@@ -8,7 +8,7 @@
 
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <div class="card h-full p-0 border-0 overflow-hidden">
-            <div class="card-header border-b border-neutral-200 dark:border-neutral-600 bg-white dark:bg-neutral-700 py-4 px-6">
+            <div class="card-header border-b border-neutral-200 bg-white py-4 px-6">
                 <h6 class="text-lg font-semibold mb-0">Default Buttons</h6>
             </div>
             <div class="card-body p-6">
@@ -21,12 +21,12 @@
                     <button type="button" class="btn bg-danger-600 hover:bg-danger-700 text-white rounded-lg px-5 py-[11px]">Danger</button>
                     <button type="button" class="btn bg-neutral-900 hover:bg-neutral-700 text-white text-base rounded-lg px-5 py-[11px]">Dark</button>
                     <button type="button" class="btn hover:text-primary-600 text-secondary-light text-decoration-none rounded-lg px-5 py-[11px]">Link</button>
-                    <button type="button" class="btn bg-light-100 hover:bg-neutral-200 dark:bg-neutral-600 dark:hover:bg-neutral-500 text-dark rounded-lg px-5 py-[11px]">Light</button>
+                    <button type="button" class="btn bg-light-100 hover:bg-neutral-200 text-dark rounded-lg px-5 py-[11px]">Light</button>
                 </div>
             </div>
         </div>
         <div class="card h-full p-0 border-0 overflow-hidden">
-            <div class="card-header border-b border-neutral-200 dark:border-neutral-600 bg-white dark:bg-neutral-700 py-4 px-6">
+            <div class="card-header border-b border-neutral-200 bg-white py-4 px-6">
                 <h6 class="text-lg font-semibold mb-0">Outline Buttons</h6>
             </div>
             <div class="card-body p-6">
@@ -44,7 +44,7 @@
             </div>
         </div>
         <div class="card h-full p-0 border-0 overflow-hidden">
-            <div class="card-header border-b border-neutral-200 dark:border-neutral-600 bg-white dark:bg-neutral-700 py-4 px-6">
+            <div class="card-header border-b border-neutral-200 bg-white py-4 px-6">
                 <h6 class="text-lg font-semibold mb-0">Rounded Buttons</h6>
             </div>
             <div class="card-body p-6">
@@ -57,12 +57,12 @@
                     <button type="button" class="btn bg-danger-600 hover:bg-danger-700 text-white rounded-full px-5 py-[11px]">Danger</button>
                     <button type="button" class="btn bg-neutral-900 hover:bg-neutral-700 text-white text-base rounded-full px-5 py-[11px]">Dark</button>
                     <button type="button" class="btn hover:text-primary-600 text-secondary-light text-decoration-none rounded-full px-5 py-[11px]">Link</button>
-                    <button type="button" class="btn bg-light-100 hover:bg-neutral-200 dark:bg-neutral-600 dark:hover:bg-neutral-500 text-dark rounded-full px-5 py-[11px]">Light</button>
+                    <button type="button" class="btn bg-light-100 hover:bg-neutral-200 text-dark rounded-full px-5 py-[11px]">Light</button>
                 </div>
             </div>
         </div>
         <div class="card h-full p-0 border-0 overflow-hidden">
-            <div class="card-header border-b border-neutral-200 dark:border-neutral-600 bg-white dark:bg-neutral-700 py-4 px-6">
+            <div class="card-header border-b border-neutral-200 bg-white py-4 px-6">
                 <h6 class="text-lg font-semibold mb-0">Rounded Buttons</h6>
             </div>
             <div class="card-body p-6">
@@ -80,25 +80,25 @@
             </div>
         </div>
         <div class="card h-full p-0 border-0 overflow-hidden">
-            <div class="card-header border-b border-neutral-200 dark:border-neutral-600 bg-white dark:bg-neutral-700 py-4 px-6">
+            <div class="card-header border-b border-neutral-200 bg-white py-4 px-6">
                 <h6 class="text-lg font-semibold mb-0">Soft Buttons</h6>
             </div>
             <div class="card-body p-6">
                 <div class="flex flex-wrap items-center gap-3">
-                    <button type="button" class="btn bg-primary-100 dark:bg-primary-600/25 dark:hover:bg-primary-600 hover:bg-primary-600 text-primary-600 hover:text-white rounded-full px-5 py-[11px]">Primary</button>
-                    <button type="button" class="btn bg-purple-100 dark:bg-purple-600/25 dark:hover:bg-purple-600 hover:bg-purple-600 text-purple-600 hover:text-white rounded-full px-5 py-[11px]">Secondary</button>
-                    <button type="button" class="btn bg-success-100 dark:bg-success-600/25 dark:hover:bg-success-600 hover:bg-success-600 text-success-600 hover:text-white rounded-full px-5 py-[11px]">Success</button>
-                    <button type="button" class="btn bg-info-100 dark:bg-info-600/25 dark:hover:bg-info-600 hover:bg-info-600 text-info-600 hover:text-white rounded-full px-5 py-[11px]">Info</button>
-                    <button type="button" class="btn bg-warning-100 dark:bg-warning-600/25 dark:hover:bg-warning-600 hover:bg-warning-600 text-warning-600 hover:text-white rounded-full px-5 py-[11px]">Warning</button>
-                    <button type="button" class="btn bg-danger-100 dark:bg-danger-600/25 dark:hover:bg-danger-600 hover:bg-danger-600 text-danger-600 hover:text-white rounded-full px-5 py-[11px]">Danger</button>
-                    <button type="button" class="btn bg-neutral-100 dark:bg-neutral-600/50 dark:hover:bg-neutral-600 hover:bg-neutral-600 text-neutral-500 hover:text-white text-base rounded-full px-5 py-[11px]">Dark</button>
+                    <button type="button" class="btn bg-primary-100 hover:bg-primary-600 text-primary-600 hover:text-white rounded-full px-5 py-[11px]">Primary</button>
+                    <button type="button" class="btn bg-purple-100 hover:bg-purple-600 text-purple-600 hover:text-white rounded-full px-5 py-[11px]">Secondary</button>
+                    <button type="button" class="btn bg-success-100 hover:bg-success-600 text-success-600 hover:text-white rounded-full px-5 py-[11px]">Success</button>
+                    <button type="button" class="btn bg-info-100 hover:bg-info-600 text-info-600 hover:text-white rounded-full px-5 py-[11px]">Info</button>
+                    <button type="button" class="btn bg-warning-100 hover:bg-warning-600 text-warning-600 hover:text-white rounded-full px-5 py-[11px]">Warning</button>
+                    <button type="button" class="btn bg-danger-100 hover:bg-danger-600 text-danger-600 hover:text-white rounded-full px-5 py-[11px]">Danger</button>
+                    <button type="button" class="btn bg-neutral-100 hover:bg-neutral-600 text-neutral-500 hover:text-white text-base rounded-full px-5 py-[11px]">Dark</button>
                     <button type="button" class="btn hover:text-primary-600 text-secondary-light text-decoration-none rounded-full px-5 py-[11px]">Link</button>
-                    <button type="button" class="btn bg-light-100 dark:bg-light-600/25 hover:bg-neutral-200 dark:bg-neutral-600 dark:hover:bg-neutral-500 text-dark rounded-full px-5 py-[11px]">Light</button>
+                    <button type="button" class="btn bg-light-100 hover:bg-neutral-200 text-dark rounded-full px-5 py-[11px]">Light</button>
                 </div>
             </div>
         </div>
         <div class="card h-full p-0 border-0 overflow-hidden">
-            <div class="card-header border-b border-neutral-200 dark:border-neutral-600 bg-white dark:bg-neutral-700 py-4 px-6">
+            <div class="card-header border-b border-neutral-200 bg-white py-4 px-6">
                 <h6 class="text-lg font-semibold mb-0">Text Buttons</h6>
             </div>
             <div class="card-body p-6">
@@ -116,7 +116,7 @@
             </div>
         </div>
         <div class="card h-full p-0 border-0 overflow-hidden">
-            <div class="card-header border-b border-neutral-200 dark:border-neutral-600 bg-white dark:bg-neutral-700 py-4 px-6">
+            <div class="card-header border-b border-neutral-200 bg-white py-4 px-6">
                 <h6 class="text-lg font-semibold mb-0">Buttons with Label</h6>
             </div>
             <div class="card-body p-6">
@@ -147,7 +147,7 @@
             </div>
         </div>
         <div class="card h-full p-0 border-0 overflow-hidden">
-            <div class="card-header border-b border-neutral-200 dark:border-neutral-600 bg-white dark:bg-neutral-700 py-4 px-6">
+            <div class="card-header border-b border-neutral-200 bg-white py-4 px-6">
                 <h6 class="text-lg font-semibold mb-0">Buttons with Label Round</h6>
             </div>
             <div class="card-body p-6">
@@ -177,7 +177,7 @@
             </div>
         </div>
         <div class="card h-full p-0 border-0 overflow-hidden">
-            <div class="card-header border-b border-neutral-200 dark:border-neutral-600 bg-white dark:bg-neutral-700 py-4 px-6">
+            <div class="card-header border-b border-neutral-200 bg-white py-4 px-6">
                 <h6 class="text-lg font-semibold mb-0">Buttons Sizes</h6>
             </div>
             <div class="card-body p-6">
@@ -194,26 +194,26 @@
             </div>
         </div>
         <div class="card h-full p-0 border-0 overflow-hidden">
-            <div class="card-header border-b border-neutral-200 dark:border-neutral-600 bg-white dark:bg-neutral-700 py-4 px-6">
+            <div class="card-header border-b border-neutral-200 bg-white py-4 px-6">
                 <h6 class="text-lg font-semibold mb-0">Checkbox & Radio Buttons</h6>
             </div>
             <div class="card-body py-4 px-6 flex flex-wrap items-center gap-3">
                 <ul class="flex items-center">
                     <li>
                         <input type="checkbox" id="checkbox-1" class="hidden peer" required="">
-                        <label for="checkbox-1" class="w-full px-5 py-[11px] text-primary-600 border border-primary-600 cursor-pointer peer-checked:border-primary-600 hover:text-white dark:peer-checked:text-white peer-checked:text-white hover:bg-primary-600 peer-checked:bg-primary-600 rounded-s-lg">
+                        <label for="checkbox-1" class="w-full px-5 py-[11px] text-primary-600 border border-primary-600 cursor-pointer peer-checked:border-primary-600 hover:text-white peer-checked:text-white hover:bg-primary-600 peer-checked:bg-primary-600 rounded-s-lg">
                             Checkbox 1
                         </label>
                     </li>
                     <li>
                         <input type="checkbox" id="checkbox-2" class="hidden peer">
-                        <label for="checkbox-2" class="w-full px-5 py-[11px] text-primary-600 border border-primary-600 cursor-pointer peer-checked:border-primary-600 hover:text-white dark:peer-checked:text-white peer-checked:text-white hover:bg-primary-600 peer-checked:bg-primary-600 border-x-0">
+                        <label for="checkbox-2" class="w-full px-5 py-[11px] text-primary-600 border border-primary-600 cursor-pointer peer-checked:border-primary-600 hover:text-white peer-checked:text-white hover:bg-primary-600 peer-checked:bg-primary-600 border-x-0">
                             Checkbox 2
                         </label>
                     </li>
                     <li>
                         <input type="checkbox" id="checkbox-3" class="hidden peer">
-                        <label for="checkbox-3" class="w-full px-5 py-[11px] text-primary-600 border border-primary-600 cursor-pointer peer-checked:border-primary-600 hover:text-white dark:peer-checked:text-white peer-checked:text-white hover:bg-primary-600 peer-checked:bg-primary-600 rounded-e-lg">
+                        <label for="checkbox-3" class="w-full px-5 py-[11px] text-primary-600 border border-primary-600 cursor-pointer peer-checked:border-primary-600 hover:text-white peer-checked:text-white hover:bg-primary-600 peer-checked:bg-primary-600 rounded-e-lg">
                             Checkbox 3
                         </label>
                     </li>
@@ -222,19 +222,19 @@
                 <ul class="flex items-center">
                     <li>
                         <input type="radio" name="radio" id="radio-1" class="hidden peer">
-                        <label for="radio-1" class="w-full px-5 py-[11px] text-warning-600 border border-warning-600 cursor-pointer peer-checked:border-warning-600 hover:text-white dark:peer-checked:text-white peer-checked:text-white hover:bg-warning-600 peer-checked:bg-warning-600 rounded-s-lg">
+                        <label for="radio-1" class="w-full px-5 py-[11px] text-warning-600 border border-warning-600 cursor-pointer peer-checked:border-warning-600 hover:text-white peer-checked:text-white hover:bg-warning-600 peer-checked:bg-warning-600 rounded-s-lg">
                             Radio 1
                         </label>
                     </li>
                     <li>
                         <input type="radio" name="radio" id="radio-2" class="hidden peer">
-                        <label for="radio-2" class="w-full px-5 py-[11px] text-warning-600 border border-warning-600 cursor-pointer peer-checked:border-warning-600 hover:text-white dark:peer-checked:text-white peer-checked:text-white hover:bg-warning-600 peer-checked:bg-warning-600 border-x-0">
+                        <label for="radio-2" class="w-full px-5 py-[11px] text-warning-600 border border-warning-600 cursor-pointer peer-checked:border-warning-600 hover:text-white peer-checked:text-white hover:bg-warning-600 peer-checked:bg-warning-600 border-x-0">
                             Radio 2
                         </label>
                     </li>
                     <li>
                         <input type="radio" name="radio" id="radio-3" class="hidden peer">
-                        <label for="radio-3" class="w-full px-5 py-[11px] text-warning-600 border border-warning-600 cursor-pointer peer-checked:border-warning-600 hover:text-white dark:peer-checked:text-white peer-checked:text-white hover:bg-warning-600 peer-checked:bg-warning-600 rounded-e-lg">
+                        <label for="radio-3" class="w-full px-5 py-[11px] text-warning-600 border border-warning-600 cursor-pointer peer-checked:border-warning-600 hover:text-white peer-checked:text-white hover:bg-warning-600 peer-checked:bg-warning-600 rounded-e-lg">
                             Radio 3
                         </label>
                     </li>
@@ -242,7 +242,7 @@
             </div>
         </div>
         <div class="card h-full p-0 border-0 overflow-hidden">
-            <div class="card-header border-b border-neutral-200 dark:border-neutral-600 bg-white dark:bg-neutral-700 py-4 px-6">
+            <div class="card-header border-b border-neutral-200 bg-white py-4 px-6">
                 <h6 class="text-lg font-semibold mb-0">Buttons Group</h6>
             </div>
             <div class="card-body py-4 px-6 flex flex-wrap items-center gap-5">
@@ -278,7 +278,7 @@
             </div>
         </div>
         <div class="card h-full p-0 border-0 overflow-hidden">
-            <div class="card-header border-b border-neutral-200 dark:border-neutral-600 bg-white dark:bg-neutral-700 py-4 px-6">
+            <div class="card-header border-b border-neutral-200 bg-white py-4 px-6">
                 <h6 class="text-lg font-semibold mb-0">Buttons Group</h6>
             </div>
             <div class="card-body p-6">

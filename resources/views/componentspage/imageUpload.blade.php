@@ -111,7 +111,7 @@
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="card h-full p-0 border-0 overflow-hidden">
-            <div class="card-header border-b border-neutral-200 dark:border-neutral-600 bg-white dark:bg-neutral-700 py-4 px-6">
+            <div class="card-header border-b border-neutral-200 bg-white py-4 px-6">
                 <h6 class="text-lg font-semibold mb-0">Basic Upload</h6>
             </div>
             <div class="card-body p-6">
@@ -119,23 +119,23 @@
                     <iconify-icon icon="solar:upload-linear" class="text-xl"></iconify-icon>
                     Click to upload
                 </label>
-                <input type="file" id="basic-upload" class="block w-full text-sm  text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 mt-6">
+                <input type="file" id="basic-upload" class="block w-full text-sm  text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none mt-6">
             </div>
         </div>
         <div class="card h-full p-0 border-0 overflow-hidden">
-            <div class="card-header border-b border-neutral-200 dark:border-neutral-600 bg-white dark:bg-neutral-700 py-4 px-6">
+            <div class="card-header border-b border-neutral-200 bg-white py-4 px-6">
                 <h6 class="text-lg font-semibold mb-0">Image Upload</h6>
             </div>
             <div class="card-body p-6">
                 <div class="upload-image-wrapper flex items-center gap-3">
-                    <div class="uploaded-img hidden relative h-[120px] w-[120px] border input-form-light rounded-lg overflow-hidden border-dashed bg-neutral-50 dark:bg-neutral-600">
+                    <div class="uploaded-img hidden relative h-[120px] w-[120px] border input-form-light rounded-lg overflow-hidden border-dashed bg-neutral-50">
                         <button type="button" class="uploaded-img__remove absolute top-0 end-0 z-1 text-2xxl line-height-1 me-8 mt-2 flex">
                             <iconify-icon icon="radix-icons:cross-2" class="text-xl text-danger-600"></iconify-icon>
                         </button>
                         <img id="uploaded-img__preview" class="w-full h-full object-fit-cover" src="{{ asset('assets/images/user.png') }}" alt="image">
                     </div>
 
-                    <label class="upload-file h-[120px] w-[120px] border input-form-light rounded-lg overflow-hidden border-dashed bg-neutral-50 dark:bg-neutral-600 hover:bg-neutral-200 flex items-center flex-col justify-center gap-1" for="upload-file">
+                    <label class="upload-file h-[120px] w-[120px] border input-form-light rounded-lg overflow-hidden border-dashed bg-neutral-50 hover:bg-neutral-200 flex items-center flex-col justify-center gap-1" for="upload-file">
                         <iconify-icon icon="solar:camera-outline" class="text-xl text-secondary-light"></iconify-icon>
                         <span class="font-semibold text-secondary-light">Upload</span>
                         <input id="upload-file" type="file" hidden>
@@ -144,13 +144,13 @@
             </div>
         </div>
         <div class="card h-full p-0 border-0 overflow-hidden">
-            <div class="card-header border-b border-neutral-200 dark:border-neutral-600 bg-white dark:bg-neutral-700 py-4 px-6">
+            <div class="card-header border-b border-neutral-200 bg-white py-4 px-6">
                 <h6 class="text-lg font-semibold mb-0">Upload With image preview</h6>
             </div>
             <div class="card-body p-6">
                 <div class="upload-image-wrapper flex items-center gap-3 flex-wrap">
                     <div class="uploaded-imgs-container flex gap-3 flex-wrap"></div>
-                    <label class="upload-file-multiple h-[120px] w-[120px] border input-form-light rounded-lg overflow-hidden border-dashed bg-neutral-50 dark:bg-neutral-600 hover:bg-neutral-200 flex items-center flex-col justify-center gap-1" for="upload-file-multiple">
+                    <label class="upload-file-multiple h-[120px] w-[120px] border input-form-light rounded-lg overflow-hidden border-dashed bg-neutral-50 hover:bg-neutral-200 flex items-center flex-col justify-center gap-1" for="upload-file-multiple">
                         <iconify-icon icon="solar:camera-outline" class="text-xl text-secondary-light"></iconify-icon>
                         <span class="font-semibold text-secondary-light">Upload</span>
                         <input id="upload-file-multiple" type="file" hidden multiple>
@@ -159,7 +159,7 @@
             </div>
         </div>
         <div class="card h-full p-0 border-0 overflow-hidden">
-            <div class="card-header border-b border-neutral-200 dark:border-neutral-600 bg-white dark:bg-neutral-700 py-4 px-6">
+            <div class="card-header border-b border-neutral-200 bg-white py-4 px-6">
                 <h6 class="text-lg font-semibold mb-0">Upload With image preview</h6>
             </div>
             <div class="card-body p-6">

@@ -10,12 +10,12 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-4 gap-6">
 
             <!-- Dashboard Widget Start -->
-            <div class="card px-xl-6 px-4 py-4 shadow-none rounded-lg border-neutral-200 dark:border-neutral-600 h-full bg-gradient-to-r from-primary-600/10 to-bg-white">
+            <div class="card px-xl-6 px-4 py-4 shadow-none rounded-lg border-neutral-200 h-full bg-gradient-to-r from-primary-600/10 to-bg-white">
                 <div class="card-body p-0">
                     <div class="flex flex-wrap items-center justify-between gap-1">
                         <div class="flex items-center">
 
-                            <div class="w-[64px] h-[64px] rounded-2xl bg-white flex-shrink-0 dark:bg-neutral-800/75 flex justify-center items-center me-2xl-5 me-xl-4 me-3">
+                            <div class="w-[64px] h-[64px] rounded-2xl bg-white flex-shrink-0 flex justify-center items-center me-2xl-5 me-xl-4 me-3">
                                 <span class="w-10 h-10 bg-primary-600 shrink-0 text-white flex justify-center items-center rounded-lg h6 mb-0">
                                     <iconify-icon icon="flowbite:users-group-solid" class="icon"></iconify-icon>
                                 </span>
@@ -26,7 +26,7 @@
                                 <h6 class="font-semibold my-1">4000</h6>
                                 <p class="text-sm mb-0">
                                     Increase by
-                                    <span class="bg-success-100 dark:bg-success-600/50 px-1 py-0.5 rounded-sm font-medium text-success-600 dark:text-success-400 text-sm">+200</span> this week
+                                    <span class="bg-success-100 px-1 py-0.5 rounded-sm font-medium text-success-600 text-sm">+200</span> this week
                                 </p>
                             </div>
                         </div>
@@ -35,12 +35,12 @@
             </div>
             <!-- Dashboard Widget End -->
             <!-- Dashboard Widget Start -->
-            <div class="card px-xl-6 px-4 py-4 shadow-none rounded-lg border-neutral-200 dark:border-neutral-600 h-full bg-gradient-to-r from-purple-600/10 to-bg-white">
+            <div class="card px-xl-6 px-4 py-4 shadow-none rounded-lg border-neutral-200 h-full bg-gradient-to-r from-purple-600/10 to-bg-white">
                 <div class="card-body p-0">
                     <div class="flex flex-wrap items-center justify-between gap-1">
                         <div class="flex items-center">
 
-                            <div class="w-[64px] h-[64px] rounded-2xl bg-white flex-shrink-0 dark:bg-neutral-800/75 flex justify-center items-center me-2xl-5 me-xl-4 me-3">
+                            <div class="w-[64px] h-[64px] rounded-2xl bg-white flex-shrink-0 flex justify-center items-center me-2xl-5 me-xl-4 me-3">
                                 <span class="w-10 h-10 bg-purple-600 shrink-0 text-white flex justify-center items-center rounded-lg h6 mb-0">
                                     <iconify-icon icon="solar:wallet-bold" class="text-white text-2xl mb-0"></iconify-icon>
                                 </span>
@@ -51,7 +51,7 @@
                                 <h6 class="font-semibold my-1">15,000</h6>
                                 <p class="text-sm mb-0">
                                     Increase by
-                                    <span class="bg-danger-100 dark:bg-danger-600/50 px-1 py-0.5 rounded-sm font-medium text-danger-600 dark:text-danger-400 text-sm">-200</span> this week
+                                    <span class="bg-danger-100 px-1 py-0.5 rounded-sm font-medium text-danger-600 text-sm">-200</span> this week
                                 </p>
                             </div>
                         </div>
@@ -60,12 +60,12 @@
             </div>
             <!-- Dashboard Widget End -->
             <!-- Dashboard Widget Start -->
-            <div class="card px-xl-6 px-4 py-4 shadow-none rounded-lg border-neutral-200 dark:border-neutral-600 h-full bg-gradient-to-r from-red-600/10 to-bg-white">
+            <div class="card px-xl-6 px-4 py-4 shadow-none rounded-lg border-neutral-200 h-full bg-gradient-to-r from-red-600/10 to-bg-white">
                 <div class="card-body p-0">
                     <div class="flex flex-wrap items-center justify-between gap-1">
                         <div class="flex items-center">
 
-                            <div class="w-[64px] h-[64px] rounded-2xl bg-white flex-shrink-0 dark:bg-neutral-800/75 flex justify-center items-center me-2xl-5 me-xl-4 me-3">
+                            <div class="w-[64px] h-[64px] rounded-2xl bg-white flex-shrink-0 flex justify-center items-center me-2xl-5 me-xl-4 me-3">
                                 <span class="w-10 h-10 bg-red-600 shrink-0 text-white flex justify-center items-center rounded-lg h6 mb-0">
                                     <iconify-icon icon="fa6-solid:file-invoice-dollar" class="text-white text-2xl mb-0"></iconify-icon>
                                 </span>
@@ -76,7 +76,7 @@
                                 <h6 class="font-semibold my-1">15,000</h6>
                                 <p class="text-sm mb-0">
                                     Increase by
-                                    <span class="bg-success-100 dark:bg-success-600/50 px-1 py-0.5 rounded-sm font-medium text-success-600 dark:text-success-400 text-sm">+200</span> this week
+                                    <span class="bg-success-100 px-1 py-0.5 rounded-sm font-medium text-success-600 text-sm">+200</span> this week
                                 </p>
                             </div>
                         </div>
@@ -85,12 +85,12 @@
             </div>
             <!-- Dashboard Widget End -->
             <!-- Dashboard Widget Start -->
-            <div class="card px-xl-6 px-4 py-4 shadow-none rounded-lg border-neutral-200 dark:border-neutral-600 h-full bg-gradient-to-r from-success-600/10 to-bg-white">
+            <div class="card px-xl-6 px-4 py-4 shadow-none rounded-lg border-neutral-200 h-full bg-gradient-to-r from-success-600/10 to-bg-white">
                 <div class="card-body p-0">
                     <div class="flex flex-wrap items-center justify-between gap-1">
                         <div class="flex items-center">
 
-                            <div class="w-[64px] h-[64px] rounded-2xl bg-white flex-shrink-0 dark:bg-neutral-800/75 flex justify-center items-center me-2xl-5 me-xl-4 me-3">
+                            <div class="w-[64px] h-[64px] rounded-2xl bg-white flex-shrink-0 flex justify-center items-center me-2xl-5 me-xl-4 me-3">
                                 <span class="w-10 h-10 bg-success-600 shrink-0 text-white flex justify-center items-center rounded-lg h6 mb-0">
                                     <iconify-icon icon="streamline:bag-dollar-solid" class="icon"></iconify-icon>
                                 </span>
@@ -101,7 +101,7 @@
                                 <h6 class="font-semibold my-1">15,000</h6>
                                 <p class="text-sm mb-0">
                                     Increase by
-                                    <span class="bg-success-100 dark:bg-success-600/50 px-1 py-0.5 rounded-sm font-medium text-success-600 dark:text-success-400 text-sm">+200</span> this week
+                                    <span class="bg-success-100 px-1 py-0.5 rounded-sm font-medium text-success-600 text-sm">+200</span> this week
                                 </p>
                             </div>
                         </div>
@@ -122,7 +122,7 @@
                                 <span class="text-sm font-medium text-secondary-light">Yearly earning overview</span>
                             </div>
                             <div class="">
-                                <select class="form-select form-select-sm w-auto bg-white dark:bg-neutral-700 border text-secondary-light">
+                                <select class="form-select form-select-sm w-auto bg-white border text-secondary-light">
                                     <option>Yearly</option>
                                     <option>Monthly</option>
                                     <option>Weekly</option>
@@ -204,7 +204,7 @@
                         <h6 class="mb-2 font-bold text-lg">Most Location</h6>
                     </div>
 
-                    <div id="world-map" class="h-[200px] bg-neutral-100 dark:bg-neutral-600/30"></div>
+                    <div id="world-map" class="h-[200px] bg-neutral-100"></div>
 
                     <div class="card-body p-6 max-h-[266px] scroll-sm overflow-y-auto">
                         <div>
@@ -294,9 +294,9 @@
                         <h6 class="mb-2 font-bold text-lg">My Portfolio</h6>
 
                         <div class="relative">
-                            <span class="w-[80px] h-[80px] bg-white dark:bg-neutral-700 shadow-xl text-neutral-600 dark:text-neutral-200 font-bold text-2xl flex justify-center items-center rounded-full absolute end-0 top-0 z-1">20k</span>
+                            <span class="w-[80px] h-[80px] bg-white shadow-xl text-neutral-600 font-bold text-2xl flex justify-center items-center rounded-full absolute end-0 top-0 z-1">20k</span>
                             <div id="statisticsDonutChart" class="mt-9 grow apexcharts-tooltip-z-none title-style circle-none"></div>
-                            <span class="w-[80px] h-[80px] bg-white dark:bg-neutral-700 shadow-xl text-neutral-600 dark:text-neutral-200 font-bold text-2xl flex justify-center items-center rounded-full absolute start-0 bottom-0 z-1">50k</span>
+                            <span class="w-[80px] h-[80px] bg-white shadow-xl text-neutral-600 font-bold text-2xl flex justify-center items-center rounded-full absolute start-0 bottom-0 z-1">50k</span>
                         </div>
 
                         <ul class="flex flex-wrap flex-col mt-[64px] gap-3">
@@ -304,14 +304,14 @@
                                 <span class="w-4 h-4 rounded-sm bg-primary-600"></span>
                                 <span class="text-secondary-light text-lg font-normal">
                                     Total Gain:
-                                    <span class="text-neutral-600 dark:text-neutral-200 font-bold text-lg">$50,000</span>
+                                    <span class="text-neutral-600 font-bold text-lg">$50,000</span>
                                 </span>
                             </li>
                             <li class="flex items-center gap-2">
                                 <span class="w-4 h-4 rounded-sm bg-warning-600"></span>
                                 <span class="text-secondary-light text-lg font-normal">
                                     Total Investment:
-                                    <span class="text-neutral-600 dark:text-neutral-200 font-bold text-lg">$20,000</span>
+                                    <span class="text-neutral-600 font-bold text-lg">$20,000</span>
                                 </span>
                             </li>
                         </ul>
@@ -326,7 +326,7 @@
                     <div class="card-body p-6">
                         <div class="flex items-center flex-wrap gap-2 justify-between mb-5">
                             <h6 class="font-bold text-lg mb-0">Latest Investments</h6>
-                            <a href="javascript:void(0)" class="text-primary-600 dark:text-primary-600 hover-text-primary flex items-center gap-1">
+                            <a href="javascript:void(0)" class="text-primary-600 hover-text-primary flex items-center gap-1">
                                 View All
                                 <iconify-icon icon="solar:alt-arrow-right-linear" class="icon"></iconify-icon>
                             </a>
@@ -361,7 +361,7 @@
                                         <td>$7,400.00</td>
                                         <td>25 May 2025</td>
                                         <td class="text-center">
-                                            <span class="bg-success-100 dark:bg-success-600/25 text-success-600 dark:text-success-400 px-4 py-1.5 rounded-lg font-medium text-sm">Completed</span>
+                                            <span class="bg-success-100 text-success-600 px-4 py-1.5 rounded-lg font-medium text-sm">Completed</span>
                                         </td>
                                     </tr>
 
@@ -382,7 +382,7 @@
                                         <td>$5,40,000.00</td>
                                         <td>25 May 2025</td>
                                         <td class="text-center">
-                                            <span class="bg-warning-100 dark:bg-warning-600/25 text-warning-600 dark:text-warning-400 px-4 py-1.5 rounded-lg font-medium text-sm">In Progress</span>
+                                            <span class="bg-warning-100 text-warning-600 px-4 py-1.5 rounded-lg font-medium text-sm">In Progress</span>
                                         </td>
                                     </tr>
 
@@ -403,7 +403,7 @@
                                         <td>$50,000.00</td>
                                         <td>25 May 2025</td>
                                         <td class="text-center">
-                                            <span class="bg-success-100 dark:bg-success-600/25 text-success-600 dark:text-success-400 px-4 py-1.5 rounded-lg font-medium text-sm">Completed</span>
+                                            <span class="bg-success-100 text-success-600 px-4 py-1.5 rounded-lg font-medium text-sm">Completed</span>
                                         </td>
                                     </tr>
 
@@ -424,7 +424,7 @@
                                         <td>$30,000.00</td>
                                         <td>25 May 2025</td>
                                         <td class="text-center">
-                                            <span class="bg-warning-100 dark:bg-warning-600/25 text-warning-600 dark:text-warning-400 px-4 py-1.5 rounded-lg font-medium text-sm">In Progress</span>
+                                            <span class="bg-warning-100 text-warning-600 px-4 py-1.5 rounded-lg font-medium text-sm">In Progress</span>
                                         </td>
                                     </tr>
 
@@ -445,7 +445,7 @@
                                         <td>$63,000.00</td>
                                         <td>25 May 2025</td>
                                         <td class="text-center">
-                                            <span class="bg-success-100 dark:bg-success-600/25 text-success-600 dark:text-success-400 px-4 py-1.5 rounded-lg font-medium text-sm">Completed</span>
+                                            <span class="bg-success-100 text-success-600 px-4 py-1.5 rounded-lg font-medium text-sm">Completed</span>
                                         </td>
                                     </tr>
 
@@ -462,7 +462,7 @@
                     <div class="card-body p-6">
                         <div class="flex items-center flex-wrap gap-2 justify-between mb-5">
                             <h6 class="font-bold text-lg mb-0">Notice board</h6>
-                            <a href="javascript:void(0)" class="text-primary-600 dark:text-primary-600 hover-text-primary flex items-center gap-1">
+                            <a href="javascript:void(0)" class="text-primary-600 hover-text-primary flex items-center gap-1">
                                 View All
                                 <iconify-icon icon="solar:alt-arrow-right-linear" class="icon"></iconify-icon>
                             </a>
@@ -506,7 +506,7 @@
                         <div class="flex items-center flex-wrap gap-2 justify-between mb-5">
                             <h6 class="mb-2 font-bold text-lg">Total Transactions </h6>
                             <div class="">
-                                <select class="form-select form-select-sm w-auto bg-white dark:bg-neutral-700 border text-secondary-light">
+                                <select class="form-select form-select-sm w-auto bg-white border text-secondary-light">
                                     <option>Yearly</option>
                                     <option>Monthly</option>
                                     <option>Weekly</option>
@@ -520,7 +520,7 @@
                                 <span class="w-4 h-4 rounded-sm bg-primary-600"></span>
                                 <span class="text-secondary-light text-lg font-normal">
                                     Total Gain:
-                                    <span class="text-neutral-600 dark:text-neutral-200 font-bold text-lg">$50,000</span>
+                                    <span class="text-neutral-600 font-bold text-lg">$50,000</span>
                                 </span>
                             </li>
                         </ul>
@@ -538,7 +538,7 @@
                         <div class="flex items-center flex-wrap gap-2 justify-between mb-5">
                             <h6 class="mb-2 font-bold text-lg">Project Status</h6>
                             <div class="">
-                                <select class="form-select form-select-sm w-auto bg-white dark:bg-neutral-700 border text-secondary-light">
+                                <select class="form-select form-select-sm w-auto bg-white border text-secondary-light">
                                     <option>Yearly</option>
                                     <option>Monthly</option>
                                     <option>Weekly</option>

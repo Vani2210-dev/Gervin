@@ -310,7 +310,7 @@
                             <div class="card-body p-0">
                                 <div class="flex flex-wrap items-center justify-between gap-1 mb-2">
                                     <div class="flex items-center gap-2">
-                                        <span class="w-12 h-12 bg-cyan-600/25 text-cyan-600 dark:text-cyan-600 flex-shrink-0 flex justify-center items-center rounded-full h6 mb-0">
+                                        <span class="w-12 h-12 bg-cyan-600/25 text-cyan-600 flex-shrink-0 flex justify-center items-center rounded-full h6 mb-0">
                                             <i class="ri-group-fill"></i>
                                         </span>
                                         <div>
@@ -319,7 +319,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <p class="text-sm mb-0 text-gray-600"><span class="text-cyan-600 dark:text-cyan-600">4</span> Doctors joined this week</p>
+                                <p class="text-sm mb-0 text-gray-600"><span class="text-cyan-600">4</span> Doctors joined this week</p>
                             </div>
                         </div>
                     </div>
@@ -328,7 +328,7 @@
                             <div class="card-body p-0">
                                 <div class="flex flex-wrap items-center justify-between gap-1 mb-2">
                                     <div class="flex items-center gap-2">
-                                        <span class="w-12 h-12 bg-lilac-600/25 text-lilac-600 dark:text-lilac-600 flex-shrink-0 flex justify-center items-center rounded-full h6 mb-0">
+                                        <span class="w-12 h-12 bg-lilac-600/25 text-lilac-600 flex-shrink-0 flex justify-center items-center rounded-full h6 mb-0">
                                             <i class="ri-award-fill"></i>
                                         </span>
                                         <div>
@@ -337,7 +337,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <p class="text-sm mb-0 text-gray-600"><span class="text-lilac-600 dark:text-lilac-600">8</span> Staffs on vacation</p>
+                                <p class="text-sm mb-0 text-gray-600"><span class="text-lilac-600">8</span> Staffs on vacation</p>
                             </div>
                         </div>
                     </div>
@@ -346,7 +346,7 @@
                             <div class="card-body p-0">
                                 <div class="flex flex-wrap items-center justify-between gap-1 mb-2">
                                     <div class="flex items-center gap-2">
-                                        <span class="w-12 h-12 bg-primary-600/25 text-primary-600 dark:text-primary-600 flex-shrink-0 flex justify-center items-center rounded-full h6 mb-0">
+                                        <span class="w-12 h-12 bg-primary-600/25 text-primary-600 flex-shrink-0 flex justify-center items-center rounded-full h6 mb-0">
                                             <i class="ri-group-fill"></i>
                                         </span>
                                         <div>
@@ -355,7 +355,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <p class="text-sm mb-0 text-gray-600"><span class="text-primary-600 dark:text-primary-600">170</span> New patients admitted</p>
+                                <p class="text-sm mb-0 text-gray-600"><span class="text-primary-600">170</span> New patients admitted</p>
                             </div>
                         </div>
                     </div>
@@ -364,7 +364,7 @@
                             <div class="card-body p-0">
                                 <div class="flex flex-wrap items-center justify-between gap-1 mb-2">
                                     <div class="flex items-center gap-2">
-                                        <span class="w-12 h-12 bg-success-600/25 text-success-600 dark:text-success-600 flex-shrink-0 flex justify-center items-center rounded-full h6 mb-0">
+                                        <span class="w-12 h-12 bg-success-600/25 text-success-600 flex-shrink-0 flex justify-center items-center rounded-full h6 mb-0">
                                             <i class="ri-wallet-3-fill"></i>
                                         </span>
                                         <div>
@@ -373,7 +373,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <p class="text-sm mb-0 text-gray-600"><span class="text-success-600 dark:text-success-600">60,000 </span> Medicine on reserve</p>
+                                <p class="text-sm mb-0 text-gray-600"><span class="text-success-600">60,000 </span> Medicine on reserve</p>
                             </div>
                         </div>
                     </div>
@@ -384,7 +384,7 @@
                             <div class="card-header">
                                 <div class="flex items-center gap-2 justify-between">
                                     <h6 class="mb-0 font-bold text-lg">Earning Statistic</h6>
-                                    <select class="form-select form-select-sm w-auto bg-base border border-neutral-600/25 text-gray-600 dark:text-white dark:bg-gray-800 !pe-7">
+                                    <select class="form-select form-select-sm w-auto bg-base border border-neutral-600/25 text-gray-600 !pe-7">
                                         <option>This Month</option>
                                         <option>This Week</option>
                                         <option>This Year</option>
@@ -425,13 +425,13 @@
                                 <div id="radialMultipleBar"></div>
                                 <ul class="flex flex-col gap-3">
                                     <li>
-                                        <span class="text-lg">Cardiology: <span class="text-primary-600 dark:text-primary-600 font-semibold">80%</span> </span>
+                                        <span class="text-lg">Cardiology: <span class="text-primary-600 font-semibold">80%</span> </span>
                                     </li>
                                     <li>
-                                        <span class="text-lg">Psychiatry: <span class="text-warning-600 dark:text-warning-600 font-semibold">40%</span> </span>
+                                        <span class="text-lg">Psychiatry: <span class="text-warning-600 font-semibold">40%</span> </span>
                                     </li>
                                     <li>
-                                        <span class="text-lg">Pediatrics: <span class="text-success-600 dark:text-success-600 font-semibold">10%</span> </span>
+                                        <span class="text-lg">Pediatrics: <span class="text-success-600 font-semibold">10%</span> </span>
                                     </li>
                                 </ul>
                             </div>
@@ -444,7 +444,7 @@
                             <div class="card-header">
                                 <div class="flex items-center gap-2 justify-between">
                                     <h6 class="mb-0 font-bold text-lg">Patient Visit By Gender</h6>
-                                    <select class="form-select form-select-sm w-auto bg-base border border-neutral-600/25 text-gray-600 dark:text-white dark:bg-gray-800 !pe-7">
+                                    <select class="form-select form-select-sm w-auto bg-base border border-neutral-600/25 text-gray-600 !pe-7">
                                         <option>This Month</option>
                                         <option>This Week</option>
                                         <option>This Year</option>
@@ -479,7 +479,7 @@
                             <div class="card-header border-bottom">
                                 <div class="flex items-center gap-2 justify-between">
                                     <h6 class="mb-0 font-bold text-lg">Doctors List</h6>
-                                    <a href="javascript:void(0)" class="flex-shrink-0 text-primary-600 dark:text-primary-600 hover-text-primary flex items-center gap-1">
+                                    <a href="javascript:void(0)" class="flex-shrink-0 text-primary-600 hover-text-primary flex items-center gap-1">
                                         View All
                                         <iconify-icon icon="solar:alt-arrow-right-linear" class="icon"></iconify-icon>
                                     </a>
@@ -495,7 +495,7 @@
                                                 <span class="text-sm text-gray-600 font-medium">Cardiology</span>
                                             </div>
                                         </div>
-                                        <span class="bg-success-focus text-success-main dark:text-success-main px-2.5 py-1 rounded-lg font-medium text-sm">Available</span>
+                                        <span class="bg-success-focus text-success-main px-2.5 py-1 rounded-lg font-medium text-sm">Available</span>
                                     </div>
                                     <div class="flex items-center justify-between gap-3">
                                         <div class="flex items-center">
@@ -505,7 +505,7 @@
                                                 <span class="text-sm text-gray-600 font-medium">Orthopedics</span>
                                             </div>
                                         </div>
-                                        <span class="bg-success-focus text-success-main dark:text-success-main px-2.5 py-1 rounded-lg font-medium text-sm">Available</span>
+                                        <span class="bg-success-focus text-success-main px-2.5 py-1 rounded-lg font-medium text-sm">Available</span>
                                     </div>
                                     <div class="flex items-center justify-between gap-3">
                                         <div class="flex items-center">
@@ -515,7 +515,7 @@
                                                 <span class="text-sm text-gray-600 font-medium">Ophthalmology</span>
                                             </div>
                                         </div>
-                                        <span class="bg-danger-focus text-danger-main dark:text-danger-main px-2.5 py-1 rounded-lg font-medium text-sm">Not Available</span>
+                                        <span class="bg-danger-focus text-danger-main px-2.5 py-1 rounded-lg font-medium text-sm">Not Available</span>
                                     </div>
                                     <div class="flex items-center justify-between gap-3">
                                         <div class="flex items-center">
@@ -525,7 +525,7 @@
                                                 <span class="text-sm text-gray-600 font-medium">Cardiology</span>
                                             </div>
                                         </div>
-                                        <span class="bg-success-focus text-success-main dark:text-success-main px-2.5 py-1 rounded-lg font-medium text-sm">Available</span>
+                                        <span class="bg-success-focus text-success-main px-2.5 py-1 rounded-lg font-medium text-sm">Available</span>
                                     </div>
                                     <div class="flex items-center justify-between gap-3">
                                         <div class="flex items-center">
@@ -535,7 +535,7 @@
                                                 <span class="text-sm text-gray-600 font-medium">Cardiology</span>
                                             </div>
                                         </div>
-                                        <span class="bg-danger-focus text-danger-main dark:text-danger-main px-2.5 py-1 rounded-lg font-medium text-sm">Not Available</span>
+                                        <span class="bg-danger-focus text-danger-main px-2.5 py-1 rounded-lg font-medium text-sm">Not Available</span>
                                     </div>
                                     <div class="flex items-center justify-between gap-3">
                                         <div class="flex items-center">
@@ -545,7 +545,7 @@
                                                 <span class="text-sm text-gray-600 font-medium">Cardiology</span>
                                             </div>
                                         </div>
-                                        <span class="bg-success-focus text-success-main dark:text-success-main px-2.5 py-1 rounded-lg font-medium text-sm">Available</span>
+                                        <span class="bg-success-focus text-success-main px-2.5 py-1 rounded-lg font-medium text-sm">Available</span>
                                     </div>
                                 </div>
                             </div>
@@ -557,7 +557,7 @@
                         <div class="card border-0 h-full">
                             <div class="card-header border-bottom bg-base py-4 px-6 flex items-center justify-between">
                                 <h6 class="text-lg font-semibold mb-0">Latest Appointments</h6>
-                                <a href="javascript:void(0)" class="flex-shrink-0 text-primary-600 dark:text-primary-600 hover-text-primary flex items-center gap-1">
+                                <a href="javascript:void(0)" class="flex-shrink-0 text-primary-600 hover-text-primary flex items-center gap-1">
                                     View All
                                     <iconify-icon icon="solar:alt-arrow-right-linear" class="icon"></iconify-icon>
                                 </a>
@@ -578,43 +578,43 @@
                                                 <td>General Checkup</td>
                                                 <td>#63254</td>
                                                 <td>27 Mar 2025</td>
-                                                <td><span class="bg-success-focus text-success-main dark:text-success-main px-2.5 py-1 rounded-lg font-medium text-sm">Completed</span></td>
+                                                <td><span class="bg-success-focus text-success-main px-2.5 py-1 rounded-lg font-medium text-sm">Completed</span></td>
                                             </tr>
                                             <tr>
                                                 <td>Blood test results</td>
                                                 <td>3.053 ETH</td>
                                                 <td>2h 5m 40s</td>
-                                                <td><span class="bg-danger-focus text-danger-main dark:text-danger-main px-2.5 py-1 rounded-lg font-medium text-sm">Canceled</span></td>
+                                                <td><span class="bg-danger-focus text-danger-main px-2.5 py-1 rounded-lg font-medium text-sm">Canceled</span></td>
                                             </tr>
                                             <tr>
                                                 <td>Heart Checkup</td>
                                                 <td>3.053 ETH</td>
                                                 <td>2h 5m 40s</td>
-                                                <td><span class="bg-success-focus text-success-main dark:text-success-main px-2.5 py-1 rounded-lg font-medium text-sm">Completed</span></td>
+                                                <td><span class="bg-success-focus text-success-main px-2.5 py-1 rounded-lg font-medium text-sm">Completed</span></td>
                                             </tr>
                                             <tr>
                                                 <td>Vaccination</td>
                                                 <td>3.053 ETH</td>
                                                 <td>2h 5m 40s</td>
-                                                <td><span class="bg-danger-focus text-danger-main dark:text-danger-main px-2.5 py-1 rounded-lg font-medium text-sm">Canceled</span></td>
+                                                <td><span class="bg-danger-focus text-danger-main px-2.5 py-1 rounded-lg font-medium text-sm">Canceled</span></td>
                                             </tr>
                                             <tr>
                                                 <td>Dental Cleanup</td>
                                                 <td>3.053 ETH</td>
                                                 <td>2h 5m 40s</td>
-                                                <td><span class="bg-success-focus text-success-main dark:text-success-main px-2.5 py-1 rounded-lg font-medium text-sm">Completed</span></td>
+                                                <td><span class="bg-success-focus text-success-main px-2.5 py-1 rounded-lg font-medium text-sm">Completed</span></td>
                                             </tr>
                                             <tr>
                                                 <td>Follow up Appointment</td>
                                                 <td>3.053 ETH</td>
                                                 <td>2h 5m 40s</td>
-                                                <td><span class="bg-danger-focus text-danger-main dark:text-danger-main px-2.5 py-1 rounded-lg font-medium text-sm">Canceled</span></td>
+                                                <td><span class="bg-danger-focus text-danger-main px-2.5 py-1 rounded-lg font-medium text-sm">Canceled</span></td>
                                             </tr>
                                             <tr>
                                                 <td>General Checkup</td>
                                                 <td>#63254</td>
                                                 <td>27 Mar 2025</td>
-                                                <td><span class="bg-success-focus text-success-main dark:text-success-main px-2.5 py-1 rounded-lg font-medium text-sm">Completed</span></td>
+                                                <td><span class="bg-success-focus text-success-main px-2.5 py-1 rounded-lg font-medium text-sm">Completed</span></td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -633,7 +633,7 @@
                             <div class="card-header border-bottom flex items-center flex-wrap gap-2 justify-between">
                                 <h6 class="mb-0 font-bold text-lg">Total Income</h6>
                                 <div class="">
-                                    <select class="form-select form-select-sm w-auto bg-base border border-neutral-600/25 text-gray-600 dark:text-white dark:bg-gray-800 !pe-7">
+                                    <select class="form-select form-select-sm w-auto bg-base border border-neutral-600/25 text-gray-600 !pe-7">
                                         <option>This Month</option>
                                         <option>This Week</option>
                                         <option>This Year</option>
@@ -673,7 +673,7 @@
                             <div class="card-header">
                                 <div class="flex items-center gap-2 justify-between">
                                     <h6 class="mb-0 font-bold text-lg">Available Treatments</h6>
-                                    <a href="javascript:void(0)" class="flex-shrink-0 text-primary-600 dark:text-primary-600 hover-text-primary flex items-center gap-1">
+                                    <a href="javascript:void(0)" class="flex-shrink-0 text-primary-600 hover-text-primary flex items-center gap-1">
                                         View All
                                         <iconify-icon icon="solar:alt-arrow-right-linear" class="icon"></iconify-icon>
                                     </a>
@@ -760,7 +760,7 @@
                             <div class="card-header">
                                 <div class="flex items-center gap-2 justify-between">
                                     <h6 class="mb-0 font-bold text-lg line-clamp-1">Health Reports Document</h6>
-                                    <a href="javascript:void(0)" class="flex-shrink-0 text-primary-600 dark:text-primary-600 hover-text-primary flex items-center gap-1">
+                                    <a href="javascript:void(0)" class="flex-shrink-0 text-primary-600 hover-text-primary flex items-center gap-1">
                                         View All
                                         <iconify-icon icon="solar:alt-arrow-right-linear" class="icon"></iconify-icon>
                                     </a>

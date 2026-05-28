@@ -33,7 +33,7 @@
                         <div class="col-span-12">
                             <label class="form-label">Input with Payment</label>
                             <div class="flex">
-                                <span class="inline-flex items-center px-3 border rounded-e-0 border-e-0 rounded-s-md border-neutral-200 dark:border-neutral-600">
+                                <span class="inline-flex items-center px-3 border rounded-e-0 border-e-0 rounded-s-md border-neutral-200">
                                     <img src="{{ asset('assets/images/card/payment-icon.png') }}" alt="image">
                                 </span>
                                 <input type="text" class="form-control grow rounded-ss-none rounded-es-none" placeholder="Card Number">
@@ -51,7 +51,7 @@
                         <div class="col-span-12">
                             <label class="form-label">Input</label>
                             <div class="flex">
-                                <span class="inline-flex items-center px-3 border rounded-e-0 border-e-0 rounded-s-md border-neutral-200 dark:border-neutral-600">
+                                <span class="inline-flex items-center px-3 border rounded-e-0 border-e-0 rounded-s-md border-neutral-200">
                                     <iconify-icon icon="mynaui:envelope"></iconify-icon>
                                 </span>
                                 <input type="text" class="form-control grow rounded-ss-none rounded-es-none" placeholder="info@gmail.com">
@@ -86,7 +86,7 @@
                         <div class="col-span-12">
                             <label class="form-label">Input</label>
                             <div class="flex">
-                                <span class="inline-flex items-center px-3 border rounded-e-0 border-e-0 rounded-s-md border-neutral-200 dark:border-neutral-600">
+                                <span class="inline-flex items-center px-3 border rounded-e-0 border-e-0 rounded-s-md border-neutral-200">
                                     http://
                                 </span>
                                 <input type="text" class="form-control grow rounded-ss-none rounded-es-none" placeholder="www.random.com">
@@ -96,7 +96,7 @@
                             <label class="form-label">Input</label>
                             <div class="flex">
                                 <input type="text" class="form-control grow rounded-se-none rounded-ee-none" placeholder="www.random.com">
-                                <button type="button" class="inline-flex items-center px-3 border rounded-s-0 border-s-0 rounded-e-md border-neutral-200 dark:border-neutral-600"><iconify-icon icon="lucide:copy"></iconify-icon>Copy</button>
+                                <button type="button" class="inline-flex items-center px-3 border rounded-s-0 border-s-0 rounded-e-md border-neutral-200"><iconify-icon icon="lucide:copy"></iconify-icon>Copy</button>
                             </div>
                             <p class="text-sm mt-2 mb-0">This is a hint text to help user.</p>
                         </div>
@@ -134,15 +134,15 @@
                     <div class="grid grid-cols-12 gap-4">
                         <div class="col-span-12">
                             <label class="form-label">Large Size File Input </label>
-                            <input class="border border-neutral-200 dark:border-neutral-600 w-full rounded-lg text-lg" name="#0" type="file">
+                            <input class="border border-neutral-200 w-full rounded-lg text-lg" name="#0" type="file">
                         </div>
                         <div class="col-span-12">
                             <label class="form-label">Medium Size File Input </label>
-                            <input class="border border-neutral-200 dark:border-neutral-600 w-full rounded-lg" type="file" name="#0">
+                            <input class="border border-neutral-200 w-full rounded-lg" type="file" name="#0">
                         </div>
                         <div class="col-span-12">
                             <label class="form-label">Small Size File Input </label>
-                            <input class="border border-neutral-200 dark:border-neutral-600 w-full rounded-lg text-xs" name="#0" type="file">
+                            <input class="border border-neutral-200 w-full rounded-lg text-xs" name="#0" type="file">
                         </div>
                     </div>
                 </div>
@@ -171,7 +171,7 @@
                         </div>
                         <div class="col-span-12">
                             <label class="form-label">Medium Size File Input </label>
-                            <input class="border border-neutral-200 dark:border-neutral-600 w-full rounded-lg" type="file" name="#0">
+                            <input class="border border-neutral-200 w-full rounded-lg" type="file" name="#0">
                         </div>
                     </div>
                 </div>

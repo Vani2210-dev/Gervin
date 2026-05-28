@@ -18,51 +18,51 @@
                         </div>
 
                         <ul class="ai-chat-list scroll-sm px-6 pb-6 max-h-[644px] overflow-y-auto">
-                            <li class="mb-4 mt-0"><span class="text-primary-600 dark:text-primary-600 text-sm font-semibold">Today</span></li>
+                            <li class="mb-4 mt-0"><span class="text-primary-600 text-sm font-semibold">Today</span></li>
                             <li class="mb-4">
-                                <a href="{{ route('textGenerator') }}" class="line-clamp-1 text-neutral-600 hover:text-primary-600 dark:text-white dark:hover: text-hover-primary-600">Please create a 5 Column table with HTM</a>
+                                <a href="{{ route('textGenerator') }}" class="line-clamp-1 text-neutral-600 hover:text-primary-600 text-hover-primary-600">Please create a 5 Column table with HTM</a>
                             </li>
                             <li class="mb-4">
-                                <a href="{{ route('textGenerator') }}" class="line-clamp-1 text-neutral-600 hover:text-primary-600 dark:text-white dark:hover: text-hover-primary-600">Calorie-dense foods: Needs, healthy</a>
+                                <a href="{{ route('textGenerator') }}" class="line-clamp-1 text-neutral-600 hover:text-primary-600 text-hover-primary-600">Calorie-dense foods: Needs, healthy</a>
                             </li>
                             <li class="mb-4">
-                                <a href="{{ route('textGenerator') }}" class="line-clamp-1 text-neutral-600 hover:text-primary-600 dark:text-white dark:hover: text-hover-primary-600">Calorie-dense foods: Needs, healthy</a>
+                                <a href="{{ route('textGenerator') }}" class="line-clamp-1 text-neutral-600 hover:text-primary-600 text-hover-primary-600">Calorie-dense foods: Needs, healthy</a>
                             </li>
                             <li class="mb-4">
-                                <a href="{{ route('textGenerator') }}" class="line-clamp-1 text-neutral-600 hover:text-primary-600 dark:text-white dark:hover: text-hover-primary-600">Calorie-dense foods: Needs, healthy</a>
+                                <a href="{{ route('textGenerator') }}" class="line-clamp-1 text-neutral-600 hover:text-primary-600 text-hover-primary-600">Calorie-dense foods: Needs, healthy</a>
                             </li>
 
                             <li class="mb-4 mt-6"><span class="text-primary-600 text-sm font-semibold">Yesterday</span></li>
                             <li class="mb-4">
-                                <a href="{{ route('textGenerator') }}" class="line-clamp-1 text-neutral-600 hover:text-primary-600 dark:text-white dark:hover: text-hover-primary-600">Online School Education Learning</a>
+                                <a href="{{ route('textGenerator') }}" class="line-clamp-1 text-neutral-600 hover:text-primary-600 text-hover-primary-600">Online School Education Learning</a>
                             </li>
                             <li class="mb-4">
-                                <a href="{{ route('textGenerator') }}" class="line-clamp-1 text-neutral-600 hover:text-primary-600 dark:text-white dark:hover: text-hover-primary-600">Calorie-dense foods: Needs, healthy</a>
+                                <a href="{{ route('textGenerator') }}" class="line-clamp-1 text-neutral-600 hover:text-primary-600 text-hover-primary-600">Calorie-dense foods: Needs, healthy</a>
                             </li>
                             <li class="mb-4">
-                                <a href="{{ route('textGenerator') }}" class="line-clamp-1 text-neutral-600 hover:text-primary-600 dark:text-white dark:hover: text-hover-primary-600">Calorie-dense foods: Needs, healthy</a>
+                                <a href="{{ route('textGenerator') }}" class="line-clamp-1 text-neutral-600 hover:text-primary-600 text-hover-primary-600">Calorie-dense foods: Needs, healthy</a>
                             </li>
                             <li class="mb-4">
-                                <a href="{{ route('textGenerator') }}" class="line-clamp-1 text-neutral-600 hover:text-primary-600 dark:text-white dark:hover: text-hover-primary-600">Calorie-dense foods: Needs, healthy</a>
+                                <a href="{{ route('textGenerator') }}" class="line-clamp-1 text-neutral-600 hover:text-primary-600 text-hover-primary-600">Calorie-dense foods: Needs, healthy</a>
                             </li>
 
                             <li class="mb-4 mt-6"><span class="text-primary-600 text-sm font-semibold">17/06/2025</span></li>
                             <li class="mb-4">
-                                <a href="{{ route('textGenerator') }}" class="line-clamp-1 text-neutral-600 hover:text-primary-600 dark:text-white dark:hover: text-hover-primary-600">Online School Education Learning</a>
+                                <a href="{{ route('textGenerator') }}" class="line-clamp-1 text-neutral-600 hover:text-primary-600 text-hover-primary-600">Online School Education Learning</a>
                             </li>
                             <li class="mb-4">
-                                <a href="{{ route('textGenerator') }}" class="line-clamp-1 text-neutral-600 hover:text-primary-600 dark:text-white dark:hover: text-hover-primary-600">Calorie-dense foods: Needs, healthy</a>
+                                <a href="{{ route('textGenerator') }}" class="line-clamp-1 text-neutral-600 hover:text-primary-600 text-hover-primary-600">Calorie-dense foods: Needs, healthy</a>
                             </li>
                             <li class="mb-4">
-                                <a href="{{ route('textGenerator') }}" class="line-clamp-1 text-neutral-600 hover:text-primary-600 dark:text-white dark:hover: text-hover-primary-600">Calorie-dense foods: Needs, healthy</a>
+                                <a href="{{ route('textGenerator') }}" class="line-clamp-1 text-neutral-600 hover:text-primary-600 text-hover-primary-600">Calorie-dense foods: Needs, healthy</a>
                             </li>
                             <li class="mb-4">
-                                <a href="{{ route('textGenerator') }}" class="line-clamp-1 text-neutral-600 hover:text-primary-600 dark:text-white dark:hover: text-hover-primary-600">Calorie-dense foods: Needs, healthy</a>
+                                <a href="{{ route('textGenerator') }}" class="line-clamp-1 text-neutral-600 hover:text-primary-600 text-hover-primary-600">Calorie-dense foods: Needs, healthy</a>
                             </li>
 
                             <li class="mb-4 mt-6"><span class="text-primary-600 text-sm font-semibold">15/06/2025</span></li>
                             <li class="mb-0">
-                                <a href="{{ route('textGenerator') }}" class="line-clamp-1 text-neutral-600 hover:text-primary-600 dark:text-white dark:hover: text-hover-primary-600">Calorie-dense foods: Needs, healthy</a>
+                                <a href="{{ route('textGenerator') }}" class="line-clamp-1 text-neutral-600 hover:text-primary-600 text-hover-primary-600">Calorie-dense foods: Needs, healthy</a>
                             </li>
                         </ul>
 
@@ -73,7 +73,7 @@
                 <div class="card h-full p-0 email-card overflow-x-auto block border-0">
                     <div class="min-w-[450px] flex flex-col justify-between h-full">
                         <div class="">
-                            <div class="card-header border-b border-neutral-200 dark:border-neutral-600 bg-white dark:bg-neutral-700 py-4 px-6 flex items-center gap-3 justify-between flex-wrap">
+                            <div class="card-header border-b border-neutral-200 bg-white py-4 px-6 flex items-center gap-3 justify-between flex-wrap">
                                 <div class="flex items-center gap-2">
                                     <button class="text-secondary-light flex me-2"><iconify-icon icon="mingcute:arrow-left-line" class="icon text-xl line-height-1"></iconify-icon></button>
                                     <h6 class="mb-0 text-lg">Please create a 5 Column table with HTML Css and js</h6>
@@ -86,7 +86,7 @@
                             </div>
                             <div class="card-body p-0 max-h-[612px] min-h-[612px] overflow-y-auto">
 
-                                <div class="py-4 px-6 flex items-start justify-between gap-4 border-b border-neutral-200 dark:border-neutral-600 pb-4 mb-4">
+                                <div class="py-4 px-6 flex items-start justify-between gap-4 border-b border-neutral-200 pb-4 mb-4">
                                     <div class="flex items-center gap-4">
                                         <div class="img overflow-hidden shrink-0">
                                             <img src="{{ asset('assets/images/chat/1.png') }}" alt="image" class="w-[44px] h-[44px] rounded-full object-fit-cover">
@@ -96,10 +96,10 @@
                                             <p class="mb-0 text-secondary-light text-sm">Please create a 5 Column table with HTML Css and js</p>
                                         </div>
                                     </div>
-                                    <button type="button" class="flex items-center gap-1.5 px-2 py-1.5 bg-primary-50 dark:bg-primary-600/25 rounded bg-hover-primary-100 shrink-0"> <i class="ri-edit-2-fill"></i>  Edit</button>
+                                    <button type="button" class="flex items-center gap-1.5 px-2 py-1.5 bg-primary-50 rounded bg-hover-primary-100 shrink-0"> <i class="ri-edit-2-fill"></i>  Edit</button>
                                 </div>
 
-                                <div class="py-4 px-6 border-b border-neutral-200 dark:border-neutral-600">
+                                <div class="py-4 px-6 border-b border-neutral-200">
                                     <div class="flex items-start gap-3">
                                         <img src="{{ asset('assets/images/wow-dash-favicon.png') }}" alt="" class="w-10 h-10 rounded-full">
                                         <div class="">
@@ -139,7 +139,7 @@
                                                     </code>
                                                 </pre>
                                                 <div class="mt-6 flex items-center justify-between gap-4">
-                                                    <div class="flex items-center gap-5 bg-neutral-50 dark:bg-neutral-600 rounded-lg px-4 py-2.5 line-height-1">
+                                                    <div class="flex items-center gap-5 bg-neutral-50 rounded-lg px-4 py-2.5 line-height-1">
                                                         <button type="button" class="text-secondary-light text-2xl flex text-hover-info-600"><i class="ri-thumb-up-line line-height-1"></i></button>
                                                         <button type="button" class="text-secondary-light text-2xl flex text-hover-info-600"><i class="ri-thumb-down-line"></i></button>
                                                         <button type="button" class="text-secondary-light text-2xl flex text-hover-info-600"><i class="ri-share-forward-line"></i></button>
@@ -152,7 +152,7 @@
                                     </div>
                                 </div>
 
-                                <div class="py-4 px-6 flex items-start justify-between gap-4 border-b border-neutral-200 dark:border-neutral-600 pb-4 mb-4">
+                                <div class="py-4 px-6 flex items-start justify-between gap-4 border-b border-neutral-200 pb-4 mb-4">
                                     <div class="flex items-center gap-4">
                                         <div class="img overflow-hidden shrink-0">
                                             <img src="{{ asset('assets/images/chat/1.png') }}" alt="image" class="w-[44px] h-[44px] rounded-full object-fit-cover">
@@ -162,12 +162,12 @@
                                             <p class="mb-0 text-secondary-light text-sm">Please create a 5 Column table with HTML Css and js</p>
                                         </div>
                                     </div>
-                                    <button type="button" class="flex items-center gap-1.5 px-2 py-1.5 bg-primary-50 dark:bg-primary-600/25 rounded bg-hover-primary-100 shrink-0"> <i class="ri-edit-2-fill"></i>  Edit</button>
+                                    <button type="button" class="flex items-center gap-1.5 px-2 py-1.5 bg-primary-50 rounded bg-hover-primary-100 shrink-0"> <i class="ri-edit-2-fill"></i>  Edit</button>
                                 </div>
 
                             </div>
                         </div>
-                        <div class="card-footer py-4 px-6 bg-white dark:bg-neutral-700 border-t border-neutral-200 dark:border-neutral-600">
+                        <div class="card-footer py-4 px-6 bg-white border-t border-neutral-200">
                             <form action="#">
                                 <div class="flex items-center justify-between">
                                     <textarea class="textarea-max-height bg-transparent focus:ring-0 w-full p-0 rounded-lg border-0 py-2 ps-2 resize-none scroll-sm" oninput="adjustHeight(this)" placeholder="Write massage"></textarea>

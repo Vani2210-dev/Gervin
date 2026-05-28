@@ -374,7 +374,7 @@
                                 <h6 class="text-white text-xl">Upgrade Your Plan</h6>                                                                                                
                                 <div class="">
                                     <p class="text-white mb-2">Your free trial expired in 7 days</p>
-                                    <a href="#" class="btn py-2 rounded-[50rem] w-full bg-gradient-to-r from-[#CBFFF9] to-[#FFEEB1] text-sm justify-center dark:text-neutral-900 hover:scale-[1.06]">Upgrade Now</a>
+                                    <a href="#" class="btn py-2 rounded-[50rem] w-full bg-gradient-to-r from-[#CBFFF9] to-[#FFEEB1] text-sm justify-center hover:scale-[1.06]">Upgrade Now</a>
                                 </div>
                             </div>
                         </div>
@@ -382,7 +382,7 @@
                             <div class="grid grid-cols-1 sm:grid-cols-12 gap-4">
                                 <div class="col-span-12 sm:col-span-6">
                                     <div class="rounded-lg h-full text-center p-5 bg-purple-light">
-                                        <span class="w-[44px] h-[44px] rounded-lg inline-flex justify-center items-center text-xl mb-3 bg-purple-200 dark:bg-purple-600/20 border border-purple-400 text-purple-600">
+                                        <span class="w-[44px] h-[44px] rounded-lg inline-flex justify-center items-center text-xl mb-3 bg-purple-200 border border-purple-400 text-purple-600">
                                             <i class="ri-price-tag-3-fill"></i>
                                         </span>
                                         <span class="text-neutral-700 block">Total Sales</span>
@@ -390,8 +390,8 @@
                                     </div>
                                 </div>
                                 <div class="col-span-12 sm:col-span-6">
-                                    <div class="rounded-lg h-full text-center p-5 bg-success-100 dark:bg-success-600/10">
-                                        <span class="w-[44px] h-[44px] rounded-lg inline-flex justify-center items-center text-xl mb-3 bg-success-200 dark:bg-success-600/20 border border-success-400 text-success-600">
+                                    <div class="rounded-lg h-full text-center p-5 bg-success-100">
+                                        <span class="w-[44px] h-[44px] rounded-lg inline-flex justify-center items-center text-xl mb-3 bg-success-200 border border-success-400 text-success-600">
                                             <i class="ri-shopping-cart-2-fill"></i>
                                         </span>
                                         <span class="text-neutral-700 block">Total Orders</span>
@@ -400,7 +400,7 @@
                                 </div>
                                 <div class="col-span-12 sm:col-span-6">
                                     <div class="rounded-lg h-full text-center p-5 bg-info-focus">
-                                        <span class="w-[44px] h-[44px] rounded-lg inline-flex justify-center items-center text-xl mb-3 bg-info-200 dark:bg-info-600/20 border border-info-400 text-info-600">
+                                        <span class="w-[44px] h-[44px] rounded-lg inline-flex justify-center items-center text-xl mb-3 bg-info-200 border border-info-400 text-info-600">
                                             <i class="ri-group-fill"></i>
                                         </span>
                                         <span class="text-neutral-700 block">Visitor</span>
@@ -408,8 +408,8 @@
                                     </div>
                                 </div>
                                 <div class="col-span-12 sm:col-span-6">
-                                    <div class="rounded-lg h-full text-center p-5 bg-danger-100 dark:bg-danger-600/10">
-                                        <span class="w-[44px] h-[44px] rounded-lg inline-flex justify-center items-center text-xl mb-3 bg-danger-200 dark:bg-danger-600/20 border border-danger-400 text-danger-600">
+                                    <div class="rounded-lg h-full text-center p-5 bg-danger-100">
+                                        <span class="w-[44px] h-[44px] rounded-lg inline-flex justify-center items-center text-xl mb-3 bg-danger-200 border border-danger-400 text-danger-600">
                                             <i class="ri-refund-2-line"></i>
                                         </span>
                                         <span class="text-neutral-700 block">Refunded</span>
@@ -427,7 +427,7 @@
                 <div class="card-body p-6">
                     <div class="flex items-center flex-wrap gap-2 justify-between">
                         <h6 class="font-bold text-lg mb-0">Revenue Statistic</h6>
-                        <select class="form-select form-select-sm w-auto bg-base border text-neutral-600 dark:text-white dark:bg-neutral-800">
+                        <select class="form-select form-select-sm w-auto bg-base border text-neutral-600">
                             <option>Yearly</option>
                             <option>Monthly</option>
                             <option>Weekly</option>
@@ -471,7 +471,7 @@
                 <div class="card-body p-6">
                     <div class="flex items-center flex-wrap gap-2 justify-between">
                         <h6 class="mb-2 font-bold text-lg">Support Tracker</h6>
-                        <select class="form-select form-select-sm w-auto bg-base border text-neutral-600 dark:text-white dark:bg-neutral-800">
+                        <select class="form-select form-select-sm w-auto bg-base border text-neutral-600">
                             <option>Yearly</option>
                             <option>Monthly</option>
                             <option>Weekly</option>
@@ -481,7 +481,7 @@
                     <div class="mt-8 flex flex-wrap gap-6 items-center justify-between">
                         <div class="flex flex-col gap-6">
                             <div class="flex items-center gap-4">
-                                <div class="w-[40px] h-[40px] rounded-[50%] flex justify-center items-center bg-primary-100 dark:bg-primary-600/20 shrink-0">
+                                <div class="w-[40px] h-[40px] rounded-[50%] flex justify-center items-center bg-primary-100 shrink-0">
                                     <img src="{{ asset('assets/images/home-nine/ticket1.png') }}" alt="" class="">
                                 </div>
                                 <div class="flex-grow-1">
@@ -490,7 +490,7 @@
                                 </div>
                             </div>
                             <div class="flex items-center gap-4">
-                                <div class="w-[40px] h-[40px] rounded-[50%] flex justify-center items-center bg-warning-100 dark:bg-warning-600/20 shrink-0">
+                                <div class="w-[40px] h-[40px] rounded-[50%] flex justify-center items-center bg-warning-100 shrink-0">
                                     <img src="{{ asset('assets/images/home-nine/ticket2.png') }}" alt="" class="">
                                 </div>
                                 <div class="flex-grow-1">
@@ -499,7 +499,7 @@
                                 </div>
                             </div>
                             <div class="flex items-center gap-4">
-                                <div class="w-[40px] h-[40px] rounded-[50%] flex justify-center items-center bg-purple-100 dark:bg-purple-600/20 shrink-0">
+                                <div class="w-[40px] h-[40px] rounded-[50%] flex justify-center items-center bg-purple-100 shrink-0">
                                     <img src="{{ asset('assets/images/home-nine/ticket3.png') }}" alt="" class="">
                                 </div>
                                 <div class="flex-grow-1">
@@ -525,7 +525,7 @@
                 <div class="card-body p-6">
                     <div class="flex items-center flex-wrap gap-2 justify-between">
                         <h6 class="font-bold text-lg mb-0">Average Daily Sales</h6>
-                        <select class="form-select form-select-sm w-auto bg-base border text-neutral-600 dark:text-white dark:bg-neutral-800">
+                        <select class="form-select form-select-sm w-auto bg-base border text-neutral-600">
                             <option>Yearly</option>
                             <option>Monthly</option>
                             <option>Weekly</option>
@@ -542,7 +542,7 @@
                 <div class="card-body p-6">
                     <div class="flex items-center flex-wrap gap-2 justify-between">
                         <h6 class="mb-2 font-bold text-lg">Transactions</h6>
-                        <a href="javascript:void(0)" class="text-primary-600 dark:text-primary-600 hover-text-primary flex items-center gap-1">
+                        <a href="javascript:void(0)" class="text-primary-600 hover-text-primary flex items-center gap-1">
                             View All
                             <iconify-icon icon="solar:alt-arrow-right-linear" class="icon"></iconify-icon>
                         </a>
@@ -551,7 +551,7 @@
                     <div class="mt-8">
                         <div class="flex items-center justify-between gap-4 mb-6">
                             <div class="flex items-center gap-4">
-                                <div class="w-[40px] h-[40px] rounded-[50%] flex justify-center items-center bg-success-200 dark:bg-success-600/20 shrink-0">
+                                <div class="w-[40px] h-[40px] rounded-[50%] flex justify-center items-center bg-success-200 shrink-0">
                                     <img src="{{ asset('assets/images/home-nine/payment1.png') }}" alt="" class="">
                                 </div>
                                 <div class="flex-grow-1">
@@ -563,7 +563,7 @@
                         </div>
                         <div class="flex items-center justify-between gap-4 mb-6">
                             <div class="flex items-center gap-4">
-                                <div class="w-[40px] h-[40px] rounded-[50%] flex justify-center items-center bg-info-200 dark:bg-info-600/20 shrink-0">
+                                <div class="w-[40px] h-[40px] rounded-[50%] flex justify-center items-center bg-info-200 shrink-0">
                                     <img src="{{ asset('assets/images/home-nine/payment2.png') }}" alt="" class="">
                                 </div>
                                 <div class="flex-grow-1">
@@ -575,7 +575,7 @@
                         </div>
                         <div class="flex items-center justify-between gap-4 mb-6">
                             <div class="flex items-center gap-4">
-                                <div class="w-[40px] h-[40px] rounded-[50%] flex justify-center items-center bg-warning-200 dark:bg-warning-600/20 shrink-0">
+                                <div class="w-[40px] h-[40px] rounded-[50%] flex justify-center items-center bg-warning-200 shrink-0">
                                     <img src="{{ asset('assets/images/home-nine/payment3.png') }}" alt="" class="">
                                 </div>
                                 <div class="flex-grow-1">
@@ -587,7 +587,7 @@
                         </div>
                         <div class="flex items-center justify-between gap-4 mb-0">
                             <div class="flex items-center gap-4">
-                                <div class="w-[40px] h-[40px] rounded-[50%] flex justify-center items-center bg-purple-200 dark:bg-purple-600/20 shrink-0">
+                                <div class="w-[40px] h-[40px] rounded-[50%] flex justify-center items-center bg-purple-200 shrink-0">
                                     <img src="{{ asset('assets/images/home-nine/payment4.png') }}" alt="" class="">
                                 </div>
                                 <div class="flex-grow-1">
@@ -607,7 +607,7 @@
                 <div class="card-body">
                     <div class="flex items-center flex-wrap gap-2 justify-between mb-5">
                         <h6 class="font-bold text-lg mb-0">Sales by Countries</h6>
-                        <select class="form-select form-select-sm w-auto bg-base border text-neutral-600 dark:text-white dark:bg-neutral-800">
+                        <select class="form-select form-select-sm w-auto bg-base border text-neutral-600">
                             <option>This Month</option>
                             <option>This Week</option>
                             <option>This Year</option>
@@ -616,11 +616,11 @@
 
                     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
                         <div class="col-span-12 lg:col-span-6">
-                            <div id="world-map" class="border border-neutral-300 dark:border-neutral-300/20 rounded-lg bg-neutral-50 dark:bg-neutral-600/20 h-full"></div>
+                            <div id="world-map" class="border border-neutral-300 rounded-lg bg-neutral-50 h-full"></div>
                         </div>
 
                         <div class="col-span-12 lg:col-span-6">
-                            <div class="h-full border border-neutral-300 dark:border-neutral-300/20 p-4 pe-0 rounded-lg">
+                            <div class="h-full border border-neutral-300 p-4 pe-0 rounded-lg">
                                 <div class="max-h-[266px] overflow-y-auto scroll-sm pe-1">
                                     <div class="flex items-center justify-between gap-4 mb-2 pb-2">
                                         <div class="flex items-center w-full">
@@ -739,7 +739,7 @@
             <div class="card h-full border-0">
                 <div class="card-header border-bottom-0 pb-3 flex items-center flex-wrap gap-2 justify-between">
                     <h6 class="font-bold text-lg mb-0">Source Visitors</h6>
-                    <select class="form-select form-select-sm w-auto bg-base border text-neutral-600 dark:text-white dark:bg-neutral-800">
+                    <select class="form-select form-select-sm w-auto bg-base border text-neutral-600">
                         <option>Last Month</option>
                         <option>Last Week</option>
                         <option>Last Year</option>
@@ -804,7 +804,7 @@
                     <div class="flex flex-col gap-[22px] mt-8">
                         <div class="flex items-center justify-between gap-4">
                             <div class="flex items-center gap-4">
-                                <div class="w-[40px] h-[40px] rounded-[50%] flex justify-center items-center bg-purple-100 dark:bg-purple-600/20 shrink-0">
+                                <div class="w-[40px] h-[40px] rounded-[50%] flex justify-center items-center bg-purple-100 shrink-0">
                                     <img src="{{ asset('assets/images/home-nine/socials1.png') }}" alt="" class="">
                                 </div>
                                 <div class="flex-grow-1">
@@ -818,7 +818,7 @@
                         </div>
                         <div class="flex items-center justify-between gap-4">
                             <div class="flex items-center gap-4">
-                                <div class="w-[40px] h-[40px] rounded-[50%] flex justify-center items-center bg-warning-100 dark:bg-warning-600/20 shrink-0">
+                                <div class="w-[40px] h-[40px] rounded-[50%] flex justify-center items-center bg-warning-100 shrink-0">
                                     <img src="{{ asset('assets/images/home-nine/socials2.png') }}" alt="" class="">
                                 </div>
                                 <div class="flex-grow-1">
@@ -832,7 +832,7 @@
                         </div>
                         <div class="flex items-center justify-between gap-4">
                             <div class="flex items-center gap-4">
-                                <div class="w-[40px] h-[40px] rounded-[50%] flex justify-center items-center bg-info-100 dark:bg-info-600/20 shrink-0">
+                                <div class="w-[40px] h-[40px] rounded-[50%] flex justify-center items-center bg-info-100 shrink-0">
                                     <img src="{{ asset('assets/images/home-nine/socials3.png') }}" alt="" class="">
                                 </div>
                                 <div class="flex-grow-1">
@@ -846,7 +846,7 @@
                         </div>
                         <div class="flex items-center justify-between gap-4">
                             <div class="flex items-center gap-4">
-                                <div class="w-[40px] h-[40px] rounded-[50%] flex justify-center items-center bg-success-100 dark:bg-success-600/20 shrink-0">
+                                <div class="w-[40px] h-[40px] rounded-[50%] flex justify-center items-center bg-success-100 shrink-0">
                                     <img src="{{ asset('assets/images/home-nine/socials4.png') }}" alt="" class="">
                                 </div>
                                 <div class="flex-grow-1">
@@ -860,7 +860,7 @@
                         </div>
                         <div class="flex items-center justify-between gap-4">
                             <div class="flex items-center gap-4">
-                                <div class="w-[40px] h-[40px] rounded-[50%] flex justify-center items-center bg-danger-100 dark:bg-danger-600/20 shrink-0">
+                                <div class="w-[40px] h-[40px] rounded-[50%] flex justify-center items-center bg-danger-100 shrink-0">
                                     <img src="{{ asset('assets/images/home-nine/socials5.png') }}" alt="" class="">
                                 </div>
                                 <div class="flex-grow-1">
@@ -874,7 +874,7 @@
                         </div>
                         <div class="flex items-center justify-between gap-4">
                             <div class="flex items-center gap-4">
-                                <div class="w-[40px] h-[40px] rounded-[50%] flex justify-center items-center bg-info-100 dark:bg-info-600/20 shrink-0">
+                                <div class="w-[40px] h-[40px] rounded-[50%] flex justify-center items-center bg-info-100 shrink-0">
                                     <img src="{{ asset('assets/images/home-nine/socials3.png') }}" alt="" class="">
                                 </div>
                                 <div class="flex-grow-1">
@@ -895,7 +895,7 @@
             <div class="card h-full border-0">
                 <div class="card-header border-bottom bg-base py-4 px-6 flex items-center justify-between">
                     <h6 class="text-lg font-semibold mb-0">Recent Activity</h6>
-                    <a href="javascript:void(0)" class="text-primary-600 dark:text-primary-600 hover-text-primary flex items-center gap-1">
+                    <a href="javascript:void(0)" class="text-primary-600 hover-text-primary flex items-center gap-1">
                         View All
                         <iconify-icon icon="solar:alt-arrow-right-linear" class="icon"></iconify-icon>
                     </a>
@@ -926,7 +926,7 @@
                                     <td>#63254</td>
                                     <td>5 min ago</td>
                                     <td>$12,408.12</td>
-                                    <td> <span class="bg-success-focus text-success-main dark:text-success-main px-2.5 py-1 rounded-lg font-medium text-sm">Member</span> </td>
+                                    <td> <span class="bg-success-focus text-success-main px-2.5 py-1 rounded-lg font-medium text-sm">Member</span> </td>
                                 </tr>
                                 <tr>
                                     <td>
@@ -941,7 +941,7 @@
                                     <td>#63254</td>
                                     <td>12 min ago</td>
                                     <td>$12,408.12</td>
-                                    <td> <span class="bg-purple-100 dark:bg-purple-600/20 text-purple-600 dark:text-purple-600 px-2.5 py-1 rounded-lg font-medium text-sm">New Customer</span> </td>
+                                    <td> <span class="bg-purple-100 text-purple-600 px-2.5 py-1 rounded-lg font-medium text-sm">New Customer</span> </td>
                                 </tr>
                                 <tr>
                                     <td>
@@ -956,7 +956,7 @@
                                     <td>#63254</td>
                                     <td>15 min ago</td>
                                     <td>$12,408.12</td>
-                                    <td> <span class="bg-warning-focus text-warning-main dark:text-warning-main px-2.5 py-1 rounded-lg font-medium text-sm">Signed Up </span> </td>
+                                    <td> <span class="bg-warning-focus text-warning-main px-2.5 py-1 rounded-lg font-medium text-sm">Signed Up </span> </td>
                                 </tr>
                                 <tr>
                                     <td>
@@ -971,7 +971,7 @@
                                     <td>#63254</td>
                                     <td>17 min ago</td>
                                     <td>$12,408.12</td>
-                                    <td> <span class="bg-success-focus text-success-main dark:text-success-main px-2.5 py-1 rounded-lg font-medium text-sm">Member</span> </td>
+                                    <td> <span class="bg-success-focus text-success-main px-2.5 py-1 rounded-lg font-medium text-sm">Member</span> </td>
                                 </tr>
                                 <tr>
                                     <td>
@@ -986,7 +986,7 @@
                                     <td>#63254</td>
                                     <td>25 min ago</td>
                                     <td>$12,408.12</td>
-                                    <td> <span class="bg-warning-focus text-warning-main dark:text-warning-main px-2.5 py-1 rounded-lg font-medium text-sm">Signed Up </span> </td>
+                                    <td> <span class="bg-warning-focus text-warning-main px-2.5 py-1 rounded-lg font-medium text-sm">Signed Up </span> </td>
                                 </tr>
                             </tbody>
                         </table>

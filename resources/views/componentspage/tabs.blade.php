@@ -9,23 +9,23 @@
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
 
         <div class="card p-0 overflow-hidden relative rounded-xl h-full border-0">
-            <div class="card-header py-4 px-6 bg-white dark:bg-neutral-700 border-b border-neutral-200 dark:border-neutral-600">
+            <div class="card-header py-4 px-6 bg-white border-b border-neutral-200">
                 <h6 class="text-lg mb-0">Default Tabs </h6>
             </div>
             <div class="card-body p-6">
-                <div class="mb-4 border-b border-gray-200 dark:border-gray-700">
+                <div class="mb-4 border-b border-gray-200">
                     <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" id="default-tab" data-tabs-toggle="#default-tab-content" role="tablist">
                         <li role="presentation">
                             <button class="inline-block px-4 py-2.5 font-semibold border-b-2 rounded-t-lg" id="default-home-tab" data-tabs-target="#default-home" type="button" role="tab" aria-controls="default-home" aria-selected="false">Home</button>
                         </li>
                         <li role="presentation">
-                            <button class="inline-block px-4 py-2.5 font-semibold border-b-2 rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300" id="default-details-tab" data-tabs-target="#default-details" type="button" role="tab" aria-controls="default-details" aria-selected="false">Details</button>
+                            <button class="inline-block px-4 py-2.5 font-semibold border-b-2 rounded-t-lg hover:text-gray-600 hover:border-gray-300" id="default-details-tab" data-tabs-target="#default-details" type="button" role="tab" aria-controls="default-details" aria-selected="false">Details</button>
                         </li>
                         <li role="presentation">
-                            <button class="inline-block px-4 py-2.5 font-semibold border-b-2 rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300" id="default-profile-tab" data-tabs-target="#default-profile" type="button" role="tab" aria-controls="default-profile" aria-selected="false">Profile</button>
+                            <button class="inline-block px-4 py-2.5 font-semibold border-b-2 rounded-t-lg hover:text-gray-600 hover:border-gray-300" id="default-profile-tab" data-tabs-target="#default-profile" type="button" role="tab" aria-controls="default-profile" aria-selected="false">Profile</button>
                         </li>
                         <li role="presentation">
-                            <button class="inline-block px-4 py-2.5 font-semibold border-b-2 rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300" id="default-settings-tab" data-tabs-target="#default-settings" type="button" role="tab" aria-controls="default-settings" aria-selected="false">Settings</button>
+                            <button class="inline-block px-4 py-2.5 font-semibold border-b-2 rounded-t-lg hover:text-gray-600 hover:border-gray-300" id="default-settings-tab" data-tabs-target="#default-settings" type="button" role="tab" aria-controls="default-settings" aria-selected="false">Settings</button>
                         </li>
                     </ul>
                 </div>
@@ -55,7 +55,7 @@
         </div>
 
         <div class="card p-0 overflow-hidden relative rounded-xl h-full border-0">
-            <div class="card-header py-4 px-6 bg-white dark:bg-neutral-700 border-b border-neutral-200 dark:border-neutral-600">
+            <div class="card-header py-4 px-6 bg-white border-b border-neutral-200">
                 <h6 class="text-lg mb-0">Focus Tabs </h6>
             </div>
             <div class="card-body p-6">
@@ -65,13 +65,13 @@
                             <button class="inline-block px-4 py-2.5 font-semibold rounded-md" id="focus-home-tab" data-tabs-target="#focus-home" type="button" role="tab" aria-controls="focus-home" aria-selected="false">Home</button>
                         </li>
                         <li role="presentation">
-                            <button class="inline-block px-4 py-2.5 font-semibold rounded-md hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300" id="focus-details-tab" data-tabs-target="#focus-details" type="button" role="tab" aria-controls="focus-details" aria-selected="false">Details</button>
+                            <button class="inline-block px-4 py-2.5 font-semibold rounded-md hover:text-gray-600 hover:border-gray-300" id="focus-details-tab" data-tabs-target="#focus-details" type="button" role="tab" aria-controls="focus-details" aria-selected="false">Details</button>
                         </li>
                         <li role="presentation">
-                            <button class="inline-block px-4 py-2.5 font-semibold rounded-md hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300" id="focus-profile-tab" data-tabs-target="#focus-profile" type="button" role="tab" aria-controls="focus-profile" aria-selected="false">Profile</button>
+                            <button class="inline-block px-4 py-2.5 font-semibold rounded-md hover:text-gray-600 hover:border-gray-300" id="focus-profile-tab" data-tabs-target="#focus-profile" type="button" role="tab" aria-controls="focus-profile" aria-selected="false">Profile</button>
                         </li>
                         <li role="presentation">
-                            <button class="inline-block px-4 py-2.5 font-semibold rounded-md hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300" id="focus-settings-tab" data-tabs-target="#focus-settings" type="button" role="tab" aria-controls="focus-settings" aria-selected="false">Settings</button>
+                            <button class="inline-block px-4 py-2.5 font-semibold rounded-md hover:text-gray-600 hover:border-gray-300" id="focus-settings-tab" data-tabs-target="#focus-settings" type="button" role="tab" aria-controls="focus-settings" aria-selected="false">Settings</button>
                         </li>
                     </ul>
                 </div>
@@ -101,7 +101,7 @@
         </div>
 
         <div class="card p-0 overflow-hidden relative rounded-xl h-full border-0">
-            <div class="card-header py-4 px-6 bg-white dark:bg-neutral-700 border-b border-neutral-200 dark:border-neutral-600">
+            <div class="card-header py-4 px-6 bg-white border-b border-neutral-200">
                 <h6 class="text-lg mb-0">Button Tabs</h6>
             </div>
             <div class="card-body p-6">
@@ -111,13 +111,13 @@
                             <button class="inline-block px-4 py-2.5 font-semibold rounded-md" id="button-home-tab" data-tabs-target="#button-home" type="button" role="tab" aria-controls="button-home" aria-selected="false">Home</button>
                         </li>
                         <li role="presentation">
-                            <button class="inline-block px-4 py-2.5 font-semibold rounded-md hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300" id="button-details-tab" data-tabs-target="#button-details" type="button" role="tab" aria-controls="button-details" aria-selected="false">Details</button>
+                            <button class="inline-block px-4 py-2.5 font-semibold rounded-md hover:text-gray-600 hover:border-gray-300" id="button-details-tab" data-tabs-target="#button-details" type="button" role="tab" aria-controls="button-details" aria-selected="false">Details</button>
                         </li>
                         <li role="presentation">
-                            <button class="inline-block px-4 py-2.5 font-semibold rounded-md hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300" id="button-profile-tab" data-tabs-target="#button-profile" type="button" role="tab" aria-controls="button-profile" aria-selected="false">Profile</button>
+                            <button class="inline-block px-4 py-2.5 font-semibold rounded-md hover:text-gray-600 hover:border-gray-300" id="button-profile-tab" data-tabs-target="#button-profile" type="button" role="tab" aria-controls="button-profile" aria-selected="false">Profile</button>
                         </li>
                         <li role="presentation">
-                            <button class="inline-block px-4 py-2.5 font-semibold rounded-md hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300" id="button-settings-tab" data-tabs-target="#button-settings" type="button" role="tab" aria-controls="button-settings" aria-selected="false">Settings</button>
+                            <button class="inline-block px-4 py-2.5 font-semibold rounded-md hover:text-gray-600 hover:border-gray-300" id="button-settings-tab" data-tabs-target="#button-settings" type="button" role="tab" aria-controls="button-settings" aria-selected="false">Settings</button>
                         </li>
                     </ul>
                 </div>
@@ -175,7 +175,7 @@
         </div>
 
         <div class="card p-0 overflow-hidden relative rounded-xl h-full border-0">
-            <div class="card-header py-4 px-6 bg-white dark:bg-neutral-700 border-b border-neutral-200 dark:border-neutral-600">
+            <div class="card-header py-4 px-6 bg-white border-b border-neutral-200">
                 <h6 class="text-lg mb-0">Icon Button Tabs</h6>
             </div>
             <div class="card-body p-6">
@@ -188,19 +188,19 @@
                             </button>
                         </li>
                         <li role="presentation">
-                            <button class="px-4 py-2.5 font-semibold rounded-md flex items-center gap-2 hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300" id="button-icon-details-tab" data-tabs-target="#button-icon-details" type="button" role="tab" aria-controls="button-icon-details" aria-selected="false">
+                            <button class="px-4 py-2.5 font-semibold rounded-md flex items-center gap-2 hover:text-gray-600 hover:border-gray-300" id="button-icon-details-tab" data-tabs-target="#button-icon-details" type="button" role="tab" aria-controls="button-icon-details" aria-selected="false">
                                 <iconify-icon icon="solar:home-smile-angle-outline" class="text-md"></iconify-icon>
                                 Details
                             </button>
                         </li>
                         <li role="presentation">
-                            <button class="px-4 py-2.5 font-semibold rounded-md flex items-center gap-2 hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300" id="button-icon-profile-tab" data-tabs-target="#button-icon-profile" type="button" role="tab" aria-controls="button-icon-profile" aria-selected="false">
+                            <button class="px-4 py-2.5 font-semibold rounded-md flex items-center gap-2 hover:text-gray-600 hover:border-gray-300" id="button-icon-profile-tab" data-tabs-target="#button-icon-profile" type="button" role="tab" aria-controls="button-icon-profile" aria-selected="false">
                                 <iconify-icon icon="solar:home-smile-angle-outline" class="text-md"></iconify-icon>
                                 Profile
                             </button>
                         </li>
                         <li role="presentation">
-                            <button class="px-4 py-2.5 font-semibold rounded-md flex items-center gap-2 hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300" id="button-icon-settings-tab" data-tabs-target="#button-icon-settings" type="button" role="tab" aria-controls="button-icon-settings" aria-selected="false">
+                            <button class="px-4 py-2.5 font-semibold rounded-md flex items-center gap-2 hover:text-gray-600 hover:border-gray-300" id="button-icon-settings-tab" data-tabs-target="#button-icon-settings" type="button" role="tab" aria-controls="button-icon-settings" aria-selected="false">
                                 <iconify-icon icon="solar:home-smile-angle-outline" class="text-md"></iconify-icon>
                                 Settings
                             </button>
@@ -261,7 +261,7 @@
         </div>
 
         <div class="card p-0 overflow-hidden relative rounded-xl h-full border-0">
-            <div class="card-header py-4 px-6 bg-white dark:bg-neutral-700 border-b border-neutral-200 dark:border-neutral-600">
+            <div class="card-header py-4 px-6 bg-white border-b border-neutral-200">
                 <h6 class="text-lg mb-0">Vertical Nav Tabs</h6>
             </div>
             <div class="card-body p-6 flex items-start gap-6">
@@ -271,13 +271,13 @@
                             <button class="inline-block px-4 py-2.5 font-semibold rounded-md" id="vertical-home-tab" data-tabs-target="#vertical-home" type="button" role="tab" aria-controls="vertical-home" aria-selected="false">Home</button>
                         </li>
                         <li role="presentation">
-                            <button class="inline-block px-4 py-2.5 font-semibold rounded-md hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300" id="vertical-details-tab" data-tabs-target="#vertical-details" type="button" role="tab" aria-controls="vertical-details" aria-selected="false">Details</button>
+                            <button class="inline-block px-4 py-2.5 font-semibold rounded-md hover:text-gray-600 hover:border-gray-300" id="vertical-details-tab" data-tabs-target="#vertical-details" type="button" role="tab" aria-controls="vertical-details" aria-selected="false">Details</button>
                         </li>
                         <li role="presentation">
-                            <button class="inline-block px-4 py-2.5 font-semibold rounded-md hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300" id="vertical-profile-tab" data-tabs-target="#vertical-profile" type="button" role="tab" aria-controls="vertical-profile" aria-selected="false">Profile</button>
+                            <button class="inline-block px-4 py-2.5 font-semibold rounded-md hover:text-gray-600 hover:border-gray-300" id="vertical-profile-tab" data-tabs-target="#vertical-profile" type="button" role="tab" aria-controls="vertical-profile" aria-selected="false">Profile</button>
                         </li>
                         <li role="presentation">
-                            <button class="inline-block px-4 py-2.5 font-semibold rounded-md hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300" id="vertical-settings-tab" data-tabs-target="#vertical-settings" type="button" role="tab" aria-controls="vertical-settings" aria-selected="false">Settings</button>
+                            <button class="inline-block px-4 py-2.5 font-semibold rounded-md hover:text-gray-600 hover:border-gray-300" id="vertical-settings-tab" data-tabs-target="#vertical-settings" type="button" role="tab" aria-controls="vertical-settings" aria-selected="false">Settings</button>
                         </li>
                     </ul>
                 </div>
@@ -307,20 +307,20 @@
         </div>
 
         <div class="card p-0 overflow-hidden relative rounded-xl h-full border-0">
-            <div class="card-header pb-0 px-6 bg-white dark:bg-neutral-700 border-b border-neutral-200 dark:border-neutral-600 flex items-center flex-wrap justify-between">
+            <div class="card-header pb-0 px-6 bg-white border-b border-neutral-200 flex items-center flex-wrap justify-between">
                 <h6 class="text-lg mb-0">Card Header Tabs</h6>
                 <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" id="card-title-tab" data-tabs-toggle="#card-title-tab-content" role="tablist">
                     <li role="presentation">
                         <button class="inline-block px-4 py-2.5 pb-4 font-semibold border-b-2 rounded-t-lg" id="card-title-home-tab" data-tabs-target="#card-title-home" type="button" role="tab" aria-controls="card-title-home" aria-selected="false">Home</button>
                     </li>
                     <li role="presentation">
-                        <button class="inline-block px-4 py-2.5 pb-4 font-semibold border-b-2 rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300" id="card-title-details-tab" data-tabs-target="#card-title-details" type="button" role="tab" aria-controls="card-title-details" aria-selected="false">Details</button>
+                        <button class="inline-block px-4 py-2.5 pb-4 font-semibold border-b-2 rounded-t-lg hover:text-gray-600 hover:border-gray-300" id="card-title-details-tab" data-tabs-target="#card-title-details" type="button" role="tab" aria-controls="card-title-details" aria-selected="false">Details</button>
                     </li>
                     <li role="presentation">
-                        <button class="inline-block px-4 py-2.5 pb-4 font-semibold border-b-2 rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300" id="card-title-profile-tab" data-tabs-target="#card-title-profile" type="button" role="tab" aria-controls="card-title-profile" aria-selected="false">Profile</button>
+                        <button class="inline-block px-4 py-2.5 pb-4 font-semibold border-b-2 rounded-t-lg hover:text-gray-600 hover:border-gray-300" id="card-title-profile-tab" data-tabs-target="#card-title-profile" type="button" role="tab" aria-controls="card-title-profile" aria-selected="false">Profile</button>
                     </li>
                     <li role="presentation">
-                        <button class="inline-block px-4 py-2.5 pb-4 font-semibold border-b-2 rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300" id="card-title-settings-tab" data-tabs-target="#card-title-settings" type="button" role="tab" aria-controls="card-title-settings" aria-selected="false">Settings</button>
+                        <button class="inline-block px-4 py-2.5 pb-4 font-semibold border-b-2 rounded-t-lg hover:text-gray-600 hover:border-gray-300" id="card-title-settings-tab" data-tabs-target="#card-title-settings" type="button" role="tab" aria-controls="card-title-settings" aria-selected="false">Settings</button>
                     </li>
                 </ul>
             </div>

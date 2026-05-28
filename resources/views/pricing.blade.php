@@ -8,7 +8,7 @@
 @section('content')
 
         <div class="card h-full p-0 rounded-xl border-0 overflow-hidden">
-            <div class="card-header border-b border-neutral-200 dark:border-neutral-600 bg-white dark:bg-neutral-700 py-4 px-6">
+            <div class="card-header border-b border-neutral-200 bg-white py-4 px-6">
                 <h6 class="mb-0 text-lg">Pricing Plan Multiple  Color</h6>
             </div>
             <div class="card-body p-10">
@@ -24,7 +24,7 @@
                                     <button class="inline-block px-6 py-2.5 font-semibold rounded-full" id="button-monthly-tab" data-tabs-target="#button-monthly" type="button" role="tab" aria-controls="button-monthly" aria-selected="false">Monthly</button>
                                 </li>
                                 <li role="presentation">
-                                    <button class="inline-block px-6 py-2.5 font-semibold rounded-full hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300" id="button-yearly-tab" data-tabs-target="#button-yearly" type="button" role="tab" aria-controls="button-yearly" aria-selected="false">Yearly</button>
+                                    <button class="inline-block px-6 py-2.5 font-semibold rounded-full hover:text-gray-600 hover:border-gray-300" id="button-yearly-tab" data-tabs-target="#button-yearly" type="button" role="tab" aria-controls="button-yearly" aria-selected="false">Yearly</button>
                                 </li>
                             </ul>
                         </div>
@@ -33,9 +33,9 @@
                             <div id="button-monthly" role="tabpanel" aria-labelledby="button-monthly-tab">
                                 <div class="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-6 2xl:gap-0">
                                     <div class="pricing-plan-wrapper">
-                                        <div class="relative rounded-[24px] overflow-hidden border py-6 lg:py-8 xl:py-10 2xl:py-[50px] px-5 lg:px-6 3xl:px-10 border-neutral-200 dark:border-neutral-600 bg-[#ebd7ff] dark:bg-purple-600/25">
+                                        <div class="relative rounded-[24px] overflow-hidden border py-6 lg:py-8 xl:py-10 2xl:py-[50px] px-5 lg:px-6 3xl:px-10 border-neutral-200 bg-[#ebd7ff]">
                                             <div class="flex items-center gap-4">
-                                                <span class="w-[72px] h-[72px] flex justify-center items-center rounded-2xl bg-white dark:bg-neutral-700">
+                                                <span class="w-[72px] h-[72px] flex justify-center items-center rounded-2xl bg-white">
                                                     <img src="{{ asset('assets/images/pricing/price-icon1.png') }}" alt="">
                                                 </span>
                                                 <div class="">
@@ -68,10 +68,10 @@
                                         </div>
                                     </div>
                                     <div class="pricing-plan-wrapper">
-                                        <div class="relative rounded-[24px] overflow-hidden border border-primary-200 dark:border-primary-600 py-6 lg:py-8 xl:py-10 2xl:py-[50px] px-5 lg:px-6 3xl:px-10 2xl:-mt-[50px] 2xl:scale-105 z-[1] bg-primary-600 text-white">
+                                        <div class="relative rounded-[24px] overflow-hidden border border-primary-200 py-6 lg:py-8 xl:py-10 2xl:py-[50px] px-5 lg:px-6 3xl:px-10 2xl:-mt-[50px] 2xl:scale-105 z-[1] bg-primary-600 text-white">
                                             <span class="bg-white bg-opacity-25 text-white rounded-se-[24px] rounded-es-[24px] py-2 px-6 text-sm absolute end-0 top-0 z-1">Popular</span>
                                             <div class="flex items-center gap-4">
-                                                <span class="w-[72px] h-[72px] flex justify-center items-center rounded-2xl bg-white dark:bg-neutral-700">
+                                                <span class="w-[72px] h-[72px] flex justify-center items-center rounded-2xl bg-white">
                                                     <img src="{{ asset('assets/images/pricing/price-icon2.png') }}" alt="">
                                                 </span>
                                                 <div class="">
@@ -84,19 +84,19 @@
                                             <span class="mb-5 font-medium">What's included</span>
                                             <ul>
                                                 <li class="flex items-center gap-4 mb-4">
-                                                    <span class="w-6 h-6 flex justify-center items-center bg-white rounded-full text-primary-600 dark:text-primary-600"><iconify-icon icon="iconamoon:check-light" class="text-lg   "></iconify-icon></span>
+                                                    <span class="w-6 h-6 flex justify-center items-center bg-white rounded-full text-primary-600"><iconify-icon icon="iconamoon:check-light" class="text-lg   "></iconify-icon></span>
                                                     <span class="text-white text-lg">All analytics features</span>
                                                 </li>
                                                 <li class="flex items-center gap-4 mb-4">
-                                                    <span class="w-6 h-6 flex justify-center items-center bg-white rounded-full text-primary-600 dark:text-primary-600"><iconify-icon icon="iconamoon:check-light" class="text-lg   "></iconify-icon></span>
+                                                    <span class="w-6 h-6 flex justify-center items-center bg-white rounded-full text-primary-600"><iconify-icon icon="iconamoon:check-light" class="text-lg   "></iconify-icon></span>
                                                     <span class="text-white text-lg">Up to 250,000 tracked visits</span>
                                                 </li>
                                                 <li class="flex items-center gap-4 mb-4">
-                                                    <span class="w-6 h-6 flex justify-center items-center bg-white rounded-full text-primary-600 dark:text-primary-600"><iconify-icon icon="iconamoon:check-light" class="text-lg   "></iconify-icon></span>
+                                                    <span class="w-6 h-6 flex justify-center items-center bg-white rounded-full text-primary-600"><iconify-icon icon="iconamoon:check-light" class="text-lg   "></iconify-icon></span>
                                                     <span class="text-white text-lg">Normal support</span>
                                                 </li>
                                                 <li class="flex items-center gap-4">
-                                                    <span class="w-6 h-6 flex justify-center items-center bg-white rounded-full text-primary-600 dark:text-primary-600"><iconify-icon icon="iconamoon:check-light" class="text-lg   "></iconify-icon></span>
+                                                    <span class="w-6 h-6 flex justify-center items-center bg-white rounded-full text-primary-600"><iconify-icon icon="iconamoon:check-light" class="text-lg   "></iconify-icon></span>
                                                     <span class="text-white text-lg">Up to 3 team members</span>
                                                 </li>
                                             </ul>
@@ -105,9 +105,9 @@
                                         </div>
                                     </div>
                                     <div class="pricing-plan-wrapper">
-                                        <div class="relative rounded-[24px] overflow-hidden border py-6 lg:py-8 xl:py-10 2xl:py-[50px] px-5 lg:px-6 3xl:px-10 border-neutral-200 dark:border-neutral-600 bg-success-100 dark:bg-success-600/25">
+                                        <div class="relative rounded-[24px] overflow-hidden border py-6 lg:py-8 xl:py-10 2xl:py-[50px] px-5 lg:px-6 3xl:px-10 border-neutral-200 bg-success-100">
                                             <div class="flex items-center gap-4">
-                                                <span class="w-[72px] h-[72px] flex justify-center items-center rounded-2xl bg-white dark:bg-neutral-700">
+                                                <span class="w-[72px] h-[72px] flex justify-center items-center rounded-2xl bg-white">
                                                     <img src="{{ asset('assets/images/pricing/price-icon3.png') }}" alt="">
                                                 </span>
                                                 <div class="">
@@ -145,9 +145,9 @@
                             <div id="button-yearly" role="tabpanel" aria-labelledby="button-yearly-tab">
                                 <div class="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-6 2xl:gap-0">
                                     <div class="pricing-plan-wrapper">
-                                        <div class="relative rounded-[24px] overflow-hidden border py-6 lg:py-8 xl:py-10 2xl:py-[50px] px-5 lg:px-6 3xl:px-10 border-neutral-200 dark:border-neutral-600 bg-[#ebd7ff] dark:bg-purple-600/25">
+                                        <div class="relative rounded-[24px] overflow-hidden border py-6 lg:py-8 xl:py-10 2xl:py-[50px] px-5 lg:px-6 3xl:px-10 border-neutral-200 bg-[#ebd7ff]">
                                             <div class="flex items-center gap-4">
-                                                <span class="w-[72px] h-[72px] flex justify-center items-center rounded-2xl bg-white dark:bg-neutral-700">
+                                                <span class="w-[72px] h-[72px] flex justify-center items-center rounded-2xl bg-white">
                                                     <img src="{{ asset('assets/images/pricing/price-icon1.png') }}" alt="">
                                                 </span>
                                                 <div class="">
@@ -180,10 +180,10 @@
                                         </div>
                                     </div>
                                     <div class="pricing-plan-wrapper">
-                                        <div class="relative rounded-[24px] overflow-hidden border border-primary-200 dark:border-primary-600 py-6 lg:py-8 xl:py-10 2xl:py-[50px] px-5 lg:px-6 3xl:px-10 2xl:-mt-[50px] 2xl:scale-105 z-[1] bg-primary-600 text-white">
+                                        <div class="relative rounded-[24px] overflow-hidden border border-primary-200 py-6 lg:py-8 xl:py-10 2xl:py-[50px] px-5 lg:px-6 3xl:px-10 2xl:-mt-[50px] 2xl:scale-105 z-[1] bg-primary-600 text-white">
                                             <span class="bg-white bg-opacity-25 text-white rounded-se-[24px] rounded-es-[24px] py-2 px-6 text-sm absolute end-0 top-0 z-1">Popular</span>
                                             <div class="flex items-center gap-4">
-                                                <span class="w-[72px] h-[72px] flex justify-center items-center rounded-2xl bg-white dark:bg-neutral-700">
+                                                <span class="w-[72px] h-[72px] flex justify-center items-center rounded-2xl bg-white">
                                                     <img src="{{ asset('assets/images/pricing/price-icon2.png') }}" alt="">
                                                 </span>
                                                 <div class="">
@@ -196,19 +196,19 @@
                                             <span class="mb-5 font-medium">What's included</span>
                                             <ul>
                                                 <li class="flex items-center gap-4 mb-4">
-                                                    <span class="w-6 h-6 flex justify-center items-center bg-white rounded-full text-primary-600 dark:text-primary-600"><iconify-icon icon="iconamoon:check-light" class="text-lg   "></iconify-icon></span>
+                                                    <span class="w-6 h-6 flex justify-center items-center bg-white rounded-full text-primary-600"><iconify-icon icon="iconamoon:check-light" class="text-lg   "></iconify-icon></span>
                                                     <span class="text-white text-lg">All analytics features</span>
                                                 </li>
                                                 <li class="flex items-center gap-4 mb-4">
-                                                    <span class="w-6 h-6 flex justify-center items-center bg-white rounded-full text-primary-600 dark:text-primary-600"><iconify-icon icon="iconamoon:check-light" class="text-lg   "></iconify-icon></span>
+                                                    <span class="w-6 h-6 flex justify-center items-center bg-white rounded-full text-primary-600"><iconify-icon icon="iconamoon:check-light" class="text-lg   "></iconify-icon></span>
                                                     <span class="text-white text-lg">Up to 250,000 tracked visits</span>
                                                 </li>
                                                 <li class="flex items-center gap-4 mb-4">
-                                                    <span class="w-6 h-6 flex justify-center items-center bg-white rounded-full text-primary-600 dark:text-primary-600"><iconify-icon icon="iconamoon:check-light" class="text-lg   "></iconify-icon></span>
+                                                    <span class="w-6 h-6 flex justify-center items-center bg-white rounded-full text-primary-600"><iconify-icon icon="iconamoon:check-light" class="text-lg   "></iconify-icon></span>
                                                     <span class="text-white text-lg">Normal support</span>
                                                 </li>
                                                 <li class="flex items-center gap-4">
-                                                    <span class="w-6 h-6 flex justify-center items-center bg-white rounded-full text-primary-600 dark:text-primary-600"><iconify-icon icon="iconamoon:check-light" class="text-lg   "></iconify-icon></span>
+                                                    <span class="w-6 h-6 flex justify-center items-center bg-white rounded-full text-primary-600"><iconify-icon icon="iconamoon:check-light" class="text-lg   "></iconify-icon></span>
                                                     <span class="text-white text-lg">Up to 3 team members</span>
                                                 </li>
                                             </ul>
@@ -217,9 +217,9 @@
                                         </div>
                                     </div>
                                     <div class="pricing-plan-wrapper">
-                                        <div class="relative rounded-[24px] overflow-hidden border py-6 lg:py-8 xl:py-10 2xl:py-[50px] px-5 lg:px-6 3xl:px-10 border-neutral-200 dark:border-neutral-600 bg-success-100 dark:bg-success-600/25">
+                                        <div class="relative rounded-[24px] overflow-hidden border py-6 lg:py-8 xl:py-10 2xl:py-[50px] px-5 lg:px-6 3xl:px-10 border-neutral-200 bg-success-100">
                                             <div class="flex items-center gap-4">
-                                                <span class="w-[72px] h-[72px] flex justify-center items-center rounded-2xl bg-white dark:bg-neutral-700">
+                                                <span class="w-[72px] h-[72px] flex justify-center items-center rounded-2xl bg-white">
                                                     <img src="{{ asset('assets/images/pricing/price-icon3.png') }}" alt="">
                                                 </span>
                                                 <div class="">
@@ -261,7 +261,7 @@
         </div>
 
         <div class="card h-full p-0 rounded-xl border-0 overflow-hidden mt-6">
-            <div class="card-header border-b border-neutral-200 dark:border-neutral-600 bg-white dark:bg-neutral-700 py-4 px-6">
+            <div class="card-header border-b border-neutral-200 bg-white py-4 px-6">
                 <h6 class="mb-0 text-lg">Pricing Plan Multiple  Color</h6>
             </div>
             <div class="card-body p-10">
@@ -274,19 +274,19 @@
                         <div class="mb-4 style-pill-button">
                             <div class=" mt-8 mb-12 2xl:mb-[110px] flex flex-wrap justify-center">
                                 <label class="inline-flex items-center cursor-pointer">
-                                    <span class="me-3 text-sm font-medium dark:text-gray-300 text-neutral-900">Monthly</span>
+                                    <span class="me-3 text-sm font-medium text-neutral-900">Monthly</span>
                                     <input type="checkbox" value="" class="sr-only peer">
-                                    <span class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></span>
-                                    <span class="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300 peer-checked:text-primary-600">Annually</span>
+                                    <span class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></span>
+                                    <span class="ms-3 text-sm font-medium text-gray-900 peer-checked:text-primary-600">Annually</span>
                                 </label>
                             </div>
                         </div>
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-6 2xl:gap-0">
                             <div class="pricing-plan-wrapper">
-                                <div class="relative rounded-[24px] overflow-hidden border py-6 lg:py-8 xl:py-10 2xl:py-[50px] px-5 lg:px-6 3xl:px-10 border-neutral-200 dark:border-neutral-600">
+                                <div class="relative rounded-[24px] overflow-hidden border py-6 lg:py-8 xl:py-10 2xl:py-[50px] px-5 lg:px-6 3xl:px-10 border-neutral-200">
                                     <div class="flex items-center gap-4">
-                                        <span class="w-[72px] h-[72px] flex justify-center items-center rounded-2xl bg-primary-50 dark:bg-primary-600/25">
+                                        <span class="w-[72px] h-[72px] flex justify-center items-center rounded-2xl bg-primary-50">
                                             <img src="{{ asset('assets/images/pricing/price-icon4.png') }}" alt="">
                                         </span>
                                         <div class="">
@@ -319,10 +319,10 @@
                                 </div>
                             </div>
                             <div class="pricing-plan-wrapper">
-                                <div class="relative rounded-[24px] overflow-hidden border border-primary-200 dark:border-primary-600 py-6 lg:py-8 xl:py-10 2xl:py-[50px] px-5 lg:px-6 3xl:px-10 2xl:-mt-[50px] 2xl:scale-105 z-[1] bg-primary-600 text-white">
+                                <div class="relative rounded-[24px] overflow-hidden border border-primary-200 py-6 lg:py-8 xl:py-10 2xl:py-[50px] px-5 lg:px-6 3xl:px-10 2xl:-mt-[50px] 2xl:scale-105 z-[1] bg-primary-600 text-white">
                                     <span class="bg-white bg-opacity-25 text-white rounded-se-[24px] rounded-es-[24px] py-2 px-6 text-sm absolute end-0 top-0 z-1">Popular</span>
                                     <div class="flex items-center gap-4">
-                                        <span class="w-[72px] h-[72px] flex justify-center items-center rounded-2xl bg-white dark:bg-neutral-700">
+                                        <span class="w-[72px] h-[72px] flex justify-center items-center rounded-2xl bg-white">
                                             <img src="{{ asset('assets/images/pricing/price-icon2.png') }}" alt="">
                                         </span>
                                         <div class="">
@@ -335,19 +335,19 @@
                                     <span class="mb-5 font-medium">What's included</span>
                                     <ul>
                                         <li class="flex items-center gap-4 mb-4">
-                                            <span class="w-6 h-6 flex justify-center items-center bg-white rounded-full text-primary-600 dark:text-primary-600"><iconify-icon icon="iconamoon:check-light" class="text-lg   "></iconify-icon></span>
+                                            <span class="w-6 h-6 flex justify-center items-center bg-white rounded-full text-primary-600"><iconify-icon icon="iconamoon:check-light" class="text-lg   "></iconify-icon></span>
                                             <span class="text-white text-lg">All analytics features</span>
                                         </li>
                                         <li class="flex items-center gap-4 mb-4">
-                                            <span class="w-6 h-6 flex justify-center items-center bg-white rounded-full text-primary-600 dark:text-primary-600"><iconify-icon icon="iconamoon:check-light" class="text-lg   "></iconify-icon></span>
+                                            <span class="w-6 h-6 flex justify-center items-center bg-white rounded-full text-primary-600"><iconify-icon icon="iconamoon:check-light" class="text-lg   "></iconify-icon></span>
                                             <span class="text-white text-lg">Up to 250,000 tracked visits</span>
                                         </li>
                                         <li class="flex items-center gap-4 mb-4">
-                                            <span class="w-6 h-6 flex justify-center items-center bg-white rounded-full text-primary-600 dark:text-primary-600"><iconify-icon icon="iconamoon:check-light" class="text-lg   "></iconify-icon></span>
+                                            <span class="w-6 h-6 flex justify-center items-center bg-white rounded-full text-primary-600"><iconify-icon icon="iconamoon:check-light" class="text-lg   "></iconify-icon></span>
                                             <span class="text-white text-lg">Normal support</span>
                                         </li>
                                         <li class="flex items-center gap-4">
-                                            <span class="w-6 h-6 flex justify-center items-center bg-white rounded-full text-primary-600 dark:text-primary-600"><iconify-icon icon="iconamoon:check-light" class="text-lg   "></iconify-icon></span>
+                                            <span class="w-6 h-6 flex justify-center items-center bg-white rounded-full text-primary-600"><iconify-icon icon="iconamoon:check-light" class="text-lg   "></iconify-icon></span>
                                             <span class="text-white text-lg">Up to 3 team members</span>
                                         </li>
                                     </ul>
@@ -356,9 +356,9 @@
                                 </div>
                             </div>
                             <div class="pricing-plan-wrapper">
-                                <div class="relative rounded-[24px] overflow-hidden border py-6 lg:py-8 xl:py-10 2xl:py-[50px] px-5 lg:px-6 3xl:px-10 border-neutral-200 dark:border-neutral-600">
+                                <div class="relative rounded-[24px] overflow-hidden border py-6 lg:py-8 xl:py-10 2xl:py-[50px] px-5 lg:px-6 3xl:px-10 border-neutral-200">
                                     <div class="flex items-center gap-4">
-                                        <span class="w-[72px] h-[72px] flex justify-center items-center rounded-2xl bg-primary-50 dark:bg-primary-600/25">
+                                        <span class="w-[72px] h-[72px] flex justify-center items-center rounded-2xl bg-primary-50">
                                             <img src="{{ asset('assets/images/pricing/price-icon5.png') }}" alt="">
                                         </span>
                                         <div class="">

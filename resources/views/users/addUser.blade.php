@@ -28,16 +28,16 @@
         <div class="card-body p-6">
             <div class="grid grid-cols-1 lg:grid-cols-12 justify-center">
                 <div class="col-span-12 lg:col-span-10 xl:col-span-8 2xl:col-span-6 2xl:col-start-4">
-                    <div class="card border border-neutral-200 dark:border-neutral-600">
+                    <div class="card border border-neutral-200">
                         <div class="card-body">
-                            <h6 class="text-base text-neutral-600 dark:text-neutral-200 mb-4">Profile Image</h6>
+                            <h6 class="text-base text-neutral-600 mb-4">Profile Image</h6>
 
                             <!-- Upload Image Start -->
                             <div class="mb-6 mt-4">
                                 <div class="avatar-upload">
                                     <div class="avatar-edit absolute bottom-0 end-0 me-6 mt-4 z-[1] cursor-pointer ">
                                         <input type='file' id="imageUpload" accept=".png, .jpg, .jpeg" hidden>
-                                        <label for="imageUpload" class="w-8 h-8 flex justify-center items-center bg-primary-50 dark:bg-primary-600/25 text-primary-600 dark:text-primary-400 border border-primary-600 hover:bg-primary-100 text-lg rounded-full">
+                                        <label for="imageUpload" class="w-8 h-8 flex justify-center items-center bg-primary-50 text-primary-600 border border-primary-600 hover:bg-primary-100 text-lg rounded-full">
                                             <iconify-icon icon="solar:camera-outline" class="icon"></iconify-icon>
                                         </label>
                                     </div>
@@ -50,19 +50,19 @@
 
                             <form action="#">
                                 <div class="mb-5">
-                                    <label for="name" class="inline-block font-semibold text-neutral-600 dark:text-neutral-200 text-sm mb-2">Full Name <span class="text-danger-600">*</span></label>
+                                    <label for="name" class="inline-block font-semibold text-neutral-600 text-sm mb-2">Full Name <span class="text-danger-600">*</span></label>
                                     <input type="text" class="form-control rounded-lg" id="name" placeholder="Enter Full Name">
                                 </div>
                                 <div class="mb-5">
-                                    <label for="email" class="inline-block font-semibold text-neutral-600 dark:text-neutral-200 text-sm mb-2">Email <span class="text-danger-600">*</span></label>
+                                    <label for="email" class="inline-block font-semibold text-neutral-600 text-sm mb-2">Email <span class="text-danger-600">*</span></label>
                                     <input type="email" class="form-control rounded-lg" id="email" placeholder="Enter email address">
                                 </div>
                                 <div class="mb-5">
-                                    <label for="number" class="inline-block font-semibold text-neutral-600 dark:text-neutral-200 text-sm mb-2">Phone</label>
+                                    <label for="number" class="inline-block font-semibold text-neutral-600 text-sm mb-2">Phone</label>
                                     <input type="email" class="form-control rounded-lg" id="number" placeholder="Enter phone number">
                                 </div>
                                 <div class="mb-5">
-                                    <label for="depart" class="inline-block font-semibold text-neutral-600 dark:text-neutral-200 text-sm mb-2">Department <span class="text-danger-600">*</span> </label>
+                                    <label for="depart" class="inline-block font-semibold text-neutral-600 text-sm mb-2">Department <span class="text-danger-600">*</span> </label>
                                     <select class="form-control rounded-lg form-select" id="depart">
                                         <option>Enter Event Title </option>
                                         <option>Enter Event Title One </option>
@@ -70,7 +70,7 @@
                                     </select>
                                 </div>
                                 <div class="mb-5">
-                                    <label for="desig" class="inline-block font-semibold text-neutral-600 dark:text-neutral-200 text-sm mb-2">Designation <span class="text-danger-600">*</span> </label>
+                                    <label for="desig" class="inline-block font-semibold text-neutral-600 text-sm mb-2">Designation <span class="text-danger-600">*</span> </label>
                                     <select class="form-control rounded-lg form-select" id="desig">
                                         <option>Enter Designation Title </option>
                                         <option>Enter Designation Title One </option>
@@ -78,7 +78,7 @@
                                     </select>
                                 </div>
                                 <div class="mb-5">
-                                    <label for="desc" class="inline-block font-semibold text-neutral-600 dark:text-neutral-200 text-sm mb-2">Description</label>
+                                    <label for="desc" class="inline-block font-semibold text-neutral-600 text-sm mb-2">Description</label>
                                     <textarea name="#0" class="form-control rounded-lg" id="desc" placeholder="Write description..."></textarea>
                                 </div>
                                 <div class="flex items-center justify-center gap-3">

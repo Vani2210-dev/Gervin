@@ -40,7 +40,7 @@
                         </div>
                         <div class="md:col-span-6 col-span-12">
                             <label class="form-label">Medium Size File Input </label>
-                            <input class="border border-neutral-200 dark:border-neutral-600 w-full rounded-lg" type="file" name="#0">
+                            <input class="border border-neutral-200 w-full rounded-lg" type="file" name="#0">
                         </div>
                         <div class="md:col-span-6 col-span-12">
                             <label class="form-label">Input with Icon</label>
@@ -49,7 +49,7 @@
                         <div class="md:col-span-6 col-span-12">
                             <label class="form-label">Input with Payment </label>
                             <div class="flex">
-                                <span class="inline-flex items-center px-3 border rounded-e-0 border-e-0 rounded-s-md border-neutral-200 dark:border-neutral-600">
+                                <span class="inline-flex items-center px-3 border rounded-e-0 border-e-0 rounded-s-md border-neutral-200">
                                     <img src="{{ asset('assets/images/card/payment-icon.png') }}" alt="image">
                                 </span>
                                 <input type="text" class="form-control grow rounded-ss-none rounded-es-none" placeholder="Card Number">
@@ -71,7 +71,7 @@
                             <label class="form-label">Input</label>
                             <div class="flex">
                                 <input type="text" class="form-control grow rounded-se-none rounded-ee-none" placeholder="www.random.com">
-                                <button type="button" class="inline-flex items-center px-3 border rounded-s-0 border-s-0 rounded-e-md border-neutral-200 dark:border-neutral-600"><iconify-icon icon="lucide:copy"></iconify-icon>Copy</button>
+                                <button type="button" class="inline-flex items-center px-3 border rounded-s-0 border-s-0 rounded-e-md border-neutral-200"><iconify-icon icon="lucide:copy"></iconify-icon>Copy</button>
                             </div>
                         </div>
                         <div class="col-span-12">

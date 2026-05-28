@@ -73,7 +73,7 @@ $subTitle = 'Text Generator';
             <div class="chat-600 card overflow-hidden">
                 <div class="chat-sidebar-single gap-2 justify-between cursor-default flex-nowrap">
                     <div class="flex items-center gap-4">
-                        <a href="text-generator-new.html" class="text-neutral-600 dark:text-neutral-200 text-2xl line-height-1"><i class="ri-arrow-left-line"></i></a>
+                        <a href="text-generator-new.html" class="text-neutral-600 text-2xl line-height-1"><i class="ri-arrow-left-line"></i></a>
                         <h6 class="text-lg mb-0 text-line-1">New Chat</h6>
                     </div>
 

@@ -292,14 +292,14 @@
                     <p class="mb-0">Available</p>
                 </div>
                 <div class="action inline-flex items-center gap-3">
-                    <button type="button" class="text-xl text-neutral-600 dark:text-neutral-200">
+                    <button type="button" class="text-xl text-neutral-600">
                         <iconify-icon icon="mi:call"></iconify-icon>
                     </button>
-                    <button type="button" class="text-xl text-neutral-600 dark:text-neutral-200">
+                    <button type="button" class="text-xl text-neutral-600">
                         <iconify-icon icon="fluent:video-32-regular"></iconify-icon>
                     </button>
                     <div class="btn-group">
-                        <button type="button" class="text-neutral-600 dark:text-neutral-200 text-xl" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false">
+                        <button type="button" class="text-neutral-600 text-xl" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false">
                             <iconify-icon icon="tabler:dots-vertical"></iconify-icon>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-lg-end border">

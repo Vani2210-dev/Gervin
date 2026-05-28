@@ -95,7 +95,7 @@
 
         </div>
 
-        <div class="card-footer p-6 bg-white dark:bg-neutral-700 border border-b border-neutral-200 dark:border-neutral-600 border-end-0 border-start-0">
+        <div class="card-footer p-6 bg-white border border-b border-neutral-200 border-end-0 border-start-0">
             <div class="flex items-center justify-center gap-3">
                 <button type="button" class="border border-danger-600 bg-hover-danger-200 text-danger-600 text-base px-[50px] py-[11px] rounded-lg">
                     Cancel

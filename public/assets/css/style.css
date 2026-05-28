@@ -1765,10 +1765,7 @@ input:checked + .toggle-bg{
 }
 
 .card-body{
-  padding-left: 1.5rem;
-  padding-right: 1.5rem;
-  padding-top: 1.25rem;
-  padding-bottom: 1.25rem;
+  padding: 1rem;
 }
 
 select{
@@ -1894,6 +1891,38 @@ select{
   border-color: rgb(75 85 99 / var(--tw-border-opacity));
 }
 
+/* Sticky last column (action column) */
+.table th:last-child,
+.table td:last-child {
+  position: sticky;
+  right: 0;
+  z-index: 2;
+  background-color: #fff;
+}
+.table thead th:last-child {
+  background-color: #f5f5f5;
+}
+.table th:last-child::before,
+.table td:last-child::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background-color: #e5e7eb;
+}
+.dark .table th:last-child,
+.dark .table td:last-child {
+  background-color: rgb(17 24 39);
+}
+.dark .table thead th:last-child {
+  background-color: rgb(31 41 55);
+}
+.dark .table th:last-child::before,
+.dark .table td:last-child::before {
+  background-color: rgb(75 85 99);
+}
 /*============================================= Table Css End =============================================*/
 /*============================================= Nav Tabs Css Start =============================================*/
 .tab-style-gradient button[aria-selected=true] {

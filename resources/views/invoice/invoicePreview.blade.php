@@ -42,8 +42,8 @@
         <div class="card-body py-[60px]">
             <div class="grid grid-cols-1" id="invoice">
                 <div class="max-w-[1174px] mx-auto w-full">
-                    <div class="shadow-4 border border-neutral-200 dark:border-neutral-600 rounded-lg">
-                        <div class="p-5 flex flex-wrap justify-between gap-3 border-b border-neutral-200 dark:border-neutral-600">
+                    <div class="shadow-4 border border-neutral-200 rounded-lg">
+                        <div class="p-5 flex flex-wrap justify-between gap-3 border-b border-neutral-200">
                             <div>
                                 <h3 class="text-xl">Invoice #3492</h3>
                                 <p class="mb-1 text-sm">Date Issued: 25/08/2020</p>
@@ -147,7 +147,7 @@
                                 </div>
                                 <div class="flex flex-wrap justify-between gap-3">
                                     <div>
-                                        <p class="text-sm mb-0"><span class="text-neutral-600 dark:text-neutral-200 font-semibold">Sales By:</span> Jammal</p>
+                                        <p class="text-sm mb-0"><span class="text-neutral-600 font-semibold">Sales By:</span> Jammal</p>
                                         <p class="text-sm mb-0">Thanks for your business</p>
                                     </div>
                                     <div>
@@ -156,27 +156,27 @@
                                                 <tr>
                                                     <td class="pe-[64px]">Subtotal:</td>
                                                     <td class="ps-6">
-                                                        <span class="text-neutral-600 dark:text-neutral-200 font-semibold">$4000.00</span>
+                                                        <span class="text-neutral-600 font-semibold">$4000.00</span>
                                                     </td>
                                                 </tr>
                                                 <tr>
                                                     <td class="pe-[64px]">Discount:</td>
                                                     <td class="ps-6">
-                                                        <span class="text-neutral-600 dark:text-neutral-200 font-semibold">$0.00</span>
+                                                        <span class="text-neutral-600 font-semibold">$0.00</span>
                                                     </td>
                                                 </tr>
                                                 <tr>
-                                                    <td class="pe-[64px] border-b border-neutral-200 dark:border-neutral-600 pb-4">Tax:</td>
-                                                    <td class="ps-6 border-b border-neutral-200 dark:border-neutral-600 pb-4">
-                                                        <span class="text-neutral-600 dark:text-neutral-200 font-semibold">0.00</span>
+                                                    <td class="pe-[64px] border-b border-neutral-200 pb-4">Tax:</td>
+                                                    <td class="ps-6 border-b border-neutral-200 pb-4">
+                                                        <span class="text-neutral-600 font-semibold">0.00</span>
                                                     </td>
                                                 </tr>
                                                 <tr>
                                                     <td class="pe-[64px] pt-4">
-                                                        <span class="text-neutral-600 dark:text-neutral-200 font-semibold">Total:</span>
+                                                        <span class="text-neutral-600 font-semibold">Total:</span>
                                                     </td>
                                                     <td class="ps-6 pt-4">
-                                                        <span class="text-neutral-600 dark:text-neutral-200 font-semibold">$1690</span>
+                                                        <span class="text-neutral-600 font-semibold">$1690</span>
                                                     </td>
                                                 </tr>
                                             </tbody>
@@ -190,8 +190,8 @@
                             </div>
 
                             <div class="flex flex-wrap justify-between align-items-end mt-16">
-                                <div class="text-sm border-t border-neutral-200 dark:border-neutral-600 inline-block px-3">Signature of Customer</div>
-                                <div class="text-sm border-t border-neutral-200 dark:border-neutral-600 inline-block px-3">Signature of Authorized</div>
+                                <div class="text-sm border-t border-neutral-200 inline-block px-3">Signature of Customer</div>
+                                <div class="text-sm border-t border-neutral-200 inline-block px-3">Signature of Authorized</div>
                             </div>
                         </div>
                     </div>

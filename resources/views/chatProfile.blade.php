@@ -33,21 +33,21 @@
                             <iconify-icon icon="mingcute:location-line" class="text-lg"></iconify-icon>
                             Location
                         </span>
-                        <span class="text-neutral-600 dark:text-neutral-200">United State</span>
+                        <span class="text-neutral-600">United State</span>
                     </li>
                     <li class="flex flex-wrap items-center justify-between">
                         <span class="inline-flex gap-2 items-center">
                             <iconify-icon icon="fluent:person-24-regular" class="text-lg"></iconify-icon>
                             Member since
                         </span>
-                        <span class="text-neutral-600 dark:text-neutral-200">25 Jan 2025</span>
+                        <span class="text-neutral-600">25 Jan 2025</span>
                     </li>
                     <li class="flex flex-wrap items-center justify-between">
                         <span class="inline-flex gap-2 items-center">
                             <iconify-icon icon="cil:language" class="text-lg"></iconify-icon>
                             Language
                         </span>
-                        <span class="text-neutral-600 dark:text-neutral-200">English</span>
+                        <span class="text-neutral-600">English</span>
                     </li>
                 </ul>
             </div>
@@ -93,14 +93,14 @@
                     <p class="mb-0">Available</p>
                 </div>
                 <div class="action inline-flex items-center gap-3">
-                    <button type="button" class="text-xl text-neutral-600 dark:text-neutral-200">
+                    <button type="button" class="text-xl text-neutral-600">
                         <iconify-icon icon="mi:call"></iconify-icon>
                     </button>
-                    <button type="button" class="text-xl text-neutral-600 dark:text-neutral-200">
+                    <button type="button" class="text-xl text-neutral-600">
                         <iconify-icon icon="fluent:video-32-regular"></iconify-icon>
                     </button>
                     <div class="btn-group">
-                        <button type="button" class="text-neutral-600 dark:text-neutral-200 text-xl" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false">
+                        <button type="button" class="text-neutral-600 text-xl" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false">
                             <iconify-icon icon="tabler:dots-vertical"></iconify-icon>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-lg-end border">

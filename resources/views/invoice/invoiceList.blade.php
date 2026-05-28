@@ -13,21 +13,21 @@
                     <div class="flex flex-wrap items-center gap-3">
                         <div class="flex items-center gap-2">
                             <span>Show</span>
-                            <select class="form-select form-select-sm w-auto dark:bg-dark-2 dark:text-white">
+                            <select class="form-select form-select-sm w-auto">
                                 <option>10</option>
                                 <option>15</option>
                                 <option>20</option>
                             </select>
                         </div>
                         <div class="icon-field relative">
-                            <input type="text" name="#0" class="bg-white dark:bg-dark-2 ps-10 border-neutral-200 dark:border-neutral-500 rounded-lg w-auto" placeholder="Search">
+                            <input type="text" name="#0" class="bg-white ps-10 border-neutral-200 rounded-lg w-auto" placeholder="Search">
                             <span class="icon absolute top-1/2 left-0 text-lg flex">
                                 <iconify-icon icon="ion:search-outline"></iconify-icon>
                             </span>
                         </div>
                     </div>
                     <div class="flex flex-wrap items-center gap-3">
-                        <select class="form-select form-select-sm w-auto dark:bg-dark-2 dark:text-white border-neutral-200 dark:border-neutral-500">
+                        <select class="form-select form-select-sm w-auto border-neutral-200">
                             <option>Satatus</option>
                             <option>Paid</option>
                             <option>Pending</option>
@@ -75,16 +75,16 @@
                                     </td>
                                     <td>25 Jan 2025</td>
                                     <td>$200.00</td>
-                                    <td> <span class="bg-success-100 dark:bg-success-600/25 text-success-600 dark:text-success-400 px-6 py-1.5 rounded-full font-medium text-sm">Paid</span> </td>
+                                    <td> <span class="bg-success-100 text-success-600 px-6 py-1.5 rounded-full font-medium text-sm">Paid</span> </td>
                                     <td>
                                         <div class="flex items-center gap-2">
-                                            <a href="javascript:void(0)" class="w-8 h-8 bg-primary-50 dark:bg-primary-600/25 text-primary-600 rounded-full inline-flex items-center justify-center">
+                                            <a href="javascript:void(0)" class="w-8 h-8 bg-primary-50 text-primary-600 rounded-full inline-flex items-center justify-center">
                                                 <iconify-icon icon="iconamoon:eye-light"></iconify-icon>
                                             </a>
-                                            <a href="javascript:void(0)" class="w-8 h-8 bg-success-100 dark:bg-success-600/25 text-success-600 dark:text-success-400 rounded-full inline-flex items-center justify-center">
+                                            <a href="javascript:void(0)" class="w-8 h-8 bg-success-100 text-success-600 rounded-full inline-flex items-center justify-center">
                                                 <iconify-icon icon="lucide:edit"></iconify-icon>
                                             </a>
-                                            <a href="javascript:void(0)" class="w-8 h-8 bg-danger-100 dark:bg-danger-600/25 text-danger-600 dark:text-danger-400 rounded-full inline-flex items-center justify-center">
+                                            <a href="javascript:void(0)" class="w-8 h-8 bg-danger-100 text-danger-600 rounded-full inline-flex items-center justify-center">
                                                 <iconify-icon icon="mingcute:delete-2-line"></iconify-icon>
                                             </a>
                                         </div>
@@ -108,16 +108,16 @@
                                     </td>
                                     <td>25 Jan 2025</td>
                                     <td>$200.00</td>
-                                    <td> <span class="bg-success-100 dark:bg-success-600/25 text-success-600 dark:text-success-400 px-6 py-1.5 rounded-full font-medium text-sm">Paid</span> </td>
+                                    <td> <span class="bg-success-100 text-success-600 px-6 py-1.5 rounded-full font-medium text-sm">Paid</span> </td>
                                     <td>
                                         <div class="flex items-center gap-2">
-                                            <a href="javascript:void(0)" class="w-8 h-8 bg-primary-50 dark:bg-primary-600/25 text-primary-600 rounded-full inline-flex items-center justify-center">
+                                            <a href="javascript:void(0)" class="w-8 h-8 bg-primary-50 text-primary-600 rounded-full inline-flex items-center justify-center">
                                                 <iconify-icon icon="iconamoon:eye-light"></iconify-icon>
                                             </a>
-                                            <a href="javascript:void(0)" class="w-8 h-8 bg-success-100 dark:bg-success-600/25 text-success-600 dark:text-success-400 rounded-full inline-flex items-center justify-center">
+                                            <a href="javascript:void(0)" class="w-8 h-8 bg-success-100 text-success-600 rounded-full inline-flex items-center justify-center">
                                                 <iconify-icon icon="lucide:edit"></iconify-icon>
                                             </a>
-                                            <a href="javascript:void(0)" class="w-8 h-8 bg-danger-100 dark:bg-danger-600/25 text-danger-600 dark:text-danger-400 rounded-full inline-flex items-center justify-center">
+                                            <a href="javascript:void(0)" class="w-8 h-8 bg-danger-100 text-danger-600 rounded-full inline-flex items-center justify-center">
                                                 <iconify-icon icon="mingcute:delete-2-line"></iconify-icon>
                                             </a>
                                         </div>
@@ -141,16 +141,16 @@
                                     </td>
                                     <td>10 Feb 2025</td>
                                     <td>$200.00</td>
-                                    <td> <span class="bg-success-100 dark:bg-success-600/25 text-success-600 dark:text-success-400 px-6 py-1.5 rounded-full font-medium text-sm">Paid</span> </td>
+                                    <td> <span class="bg-success-100 text-success-600 px-6 py-1.5 rounded-full font-medium text-sm">Paid</span> </td>
                                     <td>
                                         <div class="flex items-center gap-2">
-                                            <a href="javascript:void(0)" class="w-8 h-8 bg-primary-50 dark:bg-primary-600/25 text-primary-600 rounded-full inline-flex items-center justify-center">
+                                            <a href="javascript:void(0)" class="w-8 h-8 bg-primary-50 text-primary-600 rounded-full inline-flex items-center justify-center">
                                                 <iconify-icon icon="iconamoon:eye-light"></iconify-icon>
                                             </a>
-                                            <a href="javascript:void(0)" class="w-8 h-8 bg-success-100 dark:bg-success-600/25 text-success-600 dark:text-success-400 rounded-full inline-flex items-center justify-center">
+                                            <a href="javascript:void(0)" class="w-8 h-8 bg-success-100 text-success-600 rounded-full inline-flex items-center justify-center">
                                                 <iconify-icon icon="lucide:edit"></iconify-icon>
                                             </a>
-                                            <a href="javascript:void(0)" class="w-8 h-8 bg-danger-100 dark:bg-danger-600/25 text-danger-600 dark:text-danger-400 rounded-full inline-flex items-center justify-center">
+                                            <a href="javascript:void(0)" class="w-8 h-8 bg-danger-100 text-danger-600 rounded-full inline-flex items-center justify-center">
                                                 <iconify-icon icon="mingcute:delete-2-line"></iconify-icon>
                                             </a>
                                         </div>
@@ -174,16 +174,16 @@
                                     </td>
                                     <td>10 Feb 2025</td>
                                     <td>$150.00</td>
-                                    <td> <span class="bg-success-100 dark:bg-success-600/25 text-success-600 dark:text-success-400 px-6 py-1.5 rounded-full font-medium text-sm">Paid</span> </td>
+                                    <td> <span class="bg-success-100 text-success-600 px-6 py-1.5 rounded-full font-medium text-sm">Paid</span> </td>
                                     <td>
                                         <div class="flex items-center gap-2">
-                                            <a href="javascript:void(0)" class="w-8 h-8 bg-primary-50 dark:bg-primary-600/25 text-primary-600 rounded-full inline-flex items-center justify-center">
+                                            <a href="javascript:void(0)" class="w-8 h-8 bg-primary-50 text-primary-600 rounded-full inline-flex items-center justify-center">
                                                 <iconify-icon icon="iconamoon:eye-light"></iconify-icon>
                                             </a>
-                                            <a href="javascript:void(0)" class="w-8 h-8 bg-success-100 dark:bg-success-600/25 text-success-600 dark:text-success-400 rounded-full inline-flex items-center justify-center">
+                                            <a href="javascript:void(0)" class="w-8 h-8 bg-success-100 text-success-600 rounded-full inline-flex items-center justify-center">
                                                 <iconify-icon icon="lucide:edit"></iconify-icon>
                                             </a>
-                                            <a href="javascript:void(0)" class="w-8 h-8 bg-danger-100 dark:bg-danger-600/25 text-danger-600 dark:text-danger-400 rounded-full inline-flex items-center justify-center">
+                                            <a href="javascript:void(0)" class="w-8 h-8 bg-danger-100 text-danger-600 rounded-full inline-flex items-center justify-center">
                                                 <iconify-icon icon="mingcute:delete-2-line"></iconify-icon>
                                             </a>
                                         </div>
@@ -207,16 +207,16 @@
                                     </td>
                                     <td>15 March 2025</td>
                                     <td>$150.00</td>
-                                    <td> <span class="bg-warning-100 dark:bg-warning-600/25 text-warning-600 dark:text-warning-400 px-6 py-1.5 rounded-full font-medium text-sm">Pending</span> </td>
+                                    <td> <span class="bg-warning-100 text-warning-600 px-6 py-1.5 rounded-full font-medium text-sm">Pending</span> </td>
                                     <td>
                                         <div class="flex items-center gap-2">
-                                            <a href="javascript:void(0)" class="w-8 h-8 bg-primary-50 dark:bg-primary-600/25 text-primary-600 rounded-full inline-flex items-center justify-center">
+                                            <a href="javascript:void(0)" class="w-8 h-8 bg-primary-50 text-primary-600 rounded-full inline-flex items-center justify-center">
                                                 <iconify-icon icon="iconamoon:eye-light"></iconify-icon>
                                             </a>
-                                            <a href="javascript:void(0)" class="w-8 h-8 bg-success-100 dark:bg-success-600/25 text-success-600 dark:text-success-400 rounded-full inline-flex items-center justify-center">
+                                            <a href="javascript:void(0)" class="w-8 h-8 bg-success-100 text-success-600 rounded-full inline-flex items-center justify-center">
                                                 <iconify-icon icon="lucide:edit"></iconify-icon>
                                             </a>
-                                            <a href="javascript:void(0)" class="w-8 h-8 bg-danger-100 dark:bg-danger-600/25 text-danger-600 dark:text-danger-400 rounded-full inline-flex items-center justify-center">
+                                            <a href="javascript:void(0)" class="w-8 h-8 bg-danger-100 text-danger-600 rounded-full inline-flex items-center justify-center">
                                                 <iconify-icon icon="mingcute:delete-2-line"></iconify-icon>
                                             </a>
                                         </div>
@@ -240,16 +240,16 @@
                                     </td>
                                     <td>15 March 2025</td>
                                     <td>$150.00</td>
-                                    <td> <span class="bg-success-100 dark:bg-success-600/25 text-success-600 dark:text-success-400 px-6 py-1.5 rounded-full font-medium text-sm">Paid</span> </td>
+                                    <td> <span class="bg-success-100 text-success-600 px-6 py-1.5 rounded-full font-medium text-sm">Paid</span> </td>
                                     <td>
                                         <div class="flex items-center gap-2">
-                                            <a href="javascript:void(0)" class="w-8 h-8 bg-primary-50 dark:bg-primary-600/25 text-primary-600 rounded-full inline-flex items-center justify-center">
+                                            <a href="javascript:void(0)" class="w-8 h-8 bg-primary-50 text-primary-600 rounded-full inline-flex items-center justify-center">
                                                 <iconify-icon icon="iconamoon:eye-light"></iconify-icon>
                                             </a>
-                                            <a href="javascript:void(0)" class="w-8 h-8 bg-success-100 dark:bg-success-600/25 text-success-600 dark:text-success-400 rounded-full inline-flex items-center justify-center">
+                                            <a href="javascript:void(0)" class="w-8 h-8 bg-success-100 text-success-600 rounded-full inline-flex items-center justify-center">
                                                 <iconify-icon icon="lucide:edit"></iconify-icon>
                                             </a>
-                                            <a href="javascript:void(0)" class="w-8 h-8 bg-danger-100 dark:bg-danger-600/25 text-danger-600 dark:text-danger-400 rounded-full inline-flex items-center justify-center">
+                                            <a href="javascript:void(0)" class="w-8 h-8 bg-danger-100 text-danger-600 rounded-full inline-flex items-center justify-center">
                                                 <iconify-icon icon="mingcute:delete-2-line"></iconify-icon>
                                             </a>
                                         </div>
@@ -273,16 +273,16 @@
                                     </td>
                                     <td>27 April 2025</td>
                                     <td>$250.00</td>
-                                    <td> <span class="bg-success-100 dark:bg-success-600/25 text-success-600 dark:text-success-400 px-6 py-1.5 rounded-full font-medium text-sm">Paid</span> </td>
+                                    <td> <span class="bg-success-100 text-success-600 px-6 py-1.5 rounded-full font-medium text-sm">Paid</span> </td>
                                     <td>
                                         <div class="flex items-center gap-2">
-                                            <a href="javascript:void(0)" class="w-8 h-8 bg-primary-50 dark:bg-primary-600/25 text-primary-600 rounded-full inline-flex items-center justify-center">
+                                            <a href="javascript:void(0)" class="w-8 h-8 bg-primary-50 text-primary-600 rounded-full inline-flex items-center justify-center">
                                                 <iconify-icon icon="iconamoon:eye-light"></iconify-icon>
                                             </a>
-                                            <a href="javascript:void(0)" class="w-8 h-8 bg-success-100 dark:bg-success-600/25 text-success-600 dark:text-success-400 rounded-full inline-flex items-center justify-center">
+                                            <a href="javascript:void(0)" class="w-8 h-8 bg-success-100 text-success-600 rounded-full inline-flex items-center justify-center">
                                                 <iconify-icon icon="lucide:edit"></iconify-icon>
                                             </a>
-                                            <a href="javascript:void(0)" class="w-8 h-8 bg-danger-100 dark:bg-danger-600/25 text-danger-600 dark:text-danger-400 rounded-full inline-flex items-center justify-center">
+                                            <a href="javascript:void(0)" class="w-8 h-8 bg-danger-100 text-danger-600 rounded-full inline-flex items-center justify-center">
                                                 <iconify-icon icon="mingcute:delete-2-line"></iconify-icon>
                                             </a>
                                         </div>
@@ -306,16 +306,16 @@
                                     </td>
                                     <td>27 April 2025</td>
                                     <td>$250.00</td>
-                                    <td> <span class="bg-warning-100 dark:bg-warning-600/25 text-warning-600 dark:text-warning-400 px-6 py-1.5 rounded-full font-medium text-sm">Pending</span> </td>
+                                    <td> <span class="bg-warning-100 text-warning-600 px-6 py-1.5 rounded-full font-medium text-sm">Pending</span> </td>
                                     <td>
                                         <div class="flex items-center gap-2">
-                                            <a href="javascript:void(0)" class="w-8 h-8 bg-primary-50 dark:bg-primary-600/25 text-primary-600 rounded-full inline-flex items-center justify-center">
+                                            <a href="javascript:void(0)" class="w-8 h-8 bg-primary-50 text-primary-600 rounded-full inline-flex items-center justify-center">
                                                 <iconify-icon icon="iconamoon:eye-light"></iconify-icon>
                                             </a>
-                                            <a href="javascript:void(0)" class="w-8 h-8 bg-success-100 dark:bg-success-600/25 text-success-600 dark:text-success-400 rounded-full inline-flex items-center justify-center">
+                                            <a href="javascript:void(0)" class="w-8 h-8 bg-success-100 text-success-600 rounded-full inline-flex items-center justify-center">
                                                 <iconify-icon icon="lucide:edit"></iconify-icon>
                                             </a>
-                                            <a href="javascript:void(0)" class="w-8 h-8 bg-danger-100 dark:bg-danger-600/25 text-danger-600 dark:text-danger-400 rounded-full inline-flex items-center justify-center">
+                                            <a href="javascript:void(0)" class="w-8 h-8 bg-danger-100 text-danger-600 rounded-full inline-flex items-center justify-center">
                                                 <iconify-icon icon="mingcute:delete-2-line"></iconify-icon>
                                             </a>
                                         </div>
@@ -339,16 +339,16 @@
                                     </td>
                                     <td>30 April 2025</td>
                                     <td>$250.00</td>
-                                    <td> <span class="bg-success-100 dark:bg-success-600/25 text-success-600 dark:text-success-400 px-6 py-1.5 rounded-full font-medium text-sm">Paid</span> </td>
+                                    <td> <span class="bg-success-100 text-success-600 px-6 py-1.5 rounded-full font-medium text-sm">Paid</span> </td>
                                     <td>
                                         <div class="flex items-center gap-2">
-                                            <a href="javascript:void(0)" class="w-8 h-8 bg-primary-50 dark:bg-primary-600/25 text-primary-600 rounded-full inline-flex items-center justify-center">
+                                            <a href="javascript:void(0)" class="w-8 h-8 bg-primary-50 text-primary-600 rounded-full inline-flex items-center justify-center">
                                                 <iconify-icon icon="iconamoon:eye-light"></iconify-icon>
                                             </a>
-                                            <a href="javascript:void(0)" class="w-8 h-8 bg-success-100 dark:bg-success-600/25 text-success-600 dark:text-success-400 rounded-full inline-flex items-center justify-center">
+                                            <a href="javascript:void(0)" class="w-8 h-8 bg-success-100 text-success-600 rounded-full inline-flex items-center justify-center">
                                                 <iconify-icon icon="lucide:edit"></iconify-icon>
                                             </a>
-                                            <a href="javascript:void(0)" class="w-8 h-8 bg-danger-100 dark:bg-danger-600/25 text-danger-600 dark:text-danger-400 rounded-full inline-flex items-center justify-center">
+                                            <a href="javascript:void(0)" class="w-8 h-8 bg-danger-100 text-danger-600 rounded-full inline-flex items-center justify-center">
                                                 <iconify-icon icon="mingcute:delete-2-line"></iconify-icon>
                                             </a>
                                         </div>
@@ -372,16 +372,16 @@
                                     </td>
                                     <td>30 April 2025</td>
                                     <td>$250.00</td>
-                                    <td> <span class="bg-success-100 dark:bg-success-600/25 text-success-600 dark:text-success-400 px-6 py-1.5 rounded-full font-medium text-sm">Paid</span> </td>
+                                    <td> <span class="bg-success-100 text-success-600 px-6 py-1.5 rounded-full font-medium text-sm">Paid</span> </td>
                                     <td>
                                         <div class="flex items-center gap-2">
-                                            <a href="javascript:void(0)" class="w-8 h-8 bg-primary-50 dark:bg-primary-600/25 text-primary-600 rounded-full inline-flex items-center justify-center">
+                                            <a href="javascript:void(0)" class="w-8 h-8 bg-primary-50 text-primary-600 rounded-full inline-flex items-center justify-center">
                                                 <iconify-icon icon="iconamoon:eye-light"></iconify-icon>
                                             </a>
-                                            <a href="javascript:void(0)" class="w-8 h-8 bg-success-100 dark:bg-success-600/25 text-success-600 dark:text-success-400 rounded-full inline-flex items-center justify-center">
+                                            <a href="javascript:void(0)" class="w-8 h-8 bg-success-100 text-success-600 rounded-full inline-flex items-center justify-center">
                                                 <iconify-icon icon="lucide:edit"></iconify-icon>
                                             </a>
-                                            <a href="javascript:void(0)" class="w-8 h-8 bg-danger-100 dark:bg-danger-600/25 text-danger-600 dark:text-danger-400 rounded-full inline-flex items-center justify-center">
+                                            <a href="javascript:void(0)" class="w-8 h-8 bg-danger-100 text-danger-600 rounded-full inline-flex items-center justify-center">
                                                 <iconify-icon icon="mingcute:delete-2-line"></iconify-icon>
                                             </a>
                                         </div>
@@ -395,7 +395,7 @@
                         <span>Showing 1 to 10 of 12 entries</span>
                         <ul class="pagination flex flex-wrap items-center gap-2 justify-center">
                             <li class="page-item">
-                                <a class="page-link text-secondary-light font-medium rounded border-0 px-2.5 py-2.5 flex items-center justify-center h-8 w-8 bg-white dark:bg-neutral-700"
+                                <a class="page-link text-secondary-light font-medium rounded border-0 px-2.5 py-2.5 flex items-center justify-center h-8 w-8 bg-white"
                                     href="javascript:void(0)"><iconify-icon icon="ep:d-arrow-left" class="text-xl"></iconify-icon></a>
                             </li>
                             <li class="page-item">
@@ -403,15 +403,15 @@
                                     href="javascript:void(0)">1</a>
                             </li>
                             <li class="page-item">
-                                <a class="page-link bg-primary-50 dark:bg-primary-600/25 text-secondary-light font-medium rounded border-0 px-2.5 py-2.5 flex items-center justify-center h-8 w-8"
+                                <a class="page-link bg-primary-50 text-secondary-light font-medium rounded border-0 px-2.5 py-2.5 flex items-center justify-center h-8 w-8"
                                     href="javascript:void(0)">2</a>
                             </li>
                             <li class="page-item">
-                                <a class="page-link bg-primary-50 dark:bg-primary-600/25 text-secondary-light font-medium rounded border-0 px-2.5 py-2.5 flex items-center justify-center h-8 w-8"
+                                <a class="page-link bg-primary-50 text-secondary-light font-medium rounded border-0 px-2.5 py-2.5 flex items-center justify-center h-8 w-8"
                                     href="javascript:void(0)">3</a>
                             </li>
                             <li class="page-item">
-                                <a class="page-link text-secondary-light font-medium rounded border-0 px-2.5 py-2.5 flex items-center justify-center h-8 w-8 bg-white dark:bg-neutral-700"
+                                <a class="page-link text-secondary-light font-medium rounded border-0 px-2.5 py-2.5 flex items-center justify-center h-8 w-8 bg-white"
                                     href="javascript:void(0)"> <iconify-icon icon="ep:d-arrow-right" class="text-xl"></iconify-icon> </a>
                             </li>
                         </ul>

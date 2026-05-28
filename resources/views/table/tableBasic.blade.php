@@ -86,66 +86,66 @@
                         <table class="table basic-border-table mb-0">
                             <thead>
                                 <tr>
-                                    <th class="border-r border-neutral-200 dark:border-neutral-600 last:border-r-0">Invoice </th>
-                                    <th class="border-r border-neutral-200 dark:border-neutral-600 last:border-r-0">Name</th>
-                                    <th class="border-r border-neutral-200 dark:border-neutral-600 last:border-r-0">Issued Date</th>
-                                    <th class="border-r border-neutral-200 dark:border-neutral-600 last:border-r-0">Amount</th>
-                                    <th class="border-r border-neutral-200 dark:border-neutral-600 last:border-r-0">Action</th>
+                                    <th class="border-r border-neutral-200 last:border-r-0">Invoice </th>
+                                    <th class="border-r border-neutral-200 last:border-r-0">Name</th>
+                                    <th class="border-r border-neutral-200 last:border-r-0">Issued Date</th>
+                                    <th class="border-r border-neutral-200 last:border-r-0">Amount</th>
+                                    <th class="border-r border-neutral-200 last:border-r-0">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td class="border-r border-neutral-200 dark:border-neutral-600 last:border-r-0">
+                                    <td class="border-r border-neutral-200 last:border-r-0">
                                         <a href="javascript:void(0)" class="text-primary-600">#526534</a>
                                     </td>
-                                    <td class="border-r border-neutral-200 dark:border-neutral-600 last:border-r-0">Kathryn Murphy</td>
-                                    <td class="border-r border-neutral-200 dark:border-neutral-600 last:border-r-0">25 Jan 2025</td>
-                                    <td class="border-r border-neutral-200 dark:border-neutral-600 last:border-r-0">$200.00</td>
-                                    <td class="border-r border-neutral-200 dark:border-neutral-600 last:border-r-0">
+                                    <td class="border-r border-neutral-200 last:border-r-0">Kathryn Murphy</td>
+                                    <td class="border-r border-neutral-200 last:border-r-0">25 Jan 2025</td>
+                                    <td class="border-r border-neutral-200 last:border-r-0">$200.00</td>
+                                    <td class="border-r border-neutral-200 last:border-r-0">
                                         <a href="javascript:void(0)" class="text-primary-600">View More ></a>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td class="border-r border-neutral-200 dark:border-neutral-600 last:border-r-0">
+                                    <td class="border-r border-neutral-200 last:border-r-0">
                                         <a href="javascript:void(0)" class="text-primary-600">#696589</a>
                                     </td>
-                                    <td class="border-r border-neutral-200 dark:border-neutral-600 last:border-r-0">Annette Black</td>
-                                    <td class="border-r border-neutral-200 dark:border-neutral-600 last:border-r-0">25 Jan 2025</td>
-                                    <td class="border-r border-neutral-200 dark:border-neutral-600 last:border-r-0">$200.00</td>
-                                    <td class="border-r border-neutral-200 dark:border-neutral-600 last:border-r-0">
+                                    <td class="border-r border-neutral-200 last:border-r-0">Annette Black</td>
+                                    <td class="border-r border-neutral-200 last:border-r-0">25 Jan 2025</td>
+                                    <td class="border-r border-neutral-200 last:border-r-0">$200.00</td>
+                                    <td class="border-r border-neutral-200 last:border-r-0">
                                         <a href="javascript:void(0)" class="text-primary-600">View More ></a>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td class="border-r border-neutral-200 dark:border-neutral-600 last:border-r-0">
+                                    <td class="border-r border-neutral-200 last:border-r-0">
                                         <a href="javascript:void(0)" class="text-primary-600">#256584</a>
                                     </td>
-                                    <td class="border-r border-neutral-200 dark:border-neutral-600 last:border-r-0">256584</td>
-                                    <td class="border-r border-neutral-200 dark:border-neutral-600 last:border-r-0">10 Feb 2025</td>
-                                    <td class="border-r border-neutral-200 dark:border-neutral-600 last:border-r-0">$200.00</td>
-                                    <td class="border-r border-neutral-200 dark:border-neutral-600 last:border-r-0">
+                                    <td class="border-r border-neutral-200 last:border-r-0">256584</td>
+                                    <td class="border-r border-neutral-200 last:border-r-0">10 Feb 2025</td>
+                                    <td class="border-r border-neutral-200 last:border-r-0">$200.00</td>
+                                    <td class="border-r border-neutral-200 last:border-r-0">
                                         <a href="javascript:void(0)" class="text-primary-600">View More ></a>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td class="border-r border-neutral-200 dark:border-neutral-600 last:border-r-0">
+                                    <td class="border-r border-neutral-200 last:border-r-0">
                                         <a href="javascript:void(0)" class="text-primary-600">#526587</a>
                                     </td>
-                                    <td class="border-r border-neutral-200 dark:border-neutral-600 last:border-r-0">Eleanor Pena</td>
-                                    <td class="border-r border-neutral-200 dark:border-neutral-600 last:border-r-0">10 Feb 2025</td>
-                                    <td class="border-r border-neutral-200 dark:border-neutral-600 last:border-r-0">$150.00</td>
-                                    <td class="border-r border-neutral-200 dark:border-neutral-600 last:border-r-0">
+                                    <td class="border-r border-neutral-200 last:border-r-0">Eleanor Pena</td>
+                                    <td class="border-r border-neutral-200 last:border-r-0">10 Feb 2025</td>
+                                    <td class="border-r border-neutral-200 last:border-r-0">$150.00</td>
+                                    <td class="border-r border-neutral-200 last:border-r-0">
                                         <a href="javascript:void(0)" class="text-primary-600">View More ></a>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td class="border-r border-neutral-200 dark:border-neutral-600 last:border-r-0">
+                                    <td class="border-r border-neutral-200 last:border-r-0">
                                         <a href="javascript:void(0)" class="text-primary-600">#105986</a>
                                     </td>
-                                    <td class="border-r border-neutral-200 dark:border-neutral-600 last:border-r-0">Leslie Alexander</td>
-                                    <td class="border-r border-neutral-200 dark:border-neutral-600 last:border-r-0">15 Mar 2025</td>
-                                    <td class="border-r border-neutral-200 dark:border-neutral-600 last:border-r-0">$150.00</td>
-                                    <td class="border-r border-neutral-200 dark:border-neutral-600 last:border-r-0">
+                                    <td class="border-r border-neutral-200 last:border-r-0">Leslie Alexander</td>
+                                    <td class="border-r border-neutral-200 last:border-r-0">15 Mar 2025</td>
+                                    <td class="border-r border-neutral-200 last:border-r-0">$150.00</td>
+                                    <td class="border-r border-neutral-200 last:border-r-0">
                                         <a href="javascript:void(0)" class="text-primary-600">View More ></a>
                                     </td>
                                 </tr>
@@ -165,15 +165,15 @@
                         <table class="table striped-table mb-0">
                             <thead>
                                 <tr>
-                                    <th scope="col" class="!bg-white dark:!bg-neutral-700 border-b border-neutral-200 dark:border-neutral-600">Items</th>
-                                    <th scope="col" class="!bg-white dark:!bg-neutral-700 border-b border-neutral-200 dark:border-neutral-600">Price</th>
-                                    <th scope="col" class="!bg-white dark:!bg-neutral-700 border-b border-neutral-200 dark:border-neutral-600">Discount </th>
-                                    <th scope="col" class="!bg-white dark:!bg-neutral-700 border-b border-neutral-200 dark:border-neutral-600">Sold</th>
-                                    <th scope="col" class="!bg-white dark:!bg-neutral-700 border-b border-neutral-200 dark:border-neutral-600 text-center">Total Orders</th>
+                                    <th scope="col" class="!bg-white border-b border-neutral-200">Items</th>
+                                    <th scope="col" class="!bg-white border-b border-neutral-200">Price</th>
+                                    <th scope="col" class="!bg-white border-b border-neutral-200">Discount </th>
+                                    <th scope="col" class="!bg-white border-b border-neutral-200">Sold</th>
+                                    <th scope="col" class="!bg-white border-b border-neutral-200 text-center">Total Orders</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr class="odd:bg-neutral-100 dark:odd:bg-neutral-600">
+                                <tr class="odd:bg-neutral-100">
                                     <td>
                                         <div class="flex items-center">
                                             <img src="{{ asset('assets/images/product/product-img1.png') }}" alt="" class="shrink-0 me-3 rounded-lg me-3">
@@ -187,10 +187,10 @@
                                     <td>15%</td>
                                     <td>300</td>
                                     <td class="text-center">
-                                        <span class="bg-success-100 dark:bg-success-600/25 text-success-600 dark:text-success-400 px-8 py-1.5 rounded-full font-medium text-sm">70</span>
+                                        <span class="bg-success-100 text-success-600 px-8 py-1.5 rounded-full font-medium text-sm">70</span>
                                     </td>
                                 </tr>
-                                <tr class="odd:bg-neutral-100 dark:odd:bg-neutral-600">
+                                <tr class="odd:bg-neutral-100">
                                     <td>
                                         <div class="flex items-center">
                                             <img src="{{ asset('assets/images/product/product-img2.png') }}" alt="" class="shrink-0 me-3 rounded-lg me-3">
@@ -204,10 +204,10 @@
                                     <td>N/A</td>
                                     <td>200</td>
                                     <td class="text-center">
-                                        <span class="bg-success-100 dark:bg-success-600/25 text-success-600 dark:text-success-400 px-8 py-1.5 rounded-full font-medium text-sm">70</span>
+                                        <span class="bg-success-100 text-success-600 px-8 py-1.5 rounded-full font-medium text-sm">70</span>
                                     </td>
                                 </tr>
-                                <tr class="odd:bg-neutral-100 dark:odd:bg-neutral-600">
+                                <tr class="odd:bg-neutral-100">
                                     <td>
                                         <div class="flex items-center">
                                             <img src="{{ asset('assets/images/product/product-img3.png') }}" alt="" class="shrink-0 me-3 rounded-lg me-3">
@@ -221,10 +221,10 @@
                                     <td>$50.00</td>
                                     <td>1400</td>
                                     <td class="text-center">
-                                        <span class="bg-success-100 dark:bg-success-600/25 text-success-600 dark:text-success-400 px-8 py-1.5 rounded-full font-medium text-sm">70</span>
+                                        <span class="bg-success-100 text-success-600 px-8 py-1.5 rounded-full font-medium text-sm">70</span>
                                     </td>
                                 </tr>
-                                <tr class="odd:bg-neutral-100 dark:odd:bg-neutral-600">
+                                <tr class="odd:bg-neutral-100">
                                     <td>
                                         <div class="flex items-center">
                                             <img src="{{ asset('assets/images/product/product-img4.png') }}" alt="" class="shrink-0 me-3 rounded-lg me-3">
@@ -238,10 +238,10 @@
                                     <td>$50.00</td>
                                     <td>700</td>
                                     <td class="text-center">
-                                        <span class="bg-success-100 dark:bg-success-600/25 text-success-600 dark:text-success-400 px-8 py-1.5 rounded-full font-medium text-sm">70</span>
+                                        <span class="bg-success-100 text-success-600 px-8 py-1.5 rounded-full font-medium text-sm">70</span>
                                     </td>
                                 </tr>
-                                <tr class="odd:bg-neutral-100 dark:odd:bg-neutral-600">
+                                <tr class="odd:bg-neutral-100">
                                     <td>
                                         <div class="flex items-center">
                                             <img src="{{ asset('assets/images/product/product-img5.png') }}" alt="" class="shrink-0 me-3 rounded-lg me-3">
@@ -255,7 +255,7 @@
                                     <td>25%</td>
                                     <td>400</td>
                                     <td class="text-center">
-                                        <span class="bg-success-100 dark:bg-success-600/25 text-success-600 dark:text-success-400 px-8 py-1.5 rounded-full font-medium text-sm">70</span>
+                                        <span class="bg-success-100 text-success-600 px-8 py-1.5 rounded-full font-medium text-sm">70</span>
                                     </td>
                                 </tr>
                             </tbody>
@@ -274,72 +274,72 @@
                         <table class="table vertical-striped-table mb-0">
                             <thead>
                                 <tr>
-                                    <th scope="col" class="border-b border-neutral-200 dark:border-neutral-600">Items</th>
-                                    <th scope="col" class="border-b border-neutral-200 dark:border-neutral-600">Price</th>
-                                    <th scope="col" class="border-b border-neutral-200 dark:border-neutral-600">Discount </th>
-                                    <th scope="col" class="border-b border-neutral-200 dark:border-neutral-600">Sold</th>
-                                    <th scope="col" class="border-b border-neutral-200 dark:border-neutral-600 text-center">Total Orders</th>
+                                    <th scope="col" class="border-b border-neutral-200">Items</th>
+                                    <th scope="col" class="border-b border-neutral-200">Price</th>
+                                    <th scope="col" class="border-b border-neutral-200">Discount </th>
+                                    <th scope="col" class="border-b border-neutral-200">Sold</th>
+                                    <th scope="col" class="border-b border-neutral-200 text-center">Total Orders</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td class="odd:bg-neutral-100 dark:odd:bg-neutral-600">
+                                    <td class="odd:bg-neutral-100">
                                         <h6 class="text-base mb-0 font-normal">Blue t-shirt</h6>
                                         <span class="text-sm text-secondary-light font-normal">Fashion</span>
                                     </td>
-                                    <td class="odd:bg-neutral-100 dark:odd:bg-neutral-600">$400.00</td>
-                                    <td class="odd:bg-neutral-100 dark:odd:bg-neutral-600">15%</td>
-                                    <td class="odd:bg-neutral-100 dark:odd:bg-neutral-600">300</td>
-                                    <td class="odd:bg-neutral-100 dark:odd:bg-neutral-600 text-center">
-                                        <span class="bg-success-100 dark:bg-success-600/25 text-success-600 dark:text-success-400 px-8 py-1.5 rounded-full font-medium text-sm">70</span>
+                                    <td class="odd:bg-neutral-100">$400.00</td>
+                                    <td class="odd:bg-neutral-100">15%</td>
+                                    <td class="odd:bg-neutral-100">300</td>
+                                    <td class="odd:bg-neutral-100 text-center">
+                                        <span class="bg-success-100 text-success-600 px-8 py-1.5 rounded-full font-medium text-sm">70</span>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td class="odd:bg-neutral-100 dark:odd:bg-neutral-600">
+                                    <td class="odd:bg-neutral-100">
                                         <h6 class="text-base mb-0 font-normal">Blue t-shirt</h6>
                                         <span class="text-sm text-secondary-light font-normal">Fashion</span>
                                     </td>
-                                    <td class="odd:bg-neutral-100 dark:odd:bg-neutral-600">$150.00</td>
-                                    <td class="odd:bg-neutral-100 dark:odd:bg-neutral-600">N/A</td>
-                                    <td class="odd:bg-neutral-100 dark:odd:bg-neutral-600">200</td>
-                                    <td class="odd:bg-neutral-100 dark:odd:bg-neutral-600 text-center">
-                                        <span class="bg-success-100 dark:bg-success-600/25 text-success-600 dark:text-success-400 px-8 py-1.5 rounded-full font-medium text-sm">70</span>
+                                    <td class="odd:bg-neutral-100">$150.00</td>
+                                    <td class="odd:bg-neutral-100">N/A</td>
+                                    <td class="odd:bg-neutral-100">200</td>
+                                    <td class="odd:bg-neutral-100 text-center">
+                                        <span class="bg-success-100 text-success-600 px-8 py-1.5 rounded-full font-medium text-sm">70</span>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td class="odd:bg-neutral-100 dark:odd:bg-neutral-600">
+                                    <td class="odd:bg-neutral-100">
                                         <h6 class="text-base mb-0 font-normal">Blue t-shirt</h6>
                                         <span class="text-sm text-secondary-light font-normal">Fashion</span>
                                     </td>
-                                    <td class="odd:bg-neutral-100 dark:odd:bg-neutral-600">$300.00</td>
-                                    <td class="odd:bg-neutral-100 dark:odd:bg-neutral-600">$50.00</td>
-                                    <td class="odd:bg-neutral-100 dark:odd:bg-neutral-600">1400</td>
-                                    <td class="odd:bg-neutral-100 dark:odd:bg-neutral-600 text-center">
-                                        <span class="bg-success-100 dark:bg-success-600/25 text-success-600 dark:text-success-400 px-8 py-1.5 rounded-full font-medium text-sm">70</span>
+                                    <td class="odd:bg-neutral-100">$300.00</td>
+                                    <td class="odd:bg-neutral-100">$50.00</td>
+                                    <td class="odd:bg-neutral-100">1400</td>
+                                    <td class="odd:bg-neutral-100 text-center">
+                                        <span class="bg-success-100 text-success-600 px-8 py-1.5 rounded-full font-medium text-sm">70</span>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td class="odd:bg-neutral-100 dark:odd:bg-neutral-600">
+                                    <td class="odd:bg-neutral-100">
                                         <h6 class="text-base mb-0 font-normal">Blue t-shirt</h6>
                                         <span class="text-sm text-secondary-light font-normal">Fashion</span>
                                     </td>
-                                    <td class="odd:bg-neutral-100 dark:odd:bg-neutral-600">$400.00</td>
-                                    <td class="odd:bg-neutral-100 dark:odd:bg-neutral-600">$50.00</td>
-                                    <td class="odd:bg-neutral-100 dark:odd:bg-neutral-600">700</td>
-                                    <td class="odd:bg-neutral-100 dark:odd:bg-neutral-600 text-center">
-                                        <span class="bg-success-100 dark:bg-success-600/25 text-success-600 dark:text-success-400 px-8 py-1.5 rounded-full font-medium text-sm">70</span>
+                                    <td class="odd:bg-neutral-100">$400.00</td>
+                                    <td class="odd:bg-neutral-100">$50.00</td>
+                                    <td class="odd:bg-neutral-100">700</td>
+                                    <td class="odd:bg-neutral-100 text-center">
+                                        <span class="bg-success-100 text-success-600 px-8 py-1.5 rounded-full font-medium text-sm">70</span>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td class="odd:bg-neutral-100 dark:odd:bg-neutral-600">
+                                    <td class="odd:bg-neutral-100">
                                         <h6 class="text-base mb-0 font-normal">Blue t-shirt</h6>
                                         <span class="text-sm text-secondary-light font-normal">Fashion</span>
                                     </td>
-                                    <td class="odd:bg-neutral-100 dark:odd:bg-neutral-600">$300.00</td>
-                                    <td class="odd:bg-neutral-100 dark:odd:bg-neutral-600">25%</td>
-                                    <td class="odd:bg-neutral-100 dark:odd:bg-neutral-600">400</td>
-                                    <td class="odd:bg-neutral-100 dark:odd:bg-neutral-600 text-center">
-                                        <span class="bg-success-100 dark:bg-success-600/25 text-success-600 dark:text-success-400 px-8 py-1.5 rounded-full font-medium text-sm">70</span>
+                                    <td class="odd:bg-neutral-100">$300.00</td>
+                                    <td class="odd:bg-neutral-100">25%</td>
+                                    <td class="odd:bg-neutral-100">400</td>
+                                    <td class="odd:bg-neutral-100 text-center">
+                                        <span class="bg-success-100 text-success-600 px-8 py-1.5 rounded-full font-medium text-sm">70</span>
                                     </td>
                                 </tr>
                             </tbody>
@@ -360,8 +360,8 @@
                                 <tr>
                                     <th scope="col" class="border-r border-b border-primary-600 last:border-r-0">
                                         <div class="flex items-center">
-                                            <input id="sl" type="checkbox" value="" class="w-4 h-4 text-blue-600 bg-gray-100 border-neutral-400 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                                            <label for="sl" class="ms-1.5 text-md font-medium text-gray-900 dark:text-gray-300">S.L</label>
+                                            <input id="sl" type="checkbox" value="" class="w-4 h-4 text-blue-600 bg-gray-100 border-neutral-400 rounded focus:ring-blue-500 focus:ring-2">
+                                            <label for="sl" class="ms-1.5 text-md font-medium text-gray-900">S.L</label>
                                         </div>
                                     </th>
                                     <th scope="col" class="border-r border-b border-primary-600 last:border-r-0">Transaction ID</th>
@@ -374,70 +374,70 @@
                                 <tr>
                                     <td class="border-r border-b !border-primary-600 last:border-r-0">
                                         <div class="flex items-center">
-                                            <input id="sl1" type="checkbox" value="" class="w-4 h-4 text-blue-600 bg-gray-100 border-neutral-400 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                                            <label for="sl1" class="ms-1.5 text-md font-normal text-gray-600 dark:text-gray-300">S.L</label>
+                                            <input id="sl1" type="checkbox" value="" class="w-4 h-4 text-blue-600 bg-gray-100 border-neutral-400 rounded focus:ring-blue-500 focus:ring-2">
+                                            <label for="sl1" class="ms-1.5 text-md font-normal text-gray-600">S.L</label>
                                         </div>
                                     </td>
                                     <td class="border-r border-b !border-primary-600 last:border-r-0">5986124445445</td>
                                     <td class="border-r border-b !border-primary-600 last:border-r-0">27 Mar 2025</td>
                                     <td class="border-r border-b !border-primary-600 last:border-r-0">
-                                        <span class="bg-warning-100 dark:bg-warning-600/25 text-warning-600 dark:text-warning-400 px-8 py-1.5 rounded-full font-medium text-sm">Pending</span>
+                                        <span class="bg-warning-100 text-warning-600 px-8 py-1.5 rounded-full font-medium text-sm">Pending</span>
                                     </td>
                                     <td class="border-r border-b !border-primary-600 last:border-r-0">$20,000.00</td>
                                 </tr>
                                 <tr>
                                     <td class="border-r border-b !border-primary-600 last:border-r-0">
                                         <div class="flex items-center">
-                                            <input id="sl2" type="checkbox" value="" class="w-4 h-4 text-blue-600 bg-gray-100 border-neutral-400 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                                            <label for="sl2" class="ms-1.5 text-md font-normal text-gray-600 dark:text-gray-300">S.L</label>
+                                            <input id="sl2" type="checkbox" value="" class="w-4 h-4 text-blue-600 bg-gray-100 border-neutral-400 rounded focus:ring-blue-500 focus:ring-2">
+                                            <label for="sl2" class="ms-1.5 text-md font-normal text-gray-600">S.L</label>
                                         </div>
                                     </td>
                                     <td class="border-r border-b !border-primary-600 last:border-r-0">5986124445445</td>
                                     <td class="border-r border-b !border-primary-600 last:border-r-0">27 Mar 2025</td>
                                     <td class="border-r border-b !border-primary-600 last:border-r-0">
-                                        <span class="bg-danger-100 dark:bg-danger-600/25 text-danger-600 dark:text-danger-400 px-8 py-1.5 rounded-full font-medium text-sm">Rejected</span>
+                                        <span class="bg-danger-100 text-danger-600 px-8 py-1.5 rounded-full font-medium text-sm">Rejected</span>
                                     </td>
                                     <td class="border-r border-b !border-primary-600 last:border-r-0">$20,000.00</td>
                                 </tr>
                                 <tr>
                                     <td class="border-r border-b !border-primary-600 last:border-r-0">
                                         <div class="flex items-center">
-                                            <input id="sl3" type="checkbox" value="" class="w-4 h-4 text-blue-600 bg-gray-100 border-neutral-400 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                                            <label for="sl3" class="ms-1.5 text-md font-normal text-gray-600 dark:text-gray-300">S.L</label>
+                                            <input id="sl3" type="checkbox" value="" class="w-4 h-4 text-blue-600 bg-gray-100 border-neutral-400 rounded focus:ring-blue-500 focus:ring-2">
+                                            <label for="sl3" class="ms-1.5 text-md font-normal text-gray-600">S.L</label>
                                         </div>
                                     </td>
                                     <td class="border-r border-b !border-primary-600 last:border-r-0">5986124445445</td>
                                     <td class="border-r border-b !border-primary-600 last:border-r-0">27 Mar 2025</td>
                                     <td class="border-r border-b !border-primary-600 last:border-r-0">
-                                        <span class="bg-success-100 dark:bg-success-600/25 text-success-600 dark:text-success-400 px-8 py-1.5 rounded-full font-medium text-sm">Completed</span>
+                                        <span class="bg-success-100 text-success-600 px-8 py-1.5 rounded-full font-medium text-sm">Completed</span>
                                     </td>
                                     <td class="border-r border-b !border-primary-600 last:border-r-0">$20,000.00</td>
                                 </tr>
                                 <tr>
                                     <td class="border-r border-b !border-primary-600 last:border-r-0">
                                         <div class="flex items-center">
-                                            <input id="sl4" type="checkbox" value="" class="w-4 h-4 text-blue-600 bg-gray-100 border-neutral-400 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                                            <label for="sl4" class="ms-1.5 text-md font-normal text-gray-600 dark:text-gray-300">S.L</label>
+                                            <input id="sl4" type="checkbox" value="" class="w-4 h-4 text-blue-600 bg-gray-100 border-neutral-400 rounded focus:ring-blue-500 focus:ring-2">
+                                            <label for="sl4" class="ms-1.5 text-md font-normal text-gray-600">S.L</label>
                                         </div>
                                     </td>
                                     <td class="border-r border-b !border-primary-600 last:border-r-0">5986124445445</td>
                                     <td class="border-r border-b !border-primary-600 last:border-r-0">27 Mar 2025</td>
                                     <td class="border-r border-b !border-primary-600 last:border-r-0">
-                                        <span class="bg-success-100 dark:bg-success-600/25 text-success-600 dark:text-success-400 px-8 py-1.5 rounded-full font-medium text-sm">Completed</span>
+                                        <span class="bg-success-100 text-success-600 px-8 py-1.5 rounded-full font-medium text-sm">Completed</span>
                                     </td>
                                     <td class="border-r border-b !border-primary-600 last:border-r-0">$20,000.00</td>
                                 </tr>
                                 <tr>
                                     <td class="border-r border-b !border-primary-600 last:border-r-0">
                                         <div class="flex items-center">
-                                            <input id="sl5" type="checkbox" value="" class="w-4 h-4 text-blue-600 bg-gray-100 border-neutral-400 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                                            <label for="sl5" class="ms-1.5 text-md font-normal text-gray-600 dark:text-gray-300">S.L</label>
+                                            <input id="sl5" type="checkbox" value="" class="w-4 h-4 text-blue-600 bg-gray-100 border-neutral-400 rounded focus:ring-blue-500 focus:ring-2">
+                                            <label for="sl5" class="ms-1.5 text-md font-normal text-gray-600">S.L</label>
                                         </div>
                                     </td>
                                     <td class="border-r border-b !border-primary-600 last:border-r-0">5986124445445</td>
                                     <td class="border-r border-b !border-primary-600 last:border-r-0">27 Mar 2025</td>
                                     <td class="border-r border-b !border-primary-600 last:border-r-0">
-                                        <span class="bg-success-100 dark:bg-success-600/25 text-success-600 dark:text-success-400 px-8 py-1.5 rounded-full font-medium text-sm">Completed</span>
+                                        <span class="bg-success-100 text-success-600 px-8 py-1.5 rounded-full font-medium text-sm">Completed</span>
                                     </td>
                                     <td class="border-r border-b !border-primary-600 last:border-r-0">$20,000.00</td>
                                 </tr>
@@ -457,67 +457,67 @@
                         <table class="table colored-row-table mb-0">
                             <thead>
                                 <tr>
-                                    <th scope="col" class="!bg-white dark:!bg-neutral-700">Registered On</th>
-                                    <th scope="col" class="!bg-white dark:!bg-neutral-700">Users</th>
-                                    <th scope="col" class="!bg-white dark:!bg-neutral-700">Email</th>
-                                    <th scope="col" class="!bg-white dark:!bg-neutral-700">Plan</th>
+                                    <th scope="col" class="!bg-white">Registered On</th>
+                                    <th scope="col" class="!bg-white">Users</th>
+                                    <th scope="col" class="!bg-white">Email</th>
+                                    <th scope="col" class="!bg-white">Plan</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td class="bg-primary-50 dark:bg-primary-600/10">27 Mar 2025</td>
-                                    <td class="bg-primary-50 dark:bg-primary-600/10">
+                                    <td class="bg-primary-50">27 Mar 2025</td>
+                                    <td class="bg-primary-50">
                                         <div class="flex items-center">
                                             <img src="{{ asset('assets/images/users/user1.png') }}" alt="" class="w-10 h-10 rounded-full shrink-0 me-2 overflow-hidden">
                                             <h6 class="text-base mb-0 font-medium grow">Dianne Russell</h6>
                                         </div>
                                     </td>
-                                    <td class="bg-primary-50 dark:bg-primary-600/10">random@gmail.com</td>
-                                    <td class="bg-primary-50 dark:bg-primary-600/10">Free</td>
+                                    <td class="bg-primary-50">random@gmail.com</td>
+                                    <td class="bg-primary-50">Free</td>
                                 </tr>
                                 <tr>
-                                    <td class="bg-success-100 dark:bg-success-600/10">27 Mar 2025</td>
-                                    <td class="bg-success-100 dark:bg-success-600/10">
+                                    <td class="bg-success-100">27 Mar 2025</td>
+                                    <td class="bg-success-100">
                                         <div class="flex items-center">
                                             <img src="{{ asset('assets/images/users/user2.png') }}" alt="" class="w-10 h-10 rounded-full shrink-0 me-2 overflow-hidden">
                                             <h6 class="text-base mb-0 font-medium grow">Wade Warren</h6>
                                         </div>
                                     </td>
-                                    <td class="bg-success-100 dark:bg-success-600/10">random@gmail.com</td>
-                                    <td class="bg-success-100 dark:bg-success-600/10">Basic</td>
+                                    <td class="bg-success-100">random@gmail.com</td>
+                                    <td class="bg-success-100">Basic</td>
                                 </tr>
                                 <tr>
-                                    <td class="bg-info-100 dark:bg-info-600/10">27 Mar 2025</td>
-                                    <td class="bg-info-100 dark:bg-info-600/10">
+                                    <td class="bg-info-100">27 Mar 2025</td>
+                                    <td class="bg-info-100">
                                         <div class="flex items-center">
                                             <img src="{{ asset('assets/images/users/user3.png') }}" alt="" class="w-10 h-10 rounded-full shrink-0 me-2 overflow-hidden">
                                             <h6 class="text-base mb-0 font-medium grow">Albert Flores</h6>
                                         </div>
                                     </td>
-                                    <td class="bg-info-100 dark:bg-info-600/10">random@gmail.com</td>
-                                    <td class="bg-info-100 dark:bg-info-600/10">Standard </td>
+                                    <td class="bg-info-100">random@gmail.com</td>
+                                    <td class="bg-info-100">Standard </td>
                                 </tr>
                                 <tr>
-                                    <td class="bg-warning-100 dark:bg-warning-600/10">27 Mar 2025</td>
-                                    <td class="bg-warning-100 dark:bg-warning-600/10">
+                                    <td class="bg-warning-100">27 Mar 2025</td>
+                                    <td class="bg-warning-100">
                                         <div class="flex items-center">
                                             <img src="{{ asset('assets/images/users/user4.png') }}" alt="" class="w-10 h-10 rounded-full shrink-0 me-2 overflow-hidden">
                                             <h6 class="text-base mb-0 font-medium grow">Bessie Cooper</h6>
                                         </div>
                                     </td>
-                                    <td class="bg-warning-100 dark:bg-warning-600/10">random@gmail.com</td>
-                                    <td class="bg-warning-100 dark:bg-warning-600/10">Business </td>
+                                    <td class="bg-warning-100">random@gmail.com</td>
+                                    <td class="bg-warning-100">Business </td>
                                 </tr>
                                 <tr>
-                                    <td class="bg-danger-100 dark:bg-danger-600/10">27 Mar 2025</td>
-                                    <td class="bg-danger-100 dark:bg-danger-600/10">
+                                    <td class="bg-danger-100">27 Mar 2025</td>
+                                    <td class="bg-danger-100">
                                         <div class="flex items-center">
                                             <img src="{{ asset('assets/images/users/user5.png') }}" alt="" class="w-10 h-10 rounded-full shrink-0 me-2 overflow-hidden">
                                             <h6 class="text-base mb-0 font-medium grow">Arlene McCoy</h6>
                                         </div>
                                     </td>
-                                    <td class="bg-danger-100 dark:bg-danger-600/10">random@gmail.com</td>
-                                    <td class="bg-danger-100 dark:bg-danger-600/10">Enterprise </td>
+                                    <td class="bg-danger-100">random@gmail.com</td>
+                                    <td class="bg-danger-100">Enterprise </td>
                                 </tr>
                             </tbody>
                         </table>
@@ -556,7 +556,7 @@
                                     <td>2</td>
                                     <td>$5,000.00</td>
                                     <td class="text-center">
-                                        <span class="bg-success-100 dark:bg-success-600/25 text-success-600 dark:text-success-400 px-6 py-1.5 rounded-full font-medium text-sm">Paid</span>
+                                        <span class="bg-success-100 text-success-600 px-6 py-1.5 rounded-full font-medium text-sm">Paid</span>
                                     </td>
                                 </tr>
                                 <tr>
@@ -571,7 +571,7 @@
                                     <td>3</td>
                                     <td>$1,000.00</td>
                                     <td class="text-center">
-                                        <span class="bg-warning-100 dark:bg-warning-600/25 text-warning-600 dark:text-warning-400 px-6 py-1.5 rounded-full font-medium text-sm">Pending</span>
+                                        <span class="bg-warning-100 text-warning-600 px-6 py-1.5 rounded-full font-medium text-sm">Pending</span>
                                     </td>
                                 </tr>
                                 <tr>
@@ -586,7 +586,7 @@
                                     <td>7</td>
                                     <td>$1,000.00</td>
                                     <td class="text-center">
-                                        <span class="bg-info-100 dark:bg-info-600/25 text-info-600 dark:text-info-400 px-6 py-1.5 rounded-full font-medium text-sm">Shipped</span>
+                                        <span class="bg-info-100 text-info-600 px-6 py-1.5 rounded-full font-medium text-sm">Shipped</span>
                                     </td>
                                 </tr>
                                 <tr>
@@ -601,7 +601,7 @@
                                     <td>1</td>
                                     <td>$3,000.00</td>
                                     <td class="text-center">
-                                        <span class="bg-danger-100 dark:bg-danger-600/25 text-danger-600 dark:text-danger-400 px-6 py-1.5 rounded-full font-medium text-sm">Canceled</span>
+                                        <span class="bg-danger-100 text-danger-600 px-6 py-1.5 rounded-full font-medium text-sm">Canceled</span>
                                     </td>
                                 </tr>
                                 <tr>
@@ -616,7 +616,7 @@
                                     <td>5</td>
                                     <td>$4,000.00</td>
                                     <td class="text-center">
-                                        <span class="bg-danger-100 dark:bg-danger-600/25 text-danger-600 dark:text-danger-400 px-6 py-1.5 rounded-full font-medium text-sm">Canceled</span>
+                                        <span class="bg-danger-100 text-danger-600 px-6 py-1.5 rounded-full font-medium text-sm">Canceled</span>
                                     </td>
                                 </tr>
                             </tbody>

@@ -423,7 +423,7 @@
                                                     <h6 class="font-semibold mb-0">24,000</h6>
                                                     <span class="font-medium text-secondary-light text-base">Artworks</span>
                                                     <p class="text-sm mb-0 flex items-center flex-wrap gap-3 mt-3">
-                                                        <span class="bg-success-focus px-1.5 py-0.5 rounded-sm font-medium text-success-600 dark:text-success-600 text-sm flex items-center gap-2">
+                                                        <span class="bg-success-focus px-1.5 py-0.5 rounded-sm font-medium text-success-600 text-sm flex items-center gap-2">
                                                             +168.001%
                                                             <i class="ri-arrow-up-line"></i>
                                                         </span> This week
@@ -449,7 +449,7 @@
                                                     <h6 class="font-semibold mb-0">82,000</h6>
                                                     <span class="font-medium text-secondary-light text-base">Auction</span>
                                                     <p class="text-sm mb-0 flex items-center flex-wrap gap-3 mt-3">
-                                                        <span class="bg-danger-focus px-1.5 py-0.5 rounded-sm font-medium text-danger-600 dark:text-danger-600 text-sm flex items-center gap-2">
+                                                        <span class="bg-danger-focus px-1.5 py-0.5 rounded-sm font-medium text-danger-600 text-sm flex items-center gap-2">
                                                             +168.001%
                                                             <i class="ri-arrow-down-line"></i>
                                                         </span> This week
@@ -475,7 +475,7 @@
                                                     <h6 class="font-semibold mb-0">800</h6>
                                                     <span class="font-medium text-secondary-light text-base">Creators</span>
                                                     <p class="text-sm mb-0 flex items-center flex-wrap gap-3 mt-3">
-                                                        <span class="bg-success-focus px-1.5 py-0.5 rounded-sm font-medium text-success-600 dark:text-success-600 text-sm flex items-center gap-2">
+                                                        <span class="bg-success-focus px-1.5 py-0.5 rounded-sm font-medium text-success-600 text-sm flex items-center gap-2">
                                                             +168.001%
                                                             <i class="ri-arrow-up-line"></i>
                                                         </span> This week
@@ -495,27 +495,27 @@
                             <h6 class="mb-0">Trending NFTs</h6>
                             <ul class="style-pill-button flex flex-wrap -mb-px text-sm font-medium text-center" id="default-tab" data-tabs-toggle="#default-tab-content" role="tablist">
                                 <li class=" border-0 me-2" role="presentation">
-                                    <button class="font-semibold rounded-full px-5 py-1.5 border border-neutral-300 text-neutral-900 dark:border-neutral-300 dark:text-white" id="all-tab" data-tabs-target="#all" type="button" role="tab" aria-controls="all" aria-selected="false">All</button>
+                                    <button class="font-semibold rounded-full px-5 py-1.5 border border-neutral-300 text-neutral-900" id="all-tab" data-tabs-target="#all" type="button" role="tab" aria-controls="all" aria-selected="false">All</button>
                                 </li>
                                 <li class=" border-0 me-2" role="presentation">
-                                    <button class="font-semibold rounded-full px-5 py-1.5 border border-neutral-300 text-neutral-900 dark:border-neutral-300 dark:text-white hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300" id="art-tab" data-tabs-target="#art" type="button" role="tab" aria-controls="art" aria-selected="false">Art</button>
+                                    <button class="font-semibold rounded-full px-5 py-1.5 border border-neutral-300 text-neutral-900 hover:text-gray-600 hover:border-gray-300" id="art-tab" data-tabs-target="#art" type="button" role="tab" aria-controls="art" aria-selected="false">Art</button>
                                 </li>
                                 <li class=" border-0 me-2" role="presentation">
-                                    <button class="font-semibold rounded-full px-5 py-1.5 border border-neutral-300 text-neutral-900 dark:border-neutral-300 dark:text-white hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300" id="music-tab" data-tabs-target="#music" type="button" role="tab" aria-controls="music" aria-selected="false">Music</button>
+                                    <button class="font-semibold rounded-full px-5 py-1.5 border border-neutral-300 text-neutral-900 hover:text-gray-600 hover:border-gray-300" id="music-tab" data-tabs-target="#music" type="button" role="tab" aria-controls="music" aria-selected="false">Music</button>
                                 </li>
                                 <li class=" border-0 me-2" role="presentation">
-                                    <button class="font-semibold rounded-full px-5 py-1.5 border border-neutral-300 text-neutral-900 dark:border-neutral-300 dark:text-white hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300" id="utility-tab" data-tabs-target="#utility" type="button" role="tab" aria-controls="utility" aria-selected="false">Utility</button>
+                                    <button class="font-semibold rounded-full px-5 py-1.5 border border-neutral-300 text-neutral-900 hover:text-gray-600 hover:border-gray-300" id="utility-tab" data-tabs-target="#utility" type="button" role="tab" aria-controls="utility" aria-selected="false">Utility</button>
                                 </li>
                                 <li class=" border-0 me-2" role="presentation">
-                                    <button class="font-semibold rounded-full px-5 py-1.5 border border-neutral-300 text-neutral-900 dark:border-neutral-300 dark:text-white hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300" id="fashion-tab" data-tabs-target="#fashion" type="button" role="tab" aria-controls="fashion" aria-selected="false">Fashion</button>
+                                    <button class="font-semibold rounded-full px-5 py-1.5 border border-neutral-300 text-neutral-900 hover:text-gray-600 hover:border-gray-300" id="fashion-tab" data-tabs-target="#fashion" type="button" role="tab" aria-controls="fashion" aria-selected="false">Fashion</button>
                                 </li>
                             </ul>
                         </div>
 
                         <div id="default-tab-content">
-                            <div class="hidden p-4 rounded-lg bg-gray-50 dark:bg-gray-800" id="all" role="tabpanel" aria-labelledby="all-tab">
+                            <div class="hidden p-4 rounded-lg bg-gray-50" id="all" role="tabpanel" aria-labelledby="all-tab">
                                 <div class="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-4 gap-6">
-                                    <div class="nft-card bg-white dark:bg-neutral-700 rounded overflow-hidden">
+                                    <div class="nft-card bg-white rounded overflow-hidden">
                                         <div class="rounded overflow-hidden">
                                             <img src="{{ asset('assets/images/nft/nft-img1.png') }}" alt="" class="w-full h-full object-fit-cover">
                                         </div>
@@ -538,7 +538,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="nft-card bg-white dark:bg-neutral-700 rounded overflow-hidden">
+                                    <div class="nft-card bg-white rounded overflow-hidden">
                                         <div class="rounded overflow-hidden">
                                             <img src="{{ asset('assets/images/nft/nft-img2.png') }}" alt="" class="w-full h-full object-fit-cover">
                                         </div>
@@ -561,7 +561,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="nft-card bg-white dark:bg-neutral-700 rounded overflow-hidden">
+                                    <div class="nft-card bg-white rounded overflow-hidden">
                                         <div class="rounded overflow-hidden">
                                             <img src="{{ asset('assets/images/nft/nft-img3.png') }}" alt="" class="w-full h-full object-fit-cover">
                                         </div>
@@ -584,7 +584,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="nft-card bg-white dark:bg-neutral-700 rounded overflow-hidden">
+                                    <div class="nft-card bg-white rounded overflow-hidden">
                                         <div class="rounded overflow-hidden">
                                             <img src="{{ asset('assets/images/nft/nft-img4.png') }}" alt="" class="w-full h-full object-fit-cover">
                                         </div>
@@ -609,9 +609,9 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="hidden p-4 rounded-lg bg-gray-50 dark:bg-gray-800" id="art" role="tabpanel" aria-labelledby="art-tab">
+                            <div class="hidden p-4 rounded-lg bg-gray-50" id="art" role="tabpanel" aria-labelledby="art-tab">
                                 <div class="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-4 gap-6">
-                                    <div class="nft-card bg-white dark:bg-neutral-700 rounded overflow-hidden">
+                                    <div class="nft-card bg-white rounded overflow-hidden">
                                         <div class="rounded overflow-hidden">
                                             <img src="{{ asset('assets/images/nft/nft-img3.png') }}" alt="" class="w-full h-full object-fit-cover">
                                         </div>
@@ -634,7 +634,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="nft-card bg-white dark:bg-neutral-700 rounded overflow-hidden">
+                                    <div class="nft-card bg-white rounded overflow-hidden">
                                         <div class="rounded overflow-hidden">
                                             <img src="{{ asset('assets/images/nft/nft-img1.png') }}" alt="" class="w-full h-full object-fit-cover">
                                         </div>
@@ -657,7 +657,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="nft-card bg-white dark:bg-neutral-700 rounded overflow-hidden">
+                                    <div class="nft-card bg-white rounded overflow-hidden">
                                         <div class="rounded overflow-hidden">
                                             <img src="{{ asset('assets/images/nft/nft-img4.png') }}" alt="" class="w-full h-full object-fit-cover">
                                         </div>
@@ -680,7 +680,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="nft-card bg-white dark:bg-neutral-700 rounded overflow-hidden">
+                                    <div class="nft-card bg-white rounded overflow-hidden">
                                         <div class="rounded overflow-hidden">
                                             <img src="{{ asset('assets/images/nft/nft-img2.png') }}" alt="" class="w-full h-full object-fit-cover">
                                         </div>
@@ -705,9 +705,9 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="hidden p-4 rounded-lg bg-gray-50 dark:bg-gray-800" id="music" role="tabpanel" aria-labelledby="music-tab">
+                            <div class="hidden p-4 rounded-lg bg-gray-50" id="music" role="tabpanel" aria-labelledby="music-tab">
                                 <div class="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-4 gap-6">
-                                    <div class="nft-card bg-white dark:bg-neutral-700 rounded overflow-hidden">
+                                    <div class="nft-card bg-white rounded overflow-hidden">
                                         <div class="rounded overflow-hidden">
                                             <img src="{{ asset('assets/images/nft/nft-img1.png') }}" alt="" class="w-full h-full object-fit-cover">
                                         </div>
@@ -730,7 +730,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="nft-card bg-white dark:bg-neutral-700 rounded overflow-hidden">
+                                    <div class="nft-card bg-white rounded overflow-hidden">
                                         <div class="rounded overflow-hidden">
                                             <img src="{{ asset('assets/images/nft/nft-img2.png') }}" alt="" class="w-full h-full object-fit-cover">
                                         </div>
@@ -753,7 +753,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="nft-card bg-white dark:bg-neutral-700 rounded overflow-hidden">
+                                    <div class="nft-card bg-white rounded overflow-hidden">
                                         <div class="rounded overflow-hidden">
                                             <img src="{{ asset('assets/images/nft/nft-img3.png') }}" alt="" class="w-full h-full object-fit-cover">
                                         </div>
@@ -776,7 +776,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="nft-card bg-white dark:bg-neutral-700 rounded overflow-hidden">
+                                    <div class="nft-card bg-white rounded overflow-hidden">
                                         <div class="rounded overflow-hidden">
                                             <img src="{{ asset('assets/images/nft/nft-img4.png') }}" alt="" class="w-full h-full object-fit-cover">
                                         </div>
@@ -801,9 +801,9 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="hidden p-4 rounded-lg bg-gray-50 dark:bg-gray-800" id="utility" role="tabpanel" aria-labelledby="utility-tab">
+                            <div class="hidden p-4 rounded-lg bg-gray-50" id="utility" role="tabpanel" aria-labelledby="utility-tab">
                                 <div class="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-4 gap-6">
-                                    <div class="nft-card bg-white dark:bg-neutral-700 rounded overflow-hidden">
+                                    <div class="nft-card bg-white rounded overflow-hidden">
                                         <div class="rounded overflow-hidden">
                                             <img src="{{ asset('assets/images/nft/nft-img4.png') }}" alt="" class="w-full h-full object-fit-cover">
                                         </div>
@@ -826,7 +826,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="nft-card bg-white dark:bg-neutral-700 rounded overflow-hidden">
+                                    <div class="nft-card bg-white rounded overflow-hidden">
                                         <div class="rounded overflow-hidden">
                                             <img src="{{ asset('assets/images/nft/nft-img1.png') }}" alt="" class="w-full h-full object-fit-cover">
                                         </div>
@@ -849,7 +849,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="nft-card bg-white dark:bg-neutral-700 rounded overflow-hidden">
+                                    <div class="nft-card bg-white rounded overflow-hidden">
                                         <div class="rounded overflow-hidden">
                                             <img src="{{ asset('assets/images/nft/nft-img3.png') }}" alt="" class="w-full h-full object-fit-cover">
                                         </div>
@@ -872,7 +872,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="nft-card bg-white dark:bg-neutral-700 rounded overflow-hidden">
+                                    <div class="nft-card bg-white rounded overflow-hidden">
                                         <div class="rounded overflow-hidden">
                                             <img src="{{ asset('assets/images/nft/nft-img2.png') }}" alt="" class="w-full h-full object-fit-cover">
                                         </div>
@@ -897,9 +897,9 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="hidden p-4 rounded-lg bg-gray-50 dark:bg-gray-800" id="fashion" role="tabpanel" aria-labelledby="fashion-tab">
+                            <div class="hidden p-4 rounded-lg bg-gray-50" id="fashion" role="tabpanel" aria-labelledby="fashion-tab">
                                 <div class="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-4 gap-6">
-                                    <div class="nft-card bg-white dark:bg-neutral-700 rounded overflow-hidden">
+                                    <div class="nft-card bg-white rounded overflow-hidden">
                                         <div class="rounded overflow-hidden">
                                             <img src="{{ asset('assets/images/nft/nft-img2.png') }}" alt="" class="w-full h-full object-fit-cover">
                                         </div>
@@ -922,7 +922,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="nft-card bg-white dark:bg-neutral-700 rounded overflow-hidden">
+                                    <div class="nft-card bg-white rounded overflow-hidden">
                                         <div class="rounded overflow-hidden">
                                             <img src="{{ asset('assets/images/nft/nft-img1.png') }}" alt="" class="w-full h-full object-fit-cover">
                                         </div>
@@ -945,7 +945,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="nft-card bg-white dark:bg-neutral-700 rounded overflow-hidden">
+                                    <div class="nft-card bg-white rounded overflow-hidden">
                                         <div class="rounded overflow-hidden">
                                             <img src="{{ asset('assets/images/nft/nft-img4.png') }}" alt="" class="w-full h-full object-fit-cover">
                                         </div>
@@ -968,7 +968,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="nft-card bg-white dark:bg-neutral-700 rounded overflow-hidden">
+                                    <div class="nft-card bg-white rounded overflow-hidden">
                                         <div class="rounded overflow-hidden">
                                             <img src="{{ asset('assets/images/nft/nft-img3.png') }}" alt="" class="w-full h-full object-fit-cover">
                                         </div>
@@ -1001,7 +1001,7 @@
                             <div class="card-body p-6">
                                 <div class="flex items-center flex-wrap gap-2 justify-between mb-5">
                                     <h6 class="font-bold text-lg mb-0">Recent Bid</h6>
-                                    <select class="form-select form-select-sm w-auto bg-white dark:bg-neutral-700 border text-secondary-light rounded-full">
+                                    <select class="form-select form-select-sm w-auto bg-white border text-secondary-light rounded-full">
                                         <option>All Items </option>
                                         <option>New Item</option>
                                         <option>Trending Item</option>
@@ -1242,7 +1242,7 @@
                         <div class="card border-0 h-full">
                             <div class="card-header border-bottom flex items-center flex-wrap gap-2 justify-between">
                                 <h6 class="font-bold text-lg mb-0">ETH Price</h6>
-                                <select class="form-select form-select-sm w-auto bg-white dark:bg-neutral-700 border text-secondary-light rounded-full">
+                                <select class="form-select form-select-sm w-auto bg-white border text-secondary-light rounded-full">
                                     <option>November </option>
                                     <option>December</option>
                                     <option>January</option>
@@ -1310,7 +1310,7 @@
                                 </div>
                                 <div class="mt-6">
                                     <div class="grid grid-cols-2 gap-6">
-                                        <div class="nft-card bg-white dark:bg-neutral-700 rounded overflow-hidden shadow-4">
+                                        <div class="nft-card bg-white rounded overflow-hidden shadow-4">
                                             <div class="rounded overflow-hidden">
                                                 <img src="{{ asset('assets/images/nft/featured-creator1.png') }}" alt="" class="w-full h-full object-fit-cover">
                                             </div>
@@ -1322,7 +1322,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="nft-card bg-white dark:bg-neutral-700 rounded overflow-hidden shadow-4">
+                                        <div class="nft-card bg-white rounded overflow-hidden shadow-4">
                                             <div class="rounded overflow-hidden">
                                                 <img src="{{ asset('assets/images/nft/featured-creator2.png') }}" alt="" class="w-full h-full object-fit-cover">
                                             </div>

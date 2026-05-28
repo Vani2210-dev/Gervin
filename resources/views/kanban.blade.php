@@ -181,20 +181,20 @@ $script = '<script>
                                                     <iconify-icon icon="ph:plus-circle" class="icon"></iconify-icon>
                                                 </button>
                                                 <div class="dropdown">
-                                                    <button data-dropdown-toggle="dropdown1" class="text-neutral-800 flex text-lg dark:text-white" type="button">
+                                                    <button data-dropdown-toggle="dropdown1" class="text-neutral-800 flex text-lg" type="button">
                                                         <i class="ri-more-2-fill"></i>
                                                     </button>
 
-                                                    <div id="dropdown1" class="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow-lg border border-neutral-100 dark:border-neutral-600 w-44 dark:bg-gray-700">
-                                                        <ul class="p-2 text-sm text-gray-700 dark:text-gray-200">
+                                                    <div id="dropdown1" class="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow-lg border border-neutral-100 w-44">
+                                                        <ul class="p-2 text-sm text-gray-700">
                                                             <li>
-                                                                <button type="submit" class="w-full text-start px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-gray-600 rounded dark:hover:text-white flex items-center gap-2 duplicate-button">
+                                                                <button type="submit" class="w-full text-start px-4 py-2.5 hover:bg-gray-100 rounded flex items-center gap-2 duplicate-button">
                                                                     <iconify-icon class="text-xl" icon="humbleicons:duplicate"></iconify-icon>
                                                                     Duplicate
                                                                 </button>
                                                             </li>
                                                             <li>
-                                                                <button type="button" class="w-full text-start px-4 py-2.5 hover:bg-danger-100 dark:hover:bg-danger-600/25 rounded hover:text-danger-500 dark:hover:text-danger-600 flex items-center gap-2 delete-button">
+                                                                <button type="button" class="w-full text-start px-4 py-2.5 hover:bg-danger-100 rounded hover:text-danger-500 flex items-center gap-2 delete-button">
                                                                     <iconify-icon class="text-xl" icon="mingcute:delete-2-line"></iconify-icon>
                                                                     Delete
                                                                 </button>
@@ -205,7 +205,7 @@ $script = '<script>
                                             </div>
                                         </div>
                                         <div class="connectedSortable ps-6 pt-6 pe-6" id="sortable1">
-                                            <div class="kanban-card bg-neutral-50 dark:bg-dark-3 p-4 rounded-lg mb-6" id="kanban-1">
+                                            <div class="kanban-card bg-neutral-50 p-4 rounded-lg mb-6" id="kanban-1">
                                                 <div class="rounded-lg mb-3 max-h-[350px] overflow-hidden">
                                                     <img src="{{ asset('assets/images/kanban/kanban-1.png') }}" alt="" class="w-full h-full object-fit-cover">
                                                 </div>
@@ -217,7 +217,7 @@ $script = '<script>
                                                 </button>
                                                 <div class="mt-3 flex items-center justify-between gap-2.5">
                                                     <div class="flex items-center justify-between gap-2.5">
-                                                        <iconify-icon icon="solar:calendar-outline" class="text-neutral-600 dark:text-neutral-200"></iconify-icon>
+                                                        <iconify-icon icon="solar:calendar-outline" class="text-neutral-600"></iconify-icon>
                                                         <span class="start-date text-secondary-light">25 Aug 2024</span>
                                                     </div>
                                                     <div class="flex items-center justify-between gap-2.5">
@@ -230,7 +230,7 @@ $script = '<script>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="kanban-card bg-neutral-50 dark:bg-dark-3 p-4 rounded-lg mb-6" id="kanban-2">
+                                            <div class="kanban-card bg-neutral-50 p-4 rounded-lg mb-6" id="kanban-2">
                                                 <div class="rounded-lg mb-3 max-h-[350px] overflow-hidden">
                                                     <img src="{{ asset('assets/images/kanban/kanban-2.png') }}" alt="" class="w-full h-full object-fit-cover">
                                                 </div>
@@ -242,7 +242,7 @@ $script = '<script>
                                                 </button>
                                                 <div class="mt-3 flex items-center justify-between gap-2.5">
                                                     <div class="flex items-center justify-between gap-2.5">
-                                                        <iconify-icon icon="solar:calendar-outline" class="text-neutral-600 dark:text-neutral-200"></iconify-icon>
+                                                        <iconify-icon icon="solar:calendar-outline" class="text-neutral-600"></iconify-icon>
                                                         <span class="start-date text-secondary-light">25 Aug 2024</span>
                                                     </div>
                                                     <div class="flex items-center justify-between gap-2.5">
@@ -274,20 +274,20 @@ $script = '<script>
                                                     <iconify-icon icon="ph:plus-circle" class="icon"></iconify-icon>
                                                 </button>
                                                 <div class="dropdown">
-                                                    <button data-dropdown-toggle="dropdown2" class="text-neutral-800 flex text-lg dark:text-white" type="button">
+                                                    <button data-dropdown-toggle="dropdown2" class="text-neutral-800 flex text-lg" type="button">
                                                         <i class="ri-more-2-fill"></i>
                                                     </button>
 
-                                                    <div id="dropdown2" class="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow-lg border border-neutral-100 dark:border-neutral-600 w-44 dark:bg-gray-700">
-                                                        <ul class="p-2 text-sm text-gray-700 dark:text-gray-200">
+                                                    <div id="dropdown2" class="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow-lg border border-neutral-100 w-44">
+                                                        <ul class="p-2 text-sm text-gray-700">
                                                             <li>
-                                                                <button type="submit" class="w-full text-start px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-gray-600 rounded dark:hover:text-white flex items-center gap-2">
+                                                                <button type="submit" class="w-full text-start px-4 py-2.5 hover:bg-gray-100 rounded flex items-center gap-2">
                                                                     <iconify-icon class="text-xl" icon="humbleicons:duplicate"></iconify-icon>
                                                                     Duplicate
                                                                 </button>
                                                             </li>
                                                             <li>
-                                                                <button type="button" class="w-full text-start px-4 py-2.5 hover:bg-danger-100 dark:hover:bg-danger-600/25 rounded hover:text-danger-500 dark:hover:text-danger-600 flex items-center gap-2">
+                                                                <button type="button" class="w-full text-start px-4 py-2.5 hover:bg-danger-100 rounded hover:text-danger-500 flex items-center gap-2">
                                                                     <iconify-icon class="text-xl" icon="mingcute:delete-2-line"></iconify-icon>
                                                                     Delete
                                                                 </button>
@@ -299,7 +299,7 @@ $script = '<script>
                                         </div>
 
                                         <div class="connectedSortable ps-6 pt-6 pe-6" id="sortable2">
-                                            <div class="kanban-card bg-neutral-50 dark:bg-dark-3 p-4 rounded-lg mb-6" id="kanban-3">
+                                            <div class="kanban-card bg-neutral-50 p-4 rounded-lg mb-6" id="kanban-3">
                                                 <h6 class="kanban-title text-lg font-semibold mb-2">Creating a new website</h6>
                                                 <p class="kanban-desc text-secondary-light">Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore</p>
                                                 <button type="button" class="btn text-primary-600 border rounded border-primary-600 bg-hover-primary-600 text-hover-white flex items-center gap-2 my-3">
@@ -308,7 +308,7 @@ $script = '<script>
                                                 </button>
                                                 <div class="mt-3 flex items-center justify-between gap-2.5">
                                                     <div class="flex items-center justify-between gap-2.5">
-                                                        <iconify-icon icon="solar:calendar-outline" class="text-neutral-600 dark:text-neutral-200"></iconify-icon>
+                                                        <iconify-icon icon="solar:calendar-outline" class="text-neutral-600"></iconify-icon>
                                                         <span class="start-date text-secondary-light">25 Aug 2024</span>
                                                     </div>
                                                     <div class="flex items-center justify-between gap-2.5">
@@ -321,7 +321,7 @@ $script = '<script>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="kanban-card bg-neutral-50 dark:bg-dark-3 p-4 rounded-lg mb-6" id="kanban-4">
+                                            <div class="kanban-card bg-neutral-50 p-4 rounded-lg mb-6" id="kanban-4">
                                                 <div class="rounded-lg mb-3 max-h-[350px] overflow-hidden">
                                                     <img src="{{ asset('assets/images/kanban/kanban-2.png') }}" alt="" class="w-full h-full object-fit-cover">
                                                 </div>
@@ -333,7 +333,7 @@ $script = '<script>
                                                 </button>
                                                 <div class="mt-3 flex items-center justify-between gap-2.5">
                                                     <div class="flex items-center justify-between gap-2.5">
-                                                        <iconify-icon icon="solar:calendar-outline" class="text-neutral-600 dark:text-neutral-200"></iconify-icon>
+                                                        <iconify-icon icon="solar:calendar-outline" class="text-neutral-600"></iconify-icon>
                                                         <span class="start-date text-secondary-light">25 Aug 2024</span>
                                                     </div>
                                                     <div class="flex items-center justify-between gap-2.5">
@@ -365,20 +365,20 @@ $script = '<script>
                                                     <iconify-icon icon="ph:plus-circle" class="icon"></iconify-icon>
                                                 </button>
                                                 <div class="dropdown">
-                                                    <button data-dropdown-toggle="dropdown3" class="text-neutral-800 flex text-lg dark:text-white" type="button">
+                                                    <button data-dropdown-toggle="dropdown3" class="text-neutral-800 flex text-lg" type="button">
                                                         <i class="ri-more-2-fill"></i>
                                                     </button>
 
-                                                    <div id="dropdown3" class="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow-lg border border-neutral-100 dark:border-neutral-600 w-44 dark:bg-gray-700">
-                                                        <ul class="p-2 text-sm text-gray-700 dark:text-gray-200">
+                                                    <div id="dropdown3" class="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow-lg border border-neutral-100 w-44">
+                                                        <ul class="p-2 text-sm text-gray-700">
                                                             <li>
-                                                                <button type="submit" class="w-full text-start px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-gray-600 rounded dark:hover:text-white flex items-center gap-2">
+                                                                <button type="submit" class="w-full text-start px-4 py-2.5 hover:bg-gray-100 rounded flex items-center gap-2">
                                                                     <iconify-icon class="text-xl" icon="humbleicons:duplicate"></iconify-icon>
                                                                     Duplicate
                                                                 </button>
                                                             </li>
                                                             <li>
-                                                                <button type="button" class="w-full text-start px-4 py-2.5 hover:bg-danger-100 dark:hover:bg-danger-600/25 rounded hover:text-danger-500 dark:hover:text-danger-600 flex items-center gap-2">
+                                                                <button type="button" class="w-full text-start px-4 py-2.5 hover:bg-danger-100 rounded hover:text-danger-500 flex items-center gap-2">
                                                                     <iconify-icon class="text-xl" icon="mingcute:delete-2-line"></iconify-icon>
                                                                     Delete
                                                                 </button>
@@ -390,7 +390,7 @@ $script = '<script>
                                         </div>
 
                                         <div class="connectedSortable ps-6 pt-6 pe-6" id="sortable3">
-                                            <div class="kanban-card bg-neutral-50 dark:bg-dark-3 p-4 rounded-lg mb-6" id="kanban-5">
+                                            <div class="kanban-card bg-neutral-50 p-4 rounded-lg mb-6" id="kanban-5">
                                                 <h6 class="kanban-title text-lg font-semibold mb-2">Creating a new website</h6>
                                                 <p class="kanban-desc text-secondary-light">Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore</p>
                                                 <button type="button" class="btn text-primary-600 border rounded border-primary-600 bg-hover-primary-600 text-hover-white flex items-center gap-2 my-3">
@@ -399,7 +399,7 @@ $script = '<script>
                                                 </button>
                                                 <div class="mt-3 flex items-center justify-between gap-2.5">
                                                     <div class="flex items-center justify-between gap-2.5">
-                                                        <iconify-icon icon="solar:calendar-outline" class="text-neutral-600 dark:text-neutral-200"></iconify-icon>
+                                                        <iconify-icon icon="solar:calendar-outline" class="text-neutral-600"></iconify-icon>
                                                         <span class="start-date text-secondary-light">25 Aug 2024</span>
                                                     </div>
                                                     <div class="flex items-center justify-between gap-2.5">
@@ -412,7 +412,7 @@ $script = '<script>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="kanban-card bg-neutral-50 dark:bg-dark-3 p-4 rounded-lg mb-6" id="kanban-6">
+                                            <div class="kanban-card bg-neutral-50 p-4 rounded-lg mb-6" id="kanban-6">
                                                 <h6 class="kanban-title text-lg font-semibold mb-2">Creating a new website</h6>
                                                 <p class="kanban-desc text-secondary-light">Lorem ipsum dolor sit amet, consectetur </p>
                                                 <button type="button" class="btn text-primary-600 border rounded border-primary-600 bg-hover-primary-600 text-hover-white flex items-center gap-2 my-3">
@@ -421,7 +421,7 @@ $script = '<script>
                                                 </button>
                                                 <div class="mt-3 flex items-center justify-between gap-2.5">
                                                     <div class="flex items-center justify-between gap-2.5">
-                                                        <iconify-icon icon="solar:calendar-outline" class="text-neutral-600 dark:text-neutral-200"></iconify-icon>
+                                                        <iconify-icon icon="solar:calendar-outline" class="text-neutral-600"></iconify-icon>
                                                         <span class="start-date text-secondary-light">25 Aug 2024</span>
                                                     </div>
                                                     <div class="flex items-center justify-between gap-2.5">
@@ -434,7 +434,7 @@ $script = '<script>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="kanban-card bg-neutral-50 dark:bg-dark-3 p-4 rounded-lg mb-6" id="kanban-7">
+                                            <div class="kanban-card bg-neutral-50 p-4 rounded-lg mb-6" id="kanban-7">
                                                 <div class="rounded-lg mb-3 max-h-[350px] overflow-hidden">
                                                     <img src="{{ asset('assets/images/kanban/kanban-2.png') }}" alt="" class="w-full h-full object-fit-cover">
                                                 </div>
@@ -446,7 +446,7 @@ $script = '<script>
                                                 </button>
                                                 <div class="mt-3 flex items-center justify-between gap-2.5">
                                                     <div class="flex items-center justify-between gap-2.5">
-                                                        <iconify-icon icon="solar:calendar-outline" class="text-neutral-600 dark:text-neutral-200"></iconify-icon>
+                                                        <iconify-icon icon="solar:calendar-outline" class="text-neutral-600"></iconify-icon>
                                                         <span class="start-date text-secondary-light">25 Aug 2024</span>
                                                     </div>
                                                     <div class="flex items-center justify-between gap-2.5">
@@ -489,10 +489,10 @@ $script = '<script>
         <!-- Main modal -->
         <div id="default-modal" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
             <div class="relative p-4 w-full max-w-2xl max-h-full">
-                <div class="relative bg-white rounded-lg shadow dark:bg-dark-2">
-                    <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-600">
-                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white"> Add New Task </h3>
-                        <button type="button" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white" data-modal-hide="default-modal">
+                <div class="relative bg-white rounded-lg shadow">
+                    <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
+                        <h3 class="text-xl font-semibold text-gray-900"> Add New Task </h3>
+                        <button type="button" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center" data-modal-hide="default-modal">
                             <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
                                 <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
                             </svg>
@@ -503,29 +503,29 @@ $script = '<script>
                         <form id="taskForm">
                             <input type="hidden" id="editTaskId" value="">
                             <div class="mb-3">
-                                <label for="taskTitle" class="inline-block font-semibold text-neutral-600 dark:text-neutral-200 text-sm mb-2">Title</label>
+                                <label for="taskTitle" class="inline-block font-semibold text-neutral-600 text-sm mb-2">Title</label>
                                 <input type="text" class="form-control" placeholder="Enter Event Title " id="taskTitle" required>
                             </div>
                             <div class="mb-3">
-                                <label for="taskTag" class="inline-block font-semibold text-neutral-600 dark:text-neutral-200 text-sm mb-2">Tag</label>
+                                <label for="taskTag" class="inline-block font-semibold text-neutral-600 text-sm mb-2">Tag</label>
                                 <input type="text" class="form-control" placeholder="Enter tag" id="taskTag" required>
                             </div>
                             <div class="mb-3">
-                                <label for="startDate" class="inline-block font-semibold text-neutral-600 dark:text-neutral-200 text-sm mb-2">Start Date</label>
+                                <label for="startDate" class="inline-block font-semibold text-neutral-600 text-sm mb-2">Start Date</label>
                                 <input type="date" class="form-control" id="startDate" required>
                             </div>
                             <div class="mb-3">
-                                <label for="taskDescription" class="inline-block font-semibold text-neutral-600 dark:text-neutral-200 text-sm mb-2">Description</label>
+                                <label for="taskDescription" class="inline-block font-semibold text-neutral-600 text-sm mb-2">Description</label>
                                 <textarea class="form-control" id="taskDescription" rows="3" placeholder="Write some text" required></textarea>
                             </div>
                             <div class="mb-3">
-                                <label for="taskImage" class="inline-block font-semibold text-neutral-600 dark:text-neutral-200 text-sm mb-2">Attachments <span class="text-sm">(Jpg, Png format)</span> </label>
-                                <input class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" id="taskImage" type="file">
+                                <label for="taskImage" class="inline-block font-semibold text-neutral-600 text-sm mb-2">Attachments <span class="text-sm">(Jpg, Png format)</span> </label>
+                                <input class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none" id="taskImage" type="file">
                                 <img id="taskImagePreview" src="{{ asset('assets/images/carousel/carousel-img1.png') }}" alt="Image Preview">
                             </div>
                         </form>
                     </div>
-                    <div class="flex items-center gap-4 p-4 md:p-5 border-t border-gray-200 rounded-b dark:border-gray-600">
+                    <div class="flex items-center gap-4 p-4 md:p-5 border-t border-gray-200 rounded-b">
                         <button type="button" data-modal-hide="default-modal" class="border border-danger-600 bg-hover-danger-200 text-danger-600 text-base px-[50px] py-[11px] rounded-lg" data-bs-dismiss="modal">
                             Cancel
                         </button>

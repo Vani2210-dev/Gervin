@@ -295,11 +295,11 @@
             <div class="card border-0 rounded-lg p-5">
                 <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
                     <div class="col-span-12 md:col-span-6 2xl:col-span-4">
-                        <div class="card border-0 p-4 rounded-lg shadow-none bg-gradient-to-l from-[#ffeaf480] dark:from-[#ffeaf41c] to-[#ffe2f0] dark:to-[#ffe2f018] mb-3">
+                        <div class="card border-0 p-4 rounded-lg shadow-none bg-gradient-to-l from-[#ffeaf480] to-[#ffe2f0] mb-3">
                             <div class="card-body p-0">
                                 <div class="flex flex-wrap items-center justify-between gap-1 mb-0">
                                     <div class="flex items-center gap-2 mb-3">
-                                        <span class="mb-0 w-11 h-11 bg-white dark:bg-neutral-900 text-[#de3ace] dark:text-[#de3ace] text-2xl flex-shrink-0 flex justify-center items-center rounded-full
+                                        <span class="mb-0 w-11 h-11 bg-white text-[#de3ace] text-2xl flex-shrink-0 flex justify-center items-center rounded-full
                                         h6">
                                             <i class="ri-group-fill"></i>
                                         </span>
@@ -318,11 +318,11 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="card border-0 p-4 rounded-lg shadow-none bg-gradient-to-l from-[#ecddff4d] dark:from-[#ecddff17] to-[#ecddff] dark:to-[#ecddff26] mb-3">
+                        <div class="card border-0 p-4 rounded-lg shadow-none bg-gradient-to-l from-[#ecddff4d] to-[#ecddff] mb-3">
                             <div class="card-body p-0">
                                 <div class="flex flex-wrap items-center justify-between gap-1 mb-0">
                                     <div class="flex items-center gap-2 mb-3">
-                                        <span class="mb-0 w-11 h-11 bg-white dark:bg-neutral-900 text-lilac-600 dark:text-lilac-600 text-2xl flex-shrink-0 flex justify-center items-center rounded-full
+                                        <span class="mb-0 w-11 h-11 bg-white text-lilac-600 text-2xl flex-shrink-0 flex justify-center items-center rounded-full
                                         h6">
                                             <i class="ri-youtube-fill"></i>
                                         </span>
@@ -341,11 +341,11 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="card border-0 p-4 rounded-lg shadow-none bg-gradient-to-l from-[#ebfaff] dark:from-[#ebfaff2c] to-[#c0f0ff] dark:to-[#c0f0ff23] mb-0">
+                        <div class="card border-0 p-4 rounded-lg shadow-none bg-gradient-to-l from-[#ebfaff] to-[#c0f0ff] mb-0">
                             <div class="card-body p-0">
                                 <div class="flex flex-wrap items-center justify-between gap-1 mb-0">
                                     <div class="flex items-center gap-2 mb-3">
-                                        <span class="mb-0 w-11 h-11 bg-white dark:bg-neutral-900 text-cyan-600 dark:text-cyan-600 text-2xl flex-shrink-0 flex justify-center items-center rounded-full
+                                        <span class="mb-0 w-11 h-11 bg-white text-cyan-600 text-2xl flex-shrink-0 flex justify-center items-center rounded-full
                                             h6">
                                             <i class="ri-money-dollar-circle-fill"></i>
                                         </span>
@@ -372,7 +372,7 @@
                                     Average Enrollment Rate
                                 </h6>
                                 <div class="">
-                                    <select class="form-select form-select-sm w-auto bg-white dark:bg-neutral-800 dark:text-white border text-neutral-600">
+                                    <select class="form-select form-select-sm w-auto bg-white border text-neutral-600">
                                         <option>Yearly</option>
                                         <option>Monthly</option>
                                         <option>Weekly</option>
@@ -411,7 +411,7 @@
                 <div class="card-body p-6 flex flex-col justify-between gap-8">
                     <div class="flex items-center flex-wrap gap-2 justify-between mb-5">
                         <h6 class="font-bold text-lg mb-0">Traffic Sources</h6>
-                        <select class="form-select form-select-sm w-auto bg-white dark:bg-neutral-800 dark:text-white border text-neutral-600">
+                        <select class="form-select form-select-sm w-auto bg-white border text-neutral-600">
                             <option>Yearly</option>
                             <option>Monthly</option>
                             <option>Weekly</option>
@@ -457,7 +457,7 @@
                 <div class="card-header">
                     <div class="flex items-center flex-wrap gap-2 justify-between">
                         <h6 class="font-bold text-lg mb-0">Top Categories</h6>
-                        <a href="javascript:void(0)" class="text-primary-600 dark:text-primary-600 hover:text-primary-600 flex items-center gap-1">
+                        <a href="javascript:void(0)" class="text-primary-600 hover:text-primary-600 flex items-center gap-1">
                             View All
                             <iconify-icon icon="solar:alt-arrow-right-linear" class="icon"></iconify-icon>
                         </a>
@@ -466,7 +466,7 @@
                 <div class="card-body">
                     <div class="flex items-center justify-between gap-3 mb-[26px]">
                         <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-lg flex-shrink-0 bg-info-50 dark:bg-info-600/20 flex justify-center items-center">
+                            <div class="w-10 h-10 rounded-lg flex-shrink-0 bg-info-50 flex justify-center items-center">
                                 <img src="{{ asset('assets/images/home-six/category-icon1.png') }}" alt="" class="">
                             </div>
                             <div class="flex-grow-1">
@@ -474,13 +474,13 @@
                                 <span class="text-sm text-neutral-600 font-normal">40+ Courses</span>
                             </div>
                         </div>
-                        <a href="javascript:void(0)" class="w-6 h-6 bg-primary-600/10 text-primary-600 dark:text-primary-600 flex justify-center items-center text-lg hover:bg-primary-600/20 rounded">
+                        <a href="javascript:void(0)" class="w-6 h-6 bg-primary-600/10 text-primary-600 flex justify-center items-center text-lg hover:bg-primary-600/20 rounded">
                             <i class="ri-arrow-right-s-line"></i>
                         </a>
                     </div>
                     <div class="flex items-center justify-between gap-3 mb-[26px]">
                         <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-lg flex-shrink-0 bg-success-50 dark:bg-success-600/20 flex justify-center items-center">
+                            <div class="w-10 h-10 rounded-lg flex-shrink-0 bg-success-50 flex justify-center items-center">
                                 <img src="{{ asset('assets/images/home-six/category-icon2.png') }}" alt="" class="">
                             </div>
                             <div class="flex-grow-1">
@@ -488,13 +488,13 @@
                                 <span class="text-sm text-neutral-600 font-normal">40+ Courses</span>
                             </div>
                         </div>
-                        <a href="javascript:void(0)" class="w-6 h-6 bg-primary-600/10 text-primary-600 dark:text-primary-600 flex justify-center items-center text-lg hover:bg-primary-600/20 rounded">
+                        <a href="javascript:void(0)" class="w-6 h-6 bg-primary-600/10 text-primary-600 flex justify-center items-center text-lg hover:bg-primary-600/20 rounded">
                             <i class="ri-arrow-right-s-line"></i>
                         </a>
                     </div>
                     <div class="flex items-center justify-between gap-3 mb-[26px]">
                         <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-lg flex-shrink-0 bg-lilac-50 dark:bg-lilac-600/20 flex justify-center items-center">
+                            <div class="w-10 h-10 rounded-lg flex-shrink-0 bg-lilac-50 flex justify-center items-center">
                                 <img src="{{ asset('assets/images/home-six/category-icon3.png') }}" alt="" class="">
                             </div>
                             <div class="flex-grow-1">
@@ -502,13 +502,13 @@
                                 <span class="text-sm text-neutral-600 font-normal">40+ Courses</span>
                             </div>
                         </div>
-                        <a href="javascript:void(0)" class="w-6 h-6 bg-primary-600/10 text-primary-600 dark:text-primary-600 flex justify-center items-center text-lg hover:bg-primary-600/20 rounded">
+                        <a href="javascript:void(0)" class="w-6 h-6 bg-primary-600/10 text-primary-600 flex justify-center items-center text-lg hover:bg-primary-600/20 rounded">
                             <i class="ri-arrow-right-s-line"></i>
                         </a>
                     </div>
                     <div class="flex items-center justify-between gap-3 mb-[26px]">
                         <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-lg flex-shrink-0 bg-warning-50 dark:bg-warning-600/20 flex justify-center items-center">
+                            <div class="w-10 h-10 rounded-lg flex-shrink-0 bg-warning-50 flex justify-center items-center">
                                 <img src="{{ asset('assets/images/home-six/category-icon4.png') }}" alt="" class="">
                             </div>
                             <div class="flex-grow-1">
@@ -516,13 +516,13 @@
                                 <span class="text-sm text-neutral-600 font-normal">40+ Courses</span>
                             </div>
                         </div>
-                        <a href="javascript:void(0)" class="w-6 h-6 bg-primary-600/10 text-primary-600 dark:text-primary-600 flex justify-center items-center text-lg hover:bg-primary-600/20 rounded">
+                        <a href="javascript:void(0)" class="w-6 h-6 bg-primary-600/10 text-primary-600 flex justify-center items-center text-lg hover:bg-primary-600/20 rounded">
                             <i class="ri-arrow-right-s-line"></i>
                         </a>
                     </div>
                     <div class="flex items-center justify-between gap-3 mb-[26px]">
                         <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-lg flex-shrink-0 bg-danger-50 dark:bg-danger-600/20 flex justify-center items-center">
+                            <div class="w-10 h-10 rounded-lg flex-shrink-0 bg-danger-50 flex justify-center items-center">
                                 <img src="{{ asset('assets/images/home-six/category-icon5.png') }}" alt="" class="">
                             </div>
                             <div class="flex-grow-1">
@@ -530,7 +530,7 @@
                                 <span class="text-sm text-neutral-600 font-normal">40+ Courses</span>
                             </div>
                         </div>
-                        <a href="javascript:void(0)" class="w-6 h-6 bg-primary-600/10 text-primary-600 dark:text-primary-600 flex justify-center items-center text-lg hover:bg-primary-600/20 rounded">
+                        <a href="javascript:void(0)" class="w-6 h-6 bg-primary-600/10 text-primary-600 flex justify-center items-center text-lg hover:bg-primary-600/20 rounded">
                             <i class="ri-arrow-right-s-line"></i>
                         </a>
                     </div>
@@ -544,7 +544,7 @@
                                 <span class="text-sm text-neutral-600 font-normal">40+ Courses</span>
                             </div>
                         </div>
-                        <a href="javascript:void(0)" class="w-6 h-6 bg-primary-600/10 text-primary-600 dark:text-primary-600 flex justify-center items-center text-lg hover:bg-primary-600/20 rounded">
+                        <a href="javascript:void(0)" class="w-6 h-6 bg-primary-600/10 text-primary-600 flex justify-center items-center text-lg hover:bg-primary-600/20 rounded">
                             <i class="ri-arrow-right-s-line"></i>
                         </a>
                     </div>
@@ -559,7 +559,7 @@
                 <div class="card-header">
                     <div class="flex items-center flex-wrap gap-2 justify-between">
                         <h6 class="font-bold text-lg mb-0">Top Instructors</h6>
-                        <a href="javascript:void(0)" class="text-primary-600 dark:text-primary-600 hover:text-primary-600 flex items-center gap-1">
+                        <a href="javascript:void(0)" class="text-primary-600 hover:text-primary-600 flex items-center gap-1">
                             View All
                             <iconify-icon icon="solar:alt-arrow-right-linear" class="icon"></iconify-icon>
                         </a>
@@ -577,11 +577,11 @@
                         </div>
                         <div class="">
                             <div class="flex items-center gap-1.5 mb-1">
-                                <span class="text-lg text-warning-600 dark:text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
-                                <span class="text-lg text-warning-600 dark:text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
-                                <span class="text-lg text-warning-600 dark:text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
-                                <span class="text-lg text-warning-600 dark:text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
-                                <span class="text-lg text-warning-600 dark:text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
+                                <span class="text-lg text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
+                                <span class="text-lg text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
+                                <span class="text-lg text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
+                                <span class="text-lg text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
+                                <span class="text-lg text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
                             </div>
                             <span class="text-primary-light text-sm block text-right">25 Reviews</span>
                         </div>
@@ -598,11 +598,11 @@
                         </div>
                         <div class="">
                             <div class="flex items-center gap-1.5 mb-1">
-                                <span class="text-lg text-warning-600 dark:text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
-                                <span class="text-lg text-warning-600 dark:text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
-                                <span class="text-lg text-warning-600 dark:text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
-                                <span class="text-lg text-warning-600 dark:text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
-                                <span class="text-lg text-warning-600 dark:text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
+                                <span class="text-lg text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
+                                <span class="text-lg text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
+                                <span class="text-lg text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
+                                <span class="text-lg text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
+                                <span class="text-lg text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
                             </div>
                             <span class="text-primary-light text-sm block text-right">25 Reviews</span>
                         </div>
@@ -619,11 +619,11 @@
                         </div>
                         <div class="">
                             <div class="flex items-center gap-1.5 mb-1">
-                                <span class="text-lg text-warning-600 dark:text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
-                                <span class="text-lg text-warning-600 dark:text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
-                                <span class="text-lg text-warning-600 dark:text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
-                                <span class="text-lg text-warning-600 dark:text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
-                                <span class="text-lg text-warning-600 dark:text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
+                                <span class="text-lg text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
+                                <span class="text-lg text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
+                                <span class="text-lg text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
+                                <span class="text-lg text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
+                                <span class="text-lg text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
                             </div>
                             <span class="text-primary-light text-sm block text-right">25 Reviews</span>
                         </div>
@@ -640,11 +640,11 @@
                         </div>
                         <div class="">
                             <div class="flex items-center gap-1.5 mb-1">
-                                <span class="text-lg text-warning-600 dark:text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
-                                <span class="text-lg text-warning-600 dark:text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
-                                <span class="text-lg text-warning-600 dark:text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
-                                <span class="text-lg text-warning-600 dark:text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
-                                <span class="text-lg text-warning-600 dark:text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
+                                <span class="text-lg text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
+                                <span class="text-lg text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
+                                <span class="text-lg text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
+                                <span class="text-lg text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
+                                <span class="text-lg text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
                             </div>
                             <span class="text-primary-light text-sm block text-right">25 Reviews</span>
                         </div>
@@ -661,11 +661,11 @@
                         </div>
                         <div class="">
                             <div class="flex items-center gap-1.5 mb-1">
-                                <span class="text-lg text-warning-600 dark:text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
-                                <span class="text-lg text-warning-600 dark:text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
-                                <span class="text-lg text-warning-600 dark:text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
-                                <span class="text-lg text-warning-600 dark:text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
-                                <span class="text-lg text-warning-600 dark:text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
+                                <span class="text-lg text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
+                                <span class="text-lg text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
+                                <span class="text-lg text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
+                                <span class="text-lg text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
+                                <span class="text-lg text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
                             </div>
                             <span class="text-primary-light text-sm block text-right">25 Reviews</span>
                         </div>
@@ -682,11 +682,11 @@
                         </div>
                         <div class="">
                             <div class="flex items-center gap-1.5 mb-1">
-                                <span class="text-lg text-warning-600 dark:text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
-                                <span class="text-lg text-warning-600 dark:text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
-                                <span class="text-lg text-warning-600 dark:text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
-                                <span class="text-lg text-warning-600 dark:text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
-                                <span class="text-lg text-warning-600 dark:text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
+                                <span class="text-lg text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
+                                <span class="text-lg text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
+                                <span class="text-lg text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
+                                <span class="text-lg text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
+                                <span class="text-lg text-warning-600 flex line-height-1"><i class="ri-star-fill"></i></span>
                             </div>
                             <span class="text-primary-light text-sm block text-right">25 Reviews</span>
                         </div>
@@ -701,7 +701,7 @@
                 <div class="card-header">
                     <div class="flex items-center flex-wrap gap-2 justify-between">
                         <h6 class="font-bold text-lg mb-0">Student's Progress</h6>
-                        <a href="javascript:void(0)" class="text-primary-600 dark:text-primary-600 hover:text-primary-600 flex items-center gap-1">
+                        <a href="javascript:void(0)" class="text-primary-600 hover:text-primary-600 flex items-center gap-1">
                             View All
                             <iconify-icon icon="solar:alt-arrow-right-linear" class="icon"></iconify-icon>
                         </a>
@@ -827,7 +827,7 @@
                 <div class="card-header">
                     <div class="flex items-center flex-wrap gap-2 justify-between">
                         <h6 class="font-bold text-lg mb-0">Courses</h6>
-                        <a href="javascript:void(0)" class="text-primary-600 dark:text-primary-600 hover:text-primary-600 flex items-center gap-1">
+                        <a href="javascript:void(0)" class="text-primary-600 hover:text-primary-600 flex items-center gap-1">
                             View All
                             <iconify-icon icon="solar:alt-arrow-right-linear" class="icon"></iconify-icon>
                         </a>
@@ -958,7 +958,7 @@
                 <div class="card-header">
                     <div class="flex items-center flex-wrap gap-2 justify-between">
                         <h6 class="font-bold text-lg mb-0">Course Activity</h6>
-                        <a href="javascript:void(0)" class="text-primary-600 dark:text-primary-600 hover:text-primary-600 flex items-center gap-1">
+                        <a href="javascript:void(0)" class="text-primary-600 hover:text-primary-600 flex items-center gap-1">
                             View All
                             <iconify-icon icon="solar:alt-arrow-right-linear" class="icon"></iconify-icon>
                         </a>

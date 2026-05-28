@@ -18,24 +18,24 @@
             <div class="card h-full p-0 border-0">
                 <div class="card-body p-6">
                     <div class="mb-5">
-                        <label for="Lnaguage" class="text-sm font-semibold text-neutral-600 dark:text-neutral-200 mb-2 inline-block">Language</label>
-                        <select class="form-select form-control px-4 py-1 text-neutral-600 dark:text-white h-12" id="Lnaguage">
+                        <label for="Lnaguage" class="text-sm font-semibold text-neutral-600 mb-2 inline-block">Language</label>
+                        <select class="form-select form-control px-4 py-1 text-neutral-600 h-12" id="Lnaguage">
                             <option value="">Bangla</option>
                             <option value="">Hindi</option>
                             <option value="">Urdhu</option>
                         </select>
                     </div>
                     <div class="mb-5">
-                        <label for="AudioEffect" class="text-sm font-semibold text-neutral-600 dark:text-neutral-200 mb-2 inline-block">Audio Effect</label>
-                        <select class="form-select form-control px-4 py-1 text-neutral-600 dark:text-white h-12" id="AudioEffect">
+                        <label for="AudioEffect" class="text-sm font-semibold text-neutral-600 mb-2 inline-block">Audio Effect</label>
+                        <select class="form-select form-control px-4 py-1 text-neutral-600 h-12" id="AudioEffect">
                             <option value="">Smart Voice</option>
                             <option value="">Old Voice</option>
                             <option value="">Similar Voice</option>
                         </select>
                     </div>
                     <div class="mb-5">
-                        <label for="Voice" class="text-sm font-semibold text-neutral-600 dark:text-neutral-200 mb-2 inline-block">Voice</label>
-                        <select class="form-select form-control px-4 py-1 text-neutral-600 dark:text-white h-12" id="Voice">
+                        <label for="Voice" class="text-sm font-semibold text-neutral-600 mb-2 inline-block">Voice</label>
+                        <select class="form-select form-control px-4 py-1 text-neutral-600 h-12" id="Voice">
                             <option value="">Amber Health</option>
                             <option value="">Amber Health</option>
                             <option value="">Amber Health</option>
@@ -43,8 +43,8 @@
                         </select>
                     </div>
                     <div class="mb-5">
-                        <label for="Format" class="text-sm font-semibold text-neutral-600 dark:text-neutral-200 mb-2 inline-block">Format</label>
-                        <select class="form-select form-control px-4 py-1 text-neutral-600 dark:text-white h-12" id="Format">
+                        <label for="Format" class="text-sm font-semibold text-neutral-600 mb-2 inline-block">Format</label>
+                        <select class="form-select form-control px-4 py-1 text-neutral-600 h-12" id="Format">
                             <option value="">Mp3</option>
                             <option value="">Mp4</option>
                         </select>
@@ -57,7 +57,7 @@
             <div class="card h-full p-0 email-card overflow-x-auto block border-0">
                 <div class="min-w-[450px] flex flex-col justify-between h-full">
                     <div class="">
-                        <div class="card-header border-b border-neutral-200 dark:border-neutral-600 bg-white dark:bg-neutral-700 py-4 px-6 flex items-center gap-3 justify-between flex-wrap">
+                        <div class="card-header border-b border-neutral-200 bg-white py-4 px-6 flex items-center gap-3 justify-between flex-wrap">
                             <div class="flex items-center gap-2">
                                 <button class="text-secondary-light flex me-2"><iconify-icon icon="mingcute:arrow-left-line" class="icon text-xl line-height-1"></iconify-icon></button>
                                 <h6 class="mb-0 text-lg">Alright guys, so I've just seen this website...</h6>
@@ -70,7 +70,7 @@
                         </div>
                         <div class="card-body p-0">
 
-                            <div class="py-4 px-6 flex items-start justify-between gap-4 border-b border-neutral-200 dark:border-neutral-600 pb-4 mb-4">
+                            <div class="py-4 px-6 flex items-start justify-between gap-4 border-b border-neutral-200 pb-4 mb-4">
                                 <div class="flex items-center gap-4">
                                     <div class="img overflow-hidden shrink-0">
                                         <img src="{{ asset('assets/images/chat/1.png') }}" alt="image" class="w-[44px] h-[44px] rounded-full object-fit-cover">
@@ -80,11 +80,11 @@
                                         <p class="mb-0 text-secondary-light text-sm">Alright guys, so I've just seen this website, Fortunanest website, it's an investment website and you invest there. So I actually tried it some months, I tried it just for 3 months and I realized everything was working correct. I was thinking it was this fake website, I never met this website.                                        </p>
                                     </div>
                                 </div>
-                                <button type="button" class="flex items-center gap-1.5 px-2 py-1.5 bg-primary-50 dark:bg-primary-600/25 rounded bg-hover-primary-100 shrink-0"> <i class="ri-edit-2-fill"></i>  Edit</button>
+                                <button type="button" class="flex items-center gap-1.5 px-2 py-1.5 bg-primary-50 rounded bg-hover-primary-100 shrink-0"> <i class="ri-edit-2-fill"></i>  Edit</button>
                             </div>
 
-                            <div class="py-4 px-6 border-b border-neutral-200 dark:border-neutral-600">
-                                <div class="flex items-start gap-4 border-b border-neutral-200 dark:border-neutral-600 pb-4 mb-4">
+                            <div class="py-4 px-6 border-b border-neutral-200">
+                                <div class="flex items-start gap-4 border-b border-neutral-200 pb-4 mb-4">
                                     <div class="img overflow-hidden shrink-0">
                                         <img src="{{ asset('assets/images/wow-dash-favicon.png') }}" alt="image" class="w-[44px] h-[44px] rounded-full object-fit-cover">
                                     </div>
@@ -99,7 +99,7 @@
                                                 Download
                                                 <i class="ri-download-2-line"></i>
                                             </button>
-                                            <select class="form-select form-control px-4 py-1 text-neutral-600 dark:text-white h-12 w-auto">
+                                            <select class="form-select form-control px-4 py-1 text-neutral-600 h-12 w-auto">
                                                 <option value="">Mp3</option>
                                                 <option value="">Mp4</option>
                                             </select>
@@ -110,7 +110,7 @@
 
                         </div>
                     </div>
-                    <div class="card-footer py-4 px-6 bg-white dark:bg-neutral-700 border-t border-neutral-200 dark:border-neutral-600">
+                    <div class="card-footer py-4 px-6 bg-white border-t border-neutral-200">
                         <form action="#">
                             <div class="flex items-center justify-between">
                                 <textarea class="textarea-max-height bg-transparent focus:ring-0 w-full p-0 rounded-lg border-0 py-2 ps-2 resize-none scroll-sm" oninput="adjustHeight(this)" placeholder="Write massage"></textarea>

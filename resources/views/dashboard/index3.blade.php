@@ -16,7 +16,7 @@
                             <div class="flex items-center flex-wrap gap-2 justify-between">
                                 <h6 class="mb-2 font-bold text-lg">Revenue Report</h6>
                                 <div class="">
-                                    <select class="form-select form-select-sm w-auto bg-white dark:bg-neutral-700 border text-secondary-light">
+                                    <select class="form-select form-select-sm w-auto bg-white border text-secondary-light">
                                         <option>Yearly</option>
                                         <option>Monthly</option>
                                         <option>Weekly</option>
@@ -29,14 +29,14 @@
                                     <span class="w-3 h-3 rounded-sm bg-primary-600"></span>
                                     <span class="text-secondary-light text-sm font-semibold">
                                         Earning:
-                                        <span class="text-neutral-600 dark:text-neutral-200 font-bold">$400,00,000.00</span>
+                                        <span class="text-neutral-600 font-bold">$400,00,000.00</span>
                                     </span>
                                 </li>
                                 <li class="flex items-center gap-2">
                                     <span class="w-3 h-3 rounded-sm bg-warning-600"></span>
                                     <span class="text-secondary-light text-sm font-semibold">
                                         Expense:
-                                        <span class="text-neutral-600 dark:text-neutral-200 font-bold">$20,000.00</span>
+                                        <span class="text-neutral-600 font-bold">$20,000.00</span>
                                     </span>
                                 </li>
                             </ul>
@@ -45,55 +45,55 @@
                             </div>
                         </div>
                     </div>
-                    <div class="xl:col-span-12 2xl:col-span-6 2xl:border-l border-neutral-200 dark:border-neutral-600">
+                    <div class="xl:col-span-12 2xl:col-span-6 2xl:border-l border-neutral-200">
                         <div class="grid grid-cols-1 sm:grid-cols-2 border-s-neutral-300">
-                            <div class="card-body p-6 h-full flex flex-col border-b sm:border-r border-neutral-200 dark:border-neutral-600">
+                            <div class="card-body p-6 h-full flex flex-col border-b sm:border-r border-neutral-200">
                                 <div class="flex flex-wrap items-center justify-between gap-1 mb-0.5">
                                     <div>
-                                        <span class="w-[44px] h-[44px] text-primary-600 dark:text-primary-500 bg-primary-600/20 border border-primary-300 dark:border-primary-600/50 shrink-0 flex justify-center items-center rounded-lg h6 mb-4">
+                                        <span class="w-[44px] h-[44px] text-primary-600 bg-primary-600/20 border border-primary-300 shrink-0 flex justify-center items-center rounded-lg h6 mb-4">
                                             <iconify-icon icon="fa-solid:box-open" class="icon"></iconify-icon>
                                         </span>
                                         <span class="mb-1 font-medium text-secondary-light text-base">Total Products</span>
                                         <h6 class="font-semibold text-neutral-900 mt-2 mb-px">300</h6>
                                     </div>
                                 </div>
-                                <p class="text-sm mb-0 mt-3">Increase by  <span class="bg-success-100 dark:bg-success-600/25 px-1 py-0.5 rounded-sm font-medium text-success-600 dark:text-success-500 text-sm">+200</span> this week</p>
+                                <p class="text-sm mb-0 mt-3">Increase by  <span class="bg-success-100 px-1 py-0.5 rounded-sm font-medium text-success-600 text-sm">+200</span> this week</p>
                             </div>
-                            <div class="card-body p-6 h-full flex flex-col border-b border-neutral-200 dark:border-neutral-600">
+                            <div class="card-body p-6 h-full flex flex-col border-b border-neutral-200">
                                 <div class="flex flex-wrap items-center justify-between gap-1 mb-0.5">
                                     <div>
-                                        <span class="w-[44px] h-[44px] text-warning-600 dark:text-warning-500 bg-warning-600/20 border border-warning-300 dark:border-warning-600/50 shrink-0 flex justify-center items-center rounded-lg h6 mb-4">
+                                        <span class="w-[44px] h-[44px] text-warning-600 bg-warning-600/20 border border-warning-300 shrink-0 flex justify-center items-center rounded-lg h6 mb-4">
                                             <iconify-icon icon="flowbite:users-group-solid" class="icon"></iconify-icon>
                                         </span>
                                         <span class="mb-1 font-medium text-secondary-light text-base">Total Customer</span>
                                         <h6 class="font-semibold text-neutral-900 mt-2 mb-px">50,000</h6>
                                     </div>
                                 </div>
-                                <p class="text-sm mb-0 mt-3">Increase by  <span class="bg-danger-100 dark:bg-danger-600/25 px-1 py-0.5 rounded-sm font-medium text-danger-600 dark:text-danger-500 text-sm">-5k</span> this week</p>
+                                <p class="text-sm mb-0 mt-3">Increase by  <span class="bg-danger-100 px-1 py-0.5 rounded-sm font-medium text-danger-600 text-sm">-5k</span> this week</p>
                             </div>
-                            <div class="card-body p-6 h-full flex flex-col sm:border-r border-neutral-200 dark:border-neutral-600">
+                            <div class="card-body p-6 h-full flex flex-col sm:border-r border-neutral-200">
                                 <div class="flex flex-wrap items-center justify-between gap-1 mb-0.5">
                                     <div>
-                                        <span class="w-[44px] h-[44px] text-purple-600 dark:text-purple-500 bg-purple-600/20 border border-purple-300 dark:border-purple-600/50 shrink-0 flex justify-center items-center rounded-lg h6 mb-4">
+                                        <span class="w-[44px] h-[44px] text-purple-600 bg-purple-600/20 border border-purple-300 shrink-0 flex justify-center items-center rounded-lg h6 mb-4">
                                             <iconify-icon icon="majesticons:shopping-cart" class="icon"></iconify-icon>
                                         </span>
                                         <span class="mb-1 font-medium text-secondary-light text-base">Total Orders</span>
                                         <h6 class="font-semibold text-neutral-900 mt-2 mb-px">1400</h6>
                                     </div>
                                 </div>
-                                <p class="text-sm mb-0 mt-3">Increase by  <span class="bg-success-100 dark:bg-success-600/25 px-1 py-0.5 rounded-sm font-medium text-success-600 dark:text-success-500 text-sm">+1k</span> this week</p>
+                                <p class="text-sm mb-0 mt-3">Increase by  <span class="bg-success-100 px-1 py-0.5 rounded-sm font-medium text-success-600 text-sm">+1k</span> this week</p>
                             </div>
                             <div class="card-body p-6 h-full flex flex-col">
                                 <div class="flex flex-wrap items-center justify-between gap-1 mb-0.5">
                                     <div>
-                                        <span class="w-[44px] h-[44px] text-pink-600 dark:text-pink-500 bg-pink-600/20 border border-pink-300 dark:border-pink-600/50 shrink-0 flex justify-center items-center rounded-lg h6 mb-4">
+                                        <span class="w-[44px] h-[44px] text-pink-600 bg-pink-600/20 border border-pink-300 shrink-0 flex justify-center items-center rounded-lg h6 mb-4">
                                             <iconify-icon icon="ri:discount-percent-fill" class="icon"></iconify-icon>
                                         </span>
                                         <span class="mb-1 font-medium text-secondary-light text-base">Total Sales</span>
                                         <h6 class="font-semibold text-neutral-900 mt-2 mb-px">$25,00,000.00</h6>
                                     </div>
                                 </div>
-                                <p class="text-sm mb-0 mt-3">Increase by  <span class="bg-success-100 dark:bg-success-600/25 px-1 py-0.5 rounded-sm font-medium text-success-600 dark:text-success-500 text-sm">+$10k</span> this week</p>
+                                <p class="text-sm mb-0 mt-3">Increase by  <span class="bg-success-100 px-1 py-0.5 rounded-sm font-medium text-success-600 text-sm">+$10k</span> this week</p>
                             </div>
                         </div>
                     </div>
@@ -106,7 +106,7 @@
                     <div class="flex items-center flex-wrap gap-2 justify-between">
                         <h6 class="mb-2 font-bold text-lg">Customers Statistics</h6>
                         <div class="">
-                            <select class="form-select form-select-sm w-auto bg-white dark:bg-neutral-700 border text-secondary-light">
+                            <select class="form-select form-select-sm w-auto bg-white border text-secondary-light">
                                 <option>Yearly</option>
                                 <option>Monthly</option>
                                 <option>Weekly</option>
@@ -116,9 +116,9 @@
                     </div>
 
                     <div class="relative">
-                        <span class="w-[80px] h-[80px] bg-white dark:bg-neutral-700 shadow-lg text-neutral-600 dark:text-neutral-200 font-semibold text-xl flex justify-center items-center rounded-full absolute end-0 top-0 z-1">+30%</span>
+                        <span class="w-[80px] h-[80px] bg-white shadow-lg text-neutral-600 font-semibold text-xl flex justify-center items-center rounded-full absolute end-0 top-0 z-1">+30%</span>
                         <div id="statisticsDonutChart" class="mt-9 grow apexcharts-tooltip-z-none title-style circle-none"></div>
-                        <span class="w-[80px] h-[80px] bg-white dark:bg-neutral-700 shadow-lg text-neutral-600 dark:text-neutral-200 font-semibold text-xl flex justify-center items-center rounded-full absolute start-0 bottom-0 z-1">+25%</span>
+                        <span class="w-[80px] h-[80px] bg-white shadow-lg text-neutral-600 font-semibold text-xl flex justify-center items-center rounded-full absolute start-0 bottom-0 z-1">+25%</span>
                     </div>
 
                     <ul class="flex flex-wrap items-center justify-between mt-4 gap-3">
@@ -126,14 +126,14 @@
                             <span class="w-3 h-3 rounded-sm bg-primary-600"></span>
                             <span class="text-secondary-light text-sm font-normal">
                                 Male:
-                                <span class="text-neutral-600 dark:text-neutral-200 font-bold">20,000</span>
+                                <span class="text-neutral-600 font-bold">20,000</span>
                             </span>
                         </li>
                         <li class="flex items-center gap-2">
                             <span class="w-3 h-3 rounded-sm bg-warning-600"></span>
                             <span class="text-secondary-light text-sm font-normal">
                                 Female:
-                                <span class="text-neutral-600 dark:text-neutral-200 font-bold">25,000</span>
+                                <span class="text-neutral-600 font-bold">25,000</span>
                             </span>
                         </li>
                     </ul>
@@ -146,7 +146,7 @@
                 <div class="card-body p-6">
                     <div class="flex items-center flex-wrap gap-2 justify-between mb-5">
                         <h6 class="mb-2 font-bold text-lg">Recent Orders</h6>
-                        <a href="javascript:void(0)" class="text-primary-600 dark:text-primary-600 hover-text-primary flex items-center gap-1">
+                        <a href="javascript:void(0)" class="text-primary-600 hover-text-primary flex items-center gap-1">
                             View All
                             <iconify-icon icon="solar:alt-arrow-right-linear" class="icon"></iconify-icon>
                         </a>
@@ -175,7 +175,7 @@
                                     <td>iPhone 14 max</td>
                                     <td>2</td>
                                     <td>$5,000.00</td>
-                                    <td class="text-center"> <span class="bg-success-100 dark:bg-success-600/25 text-success-600 dark:text-success-400 px-6 py-1.5 rounded-full font-medium text-sm">Paid</span> </td>
+                                    <td class="text-center"> <span class="bg-success-100 text-success-600 px-6 py-1.5 rounded-full font-medium text-sm">Paid</span> </td>
                                 </tr>
                                 <tr>
                                     <td>
@@ -188,7 +188,7 @@
                                     <td>Laptop HPH </td>
                                     <td>3</td>
                                     <td>$1,000.00</td>
-                                    <td class="text-center"> <span class="bg-warning-100 dark:bg-warning-600/25 text-warning-600 dark:text-warning-400 px-6 py-1.5 rounded-full font-medium text-sm">Pending</span> </td>
+                                    <td class="text-center"> <span class="bg-warning-100 text-warning-600 px-6 py-1.5 rounded-full font-medium text-sm">Pending</span> </td>
                                 </tr>
                                 <tr>
                                     <td>
@@ -201,7 +201,7 @@
                                     <td>Smart Watch </td>
                                     <td>7</td>
                                     <td>$1,000.00</td>
-                                    <td class="text-center"> <span class="bg-info-100 dark:bg-info-600/25 text-info-600 dark:text-info-400 px-6 py-1.5 rounded-full font-medium text-sm">Shipped</span> </td>
+                                    <td class="text-center"> <span class="bg-info-100 text-info-600 px-6 py-1.5 rounded-full font-medium text-sm">Shipped</span> </td>
                                 </tr>
                                 <tr>
                                     <td>
@@ -214,7 +214,7 @@
                                     <td>Nike Air Shoe</td>
                                     <td>1</td>
                                     <td>$3,000.00</td>
-                                    <td class="text-center"> <span class="bg-danger-100 dark:bg-danger-600/25 text-danger-600 dark:text-danger-400 px-6 py-1.5 rounded-full font-medium text-sm">Canceled</span> </td>
+                                    <td class="text-center"> <span class="bg-danger-100 text-danger-600 px-6 py-1.5 rounded-full font-medium text-sm">Canceled</span> </td>
                                 </tr>
                                 <tr>
                                     <td>
@@ -227,7 +227,7 @@
                                     <td>New Headphone </td>
                                     <td>5</td>
                                     <td>$4,000.00</td>
-                                    <td class="text-center"> <span class="bg-danger-100 dark:bg-danger-600/25 text-danger-600 dark:text-danger-400 px-6 py-1.5 rounded-full font-medium text-sm">Canceled</span> </td>
+                                    <td class="text-center"> <span class="bg-danger-100 text-danger-600 px-6 py-1.5 rounded-full font-medium text-sm">Canceled</span> </td>
                                 </tr>
                             </tbody>
                         </table>
@@ -242,7 +242,7 @@
                     <div class="flex items-center flex-wrap gap-2 justify-between">
                         <h6 class="mb-2 font-bold text-lg">Transactions</h6>
                         <div class="">
-                            <select class="form-select form-select-sm w-auto bg-white dark:bg-neutral-700 border text-secondary-light">
+                            <select class="form-select form-select-sm w-auto bg-white border text-secondary-light">
                                 <option>This Month</option>
                                 <option>Last Month</option>
                             </select>
@@ -327,7 +327,7 @@
                     <div class="flex items-center gap-2">
                         <h6 class="font-semibold mb-0">$27,200</h6>
                         <p class="text-sm mb-0">
-                            <span class="bg-success-600/20 border border-success-600/25 px-2 py-1 rounded-full font-semibold text-success-600 dark:text-success-400 text-sm inline-flex items-center gap-1">
+                            <span class="bg-success-600/20 border border-success-600/25 px-2 py-1 rounded-full font-semibold text-success-600 text-sm inline-flex items-center gap-1">
                                 10%
                                 <iconify-icon icon="iconamoon:arrow-up-2-fill" class="icon"></iconify-icon>
                             </span>
@@ -345,7 +345,7 @@
                     <div class="flex items-center flex-wrap gap-2 justify-between">
                         <h6 class="mb-2 font-bold text-lg">Distribution Maps</h6>
                         <div class="">
-                            <select class="form-select form-select-sm w-auto bg-white dark:bg-neutral-700 border text-secondary-light">
+                            <select class="form-select form-select-sm w-auto bg-white border text-secondary-light">
                                 <option>Yearly</option>
                                 <option>Monthly</option>
                                 <option>Weekly</option>
@@ -355,7 +355,7 @@
                     </div>
                 </div>
 
-                <div id="world-map" class="h-[200px] bg-neutral-100 dark:bg-neutral-600/30"></div>
+                <div id="world-map" class="h-[200px] bg-neutral-100"></div>
 
                 <div class="card-body p-6 max-h-[266px] scroll-sm overflow-y-auto">
                     <div class="">
@@ -443,7 +443,7 @@
                 <div class="card-body">
                     <div class="flex items-center flex-wrap gap-2 justify-between mb-5">
                         <h6 class="mb-2 font-bold text-lg mb-0">Top Customers</h6>
-                        <a href="javascript:void(0)" class="text-primary-600 dark:text-primary-600 hover-text-primary flex items-center gap-1">
+                        <a href="javascript:void(0)" class="text-primary-600 hover-text-primary flex items-center gap-1">
                             View All
                             <iconify-icon icon="solar:alt-arrow-right-linear" class="icon"></iconify-icon>
                         </a>
@@ -459,7 +459,7 @@
                                     <span class="text-sm text-secondary-light font-normal">017******58</span>
                                 </div>
                             </div>
-                            <span class="text-neutral-600 dark:text-neutral-200 text-base font-medium">Orders: 30</span>
+                            <span class="text-neutral-600 text-base font-medium">Orders: 30</span>
                         </div>
 
                         <div class="flex items-center justify-between gap-3 mb-8">
@@ -470,7 +470,7 @@
                                     <span class="text-sm text-secondary-light font-normal">017******58</span>
                                 </div>
                             </div>
-                            <span class="text-neutral-600 dark:text-neutral-200 text-base font-medium">Orders: 30</span>
+                            <span class="text-neutral-600 text-base font-medium">Orders: 30</span>
                         </div>
 
                         <div class="flex items-center justify-between gap-3 mb-8">
@@ -481,7 +481,7 @@
                                     <span class="text-sm text-secondary-light font-normal">017******58</span>
                                 </div>
                             </div>
-                            <span class="text-neutral-600 dark:text-neutral-200 text-base font-medium">Orders: 35</span>
+                            <span class="text-neutral-600 text-base font-medium">Orders: 35</span>
                         </div>
 
                         <div class="flex items-center justify-between gap-3 mb-8">
@@ -492,7 +492,7 @@
                                     <span class="text-sm text-secondary-light font-normal">017******58</span>
                                 </div>
                             </div>
-                            <span class="text-neutral-600 dark:text-neutral-200 text-base font-medium">Orders: 20</span>
+                            <span class="text-neutral-600 text-base font-medium">Orders: 20</span>
                         </div>
 
                         <div class="flex items-center justify-between gap-3 mb-8">
@@ -503,7 +503,7 @@
                                     <span class="text-sm text-secondary-light font-normal">017******58</span>
                                 </div>
                             </div>
-                            <span class="text-neutral-600 dark:text-neutral-200 text-base font-medium">Orders: 25</span>
+                            <span class="text-neutral-600 text-base font-medium">Orders: 25</span>
                         </div>
 
                         <div class="flex items-center justify-between gap-3">
@@ -514,7 +514,7 @@
                                     <span class="text-sm text-secondary-light font-normal">017******58</span>
                                 </div>
                             </div>
-                            <span class="text-neutral-600 dark:text-neutral-200 text-base font-medium">Orders: 32</span>
+                            <span class="text-neutral-600 text-base font-medium">Orders: 32</span>
                         </div>
 
                     </div>
@@ -526,7 +526,7 @@
                 <div class="card-body p-6">
                     <div class="flex items-center flex-wrap gap-2 justify-between mb-5">
                         <h6 class="mb-2 font-bold text-lg mb-0">Top Selling Product</h6>
-                        <a href="javascript:void(0)" class="text-primary-600 dark:text-primary-600 hover-text-primary flex items-center gap-1">
+                        <a href="javascript:void(0)" class="text-primary-600 hover-text-primary flex items-center gap-1">
                             View All
                             <iconify-icon icon="solar:alt-arrow-right-linear" class="icon"></iconify-icon>
                         </a>
@@ -557,7 +557,7 @@
                                     <td>15%</td>
                                     <td>300</td>
                                     <td class="text-center">
-                                        <span class="bg-success-100 dark:bg-success-600/25 text-success-600 dark:text-success-400 px-8 py-1.5 rounded-full font-medium text-sm">70</span>
+                                        <span class="bg-success-100 text-success-600 px-8 py-1.5 rounded-full font-medium text-sm">70</span>
                                     </td>
                                 </tr>
                                 <tr>
@@ -574,7 +574,7 @@
                                     <td>N/A</td>
                                     <td>200</td>
                                     <td class="text-center">
-                                        <span class="bg-success-100 dark:bg-success-600/25 text-success-600 dark:text-success-400 px-8 py-1.5 rounded-full font-medium text-sm">70</span>
+                                        <span class="bg-success-100 text-success-600 px-8 py-1.5 rounded-full font-medium text-sm">70</span>
                                     </td>
                                 </tr>
                                 <tr>
@@ -591,7 +591,7 @@
                                     <td>$50.00</td>
                                     <td>1400</td>
                                     <td class="text-center">
-                                        <span class="bg-success-100 dark:bg-success-600/25 text-success-600 dark:text-success-400 px-8 py-1.5 rounded-full font-medium text-sm">70</span>
+                                        <span class="bg-success-100 text-success-600 px-8 py-1.5 rounded-full font-medium text-sm">70</span>
                                     </td>
                                 </tr>
                                 <tr>
@@ -608,7 +608,7 @@
                                     <td>$50.00</td>
                                     <td>700</td>
                                     <td class="text-center">
-                                        <span class="bg-success-100 dark:bg-success-600/25 text-success-600 dark:text-success-400 px-8 py-1.5 rounded-full font-medium text-sm">70</span>
+                                        <span class="bg-success-100 text-success-600 px-8 py-1.5 rounded-full font-medium text-sm">70</span>
                                     </td>
                                 </tr>
                                 <tr>
@@ -625,7 +625,7 @@
                                     <td>25%</td>
                                     <td>400</td>
                                     <td class="text-center">
-                                        <span class="bg-success-100 dark:bg-success-600/25 text-success-600 dark:text-success-400 px-8 py-1.5 rounded-full font-medium text-sm">70</span>
+                                        <span class="bg-success-100 text-success-600 px-8 py-1.5 rounded-full font-medium text-sm">70</span>
                                     </td>
                                 </tr>
                             </tbody>
@@ -639,7 +639,7 @@
                 <div class="card-body p-6">
                     <div class="flex items-center flex-wrap gap-2 justify-between mb-5">
                         <h6 class="mb-2 font-bold text-lg">Stock Report</h6>
-                        <a href="javascript:void(0)" class="text-primary-600 dark:text-primary-600 hover-text-primary flex items-center gap-1">
+                        <a href="javascript:void(0)" class="text-primary-600 hover-text-primary flex items-center gap-1">
                             View All
                             <iconify-icon icon="solar:alt-arrow-right-linear" class="icon"></iconify-icon>
                         </a>

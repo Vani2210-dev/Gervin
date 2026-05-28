@@ -11,7 +11,7 @@
     <div class="grid grid-cols-1 sm:grid-cols-12 gap-6">
         <div class="col-span-12 sm:col-span-6">
             <div class="card p-0 overflow-hidden relative rounded-xl border-0">
-                <div class="card-header py-4 px-6 bg-white dark:bg-neutral-700 border-b border-neutral-200 dark:border-neutral-600">
+                <div class="card-header py-4 px-6 bg-white border-b border-neutral-200">
                     <h6 class="text-lg mb-0">Default Carousel</h6>
                 </div>
                 <div class="card-body p-0 default-carousel">
@@ -41,7 +41,7 @@
         </div>
         <div class="col-span-12 sm:col-span-6">
             <div class="card p-0 overflow-hidden relative rounded-xl border-0">
-                <div class="card-header py-4 px-6 bg-white dark:bg-neutral-700 border-b border-neutral-200 dark:border-neutral-600">
+                <div class="card-header py-4 px-6 bg-white border-b border-neutral-200">
                     <h6 class="text-lg mb-0">Carousel With Arrows</h6>
                 </div>
                 <div class="card-body p-0 arrow-carousel">
@@ -71,7 +71,7 @@
         </div>
         <div class="col-span-12 sm:col-span-6">
             <div class="card p-0 overflow-hidden relative rounded-xl border-0">
-                <div class="card-header py-4 px-6 bg-white dark:bg-neutral-700 border-b border-neutral-200 dark:border-neutral-600">
+                <div class="card-header py-4 px-6 bg-white border-b border-neutral-200">
                     <h6 class="text-lg mb-0">Carousel With Pagination</h6>
                 </div>
                 <div class="card-body p-0 pagination-carousel slick-dots-style-two absolute-dots">
@@ -108,7 +108,7 @@
         </div>
         <div class="col-span-12 sm:col-span-6">
             <div class="card p-0 overflow-hidden relative rounded-xl border-0">
-                <div class="card-header py-4 px-6 bg-white dark:bg-neutral-700 border-b border-neutral-200 dark:border-neutral-600">
+                <div class="card-header py-4 px-6 bg-white border-b border-neutral-200">
                     <h6 class="text-lg mb-0">Carousel with progress</h6>
                 </div>
                 <div class="card-body p-0 relative">
@@ -150,7 +150,7 @@
         </div>
         <div class="col-span-12">
             <div class="card p-0 overflow-hidden relative rounded-xl border-0">
-                <div class="card-header py-4 px-6 bg-white dark:bg-neutral-700 border-b border-neutral-200 dark:border-neutral-600">
+                <div class="card-header py-4 px-6 bg-white border-b border-neutral-200">
                     <h6 class="text-lg mb-0">Multiple slides</h6>
                 </div>
                 <div class="card-body py-6 px-4 multiple-carousel slick-dots-style-two">

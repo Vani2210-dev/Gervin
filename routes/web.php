@@ -13,10 +13,14 @@ use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\TableController;
 use App\Http\Controllers\UsersController;
 use App\Http\Controllers\CryptocurrencyController;
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\MediaController;
 
 Route::controller(DashboardController::class)->group(function () {
     Route::get('/', 'index')->name('index');
 });
+
+Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
 Route::controller(HomeController::class)->group(function () {
     Route::get('calendar-Main','calendarMain')->name('calendarMain');
@@ -34,10 +38,9 @@ Route::controller(HomeController::class)->group(function () {
     Route::get('terms-condition','termsCondition')->name('termsCondition');
     Route::get('veiw-details','veiwDetails')->name('veiwDetails');
     Route::get('widgets','widgets')->name('widgets');
+});
 
-    });
-
-    // aiApplication
+// aiApplication
 Route::prefix('aiapplication')->group(function () {
     Route::controller(AiapplicationController::class)->group(function () {
         Route::get('/code-generator', 'codeGenerator')->name('codeGenerator');
@@ -50,13 +53,17 @@ Route::prefix('aiapplication')->group(function () {
     });
 });
 
-// Authentication
+// Authentication (legacy redirects to Breeze routes)
 Route::prefix('authentication')->group(function () {
-    Route::controller(AuthenticationController::class)->group(function () {
-        Route::get('/forgot-password', 'forgotPassword')->name('forgotPassword');
-        Route::get('/sign-in', 'signin')->name('signin');
-        Route::get('/sign-up', 'signup')->name('signup');
-    });
+    Route::get('/sign-in', function () {
+        return redirect()->route('login');
+    })->name('signin');
+    Route::get('/sign-up', function () {
+        return redirect()->route('register');
+    })->name('signup');
+    Route::get('/forgot-password', function () {
+        return redirect()->route('password.request');
+    })->name('forgotPassword');
 });
 
 // chart
@@ -95,7 +102,7 @@ Route::prefix('componentspage')->group(function () {
     });
 });
 
-// Dashboard
+// Cryptocurrency
 Route::prefix('cryptocurrency')->group(function () {
     Route::controller(CryptocurrencyController::class)->group(function () {
         Route::get('/wallet','wallet')->name('wallet');
@@ -127,7 +134,7 @@ Route::prefix('forms')->group(function () {
     });
 });
 
-// invoice/invoiceList
+// Invoice
 Route::prefix('invoice')->group(function () {
     Route::controller(InvoiceController::class)->group(function () {
         Route::get('/invoice-add', 'invoiceAdd')->name('invoiceAdd');
@@ -159,11 +166,34 @@ Route::prefix('table')->group(function () {
 });
 
 // Users
-Route::prefix('users')->group(function () {
+Route::middleware(['auth'])->prefix('users')->group(function () {
     Route::controller(UsersController::class)->group(function () {
-        Route::get('/add-user', 'addUser')->name('addUser');
+        Route::get('/', 'index')->name('users.index');
+        Route::get('/add', 'create')->name('users.create');
+        Route::post('/', 'store')->name('users.store');
         Route::get('/users-grid', 'usersGrid')->name('usersGrid');
-        Route::get('/users-list', 'usersList')->name('usersList');
         Route::get('/view-profile', 'viewProfile')->name('viewProfile');
+        Route::post('/view-profile', 'updateProfile')->name('updateProfile');
+        Route::get('/{user}/edit', 'edit')->name('users.edit');
+        Route::put('/{user}', 'update')->name('users.update');
+        Route::delete('/{user}', 'destroy')->name('users.destroy');
+        Route::get('/{user}/avatar', 'avatar')->name('users.avatar');
+        Route::get('/{user}', 'show')->name('users.show');
     });
 });
+
+// Roles
+Route::middleware(['auth'])->resource('roles', RoleController::class);
+
+// Media
+Route::middleware(['auth'])->prefix('media')->name('media.')->group(function () {
+    Route::get('/', [MediaController::class, 'index'])->name('index');
+    Route::post('/', [MediaController::class, 'store'])->name('store');
+    Route::post('/folder', [MediaController::class, 'createFolder'])->name('folder');
+    Route::delete('/{filename}', [MediaController::class, 'destroy'])->name('destroy')->where('filename', '.*');
+    Route::get('/serve/{filename}', [MediaController::class, 'serve'])->name('serve')->where('filename', '.*');
+    Route::get('/download/{filename}', [MediaController::class, 'download'])->name('download')->where('filename', '.*');
+});
+
+
+require __DIR__.'/auth.php';
