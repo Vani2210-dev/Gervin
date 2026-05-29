@@ -39,6 +39,12 @@ class RoleSeeder extends Seeder
             'view media',
             'add media',
             'delete media',
+
+            // Supply permissions
+            'view supply',
+            'add supply',
+            'edit supply',
+            'delete supply',
         ]);
     }
 }

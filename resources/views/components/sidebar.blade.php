@@ -47,6 +47,23 @@
                 </ul>
             </li>
             <li class="sidebar-menu-group-title">Ứng dụng</li>
+            @can('view supply')
+            <li>
+                <a href="{{ route('supplies.index') }}">
+                    <iconify-icon icon="mdi:package-variant-closed" class="menu-icon"></iconify-icon>
+                    <span>Vật tư</span>
+                </a>
+            </li>
+            @endcan
+            @can('view media')
+            <li>
+                <a href="{{ route('media.index') }}">
+                    <iconify-icon icon="solar:folder-cloud-outline" class="menu-icon"></iconify-icon>
+                    <span>Quản lý File</span>
+                </a>
+            </li>
+            @endcan
+            @can('view user')
             <li class="dropdown">
                 <a href="javascript:void(0)">
                     <iconify-icon icon="flowbite:users-group-outline" class="menu-icon"></iconify-icon>
@@ -64,6 +81,8 @@
                     </li>
                 </ul>
             </li>
+            @endcan
+            @can('view role')
             <li class="dropdown">
                 <a href="javascript:void(0)">
                     <iconify-icon icon="heroicons:shield-check" class="menu-icon"></iconify-icon>
@@ -75,13 +94,7 @@
                     </li>
                 </ul>
             </li>
-
-            <li>
-                <a href="{{ route('media.index') }}">
-                    <iconify-icon icon="solar:folder-cloud-outline" class="menu-icon"></iconify-icon>
-                    <span>Quản lý File</span>
-                </a>
-            </li>
+            @endcan
 
             <li class="sidebar-menu-group-title">Ứng dụng</li>
 

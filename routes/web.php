@@ -15,6 +15,7 @@ use App\Http\Controllers\UsersController;
 use App\Http\Controllers\CryptocurrencyController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\MediaController;
+use App\Http\Controllers\SupplyController;
 
 Route::controller(DashboardController::class)->group(function () {
     Route::get('/', 'index')->name('index');
@@ -195,5 +196,10 @@ Route::middleware(['auth'])->prefix('media')->name('media.')->group(function () 
     Route::get('/download/{filename}', [MediaController::class, 'download'])->name('download')->where('filename', '.*');
 });
 
+
+// Supplies
+Route::middleware(['auth'])->group(function () {
+    Route::resource('supplies', SupplyController::class)->names('supplies');
+});
 
 require __DIR__.'/auth.php';
