@@ -21,7 +21,7 @@ class DatabaseSeeder extends Seeder
         // User::factory(10)->create();
 
         User::firstOrCreate(
-            ['email' => 'admin@example.com'],
+            ['email' => 'admin@kbtech.com'],
             [
                 'name' => 'Admin',
                 'password' => bcrypt('password'),
@@ -29,9 +29,10 @@ class DatabaseSeeder extends Seeder
         )->assignRole('admin');
 
         User::firstOrCreate(
-            ['email' => 'test@example.com'],
+            ['email' => 'test@kbtech.com'],
             [
                 'name' => 'Test User',
+                'password' => bcrypt('password'),
             ]
         )->assignRole('user');
     }

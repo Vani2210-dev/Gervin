@@ -57,20 +57,13 @@
     </div>
     <div class="mb-5">
         <label for="role_id" class="inline-block font-semibold text-neutral-600 text-sm mb-2">Vai trò</label>
-        <select class="form-control rounded-lg form-select" id="role_id" name="role_id">
+        <select class="tom-select-role" id="role_id" name="role_id">
             <option value="">-- Chọn vai trò --</option>
             @foreach($roles as $role)
                 <option value="{{ $role->id }}" {{ old('role_id', $user?->role_id) == $role->id ? 'selected' : '' }}>{{ $role->name }}</option>
             @endforeach
         </select>
         @error('role_id')
-            <div class="text-danger-600 text-sm mt-1">{{ $message }}</div>
-        @enderror
-    </div>
-    <div class="mb-5">
-        <label for="designation" class="inline-block font-semibold text-neutral-600 text-sm mb-2">Chức vụ</label>
-        <input type="text" class="form-control rounded-lg" id="designation" name="designation" value="{{ old('designation', $user?->designation) }}" placeholder="Nhập chức vụ">
-        @error('designation')
             <div class="text-danger-600 text-sm mt-1">{{ $message }}</div>
         @enderror
     </div>
@@ -101,6 +94,15 @@
 </form>
 
 <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        if (typeof TomSelect !== 'undefined' && document.getElementById('role_id')) {
+            new TomSelect('#role_id', {
+                allowEmptyOption: true,
+                placeholder: '-- Chọn vai trò --',
+            });
+        }
+    });
+
     document.getElementById('avatar').addEventListener('change', function() {
         if (this.files && this.files[0]) {
             var reader = new FileReader();

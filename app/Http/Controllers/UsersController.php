@@ -52,7 +52,6 @@ class UsersController extends Controller
             'name'        => 'required|string|max:255',
             'email'       => 'required|email|unique:users,email',
             'phone'       => 'nullable|string|max:20',
-            'designation' => 'nullable|string|max:255',
             'description' => 'nullable|string',
             'role_id'     => 'nullable|exists:roles,id',
             'avatar'      => 'nullable|image|max:2048',
@@ -98,7 +97,6 @@ class UsersController extends Controller
             'name'        => 'required|string|max:255',
             'email'       => 'required|email|unique:users,email,' . $user->id,
             'phone'       => 'nullable|string|max:20',
-            'designation' => 'nullable|string|max:255',
             'description' => 'nullable|string',
             'role_id'     => 'nullable|exists:roles,id',
             'avatar'      => 'nullable|image|max:2048',
@@ -199,7 +197,6 @@ class UsersController extends Controller
             'name'        => 'required|string|max:255',
             'email'       => 'required|email|unique:users,email,' . $user->id,
             'phone'       => 'nullable|string|max:20',
-            'designation' => 'nullable|string|max:255',
             'description' => 'nullable|string',
             'avatar'      => 'nullable|image|max:2048',
             'password'    => 'nullable|string|min:8',
@@ -209,7 +206,6 @@ class UsersController extends Controller
             'name'        => $request->name,
             'email'       => $request->email,
             'phone'       => $request->phone,
-            'designation' => $request->designation,
             'description' => $request->description,
         ];
 

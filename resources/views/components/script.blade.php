@@ -23,6 +23,8 @@
     <script src="{{ asset('assets/js/lib/audioplayer.js') }}"></script>
 
     <script src="{{ asset('assets/js/flowbite.min.js') }}"></script>
+    <!-- Tom Select js -->
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
     <!-- main js -->
     <script src="{{ asset('assets/js/app.js') }}"></script>
 

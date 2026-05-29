@@ -47,6 +47,44 @@
                 </ul>
             </li>
             <li class="sidebar-menu-group-title">Ứng dụng</li>
+            <li class="dropdown">
+                <a href="javascript:void(0)">
+                    <iconify-icon icon="flowbite:users-group-outline" class="menu-icon"></iconify-icon>
+                    <span>Người dùng</span>
+                </a>
+                <ul class="sidebar-submenu">
+                    <li>
+                        <a href="{{ route('users.index') }}"><i class="ri-circle-fill circle-icon text-primary-600 w-auto"></i> Danh sách người dùng</a>
+                    </li>
+                    <li>
+                        <a href="{{ route('users.create') }}"><i class="ri-circle-fill circle-icon text-info-600 w-auto"></i> Thêm người dùng</a>
+                    </li>
+                    <li>
+                        <a href="{{ route('viewProfile') }}"><i class="ri-circle-fill circle-icon text-danger-600 w-auto"></i> Xem hồ sơ</a>
+                    </li>
+                </ul>
+            </li>
+            <li class="dropdown">
+                <a href="javascript:void(0)">
+                    <iconify-icon icon="heroicons:shield-check" class="menu-icon"></iconify-icon>
+                    <span>Phân quyền</span>
+                </a>
+                <ul class="sidebar-submenu">
+                    <li>
+                        <a href="{{ route('roles.index') }}"><i class="ri-circle-fill circle-icon text-primary-600 w-auto"></i> Vai trò</a>
+                    </li>
+                </ul>
+            </li>
+
+            <li>
+                <a href="{{ route('media.index') }}">
+                    <iconify-icon icon="solar:folder-cloud-outline" class="menu-icon"></iconify-icon>
+                    <span>Quản lý File</span>
+                </a>
+            </li>
+
+            <li class="sidebar-menu-group-title">Ứng dụng</li>
+
             <li>
                 <a href="{{ route('email') }}">
                     <iconify-icon icon="mage:email" class="menu-icon"></iconify-icon>
@@ -257,43 +295,6 @@
                     <span>Widgets</span>
                 </a>
             </li>
-            <li class="dropdown">
-                <a href="javascript:void(0)">
-                    <iconify-icon icon="flowbite:users-group-outline" class="menu-icon"></iconify-icon>
-                    <span>Người dùng</span>
-                </a>
-                <ul class="sidebar-submenu">
-                    <li>
-                        <a href="{{ route('users.index') }}"><i class="ri-circle-fill circle-icon text-primary-600 w-auto"></i> Danh sách người dùng</a>
-                    </li>
-                    <li>
-                        <a href="{{ route('users.create') }}"><i class="ri-circle-fill circle-icon text-info-600 w-auto"></i> Thêm người dùng</a>
-                    </li>
-                    <li>
-                        <a href="{{ route('viewProfile') }}"><i class="ri-circle-fill circle-icon text-danger-600 w-auto"></i> Xem hồ sơ</a>
-                    </li>
-                </ul>
-            </li>
-            <li class="dropdown">
-                <a href="javascript:void(0)">
-                    <iconify-icon icon="heroicons:shield-check" class="menu-icon"></iconify-icon>
-                    <span>Phân quyền</span>
-                </a>
-                <ul class="sidebar-submenu">
-                    <li>
-                        <a href="{{ route('roles.index') }}"><i class="ri-circle-fill circle-icon text-primary-600 w-auto"></i> Vai trò</a>
-                    </li>
-                </ul>
-            </li>
-
-            <li>
-                <a href="{{ route('media.index') }}">
-                    <iconify-icon icon="solar:folder-cloud-outline" class="menu-icon"></iconify-icon>
-                    <span>Quản lý File</span>
-                </a>
-            </li>
-
-            <li class="sidebar-menu-group-title">Ứng dụng</li>
 
             <li class="dropdown">
                 <a href="javascript:void(0)">
