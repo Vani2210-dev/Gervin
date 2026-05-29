@@ -59,16 +59,22 @@
                     </div>
                 </div>
                 <!-- Notification End  -->
-
-
+@auth
                 <button data-dropdown-toggle="dropdownProfile" class="flex justify-center items-center rounded-full" type="button">
-                    <img src="{{ asset('assets/images/user.png') }}" alt="image" class="w-10 h-10 object-fit-cover rounded-full">
+                    @if(auth()->user()->avatar)
+                        <img src="{{ route('users.avatar', auth()->user()) }}?t={{ auth()->user()->updated_at?->timestamp }}"
+                             alt="" class="w-10 h-10 object-cover rounded-full">
+                    @else
+                        <div class="w-10 h-10 rounded-full bg-primary-600 text-white flex items-center justify-center font-bold text-sm">
+                            {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
+                        </div>
+                    @endif
                 </button>
                 <div id="dropdownProfile" class="z-10 hidden bg-white rounded-lg shadow-lg dropdown-menu-sm p-3">
                     <div class="py-3 px-4 rounded-lg bg-primary-50 mb-4 flex items-center justify-between gap-2">
                         <div>
-                            <h6 class="text-lg text-neutral-900 font-semibold mb-0">Admin</h6>
-                            <span class="text-neutral-500">Quản trị viên</span>
+                            <h6 class="text-lg text-neutral-900 font-semibold mb-0">{{ auth()->user()->name }}</h6>
+                            <span class="text-neutral-500">{{ auth()->user()->role?->name ?? 'Người dùng' }}</span>
                         </div>
                         <button type="button" class="hover:text-danger-600">
                             <iconify-icon icon="radix-icons:cross-1" class="icon text-xl"></iconify-icon>
@@ -79,27 +85,31 @@
                         <ul class="flex flex-col">
                             <li>
                                 <a class="text-black px-0 py-2 hover:text-primary-600 flex items-center gap-4" href="{{ route('viewProfile') }}">
-                                    <iconify-icon icon="solar:user-linear" class="icon text-xl"></iconify-icon>  My Profile
+                                    <iconify-icon icon="solar:user-linear" class="icon text-xl"></iconify-icon> Hồ sơ của tôi
                                 </a>
                             </li>
                             <li>
                                 <a class="text-black px-0 py-2 hover:text-primary-600 flex items-center gap-4" href="{{ route('email') }}">
-                                    <iconify-icon icon="tabler:message-check" class="icon text-xl"></iconify-icon>  Hộp thư
+                                    <iconify-icon icon="tabler:message-check" class="icon text-xl"></iconify-icon> Hộp thư
                                 </a>
                             </li>
                             <li>
                                 <a class="text-black px-0 py-2 hover:text-primary-600 flex items-center gap-4" href="{{ route('company') }}">
-                                    <iconify-icon icon="icon-park-outline:setting-two" class="icon text-xl"></iconify-icon>  Cài đặt
+                                    <iconify-icon icon="icon-park-outline:setting-two" class="icon text-xl"></iconify-icon> Cài đặt
                                 </a>
                             </li>
                             <li>
-                                <a class="text-black px-0 py-2 hover:text-danger-600 flex items-center gap-4" href="javascript:void(0)">
-                                    <iconify-icon icon="lucide:power" class="icon text-xl"></iconify-icon>  Đăng xuất
-                                </a>
+                                <form method="POST" action="{{ route('logout') }}">
+                                    @csrf
+                                    <button type="submit" class="text-black w-full text-start px-0 py-2 hover:text-danger-600 flex items-center gap-4">
+                                        <iconify-icon icon="lucide:power" class="icon text-xl"></iconify-icon> Đăng xuất
+                                    </button>
+                                </form>
                             </li>
                         </ul>
                     </div>
                 </div>
+                @endauth
             </div>
         </div>
     </div>
