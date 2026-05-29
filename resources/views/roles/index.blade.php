@@ -28,12 +28,25 @@
                             <iconify-icon icon="ion:search-outline" class="icon"></iconify-icon>
                         </form>
                     </div>
-                    @can('add role')
-                    <a href="{{ route('roles.create') }}" class="btn btn-primary text-sm btn-sm px-3 py-3 rounded-lg flex items-center gap-2">
-                        <iconify-icon icon="ic:baseline-plus" class="icon text-xl line-height-1"></iconify-icon>
-                        Thêm vai trò mới
-                    </a>
-                    @endcan
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="openModal('filter-modal')"
+                            class="btn bg-light-600 text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2">
+                            <iconify-icon icon="solar:filter-outline" class="icon text-xl line-height-1"></iconify-icon>
+                            Lọc
+                        </button>
+                        @if(request()->filled('filter_name'))
+                        <a href="{{ route('roles.index') }}" class="btn text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2">
+                            <iconify-icon icon="solar:close-circle-outline" class="icon text-xl line-height-1"></iconify-icon>
+                            Xóa lọc
+                        </a>
+                        @endif
+                        @can('add role')
+                        <a href="{{ route('roles.create') }}" class="btn btn-primary text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2">
+                            <iconify-icon icon="ic:baseline-plus" class="icon text-xl line-height-1"></iconify-icon>
+                            Thêm vai trò mới
+                        </a>
+                        @endcan
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive scroll-sm">
@@ -124,5 +137,27 @@
             </div>
         </div>
     </div>
+
+{{-- Modal Lọc --}}
+<x-modal name="filter-modal" maxWidth="md">
+    <div class="px-6 py-4 border-b border-neutral-200 flex items-center justify-between">
+        <h5 class="font-semibold text-base">Lọc vai trò</h5>
+        <button type="button" onclick="closeModal('filter-modal')" class="text-secondary-light hover:text-neutral-700 text-xl leading-none">&times;</button>
+    </div>
+    <form action="{{ route('roles.index') }}" method="GET">
+        <input type="hidden" name="per_page" value="{{ $perPage }}">
+        <input type="hidden" name="search" value="{{ request('search') }}">
+        <div class="p-6">
+            <div class="form-group">
+                <label class="form-label font-semibold text-sm text-neutral-600">Tên vai trò</label>
+                <input type="text" name="filter_name" class="form-control rounded-lg" placeholder="Nhập tên vai trò..." value="{{ request('filter_name') }}">
+            </div>
+        </div>
+        <div class="px-6 py-4 border-t border-neutral-200 flex gap-3">
+            <button type="submit" class="btn btn-primary px-5 py-2.5 rounded-lg">Áp dụng lọc</button>
+            <button type="button" onclick="closeModal('filter-modal')" class="btn btn-neutral px-5 py-2.5 rounded-lg">Hủy</button>
+        </div>
+    </form>
+</x-modal>
 
 @endsection

@@ -33,34 +33,31 @@
 
                         {{-- Tìm kiếm --}}
                         <form method="GET" action="{{ route('users.index') }}" class="navbar-search">
-                            <input type="hidden" name="role_id" value="{{ request('role_id') }}">
                             <input type="hidden" name="per_page" value="{{ $perPage }}">
                             <input type="text" class="bg-white h-10 w-auto" name="search"
                                 value="{{ request('search') }}" placeholder="Tìm kiếm">
                             <iconify-icon icon="ion:search-outline" class="icon"></iconify-icon>
                         </form>
-
-                        {{-- Lọc vai trò --}}
-                        <form method="GET" action="{{ route('users.index') }}" id="roleForm">
-                            <input type="hidden" name="search" value="{{ request('search') }}">
-                            <input type="hidden" name="per_page" value="{{ $perPage }}">
-                            <select name="role_id" class="form-select form-select-sm w-auto border-neutral-200 rounded-lg"
-                                onchange="document.getElementById('roleForm').submit()">
-                                <option value="">Tất cả vai trò</option>
-                                @foreach(\Spatie\Permission\Models\Role::all() as $role)
-                                <option value="{{ $role->id }}" {{ request('role_id') == $role->id ? 'selected' : '' }}>
-                                    {{ $role->name }}
-                                </option>
-                                @endforeach
-                            </select>
-                        </form>
                     </div>
-                    @can('add user')
-                    <a href="{{ route('users.create') }}" class="btn btn-primary text-sm btn-sm px-3 py-3 rounded-lg flex items-center gap-2">
-                        <iconify-icon icon="ic:baseline-plus" class="icon text-xl line-height-1"></iconify-icon>
-                        Thêm người dùng mới
-                    </a>
-                    @endcan
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="openModal('filter-modal')"
+                            class="btn bg-light-600 text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2">
+                            <iconify-icon icon="solar:filter-outline" class="icon text-xl line-height-1"></iconify-icon>
+                            Lọc
+                        </button>
+                        @if(request()->filled('filter_name') || request()->filled('filter_email') || request()->filled('filter_phone') || request()->filled('filter_role_id'))
+                        <a href="{{ route('users.index') }}" class="btn text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2">
+                            <iconify-icon icon="solar:close-circle-outline" class="icon text-xl line-height-1"></iconify-icon>
+                            Xóa lọc
+                        </a>
+                        @endif
+                        @can('add user')
+                        <a href="{{ route('users.create') }}" class="btn btn-primary text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2">
+                            <iconify-icon icon="ic:baseline-plus" class="icon text-xl line-height-1"></iconify-icon>
+                            Thêm người dùng mới
+                        </a>
+                        @endcan
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive scroll-sm">
@@ -186,5 +183,44 @@
             </div>
         </div>
     </div>
+
+{{-- Modal Lọc --}}
+<x-modal name="filter-modal" maxWidth="lg">
+    <div class="px-6 py-4 border-b border-neutral-200 flex items-center justify-between">
+        <h5 class="font-semibold text-base">Lọc người dùng</h5>
+        <button type="button" onclick="closeModal('filter-modal')" class="text-secondary-light hover:text-neutral-700 text-xl leading-none">&times;</button>
+    </div>
+    <form action="{{ route('users.index') }}" method="GET">
+        <input type="hidden" name="per_page" value="{{ $perPage }}">
+        <input type="hidden" name="search" value="{{ request('search') }}">
+        <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="form-group">
+                <label class="form-label font-semibold text-sm text-neutral-600">Tên</label>
+                <input type="text" name="filter_name" class="form-control rounded-lg" placeholder="Nhập tên..." value="{{ request('filter_name') }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label font-semibold text-sm text-neutral-600">Email</label>
+                <input type="text" name="filter_email" class="form-control rounded-lg" placeholder="Nhập email..." value="{{ request('filter_email') }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label font-semibold text-sm text-neutral-600">Số điện thoại</label>
+                <input type="text" name="filter_phone" class="form-control rounded-lg" placeholder="Nhập số điện thoại..." value="{{ request('filter_phone') }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label font-semibold text-sm text-neutral-600">Vai trò</label>
+                <select name="filter_role_id" class="form-select rounded-lg">
+                    <option value="">Tất cả vai trò</option>
+                    @foreach(\Spatie\Permission\Models\Role::all() as $role)
+                    <option value="{{ $role->id }}" {{ request('filter_role_id') == $role->id ? 'selected' : '' }}>{{ $role->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+        <div class="px-6 py-4 border-t border-neutral-200 flex gap-3">
+            <button type="submit" class="btn btn-primary px-5 py-2.5 rounded-lg">Áp dụng lọc</button>
+            <button type="button" onclick="closeModal('filter-modal')" class="btn btn-neutral px-5 py-2.5 rounded-lg">Hủy</button>
+        </div>
+    </form>
+</x-modal>
 
 @endsection

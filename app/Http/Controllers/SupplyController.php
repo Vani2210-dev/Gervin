@@ -24,6 +24,27 @@ class SupplyController extends Controller
                 $q->where('name', 'like', "%$search%")
                   ->orWhere('category', 'like', "%$search%");
             })
+            ->when($request->filled('filter_name'), function ($q) use ($request) {
+                $q->where('name', 'like', "%{$request->filter_name}%");
+            })
+            ->when($request->filled('filter_category'), function ($q) use ($request) {
+                $q->where('category', 'like', "%{$request->filter_category}%");
+            })
+            ->when($request->filled('filter_unit'), function ($q) use ($request) {
+                $q->where('unit', 'like', "%{$request->filter_unit}%");
+            })
+            ->when($request->filled('filter_min_stock'), function ($q) use ($request) {
+                $q->where('stock_quantity', '>=', $request->filter_min_stock);
+            })
+            ->when($request->filled('filter_max_stock'), function ($q) use ($request) {
+                $q->where('stock_quantity', '<=', $request->filter_max_stock);
+            })
+            ->when($request->filled('filter_min_price'), function ($q) use ($request) {
+                $q->where('unit_price', '>=', $request->filter_min_price);
+            })
+            ->when($request->filled('filter_max_price'), function ($q) use ($request) {
+                $q->where('unit_price', '<=', $request->filter_max_price);
+            })
             ->orderBy('name')
             ->paginate($perPage)
             ->withQueryString();

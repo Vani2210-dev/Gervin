@@ -30,27 +30,10 @@
                     {{-- Tìm kiếm --}}
                     <form method="GET" action="{{ route('media.index') }}" class="navbar-search">
                         <input type="hidden" name="folder" value="{{ $currentFolder }}">
-                        <input type="hidden" name="type" value="{{ $type }}">
                         <input type="hidden" name="per_page" value="{{ $perPage }}">
                         <input type="text" class="bg-white h-10 w-auto" name="search"
                             value="{{ $search }}" placeholder="Tìm kiếm file...">
                         <iconify-icon icon="ion:search-outline" class="icon"></iconify-icon>
-                    </form>
-
-                    {{-- Lọc loại file --}}
-                    <form method="GET" action="{{ route('media.index') }}" id="typeForm">
-                        <input type="hidden" name="folder" value="{{ $currentFolder }}">
-                        <input type="hidden" name="search" value="{{ $search }}">
-                        <input type="hidden" name="per_page" value="{{ $perPage }}">
-                        <select name="type" class="form-select form-select-sm w-auto border-neutral-200 rounded-lg"
-                            onchange="document.getElementById('typeForm').submit()">
-                            <option value="all"    {{ ($type ?? 'all') === 'all'    ? 'selected' : '' }}>Tất cả loại</option>
-                            <option value="image"  {{ ($type ?? 'all') === 'image'  ? 'selected' : '' }}>Ảnh</option>
-                            <option value="word"   {{ ($type ?? 'all') === 'word'   ? 'selected' : '' }}>Word</option>
-                            <option value="pdf"    {{ ($type ?? 'all') === 'pdf'    ? 'selected' : '' }}>PDF</option>
-                            <option value="excel"  {{ ($type ?? 'all') === 'excel'  ? 'selected' : '' }}>Excel</option>
-                            <option value="archive"{{ ($type ?? 'all') === 'archive'? 'selected' : '' }}>Nén</option>
-                        </select>
                     </form>
 
                     {{-- Breadcrumb thư mục --}}
@@ -69,14 +52,25 @@
 
                 {{-- Nút hành động --}}
                 <div class="flex items-center gap-2">
+                    <button type="button" onclick="openModal('filter-modal')"
+                        class="btn bg-light-600 text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2">
+                        <iconify-icon icon="solar:filter-outline" class="icon text-xl line-height-1"></iconify-icon>
+                        Lọc
+                    </button>
+                    @if(request()->filled('filter_name') || request()->filled('filter_type') || request()->filled('filter_min_size') || request()->filled('filter_max_size'))
+                    <a href="{{ route('media.index', ['folder' => $currentFolder]) }}" class="btn text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2">
+                        <iconify-icon icon="solar:close-circle-outline" class="icon text-xl line-height-1"></iconify-icon>
+                        Xóa lọc
+                    </a>
+                    @endif
                     @can('add media')
                     <button type="button" onclick="openModal('upload-modal')"
-                        class="btn btn-primary text-sm btn-sm px-3 py-3 rounded-lg flex items-center gap-2">
+                        class="btn btn-primary text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2">
                         <iconify-icon icon="ic:baseline-plus" class="icon text-xl line-height-1"></iconify-icon>
                         Tải lên file
                     </button>
                     <button type="button" onclick="openModal('folder-modal')"
-                        class="btn btn-outline-primary text-sm btn-sm px-3 py-3 rounded-lg flex items-center gap-2">
+                        class="btn btn-outline-primary text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2">
                         <iconify-icon icon="ic:baseline-plus" class="icon text-xl line-height-1"></iconify-icon>
                         Thư mục mới
                     </button>
@@ -302,5 +296,46 @@
     </form>
 </x-modal>
 @endcan
+
+{{-- Modal Lọc --}}
+<x-modal name="filter-modal" maxWidth="lg">
+    <div class="px-6 py-4 border-b border-neutral-200 flex items-center justify-between">
+        <h5 class="font-semibold text-base">Lọc file</h5>
+        <button type="button" onclick="closeModal('filter-modal')" class="text-secondary-light hover:text-neutral-700 text-xl leading-none">&times;</button>
+    </div>
+    <form action="{{ route('media.index') }}" method="GET">
+        <input type="hidden" name="folder" value="{{ $currentFolder }}">
+        <input type="hidden" name="per_page" value="{{ $perPage }}">
+        <input type="hidden" name="search" value="{{ $search }}">
+        <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="form-group md:col-span-2">
+                <label class="form-label font-semibold text-sm text-neutral-600">Tên file</label>
+                <input type="text" name="filter_name" class="form-control rounded-lg" placeholder="Nhập tên file..." value="{{ request('filter_name') }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label font-semibold text-sm text-neutral-600">Loại file</label>
+                <select name="filter_type" class="form-select rounded-lg">
+                    <option value="">Tất cả loại</option>
+                    <option value="image" {{ request('filter_type') === 'image' ? 'selected' : '' }}>Ảnh</option>
+                    <option value="word" {{ request('filter_type') === 'word' ? 'selected' : '' }}>Word</option>
+                    <option value="pdf" {{ request('filter_type') === 'pdf' ? 'selected' : '' }}>PDF</option>
+                    <option value="excel" {{ request('filter_type') === 'excel' ? 'selected' : '' }}>Excel</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label font-semibold text-sm text-neutral-600">Kích thước từ (KB)</label>
+                <input type="number" name="filter_min_size" class="form-control rounded-lg" placeholder="0" min="0" value="{{ request('filter_min_size') }}">
+            </div>
+            <div class="form-group md:col-span-2">
+                <label class="form-label font-semibold text-sm text-neutral-600">Kích thước đến (KB)</label>
+                <input type="number" name="filter_max_size" class="form-control rounded-lg" placeholder="0" min="0" value="{{ request('filter_max_size') }}">
+            </div>
+        </div>
+        <div class="px-6 py-4 border-t border-neutral-200 flex gap-3">
+            <button type="submit" class="btn btn-primary px-5 py-2.5 rounded-lg">Áp dụng lọc</button>
+            <button type="button" onclick="closeModal('filter-modal')" class="btn btn-neutral px-5 py-2.5 rounded-lg">Hủy</button>
+        </div>
+    </form>
+</x-modal>
 
 @endsection

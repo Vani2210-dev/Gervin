@@ -34,6 +34,22 @@ class UsersController extends Controller
             $query->where('role_id', $roleId);
         }
 
+        if ($request->filled('filter_name')) {
+            $query->where('name', 'like', "%{$request->filter_name}%");
+        }
+
+        if ($request->filled('filter_email')) {
+            $query->where('email', 'like', "%{$request->filter_email}%");
+        }
+
+        if ($request->filled('filter_phone')) {
+            $query->where('phone', 'like', "%{$request->filter_phone}%");
+        }
+
+        if ($request->filled('filter_role_id')) {
+            $query->where('role_id', $request->filter_role_id);
+        }
+
         $perPage = (int) $request->input('per_page', 10);
         $users   = $query->latest()->paginate($perPage)->withQueryString();
 

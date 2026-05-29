@@ -89,7 +89,7 @@ class MediaController extends Controller
             $files = array_filter($files, fn($f) => $f['name'] === '.. (Quay lại)' || stripos($f['name'], $search) !== false);
         }
 
-        // Lọc theo loại
+        // Lọc theo loại (dropdown cũ)
         $type = $request->input('type', 'all');
         if ($type && $type !== 'all') {
             $files = array_filter($files, function ($file) use ($type) {
@@ -104,6 +104,38 @@ class MediaController extends Controller
                     default   => true,
                 };
             });
+        }
+
+        // Lọc theo popup
+        if ($request->filled('filter_name')) {
+            $files = array_filter($files, fn($f) => $f['name'] === '.. (Quay lại)' || stripos($f['name'], $request->filter_name) !== false);
+        }
+
+        if ($request->filled('filter_type') && $request->filter_type !== '') {
+            $filterType = $request->filter_type;
+            $files = array_filter($files, function ($file) use ($filterType) {
+                if ($file['is_dir']) return true;
+                $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+                return match ($filterType) {
+                    'word'  => in_array($ext, ['doc', 'docx']),
+                    'pdf'   => $ext === 'pdf',
+                    'excel' => in_array($ext, ['xls', 'xlsx', 'csv']),
+                    'image' => in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp']),
+                    default => true,
+                };
+            });
+        }
+
+        if ($request->filled('filter_min_size')) {
+            $minSizeKB = (int) $request->filter_min_size;
+            $minSizeBytes = $minSizeKB * 1024;
+            $files = array_filter($files, fn($f) => $f['is_dir'] || $f['size'] >= $minSizeBytes);
+        }
+
+        if ($request->filled('filter_max_size')) {
+            $maxSizeKB = (int) $request->filter_max_size;
+            $maxSizeBytes = $maxSizeKB * 1024;
+            $files = array_filter($files, fn($f) => $f['is_dir'] || $f['size'] <= $maxSizeBytes);
         }
 
         $perPage     = (int) $request->input('per_page', 20);

@@ -8,8 +8,48 @@
 
 <div class="grid grid-cols-12">
     <div class="col-span-12">
-        <div class="card h-full p-0 rounded-xl border-0 overflow-hidden">
+        {{-- Summary Cards --}}
+        <div class="card p-0 rounded-xl border-0 mb-2">
+            <div class="card-body p-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-primary-50 rounded-xl p-5 border border-primary-100">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-secondary-light text-sm mb-1">Tổng số vật tư</p>
+                                <h4 class="text-2xl font-bold text-primary-600 mb-0">{{ $supplies->total() }}</h4>
+                            </div>
+                            <div class="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">
+                                <iconify-icon icon="mdi:package-variant-closed" class="text-primary-600 text-2xl"></iconify-icon>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-warning-50 rounded-xl p-5 border border-warning-100">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-secondary-light text-sm mb-1">Vật tư dưới mức tồn</p>
+                                <h4 class="text-2xl font-bold text-warning-600 mb-0">{{ \App\Models\Supply::whereColumn('stock_quantity', '<=', 'min_stock')->where('min_stock', '>', 0)->count() }}</h4>
+                            </div>
+                            <div class="w-12 h-12 bg-warning-100 rounded-full flex items-center justify-center">
+                                <iconify-icon icon="mdi:alert-circle-outline" class="text-warning-600 text-2xl"></iconify-icon>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-success-50 rounded-xl p-5 border border-success-100">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-secondary-light text-sm mb-1">Tổng giá trị (VNĐ)</p>
+                                <h4 class="text-2xl font-bold text-success-600 mb-0">{{ number_format(\App\Models\Supply::sum('unit_price') * \App\Models\Supply::sum('stock_quantity'), 0, ',', '.') }}</h4>
+                            </div>
+                            <div class="w-12 h-12 bg-success-100 rounded-full flex items-center justify-center">
+                                <iconify-icon icon="mdi:cash" class="text-success-600 text-2xl"></iconify-icon>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
+        <div class="card p-0 rounded-xl border-0 overflow-hidden">
             {{-- Header --}}
             <div class="card-header border-b border-neutral-200 bg-white py-4 px-6 flex items-center flex-wrap gap-3 justify-between">
                 <div class="flex items-center flex-wrap gap-3">
@@ -35,9 +75,20 @@
                 </div>
 
                 <div class="flex items-center gap-2">
+                    <button type="button" onclick="openModal('filter-modal')"
+                        class="btn bg-light-600 text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2">
+                        <iconify-icon icon="solar:filter-outline" class="icon text-xl line-height-1"></iconify-icon>
+                        Lọc
+                    </button>
+                    @if(request()->filled('filter_name') || request()->filled('filter_category') || request()->filled('filter_unit') || request()->filled('filter_min_stock') || request()->filled('filter_max_stock') || request()->filled('filter_min_price') || request()->filled('filter_max_price'))
+                    <a href="{{ route('supplies.index') }}" class="btn text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2">
+                        <iconify-icon icon="solar:close-circle-outline" class="icon text-xl line-height-1"></iconify-icon>
+                        Xóa lọc
+                    </a>
+                    @endif
                     @can('add supply')
                     <button type="button" onclick="openModal('create-supply-modal')"
-                        class="btn btn-primary text-sm btn-sm px-3 py-3 rounded-lg flex items-center gap-2">
+                        class="btn btn-primary text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2">
                         <iconify-icon icon="ic:baseline-plus" class="icon text-xl line-height-1"></iconify-icon>
                         Thêm vật tư
                     </button>
@@ -58,7 +109,7 @@
             @endif
 
             {{-- Table --}}
-            <div class="card-body p-6">
+            <div class="card-body">
                 <div class="table-responsive scroll-sm">
                     <table class="table bordered-table sm-table mb-0">
                         <thead>
@@ -271,5 +322,51 @@ function openEditModal(id, name, category, unit, stock, minStock, price) {
 }
 </script>
 @endcan
+
+{{-- Modal Lọc --}}
+<x-modal name="filter-modal" maxWidth="lg">
+    <div class="px-6 py-4 border-b border-neutral-200 flex items-center justify-between">
+        <h5 class="font-semibold text-base">Lọc vật tư</h5>
+        <button type="button" onclick="closeModal('filter-modal')" class="text-secondary-light hover:text-neutral-700 text-xl leading-none">&times;</button>
+    </div>
+    <form action="{{ route('supplies.index') }}" method="GET">
+        <input type="hidden" name="per_page" value="{{ $perPage }}">
+        <input type="hidden" name="search" value="{{ $search }}">
+        <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="form-group md:col-span-2">
+                <label class="form-label font-semibold text-sm text-neutral-600">Tên vật tư</label>
+                <input type="text" name="filter_name" class="form-control rounded-lg" placeholder="Nhập tên vật tư..." value="{{ request('filter_name') }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label font-semibold text-sm text-neutral-600">Phân loại</label>
+                <input type="text" name="filter_category" class="form-control rounded-lg" placeholder="VD: Điện, Cơ khí..." value="{{ request('filter_category') }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label font-semibold text-sm text-neutral-600">Đơn vị tính</label>
+                <input type="text" name="filter_unit" class="form-control rounded-lg" placeholder="VD: cái, kg, m..." value="{{ request('filter_unit') }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label font-semibold text-sm text-neutral-600">Số lượng tồn từ</label>
+                <input type="number" name="filter_min_stock" class="form-control rounded-lg" placeholder="0" min="0" step="0.01" value="{{ request('filter_min_stock') }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label font-semibold text-sm text-neutral-600">Số lượng tồn đến</label>
+                <input type="number" name="filter_max_stock" class="form-control rounded-lg" placeholder="0" min="0" step="0.01" value="{{ request('filter_max_stock') }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label font-semibold text-sm text-neutral-600">Đơn giá từ (VNĐ)</label>
+                <input type="number" name="filter_min_price" class="form-control rounded-lg" placeholder="0" min="0" step="1000" value="{{ request('filter_min_price') }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label font-semibold text-sm text-neutral-600">Đơn giá đến (VNĐ)</label>
+                <input type="number" name="filter_max_price" class="form-control rounded-lg" placeholder="0" min="0" step="1000" value="{{ request('filter_max_price') }}">
+            </div>
+        </div>
+        <div class="px-6 py-4 border-t border-neutral-200 flex gap-3">
+            <button type="submit" class="btn btn-primary px-5 py-2.5 rounded-lg">Áp dụng lọc</button>
+            <button type="button" onclick="closeModal('filter-modal')" class="btn btn-neutral px-5 py-2.5 rounded-lg">Hủy</button>
+        </div>
+    </form>
+</x-modal>
 
 @endsection

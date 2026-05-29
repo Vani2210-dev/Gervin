@@ -24,6 +24,10 @@ class RoleController extends Controller
             $query->where('name', 'like', "%$search%");
         }
 
+        if ($request->filled('filter_name')) {
+            $query->where('name', 'like', "%{$request->filter_name}%");
+        }
+
         $perPage = (int) $request->input('per_page', 10);
         $roles   = $query->paginate($perPage)->withQueryString();
 
