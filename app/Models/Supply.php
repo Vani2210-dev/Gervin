@@ -9,11 +9,13 @@ class Supply extends Model
     protected $table = 'supplies';
 
     protected $fillable = [
+        'product_code',
         'name',
         'category',
         'unit',
-        'stock_quantity',
-        'min_stock',
+        'grain_direction',
+        'width_mm',
+        'height_mm',
         'unit_price',
     ];
 }

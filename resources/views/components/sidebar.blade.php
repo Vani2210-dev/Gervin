@@ -55,6 +55,22 @@
                 </a>
             </li>
             @endcan
+            @can('view customer')
+            <li>
+                <a href="{{ route('customers.index') }}">
+                    <iconify-icon icon="mdi:account-group" class="menu-icon"></iconify-icon>
+                    <span>Khách hàng</span>
+                </a>
+            </li>
+            @endcan
+            @can('view acrylic order')
+            <li>
+                <a href="{{ route('acrylic_orders.index') }}">
+                    <iconify-icon icon="mdi:clipboard-text-outline" class="menu-icon"></iconify-icon>
+                    <span>Đơn hàng Acrylic</span>
+                </a>
+            </li>
+            @endcan
             @can('view media')
             <li>
                 <a href="{{ route('media.index') }}">

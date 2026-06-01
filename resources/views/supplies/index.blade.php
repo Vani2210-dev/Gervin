@@ -11,7 +11,7 @@
         {{-- Summary Cards --}}
         <div class="card p-0 rounded-xl border-0 mb-2">
             <div class="card-body p-4">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="bg-primary-50 rounded-xl p-5 border border-primary-100">
                         <div class="flex items-center justify-between">
                             <div>
@@ -23,25 +23,14 @@
                             </div>
                         </div>
                     </div>
-                    <div class="bg-warning-50 rounded-xl p-5 border border-warning-100">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-secondary-light text-sm mb-1">Vật tư dưới mức tồn</p>
-                                <h4 class="text-2xl font-bold text-warning-600 mb-0">{{ \App\Models\Supply::whereColumn('stock_quantity', '<=', 'min_stock')->where('min_stock', '>', 0)->count() }}</h4>
-                            </div>
-                            <div class="w-12 h-12 bg-warning-100 rounded-full flex items-center justify-center">
-                                <iconify-icon icon="mdi:alert-circle-outline" class="text-warning-600 text-2xl"></iconify-icon>
-                            </div>
-                        </div>
-                    </div>
                     <div class="bg-success-50 rounded-xl p-5 border border-success-100">
                         <div class="flex items-center justify-between">
                             <div>
-                                <p class="text-secondary-light text-sm mb-1">Tổng giá trị (VNĐ)</p>
-                                <h4 class="text-2xl font-bold text-success-600 mb-0">{{ number_format(\App\Models\Supply::sum('unit_price') * \App\Models\Supply::sum('stock_quantity'), 0, ',', '.') }}</h4>
+                                <p class="text-secondary-light text-sm mb-1">Vật tư có vân</p>
+                                <h4 class="text-2xl font-bold text-success-600 mb-0">{{ \App\Models\Supply::where('grain_direction', 2)->count() }}</h4>
                             </div>
                             <div class="w-12 h-12 bg-success-100 rounded-full flex items-center justify-center">
-                                <iconify-icon icon="mdi:cash" class="text-success-600 text-2xl"></iconify-icon>
+                                <iconify-icon icon="mdi:grain" class="text-success-600 text-2xl"></iconify-icon>
                             </div>
                         </div>
                     </div>
@@ -64,7 +53,7 @@
                             @endforeach
                         </select>
                     </form>
-
+    
                     {{-- Tìm kiếm --}}
                     <form method="GET" action="{{ route('supplies.index') }}" class="navbar-search">
                         <input type="hidden" name="per_page" value="{{ $perPage }}">
@@ -80,7 +69,7 @@
                         <iconify-icon icon="solar:filter-outline" class="icon text-xl line-height-1"></iconify-icon>
                         Lọc
                     </button>
-                    @if(request()->filled('filter_name') || request()->filled('filter_category') || request()->filled('filter_unit') || request()->filled('filter_min_stock') || request()->filled('filter_max_stock') || request()->filled('filter_min_price') || request()->filled('filter_max_price'))
+                    @if(request()->filled('filter_product_code') || request()->filled('filter_name') || request()->filled('filter_category') || request()->filled('filter_unit') || request()->filled('filter_grain_direction') || request()->filled('filter_min_width') || request()->filled('filter_max_width') || request()->filled('filter_min_height') || request()->filled('filter_max_height') || request()->filled('filter_min_price') || request()->filled('filter_max_price'))
                     <a href="{{ route('supplies.index') }}" class="btn text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2">
                         <iconify-icon icon="solar:close-circle-outline" class="icon text-xl line-height-1"></iconify-icon>
                         Xóa lọc
@@ -115,11 +104,13 @@
                         <thead>
                             <tr>
                                 <th scope="col">STT</th>
+                                <th scope="col">Mã sản phẩm</th>
                                 <th scope="col">Tên vật tư</th>
                                 <th scope="col">Phân loại</th>
                                 <th scope="col">Đơn vị tính</th>
-                                <th scope="col" class="text-end">Số lượng tồn</th>
-                                <th scope="col" class="text-end">Tồn tối thiểu</th>
+                                <th scope="col" class="text-center">Chiều vân</th>
+                                <th scope="col" class="text-end">Chiều rộng (mm)</th>
+                                <th scope="col" class="text-end">Chiều cao (mm)</th>
                                 <th scope="col" class="text-end">Đơn giá (VNĐ)</th>
                                 <th scope="col" class="text-center">Hành động</th>
                             </tr>
@@ -129,6 +120,9 @@
                             @php $stt = $supplies->firstItem() + $loop->index; @endphp
                             <tr>
                                 <td>{{ $stt }}</td>
+                                <td>
+                                    <span class="text-base font-medium text-secondary-light">{{ $s->product_code ?? '—' }}</span>
+                                </td>
                                 <td>
                                     <span class="text-base font-medium text-secondary-light">{{ $s->name }}</span>
                                 </td>
@@ -142,17 +136,14 @@
                                 <td>
                                     <span class="text-base text-secondary-light">{{ $s->unit ?? '—' }}</span>
                                 </td>
-                                <td class="text-end">
-                                    @php $low = $s->stock_quantity <= $s->min_stock && $s->min_stock > 0; @endphp
-                                    <span class="font-medium {{ $low ? 'text-danger-600' : 'text-secondary-light' }}">
-                                        {{ number_format($s->stock_quantity, 2, ',', '.') }}
-                                    </span>
-                                    @if($low)
-                                        <iconify-icon icon="mdi:alert-circle-outline" class="text-danger-500 text-base align-middle" title="Dưới mức tồn tối thiểu"></iconify-icon>
-                                    @endif
+                                <td class="text-center">
+                                    <span class="text-base text-secondary-light">{{ $s->grain_direction ?? 0 }}</span>
                                 </td>
                                 <td class="text-end">
-                                    <span class="text-base text-secondary-light">{{ number_format($s->min_stock, 2, ',', '.') }}</span>
+                                    <span class="text-base text-secondary-light">{{ $s->width_mm ? number_format($s->width_mm, 0, ',', '.') : '—' }}</span>
+                                </td>
+                                <td class="text-end">
+                                    <span class="text-base text-secondary-light">{{ $s->height_mm ? number_format($s->height_mm, 0, ',', '.') : '—' }}</span>
                                 </td>
                                 <td class="text-end">
                                     <span class="text-base font-medium text-secondary-light">{{ number_format($s->unit_price, 0, ',', '.') }}</span>
@@ -161,7 +152,7 @@
                                     <div class="flex items-center gap-3 justify-center">
                                         @can('edit supply')
                                         <button type="button"
-                                            onclick="openEditModal({{ $s->id }}, '{{ addslashes($s->name) }}', '{{ addslashes($s->category) }}', '{{ addslashes($s->unit) }}', {{ $s->stock_quantity }}, {{ $s->min_stock }}, {{ $s->unit_price }})"
+                                            onclick="openEditModal({{ $s->id }}, '{{ addslashes($s->product_code) }}', '{{ addslashes($s->name) }}', '{{ addslashes($s->category) }}', '{{ addslashes($s->unit) }}', {{ $s->grain_direction ?? 0 }}, {{ $s->width_mm ?? 'null' }}, {{ $s->height_mm ?? 'null' }}, {{ $s->unit_price ?? 0 }})"
                                             class="bg-success-100 hover:bg-success-200 text-success-600 font-medium w-10 h-10 flex justify-center items-center rounded-full">
                                             <iconify-icon icon="lucide:edit" class="menu-icon"></iconify-icon>
                                         </button>
@@ -181,7 +172,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="8" class="text-center py-8">
+                                <td colspan="10" class="text-center py-8">
                                     <p class="text-neutral-500">Chưa có vật tư nào</p>
                                 </td>
                             </tr>
@@ -234,6 +225,15 @@
     <form action="{{ route('supplies.store') }}" method="POST">
         @csrf
         <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="form-group">
+                <label class="form-label font-semibold text-sm text-neutral-600">Mã sản phẩm</label>
+                <select name="product_code" class="form-select rounded-lg tom-select" placeholder="Chọn mã sản phẩm">
+                    <option value="">-- Chọn mã sản phẩm --</option>
+                    @foreach(\App\Models\Supply::pluck('product_code')->filter()->unique() as $code)
+                    <option value="{{ $code }}" {{ old('product_code') == $code ? 'selected' : '' }}>{{ $code }}</option>
+                    @endforeach
+                </select>
+            </div>
             <div class="form-group md:col-span-2">
                 <label class="form-label font-semibold text-sm text-neutral-600">Tên vật tư <span class="text-danger-500">*</span></label>
                 <input type="text" name="name" class="form-control rounded-lg" placeholder="Nhập tên vật tư" required value="{{ old('name') }}">
@@ -247,12 +247,19 @@
                 <input type="text" name="unit" class="form-control rounded-lg" placeholder="VD: cái, kg, m..." value="{{ old('unit') }}">
             </div>
             <div class="form-group">
-                <label class="form-label font-semibold text-sm text-neutral-600">Số lượng tồn</label>
-                <input type="number" name="stock_quantity" class="form-control rounded-lg" placeholder="0" min="0" step="0.01" value="{{ old('stock_quantity', 0) }}">
+                <label class="form-label font-semibold text-sm text-neutral-600">Chiều vân</label>
+                <select name="grain_direction" class="form-select rounded-lg">
+                    <option value="0" {{ old('grain_direction', 0) == 0 ? 'selected' : '' }}>0</option>
+                    <option value="2" {{ old('grain_direction', 0) == 2 ? 'selected' : '' }}>2</option>
+                </select>
             </div>
             <div class="form-group">
-                <label class="form-label font-semibold text-sm text-neutral-600">Tồn tối thiểu</label>
-                <input type="number" name="min_stock" class="form-control rounded-lg" placeholder="0" min="0" step="0.01" value="{{ old('min_stock', 0) }}">
+                <label class="form-label font-semibold text-sm text-neutral-600">Chiều rộng (mm)</label>
+                <input type="number" name="width_mm" class="form-control rounded-lg" placeholder="0" min="0" value="{{ old('width_mm') }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label font-semibold text-sm text-neutral-600">Chiều cao (mm)</label>
+                <input type="number" name="height_mm" class="form-control rounded-lg" placeholder="0" min="0" value="{{ old('height_mm') }}">
             </div>
             <div class="form-group md:col-span-2">
                 <label class="form-label font-semibold text-sm text-neutral-600">Đơn giá (VNĐ)</label>
@@ -277,6 +284,15 @@
     <form id="edit-supply-form" action="" method="POST">
         @csrf @method('PUT')
         <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="form-group">
+                <label class="form-label font-semibold text-sm text-neutral-600">Mã sản phẩm</label>
+                <select id="edit_product_code" name="product_code" class="form-control rounded-lg" placeholder="Chọn mã sản phẩm">
+                    <option value="">-- Chọn mã sản phẩm --</option>
+                    @foreach(\App\Models\Supply::pluck('product_code')->filter()->unique() as $code)
+                    <option value="{{ $code }}">{{ $code }}</option>
+                    @endforeach
+                </select>
+            </div>
             <div class="form-group md:col-span-2">
                 <label class="form-label font-semibold text-sm text-neutral-600">Tên vật tư <span class="text-danger-500">*</span></label>
                 <input type="text" id="edit_name" name="name" class="form-control rounded-lg" placeholder="Nhập tên vật tư" required>
@@ -290,12 +306,19 @@
                 <input type="text" id="edit_unit" name="unit" class="form-control rounded-lg" placeholder="VD: cái, kg, m...">
             </div>
             <div class="form-group">
-                <label class="form-label font-semibold text-sm text-neutral-600">Số lượng tồn</label>
-                <input type="number" id="edit_stock_quantity" name="stock_quantity" class="form-control rounded-lg" min="0" step="0.01">
+                <label class="form-label font-semibold text-sm text-neutral-600">Chiều vân</label>
+                <select id="edit_grain_direction" name="grain_direction" class="form-select rounded-lg">
+                    <option value="0">0</option>
+                    <option value="2">2</option>
+                </select>
             </div>
             <div class="form-group">
-                <label class="form-label font-semibold text-sm text-neutral-600">Tồn tối thiểu</label>
-                <input type="number" id="edit_min_stock" name="min_stock" class="form-control rounded-lg" min="0" step="0.01">
+                <label class="form-label font-semibold text-sm text-neutral-600">Chiều rộng (mm)</label>
+                <input type="number" id="edit_width_mm" name="width_mm" class="form-control rounded-lg" min="0">
+            </div>
+            <div class="form-group">
+                <label class="form-label font-semibold text-sm text-neutral-600">Chiều cao (mm)</label>
+                <input type="number" id="edit_height_mm" name="height_mm" class="form-control rounded-lg" min="0">
             </div>
             <div class="form-group md:col-span-2">
                 <label class="form-label font-semibold text-sm text-neutral-600">Đơn giá (VNĐ)</label>
@@ -310,13 +333,34 @@
 </x-modal>
 
 <script>
-function openEditModal(id, name, category, unit, stock, minStock, price) {
+// Initialize Tom Select
+document.addEventListener('DOMContentLoaded', function() {
+    const tomSelectElements = document.querySelectorAll('.tom-select');
+    tomSelectElements.forEach(function(element) {
+        new TomSelect(element, {
+            create: false,
+            sortField: {
+                field: 'text',
+                direction: 'asc'
+            }
+        });
+    });
+});
+
+function openEditModal(id, productCode, name, category, unit, grainDirection, widthMm, heightMm, price) {
     document.getElementById('edit-supply-form').action = '/supplies/' + id;
+    const productCodeSelect = document.getElementById('edit_product_code');
+    productCodeSelect.value = productCode;
+    // Trigger tom-select update if it exists
+    if (productCodeSelect.tomselect) {
+        productCodeSelect.tomselect.setValue(productCode);
+    }
     document.getElementById('edit_name').value           = name;
     document.getElementById('edit_category').value       = category;
     document.getElementById('edit_unit').value           = unit;
-    document.getElementById('edit_stock_quantity').value = stock;
-    document.getElementById('edit_min_stock').value      = minStock;
+    document.getElementById('edit_grain_direction').value = grainDirection;
+    document.getElementById('edit_width_mm').value      = widthMm;
+    document.getElementById('edit_height_mm').value     = heightMm;
     document.getElementById('edit_unit_price').value     = price;
     openModal('edit-supply-modal');
 }
@@ -333,6 +377,15 @@ function openEditModal(id, name, category, unit, stock, minStock, price) {
         <input type="hidden" name="per_page" value="{{ $perPage }}">
         <input type="hidden" name="search" value="{{ $search }}">
         <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="form-group">
+                <label class="form-label font-semibold text-sm text-neutral-600">Mã sản phẩm</label>
+                <select name="filter_product_code" class="form-select rounded-lg tom-select" placeholder="Chọn mã sản phẩm...">
+                    <option value="">-- Tất cả --</option>
+                    @foreach(\App\Models\Supply::pluck('product_code')->filter()->unique() as $code)
+                    <option value="{{ $code }}" {{ request('filter_product_code') == $code ? 'selected' : '' }}>{{ $code }}</option>
+                    @endforeach
+                </select>
+            </div>
             <div class="form-group md:col-span-2">
                 <label class="form-label font-semibold text-sm text-neutral-600">Tên vật tư</label>
                 <input type="text" name="filter_name" class="form-control rounded-lg" placeholder="Nhập tên vật tư..." value="{{ request('filter_name') }}">
@@ -346,12 +399,28 @@ function openEditModal(id, name, category, unit, stock, minStock, price) {
                 <input type="text" name="filter_unit" class="form-control rounded-lg" placeholder="VD: cái, kg, m..." value="{{ request('filter_unit') }}">
             </div>
             <div class="form-group">
-                <label class="form-label font-semibold text-sm text-neutral-600">Số lượng tồn từ</label>
-                <input type="number" name="filter_min_stock" class="form-control rounded-lg" placeholder="0" min="0" step="0.01" value="{{ request('filter_min_stock') }}">
+                <label class="form-label font-semibold text-sm text-neutral-600">Chiều vân</label>
+                <select name="filter_grain_direction" class="form-select rounded-lg">
+                    <option value="">Tất cả</option>
+                    <option value="0" {{ request('filter_grain_direction') === '0' ? 'selected' : '' }}>0</option>
+                    <option value="2" {{ request('filter_grain_direction') === '2' ? 'selected' : '' }}>2</option>
+                </select>
             </div>
             <div class="form-group">
-                <label class="form-label font-semibold text-sm text-neutral-600">Số lượng tồn đến</label>
-                <input type="number" name="filter_max_stock" class="form-control rounded-lg" placeholder="0" min="0" step="0.01" value="{{ request('filter_max_stock') }}">
+                <label class="form-label font-semibold text-sm text-neutral-600">Chiều rộng từ (mm)</label>
+                <input type="number" name="filter_min_width" class="form-control rounded-lg" placeholder="0" min="0" value="{{ request('filter_min_width') }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label font-semibold text-sm text-neutral-600">Chiều rộng đến (mm)</label>
+                <input type="number" name="filter_max_width" class="form-control rounded-lg" placeholder="0" min="0" value="{{ request('filter_max_width') }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label font-semibold text-sm text-neutral-600">Chiều cao từ (mm)</label>
+                <input type="number" name="filter_min_height" class="form-control rounded-lg" placeholder="0" min="0" value="{{ request('filter_min_height') }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label font-semibold text-sm text-neutral-600">Chiều cao đến (mm)</label>
+                <input type="number" name="filter_max_height" class="form-control rounded-lg" placeholder="0" min="0" value="{{ request('filter_max_height') }}">
             </div>
             <div class="form-group">
                 <label class="form-label font-semibold text-sm text-neutral-600">Đơn giá từ (VNĐ)</label>

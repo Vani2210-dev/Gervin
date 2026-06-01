@@ -34,6 +34,18 @@ class PermissionSeeder extends Seeder
             'add supply',
             'edit supply',
             'delete supply',
+
+            // Customer permissions
+            'view customer',
+            'add customer',
+            'edit customer',
+            'delete customer',
+
+            // Acrylic Order permissions
+            'view acrylic order',
+            'add acrylic order',
+            'edit acrylic order',
+            'delete acrylic order',
         ];
 
         foreach ($permissions as $permission) {

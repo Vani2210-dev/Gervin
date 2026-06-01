@@ -16,6 +16,8 @@ use App\Http\Controllers\CryptocurrencyController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\MediaController;
 use App\Http\Controllers\SupplyController;
+use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\AcrylicOrderController;
 
 Route::controller(DashboardController::class)->group(function () {
     Route::get('/', 'index')->name('index');
@@ -200,6 +202,17 @@ Route::middleware(['auth'])->prefix('media')->name('media.')->group(function () 
 // Supplies
 Route::middleware(['auth'])->group(function () {
     Route::resource('supplies', SupplyController::class)->names('supplies');
+});
+
+// Customers
+Route::middleware(['auth'])->group(function () {
+    Route::resource('customers', CustomerController::class)->names('customers');
+});
+
+// Acrylic Orders
+Route::middleware(['auth'])->group(function () {
+    Route::resource('acrylic_orders', AcrylicOrderController::class)->names('acrylic_orders');
+    Route::get('acrylic-orders/image/{filename}', [AcrylicOrderController::class, 'serveImage'])->name('acrylic_orders.image');
 });
 
 require __DIR__.'/auth.php';

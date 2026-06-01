@@ -24,6 +24,9 @@ class SupplyController extends Controller
                 $q->where('name', 'like', "%$search%")
                   ->orWhere('category', 'like', "%$search%");
             })
+            ->when($request->filled('filter_product_code'), function ($q) use ($request) {
+                $q->where('product_code', 'like', "%{$request->filter_product_code}%");
+            })
             ->when($request->filled('filter_name'), function ($q) use ($request) {
                 $q->where('name', 'like', "%{$request->filter_name}%");
             })
@@ -33,11 +36,20 @@ class SupplyController extends Controller
             ->when($request->filled('filter_unit'), function ($q) use ($request) {
                 $q->where('unit', 'like', "%{$request->filter_unit}%");
             })
-            ->when($request->filled('filter_min_stock'), function ($q) use ($request) {
-                $q->where('stock_quantity', '>=', $request->filter_min_stock);
+            ->when($request->filled('filter_grain_direction'), function ($q) use ($request) {
+                $q->where('grain_direction', $request->filter_grain_direction);
             })
-            ->when($request->filled('filter_max_stock'), function ($q) use ($request) {
-                $q->where('stock_quantity', '<=', $request->filter_max_stock);
+            ->when($request->filled('filter_min_width'), function ($q) use ($request) {
+                $q->where('width_mm', '>=', $request->filter_min_width);
+            })
+            ->when($request->filled('filter_max_width'), function ($q) use ($request) {
+                $q->where('width_mm', '<=', $request->filter_max_width);
+            })
+            ->when($request->filled('filter_min_height'), function ($q) use ($request) {
+                $q->where('height_mm', '>=', $request->filter_min_height);
+            })
+            ->when($request->filled('filter_max_height'), function ($q) use ($request) {
+                $q->where('height_mm', '<=', $request->filter_max_height);
             })
             ->when($request->filled('filter_min_price'), function ($q) use ($request) {
                 $q->where('unit_price', '>=', $request->filter_min_price);
@@ -55,20 +67,24 @@ class SupplyController extends Controller
     public function store(Request $request)
     {
         $request->validate([
+            'product_code'   => 'nullable|string|max:50|unique:supplies,product_code',
             'name'           => 'required|string|max:255',
             'category'       => 'nullable|string|max:255',
             'unit'           => 'nullable|string|max:100',
-            'stock_quantity' => 'nullable|numeric|min:0',
-            'min_stock'      => 'nullable|numeric|min:0',
+            'grain_direction'=> 'nullable|in:0,2',
+            'width_mm'       => 'nullable|integer|min:0',
+            'height_mm'      => 'nullable|integer|min:0',
             'unit_price'     => 'nullable|numeric|min:0',
         ]);
 
         Supply::create([
+            'product_code'   => $request->product_code,
             'name'           => $request->name,
             'category'       => $request->category,
             'unit'           => $request->unit,
-            'stock_quantity' => $request->stock_quantity ?? 0,
-            'min_stock'      => $request->min_stock ?? 0,
+            'grain_direction'=> $request->grain_direction ?? 0,
+            'width_mm'       => $request->width_mm,
+            'height_mm'      => $request->height_mm,
             'unit_price'     => $request->unit_price ?? 0,
         ]);
 
@@ -78,20 +94,24 @@ class SupplyController extends Controller
     public function update(Request $request, Supply $supply)
     {
         $request->validate([
+            'product_code'   => 'nullable|string|max:50|unique:supplies,product_code,' . $supply->id,
             'name'           => 'required|string|max:255',
             'category'       => 'nullable|string|max:255',
             'unit'           => 'nullable|string|max:100',
-            'stock_quantity' => 'nullable|numeric|min:0',
-            'min_stock'      => 'nullable|numeric|min:0',
+            'grain_direction'=> 'nullable|in:0,2',
+            'width_mm'       => 'nullable|integer|min:0',
+            'height_mm'      => 'nullable|integer|min:0',
             'unit_price'     => 'nullable|numeric|min:0',
         ]);
 
         $supply->update([
+            'product_code'   => $request->product_code,
             'name'           => $request->name,
             'category'       => $request->category,
             'unit'           => $request->unit,
-            'stock_quantity' => $request->stock_quantity ?? 0,
-            'min_stock'      => $request->min_stock ?? 0,
+            'grain_direction'=> $request->grain_direction ?? 0,
+            'width_mm'       => $request->width_mm,
+            'height_mm'      => $request->height_mm,
             'unit_price'     => $request->unit_price ?? 0,
         ]);
 
