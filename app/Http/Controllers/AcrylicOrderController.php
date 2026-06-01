@@ -44,24 +44,24 @@ class AcrylicOrderController extends Controller
             ->paginate($perPage)
             ->withQueryString();
 
-        return view('acrylic_orders.index', compact('orders', 'perPage', 'search'));
+        return view('orders.index', compact('orders', 'perPage', 'search'));
     }
 
     public function show(Order $acrylicOrder)
     {
         $acrylicOrder->load(['supplies.items', 'supplies.minLateItems']);
-        return view('acrylic_orders.show', compact('acrylicOrder'));
+        return view('orders.show', compact('acrylicOrder'));
     }
 
     public function create()
     {
-        return view('acrylic_orders.create');
+        return view('orders.create');
     }
 
     public function edit(Order $acrylicOrder)
     {
         $acrylicOrder->load(['supplies.items', 'supplies.minLateItems']);
-        return view('acrylic_orders.edit', compact('acrylicOrder'));
+        return view('orders.edit', compact('acrylicOrder'));
     }
 
     public function store(Request $request)
@@ -214,7 +214,7 @@ class AcrylicOrderController extends Controller
             }
         }
 
-        return redirect()->route('acrylic_orders.index')->with('success', 'Tạo đơn hàng thành công.');
+        return redirect()->route('orders.index')->with('success', 'Tạo đơn hàng thành công.');
     }
 
     public function update(Request $request, Order $acrylicOrder)
@@ -388,13 +388,13 @@ class AcrylicOrderController extends Controller
             }
         }
 
-        return redirect()->route('acrylic_orders.index')->with('success', 'Cập nhật đơn hàng Acrylic thành công.');
+        return redirect()->route('orders.index')->with('success', 'Cập nhật đơn hàng thành công.');
     }
 
     public function destroy(Order $acrylicOrder)
     {
         $acrylicOrder->delete();
-        return redirect()->route('acrylic_orders.index')->with('success', 'Xóa đơn hàng Acrylic thành công.');
+        return redirect()->route('orders.index')->with('success', 'Xóa đơn hàng thành công.');
     }
 
     public function serveImage($filename)
