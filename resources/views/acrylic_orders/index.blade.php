@@ -73,6 +73,7 @@
                             <tr>
                                 <th scope="col">STT</th>
                                 <th scope="col">Mã đơn</th>
+                                <th scope="col">Loại đơn</th>
                                 <th scope="col">Khách hàng</th>
                                 <th scope="col">Số điện thoại</th>
                                 <th scope="col">Hạn đơn</th>
@@ -88,6 +89,27 @@
                                 <td>{{ $stt }}</td>
                                 <td>
                                     <span class="text-base font-medium text-secondary-light">{{ $order->order_code }}</span>
+                                </td>
+                                <td>
+                                    @if($order->type)
+                                        @php
+                                            $typeColors = [
+                                                'acrylic' => 'bg-primary-100 text-primary-600 border border-primary-200',
+                                                'min_late' => 'bg-warning-100 text-warning-600 border border-warning-200',
+                                                'glass' => 'bg-info-100 text-info-600 border border-info-200',
+                                            ];
+                                            $typeLabels = [
+                                                'acrylic' => 'Acrylic',
+                                                'min_late' => 'Min Late',
+                                                'glass' => 'Glass',
+                                            ];
+                                        @endphp
+                                        <span class="px-2 py-0.5 rounded border text-xs font-semibold {{ $typeColors[$order->type] ?? 'bg-neutral-100 text-neutral-600' }}">
+                                            {{ $typeLabels[$order->type] ?? $order->type }}
+                                        </span>
+                                    @else
+                                        <span class="text-neutral-400 text-xs">—</span>
+                                    @endif
                                 </td>
                                 <td>
                                     <span class="text-base font-medium text-secondary-light">{{ $order->customer_name }}</span>
@@ -148,7 +170,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="8" class="text-center py-8">
+                                <td colspan="9" class="text-center py-8">
                                     <p class="text-neutral-500">Chưa có đơn hàng nào</p>
                                 </td>
                             </tr>
