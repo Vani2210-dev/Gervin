@@ -10,7 +10,7 @@ use App\Models\Customer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
-class AcrylicOrderController extends Controller
+class OrderController extends Controller
 {
     public function __construct()
     {

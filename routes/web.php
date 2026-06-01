@@ -17,7 +17,7 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\MediaController;
 use App\Http\Controllers\SupplyController;
 use App\Http\Controllers\CustomerController;
-use App\Http\Controllers\AcrylicOrderController;
+use App\Http\Controllers\OrderController;
 
 Route::controller(DashboardController::class)->group(function () {
     Route::get('/', 'index')->name('index');
@@ -211,8 +211,8 @@ Route::middleware(['auth'])->group(function () {
 
 // Orders
 Route::middleware(['auth'])->group(function () {
-    Route::resource('orders', AcrylicOrderController::class)->names('orders');
-    Route::get('orders/image/{filename}', [AcrylicOrderController::class, 'serveImage'])->name('orders.image');
+    Route::resource('orders', OrderController::class)->names('orders');
+    Route::get('orders/image/{filename}', [OrderController::class, 'serveImage'])->name('orders.image');
 });
 
 require __DIR__.'/auth.php';
