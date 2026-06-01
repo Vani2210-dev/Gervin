@@ -4,8 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class AcrylicOrder extends Model
+class Order extends Model
 {
+    protected $table = 'orders';
+
     protected $fillable = [
         'order_code',
         'customer_id',
@@ -30,6 +32,11 @@ class AcrylicOrder extends Model
 
     public function items()
     {
-        return $this->hasMany(AcrylicOrderItem::class);
+        return $this->hasMany(AcrylicOrderItem::class, 'order_id');
+    }
+
+    public function supplies()
+    {
+        return $this->hasMany(OrderSupply::class, 'order_id');
     }
 }

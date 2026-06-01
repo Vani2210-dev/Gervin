@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class AcrylicOrderItem extends Model
 {
     protected $fillable = [
-        'acrylic_order_id',
+        'order_id',
         'product_code',
         'product_name',
         'height',
@@ -26,6 +26,6 @@ class AcrylicOrderItem extends Model
 
     public function acrylicOrder()
     {
-        return $this->belongsTo(AcrylicOrder::class);
+        return $this->belongsTo(Order::class, 'order_id');
     }
 }

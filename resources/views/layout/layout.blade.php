@@ -24,9 +24,6 @@
             @yield('content')
         
         </div>
-        <!-- ..::  footer  start ::.. -->
-        <x-footer />
-        <!-- ..::  footer area end ::.. -->
 
     </main>
 
