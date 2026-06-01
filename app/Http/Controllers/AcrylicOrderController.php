@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\AcrylicOrderItem;
+use App\Models\MinLateOrderItem;
 use App\Models\OrderSupply;
 use App\Models\Customer;
 use Illuminate\Http\Request;
@@ -48,7 +49,7 @@ class AcrylicOrderController extends Controller
 
     public function show(Order $acrylicOrder)
     {
-        $acrylicOrder->load('items');
+        $acrylicOrder->load(['supplies.items', 'supplies.minLateItems']);
         return view('acrylic_orders.show', compact('acrylicOrder'));
     }
 
@@ -59,7 +60,7 @@ class AcrylicOrderController extends Controller
 
     public function edit(Order $acrylicOrder)
     {
-        $acrylicOrder->load('items');
+        $acrylicOrder->load(['supplies.items', 'supplies.minLateItems']);
         return view('acrylic_orders.edit', compact('acrylicOrder'));
     }
 
@@ -79,8 +80,9 @@ class AcrylicOrderController extends Controller
             'attachments.*'  => 'image|mimes:jpg,jpeg,png|max:2048',
             'supplies'       => 'required|array|min:1',
             'supplies.*.supply_name'         => 'nullable|string|max:255',
+            'supplies.*.quantity'            => 'nullable|numeric|min:0',
             'supplies.*.items'               => 'required|array|min:1',
-            'supplies.*.items.*.id'                   => 'nullable|exists:acrylic_order_items,id',
+            'supplies.*.items.*.id'                   => 'nullable|integer',
             'supplies.*.items.*.product_code'        => 'nullable|string|max:50',
             'supplies.*.items.*.product_name'        => 'required|string|max:255',
             'supplies.*.items.*.height'              => 'nullable|numeric|min:0',
@@ -94,6 +96,15 @@ class AcrylicOrderController extends Controller
             'supplies.*.items.*.notes'               => 'nullable|string',
             'supplies.*.items.*.bevel'               => 'nullable|string|max:100',
             'supplies.*.items.*.vertical_grain_cnc'  => 'nullable|string|max:100',
+            'supplies.*.items.*.straight_paste_length' => 'nullable|numeric|min:0',
+            'supplies.*.items.*.beveled_length'        => 'nullable|numeric|min:0',
+            'supplies.*.items.*.vat_moi_length'        => 'nullable|numeric|min:0',
+            'supplies.*.items.*.ban_rong_40_59'        => 'nullable|numeric|min:0',
+            'supplies.*.items.*.ban_rong_17_39'        => 'nullable|numeric|min:0',
+            'supplies.*.items.*.ban_rong_25_35'        => 'nullable|numeric|min:0',
+            'supplies.*.items.*.beveled_handle'        => 'nullable|numeric|min:0',
+            'supplies.*.items.*.cnc'                   => 'nullable|integer',
+            'supplies.*.items.*.direction'             => 'nullable|string|max:100',
         ]);
 
         // Calculate deadline from order_date + delivery_days if both are provided
@@ -133,7 +144,7 @@ class AcrylicOrderController extends Controller
 
         $order = Order::create([
             'order_code'    => $orderCode,
-            'type'          => $request->type,
+            'type'          => $request->type ?? 'acrylic',
             'order_date'    => $request->order_date,
             'delivery_days' => $request->delivery_days,
             'customer_id'   => $request->customer_id,
@@ -151,34 +162,58 @@ class AcrylicOrderController extends Controller
         foreach ($request->supplies as $supplyData) {
             $orderSupply = OrderSupply::create([
                 'order_id'    => $order->id,
+                'type'        => $order->type,
                 'supply_name' => $supplyData['supply_name'] ?? 'Vật tư',
-                'quantity'    => 1,
+                'quantity'    => $supplyData['quantity'] ?? 1,
             ]);
 
             // Create items for this supply
             foreach ($supplyData['items'] as $item) {
                 $totalPrice = $item['unit_price'] * $item['quantity'];
-                AcrylicOrderItem::create([
-                    'order_supply_id'    => $orderSupply->id,
-                    'product_code'        => $item['product_code'],
-                    'product_name'        => $item['product_name'],
-                    'height'              => $item['height'],
-                    'width'               => $item['width'],
-                    'grain_direction'     => $item['grain_direction'] ?? 0,
-                    'edge_bevel'          => $item['edge_bevel'],
-                    'wing_area'           => $item['wing_area'],
-                    'molding_length'      => $item['molding_length'],
-                    'quantity'            => $item['quantity'],
-                    'unit_price'          => $item['unit_price'],
-                    'total_price'         => $totalPrice,
-                    'notes'               => $item['notes'],
-                    'bevel'               => $item['bevel'],
-                    'vertical_grain_cnc'  => $item['vertical_grain_cnc'],
-                ]);
+                
+                if ($order->type === 'min_late') {
+                    MinLateOrderItem::create([
+                        'order_supply_id'       => $orderSupply->id,
+                        'name'                  => $item['product_name'],
+                        'size'                  => json_encode([
+                            'height' => $item['height'] ?? null,
+                            'width'  => $item['width'] ?? null,
+                        ]),
+                        'quantity'              => $item['quantity'] ?? 1,
+                        'edge_gluing'           => json_encode($item['edge_gluing'] ?? []),
+                        'straight_paste_length' => $item['straight_paste_length'] ?? 0,
+                        'beveled_length'        => $item['beveled_length'] ?? 0,
+                        'vat_moi_length'        => $item['vat_moi_length'] ?? 0,
+                        'ban_rong_40_59'        => $item['ban_rong_40_59'] ?? 0,
+                        'ban_rong_17_39'        => $item['ban_rong_17_39'] ?? 0,
+                        'ban_rong_25_35'        => $item['ban_rong_25_35'] ?? 0,
+                        'beveled_handle'        => $item['beveled_handle'] ?? 0,
+                        'cnc'                   => $item['cnc'] ?? 0,
+                        'direction'             => $item['direction'] ?? null,
+                    ]);
+                } else {
+                    AcrylicOrderItem::create([
+                        'order_supply_id'    => $orderSupply->id,
+                        'product_code'        => $item['product_code'] ?? null,
+                        'product_name'        => $item['product_name'],
+                        'height'              => $item['height'] ?? null,
+                        'width'               => $item['width'] ?? null,
+                        'grain_direction'     => $item['grain_direction'] ?? 0,
+                        'edge_bevel'          => $item['edge_bevel'] ?? null,
+                        'wing_area'           => $item['wing_area'] ?? null,
+                        'molding_length'      => $item['molding_length'] ?? null,
+                        'quantity'            => $item['quantity'],
+                        'unit_price'          => $item['unit_price'],
+                        'total_price'         => $totalPrice,
+                        'notes'               => $item['notes'] ?? null,
+                        'bevel'               => $item['bevel'] ?? null,
+                        'vertical_grain_cnc'  => $item['vertical_grain_cnc'] ?? null,
+                    ]);
+                }
             }
         }
 
-        return redirect()->route('acrylic_orders.index')->with('success', 'Tạo đơn hàng Acrylic thành công.');
+        return redirect()->route('acrylic_orders.index')->with('success', 'Tạo đơn hàng thành công.');
     }
 
     public function update(Request $request, Order $acrylicOrder)
@@ -199,8 +234,9 @@ class AcrylicOrderController extends Controller
             'delete_attachments' => 'nullable|string',
             'supplies'       => 'required|array|min:1',
             'supplies.*.supply_name'         => 'nullable|string|max:255',
+            'supplies.*.quantity'            => 'nullable|numeric|min:0',
             'supplies.*.items'               => 'required|array|min:1',
-            'supplies.*.items.*.id'                   => 'nullable|exists:acrylic_order_items,id',
+            'supplies.*.items.*.id'                   => 'nullable|integer',
             'supplies.*.items.*.product_code'        => 'nullable|string|max:50',
             'supplies.*.items.*.product_name'        => 'required|string|max:255',
             'supplies.*.items.*.height'              => 'nullable|numeric|min:0',
@@ -214,6 +250,15 @@ class AcrylicOrderController extends Controller
             'supplies.*.items.*.notes'               => 'nullable|string',
             'supplies.*.items.*.bevel'               => 'nullable|string|max:100',
             'supplies.*.items.*.vertical_grain_cnc'  => 'nullable|string|max:100',
+            'supplies.*.items.*.straight_paste_length' => 'nullable|numeric|min:0',
+            'supplies.*.items.*.beveled_length'        => 'nullable|numeric|min:0',
+            'supplies.*.items.*.vat_moi_length'        => 'nullable|numeric|min:0',
+            'supplies.*.items.*.ban_rong_40_59'        => 'nullable|numeric|min:0',
+            'supplies.*.items.*.ban_rong_17_39'        => 'nullable|numeric|min:0',
+            'supplies.*.items.*.ban_rong_25_35'        => 'nullable|numeric|min:0',
+            'supplies.*.items.*.beveled_handle'        => 'nullable|numeric|min:0',
+            'supplies.*.items.*.cnc'                   => 'nullable|integer',
+            'supplies.*.items.*.direction'             => 'nullable|string|max:100',
         ]);
 
         // Calculate deadline from order_date + delivery_days if both are provided
@@ -266,7 +311,7 @@ class AcrylicOrderController extends Controller
         }
 
         $acrylicOrder->update([
-            'type'          => $request->type,
+            'type'          => $request->type ?? 'acrylic',
             'order_date'    => $request->order_date,
             'delivery_days' => $request->delivery_days,
             'customer_id'   => $request->customer_id,
@@ -283,36 +328,61 @@ class AcrylicOrderController extends Controller
         // Delete all existing supplies and their items for this order, then recreate
         $existingSupplyIds = $acrylicOrder->supplies()->pluck('id')->toArray();
         AcrylicOrderItem::whereIn('order_supply_id', $existingSupplyIds)->delete();
+        MinLateOrderItem::whereIn('order_supply_id', $existingSupplyIds)->delete();
         $acrylicOrder->supplies()->delete();
 
         // Create new supplies and their items
         foreach ($request->supplies as $supplyData) {
             $orderSupply = OrderSupply::create([
                 'order_id'    => $acrylicOrder->id,
+                'type'        => $acrylicOrder->type,
                 'supply_name' => $supplyData['supply_name'] ?? 'Vật tư',
-                'quantity'    => 1,
+                'quantity'    => $supplyData['quantity'] ?? 1,
             ]);
 
             // Create items for this supply
             foreach ($supplyData['items'] as $item) {
                 $totalPrice = $item['unit_price'] * $item['quantity'];
-                AcrylicOrderItem::create([
-                    'order_supply_id'    => $orderSupply->id,
-                    'product_code'        => $item['product_code'],
-                    'product_name'        => $item['product_name'],
-                    'height'              => $item['height'],
-                    'width'               => $item['width'],
-                    'grain_direction'     => $item['grain_direction'] ?? 0,
-                    'edge_bevel'          => $item['edge_bevel'],
-                    'wing_area'           => $item['wing_area'],
-                    'molding_length'      => $item['molding_length'],
-                    'quantity'            => $item['quantity'],
-                    'unit_price'          => $item['unit_price'],
-                    'total_price'         => $totalPrice,
-                    'notes'               => $item['notes'],
-                    'bevel'               => $item['bevel'],
-                    'vertical_grain_cnc'  => $item['vertical_grain_cnc'],
-                ]);
+                
+                if ($acrylicOrder->type === 'min_late') {
+                    MinLateOrderItem::create([
+                        'order_supply_id'       => $orderSupply->id,
+                        'name'                  => $item['product_name'],
+                        'size'                  => json_encode([
+                            'height' => $item['height'] ?? null,
+                            'width'  => $item['width'] ?? null,
+                        ]),
+                        'quantity'              => $item['quantity'] ?? 1,
+                        'edge_gluing'           => json_encode($item['edge_gluing'] ?? []),
+                        'straight_paste_length' => $item['straight_paste_length'] ?? 0,
+                        'beveled_length'        => $item['beveled_length'] ?? 0,
+                        'vat_moi_length'        => $item['vat_moi_length'] ?? 0,
+                        'ban_rong_40_59'        => $item['ban_rong_40_59'] ?? 0,
+                        'ban_rong_17_39'        => $item['ban_rong_17_39'] ?? 0,
+                        'ban_rong_25_35'        => $item['ban_rong_25_35'] ?? 0,
+                        'beveled_handle'        => $item['beveled_handle'] ?? 0,
+                        'cnc'                   => $item['cnc'] ?? 0,
+                        'direction'             => $item['direction'] ?? null,
+                    ]);
+                } else {
+                    AcrylicOrderItem::create([
+                        'order_supply_id'    => $orderSupply->id,
+                        'product_code'        => $item['product_code'] ?? null,
+                        'product_name'        => $item['product_name'],
+                        'height'              => $item['height'] ?? null,
+                        'width'               => $item['width'] ?? null,
+                        'grain_direction'     => $item['grain_direction'] ?? 0,
+                        'edge_bevel'          => $item['edge_bevel'] ?? null,
+                        'wing_area'           => $item['wing_area'] ?? null,
+                        'molding_length'      => $item['molding_length'] ?? null,
+                        'quantity'            => $item['quantity'],
+                        'unit_price'          => $item['unit_price'],
+                        'total_price'         => $totalPrice,
+                        'notes'               => $item['notes'] ?? null,
+                        'bevel'               => $item['bevel'] ?? null,
+                        'vertical_grain_cnc'  => $item['vertical_grain_cnc'] ?? null,
+                    ]);
+                }
             }
         }
 
