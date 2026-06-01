@@ -164,6 +164,7 @@ class AcrylicOrderController extends Controller
             'status'         => 'nullable|in:pending,processing,completed,cancelled',
             'attachments'    => 'nullable|array',
             'attachments.*'  => 'image|mimes:jpg,jpeg,png|max:2048',
+            'delete_attachments' => 'nullable|string',
             'items'          => 'required|array|min:1',
             'items.*.id'                   => 'nullable|exists:acrylic_order_items,id',
             'items.*.product_code'        => 'nullable|string|max:50',
@@ -195,8 +196,23 @@ class AcrylicOrderController extends Controller
             }
         }
 
-        // Merge with existing attachments
+        // Handle deleted attachments
         $existingAttachments = json_decode($acrylicOrder->attachments, true) ?? [];
+        if ($request->filled('delete_attachments')) {
+            $deletedAttachments = json_decode($request->delete_attachments, true) ?? [];
+            foreach ($deletedAttachments as $deletedPath) {
+                // Remove from array
+                $existingAttachments = array_filter($existingAttachments, function($path) use ($deletedPath) {
+                    return $path !== $deletedPath;
+                });
+                // Delete file from storage
+                if (Storage::disk('private')->exists($deletedPath)) {
+                    Storage::disk('private')->delete($deletedPath);
+                }
+            }
+        }
+
+        // Merge with existing attachments
         $allAttachments = array_merge($existingAttachments, $attachmentPaths);
 
         // Calculate total amount

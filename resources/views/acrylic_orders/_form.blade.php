@@ -195,13 +195,17 @@
                             @if(isset($acrylicOrder) && $acrylicOrder->attachments)
                             <div class="mt-4">
                                 <label class="form-label font-semibold text-sm text-neutral-600">Hình ảnh đã tải</label>
-                                <div class="flex flex-wrap gap-2">
-                                    @foreach(json_decode($acrylicOrder->attachments, true) ?? [] as $image)
+                                <div class="flex flex-wrap gap-2" id="existing-attachments">
+                                    @foreach(json_decode($acrylicOrder->attachments, true) ?? [] as $index => $image)
                                     <div class="relative">
                                         <img src="{{ route('acrylic_orders.image', ['filename' => basename($image)]) }}" class="w-20 h-20 object-cover rounded-lg border border-neutral-200">
+                                        <button type="button" onclick="deleteAttachment('{{ $index }}', '{{ $image }}')" class="absolute top-0 right-0 m-1 bg-danger-100 hover:bg-danger-200 text-danger-600 font-medium w-7 h-7 m-2 p-2 flex justify-center items-center rounded-full">
+                                            <iconify-icon icon="fluent:delete-24-regular" class="menu-icon"></iconify-icon>
+                                        </button>
                                     </div>
                                     @endforeach
                                 </div>
+                                <input type="hidden" name="delete_attachments" id="delete-attachments" value="">
                             </div>
                             @endif
                         </div>
@@ -398,6 +402,23 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+function deleteAttachment(index, imagePath) {
+    if (confirm('Bạn có chắc muốn xóa hình ảnh này?')) {
+        // Remove from DOM
+        const container = document.getElementById('existing-attachments');
+        const imageDivs = container.querySelectorAll('.relative.group');
+        if (imageDivs[index]) {
+            imageDivs[index].remove();
+        }
+        
+        // Track deleted attachments
+        const deleteInput = document.getElementById('delete-attachments');
+        let deleted = deleteInput.value ? JSON.parse(deleteInput.value) : [];
+        deleted.push(imagePath);
+        deleteInput.value = JSON.stringify(deleted);
+    }
+}
 
 function fillProductInfo(selectElement, index) {
     const productCode = selectElement.value;
