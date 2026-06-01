@@ -14,7 +14,7 @@
                 <div class="flex items-center flex-wrap gap-3">
                     {{-- Per page --}}
                     <span class="text-base font-medium text-secondary-light mb-0">Hiển thị</span>
-                    <form method="GET" action="{{ route('acrylic_orders.index') }}" id="perPageForm">
+                    <form method="GET" action="{{ route('orders.index') }}" id="perPageForm">
                         <input type="hidden" name="search" value="{{ $search }}">
                         <select name="per_page" class="form-select form-select-sm w-auto border-neutral-200 rounded-lg"
                             onchange="document.getElementById('perPageForm').submit()">
@@ -25,7 +25,7 @@
                     </form>
 
                     {{-- Search --}}
-                    <form method="GET" action="{{ route('acrylic_orders.index') }}" class="navbar-search">
+                    <form method="GET" action="{{ route('orders.index') }}" class="navbar-search">
                         <input type="hidden" name="per_page" value="{{ $perPage }}">
                         <input type="text" name="search" class="form-control form-control-sm border-neutral-200 rounded-lg" placeholder="Tìm kiếm..." value="{{ $search }}">
                     </form>
@@ -38,13 +38,13 @@
                         Lọc
                     </button>
                     @if(request()->filled('filter_order_code') || request()->filled('filter_customer_name') || request()->filled('filter_status'))
-                    <a href="{{ route('acrylic_orders.index') }}" class="btn text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2">
+                    <a href="{{ route('orders.index') }}" class="btn text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2">
                         <iconify-icon icon="solar:close-circle-outline" class="icon text-xl line-height-1"></iconify-icon>
                         Xóa lọc
                     </a>
                     @endif
                     @can('add acrylic order')
-                    <a href="{{ route('acrylic_orders.create') }}"
+                    <a href="{{ route('orders.create') }}"
                         class="btn btn-primary text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2">
                         <iconify-icon icon="ic:baseline-plus" class="icon text-xl line-height-1"></iconify-icon>
                         Tạo đơn hàng
@@ -145,18 +145,18 @@
                                 <td class="text-center">
                                     <div class="flex items-center gap-3 justify-center">
                                         @can('view acrylic order')
-                                        <a href="{{ route('acrylic_orders.show', $order) }}" class="bg-primary-100 hover:bg-primary-200 text-primary-600 font-medium w-10 h-10 flex justify-center items-center rounded-full">
+                                        <a href="{{ route('orders.show', $order) }}" class="bg-primary-100 hover:bg-primary-200 text-primary-600 font-medium w-10 h-10 flex justify-center items-center rounded-full">
                                             <iconify-icon icon="lucide:eye" class="menu-icon"></iconify-icon>
                                         </a>
                                         @endcan
                                         @can('edit acrylic order')
-                                        <a href="{{ route('acrylic_orders.edit', $order) }}"
+                                        <a href="{{ route('orders.edit', $order) }}"
                                             class="bg-success-100 hover:bg-success-200 text-success-600 font-medium w-10 h-10 flex justify-center items-center rounded-full">
                                             <iconify-icon icon="lucide:edit" class="menu-icon"></iconify-icon>
                                         </a>
                                         @endcan
                                         @can('delete acrylic order')
-                                        <form method="POST" action="{{ route('acrylic_orders.destroy', $order) }}"
+                                        <form method="POST" action="{{ route('orders.destroy', $order) }}"
                                             onsubmit="return confirm('Xóa đơn hàng này?')">
                                             @csrf @method('DELETE')
                                             <button type="submit"
@@ -219,7 +219,7 @@
         <h5 class="font-semibold text-base">Lọc đơn hàng</h5>
         <button type="button" onclick="closeModal('filter-modal')" class="text-secondary-light hover:text-neutral-700 text-xl leading-none">&times;</button>
     </div>
-    <form action="{{ route('acrylic_orders.index') }}" method="GET">
+    <form action="{{ route('orders.index') }}" method="GET">
         <input type="hidden" name="per_page" value="{{ $perPage }}">
         <input type="hidden" name="search" value="{{ $search }}">
         <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">

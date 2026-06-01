@@ -80,7 +80,7 @@
 
                     {{-- Dynamic Items Container based on selected type --}}
                     <div id="items-section-acrylic" class="type-items-section">
-                        @include('acrylic_orders._items')
+                        @include('orders.acrylic')
                     </div>
                     <div id="items-section-min_late" class="type-items-section hidden">
                         @include('orders.min_late')
@@ -143,7 +143,7 @@
                                 <div class="flex flex-wrap gap-2" id="existing-attachments">
                                     @foreach(json_decode($acrylicOrder->attachments, true) ?? [] as $index => $image)
                                     <div class="relative group">
-                                        <img src="{{ route('acrylic_orders.image', ['filename' => basename($image)]) }}" class="w-16 h-16 object-cover rounded-lg border border-neutral-200 shadow-sm transition-transform group-hover:scale-105">
+                                        <img src="{{ route('orders.image', ['filename' => basename($image)]) }}" class="w-16 h-16 object-cover rounded-lg border border-neutral-200 shadow-sm transition-transform group-hover:scale-105">
                                         <button type="button" onclick="deleteAttachment('{{ $index }}', '{{ $image }}')" class="absolute -top-1.5 -right-1.5 bg-danger-100 hover:bg-danger-200 text-danger-600 transition-colors w-6 h-6 flex justify-center items-center rounded-full shadow-sm" title="Xóa ảnh">
                                             <iconify-icon icon="lucide:trash-2" class="text-xs"></iconify-icon>
                                         </button>
@@ -159,7 +159,7 @@
             </div>
         </div>
         <div class="px-6 py-4 border-t border-neutral-100 bg-neutral-50/50 flex items-center justify-end gap-3 rounded-b-xl">
-            <a href="{{ route('acrylic_orders.index') }}" class="btn btn-outline-neutral px-5 py-2.5 rounded-lg text-sm font-semibold transition-all">Quay lại</a>
+            <a href="{{ route('orders.index') }}" class="btn btn-outline-neutral px-5 py-2.5 rounded-lg text-sm font-semibold transition-all">Quay lại</a>
             <button type="submit" class="btn btn-primary px-6 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all">{{ isset($acrylicOrder) ? 'Cập nhật đơn hàng' : 'Lưu đơn hàng' }}</button>
         </div>
     </form>

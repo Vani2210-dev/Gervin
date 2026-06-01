@@ -65,9 +65,9 @@
             @endcan
             @can('view acrylic order')
             <li>
-                <a href="{{ route('acrylic_orders.index') }}">
+                <a href="{{ route('orders.index') }}">
                     <iconify-icon icon="mdi:clipboard-text-outline" class="menu-icon"></iconify-icon>
-                    <span>Đơn hàng Acrylic</span>
+                    <span>Quản lý Đơn hàng</span>
                 </a>
             </li>
             @endcan

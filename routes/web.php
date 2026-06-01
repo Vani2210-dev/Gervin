@@ -209,10 +209,10 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('customers', CustomerController::class)->names('customers');
 });
 
-// Acrylic Orders
+// Orders
 Route::middleware(['auth'])->group(function () {
-    Route::resource('acrylic_orders', AcrylicOrderController::class)->names('acrylic_orders');
-    Route::get('acrylic-orders/image/{filename}', [AcrylicOrderController::class, 'serveImage'])->name('acrylic_orders.image');
+    Route::resource('orders', AcrylicOrderController::class)->names('orders');
+    Route::get('orders/image/{filename}', [AcrylicOrderController::class, 'serveImage'])->name('orders.image');
 });
 
 require __DIR__.'/auth.php';
