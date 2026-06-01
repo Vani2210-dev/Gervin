@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\AcrylicOrderItem;
+use App\Models\OrderSupply;
 use App\Models\Customer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -127,11 +128,19 @@ class AcrylicOrderController extends Controller
             'attachments'   => !empty($attachmentPaths) ? json_encode($attachmentPaths) : null,
         ]);
 
+        // Create a default OrderSupply for the order
+        $orderSupply = OrderSupply::create([
+            'order_id'    => $order->id,
+            'supply_name' => 'Vật tư Acrylic mặc định',
+            'quantity'    => 1,
+            'type'        => 'acrylic',
+        ]);
+
         // Create order items
         foreach ($request->items as $item) {
             $totalPrice = $item['unit_price'] * $item['quantity'];
             AcrylicOrderItem::create([
-                'order_id'           => $order->id,
+                'order_supply_id'    => $orderSupply->id,
                 'product_code'        => $item['product_code'],
                 'product_name'        => $item['product_name'],
                 'height'              => $item['height'],
@@ -233,6 +242,17 @@ class AcrylicOrderController extends Controller
             'attachments'   => !empty($allAttachments) ? json_encode($allAttachments) : null,
         ]);
 
+        // Find or create a default OrderSupply for the order
+        $orderSupply = $acrylicOrder->supplies()->first();
+        if (!$orderSupply) {
+            $orderSupply = OrderSupply::create([
+                'order_id'    => $acrylicOrder->id,
+                'supply_name' => 'Vật tư Acrylic mặc định',
+                'quantity'    => 1,
+                'type'        => 'acrylic',
+            ]);
+        }
+
         // Update or create order items
         $existingItemIds = [];
         foreach ($request->items as $item) {
@@ -241,7 +261,7 @@ class AcrylicOrderController extends Controller
             if (isset($item['id'])) {
                 // Update existing item
                 $orderItem = AcrylicOrderItem::find($item['id']);
-                if ($orderItem && $orderItem->order_id == $acrylicOrder->id) {
+                if ($orderItem && $orderItem->orderSupply && $orderItem->orderSupply->order_id == $acrylicOrder->id) {
                     $orderItem->update([
                         'product_code'        => $item['product_code'],
                         'product_name'        => $item['product_name'],
@@ -263,7 +283,7 @@ class AcrylicOrderController extends Controller
             } else {
                 // Create new item
                 AcrylicOrderItem::create([
-                    'order_id'           => $acrylicOrder->id,
+                    'order_supply_id'    => $orderSupply->id,
                     'product_code'        => $item['product_code'],
                     'product_name'        => $item['product_name'],
                     'height'              => $item['height'],
@@ -283,7 +303,8 @@ class AcrylicOrderController extends Controller
         }
 
         // Delete items not in the request
-        $acrylicOrder->items()->whereNotIn('id', $existingItemIds)->delete();
+        $supplyIds = $acrylicOrder->supplies()->pluck('id');
+        AcrylicOrderItem::whereIn('order_supply_id', $supplyIds)->whereNotIn('id', $existingItemIds)->delete();
 
         return redirect()->route('acrylic_orders.index')->with('success', 'Cập nhật đơn hàng Acrylic thành công.');
     }

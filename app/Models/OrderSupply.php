@@ -10,6 +10,7 @@ class OrderSupply extends Model
 
     protected $fillable = [
         'order_id',
+        'type',
         'supply_name',
         'quantity',
     ];
@@ -17,5 +18,10 @@ class OrderSupply extends Model
     public function order()
     {
         return $this->belongsTo(Order::class, 'order_id');
+    }
+
+    public function items()
+    {
+        return $this->hasMany(AcrylicOrderItem::class, 'order_supply_id');
     }
 }

@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class AcrylicOrderItem extends Model
 {
     protected $fillable = [
-        'order_id',
+        'order_supply_id',
         'product_code',
         'product_name',
         'height',
@@ -24,8 +24,8 @@ class AcrylicOrderItem extends Model
         'vertical_grain_cnc',
     ];
 
-    public function acrylicOrder()
+    public function orderSupply()
     {
-        return $this->belongsTo(Order::class, 'order_id');
+        return $this->belongsTo(OrderSupply::class, 'order_supply_id');
     }
 }

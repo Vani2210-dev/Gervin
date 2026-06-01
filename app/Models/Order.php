@@ -32,7 +32,7 @@ class Order extends Model
 
     public function items()
     {
-        return $this->hasMany(AcrylicOrderItem::class, 'order_id');
+        return $this->hasManyThrough(AcrylicOrderItem::class, OrderSupply::class, 'order_id', 'order_supply_id');
     }
 
     public function supplies()
