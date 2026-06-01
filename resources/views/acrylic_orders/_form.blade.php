@@ -407,7 +407,7 @@ function deleteAttachment(index, imagePath) {
     if (confirm('Bạn có chắc muốn xóa hình ảnh này?')) {
         // Remove from DOM
         const container = document.getElementById('existing-attachments');
-        const imageDivs = container.querySelectorAll('.relative.group');
+        const imageDivs = container.querySelectorAll('.relative');
         if (imageDivs[index]) {
             imageDivs[index].remove();
         }
