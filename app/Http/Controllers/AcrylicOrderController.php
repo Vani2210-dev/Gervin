@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\AcrylicOrder;
+use App\Models\Order;
 use App\Models\AcrylicOrderItem;
+use App\Models\OrderSupply;
 use App\Models\Customer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -23,7 +24,7 @@ class AcrylicOrderController extends Controller
         $perPage = $request->input('per_page', 10);
         $search  = $request->input('search', '');
 
-        $orders = AcrylicOrder::with('customer')
+        $orders = Order::with('customer')
             ->when($search, function ($q) use ($search) {
                 $q->where('order_code', 'like', "%$search%")
                   ->orWhere('customer_name', 'like', "%$search%")
@@ -45,7 +46,7 @@ class AcrylicOrderController extends Controller
         return view('acrylic_orders.index', compact('orders', 'perPage', 'search'));
     }
 
-    public function show(AcrylicOrder $acrylicOrder)
+    public function show(Order $acrylicOrder)
     {
         $acrylicOrder->load('items');
         return view('acrylic_orders.show', compact('acrylicOrder'));
@@ -56,7 +57,7 @@ class AcrylicOrderController extends Controller
         return view('acrylic_orders.create');
     }
 
-    public function edit(AcrylicOrder $acrylicOrder)
+    public function edit(Order $acrylicOrder)
     {
         $acrylicOrder->load('items');
         return view('acrylic_orders.edit', compact('acrylicOrder'));
@@ -104,7 +105,7 @@ class AcrylicOrderController extends Controller
         }
 
         // Generate order code: DA00001, DA00002, etc.
-        $lastOrder = AcrylicOrder::orderBy('id', 'desc')->first();
+        $lastOrder = Order::orderBy('id', 'desc')->first();
         $nextNumber = $lastOrder ? intval(substr($lastOrder->order_code, 2)) + 1 : 1;
         $orderCode = 'DA' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
 
@@ -114,7 +115,7 @@ class AcrylicOrderController extends Controller
             $totalAmount += ($item['unit_price'] * $item['quantity']);
         }
 
-        $order = AcrylicOrder::create([
+        $order = Order::create([
             'order_code'    => $orderCode,
             'customer_id'   => $request->customer_id,
             'customer_name' => $request->customer_name,
@@ -127,11 +128,19 @@ class AcrylicOrderController extends Controller
             'attachments'   => !empty($attachmentPaths) ? json_encode($attachmentPaths) : null,
         ]);
 
+        // Create a default OrderSupply for the order
+        $orderSupply = OrderSupply::create([
+            'order_id'    => $order->id,
+            'supply_name' => 'Vật tư Acrylic mặc định',
+            'quantity'    => 1,
+            'type'        => 'acrylic',
+        ]);
+
         // Create order items
         foreach ($request->items as $item) {
             $totalPrice = $item['unit_price'] * $item['quantity'];
             AcrylicOrderItem::create([
-                'acrylic_order_id'   => $order->id,
+                'order_supply_id'    => $orderSupply->id,
                 'product_code'        => $item['product_code'],
                 'product_name'        => $item['product_name'],
                 'height'              => $item['height'],
@@ -152,7 +161,7 @@ class AcrylicOrderController extends Controller
         return redirect()->route('acrylic_orders.index')->with('success', 'Tạo đơn hàng Acrylic thành công.');
     }
 
-    public function update(Request $request, AcrylicOrder $acrylicOrder)
+    public function update(Request $request, Order $acrylicOrder)
     {
         $request->validate([
             'customer_id'    => 'nullable|exists:customers,id',
@@ -233,6 +242,17 @@ class AcrylicOrderController extends Controller
             'attachments'   => !empty($allAttachments) ? json_encode($allAttachments) : null,
         ]);
 
+        // Find or create a default OrderSupply for the order
+        $orderSupply = $acrylicOrder->supplies()->first();
+        if (!$orderSupply) {
+            $orderSupply = OrderSupply::create([
+                'order_id'    => $acrylicOrder->id,
+                'supply_name' => 'Vật tư Acrylic mặc định',
+                'quantity'    => 1,
+                'type'        => 'acrylic',
+            ]);
+        }
+
         // Update or create order items
         $existingItemIds = [];
         foreach ($request->items as $item) {
@@ -241,7 +261,7 @@ class AcrylicOrderController extends Controller
             if (isset($item['id'])) {
                 // Update existing item
                 $orderItem = AcrylicOrderItem::find($item['id']);
-                if ($orderItem && $orderItem->acrylic_order_id == $acrylicOrder->id) {
+                if ($orderItem && $orderItem->orderSupply && $orderItem->orderSupply->order_id == $acrylicOrder->id) {
                     $orderItem->update([
                         'product_code'        => $item['product_code'],
                         'product_name'        => $item['product_name'],
@@ -263,7 +283,7 @@ class AcrylicOrderController extends Controller
             } else {
                 // Create new item
                 AcrylicOrderItem::create([
-                    'acrylic_order_id'   => $acrylicOrder->id,
+                    'order_supply_id'    => $orderSupply->id,
                     'product_code'        => $item['product_code'],
                     'product_name'        => $item['product_name'],
                     'height'              => $item['height'],
@@ -283,12 +303,13 @@ class AcrylicOrderController extends Controller
         }
 
         // Delete items not in the request
-        $acrylicOrder->items()->whereNotIn('id', $existingItemIds)->delete();
+        $supplyIds = $acrylicOrder->supplies()->pluck('id');
+        AcrylicOrderItem::whereIn('order_supply_id', $supplyIds)->whereNotIn('id', $existingItemIds)->delete();
 
         return redirect()->route('acrylic_orders.index')->with('success', 'Cập nhật đơn hàng Acrylic thành công.');
     }
 
-    public function destroy(AcrylicOrder $acrylicOrder)
+    public function destroy(Order $acrylicOrder)
     {
         $acrylicOrder->delete();
         return redirect()->route('acrylic_orders.index')->with('success', 'Xóa đơn hàng Acrylic thành công.');
