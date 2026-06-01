@@ -10,7 +10,7 @@ use App\Models\Customer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
-class AcrylicOrderController extends Controller
+class OrderController extends Controller
 {
     public function __construct()
     {
@@ -47,9 +47,10 @@ class AcrylicOrderController extends Controller
         return view('orders.index', compact('orders', 'perPage', 'search'));
     }
 
-    public function show(Order $acrylicOrder)
+    public function show(Order $order)
     {
-        $acrylicOrder->load(['supplies.items', 'supplies.minLateItems']);
+        $order->load(['supplies.items', 'supplies.minLateItems']);
+        $acrylicOrder = $order;
         return view('orders.show', compact('acrylicOrder'));
     }
 
@@ -58,9 +59,10 @@ class AcrylicOrderController extends Controller
         return view('orders.create');
     }
 
-    public function edit(Order $acrylicOrder)
+    public function edit(Order $order)
     {
-        $acrylicOrder->load(['supplies.items', 'supplies.minLateItems']);
+        $order->load(['supplies.items', 'supplies.minLateItems']);
+        $acrylicOrder = $order;
         return view('orders.edit', compact('acrylicOrder'));
     }
 
@@ -163,7 +165,6 @@ class AcrylicOrderController extends Controller
         foreach ($request->supplies as $supplyData) {
             $orderSupply = OrderSupply::create([
                 'order_id'    => $order->id,
-                'type'        => $order->type,
                 'supply_name' => $supplyData['supply_name'] ?? 'Vật tư',
                 'quantity'    => $supplyData['quantity'] ?? 1,
             ]);
@@ -217,8 +218,9 @@ class AcrylicOrderController extends Controller
         return redirect()->route('orders.index')->with('success', 'Tạo đơn hàng thành công.');
     }
 
-    public function update(Request $request, Order $acrylicOrder)
+    public function update(Request $request, Order $order)
     {
+        $acrylicOrder = $order;
         $request->validate([
             'customer_id'    => 'nullable|exists:customers,id',
             'customer_name'  => 'required|string|max:255',
@@ -337,7 +339,6 @@ class AcrylicOrderController extends Controller
         foreach ($request->supplies as $supplyData) {
             $orderSupply = OrderSupply::create([
                 'order_id'    => $acrylicOrder->id,
-                'type'        => $acrylicOrder->type,
                 'supply_name' => $supplyData['supply_name'] ?? 'Vật tư',
                 'quantity'    => $supplyData['quantity'] ?? 1,
             ]);
@@ -391,9 +392,9 @@ class AcrylicOrderController extends Controller
         return redirect()->route('orders.index')->with('success', 'Cập nhật đơn hàng thành công.');
     }
 
-    public function destroy(Order $acrylicOrder)
+    public function destroy(Order $order)
     {
-        $acrylicOrder->delete();
+        $order->delete();
         return redirect()->route('orders.index')->with('success', 'Xóa đơn hàng thành công.');
     }
 
