@@ -39,4 +39,10 @@ class Order extends Model
     {
         return $this->hasMany(OrderSupply::class, 'order_id');
     }
+
+    public function paymentDetails()
+    {
+        return $this->hasMany(PaymentDetail::class, 'order_id');
+    }
 }
+

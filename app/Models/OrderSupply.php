@@ -24,4 +24,9 @@ class OrderSupply extends Model
     {
         return $this->hasMany(AcrylicOrderItem::class, 'order_supply_id');
     }
+
+    public function minLateItems()
+    {
+        return $this->hasMany(MinLateOrderItem::class, 'order_supply_id');
+    }
 }
