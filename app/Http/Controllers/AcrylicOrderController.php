@@ -92,7 +92,7 @@ class AcrylicOrderController extends Controller
             'supplies.*.items.*.wing_area'           => 'nullable|numeric|min:0',
             'supplies.*.items.*.molding_length'      => 'nullable|numeric|min:0',
             'supplies.*.items.*.quantity'            => 'required|integer|min:1',
-            'supplies.*.items.*.unit_price'          => 'required|numeric|min:0',
+            'supplies.*.items.*.unit_price'          => 'nullable|numeric|min:0',
             'supplies.*.items.*.notes'               => 'nullable|string',
             'supplies.*.items.*.bevel'               => 'nullable|string|max:100',
             'supplies.*.items.*.vertical_grain_cnc'  => 'nullable|string|max:100',
@@ -138,7 +138,8 @@ class AcrylicOrderController extends Controller
         $totalAmount = 0;
         foreach ($request->supplies as $supply) {
             foreach ($supply['items'] as $item) {
-                $totalAmount += ($item['unit_price'] * $item['quantity']);
+                $unitPrice = $item['unit_price'] ?? 0;
+                $totalAmount += ($unitPrice * $item['quantity']);
             }
         }
 
@@ -246,7 +247,7 @@ class AcrylicOrderController extends Controller
             'supplies.*.items.*.wing_area'           => 'nullable|numeric|min:0',
             'supplies.*.items.*.molding_length'      => 'nullable|numeric|min:0',
             'supplies.*.items.*.quantity'            => 'required|integer|min:1',
-            'supplies.*.items.*.unit_price'          => 'required|numeric|min:0',
+            'supplies.*.items.*.unit_price'          => 'nullable|numeric|min:0',
             'supplies.*.items.*.notes'               => 'nullable|string',
             'supplies.*.items.*.bevel'               => 'nullable|string|max:100',
             'supplies.*.items.*.vertical_grain_cnc'  => 'nullable|string|max:100',
@@ -306,7 +307,8 @@ class AcrylicOrderController extends Controller
         $totalAmount = 0;
         foreach ($request->supplies as $supply) {
             foreach ($supply['items'] as $item) {
-                $totalAmount += ($item['unit_price'] * $item['quantity']);
+                $unitPrice = $item['unit_price'] ?? 0;
+                $totalAmount += ($unitPrice * $item['quantity']);
             }
         }
 
