@@ -51,9 +51,9 @@
                     </div>
                     <div class="flex items-center gap-2">
                         <button type="button" onclick="addMinLateOrderItem(this)" class="btn btn-sm btn-outline-primary rounded-lg flex items-center gap-1">
-                            <iconify-icon icon="lucide:plus" class="text-sm"></iconify-icon>
+                            <iconify-icon icon="lucide:plus" class="text-sm"></iconify-icon> Thêm sản phẩm
                         </button>
-                        <button type="button" onclick="this.closest('.order-supply-row').remove()" class="text-neutral-400 hover:text-danger-500 transition-colors p-1" title="Xóa vật tư này">
+                        <button type="button" onclick="this.closest('.order-supply-row').remove()" class="text-neutral-400 hover:text-danger-500 transition-colors p-1 flex items-center justify-center" title="Xóa vật tư này">
                             <iconify-icon icon="lucide:trash-2" class="text-lg"></iconify-icon>
                         </button>
                     </div>
@@ -116,7 +116,7 @@
                                     </select>
                                 </td>
                                 <td class="border border-neutral-200">
-                                    <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][product_name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Tên sản phẩm" required value="{{ $item->product_name ?? $item->name ?? '' }}">
+                                    <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][product_name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Tên sản phẩm" required value="{{ $item->product_name ?? $item->name ?? '' }}">
                                 </td>
                                 <td class="border border-neutral-200 w-[90px] min-w-[90px] max-w-[90px]">
                                     <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][height]" class="form-control form-control-sm rounded-lg border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500 bg-yellow-50/30 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="{{ $size['height'] ?? '' }}">
@@ -201,7 +201,7 @@
                                 </td>
 
                                 <td class="border border-neutral-200">
-                                    <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Ghi chú" value="{{ $item->notes ?? '' }}">
+                                    <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Ghi chú" value="{{ $item->notes ?? '' }}">
                                 </td>
                                 <td class="text-center align-middle border border-neutral-200">
                                     <button type="button" onclick="removeMinLateOrderItem(this)" class="text-neutral-400 hover:text-danger-500 transition-colors p-1" title="Xóa sản phẩm">
@@ -297,18 +297,18 @@ function addMinLateOrderSupply() {
     newSupply.innerHTML = `
         <div class="flex items-center justify-between gap-4 border-b border-neutral-200 pb-3 mb-4">
             <div class="flex items-center gap-3">
-                <div class="p-1.5 bg-primary-50 rounded-lg text-primary-600 flex items-center justify-center">
+                <div class="p-1.5 bg-primary-50 rounded-lg text-primary-500 flex items-center justify-center">
                     <iconify-icon icon="lucide:clipboard-list" class="text-base"></iconify-icon>
                 </div>
                 <input type="text" name="supplies[${minLateSupplyIndex}][supply_name]" class="form-control form-control-sm rounded-lg w-64 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Tên vật tư (ví dụ: Acrylic, Melamine...)">
                 <input type="number" name="supplies[${minLateSupplyIndex}][quantity]" class="form-control form-control-sm rounded-lg w-24 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="SL" min="0" step="0.01" value="0">
             </div>
             <div class="flex items-center gap-2">
-                <button type="button" onclick="addMinLateOrderItem(this)" class="text-neutral-400 hover:text-primary-600 transition-colors p-1">
-                    <iconify-icon icon="lucide:package-plus" class="text-lg"></iconify-icon> Thêm
+                <button type="button" onclick="addMinLateOrderItem(this)" class="btn btn-sm btn-outline-primary rounded-lg flex items-center gap-1">
+                    <iconify-icon icon="lucide:plus" class="text-sm"></iconify-icon> Thêm sản phẩm
                 </button>
-                <button type="button" onclick="this.closest('.order-supply-row').remove()" class="text-neutral-400 hover:text-danger-500 transition-colors p-1" title="Xóa vật tư này">
-                    <iconify-icon icon="lucide:trash-2" class="text-lg"></iconify-icon> Xóa
+                <button type="button" onclick="this.closest('.order-supply-row').remove()" class="text-neutral-400 hover:text-danger-500 transition-colors p-1 flex items-center justify-center" title="Xóa vật tư này">
+                    <iconify-icon icon="lucide:trash-2" class="text-lg"></iconify-icon>
                 </button>
             </div>
         </div>
@@ -375,7 +375,7 @@ function addMinLateOrderItem(button) {
             </select>
         </td>
         <td class="border border-neutral-200">
-            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][product_name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Tên sản phẩm" required>
+            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][product_name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Tên sản phẩm" required>
         </td>
         <td class="border border-neutral-200 w-[90px] min-w-[90px] max-w-[90px]">
             <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][height]" class="form-control form-control-sm rounded-lg border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500 bg-yellow-50/30 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01">
@@ -460,7 +460,7 @@ function addMinLateOrderItem(button) {
         </td>
 
         <td class="border border-neutral-200">
-            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Ghi chú">
+            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Ghi chú">
         </td>
         <td class="text-center align-middle border border-neutral-200">
             <button type="button" onclick="removeMinLateOrderItem(this)" class="text-neutral-400 hover:text-danger-500 transition-colors p-1" title="Xóa sản phẩm">
@@ -492,10 +492,10 @@ function removeMinLateOrderItem(button) {
     const tbody = row.closest('.supply-items-container');
     row.remove();
     updateOrderSummary();
-    updateRowIndexes(tbody);
+    updateMinLateRowIndexes(tbody);
 }
 
-function updateRowIndexes(tbody) {
+function updateMinLateRowIndexes(tbody) {
     if (!tbody) return;
     tbody.querySelectorAll('.order-item-row').forEach((row, index) => {
         const indexEl = row.querySelector('.row-index');

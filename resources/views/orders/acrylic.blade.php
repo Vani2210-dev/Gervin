@@ -9,6 +9,46 @@
     .table thead tr:nth-child(2) th:last-child::before {
         display: none !important;
     }
+    /* Style TomSelect inside table rows to match compact inputs */
+    .table .ts-wrapper {
+        padding: 0 !important;
+        border: none !important;
+        background: transparent !important;
+        min-height: auto !important;
+        height: 32px !important;
+    }
+    .table .ts-control {
+        padding: 0 8px !important;
+        height: 32px !important; /* matches h-8 (32px) */
+        font-size: 12px !important; /* matches text-xs */
+        line-height: 30px !important; /* 32px minus borders */
+        border-radius: 8px !important; /* matches rounded-lg */
+        border: 1px solid #d1d5db !important; /* matches border-neutral-300 */
+        background-color: #ffffff !important;
+        display: flex !important;
+        align-items: center !important;
+        box-shadow: none !important;
+    }
+    .table .ts-control input {
+        font-size: 12px !important;
+        height: auto !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    .table .ts-control .item {
+        font-size: 12px !important;
+        line-height: 30px !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .table .ts-wrapper.single .ts-control:after {
+        top: 50% !important;
+        margin-top: -3px !important;
+    }
+    .table .ts-wrapper.focus .ts-control {
+        border-color: #3b82f6 !important; /* focus border color (primary-500) */
+        box-shadow: 0 0 0 1px #3b82f6 !important;
+    }
 </style>
 <div class="bg-white border border-neutral-200 rounded-xl p-6 shadow-sm">
     <div class="flex items-center justify-between border-b border-neutral-100 pb-4 mb-5">
@@ -38,7 +78,7 @@
                         <button type="button" onclick="addOrderItem(this)" class="btn btn-sm btn-outline-primary rounded-lg flex items-center gap-1">
                             <iconify-icon icon="lucide:plus" class="text-sm"></iconify-icon> Thêm sản phẩm
                         </button>
-                        <button type="button" onclick="this.closest('.order-supply-row').remove()" class="text-neutral-400 hover:text-danger-500 transition-colors p-1" title="Xóa vật tư này">
+                        <button type="button" onclick="this.closest('.order-supply-row').remove()" class="text-neutral-400 hover:text-danger-500 transition-colors p-1 flex items-center justify-center" title="Xóa vật tư này">
                             <iconify-icon icon="lucide:trash-2" class="text-lg"></iconify-icon>
                         </button>
                     </div>
@@ -154,18 +194,18 @@ function addOrderSupply() {
     newSupply.innerHTML = `
         <div class="flex items-center justify-between gap-4 border-b border-neutral-200 pb-3 mb-4">
             <div class="flex items-center gap-3">
-                <div class="p-1.5 bg-primary-50 rounded-lg text-primary-600 flex items-center justify-center">
+                <div class="p-1.5 bg-primary-50 rounded-lg text-primary-500 flex items-center justify-center">
                     <iconify-icon icon="lucide:clipboard-list" class="text-base"></iconify-icon>
                 </div>
-                <input type="text" name="supplies[\${supplyIndex}][supply_name]" class="form-control form-control-sm rounded-lg w-64 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Tên vật tư (ví dụ: Acrylic, Melamine...)">
-                <input type="number" name="supplies[\${supplyIndex}][quantity]" class="form-control form-control-sm rounded-lg w-24 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="SL" min="0" step="0.01" value="0">
+                <input type="text" name="supplies[${supplyIndex}][supply_name]" class="form-control form-control-sm rounded-lg w-64 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Tên vật tư (ví dụ: Acrylic, Melamine...)">
+                <input type="number" name="supplies[${supplyIndex}][quantity]" class="form-control form-control-sm rounded-lg w-24 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="SL" min="0" step="0.01" value="0">
             </div>
             <div class="flex items-center gap-2">
-                <button type="button" onclick="addOrderItem(this)" class="text-neutral-400 hover:text-primary-600 transition-colors p-1">
-                    <iconify-icon icon="lucide:package-plus" class="text-lg"></iconify-icon> Thêm sản phẩm
+                <button type="button" onclick="addOrderItem(this)" class="btn btn-sm btn-outline-primary rounded-lg flex items-center gap-1">
+                    <iconify-icon icon="lucide:plus" class="text-sm"></iconify-icon> Thêm sản phẩm
                 </button>
-                <button type="button" onclick="this.closest('.order-supply-row').remove()" class="text-neutral-400 hover:text-danger-500 transition-colors p-1" title="Xóa vật tư này">
-                    <iconify-icon icon="lucide:trash-2" class="text-lg"></iconify-icon> Xóa
+                <button type="button" onclick="this.closest('.order-supply-row').remove()" class="text-neutral-400 hover:text-danger-500 transition-colors p-1 flex items-center justify-center" title="Xóa vật tư này">
+                    <iconify-icon icon="lucide:trash-2" class="text-lg"></iconify-icon>
                 </button>
             </div>
         </div>
@@ -194,7 +234,7 @@ function addOrderSupply() {
                         <th scope="col" class="w-[80px] border border-neutral-200 font-semibold text-xs text-neutral-700 uppercase">Rộng</th>
                     </tr>
                 </thead>
-                <tbody class="supply-items-container" data-supply-index="\${supplyIndex}">
+                <tbody class="supply-items-container" data-supply-index="${supplyIndex}">
                 </tbody>
             </table>
         </div>
@@ -213,10 +253,10 @@ function addOrderItem(button) {
     newItem.className = 'order-item-row';
     newItem.innerHTML = `
         <td class="text-center align-middle border border-neutral-200">
-            <span class="row-index font-semibold text-neutral-500">\${itemIndex + 1}</span>
+            <span class="row-index font-semibold text-neutral-500">${itemIndex + 1}</span>
         </td>
         <td class="border border-neutral-200 w-[160px] min-w-[160px] max-w-[160px]">
-            <select name="supplies[\${supplyIndex}][items][\${itemIndex}][product_code]" class="tom-select-product" onchange="fillProductInfo(this, \${supplyIndex}, \${itemIndex})">
+            <select name="supplies[${supplyIndex}][items][${itemIndex}][product_code]" class="tom-select-product" onchange="fillProductInfo(this, ${supplyIndex}, ${itemIndex})">
                 <option value="">-- Chọn --</option>
                 @foreach(\App\Models\Supply::pluck('product_code')->filter()->unique() as $code)
                 <option value="{{ $code }}">{{ $code }}</option>
@@ -224,46 +264,46 @@ function addOrderItem(button) {
             </select>
         </td>
         <td class="border border-neutral-200">
-            <input type="text" name="supplies[\${supplyIndex}][items][\${itemIndex}][product_name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Tên sản phẩm" required>
+            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][product_name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Tên sản phẩm" required>
         </td>
         <td class="border border-neutral-200 w-[85px] min-w-[85px] max-w-[85px]">
-            <input type="number" name="supplies[\${supplyIndex}][items][\${itemIndex}][height]" class="form-control form-control-sm rounded-lg border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500 bg-yellow-50/30 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][height]" class="form-control form-control-sm rounded-lg border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500 bg-yellow-50/30 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01">
         </td>
         <td class="border border-neutral-200 w-[80px] min-w-[80px] max-w-[80px]">
-            <input type="number" name="supplies[\${supplyIndex}][items][\${itemIndex}][width]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][width]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01">
         </td>
         <td class="border border-neutral-200 w-[70px] min-w-[70px] max-w-[70px]">
-            <input type="number" name="supplies[\${supplyIndex}][items][\${itemIndex}][quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="1" min="1" required value="1">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="1" min="1" required value="1">
         </td>
         <td class="border border-neutral-200 w-[100px] min-w-[100px] max-w-[100px]">
-            <input type="text" name="supplies[\${supplyIndex}][items][\${itemIndex}][edge_bevel]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Cạnh vát">
+            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][edge_bevel]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Cạnh vát">
         </td>
         <td class="border border-neutral-200 w-[85px] min-w-[85px] max-w-[85px]">
-            <select name="supplies[\${supplyIndex}][items][\${itemIndex}][grain_direction]" class="form-select form-select-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 px-1 py-1 h-8 text-xs">
+            <select name="supplies[${supplyIndex}][items][${itemIndex}][grain_direction]" class="form-select form-select-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 px-1 py-1 h-8 text-xs">
                 <option value="0">0</option>
                 <option value="2">2</option>
             </select>
         </td>
         <td class="border border-neutral-200 w-[90px] min-w-[90px] max-w-[90px]">
-            <input type="number" name="supplies[\${supplyIndex}][items][\${itemIndex}][wing_area]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][wing_area]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01">
         </td>
         <td class="border border-neutral-200 w-[90px] min-w-[90px] max-w-[90px]">
-            <input type="number" name="supplies[\${supplyIndex}][items][\${itemIndex}][molding_length]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][molding_length]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01">
         </td>
         <td class="border border-neutral-200 w-[90px] min-w-[90px] max-w-[90px]">
-            <input type="text" name="supplies[\${supplyIndex}][items][\${itemIndex}][bevel]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Vát">
+            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][bevel]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Vát">
         </td>
         <td class="border border-neutral-200 w-[110px] min-w-[110px] max-w-[110px]">
-            <input type="text" name="supplies[\${supplyIndex}][items][\${itemIndex}][vertical_grain_cnc]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Vân dọc CNC">
+            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][vertical_grain_cnc]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Vân dọc CNC">
         </td>
         <td class="border border-neutral-200 w-[110px] min-w-[110px] max-w-[110px]">
-            <input type="number" name="supplies[\${supplyIndex}][items][\${itemIndex}][unit_price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" min="0" required>
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][unit_price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" min="0" required>
         </td>
         <td class="border border-neutral-200 w-[120px] min-w-[120px] max-w-[120px]">
-            <input type="number" name="supplies[\${supplyIndex}][items][\${itemIndex}][total_price]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" readonly>
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][total_price]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" readonly>
         </td>
         <td class="border border-neutral-200">
-            <input type="text" name="supplies[\${supplyIndex}][items][\${itemIndex}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Ghi chú">
+            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Ghi chú">
         </td>
         <td class="text-center align-middle border border-neutral-200">
             <button type="button" onclick="removeOrderItem(this)" class="text-neutral-400 hover:text-danger-500 transition-colors p-1" title="Xóa sản phẩm">
@@ -284,10 +324,21 @@ function addOrderItem(button) {
     }
     
     // Attach event listeners to new inputs
-    const unitPriceInput = newRow.querySelector('input[name*="[unit_price]"]');
+    const heightInput = newRow.querySelector('input[name*="[height]"]');
+    const widthInput = newRow.querySelector('input[name*="[width]"]');
     const quantityInput = newRow.querySelector('input[name*="[quantity]"]');
-    if (unitPriceInput) unitPriceInput.addEventListener('input', () => calculateTotalPrice(newRow));
-    if (quantityInput) quantityInput.addEventListener('input', () => calculateTotalPrice(newRow));
+    const wingAreaInput = newRow.querySelector('input[name*="[wing_area]"]');
+    const moldingLengthInput = newRow.querySelector('input[name*="[molding_length]"]');
+    const unitPriceInput = newRow.querySelector('input[name*="[unit_price]"]');
+    const bevelInput = newRow.querySelector('input[name*="[bevel]"]');
+    
+    if (heightInput) heightInput.addEventListener('input', () => calculateTotalPrice(newRow, 'height'));
+    if (widthInput) widthInput.addEventListener('input', () => calculateTotalPrice(newRow, 'width'));
+    if (quantityInput) quantityInput.addEventListener('input', () => calculateTotalPrice(newRow, 'quantity'));
+    if (wingAreaInput) wingAreaInput.addEventListener('input', () => calculateTotalPrice(newRow, 'wing_area'));
+    if (moldingLengthInput) moldingLengthInput.addEventListener('input', () => calculateTotalPrice(newRow, 'molding_length'));
+    if (unitPriceInput) unitPriceInput.addEventListener('input', () => calculateTotalPrice(newRow, 'unit_price'));
+    if (bevelInput) bevelInput.addEventListener('input', () => updateEdgeBevel(newRow));
     
     updateOrderSummary();
 }
@@ -308,12 +359,55 @@ function updateAcrylicRowIndexes(tbody) {
     });
 }
 
-function calculateTotalPrice(row) {
-    const unitPrice = parseFloat(row.querySelector('input[name*="[unit_price]"]').value) || 0;
-    const quantity = parseFloat(row.querySelector('input[name*="[quantity]"]').value) || 0;
-    const totalPrice = unitPrice * quantity;
-    row.querySelector('input[name*="[total_price]"]').value = totalPrice.toFixed(2);
+function calculateTotalPrice(row, sourceEvent) {
+    const heightInput = row.querySelector('input[name*="[height]"]');
+    const widthInput = row.querySelector('input[name*="[width]"]');
+    const quantityInput = row.querySelector('input[name*="[quantity]"]');
+    const wingAreaInput = row.querySelector('input[name*="[wing_area]"]');
+    const moldingLengthInput = row.querySelector('input[name*="[molding_length]"]');
+    const unitPriceInput = row.querySelector('input[name*="[unit_price]"]');
+    
+    if (!heightInput || !widthInput || !quantityInput || !wingAreaInput || !moldingLengthInput) return;
+
+    const height = parseFloat(heightInput.value) || 0;
+    const width = parseFloat(widthInput.value) || 0;
+    const quantity = parseFloat(quantityInput.value) || 0;
+    const unitPrice = parseFloat(unitPriceInput ? unitPriceInput.value : 0) || 0;
+    
+    if (sourceEvent !== 'wing_area') {
+        let wingArea = 0;
+        if (height > 0 && width > 0 && quantity > 0) {
+            wingArea = (height * width * quantity) / 1000000;
+        }
+        wingAreaInput.value = wingArea > 0 ? wingArea.toFixed(2) : '';
+    }
+    
+    const currentWingArea = parseFloat(wingAreaInput.value) || 0;
+    const moldingLength = parseFloat(moldingLengthInput.value) || 0;
+    
+    const totalPrice = Math.round((currentWingArea + moldingLength) * unitPrice);
+    const totalPriceInput = row.querySelector('input[name*="[total_price]"]');
+    if (totalPriceInput) {
+        totalPriceInput.value = totalPrice > 0 ? totalPrice : 0;
+    }
     updateOrderSummary();
+}
+
+function updateEdgeBevel(row) {
+    const bevelInput = row.querySelector('input[name*="[bevel]"]');
+    const edgeBevelInput = row.querySelector('input[name*="[edge_bevel]"]');
+    if (!bevelInput || !edgeBevelInput) return;
+    
+    const bevelValue = bevelInput.value.trim();
+    if (bevelValue) {
+        if (/^vát/i.test(bevelValue)) {
+            edgeBevelInput.value = bevelValue;
+        } else {
+            edgeBevelInput.value = 'Vát ' + bevelValue;
+        }
+    } else {
+        edgeBevelInput.value = '';
+    }
 }
 
 function fillProductInfo(selectElement, supplyIndex, itemIndex) {
@@ -324,10 +418,10 @@ function fillProductInfo(selectElement, supplyIndex, itemIndex) {
     const supplies = @json(\App\Models\Supply::all());
     const supply = supplies.find(s => s.product_code === productCode);
     if (supply) {
-        const productNameInput = row.querySelector(`input[name="supplies[\${supplyIndex}][items][\${itemIndex}][product_name]"]`);
+        const productNameInput = row.querySelector(`input[name="supplies[${supplyIndex}][items][${itemIndex}][product_name]"]`);
         if (productNameInput) productNameInput.value = supply.name || '';
         
-        const unitPriceInput = row.querySelector(`input[name="supplies[\${supplyIndex}][items][\${itemIndex}][unit_price]"]`);
+        const unitPriceInput = row.querySelector(`input[name="supplies[${supplyIndex}][items][${itemIndex}][unit_price]"]`);
         if (unitPriceInput) {
             unitPriceInput.value = supply.unit_price || 0;
             calculateTotalPrice(row);
@@ -339,11 +433,25 @@ function fillProductInfo(selectElement, supplyIndex, itemIndex) {
 
 // Initial attachment setup for Acrylic-specific rows if DOM loaded
 document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.order-item-row').forEach(row => {
-        const unitPriceInput = row.querySelector('input[name*="[unit_price]"]');
+    document.querySelectorAll('#order-supplies-container .order-item-row').forEach(row => {
+        const heightInput = row.querySelector('input[name*="[height]"]');
+        const widthInput = row.querySelector('input[name*="[width]"]');
         const quantityInput = row.querySelector('input[name*="[quantity]"]');
-        if (unitPriceInput) unitPriceInput.addEventListener('input', () => calculateTotalPrice(row));
-        if (quantityInput) quantityInput.addEventListener('input', () => calculateTotalPrice(row));
+        const wingAreaInput = row.querySelector('input[name*="[wing_area]"]');
+        const moldingLengthInput = row.querySelector('input[name*="[molding_length]"]');
+        const unitPriceInput = row.querySelector('input[name*="[unit_price]"]');
+        const bevelInput = row.querySelector('input[name*="[bevel]"]');
+        
+        if (heightInput) heightInput.addEventListener('input', () => calculateTotalPrice(row, 'height'));
+        if (widthInput) widthInput.addEventListener('input', () => calculateTotalPrice(row, 'width'));
+        if (quantityInput) quantityInput.addEventListener('input', () => calculateTotalPrice(row, 'quantity'));
+        if (wingAreaInput) wingAreaInput.addEventListener('input', () => calculateTotalPrice(row, 'wing_area'));
+        if (moldingLengthInput) moldingLengthInput.addEventListener('input', () => calculateTotalPrice(row, 'molding_length'));
+        if (unitPriceInput) unitPriceInput.addEventListener('input', () => calculateTotalPrice(row, 'unit_price'));
+        if (bevelInput) bevelInput.addEventListener('input', () => updateEdgeBevel(row));
+        
+        calculateTotalPrice(row);
+        updateEdgeBevel(row);
     });
 });
 </script>

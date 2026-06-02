@@ -9,6 +9,46 @@
     .table thead tr:nth-child(2) th:last-child::before {
         display: none !important;
     }
+    /* Style TomSelect inside table rows to match compact inputs */
+    .table .ts-wrapper {
+        padding: 0 !important;
+        border: none !important;
+        background: transparent !important;
+        min-height: auto !important;
+        height: 32px !important;
+    }
+    .table .ts-control {
+        padding: 0 8px !important;
+        height: 32px !important; /* matches h-8 (32px) */
+        font-size: 12px !important; /* matches text-xs */
+        line-height: 30px !important; /* 32px minus borders */
+        border-radius: 8px !important; /* matches rounded-lg */
+        border: 1px solid #d1d5db !important; /* matches border-neutral-300 */
+        background-color: #ffffff !important;
+        display: flex !important;
+        align-items: center !important;
+        box-shadow: none !important;
+    }
+    .table .ts-control input {
+        font-size: 12px !important;
+        height: auto !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    .table .ts-control .item {
+        font-size: 12px !important;
+        line-height: 30px !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .table .ts-wrapper.single .ts-control:after {
+        top: 50% !important;
+        margin-top: -3px !important;
+    }
+    .table .ts-wrapper.focus .ts-control {
+        border-color: #3b82f6 !important; /* focus border color (primary-500) */
+        box-shadow: 0 0 0 1px #3b82f6 !important;
+    }
 </style>
 <div class="bg-white border border-neutral-200 rounded-xl p-6 shadow-sm">
     <div class="flex items-center justify-between border-b border-neutral-100 pb-4 mb-5">
@@ -38,7 +78,7 @@
                         <button type="button" onclick="addGlassOrderItem(this)" class="btn btn-sm btn-outline-primary rounded-lg flex items-center gap-1">
                             <iconify-icon icon="lucide:plus" class="text-sm"></iconify-icon> Thêm sản phẩm
                         </button>
-                        <button type="button" onclick="this.closest('.order-supply-row').remove()" class="text-neutral-400 hover:text-danger-500 transition-colors p-1" title="Xóa vật tư này">
+                        <button type="button" onclick="this.closest('.order-supply-row').remove()" class="text-neutral-400 hover:text-danger-500 transition-colors p-1 flex items-center justify-center" title="Xóa vật tư này">
                             <iconify-icon icon="lucide:trash-2" class="text-lg"></iconify-icon>
                         </button>
                     </div>
@@ -63,7 +103,7 @@
                                 <th scope="col" rowspan="2" class="align-middle w-[45px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Xóa</th>
                             </tr>
                             <tr class="bg-neutral-50 text-center">
-                                <th scope="col" class="w-[85px] border border-neutral-200 bg-yellow-100/70 font-semibold text-xs text-neutral-700 uppercase">Dài (mm)</th>
+                                <th scope="col" class="w-[80px] border border-neutral-200 bg-yellow-100/70 font-semibold text-xs text-neutral-700 uppercase">Dài (mm)</th>
                                 <th scope="col" class="w-[80px] border border-neutral-200 font-semibold text-xs text-neutral-700 uppercase">Rộng (mm)</th>
                             </tr>
                         </thead>
@@ -147,18 +187,18 @@ function addGlassOrderSupply() {
     newSupply.innerHTML = `
         <div class="flex items-center justify-between gap-4 border-b border-neutral-200 pb-3 mb-4">
             <div class="flex items-center gap-3">
-                <div class="p-1.5 bg-primary-50 rounded-lg text-primary-600 flex items-center justify-center">
+                <div class="p-1.5 bg-primary-50 rounded-lg text-primary-500 flex items-center justify-center">
                     <iconify-icon icon="lucide:clipboard-list" class="text-base"></iconify-icon>
                 </div>
-                <input type="text" name="supplies[\${glassSupplyIndex}][supply_name]" class="form-control form-control-sm rounded-lg w-64 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Tên vật tư (ví dụ: Acrylic, Melamine...)">
-                <input type="number" name="supplies[\${glassSupplyIndex}][quantity]" class="form-control form-control-sm rounded-lg w-24 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="SL" min="0" step="0.01" value="0">
+                <input type="text" name="supplies[${glassSupplyIndex}][supply_name]" class="form-control form-control-sm rounded-lg w-64 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Tên vật tư (ví dụ: Acrylic, Melamine...)">
+                <input type="number" name="supplies[${glassSupplyIndex}][quantity]" class="form-control form-control-sm rounded-lg w-24 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="SL" min="0" step="0.01" value="0">
             </div>
             <div class="flex items-center gap-2">
-                <button type="button" onclick="addGlassOrderItem(this)" class="text-neutral-400 hover:text-primary-600 transition-colors p-1">
-                    <iconify-icon icon="lucide:package-plus" class="text-lg"></iconify-icon> Thêm sản phẩm
+                <button type="button" onclick="addGlassOrderItem(this)" class="btn btn-sm btn-outline-primary rounded-lg flex items-center gap-1">
+                    <iconify-icon icon="lucide:plus" class="text-sm"></iconify-icon> Thêm sản phẩm
                 </button>
-                <button type="button" onclick="this.closest('.order-supply-row').remove()" class="text-neutral-400 hover:text-danger-500 transition-colors p-1" title="Xóa vật tư này">
-                    <iconify-icon icon="lucide:trash-2" class="text-lg"></iconify-icon> Xóa
+                <button type="button" onclick="this.closest('.order-supply-row').remove()" class="text-neutral-400 hover:text-danger-500 transition-colors p-1 flex items-center justify-center" title="Xóa vật tư này">
+                    <iconify-icon icon="lucide:trash-2" class="text-lg"></iconify-icon>
                 </button>
             </div>
         </div>
@@ -182,11 +222,11 @@ function addGlassOrderSupply() {
                         <th scope="col" rowspan="2" class="align-middle w-[45px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Xóa</th>
                     </tr>
                     <tr class="bg-neutral-50 text-center">
-                        <th scope="col" class="w-[85px] border border-neutral-200 bg-yellow-100/70 font-semibold text-xs text-neutral-700 uppercase">Dài (mm)</th>
+                        <th scope="col" class="w-[80px] border border-neutral-200 bg-yellow-100/70 font-semibold text-xs text-neutral-700 uppercase">Dài (mm)</th>
                         <th scope="col" class="w-[80px] border border-neutral-200 font-semibold text-xs text-neutral-700 uppercase">Rộng (mm)</th>
                     </tr>
                 </thead>
-                <tbody class="supply-items-container" data-supply-index="\${glassSupplyIndex}">
+                <tbody class="supply-items-container" data-supply-index="${glassSupplyIndex}">
                 </tbody>
             </table>
         </div>
@@ -205,10 +245,10 @@ function addGlassOrderItem(button) {
     newItem.className = 'order-item-row';
     newItem.innerHTML = `
         <td class="text-center align-middle border border-neutral-200">
-            <span class="row-index font-semibold text-neutral-500">\${itemIndex + 1}</span>
+            <span class="row-index font-semibold text-neutral-500">${itemIndex + 1}</span>
         </td>
         <td class="border border-neutral-200 w-[160px] min-w-[160px] max-w-[160px]">
-            <select name="supplies[\${supplyIndex}][items][\${itemIndex}][product_code]" class="tom-select-product" onchange="fillGlassProductInfo(this, \${supplyIndex}, \${itemIndex})">
+            <select name="supplies[${supplyIndex}][items][${itemIndex}][product_code]" class="tom-select-product" onchange="fillGlassProductInfo(this, ${supplyIndex}, ${itemIndex})">
                 <option value="">-- Chọn --</option>
                 @foreach(\App\Models\Supply::pluck('product_code')->filter()->unique() as $code)
                 <option value="{{ $code }}">{{ $code }}</option>
@@ -216,40 +256,40 @@ function addGlassOrderItem(button) {
             </select>
         </td>
         <td class="border border-neutral-200">
-            <input type="text" name="supplies[\${supplyIndex}][items][\${itemIndex}][product_name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Tên sản phẩm" required>
+            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][product_name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Tên sản phẩm" required>
         </td>
         <td class="border border-neutral-200 w-[110px] min-w-[110px] max-w-[110px]">
-            <input type="text" name="supplies[\${supplyIndex}][items][\${itemIndex}][wing_opening_direction]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs text-center px-1" placeholder="Chiều mở cánh">
+            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][wing_opening_direction]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs text-center px-1" placeholder="Chiều mở cánh">
         </td>
         <td class="border border-neutral-200 w-[100px] min-w-[100px] max-w-[100px]">
-            <input type="text" name="supplies[\${supplyIndex}][items][\${itemIndex}][aluminum_color]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs text-center px-1" placeholder="Màu nhôm">
+            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][aluminum_color]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs text-center px-1" placeholder="Màu nhôm">
         </td>
         <td class="border border-neutral-200 w-[100px] min-w-[100px] max-w-[100px]">
-            <input type="text" name="supplies[\${supplyIndex}][items][\${itemIndex}][glass_color]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs text-center px-1" placeholder="Màu kính">
+            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][glass_color]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs text-center px-1" placeholder="Màu kính">
         </td>
         <td class="border border-neutral-200 w-[85px] min-w-[85px] max-w-[85px]">
-            <input type="number" name="supplies[\${supplyIndex}][items][\${itemIndex}][height]" class="form-control form-control-sm rounded-lg border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500 bg-yellow-50/30 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][height]" class="form-control form-control-sm rounded-lg border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500 bg-yellow-50/30 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01">
         </td>
         <td class="border border-neutral-200 w-[80px] min-w-[80px] max-w-[80px]">
-            <input type="number" name="supplies[\${supplyIndex}][items][\${itemIndex}][width]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][width]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01">
         </td>
         <td class="border border-neutral-200 w-[80px] min-w-[80px] max-w-[80px]">
-            <input type="text" name="supplies[\${supplyIndex}][items][\${itemIndex}][unit]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs px-1" placeholder="Bộ" value="Bộ">
+            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][unit]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs px-1" placeholder="Bộ" value="Bộ">
         </td>
         <td class="border border-neutral-200 w-[70px] min-w-[70px] max-w-[70px]">
-            <input type="number" name="supplies[\${supplyIndex}][items][\${itemIndex}][wing_quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="1" min="1" required value="1">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][wing_quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="1" min="1" required value="1">
         </td>
         <td class="border border-neutral-200 w-[90px] min-w-[90px] max-w-[90px]">
-            <input type="number" name="supplies[\${supplyIndex}][items][\${itemIndex}][area_m2]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][area_m2]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01">
         </td>
         <td class="border border-neutral-200 w-[110px] min-w-[110px] max-w-[110px]">
-            <input type="number" name="supplies[\${supplyIndex}][items][\${itemIndex}][unit_price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" min="0" required>
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][unit_price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" min="0" required>
         </td>
         <td class="border border-neutral-200 w-[120px] min-w-[120px] max-w-[120px]">
-            <input type="number" name="supplies[\${supplyIndex}][items][\${itemIndex}][total_price]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" readonly>
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][total_price]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" readonly>
         </td>
         <td class="border border-neutral-200">
-            <input type="text" name="supplies[\${supplyIndex}][items][\${itemIndex}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Ghi chú">
+            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Ghi chú">
         </td>
         <td class="text-center align-middle border border-neutral-200">
             <button type="button" onclick="removeGlassOrderItem(this)" class="text-neutral-400 hover:text-danger-500 transition-colors p-1" title="Xóa sản phẩm">
@@ -273,12 +313,14 @@ function addGlassOrderItem(button) {
     const heightInput = newRow.querySelector('input[name*="[height]"]');
     const widthInput = newRow.querySelector('input[name*="[width]"]');
     const wingQtyInput = newRow.querySelector('input[name*="[wing_quantity]"]');
+    const areaInput = newRow.querySelector('input[name*="[area_m2]"]');
     const unitPriceInput = newRow.querySelector('input[name*="[unit_price]"]');
     
-    if (heightInput) heightInput.addEventListener('input', () => calculateGlassTotalPrice(newRow));
-    if (widthInput) widthInput.addEventListener('input', () => calculateGlassTotalPrice(newRow));
-    if (wingQtyInput) wingQtyInput.addEventListener('input', () => calculateGlassTotalPrice(newRow));
-    if (unitPriceInput) unitPriceInput.addEventListener('input', () => calculateGlassTotalPrice(newRow));
+    if (heightInput) heightInput.addEventListener('input', () => calculateGlassTotalPrice(newRow, 'height'));
+    if (widthInput) widthInput.addEventListener('input', () => calculateGlassTotalPrice(newRow, 'width'));
+    if (wingQtyInput) wingQtyInput.addEventListener('input', () => calculateGlassTotalPrice(newRow, 'wing_quantity'));
+    if (areaInput) areaInput.addEventListener('input', () => calculateGlassTotalPrice(newRow, 'area'));
+    if (unitPriceInput) unitPriceInput.addEventListener('input', () => calculateGlassTotalPrice(newRow, 'unit_price'));
     
     updateOrderSummary();
 }
@@ -299,24 +341,35 @@ function updateGlassRowIndexes(tbody) {
     });
 }
 
-function calculateGlassTotalPrice(row) {
-    const height = parseFloat(row.querySelector('input[name*="[height]"]').value) || 0;
-    const width = parseFloat(row.querySelector('input[name*="[width]"]').value) || 0;
-    const wingQuantity = parseFloat(row.querySelector('input[name*="[wing_quantity]"]').value) || 0;
+function calculateGlassTotalPrice(row, sourceEvent) {
+    const heightInput = row.querySelector('input[name*="[height]"]');
+    const widthInput = row.querySelector('input[name*="[width]"]');
+    const wingQtyInput = row.querySelector('input[name*="[wing_quantity]"]');
     const areaInput = row.querySelector('input[name*="[area_m2]"]');
-    const unitPrice = parseFloat(row.querySelector('input[name*="[unit_price]"]').value) || 0;
+    const unitPriceInput = row.querySelector('input[name*="[unit_price]"]');
     
-    let area = 0;
-    if (height > 0 && width > 0 && wingQuantity > 0) {
-        area = (height * width * wingQuantity) / 1000000;
-    }
+    if (!heightInput || !widthInput || !wingQtyInput || !areaInput) return;
     
-    if (areaInput) {
+    const height = parseFloat(heightInput.value) || 0;
+    const width = parseFloat(widthInput.value) || 0;
+    const wingQuantity = parseFloat(wingQtyInput.value) || 0;
+    const unitPrice = parseFloat(unitPriceInput ? unitPriceInput.value : 0) || 0;
+    
+    if (sourceEvent !== 'area') {
+        let area = 0;
+        if (height > 0 && width > 0 && wingQuantity > 0) {
+            area = (height * width * wingQuantity) / 1000000;
+        }
         areaInput.value = area > 0 ? area.toFixed(2) : '';
     }
     
-    const totalPrice = area > 0 ? (area * unitPrice) : (wingQuantity * unitPrice);
-    row.querySelector('input[name*="[total_price]"]').value = totalPrice.toFixed(2);
+    const currentArea = parseFloat(areaInput.value) || 0;
+    const totalPrice = currentArea * unitPrice;
+    
+    const totalPriceInput = row.querySelector('input[name*="[total_price]"]');
+    if (totalPriceInput) {
+        totalPriceInput.value = totalPrice.toFixed(2);
+    }
     updateOrderSummary();
 }
 
@@ -328,10 +381,10 @@ function fillGlassProductInfo(selectElement, supplyIndex, itemIndex) {
     const supplies = @json(\App\Models\Supply::all());
     const supply = supplies.find(s => s.product_code === productCode);
     if (supply) {
-        const productNameInput = row.querySelector(`input[name="supplies[\${supplyIndex}][items][\${itemIndex}][product_name]"]`);
+        const productNameInput = row.querySelector(`input[name="supplies[${supplyIndex}][items][${itemIndex}][product_name]"]`);
         if (productNameInput) productNameInput.value = supply.name || '';
         
-        const unitPriceInput = row.querySelector(`input[name="supplies[\${supplyIndex}][items][\${itemIndex}][unit_price]"]`);
+        const unitPriceInput = row.querySelector(`input[name="supplies[${supplyIndex}][items][${itemIndex}][unit_price]"]`);
         if (unitPriceInput) {
             unitPriceInput.value = supply.unit_price || 0;
             calculateGlassTotalPrice(row);
@@ -343,16 +396,20 @@ function fillGlassProductInfo(selectElement, supplyIndex, itemIndex) {
 
 // Initial setup for Glass-specific rows if DOM loaded
 document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.order-item-row').forEach(row => {
+    document.querySelectorAll('#glass-supplies-container .order-item-row').forEach(row => {
         const heightInput = row.querySelector('input[name*="[height]"]');
         const widthInput = row.querySelector('input[name*="[width]"]');
         const wingQtyInput = row.querySelector('input[name*="[wing_quantity]"]');
+        const areaInput = row.querySelector('input[name*="[area_m2]"]');
         const unitPriceInput = row.querySelector('input[name*="[unit_price]"]');
         
-        if (heightInput) heightInput.addEventListener('input', () => calculateGlassTotalPrice(row));
-        if (widthInput) widthInput.addEventListener('input', () => calculateGlassTotalPrice(row));
-        if (wingQtyInput) wingQtyInput.addEventListener('input', () => calculateGlassTotalPrice(row));
-        if (unitPriceInput) unitPriceInput.addEventListener('input', () => calculateGlassTotalPrice(row));
+        if (heightInput) heightInput.addEventListener('input', () => calculateGlassTotalPrice(row, 'height'));
+        if (widthInput) widthInput.addEventListener('input', () => calculateGlassTotalPrice(row, 'width'));
+        if (wingQtyInput) wingQtyInput.addEventListener('input', () => calculateGlassTotalPrice(row, 'wing_quantity'));
+        if (areaInput) areaInput.addEventListener('input', () => calculateGlassTotalPrice(row, 'area'));
+        if (unitPriceInput) unitPriceInput.addEventListener('input', () => calculateGlassTotalPrice(row, 'unit_price'));
+        
+        calculateGlassTotalPrice(row);
     });
 });
 </script>
