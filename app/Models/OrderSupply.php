@@ -29,4 +29,9 @@ class OrderSupply extends Model
     {
         return $this->hasMany(MinLateOrderItem::class, 'order_supply_id');
     }
+
+    public function glassItems()
+    {
+        return $this->hasMany(GlassOrderItem::class, 'order_supply_id');
+    }
 }

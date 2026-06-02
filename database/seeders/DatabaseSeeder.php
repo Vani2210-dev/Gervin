@@ -26,7 +26,7 @@ class DatabaseSeeder extends Seeder
                 'name' => 'Admin',
                 'password' => bcrypt('password'),
             ]
-        )->assignRole('admin');
+        )->assignRole('Quản trị viên');
 
         User::firstOrCreate(
             ['email' => 'test@kbtech.com'],
@@ -34,6 +34,6 @@ class DatabaseSeeder extends Seeder
                 'name' => 'Test User',
                 'password' => bcrypt('password'),
             ]
-        )->assignRole('user');
+        )->assignRole('Nhân viên');
     }
 }

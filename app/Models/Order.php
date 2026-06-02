@@ -38,6 +38,16 @@ class Order extends Model
         return $this->hasManyThrough(AcrylicOrderItem::class, OrderSupply::class, 'order_id', 'order_supply_id');
     }
 
+    public function minLateItems()
+    {
+        return $this->hasManyThrough(MinLateOrderItem::class, OrderSupply::class, 'order_id', 'order_supply_id');
+    }
+
+    public function glassItems()
+    {
+        return $this->hasManyThrough(GlassOrderItem::class, OrderSupply::class, 'order_id', 'order_supply_id');
+    }
+
     public function supplies()
     {
         return $this->hasMany(OrderSupply::class, 'order_id');

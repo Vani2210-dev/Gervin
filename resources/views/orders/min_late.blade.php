@@ -95,7 +95,13 @@
                             @foreach($supply->minLateItems as $itemIndex => $item)
                             @php
                                 $size = $item->size ?? [];
+                                if (is_string($size)) {
+                                    $size = json_decode($size, true) ?? [];
+                                }
                                 $gluing = $item->edge_gluing ?? [];
+                                if (is_string($gluing)) {
+                                    $gluing = json_decode($gluing, true) ?? [];
+                                }
                             @endphp
                             <tr class="order-item-row" data-item-id="{{ $item->id }}">
                                 <td class="text-center align-middle border border-neutral-200">
