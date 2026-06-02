@@ -128,6 +128,8 @@
                                         <option value="V" {{ ($gluing['height_1'] ?? '') == 'V' ? 'selected' : '' }}>V</option>
                                         <option value="T" {{ ($gluing['height_1'] ?? '') == 'T' ? 'selected' : '' }}>T</option>
                                         <option value="VAT MOI" {{ ($gluing['height_1'] ?? '') == 'VAT MOI' ? 'selected' : '' }}>VAT MOI</option>
+                                        <option value="DS" {{ ($gluing['height_1'] ?? '') == 'DS' ? 'selected' : '' }}>DS</option>
+                                        <option value="VAT TNA" {{ ($gluing['height_1'] ?? '') == 'VAT TNA' ? 'selected' : '' }}>VAT TNA</option>
                                         <option value="XEM BAN VE CT" {{ ($gluing['height_1'] ?? '') == 'XEM BAN VE CT' ? 'selected' : '' }}>XEM BAN VE CT</option>
                                     </select>
                                 </td>
@@ -137,6 +139,8 @@
                                         <option value="V" {{ ($gluing['height_2'] ?? '') == 'V' ? 'selected' : '' }}>V</option>
                                         <option value="T" {{ ($gluing['height_2'] ?? '') == 'T' ? 'selected' : '' }}>T</option>
                                         <option value="VAT MOI" {{ ($gluing['height_2'] ?? '') == 'VAT MOI' ? 'selected' : '' }}>VAT MOI</option>
+                                        <option value="DS" {{ ($gluing['height_2'] ?? '') == 'DS' ? 'selected' : '' }}>DS</option>
+                                        <option value="VAT TNA" {{ ($gluing['height_2'] ?? '') == 'VAT TNA' ? 'selected' : '' }}>VAT TNA</option>
                                         <option value="XEM BAN VE CT" {{ ($gluing['height_2'] ?? '') == 'XEM BAN VE CT' ? 'selected' : '' }}>XEM BAN VE CT</option>
                                     </select>
                                 </td>
@@ -146,6 +150,8 @@
                                         <option value="V" {{ ($gluing['width_1'] ?? '') == 'V' ? 'selected' : '' }}>V</option>
                                         <option value="T" {{ ($gluing['width_1'] ?? '') == 'T' ? 'selected' : '' }}>T</option>
                                         <option value="VAT MOI" {{ ($gluing['width_1'] ?? '') == 'VAT MOI' ? 'selected' : '' }}>VAT MOI</option>
+                                        <option value="DS" {{ ($gluing['width_1'] ?? '') == 'DS' ? 'selected' : '' }}>DS</option>
+                                        <option value="VAT TNA" {{ ($gluing['width_1'] ?? '') == 'VAT TNA' ? 'selected' : '' }}>VAT TNA</option>
                                         <option value="XEM BAN VE CT" {{ ($gluing['width_1'] ?? '') == 'XEM BAN VE CT' ? 'selected' : '' }}>XEM BAN VE CT</option>
                                     </select>
                                 </td>
@@ -155,6 +161,8 @@
                                         <option value="V" {{ ($gluing['width_2'] ?? '') == 'V' ? 'selected' : '' }}>V</option>
                                         <option value="T" {{ ($gluing['width_2'] ?? '') == 'T' ? 'selected' : '' }}>T</option>
                                         <option value="VAT MOI" {{ ($gluing['width_2'] ?? '') == 'VAT MOI' ? 'selected' : '' }}>VAT MOI</option>
+                                        <option value="DS" {{ ($gluing['width_2'] ?? '') == 'DS' ? 'selected' : '' }}>DS</option>
+                                        <option value="VAT TNA" {{ ($gluing['width_2'] ?? '') == 'VAT TNA' ? 'selected' : '' }}>VAT TNA</option>
                                         <option value="XEM BAN VE CT" {{ ($gluing['width_2'] ?? '') == 'XEM BAN VE CT' ? 'selected' : '' }}>XEM BAN VE CT</option>
                                     </select>
                                 </td>
@@ -315,6 +323,8 @@ function addMinLateOrderItem(button) {
                 <option value="V">V</option>
                 <option value="T">T</option>
                 <option value="VAT MOI">VAT MOI</option>
+                <option value="DS">DS</option>
+                <option value="VAT TNA">VAT TNA</option>
                 <option value="XEM BAN VE CT">XEM BAN VE CT</option>
             </select>
         </td>
@@ -324,6 +334,8 @@ function addMinLateOrderItem(button) {
                 <option value="V">V</option>
                 <option value="T">T</option>
                 <option value="VAT MOI">VAT MOI</option>
+                <option value="DS">DS</option>
+                <option value="VAT TNA">VAT TNA</option>
                 <option value="XEM BAN VE CT">XEM BAN VE CT</option>
             </select>
         </td>
@@ -333,6 +345,8 @@ function addMinLateOrderItem(button) {
                 <option value="V">V</option>
                 <option value="T">T</option>
                 <option value="VAT MOI">VAT MOI</option>
+                <option value="DS">DS</option>
+                <option value="VAT TNA">VAT TNA</option>
                 <option value="XEM BAN VE CT">XEM BAN VE CT</option>
             </select>
         </td>
@@ -342,6 +356,8 @@ function addMinLateOrderItem(button) {
                 <option value="V">V</option>
                 <option value="T">T</option>
                 <option value="VAT MOI">VAT MOI</option>
+                <option value="DS">DS</option>
+                <option value="VAT TNA">VAT TNA</option>
                 <option value="XEM BAN VE CT">XEM BAN VE CT</option>
             </select>
         </td>
@@ -394,11 +410,9 @@ function addMinLateOrderItem(button) {
         });
     }
     
-    // Attach event listeners to new inputs
-    const unitPriceInput = newRow.querySelector('input[name*="[unit_price]"]');
-    const quantityInput = newRow.querySelector('input[name*="[quantity]"]');
-    if (unitPriceInput) unitPriceInput.addEventListener('input', () => calculateMinLateTotalPrice(newRow));
-    if (quantityInput) quantityInput.addEventListener('input', () => calculateMinLateTotalPrice(newRow));
+    // Attach event listeners to new inputs and calculate initial values
+    bindMinLateRowEvents(newRow);
+    calculateMinLateRowStats(newRow);
     
     updateOrderSummary();
 }
@@ -416,6 +430,140 @@ function updateRowIndexes(tbody) {
     tbody.querySelectorAll('.order-item-row').forEach((row, index) => {
         const indexEl = row.querySelector('.row-index');
         if (indexEl) indexEl.textContent = index + 1;
+    });
+}
+
+function calculateMinLateRowStats(row) {
+    if (!row) return;
+    
+    const heightInput = row.querySelector('input[name*="[height]"]');
+    const widthInput = row.querySelector('input[name*="[width]"]');
+    const quantityInput = row.querySelector('input[name*="[quantity]"]');
+    
+    if (!heightInput || !widthInput || !quantityInput) return;
+    
+    const height = parseFloat(heightInput.value) || 0;
+    const width = parseFloat(widthInput.value) || 0;
+    const quantity = parseFloat(quantityInput.value) || 0;
+    
+    const height1Select = row.querySelector('select[name*="[edge_gluing][height_1]"]');
+    const height2Select = row.querySelector('select[name*="[edge_gluing][height_2]"]');
+    const width1Select = row.querySelector('select[name*="[edge_gluing][width_1]"]');
+    const width2Select = row.querySelector('select[name*="[edge_gluing][width_2]"]');
+    
+    const h1 = height1Select ? height1Select.value : '';
+    const h2 = height2Select ? height2Select.value : '';
+    const w1 = width1Select ? width1Select.value : '';
+    const w2 = width2Select ? width2Select.value : '';
+    
+    // 1. Straight paste length ("T")
+    let sumT = 0;
+    if (h1 === 'T') sumT += height;
+    if (h2 === 'T') sumT += height;
+    if (w1 === 'T') sumT += width;
+    if (w2 === 'T') sumT += width;
+    const straightLength = Math.ceil(((sumT * quantity) / 1000) * 100) / 100;
+    
+    // 2. Beveled length ("V")
+    let sumV = 0;
+    if (h1 === 'V') sumV += height;
+    if (h2 === 'V') sumV += height;
+    if (w1 === 'V') sumV += width;
+    if (w2 === 'V') sumV += width;
+    const beveledLength = Math.ceil(((sumV * quantity) / 1000) * 100) / 100;
+    
+    // 3. Vát mòi length ("VAT MOI")
+    let sumVatMoi = 0;
+    if (h1 === 'VAT MOI') sumVatMoi += height;
+    if (h2 === 'VAT MOI') sumVatMoi += height;
+    if (w1 === 'VAT MOI') sumVatMoi += width;
+    if (w2 === 'VAT MOI') sumVatMoi += width;
+    const vatMoiLength = Math.ceil(((sumVatMoi * quantity) / 1000) * 100) / 100;
+    
+    // 3.5. Dán bản rộng 25-35mm ("DS")
+    let sumDS = 0;
+    if (h1 === 'DS') sumDS += height;
+    if (h2 === 'DS') sumDS += height;
+    if (w1 === 'DS') sumDS += width;
+    if (w2 === 'DS') sumDS += width;
+    const banRong2535Length = Math.ceil(((sumDS * quantity) / 1000) * 100) / 100;
+    
+    // Set outputs
+    const straightInput = row.querySelector('input[name*="[straight_paste_length]"]');
+    if (straightInput) {
+        straightInput.value = straightLength.toFixed(2);
+    }
+    
+    const beveledInput = row.querySelector('input[name*="[beveled_length]"]');
+    if (beveledInput) {
+        beveledInput.value = beveledLength.toFixed(2);
+    }
+    
+    const vatMoiInput = row.querySelector('input[name*="[vat_moi_length]"]');
+    if (vatMoiInput) {
+        vatMoiInput.value = vatMoiLength.toFixed(2);
+    }
+    
+    const banRong2535Input = row.querySelector('input[name*="[ban_rong_25_35]"]');
+    if (banRong2535Input) {
+        banRong2535Input.value = banRong2535Length.toFixed(2);
+    }
+    
+    // Dán bản rộng 40-59mm and 17-39mm logic based on dimension checks
+    let banRong40_59Length = 0;
+    let banRong17_39Length = 0;
+    
+    const hasDim40_59 = (height >= 40 && height <= 59) || (width >= 40 && width <= 59);
+    const hasDimUnder39 = (height > 0 && height <= 39) || (width > 0 && width <= 39);
+    
+    if (hasDim40_59) {
+        banRong40_59Length = straightLength;
+    }
+    if (hasDimUnder39) {
+        banRong17_39Length = straightLength;
+    }
+    
+    const banRong40_59Input = row.querySelector('input[name*="[ban_rong_40_59]"]');
+    if (banRong40_59Input) {
+        banRong40_59Input.value = banRong40_59Length.toFixed(2);
+    }
+    
+    const banRong17_39Input = row.querySelector('input[name*="[ban_rong_17_39]"]');
+    if (banRong17_39Input) {
+        banRong17_39Input.value = banRong17_39Length.toFixed(2);
+    }
+    
+    // 4. CNC count: if any of the 4 contains "BAN VE CT" or "XEM BAN VE CT"
+    const hasBanVe = [h1, h2, w1, w2].some(val => val === 'XEM BAN VE CT' || val === 'BAN VE CT');
+    const cncInput = row.querySelector('input[name*="[cnc]"]');
+    if (cncInput) {
+        cncInput.value = hasBanVe ? quantity : 0;
+    }
+    
+    // 5. Số vát tay nắm âm: if any of the 4 contains "VAT TNA"
+    const hasVatTna = [h1, h2, w1, w2].some(val => val === 'VAT TNA');
+    const beveledHandleInput = row.querySelector('input[name*="[beveled_handle]"]');
+    if (beveledHandleInput) {
+        beveledHandleInput.value = hasVatTna ? quantity : 0;
+    }
+}
+
+function bindMinLateRowEvents(row) {
+    if (!row) return;
+    
+    const inputs = row.querySelectorAll('input[name*="[height]"], input[name*="[width]"], input[name*="[quantity]"]');
+    inputs.forEach(input => {
+        input.addEventListener('input', () => {
+            calculateMinLateRowStats(row);
+            if (typeof calculateMinLateTotalPrice === 'function') calculateMinLateTotalPrice(row);
+        });
+    });
+    
+    const selects = row.querySelectorAll('select[name*="[edge_gluing]"]');
+    selects.forEach(select => {
+        select.addEventListener('change', () => {
+            calculateMinLateRowStats(row);
+        });
     });
 }
 
@@ -454,16 +602,8 @@ function fillMinLateProductInfo(selectElement, supplyIndex, itemIndex) {
 // Initial setup for Min Late-specific rows if DOM loaded
 document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.order-item-row').forEach(row => {
-        const unitPriceInput = row.querySelector('input[name*="[unit_price]"]');
-        const quantityInput = row.querySelector('input[name*="[quantity]"]');
-        if (unitPriceInput) unitPriceInput.addEventListener('input', () => {
-            if (typeof calculateMinLateTotalPrice === 'function') calculateMinLateTotalPrice(row);
-            else if (typeof calculateTotalPrice === 'function') calculateTotalPrice(row);
-        });
-        if (quantityInput) quantityInput.addEventListener('input', () => {
-            if (typeof calculateMinLateTotalPrice === 'function') calculateMinLateTotalPrice(row);
-            else if (typeof calculateTotalPrice === 'function') calculateTotalPrice(row);
-        });
+        bindMinLateRowEvents(row);
+        calculateMinLateRowStats(row);
     });
 });
 </script>
