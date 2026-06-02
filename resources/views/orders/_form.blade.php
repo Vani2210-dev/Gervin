@@ -156,7 +156,7 @@
                                     @foreach(json_decode($acrylicOrder->attachments, true) ?? [] as $index => $image)
                                     <div class="relative group w-16 h-16">
                                         <img src="{{ route('orders.image', ['filename' => basename($image)]) }}" class="w-16 h-16 object-cover rounded-lg border border-neutral-200 shadow-sm transition-transform group-hover:scale-105">
-                                        <button type="button" onclick="deleteAttachment('{{ $index }}', '{{ $image }}')" class="absolute -top-1.5 -right-1.5 bg-danger-100 hover:bg-danger-200 text-danger-600 transition-colors w-6 h-6 flex justify-center items-center rounded-full shadow-sm" title="Xóa ảnh">
+                                        <button type="button" onclick="deleteAttachment('{{ $index }}', '{{ $image }}')" class="absolute bg-danger-100 hover:bg-danger-200 text-danger-600 transition-colors w-6 h-6 flex justify-center items-center rounded-full shadow-sm z-10" style="top: -6px; right: -6px;" title="Xóa ảnh">
                                             <iconify-icon icon="lucide:trash-2" class="text-xs"></iconify-icon>
                                         </button>
                                     </div>
@@ -336,6 +336,50 @@ document.addEventListener('DOMContentLoaded', function() {
         orderDateInput.addEventListener('change', calculateDeadline);
         deliveryDaysInput.addEventListener('input', calculateDeadline);
     }
+    
+    // Clipboard paste handler (Ctrl+V) for images
+    document.addEventListener('paste', function(event) {
+        const clipboardItems = (event.clipboardData || window.clipboardData).items;
+        let imagePasted = false;
+        const newFiles = [];
+
+        for (let i = 0; i < clipboardItems.length; i++) {
+            const item = clipboardItems[i];
+            if (item.type.indexOf('image') !== -1) {
+                const file = item.getAsFile();
+                if (file) {
+                    newFiles.push(file);
+                    imagePasted = true;
+                }
+            }
+        }
+
+        if (imagePasted) {
+            event.preventDefault(); // Stop default pasting behavior
+            
+            const attachmentsInput = document.getElementById('attachments-input');
+            if (attachmentsInput) {
+                const dataTransfer = new DataTransfer();
+                
+                // Keep pre-existing files in the file input
+                if (attachmentsInput.files) {
+                    Array.from(attachmentsInput.files).forEach(file => {
+                        dataTransfer.items.add(file);
+                    });
+                }
+                
+                // Add new pasted files
+                newFiles.forEach(file => {
+                    const filename = `pasted_image_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.png`;
+                    const renamedFile = new File([file], filename, { type: file.type });
+                    dataTransfer.items.add(renamedFile);
+                });
+                
+                attachmentsInput.files = dataTransfer.files;
+                attachmentsInput.dispatchEvent(new Event('change'));
+            }
+        }
+    });
     
     updateOrderSummary();
 });

@@ -417,10 +417,17 @@ function updateMinLateRowIndexes(tbody) {
 }
 
 function calculateMinLateTotalPrice(row) {
-    const unitPrice = parseFloat(row.querySelector('input[name*="[unit_price]"]').value) || 0;
-    const quantity = parseFloat(row.querySelector('input[name*="[quantity]"]').value) || 0;
+    const unitPriceInput = row.querySelector('input[name*="[unit_price]"]');
+    const quantityInput = row.querySelector('input[name*="[quantity]"]');
+    if (!unitPriceInput || !quantityInput) return;
+
+    const unitPrice = parseFloat(unitPriceInput.value) || 0;
+    const quantity = parseFloat(quantityInput.value) || 0;
     const totalPrice = unitPrice * quantity;
-    row.querySelector('input[name*="[total_price]"]').value = totalPrice.toFixed(2);
+    const totalPriceInput = row.querySelector('input[name*="[total_price]"]');
+    if (totalPriceInput) {
+        totalPriceInput.value = totalPrice.toFixed(2);
+    }
     updateOrderSummary();
 }
 
@@ -447,11 +454,13 @@ function fillMinLateProductInfo(selectElement, supplyIndex, itemIndex) {
 
 // Initial setup for Min Late-specific rows if DOM loaded
 document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.order-item-row').forEach(row => {
+    document.querySelectorAll('#min-late-supplies-container .order-item-row').forEach(row => {
         const unitPriceInput = row.querySelector('input[name*="[unit_price]"]');
         const quantityInput = row.querySelector('input[name*="[quantity]"]');
         if (unitPriceInput) unitPriceInput.addEventListener('input', () => calculateMinLateTotalPrice(row));
         if (quantityInput) quantityInput.addEventListener('input', () => calculateMinLateTotalPrice(row));
+        
+        calculateMinLateTotalPrice(row);
     });
 });
 </script>

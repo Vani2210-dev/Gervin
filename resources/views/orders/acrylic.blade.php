@@ -324,10 +324,21 @@ function addOrderItem(button) {
     }
     
     // Attach event listeners to new inputs
-    const unitPriceInput = newRow.querySelector('input[name*="[unit_price]"]');
+    const heightInput = newRow.querySelector('input[name*="[height]"]');
+    const widthInput = newRow.querySelector('input[name*="[width]"]');
     const quantityInput = newRow.querySelector('input[name*="[quantity]"]');
-    if (unitPriceInput) unitPriceInput.addEventListener('input', () => calculateTotalPrice(newRow));
-    if (quantityInput) quantityInput.addEventListener('input', () => calculateTotalPrice(newRow));
+    const wingAreaInput = newRow.querySelector('input[name*="[wing_area]"]');
+    const moldingLengthInput = newRow.querySelector('input[name*="[molding_length]"]');
+    const unitPriceInput = newRow.querySelector('input[name*="[unit_price]"]');
+    const bevelInput = newRow.querySelector('input[name*="[bevel]"]');
+    
+    if (heightInput) heightInput.addEventListener('input', () => calculateTotalPrice(newRow, 'height'));
+    if (widthInput) widthInput.addEventListener('input', () => calculateTotalPrice(newRow, 'width'));
+    if (quantityInput) quantityInput.addEventListener('input', () => calculateTotalPrice(newRow, 'quantity'));
+    if (wingAreaInput) wingAreaInput.addEventListener('input', () => calculateTotalPrice(newRow, 'wing_area'));
+    if (moldingLengthInput) moldingLengthInput.addEventListener('input', () => calculateTotalPrice(newRow, 'molding_length'));
+    if (unitPriceInput) unitPriceInput.addEventListener('input', () => calculateTotalPrice(newRow, 'unit_price'));
+    if (bevelInput) bevelInput.addEventListener('input', () => updateEdgeBevel(newRow));
     
     updateOrderSummary();
 }
@@ -348,12 +359,55 @@ function updateAcrylicRowIndexes(tbody) {
     });
 }
 
-function calculateTotalPrice(row) {
-    const unitPrice = parseFloat(row.querySelector('input[name*="[unit_price]"]').value) || 0;
-    const quantity = parseFloat(row.querySelector('input[name*="[quantity]"]').value) || 0;
-    const totalPrice = unitPrice * quantity;
-    row.querySelector('input[name*="[total_price]"]').value = totalPrice.toFixed(2);
+function calculateTotalPrice(row, sourceEvent) {
+    const heightInput = row.querySelector('input[name*="[height]"]');
+    const widthInput = row.querySelector('input[name*="[width]"]');
+    const quantityInput = row.querySelector('input[name*="[quantity]"]');
+    const wingAreaInput = row.querySelector('input[name*="[wing_area]"]');
+    const moldingLengthInput = row.querySelector('input[name*="[molding_length]"]');
+    const unitPriceInput = row.querySelector('input[name*="[unit_price]"]');
+    
+    if (!heightInput || !widthInput || !quantityInput || !wingAreaInput || !moldingLengthInput) return;
+
+    const height = parseFloat(heightInput.value) || 0;
+    const width = parseFloat(widthInput.value) || 0;
+    const quantity = parseFloat(quantityInput.value) || 0;
+    const unitPrice = parseFloat(unitPriceInput ? unitPriceInput.value : 0) || 0;
+    
+    if (sourceEvent !== 'wing_area') {
+        let wingArea = 0;
+        if (height > 0 && width > 0 && quantity > 0) {
+            wingArea = (height * width * quantity) / 1000000;
+        }
+        wingAreaInput.value = wingArea > 0 ? wingArea.toFixed(2) : '';
+    }
+    
+    const currentWingArea = parseFloat(wingAreaInput.value) || 0;
+    const moldingLength = parseFloat(moldingLengthInput.value) || 0;
+    
+    const totalPrice = Math.round((currentWingArea + moldingLength) * unitPrice);
+    const totalPriceInput = row.querySelector('input[name*="[total_price]"]');
+    if (totalPriceInput) {
+        totalPriceInput.value = totalPrice > 0 ? totalPrice : 0;
+    }
     updateOrderSummary();
+}
+
+function updateEdgeBevel(row) {
+    const bevelInput = row.querySelector('input[name*="[bevel]"]');
+    const edgeBevelInput = row.querySelector('input[name*="[edge_bevel]"]');
+    if (!bevelInput || !edgeBevelInput) return;
+    
+    const bevelValue = bevelInput.value.trim();
+    if (bevelValue) {
+        if (/^vát/i.test(bevelValue)) {
+            edgeBevelInput.value = bevelValue;
+        } else {
+            edgeBevelInput.value = 'Vát ' + bevelValue;
+        }
+    } else {
+        edgeBevelInput.value = '';
+    }
 }
 
 function fillProductInfo(selectElement, supplyIndex, itemIndex) {
@@ -379,11 +433,25 @@ function fillProductInfo(selectElement, supplyIndex, itemIndex) {
 
 // Initial attachment setup for Acrylic-specific rows if DOM loaded
 document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.order-item-row').forEach(row => {
-        const unitPriceInput = row.querySelector('input[name*="[unit_price]"]');
+    document.querySelectorAll('#order-supplies-container .order-item-row').forEach(row => {
+        const heightInput = row.querySelector('input[name*="[height]"]');
+        const widthInput = row.querySelector('input[name*="[width]"]');
         const quantityInput = row.querySelector('input[name*="[quantity]"]');
-        if (unitPriceInput) unitPriceInput.addEventListener('input', () => calculateTotalPrice(row));
-        if (quantityInput) quantityInput.addEventListener('input', () => calculateTotalPrice(row));
+        const wingAreaInput = row.querySelector('input[name*="[wing_area]"]');
+        const moldingLengthInput = row.querySelector('input[name*="[molding_length]"]');
+        const unitPriceInput = row.querySelector('input[name*="[unit_price]"]');
+        const bevelInput = row.querySelector('input[name*="[bevel]"]');
+        
+        if (heightInput) heightInput.addEventListener('input', () => calculateTotalPrice(row, 'height'));
+        if (widthInput) widthInput.addEventListener('input', () => calculateTotalPrice(row, 'width'));
+        if (quantityInput) quantityInput.addEventListener('input', () => calculateTotalPrice(row, 'quantity'));
+        if (wingAreaInput) wingAreaInput.addEventListener('input', () => calculateTotalPrice(row, 'wing_area'));
+        if (moldingLengthInput) moldingLengthInput.addEventListener('input', () => calculateTotalPrice(row, 'molding_length'));
+        if (unitPriceInput) unitPriceInput.addEventListener('input', () => calculateTotalPrice(row, 'unit_price'));
+        if (bevelInput) bevelInput.addEventListener('input', () => updateEdgeBevel(row));
+        
+        calculateTotalPrice(row);
+        updateEdgeBevel(row);
     });
 });
 </script>

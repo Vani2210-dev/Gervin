@@ -103,7 +103,7 @@
                                 <th scope="col" rowspan="2" class="align-middle w-[45px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Xóa</th>
                             </tr>
                             <tr class="bg-neutral-50 text-center">
-                                <th scope="col" class="w-[85px] border border-neutral-200 bg-yellow-100/70 font-semibold text-xs text-neutral-700 uppercase">Dài (mm)</th>
+                                <th scope="col" class="w-[80px] border border-neutral-200 bg-yellow-100/70 font-semibold text-xs text-neutral-700 uppercase">Dài (mm)</th>
                                 <th scope="col" class="w-[80px] border border-neutral-200 font-semibold text-xs text-neutral-700 uppercase">Rộng (mm)</th>
                             </tr>
                         </thead>
@@ -222,7 +222,7 @@ function addGlassOrderSupply() {
                         <th scope="col" rowspan="2" class="align-middle w-[45px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Xóa</th>
                     </tr>
                     <tr class="bg-neutral-50 text-center">
-                        <th scope="col" class="w-[85px] border border-neutral-200 bg-yellow-100/70 font-semibold text-xs text-neutral-700 uppercase">Dài (mm)</th>
+                        <th scope="col" class="w-[80px] border border-neutral-200 bg-yellow-100/70 font-semibold text-xs text-neutral-700 uppercase">Dài (mm)</th>
                         <th scope="col" class="w-[80px] border border-neutral-200 font-semibold text-xs text-neutral-700 uppercase">Rộng (mm)</th>
                     </tr>
                 </thead>
@@ -313,12 +313,14 @@ function addGlassOrderItem(button) {
     const heightInput = newRow.querySelector('input[name*="[height]"]');
     const widthInput = newRow.querySelector('input[name*="[width]"]');
     const wingQtyInput = newRow.querySelector('input[name*="[wing_quantity]"]');
+    const areaInput = newRow.querySelector('input[name*="[area_m2]"]');
     const unitPriceInput = newRow.querySelector('input[name*="[unit_price]"]');
     
-    if (heightInput) heightInput.addEventListener('input', () => calculateGlassTotalPrice(newRow));
-    if (widthInput) widthInput.addEventListener('input', () => calculateGlassTotalPrice(newRow));
-    if (wingQtyInput) wingQtyInput.addEventListener('input', () => calculateGlassTotalPrice(newRow));
-    if (unitPriceInput) unitPriceInput.addEventListener('input', () => calculateGlassTotalPrice(newRow));
+    if (heightInput) heightInput.addEventListener('input', () => calculateGlassTotalPrice(newRow, 'height'));
+    if (widthInput) widthInput.addEventListener('input', () => calculateGlassTotalPrice(newRow, 'width'));
+    if (wingQtyInput) wingQtyInput.addEventListener('input', () => calculateGlassTotalPrice(newRow, 'wing_quantity'));
+    if (areaInput) areaInput.addEventListener('input', () => calculateGlassTotalPrice(newRow, 'area'));
+    if (unitPriceInput) unitPriceInput.addEventListener('input', () => calculateGlassTotalPrice(newRow, 'unit_price'));
     
     updateOrderSummary();
 }
@@ -339,24 +341,35 @@ function updateGlassRowIndexes(tbody) {
     });
 }
 
-function calculateGlassTotalPrice(row) {
-    const height = parseFloat(row.querySelector('input[name*="[height]"]').value) || 0;
-    const width = parseFloat(row.querySelector('input[name*="[width]"]').value) || 0;
-    const wingQuantity = parseFloat(row.querySelector('input[name*="[wing_quantity]"]').value) || 0;
+function calculateGlassTotalPrice(row, sourceEvent) {
+    const heightInput = row.querySelector('input[name*="[height]"]');
+    const widthInput = row.querySelector('input[name*="[width]"]');
+    const wingQtyInput = row.querySelector('input[name*="[wing_quantity]"]');
     const areaInput = row.querySelector('input[name*="[area_m2]"]');
-    const unitPrice = parseFloat(row.querySelector('input[name*="[unit_price]"]').value) || 0;
+    const unitPriceInput = row.querySelector('input[name*="[unit_price]"]');
     
-    let area = 0;
-    if (height > 0 && width > 0 && wingQuantity > 0) {
-        area = (height * width * wingQuantity) / 1000000;
-    }
+    if (!heightInput || !widthInput || !wingQtyInput || !areaInput) return;
     
-    if (areaInput) {
+    const height = parseFloat(heightInput.value) || 0;
+    const width = parseFloat(widthInput.value) || 0;
+    const wingQuantity = parseFloat(wingQtyInput.value) || 0;
+    const unitPrice = parseFloat(unitPriceInput ? unitPriceInput.value : 0) || 0;
+    
+    if (sourceEvent !== 'area') {
+        let area = 0;
+        if (height > 0 && width > 0 && wingQuantity > 0) {
+            area = (height * width * wingQuantity) / 1000000;
+        }
         areaInput.value = area > 0 ? area.toFixed(2) : '';
     }
     
-    const totalPrice = area > 0 ? (area * unitPrice) : (wingQuantity * unitPrice);
-    row.querySelector('input[name*="[total_price]"]').value = totalPrice.toFixed(2);
+    const currentArea = parseFloat(areaInput.value) || 0;
+    const totalPrice = currentArea * unitPrice;
+    
+    const totalPriceInput = row.querySelector('input[name*="[total_price]"]');
+    if (totalPriceInput) {
+        totalPriceInput.value = totalPrice.toFixed(2);
+    }
     updateOrderSummary();
 }
 
@@ -383,16 +396,20 @@ function fillGlassProductInfo(selectElement, supplyIndex, itemIndex) {
 
 // Initial setup for Glass-specific rows if DOM loaded
 document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.order-item-row').forEach(row => {
+    document.querySelectorAll('#glass-supplies-container .order-item-row').forEach(row => {
         const heightInput = row.querySelector('input[name*="[height]"]');
         const widthInput = row.querySelector('input[name*="[width]"]');
         const wingQtyInput = row.querySelector('input[name*="[wing_quantity]"]');
+        const areaInput = row.querySelector('input[name*="[area_m2]"]');
         const unitPriceInput = row.querySelector('input[name*="[unit_price]"]');
         
-        if (heightInput) heightInput.addEventListener('input', () => calculateGlassTotalPrice(row));
-        if (widthInput) widthInput.addEventListener('input', () => calculateGlassTotalPrice(row));
-        if (wingQtyInput) wingQtyInput.addEventListener('input', () => calculateGlassTotalPrice(row));
-        if (unitPriceInput) unitPriceInput.addEventListener('input', () => calculateGlassTotalPrice(row));
+        if (heightInput) heightInput.addEventListener('input', () => calculateGlassTotalPrice(row, 'height'));
+        if (widthInput) widthInput.addEventListener('input', () => calculateGlassTotalPrice(row, 'width'));
+        if (wingQtyInput) wingQtyInput.addEventListener('input', () => calculateGlassTotalPrice(row, 'wing_quantity'));
+        if (areaInput) areaInput.addEventListener('input', () => calculateGlassTotalPrice(row, 'area'));
+        if (unitPriceInput) unitPriceInput.addEventListener('input', () => calculateGlassTotalPrice(row, 'unit_price'));
+        
+        calculateGlassTotalPrice(row);
     });
 });
 </script>
