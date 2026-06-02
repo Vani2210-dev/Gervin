@@ -19,11 +19,13 @@ use App\Http\Controllers\SupplyController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\OrderController;
 
-Route::controller(DashboardController::class)->group(function () {
-    Route::get('/', 'index')->name('index');
-});
+Route::middleware(['auth'])->group(function () {
+    Route::controller(DashboardController::class)->group(function () {
+        Route::get('/', 'index')->name('index');
+    });
 
-Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+});
 
 Route::controller(HomeController::class)->group(function () {
     Route::get('calendar-Main','calendarMain')->name('calendarMain');

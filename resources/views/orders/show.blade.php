@@ -155,7 +155,7 @@
                                     <td>{{ $item->beveled_length ?? '—' }}</td>
                                     <td>{{ $item->vat_moi_length ?? '—' }}</td>
                                     <td>{{ $item->ban_rong_40_59 ?? '—' }}</td>
-                                    <td>{{ $item->ban_rong_17_39 ?? '—' }}</td>
+                                    <td>{{ $item->call_rong_17_39 ?? $item->ban_rong_17_39 ?? '—' }}</td>
                                     <td>{{ $item->ban_rong_25_35 ?? '—' }}</td>
                                     <td>{{ $item->beveled_handle ?? '—' }}</td>
                                     <td class="text-center">
@@ -174,8 +174,54 @@
                                 @endforelse
                             </tbody>
                         </table>
+                    @elseif($acrylicOrder->type === 'glass')
+                        {{-- Glass items --}}
+                        <table class="table bordered-table sm-table mb-0 min-w-[1800px]">
+                            <thead>
+                                <tr>
+                                    <th scope="col" class="w-10 text-center">STT</th>
+                                    <th scope="col" class="w-32">Mã SP</th>
+                                    <th scope="col" class="w-64">Tên SP</th>
+                                    <th scope="col" class="w-28">Chiều mở cánh</th>
+                                    <th scope="col" class="w-28">Màu nhôm</th>
+                                    <th scope="col" class="w-28">Màu kính</th>
+                                    <th scope="col" class="w-20">Dài</th>
+                                    <th scope="col" class="w-20">Rộng</th>
+                                    <th scope="col" class="w-20">Đơn vị</th>
+                                    <th scope="col" class="w-24">SL cánh</th>
+                                    <th scope="col" class="w-28">Khối lượng (m2)</th>
+                                    <th scope="col" class="w-28 text-end">Đơn giá</th>
+                                    <th scope="col" class="w-28 text-end">Thành tiền</th>
+                                    <th scope="col" class="w-44">Ghi chú</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($supply->glassItems as $itemIndex => $item)
+                                <tr>
+                                    <td class="text-center">{{ $itemIndex + 1 }}</td>
+                                    <td><span class="text-neutral-500 text-xs">{{ $item->product_code ?? '—' }}</span></td>
+                                    <td><span class="font-medium text-neutral-800">{{ $item->product_name }}</span></td>
+                                    <td>{{ $item->wing_opening_direction ?? '—' }}</td>
+                                    <td>{{ $item->aluminum_color ?? '—' }}</td>
+                                    <td>{{ $item->glass_color ?? '—' }}</td>
+                                    <td>{{ $item->height ?? '—' }}</td>
+                                    <td>{{ $item->width ?? '—' }}</td>
+                                    <td>{{ $item->unit ?? 'Bộ' }}</td>
+                                    <td>{{ $item->wing_quantity }}</td>
+                                    <td>{{ $item->area_m2 ?? '—' }}</td>
+                                    <td class="text-end font-medium text-neutral-600">{{ number_format($item->unit_price, 0, ',', '.') }}</td>
+                                    <td class="text-end font-semibold text-neutral-800">{{ number_format($item->total_price, 0, ',', '.') }}</td>
+                                    <td><span class="text-neutral-500 text-xs">{{ $item->notes ?? '—' }}</span></td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="14" class="text-center text-neutral-400 py-4">Chưa có sản phẩm nào</td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
                     @else
-                        {{-- Acrylic / Glass items --}}
+                        {{-- Acrylic items --}}
                         <table class="table bordered-table sm-table mb-0 min-w-[1700px]">
                             <thead>
                                 <tr>
@@ -240,7 +286,11 @@
                 <div class="flex justify-between items-center text-sm">
                     <span class="text-neutral-500">Tổng số sản phẩm:</span>
                     <span class="font-semibold text-neutral-800" id="summary-total-items">
-                        {{ $acrylicOrder->supplies->flatMap(fn($s) => $acrylicOrder->type === 'min_late' ? $s->minLateItems : $s->items)->sum('quantity') }}
+                        {{ $acrylicOrder->supplies->flatMap(function($s) use ($acrylicOrder) {
+                            if ($acrylicOrder->type === 'min_late') return $s->minLateItems;
+                            if ($acrylicOrder->type === 'glass') return $s->glassItems;
+                            return $s->items;
+                        })->sum(fn($i) => $i->quantity ?? $i->wing_quantity ?? 0) }}
                     </span>
                 </div>
                 <div class="border-t border-neutral-100 pt-3 flex justify-between items-center">

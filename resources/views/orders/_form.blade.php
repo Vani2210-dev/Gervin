@@ -33,12 +33,21 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label font-semibold text-xs text-neutral-500 uppercase tracking-wider mb-2 block">Loại đơn</label>
-                                <select name="type" id="order-type-select" class="form-select rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500" onchange="switchOrderType(this.value)">
-                                    <option value="">-- Chọn --</option>
-                                    <option value="acrylic" {{ old('type', $acrylicOrder?->type ?? 'acrylic') == 'acrylic' ? 'selected' : '' }}>Acrylic</option>
-                                    <option value="min_late" {{ old('type', $acrylicOrder?->type ?? '') == 'min_late' ? 'selected' : '' }}>Min Late</option>
-                                    <option value="glass" {{ old('type', $acrylicOrder?->type ?? '') == 'glass' ? 'selected' : '' }}>Glass</option>
-                                </select>
+                                @if(isset($acrylicOrder))
+                                    <select id="order-type-select" class="form-select rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-neutral-500 font-medium" disabled>
+                                        <option value="acrylic" {{ $acrylicOrder->type == 'acrylic' ? 'selected' : '' }}>Acrylic</option>
+                                        <option value="min_late" {{ $acrylicOrder->type == 'min_late' ? 'selected' : '' }}>Min Late</option>
+                                        <option value="glass" {{ $acrylicOrder->type == 'glass' ? 'selected' : '' }}>Glass</option>
+                                    </select>
+                                    <input type="hidden" name="type" value="{{ $acrylicOrder->type }}">
+                                @else
+                                    <select name="type" id="order-type-select" class="form-select rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500" onchange="switchOrderType(this.value)">
+                                        <option value="">-- Chọn --</option>
+                                        <option value="acrylic" {{ old('type', 'acrylic') == 'acrylic' ? 'selected' : '' }}>Acrylic</option>
+                                        <option value="min_late" {{ old('type') == 'min_late' ? 'selected' : '' }}>Min Late</option>
+                                        <option value="glass" {{ old('type') == 'glass' ? 'selected' : '' }}>Glass</option>
+                                    </select>
+                                @endif
                             </div>
                             <div class="form-group">
                                 <label class="form-label font-semibold text-xs text-neutral-500 uppercase tracking-wider mb-2 block">Số điện thoại</label>
@@ -84,6 +93,9 @@
                     </div>
                     <div id="items-section-min_late" class="type-items-section hidden">
                         @include('orders.min_late')
+                    </div>
+                    <div id="items-section-glass" class="type-items-section hidden">
+                        @include('orders.glass')
                     </div>
                 </div>
 
@@ -169,6 +181,8 @@
 function switchOrderType(type) {
     if (!type) return;
     
+    const targetSection = type;
+    
     // Hide all sections and disable inputs inside them
     document.querySelectorAll('.type-items-section').forEach(section => {
         section.classList.add('hidden');
@@ -178,7 +192,7 @@ function switchOrderType(type) {
     });
 
     // Show selected section and enable inputs inside it
-    const activeSection = document.getElementById(`items-section-${type}`);
+    const activeSection = document.getElementById(`items-section-${targetSection}`);
     if (activeSection) {
         activeSection.classList.remove('hidden');
         activeSection.querySelectorAll('input, select, textarea').forEach(input => {
@@ -188,10 +202,12 @@ function switchOrderType(type) {
         // If there are no rows in the active section, add one by default
         const rows = activeSection.querySelectorAll('.order-item-row');
         if (rows.length === 0) {
-            if (type === 'acrylic' && typeof addOrderSupply === 'function') {
+            if (targetSection === 'acrylic' && typeof addOrderSupply === 'function') {
                 addOrderSupply();
-            } else if (type === 'min_late' && typeof addMinLateOrderSupply === 'function') {
+            } else if (targetSection === 'min_late' && typeof addMinLateOrderSupply === 'function') {
                 addMinLateOrderSupply();
+            } else if (targetSection === 'glass' && typeof addGlassOrderSupply === 'function') {
+                addGlassOrderSupply();
             }
         }
     }
