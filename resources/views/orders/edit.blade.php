@@ -1,6 +1,6 @@
 @extends('layout.layout')
 @php
-    $title    = 'Chỉnh sửa đơn hàng Acrylic';
+    $title    = 'Chỉnh sửa đơn hàng';
     $subTitle = 'Chỉnh sửa đơn hàng: ' . $acrylicOrder->order_code;
     $action   = route('orders.update', $acrylicOrder);
 @endphp
