@@ -597,6 +597,12 @@ function duplicateMinLateRow(button) {
     const h2Val = row.querySelector('select[name*="[edge_gluing][height_2]"]').value;
     const w1Val = row.querySelector('select[name*="[edge_gluing][width_1]"]').value;
     const w2Val = row.querySelector('select[name*="[edge_gluing][width_2]"]').value;
+
+    // Collect non-TomSelect input/select values BEFORE cloning
+    const valuesToCopy = [];
+    row.querySelectorAll('input:not(.ts-hidden-accessible):not([type="hidden"]), select:not(.tom-select-product), textarea').forEach(el => {
+        valuesToCopy.push({ name: el.name, value: el.value });
+    });
     
     const newRow = row.cloneNode(true);
     
@@ -604,28 +610,28 @@ function duplicateMinLateRow(button) {
     const idInput = newRow.querySelector('input[name*="[id]"]');
     if (idInput) idInput.remove();
     
-    // Copy select/input values manually
-    const sourceInputs = row.querySelectorAll('input, select, textarea');
-    const targetInputs = newRow.querySelectorAll('input, select, textarea');
-    sourceInputs.forEach((sourceInput, idx) => {
-        if (targetInputs[idx] && sourceInput.name.indexOf('[id]') === -1) {
-            targetInputs[idx].value = sourceInput.value;
-        }
-    });
-    
-    // Set edge_gluing select values manually to be absolutely safe
+    // Set edge_gluing select values
     newRow.querySelector('select[name*="[edge_gluing][height_1]"]').value = h1Val;
     newRow.querySelector('select[name*="[edge_gluing][height_2]"]').value = h2Val;
     newRow.querySelector('select[name*="[edge_gluing][width_1]"]').value = w1Val;
     newRow.querySelector('select[name*="[edge_gluing][width_2]"]').value = w2Val;
     
-    // Reinitialize TomSelect
+    // Restore other field values by name
+    valuesToCopy.forEach(({ name, value }) => {
+        if (!name || name.indexOf('[id]') !== -1) return;
+        const el = newRow.querySelector(`[name="${name}"]`);
+        if (el) el.value = value;
+    });
+
+    // Reinitialize TomSelect for product code select
     const select = newRow.querySelector('.tom-select-product');
     if (select) {
+        // Remove cloned TomSelect wrapper/state
         const tsWrapper = newRow.querySelector('.ts-wrapper');
         if (tsWrapper) tsWrapper.remove();
-        select.classList.remove('tomselected');
-        select.style.display = '';
+        select.classList.remove('tomselected', 'ts-hidden-accessible');
+        select.removeAttribute('style');
+        // Pre-set the value on the raw <select>
         select.value = selectedValue;
     }
     
@@ -633,10 +639,14 @@ function duplicateMinLateRow(button) {
     row.parentNode.insertBefore(newRow, row.nextSibling);
     
     if (select && typeof TomSelect !== 'undefined') {
-        new TomSelect(select, {
+        const ts = new TomSelect(select, {
             allowEmptyOption: true,
             placeholder: '-- Chọn --',
         });
+        // Set value via TomSelect API to ensure UI reflects the selected option
+        if (selectedValue) {
+            ts.setValue(selectedValue, true);
+        }
     }
     
     bindMinLateRowEvents(newRow);
