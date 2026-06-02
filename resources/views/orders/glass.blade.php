@@ -87,33 +87,33 @@
                     <table class="table bordered-table sm-table mb-0 min-w-[1800px] border border-neutral-200">
                         <thead>
                             <tr class="bg-neutral-50 text-center">
-                                <th scope="col" rowspan="2" class="align-middle w-[45px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Stt</th>
-                                <th scope="col" rowspan="2" class="align-middle w-[160px] min-w-[160px] max-w-[160px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Mã SP</th>
-                                <th scope="col" rowspan="2" class="align-middle w-[220px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên sản phẩm <span class="text-danger-500">*</span></th>
-                                <th scope="col" rowspan="2" class="align-middle w-[110px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Chiều mở cánh</th>
-                                <th scope="col" rowspan="2" class="align-middle w-[100px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Màu nhôm</th>
-                                <th scope="col" rowspan="2" class="align-middle w-[100px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Màu kính</th>
-                                <th scope="col" colspan="2" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Kích thước cánh (mm)</th>
-                                <th scope="col" rowspan="2" class="align-middle w-[80px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn vị</th>
-                                <th scope="col" rowspan="2" class="align-middle w-[70px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số lượng cánh <span class="text-danger-500">*</span></th>
-                                <th scope="col" rowspan="2" class="align-middle w-[90px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Khối lượng (m2)</th>
-                                <th scope="col" rowspan="2" class="align-middle w-[110px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá <span class="text-danger-500">*</span></th>
-                                <th scope="col" rowspan="2" class="align-middle w-[120px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Thành tiền</th>
-                                <th scope="col" rowspan="2" class="align-middle w-[160px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Ghi chú</th>
-                                <th scope="col" rowspan="2" class="align-middle w-[45px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Xóa</th>
+                                <th scope="col" rowspan="2" style="width: 45px; min-width: 45px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Stt</th>
+                                <th scope="col" rowspan="2" style="width: 160px; min-width: 160px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Mã SP</th>
+                                <th scope="col" rowspan="2" style="min-width: 220px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên sản phẩm <span class="text-danger-500">*</span></th>
+                                <th scope="col" rowspan="2" style="width: 110px; min-width: 110px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Chiều mở cánh</th>
+                                <th scope="col" rowspan="2" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Màu nhôm</th>
+                                <th scope="col" rowspan="2" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Màu kính</th>
+                                <th scope="col" colspan="2" style="white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Kích thước cánh (mm)</th>
+                                <th scope="col" rowspan="2" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn vị</th>
+                                <th scope="col" rowspan="2" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số lượng cánh <span class="text-danger-500">*</span></th>
+                                <th scope="col" rowspan="2" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Khối lượng (m2)</th>
+                                <th scope="col" rowspan="2" style="width: 110px; min-width: 110px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá <span class="text-danger-500">*</span></th>
+                                <th scope="col" rowspan="2" style="width: 120px; min-width: 120px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Thành tiền</th>
+                                <th scope="col" rowspan="2" style="min-width: 160px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Ghi chú</th>
+                                <th scope="col" rowspan="2" style="width: 80px; min-width: 80px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Hành động</th>
                             </tr>
                             <tr class="bg-neutral-50 text-center">
-                                <th scope="col" class="w-[80px] border border-neutral-200 bg-yellow-100/70 font-semibold text-xs text-neutral-700 uppercase">Dài (mm)</th>
-                                <th scope="col" class="w-[80px] border border-neutral-200 font-semibold text-xs text-neutral-700 uppercase">Rộng (mm)</th>
+                                <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="border border-neutral-200 bg-yellow-100/70 font-semibold text-xs text-neutral-700 uppercase">Dài (mm)</th>
+                                <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="border border-neutral-200 font-semibold text-xs text-neutral-700 uppercase">Rộng (mm)</th>
                             </tr>
                         </thead>
                         <tbody class="supply-items-container" data-supply-index="{{ $supplyIndex }}">
                             @foreach($supply->glassItems as $itemIndex => $item)
                             <tr class="order-item-row" data-item-id="{{ $item->id }}">
-                                <td class="text-center align-middle border border-neutral-200">
+                                <td style="width: 45px; min-width: 45px; " class="text-center align-middle border border-neutral-200">
                                     <span class="row-index font-semibold text-neutral-500">{{ $itemIndex + 1 }}</span>
                                 </td>
-                                <td class="border border-neutral-200 w-[160px] min-w-[160px] max-w-[160px]">
+                                <td style="width: 160px; min-width: 160px; " class="border border-neutral-200">
                                     <select name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][product_code]" class="tom-select-product" onchange="fillGlassProductInfo(this, {{ $supplyIndex }}, {{ $itemIndex }})">
                                         <option value="">-- Chọn --</option>
                                         @foreach(\App\Models\Supply::pluck('product_code')->filter()->unique() as $code)
@@ -121,48 +121,53 @@
                                         @endforeach
                                     </select>
                                 </td>
-                                <td class="border border-neutral-200">
+                                <td style="min-width: 220px;" class="border border-neutral-200">
                                     <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][product_name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Tên sản phẩm" required value="{{ $item->product_name }}">
                                 </td>
-                                <td class="border border-neutral-200 w-[110px] min-w-[110px] max-w-[110px]">
+                                <td style="width: 110px; min-width: 110px; " class="border border-neutral-200">
                                     <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][wing_opening_direction]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs text-center px-1" placeholder="Chiều mở cánh" value="{{ $item->wing_opening_direction }}">
                                 </td>
-                                <td class="border border-neutral-200 w-[100px] min-w-[100px] max-w-[100px]">
+                                <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
                                     <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][aluminum_color]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs text-center px-1" placeholder="Màu nhôm" value="{{ $item->aluminum_color }}">
                                 </td>
-                                <td class="border border-neutral-200 w-[100px] min-w-[100px] max-w-[100px]">
+                                <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
                                     <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][glass_color]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs text-center px-1" placeholder="Màu kính" value="{{ $item->glass_color }}">
                                 </td>
-                                <td class="border border-neutral-200 w-[85px] min-w-[85px] max-w-[85px]">
+                                <td style="width: 200px; min-width: 200px; " class="border border-neutral-200">
                                     <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][height]" class="form-control form-control-sm rounded-lg border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500 bg-yellow-50/30 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="{{ $item->height }}">
                                 </td>
-                                <td class="border border-neutral-200 w-[80px] min-w-[80px] max-w-[80px]">
+                                <td style="width: 200px; min-width: 200px; " class="border border-neutral-200">
                                     <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][width]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="{{ $item->width }}">
                                 </td>
-                                <td class="border border-neutral-200 w-[80px] min-w-[80px] max-w-[80px]">
+                                <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
                                     <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][unit]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs px-1" placeholder="Bộ" value="{{ $item->unit ?? 'Bộ' }}">
                                 </td>
-                                <td class="border border-neutral-200 w-[70px] min-w-[70px] max-w-[70px]">
+                                <td style="width: 70px; min-width: 70px; " class="border border-neutral-200">
                                     <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][wing_quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="1" min="1" required value="{{ $item->wing_quantity }}">
                                 </td>
-                                <td class="border border-neutral-200 w-[90px] min-w-[90px] max-w-[90px]">
+                                <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
                                     <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][area_m2]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="{{ $item->area_m2 }}">
                                 </td>
-                                <td class="border border-neutral-200 w-[110px] min-w-[110px] max-w-[110px]">
-                                    <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][unit_price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" min="0" required value="{{ $item->unit_price }}">
+                                <td style="width: 110px; min-width: 110px; " class="border border-neutral-200">
+                                    <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][unit_price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" min="0" required value="{{ $item->unit_price ? round($item->unit_price) : '' }}">
                                 </td>
-                                <td class="border border-neutral-200 w-[120px] min-w-[120px] max-w-[120px]">
-                                    <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][total_price]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="{{ $item->total_price }}" readonly>
+                                <td style="width: 120px; min-width: 120px; " class="border border-neutral-200">
+                                    <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][total_price]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center px-1 py-1 h-8 text-xs" placeholder="0" value="{{ $item->total_price ? round($item->total_price) : '' }}" readonly>
                                 </td>
-                                <td class="border border-neutral-200">
+                                <td style="min-width: 160px;" class="border border-neutral-200">
                                     <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Ghi chú" value="{{ $item->notes }}">
                                 </td>
-                                <td class="text-center align-middle border border-neutral-200">
-                                    <button type="button" onclick="removeGlassOrderItem(this)" class="text-neutral-400 hover:text-danger-500 transition-colors p-1" title="Xóa sản phẩm">
-                                        <iconify-icon icon="lucide:trash-2" class="text-base"></iconify-icon>
-                                    </button>
+                                <td style="width: 80px; min-width: 80px; " class="text-center align-middle border border-neutral-200">
+                                    <div class="flex items-center gap-1 justify-center">
+                                        <button type="button" onclick="duplicateGlassRow(this)" class="text-neutral-400 hover:text-primary-500 transition-colors p-1" title="Nhân bản sản phẩm">
+                                            <iconify-icon icon="lucide:copy" class="text-base"></iconify-icon>
+                                        </button>
+                                        <button type="button" onclick="removeGlassOrderItem(this)" class="text-neutral-400 hover:text-danger-500 transition-colors p-1" title="Xóa sản phẩm">
+                                            <iconify-icon icon="lucide:trash-2" class="text-base"></iconify-icon>
+                                        </button>
+                                    </div>
+                                    <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][id]" value="{{ $item->id }}">
                                 </td>
-                                <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][id]" value="{{ $item->id }}">
                             </tr>
                             @endforeach
                         </tbody>
@@ -206,24 +211,24 @@ function addGlassOrderSupply() {
             <table class="table bordered-table sm-table mb-0 min-w-[1800px] border border-neutral-200">
                 <thead>
                     <tr class="bg-neutral-50 text-center">
-                        <th scope="col" rowspan="2" class="align-middle w-[45px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Stt</th>
-                        <th scope="col" rowspan="2" class="align-middle w-[160px] min-w-[160px] max-w-[160px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Mã SP</th>
-                        <th scope="col" rowspan="2" class="align-middle w-[220px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên sản phẩm <span class="text-danger-500">*</span></th>
-                        <th scope="col" rowspan="2" class="align-middle w-[110px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Chiều mở cánh</th>
-                        <th scope="col" rowspan="2" class="align-middle w-[100px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Màu nhôm</th>
-                        <th scope="col" rowspan="2" class="align-middle w-[100px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Màu kính</th>
-                        <th scope="col" colspan="2" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Kích thước cánh (mm)</th>
-                        <th scope="col" rowspan="2" class="align-middle w-[80px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn vị</th>
-                        <th scope="col" rowspan="2" class="align-middle w-[70px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số lượng cánh <span class="text-danger-500">*</span></th>
-                        <th scope="col" rowspan="2" class="align-middle w-[90px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Khối lượng (m2)</th>
-                        <th scope="col" rowspan="2" class="align-middle w-[110px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá <span class="text-danger-500">*</span></th>
-                        <th scope="col" rowspan="2" class="align-middle w-[120px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Thành tiền</th>
-                        <th scope="col" rowspan="2" class="align-middle w-[160px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Ghi chú</th>
-                        <th scope="col" rowspan="2" class="align-middle w-[45px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Xóa</th>
+                        <th scope="col" rowspan="2" style="width: 45px; min-width: 45px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Stt</th>
+                        <th scope="col" rowspan="2" style="width: 160px; min-width: 160px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Mã SP</th>
+                        <th scope="col" rowspan="2" style="min-width: 220px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên sản phẩm <span class="text-danger-500">*</span></th>
+                        <th scope="col" rowspan="2" style="width: 110px; min-width: 110px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Chiều mở cánh</th>
+                        <th scope="col" rowspan="2" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Màu nhôm</th>
+                        <th scope="col" rowspan="2" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Màu kính</th>
+                        <th scope="col" colspan="2" style="white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Kích thước cánh (mm)</th>
+                        <th scope="col" rowspan="2" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn vị</th>
+                        <th scope="col" rowspan="2" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số lượng cánh <span class="text-danger-500">*</span></th>
+                        <th scope="col" rowspan="2" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Khối lượng (m2)</th>
+                        <th scope="col" rowspan="2" style="width: 110px; min-width: 110px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá <span class="text-danger-500">*</span></th>
+                        <th scope="col" rowspan="2" style="width: 120px; min-width: 120px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Thành tiền</th>
+                        <th scope="col" rowspan="2" style="min-width: 160px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Ghi chú</th>
+                        <th scope="col" rowspan="2" style="width: 80px; min-width: 80px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Hành động</th>
                     </tr>
                     <tr class="bg-neutral-50 text-center">
-                        <th scope="col" class="w-[80px] border border-neutral-200 bg-yellow-100/70 font-semibold text-xs text-neutral-700 uppercase">Dài (mm)</th>
-                        <th scope="col" class="w-[80px] border border-neutral-200 font-semibold text-xs text-neutral-700 uppercase">Rộng (mm)</th>
+                        <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="border border-neutral-200 bg-yellow-100/70 font-semibold text-xs text-neutral-700 uppercase">Dài (mm)</th>
+                        <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="border border-neutral-200 font-semibold text-xs text-neutral-700 uppercase">Rộng (mm)</th>
                     </tr>
                 </thead>
                 <tbody class="supply-items-container" data-supply-index="${glassSupplyIndex}">
@@ -241,60 +246,86 @@ function addGlassOrderItem(button) {
     const container = supplyRow.querySelector('.supply-items-container');
     const itemIndex = container.querySelectorAll('.order-item-row').length;
     
+    // Check if there is an existing last row in the container to copy from
+    const lastRow = container.querySelector('.order-item-row:last-of-type');
+    let lastData = null;
+    if (lastRow) {
+        lastData = {
+            product_code: lastRow.querySelector('.tom-select-product') ? lastRow.querySelector('.tom-select-product').value : '',
+            product_name: lastRow.querySelector('input[name*="[product_name]"]') ? lastRow.querySelector('input[name*="[product_name]"]').value : '',
+            wing_opening_direction: lastRow.querySelector('input[name*="[wing_opening_direction]"]') ? lastRow.querySelector('input[name*="[wing_opening_direction]"]').value : '',
+            aluminum_color: lastRow.querySelector('input[name*="[aluminum_color]"]') ? lastRow.querySelector('input[name*="[aluminum_color]"]').value : '',
+            glass_color: lastRow.querySelector('input[name*="[glass_color]"]') ? lastRow.querySelector('input[name*="[glass_color]"]').value : '',
+            height: lastRow.querySelector('input[name*="[height]"]') ? lastRow.querySelector('input[name*="[height]"]').value : '',
+            width: lastRow.querySelector('input[name*="[width]"]') ? lastRow.querySelector('input[name*="[width]"]').value : '',
+            unit: lastRow.querySelector('input[name*="[unit]"]') ? lastRow.querySelector('input[name*="[unit]"]').value : 'Bộ',
+            wing_quantity: lastRow.querySelector('input[name*="[wing_quantity]"]') ? lastRow.querySelector('input[name*="[wing_quantity]"]').value : '1',
+            area_m2: lastRow.querySelector('input[name*="[area_m2]"]') ? lastRow.querySelector('input[name*="[area_m2]"]').value : '',
+            unit_price: lastRow.querySelector('input[name*="[unit_price]"]') ? lastRow.querySelector('input[name*="[unit_price]"]').value : '',
+            total_price: lastRow.querySelector('input[name*="[total_price]"]') ? lastRow.querySelector('input[name*="[total_price]"]').value : '',
+            notes: lastRow.querySelector('input[name*="[notes]"]') ? lastRow.querySelector('input[name*="[notes]"]').value : '',
+        };
+    }
+    
     const newItem = document.createElement('tr');
     newItem.className = 'order-item-row';
     newItem.innerHTML = `
-        <td class="text-center align-middle border border-neutral-200">
+        <td style="width: 45px; min-width: 45px; " class="text-center align-middle border border-neutral-200">
             <span class="row-index font-semibold text-neutral-500">${itemIndex + 1}</span>
         </td>
-        <td class="border border-neutral-200 w-[160px] min-w-[160px] max-w-[160px]">
+        <td style="width: 160px; min-width: 160px; " class="border border-neutral-200">
             <select name="supplies[${supplyIndex}][items][${itemIndex}][product_code]" class="tom-select-product" onchange="fillGlassProductInfo(this, ${supplyIndex}, ${itemIndex})">
                 <option value="">-- Chọn --</option>
                 @foreach(\App\Models\Supply::pluck('product_code')->filter()->unique() as $code)
-                <option value="{{ $code }}">{{ $code }}</option>
+                <option value="{{ $code }}" ${lastData && lastData.product_code === '{{ $code }}' ? 'selected' : ''}>{{ $code }}</option>
                 @endforeach
             </select>
         </td>
-        <td class="border border-neutral-200">
-            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][product_name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Tên sản phẩm" required>
+        <td style="min-width: 220px;" class="border border-neutral-200">
+            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][product_name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Tên sản phẩm" required value="${lastData ? lastData.product_name : ''}">
         </td>
-        <td class="border border-neutral-200 w-[110px] min-w-[110px] max-w-[110px]">
-            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][wing_opening_direction]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs text-center px-1" placeholder="Chiều mở cánh">
+        <td style="width: 110px; min-width: 110px; " class="border border-neutral-200">
+            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][wing_opening_direction]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs text-center px-1" placeholder="Chiều mở cánh" value="${lastData ? lastData.wing_opening_direction : ''}">
         </td>
-        <td class="border border-neutral-200 w-[100px] min-w-[100px] max-w-[100px]">
-            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][aluminum_color]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs text-center px-1" placeholder="Màu nhôm">
+        <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
+            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][aluminum_color]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs text-center px-1" placeholder="Màu nhôm" value="${lastData ? lastData.aluminum_color : ''}">
         </td>
-        <td class="border border-neutral-200 w-[100px] min-w-[100px] max-w-[100px]">
-            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][glass_color]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs text-center px-1" placeholder="Màu kính">
+        <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
+            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][glass_color]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs text-center px-1" placeholder="Màu kính" value="${lastData ? lastData.glass_color : ''}">
         </td>
-        <td class="border border-neutral-200 w-[85px] min-w-[85px] max-w-[85px]">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][height]" class="form-control form-control-sm rounded-lg border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500 bg-yellow-50/30 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01">
+        <td style="width: 200px; min-width: 200px; " class="border border-neutral-200">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][height]" class="form-control form-control-sm rounded-lg border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500 bg-yellow-50/30 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="${lastData ? lastData.height : ''}">
         </td>
-        <td class="border border-neutral-200 w-[80px] min-w-[80px] max-w-[80px]">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][width]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01">
+        <td style="width: 200px; min-width: 200px; " class="border border-neutral-200">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][width]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="${lastData ? lastData.width : ''}">
         </td>
-        <td class="border border-neutral-200 w-[80px] min-w-[80px] max-w-[80px]">
-            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][unit]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs px-1" placeholder="Bộ" value="Bộ">
+        <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
+            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][unit]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs px-1" placeholder="Bộ" value="${lastData ? lastData.unit : 'Bộ'}">
         </td>
-        <td class="border border-neutral-200 w-[70px] min-w-[70px] max-w-[70px]">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][wing_quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="1" min="1" required value="1">
+        <td style="width: 70px; min-width: 70px; " class="border border-neutral-200">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][wing_quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="1" min="1" required value="${lastData ? lastData.wing_quantity : '1'}">
         </td>
-        <td class="border border-neutral-200 w-[90px] min-w-[90px] max-w-[90px]">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][area_m2]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01">
+        <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][area_m2]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="${lastData ? lastData.area_m2 : ''}">
         </td>
-        <td class="border border-neutral-200 w-[110px] min-w-[110px] max-w-[110px]">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][unit_price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" min="0" required>
+        <td style="width: 110px; min-width: 110px; " class="border border-neutral-200">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][unit_price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" min="0" required value="${lastData ? lastData.unit_price : ''}">
         </td>
-        <td class="border border-neutral-200 w-[120px] min-w-[120px] max-w-[120px]">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][total_price]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" readonly>
+        <td style="width: 120px; min-width: 120px; " class="border border-neutral-200">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][total_price]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center px-1 py-1 h-8 text-xs" placeholder="0" readonly value="${lastData ? lastData.total_price : ''}">
         </td>
-        <td class="border border-neutral-200">
-            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Ghi chú">
+        <td style="min-width: 160px;" class="border border-neutral-200">
+            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Ghi chú" value="${lastData ? lastData.notes : ''}">
         </td>
-        <td class="text-center align-middle border border-neutral-200">
-            <button type="button" onclick="removeGlassOrderItem(this)" class="text-neutral-400 hover:text-danger-500 transition-colors p-1" title="Xóa sản phẩm">
-                <iconify-icon icon="lucide:trash-2" class="text-base"></iconify-icon>
-            </button>
+        <td style="width: 80px; min-width: 80px; " class="text-center align-middle border border-neutral-200">
+            <div class="flex items-center gap-1 justify-center">
+                <button type="button" onclick="duplicateGlassRow(this)" class="text-neutral-400 hover:text-primary-500 transition-colors p-1" title="Nhân bản sản phẩm">
+                    <iconify-icon icon="lucide:copy" class="text-base"></iconify-icon>
+                </button>
+                <button type="button" onclick="removeGlassOrderItem(this)" class="text-neutral-400 hover:text-danger-500 transition-colors p-1" title="Xóa sản phẩm">
+                    <iconify-icon icon="lucide:trash-2" class="text-base"></iconify-icon>
+                </button>
+            </div>
         </td>
     `;
     container.appendChild(newItem);
@@ -310,17 +341,7 @@ function addGlassOrderItem(button) {
     }
     
     // Attach event listeners to new inputs
-    const heightInput = newRow.querySelector('input[name*="[height]"]');
-    const widthInput = newRow.querySelector('input[name*="[width]"]');
-    const wingQtyInput = newRow.querySelector('input[name*="[wing_quantity]"]');
-    const areaInput = newRow.querySelector('input[name*="[area_m2]"]');
-    const unitPriceInput = newRow.querySelector('input[name*="[unit_price]"]');
-    
-    if (heightInput) heightInput.addEventListener('input', () => calculateGlassTotalPrice(newRow, 'height'));
-    if (widthInput) widthInput.addEventListener('input', () => calculateGlassTotalPrice(newRow, 'width'));
-    if (wingQtyInput) wingQtyInput.addEventListener('input', () => calculateGlassTotalPrice(newRow, 'wing_quantity'));
-    if (areaInput) areaInput.addEventListener('input', () => calculateGlassTotalPrice(newRow, 'area'));
-    if (unitPriceInput) unitPriceInput.addEventListener('input', () => calculateGlassTotalPrice(newRow, 'unit_price'));
+    bindGlassRowEvents(newRow);
     
     updateOrderSummary();
 }
@@ -335,10 +356,78 @@ function removeGlassOrderItem(button) {
 
 function updateGlassRowIndexes(tbody) {
     if (!tbody) return;
-    tbody.querySelectorAll('.order-item-row').forEach((row, index) => {
+    tbody.querySelectorAll('.order-item-row').forEach((row, itemIndex) => {
         const indexEl = row.querySelector('.row-index');
-        if (indexEl) indexEl.textContent = index + 1;
+        if (indexEl) indexEl.textContent = itemIndex + 1;
+        
+        row.querySelectorAll('input, select, textarea').forEach(input => {
+            const name = input.getAttribute('name');
+            if (name) {
+                const newName = name.replace(/\[items\]\[\d+\]/, `[items][${itemIndex}]`);
+                input.setAttribute('name', newName);
+            }
+        });
     });
+}
+
+function bindGlassRowEvents(row) {
+    const heightInput = row.querySelector('input[name*="[height]"]');
+    const widthInput = row.querySelector('input[name*="[width]"]');
+    const wingQtyInput = row.querySelector('input[name*="[wing_quantity]"]');
+    const areaInput = row.querySelector('input[name*="[area_m2]"]');
+    const unitPriceInput = row.querySelector('input[name*="[unit_price]"]');
+    
+    if (heightInput) heightInput.addEventListener('input', () => calculateGlassTotalPrice(row, 'height'));
+    if (widthInput) widthInput.addEventListener('input', () => calculateGlassTotalPrice(row, 'width'));
+    if (wingQtyInput) wingQtyInput.addEventListener('input', () => calculateGlassTotalPrice(row, 'wing_quantity'));
+    if (areaInput) areaInput.addEventListener('input', () => calculateGlassTotalPrice(row, 'area'));
+    if (unitPriceInput) unitPriceInput.addEventListener('input', () => calculateGlassTotalPrice(row, 'unit_price'));
+}
+
+function duplicateGlassRow(button) {
+    const row = button.closest('.order-item-row');
+    const tbody = row.closest('.supply-items-container');
+    const originalSelect = row.querySelector('.tom-select-product');
+    const selectedValue = originalSelect ? originalSelect.value : '';
+    
+    const newRow = row.cloneNode(true);
+    
+    // Remove database ID so it creates a new entry
+    const idInput = newRow.querySelector('input[name*="[id]"]');
+    if (idInput) idInput.remove();
+    
+    // Copy select/input values manually
+    const sourceInputs = row.querySelectorAll('input, select, textarea');
+    const targetInputs = newRow.querySelectorAll('input, select, textarea');
+    sourceInputs.forEach((sourceInput, idx) => {
+        if (targetInputs[idx] && sourceInput.name.indexOf('[id]') === -1) {
+            targetInputs[idx].value = sourceInput.value;
+        }
+    });
+    
+    // Reinitialize TomSelect
+    const select = newRow.querySelector('.tom-select-product');
+    if (select) {
+        const tsWrapper = newRow.querySelector('.ts-wrapper');
+        if (tsWrapper) tsWrapper.remove();
+        select.classList.remove('tomselected');
+        select.style.display = '';
+        select.value = selectedValue;
+    }
+    
+    // Insert after current row
+    row.parentNode.insertBefore(newRow, row.nextSibling);
+    
+    if (select && typeof TomSelect !== 'undefined') {
+        new TomSelect(select, {
+            allowEmptyOption: true,
+            placeholder: '-- Chọn --',
+        });
+    }
+    
+    bindGlassRowEvents(newRow);
+    updateGlassRowIndexes(tbody);
+    updateOrderSummary();
 }
 
 function calculateGlassTotalPrice(row, sourceEvent) {
@@ -368,7 +457,7 @@ function calculateGlassTotalPrice(row, sourceEvent) {
     
     const totalPriceInput = row.querySelector('input[name*="[total_price]"]');
     if (totalPriceInput) {
-        totalPriceInput.value = totalPrice.toFixed(2);
+        totalPriceInput.value = Math.round(totalPrice);
     }
     updateOrderSummary();
 }
@@ -381,12 +470,12 @@ function fillGlassProductInfo(selectElement, supplyIndex, itemIndex) {
     const supplies = @json(\App\Models\Supply::all());
     const supply = supplies.find(s => s.product_code === productCode);
     if (supply) {
-        const productNameInput = row.querySelector(`input[name="supplies[${supplyIndex}][items][${itemIndex}][product_name]"]`);
+        const productNameInput = row.querySelector(`input[name="supplies[\${supplyIndex}][items][\${itemIndex}][product_name]"]`);
         if (productNameInput) productNameInput.value = supply.name || '';
         
-        const unitPriceInput = row.querySelector(`input[name="supplies[${supplyIndex}][items][${itemIndex}][unit_price]"]`);
+        const unitPriceInput = row.querySelector(`input[name="supplies[\${supplyIndex}][items][\${itemIndex}][unit_price]"]`);
         if (unitPriceInput) {
-            unitPriceInput.value = supply.unit_price || 0;
+            unitPriceInput.value = supply.unit_price ? Math.round(supply.unit_price) : 0;
             calculateGlassTotalPrice(row);
         }
     }
@@ -397,18 +486,7 @@ function fillGlassProductInfo(selectElement, supplyIndex, itemIndex) {
 // Initial setup for Glass-specific rows if DOM loaded
 document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('#glass-supplies-container .order-item-row').forEach(row => {
-        const heightInput = row.querySelector('input[name*="[height]"]');
-        const widthInput = row.querySelector('input[name*="[width]"]');
-        const wingQtyInput = row.querySelector('input[name*="[wing_quantity]"]');
-        const areaInput = row.querySelector('input[name*="[area_m2]"]');
-        const unitPriceInput = row.querySelector('input[name*="[unit_price]"]');
-        
-        if (heightInput) heightInput.addEventListener('input', () => calculateGlassTotalPrice(row, 'height'));
-        if (widthInput) widthInput.addEventListener('input', () => calculateGlassTotalPrice(row, 'width'));
-        if (wingQtyInput) wingQtyInput.addEventListener('input', () => calculateGlassTotalPrice(row, 'wing_quantity'));
-        if (areaInput) areaInput.addEventListener('input', () => calculateGlassTotalPrice(row, 'area'));
-        if (unitPriceInput) unitPriceInput.addEventListener('input', () => calculateGlassTotalPrice(row, 'unit_price'));
-        
+        bindGlassRowEvents(row);
         calculateGlassTotalPrice(row);
     });
 });

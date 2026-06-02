@@ -112,6 +112,8 @@
             </li>
             @endcan
 
+            <!-- View UI -->
+            @can('view ui')
             <li class="sidebar-menu-group-title">Ứng dụng</li>
 
             <li>
@@ -401,6 +403,7 @@
                     </li>
                 </ul>
             </li>
+            @endcan
         </ul>
     </div>
 </aside>

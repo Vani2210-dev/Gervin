@@ -24,6 +24,46 @@
     .hide-arrow option {
         text-align: center;
     }
+    /* Style TomSelect inside table rows to match compact inputs */
+    .table .ts-wrapper {
+        padding: 0 !important;
+        border: none !important;
+        background: transparent !important;
+        min-height: auto !important;
+        height: 32px !important;
+    }
+    .table .ts-control {
+        padding: 0 8px !important;
+        height: 32px !important; /* matches h-8 (32px) */
+        font-size: 12px !important; /* matches text-xs */
+        line-height: 30px !important; /* 32px minus borders */
+        border-radius: 8px !important; /* matches rounded-lg */
+        border: 1px solid #d1d5db !important; /* matches border-neutral-300 */
+        background-color: #ffffff !important;
+        display: flex !important;
+        align-items: center !important;
+        box-shadow: none !important;
+    }
+    .table .ts-control input {
+        font-size: 12px !important;
+        height: auto !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    .table .ts-control .item {
+        font-size: 12px !important;
+        line-height: 30px !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .table .ts-wrapper.single .ts-control:after {
+        top: 50% !important;
+        margin-top: -3px !important;
+    }
+    .table .ts-wrapper.focus .ts-control {
+        border-color: #3b82f6 !important; /* focus border color (primary-500) */
+        box-shadow: 0 0 0 1px #3b82f6 !important;
+    }
 </style>
 <div class="bg-white border border-neutral-200 rounded-xl p-6 shadow-sm">
     <div class="flex items-center justify-between border-b border-neutral-100 pb-4 mb-5">
@@ -62,33 +102,33 @@
                     <table class="table bordered-table sm-table mb-0 min-w-[2000px] border border-neutral-200">
                         <thead>
                             <tr class="bg-neutral-50 text-center">
-                                <th scope="col" rowspan="2" class="align-middle w-[45px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Stt</th>
-                                <th scope="col" rowspan="2" class="align-middle w-[160px] min-w-[160px] max-w-[160px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Mã hàng</th>
-                                <th scope="col" rowspan="2" class="align-middle w-[180px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên hàng hóa, dịch vụ <span class="text-danger-500">*</span></th>
-                                <th scope="col" colspan="2" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Kích thước (mm)</th>
-                                <th scope="col" rowspan="2" class="align-middle w-[70px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số lượng</th>
-                                <th scope="col" colspan="4" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Dán cạnh</th>
-                                <th scope="col" rowspan="2" class="align-middle w-[85px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán thẳng</th>
-                                <th scope="col" rowspan="2" class="align-middle w-[85px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán vát</th>
-                                <th scope="col" rowspan="2" class="align-middle w-[85px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán vát mòi</th>
-                                <th scope="col" rowspan="2" class="align-middle w-[105px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán bản rộng 40-59mm</th>
-                                <th scope="col" rowspan="2" class="align-middle w-[105px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán bản rộng 17-39mm</th>
-                                <th scope="col" rowspan="2" class="align-middle w-[105px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán bản rộng 25-35mm</th>
-                                <th scope="col" rowspan="2" class="align-middle w-[85px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số vát tay nắm âm</th>
-                                <th scope="col" rowspan="2" class="align-middle w-[75px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số tấm CNC</th>
-                                <th scope="col" rowspan="2" class="align-middle w-[85px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Chiều vân</th>
-                                <th scope="col" rowspan="2" class="align-middle w-[140px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Ghi chú</th>
-                                <th scope="col" rowspan="2" class="align-middle w-[45px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Xóa</th>
+                                <th scope="col" rowspan="2" style="width: 45px; min-width: 45px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Stt</th>
+                                <th scope="col" rowspan="2" style="width: 160px; min-width: 160px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Mã hàng</th>
+                                <th scope="col" rowspan="2" style="min-width: 180px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên hàng hóa, dịch vụ <span class="text-danger-500">*</span></th>
+                                <th scope="col" colspan="2" style="white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Kích thước (mm)</th>
+                                <th scope="col" rowspan="2" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số lượng</th>
+                                <th scope="col" colspan="4" style="white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Dán cạnh</th>
+                                <th scope="col" rowspan="2" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán thẳng</th>
+                                <th scope="col" rowspan="2" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán vát</th>
+                                <th scope="col" rowspan="2" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán vát mòi</th>
+                                <th scope="col" rowspan="2" style="width: 105px; min-width: 105px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán bản rộng 40-59mm</th>
+                                <th scope="col" rowspan="2" style="width: 105px; min-width: 105px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán bản rộng 17-39mm</th>
+                                <th scope="col" rowspan="2" style="width: 105px; min-width: 105px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán bản rộng 25-35mm</th>
+                                <th scope="col" rowspan="2" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số vát tay nắm âm</th>
+                                <th scope="col" rowspan="2" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số tấm CNC</th>
+                                <th scope="col" rowspan="2" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Chiều vân</th>
+                                <th scope="col" rowspan="2" style="min-width: 140px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Ghi chú</th>
+                                <th scope="col" rowspan="2" style="width: 80px; min-width: 80px; white-space: nowrap; position: sticky; right: 0; z-index: 3; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Hành động</th>
                             </tr>
                             <tr class="bg-neutral-50 text-center">
                                 {{-- Kích thước --}}
-                                <th scope="col" class="w-[90px] min-w-[90px] max-w-[90px] border border-neutral-200 bg-yellow-100/70 font-semibold text-xs text-neutral-700 uppercase">Cao (vân)</th>
-                                <th scope="col" class="w-[90px] min-w-[90px] max-w-[90px] border border-neutral-200 font-semibold text-xs text-neutral-700 uppercase">Rộng</th>
+                                <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="border border-neutral-200 bg-yellow-100/70 font-semibold text-xs text-neutral-700 uppercase">Cao (vân)</th>
+                                <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="border border-neutral-200 font-semibold text-xs text-neutral-700 uppercase">Rộng</th>
                                 {{-- Dán cạnh --}}
-                                <th scope="col" class="w-[70px] min-w-[70px] max-w-[70px] border border-neutral-200 font-semibold text-xs text-neutral-700 uppercase">Cao</th>
-                                <th scope="col" class="w-[70px] min-w-[70px] max-w-[70px] border border-neutral-200 font-semibold text-xs text-neutral-700 uppercase">Cao</th>
-                                <th scope="col" class="w-[70px] min-w-[70px] max-w-[70px] border border-neutral-200 font-semibold text-xs text-neutral-700 uppercase">Rộng</th>
-                                <th scope="col" class="w-[70px] min-w-[70px] max-w-[70px] border border-neutral-200 font-semibold text-xs text-neutral-700 uppercase">Rộng</th>
+                                <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="border border-neutral-200 font-semibold text-xs text-neutral-700 uppercase">Cao</th>
+                                <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="border border-neutral-200 font-semibold text-xs text-neutral-700 uppercase">Cao</th>
+                                <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="border border-neutral-200 font-semibold text-xs text-neutral-700 uppercase">Rộng</th>
+                                <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="border border-neutral-200 font-semibold text-xs text-neutral-700 uppercase">Rộng</th>
                             </tr>
                         </thead>
                         <tbody class="supply-items-container" data-supply-index="{{ $supplyIndex }}">
@@ -104,10 +144,10 @@
                                 }
                             @endphp
                             <tr class="order-item-row" data-item-id="{{ $item->id }}">
-                                <td class="text-center align-middle border border-neutral-200">
+                                <td style="width: 45px; min-width: 45px; " class="text-center align-middle border border-neutral-200">
                                     <span class="row-index font-semibold text-neutral-500">{{ $itemIndex + 1 }}</span>
                                 </td>
-                                <td class="border border-neutral-200 w-[160px] min-w-[160px] max-w-[160px]">
+                                <td style="width: 160px; min-width: 160px; " class="border border-neutral-200">
                                     <select name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][product_code]" class="tom-select-product" onchange="fillMinLateProductInfo(this, {{ $supplyIndex }}, {{ $itemIndex }})">
                                         <option value="">-- Chọn --</option>
                                         @foreach(\App\Models\Supply::pluck('product_code')->filter()->unique() as $code)
@@ -115,20 +155,20 @@
                                         @endforeach
                                     </select>
                                 </td>
-                                <td class="border border-neutral-200">
+                                <td style="min-width: 180px;" class="border border-neutral-200">
                                     <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][product_name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Tên sản phẩm" required value="{{ $item->product_name ?? $item->name ?? '' }}">
                                 </td>
-                                <td class="border border-neutral-200 w-[90px] min-w-[90px] max-w-[90px]">
+                                <td style="width: 200px; min-width: 200px; " class="border border-neutral-200">
                                     <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][height]" class="form-control form-control-sm rounded-lg border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500 bg-yellow-50/30 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="{{ $size['height'] ?? '' }}">
                                 </td>
-                                <td class="border border-neutral-200 w-[90px] min-w-[90px] max-w-[90px]">
+                                <td style="width: 200px; min-width: 200px; " class="border border-neutral-200">
                                     <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][width]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="{{ $size['width'] ?? '' }}">
                                 </td>
-                                <td class="border border-neutral-200 w-[70px] min-w-[70px] max-w-[70px]">
+                                <td style="width: 70px; min-width: 70px; " class="border border-neutral-200">
                                     <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="1" min="1" required value="{{ $item->quantity }}">
                                 </td>
                                 {{-- Dán cạnh (4 text inputs) --}}
-                                <td class="border border-neutral-200 w-[70px] min-w-[70px] max-w-[70px]">
+                                <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
                                     <select name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][edge_gluing][height_1]" class="form-select form-select-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center w-full px-1 py-0.5 h-8 text-xs hide-arrow">
                                         <option value=""></option>
                                         <option value="V" {{ ($gluing['height_1'] ?? '') == 'V' ? 'selected' : '' }}>V</option>
@@ -139,7 +179,7 @@
                                         <option value="XEM BAN VE CT" {{ ($gluing['height_1'] ?? '') == 'XEM BAN VE CT' ? 'selected' : '' }}>XEM BAN VE CT</option>
                                     </select>
                                 </td>
-                                <td class="border border-neutral-200 w-[70px] min-w-[70px] max-w-[70px]">
+                                <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
                                     <select name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][edge_gluing][height_2]" class="form-select form-select-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center w-full px-1 py-0.5 h-8 text-xs hide-arrow">
                                         <option value=""></option>
                                         <option value="V" {{ ($gluing['height_2'] ?? '') == 'V' ? 'selected' : '' }}>V</option>
@@ -150,7 +190,7 @@
                                         <option value="XEM BAN VE CT" {{ ($gluing['height_2'] ?? '') == 'XEM BAN VE CT' ? 'selected' : '' }}>XEM BAN VE CT</option>
                                     </select>
                                 </td>
-                                <td class="border border-neutral-200 w-[70px] min-w-[70px] max-w-[70px]">
+                                <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
                                     <select name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][edge_gluing][width_1]" class="form-select form-select-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center w-full px-1 py-0.5 h-8 text-xs hide-arrow">
                                         <option value=""></option>
                                         <option value="V" {{ ($gluing['width_1'] ?? '') == 'V' ? 'selected' : '' }}>V</option>
@@ -161,7 +201,7 @@
                                         <option value="XEM BAN VE CT" {{ ($gluing['width_1'] ?? '') == 'XEM BAN VE CT' ? 'selected' : '' }}>XEM BAN VE CT</option>
                                     </select>
                                 </td>
-                                <td class="border border-neutral-200 w-[70px] min-w-[70px] max-w-[70px]">
+                                <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
                                     <select name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][edge_gluing][width_2]" class="form-select form-select-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center w-full px-1 py-0.5 h-8 text-xs hide-arrow">
                                         <option value=""></option>
                                         <option value="V" {{ ($gluing['width_2'] ?? '') == 'V' ? 'selected' : '' }}>V</option>
@@ -172,43 +212,48 @@
                                         <option value="XEM BAN VE CT" {{ ($gluing['width_2'] ?? '') == 'XEM BAN VE CT' ? 'selected' : '' }}>XEM BAN VE CT</option>
                                     </select>
                                 </td>
-                                <td class="border border-neutral-200 w-[85px] min-w-[85px] max-w-[85px]">
+                                <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
                                     <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][straight_paste_length]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="{{ $item->straight_paste_length ?? 0 }}" readonly>
                                 </td>
-                                <td class="border border-neutral-200 w-[85px] min-w-[85px] max-w-[85px]">
+                                <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
                                     <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][beveled_length]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="{{ $item->beveled_length ?? 0 }}" readonly>
                                 </td>
-                                <td class="border border-neutral-200 w-[85px] min-w-[85px] max-w-[85px]">
+                                <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
                                     <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][vat_moi_length]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="{{ $item->vat_moi_length ?? 0 }}" readonly>
                                 </td>
-                                <td class="border border-neutral-200 w-[105px] min-w-[105px] max-w-[105px]">
+                                <td style="width: 105px; min-width: 105px; " class="border border-neutral-200">
                                     <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][ban_rong_40_59]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="{{ $item->ban_rong_40_59 ?? 0 }}" readonly>
                                 </td>
-                                <td class="border border-neutral-200 w-[105px] min-w-[105px] max-w-[105px]">
+                                <td style="width: 105px; min-width: 105px; " class="border border-neutral-200">
                                     <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][ban_rong_17_39]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="{{ $item->ban_rong_17_39 ?? 0 }}" readonly>
                                 </td>
-                                <td class="border border-neutral-200 w-[105px] min-w-[105px] max-w-[105px]">
+                                <td style="width: 105px; min-width: 105px; " class="border border-neutral-200">
                                     <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][ban_rong_25_35]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="{{ $item->ban_rong_25_35 ?? 0 }}" readonly>
                                 </td>
-                                <td class="border border-neutral-200 w-[85px] min-w-[85px] max-w-[85px]">
+                                <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
                                     <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][beveled_handle]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="{{ $item->beveled_handle ?? 0 }}" readonly>
                                 </td>
-                                <td class="border border-neutral-200 w-[75px] min-w-[75px] max-w-[75px]">
+                                <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
                                     <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][cnc]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="0" value="{{ $item->cnc ?? 0 }}" readonly>
                                 </td>
-                                <td class="border border-neutral-200 w-[85px] min-w-[85px] max-w-[85px]">
+                                <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
                                     <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][direction]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 px-1 py-1 h-8 text-xs" placeholder="Chiều vân" value="{{ $item->direction ?? '' }}">
                                 </td>
 
-                                <td class="border border-neutral-200">
+                                <td style="min-width: 140px;" class="border border-neutral-200">
                                     <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Ghi chú" value="{{ $item->notes ?? '' }}">
                                 </td>
-                                <td class="text-center align-middle border border-neutral-200">
-                                    <button type="button" onclick="removeMinLateOrderItem(this)" class="text-neutral-400 hover:text-danger-500 transition-colors p-1" title="Xóa sản phẩm">
-                                        <iconify-icon icon="lucide:trash-2" class="text-base"></iconify-icon>
-                                    </button>
+                                <td style="width: 80px; min-width: 80px; position: sticky; right: 0; z-index: 1; background-color: #fff; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="text-center align-middle border border-neutral-200">
+                                    <div class="flex items-center gap-1 justify-center">
+                                        <button type="button" onclick="duplicateMinLateRow(this)" class="text-neutral-400 hover:text-primary-500 transition-colors p-1" title="Nhân bản sản phẩm">
+                                            <iconify-icon icon="lucide:copy" class="text-base"></iconify-icon>
+                                        </button>
+                                        <button type="button" onclick="removeMinLateOrderItem(this)" class="text-neutral-400 hover:text-danger-500 transition-colors p-1" title="Xóa sản phẩm">
+                                            <iconify-icon icon="lucide:trash-2" class="text-base"></iconify-icon>
+                                        </button>
+                                    </div>
+                                    <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][id]" value="{{ $item->id }}">
                                 </td>
-                                <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][id]" value="{{ $item->id }}">
                             </tr>
                             @endforeach
                         </tbody>
@@ -238,47 +283,47 @@
         <table class="table bordered-table sm-table mb-0 min-w-[900px] border border-neutral-200">
             <thead>
                 <tr class="bg-neutral-50 text-center">
-                    <th scope="col" class="w-[50px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Stt</th>
-                    <th scope="col" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên nội dung <span class="text-danger-500">*</span></th>
-                    <th scope="col" class="w-[100px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn vị</th>
-                    <th scope="col" class="w-[100px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số lượng</th>
-                    <th scope="col" class="w-[150px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá <span class="text-danger-500">*</span></th>
-                    <th scope="col" class="w-[150px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá chỉ gỗ</th>
-                    <th scope="col" class="w-[160px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Thành tiền</th>
-                    <th scope="col" class="w-[50px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Xóa</th>
+                    <th scope="col" style="width: 50px; min-width: 50px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Stt</th>
+                    <th scope="col" style="white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên nội dung <span class="text-danger-500">*</span></th>
+                    <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn vị</th>
+                    <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số lượng</th>
+                    <th scope="col" style="width: 150px; min-width: 150px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá <span class="text-danger-500">*</span></th>
+                    <th scope="col" style="width: 150px; min-width: 150px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá chỉ gỗ</th>
+                    <th scope="col" style="width: 160px; min-width: 160px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Thành tiền</th>
+                    <th scope="col" style="width: 50px; min-width: 50px; white-space: nowrap; position: sticky; right: 0; z-index: 2; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Xóa</th>
                 </tr>
             </thead>
             <tbody id="payment-details-container">
                 @if(isset($acrylicOrder) && $acrylicOrder->type == 'min_late' && isset($acrylicOrder->paymentDetails) && $acrylicOrder->paymentDetails->count() > 0)
                     @foreach($acrylicOrder->paymentDetails as $detailIndex => $detail)
                     <tr class="payment-detail-row">
-                        <td class="text-center align-middle border border-neutral-200">
+                        <td style="width: 50px; min-width: 50px; " class="text-center align-middle border border-neutral-200">
                             <span class="detail-index font-semibold text-neutral-500">{{ $detailIndex + 1 }}</span>
                         </td>
                         <td class="border border-neutral-200">
                             <input type="text" name="payment_details[{{ $detailIndex }}][name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Nhập tên chi phí/dịch vụ" required value="{{ $detail->name }}">
                         </td>
-                        <td class="border border-neutral-200">
+                        <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
                             <input type="text" name="payment_details[{{ $detailIndex }}][unit]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs" placeholder="m, tấm..." value="{{ $detail->unit }}">
                         </td>
-                        <td class="border border-neutral-200">
+                        <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
                             <input type="number" name="payment_details[{{ $detailIndex }}][quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs" placeholder="1" step="0.01" value="{{ $detail->quantity }}">
                         </td>
-                        <td class="border border-neutral-200">
-                            <input type="number" name="payment_details[{{ $detailIndex }}][price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs" placeholder="0" min="0" required value="{{ $detail->price }}">
+                        <td style="width: 150px; min-width: 150px; " class="border border-neutral-200">
+                            <input type="number" name="payment_details[{{ $detailIndex }}][price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs" placeholder="0" min="0" required value="{{ $detail->price ? round($detail->price) : '0' }}">
                         </td>
-                        <td class="border border-neutral-200">
-                            <input type="number" name="payment_details[{{ $detailIndex }}][price_only]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs" placeholder="0" min="0" value="{{ $detail->price_only }}">
+                        <td style="width: 150px; min-width: 150px; " class="border border-neutral-200">
+                            <input type="number" name="payment_details[{{ $detailIndex }}][price_only]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs" placeholder="0" min="0" value="{{ $detail->price_only ? round($detail->price_only) : '0' }}">
                         </td>
-                        <td class="border border-neutral-200">
-                            <input type="number" name="payment_details[{{ $detailIndex }}][total]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center h-8 text-xs" placeholder="0" step="0.01" readonly value="{{ $detail->total }}">
+                        <td style="width: 160px; min-width: 160px; " class="border border-neutral-200">
+                            <input type="number" name="payment_details[{{ $detailIndex }}][total]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center h-8 text-xs" placeholder="0" readonly value="{{ $detail->total ? round($detail->total) : '0' }}">
                         </td>
-                        <td class="text-center align-middle border border-neutral-200">
+                        <td style="width: 50px; min-width: 50px; position: sticky; right: 0; z-index: 1; background-color: #fff; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="text-center align-middle border border-neutral-200">
                             <button type="button" onclick="removePaymentDetail(this)" class="text-neutral-400 hover:text-danger-500 transition-colors p-1" title="Xóa nội dung này">
                                 <iconify-icon icon="lucide:trash-2" class="text-base"></iconify-icon>
                             </button>
+                            <input type="hidden" name="payment_details[{{ $detailIndex }}][id]" value="{{ $detail->id }}">
                         </td>
-                        <input type="hidden" name="payment_details[{{ $detailIndex }}][id]" value="{{ $detail->id }}">
                     </tr>
                     @endforeach
                 @endif
@@ -316,33 +361,33 @@ function addMinLateOrderSupply() {
             <table class="table bordered-table sm-table mb-0 min-w-[2000px] border border-neutral-200">
                 <thead>
                     <tr class="bg-neutral-50 text-center">
-                        <th scope="col" rowspan="2" class="align-middle w-[45px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Stt</th>
-                        <th scope="col" rowspan="2" class="align-middle w-[160px] min-w-[160px] max-w-[160px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Mã hàng</th>
-                        <th scope="col" rowspan="2" class="align-middle w-[180px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên hàng hóa, dịch vụ <span class="text-danger-500">*</span></th>
-                        <th scope="col" colspan="2" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Kích thước (mm)</th>
-                        <th scope="col" rowspan="2" class="align-middle w-[70px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số lượng</th>
-                        <th scope="col" colspan="4" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Dán cạnh</th>
-                        <th scope="col" rowspan="2" class="align-middle w-[85px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán thẳng</th>
-                        <th scope="col" rowspan="2" class="align-middle w-[85px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán vát</th>
-                        <th scope="col" rowspan="2" class="align-middle w-[85px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán vát mòi</th>
-                        <th scope="col" rowspan="2" class="align-middle w-[105px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán bản rộng 40-59mm</th>
-                        <th scope="col" rowspan="2" class="align-middle w-[105px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán bản rộng 17-39mm</th>
-                        <th scope="col" rowspan="2" class="align-middle w-[105px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán bản rộng 25-35mm</th>
-                        <th scope="col" rowspan="2" class="align-middle w-[85px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số vát tay nắm âm</th>
-                        <th scope="col" rowspan="2" class="align-middle w-[75px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số tấm CNC</th>
-                        <th scope="col" rowspan="2" class="align-middle w-[85px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Chiều vân</th>
-                        <th scope="col" rowspan="2" class="align-middle w-[140px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Ghi chú</th>
-                        <th scope="col" rowspan="2" class="align-middle w-[45px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Xóa</th>
+                        <th scope="col" rowspan="2" style="width: 45px; min-width: 45px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Stt</th>
+                        <th scope="col" rowspan="2" style="width: 160px; min-width: 160px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Mã hàng</th>
+                        <th scope="col" rowspan="2" style="min-width: 180px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên hàng hóa, dịch vụ <span class="text-danger-500">*</span></th>
+                        <th scope="col" colspan="2" style="white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Kích thước (mm)</th>
+                        <th scope="col" rowspan="2" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số lượng</th>
+                        <th scope="col" colspan="4" style="white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Dán cạnh</th>
+                        <th scope="col" rowspan="2" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán thẳng</th>
+                        <th scope="col" rowspan="2" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán vát</th>
+                        <th scope="col" rowspan="2" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán vát mòi</th>
+                        <th scope="col" rowspan="2" style="width: 105px; min-width: 105px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán bản rộng 40-59mm</th>
+                        <th scope="col" rowspan="2" style="width: 105px; min-width: 105px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán bản rộng 17-39mm</th>
+                        <th scope="col" rowspan="2" style="width: 105px; min-width: 105px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán bản rộng 25-35mm</th>
+                        <th scope="col" rowspan="2" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số vát tay nắm âm</th>
+                        <th scope="col" rowspan="2" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số tấm CNC</th>
+                        <th scope="col" rowspan="2" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Chiều vân</th>
+                        <th scope="col" rowspan="2" style="min-width: 140px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Ghi chú</th>
+                        <th scope="col" rowspan="2" style="width: 80px; min-width: 80px; white-space: nowrap; position: sticky; right: 0; z-index: 3; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Hành động</th>
                     </tr>
                     <tr class="bg-neutral-50 text-center">
                         {{-- Kích thước --}}
-                        <th scope="col" class="w-[90px] min-w-[90px] max-w-[90px] border border-neutral-200 bg-yellow-100/70 font-semibold text-xs text-neutral-700 uppercase">Cao (vân)</th>
-                        <th scope="col" class="w-[90px] min-w-[90px] max-w-[90px] border border-neutral-200 font-semibold text-xs text-neutral-700 uppercase">Rộng</th>
+                        <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="border border-neutral-200 bg-yellow-100/70 font-semibold text-xs text-neutral-700 uppercase">Cao (vân)</th>
+                        <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="border border-neutral-200 font-semibold text-xs text-neutral-700 uppercase">Rộng</th>
                         {{-- Dán cạnh --}}
-                        <th scope="col" class="w-[70px] min-w-[70px] max-w-[70px] border border-neutral-200 font-semibold text-xs text-neutral-700 uppercase">Cao</th>
-                        <th scope="col" class="w-[70px] min-w-[70px] max-w-[70px] border border-neutral-200 font-semibold text-xs text-neutral-700 uppercase">Cao</th>
-                        <th scope="col" class="w-[70px] min-w-[70px] max-w-[70px] border border-neutral-200 font-semibold text-xs text-neutral-700 uppercase">Rộng</th>
-                        <th scope="col" class="w-[70px] min-w-[70px] max-w-[70px] border border-neutral-200 font-semibold text-xs text-neutral-700 uppercase">Rộng</th>
+                        <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="border border-neutral-200 font-semibold text-xs text-neutral-700 uppercase">Cao</th>
+                        <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="border border-neutral-200 font-semibold text-xs text-neutral-700 uppercase">Cao</th>
+                        <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="border border-neutral-200 font-semibold text-xs text-neutral-700 uppercase">Rộng</th>
+                        <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="border border-neutral-200 font-semibold text-xs text-neutral-700 uppercase">Rộng</th>
                     </tr>
                 </thead>
                 <tbody class="supply-items-container" data-supply-index="${minLateSupplyIndex}">
@@ -360,112 +405,143 @@ function addMinLateOrderItem(button) {
     const container = supplyRow.querySelector('.supply-items-container');
     const itemIndex = container.querySelectorAll('.order-item-row').length;
     
+    // Check if there is an existing last row in the container to copy from
+    const lastRow = container.querySelector('.order-item-row:last-of-type');
+    let lastData = null;
+    if (lastRow) {
+        lastData = {
+            product_code: lastRow.querySelector('.tom-select-product') ? lastRow.querySelector('.tom-select-product').value : '',
+            product_name: lastRow.querySelector('input[name*="[product_name]"]') ? lastRow.querySelector('input[name*="[product_name]"]').value : '',
+            height: lastRow.querySelector('input[name*="[height]"]') ? lastRow.querySelector('input[name*="[height]"]').value : '',
+            width: lastRow.querySelector('input[name*="[width]"]') ? lastRow.querySelector('input[name*="[width]"]').value : '',
+            quantity: lastRow.querySelector('input[name*="[quantity]"]') ? lastRow.querySelector('input[name*="[quantity]"]').value : '1',
+            edge_gluing_height_1: lastRow.querySelector('select[name*="[edge_gluing][height_1]"]') ? lastRow.querySelector('select[name*="[edge_gluing][height_1]"]').value : '',
+            edge_gluing_height_2: lastRow.querySelector('select[name*="[edge_gluing][height_2]"]') ? lastRow.querySelector('select[name*="[edge_gluing][height_2]"]').value : '',
+            edge_gluing_width_1: lastRow.querySelector('select[name*="[edge_gluing][width_1]"]') ? lastRow.querySelector('select[name*="[edge_gluing][width_1]"]').value : '',
+            edge_gluing_width_2: lastRow.querySelector('select[name*="[edge_gluing][width_2]"]') ? lastRow.querySelector('select[name*="[edge_gluing][width_2]"]').value : '',
+            straight_paste_length: lastRow.querySelector('input[name*="[straight_paste_length]"]') ? lastRow.querySelector('input[name*="[straight_paste_length]"]').value : '0',
+            beveled_length: lastRow.querySelector('input[name*="[beveled_length]"]') ? lastRow.querySelector('input[name*="[beveled_length]"]').value : '0',
+            vat_moi_length: lastRow.querySelector('input[name*="[vat_moi_length]"]') ? lastRow.querySelector('input[name*="[vat_moi_length]"]').value : '0',
+            ban_rong_40_59: lastRow.querySelector('input[name*="[ban_rong_40_59]"]') ? lastRow.querySelector('input[name*="[ban_rong_40_59]"]').value : '0',
+            ban_rong_17_39: lastRow.querySelector('input[name*="[ban_rong_17_39]"]') ? lastRow.querySelector('input[name*="[ban_rong_17_39]"]').value : '0',
+            ban_rong_25_35: lastRow.querySelector('input[name*="[ban_rong_25_35]"]') ? lastRow.querySelector('input[name*="[ban_rong_25_35]"]').value : '0',
+            beveled_handle: lastRow.querySelector('input[name*="[beveled_handle]"]') ? lastRow.querySelector('input[name*="[beveled_handle]"]').value : '0',
+            cnc: lastRow.querySelector('input[name*="[cnc]"]') ? lastRow.querySelector('input[name*="[cnc]"]').value : '0',
+            direction: lastRow.querySelector('input[name*="[direction]"]') ? lastRow.querySelector('input[name*="[direction]"]').value : '',
+            notes: lastRow.querySelector('input[name*="[notes]"]') ? lastRow.querySelector('input[name*="[notes]"]').value : '',
+        };
+    }
+    
     const newItem = document.createElement('tr');
     newItem.className = 'order-item-row';
     newItem.innerHTML = `
-        <td class="text-center align-middle border border-neutral-200">
+        <td style="width: 45px; min-width: 45px; " class="text-center align-middle border border-neutral-200">
             <span class="row-index font-semibold text-neutral-500">${itemIndex + 1}</span>
         </td>
-        <td class="border border-neutral-200 w-[160px] min-w-[160px] max-w-[160px]">
+        <td style="width: 160px; min-width: 160px; " class="border border-neutral-200">
             <select name="supplies[${supplyIndex}][items][${itemIndex}][product_code]" class="tom-select-product" onchange="fillMinLateProductInfo(this, ${supplyIndex}, ${itemIndex})">
                 <option value="">-- Chọn --</option>
                 @foreach(\App\Models\Supply::pluck('product_code')->filter()->unique() as $code)
-                <option value="{{ $code }}">{{ $code }}</option>
+                <option value="{{ $code }}" ${lastData && lastData.product_code === '{{ $code }}' ? 'selected' : ''}>{{ $code }}</option>
                 @endforeach
             </select>
         </td>
-        <td class="border border-neutral-200">
-            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][product_name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Tên sản phẩm" required>
+        <td style="min-width: 180px;" class="border border-neutral-200">
+            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][product_name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Tên sản phẩm" required value="${lastData ? lastData.product_name : ''}">
         </td>
-        <td class="border border-neutral-200 w-[90px] min-w-[90px] max-w-[90px]">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][height]" class="form-control form-control-sm rounded-lg border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500 bg-yellow-50/30 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01">
+        <td style="width: 200px; min-width: 200px; " class="border border-neutral-200">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][height]" class="form-control form-control-sm rounded-lg border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500 bg-yellow-50/30 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="${lastData ? lastData.height : ''}">
         </td>
-        <td class="border border-neutral-200 w-[90px] min-w-[90px] max-w-[90px]">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][width]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01">
+        <td style="width: 200px; min-width: 200px; " class="border border-neutral-200">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][width]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="${lastData ? lastData.width : ''}">
         </td>
-        <td class="border border-neutral-200 w-[70px] min-w-[70px] max-w-[70px]">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="1" min="1" required value="1">
+        <td style="width: 70px; min-width: 70px; " class="border border-neutral-200">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="1" min="1" required value="${lastData ? lastData.quantity : '1'}">
         </td>
         {{-- Dán cạnh (4 select options) --}}
-        <td class="border border-neutral-200 w-[70px] min-w-[70px] max-w-[70px]">
+        <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
             <select name="supplies[${supplyIndex}][items][${itemIndex}][edge_gluing][height_1]" class="form-select form-select-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center w-full px-1 py-0.5 h-8 text-xs hide-arrow">
                 <option value=""></option>
-                <option value="V">V</option>
-                <option value="T">T</option>
-                <option value="VAT MOI">VAT MOI</option>
-                <option value="DS">DS</option>
-                <option value="VAT TNA">VAT TNA</option>
-                <option value="XEM BAN VE CT">XEM BAN VE CT</option>
+                <option value="V" \${lastData && lastData.edge_gluing_height_1 === 'V' ? 'selected' : ''}>V</option>
+                <option value="T" \${lastData && lastData.edge_gluing_height_1 === 'T' ? 'selected' : ''}>T</option>
+                <option value="VAT MOI" \${lastData && lastData.edge_gluing_height_1 === 'VAT MOI' ? 'selected' : ''}>VAT MOI</option>
+                <option value="DS" \${lastData && lastData.edge_gluing_height_1 === 'DS' ? 'selected' : ''}>DS</option>
+                <option value="VAT TNA" \${lastData && lastData.edge_gluing_height_1 === 'VAT TNA' ? 'selected' : ''}>VAT TNA</option>
+                <option value="XEM BAN VE CT" \${lastData && lastData.edge_gluing_height_1 === 'XEM BAN VE CT' ? 'selected' : ''}>XEM BAN VE CT</option>
             </select>
         </td>
-        <td class="border border-neutral-200 w-[70px] min-w-[70px] max-w-[70px]">
+        <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
             <select name="supplies[${supplyIndex}][items][${itemIndex}][edge_gluing][height_2]" class="form-select form-select-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center w-full px-1 py-0.5 h-8 text-xs hide-arrow">
                 <option value=""></option>
-                <option value="V">V</option>
-                <option value="T">T</option>
-                <option value="VAT MOI">VAT MOI</option>
-                <option value="DS">DS</option>
-                <option value="VAT TNA">VAT TNA</option>
-                <option value="XEM BAN VE CT">XEM BAN VE CT</option>
+                <option value="V" \${lastData && lastData.edge_gluing_height_2 === 'V' ? 'selected' : ''}>V</option>
+                <option value="T" \${lastData && lastData.edge_gluing_height_2 === 'T' ? 'selected' : ''}>T</option>
+                <option value="VAT MOI" \${lastData && lastData.edge_gluing_height_2 === 'VAT MOI' ? 'selected' : ''}>VAT MOI</option>
+                <option value="DS" \${lastData && lastData.edge_gluing_height_2 === 'DS' ? 'selected' : ''}>DS</option>
+                <option value="VAT TNA" \${lastData && lastData.edge_gluing_height_2 === 'VAT TNA' ? 'selected' : ''}>VAT TNA</option>
+                <option value="XEM BAN VE CT" \${lastData && lastData.edge_gluing_height_2 === 'XEM BAN VE CT' ? 'selected' : ''}>XEM BAN VE CT</option>
             </select>
         </td>
-        <td class="border border-neutral-200 w-[70px] min-w-[70px] max-w-[70px]">
+        <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
             <select name="supplies[${supplyIndex}][items][${itemIndex}][edge_gluing][width_1]" class="form-select form-select-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center w-full px-1 py-0.5 h-8 text-xs hide-arrow">
                 <option value=""></option>
-                <option value="V">V</option>
-                <option value="T">T</option>
-                <option value="VAT MOI">VAT MOI</option>
-                <option value="DS">DS</option>
-                <option value="VAT TNA">VAT TNA</option>
-                <option value="XEM BAN VE CT">XEM BAN VE CT</option>
+                <option value="V" \${lastData && lastData.edge_gluing_width_1 === 'V' ? 'selected' : ''}>V</option>
+                <option value="T" \${lastData && lastData.edge_gluing_width_1 === 'T' ? 'selected' : ''}>T</option>
+                <option value="VAT MOI" \${lastData && lastData.edge_gluing_width_1 === 'VAT MOI' ? 'selected' : ''}>VAT MOI</option>
+                <option value="DS" \${lastData && lastData.edge_gluing_width_1 === 'DS' ? 'selected' : ''}>DS</option>
+                <option value="VAT TNA" \${lastData && lastData.edge_gluing_width_1 === 'VAT TNA' ? 'selected' : ''}>VAT TNA</option>
+                <option value="XEM BAN VE CT" \${lastData && lastData.edge_gluing_width_1 === 'XEM BAN VE CT' ? 'selected' : ''}>XEM BAN VE CT</option>
             </select>
         </td>
-        <td class="border border-neutral-200 w-[70px] min-w-[70px] max-w-[70px]">
+        <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
             <select name="supplies[${supplyIndex}][items][${itemIndex}][edge_gluing][width_2]" class="form-select form-select-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center w-full px-1 py-0.5 h-8 text-xs hide-arrow">
                 <option value=""></option>
-                <option value="V">V</option>
-                <option value="T">T</option>
-                <option value="VAT MOI">VAT MOI</option>
-                <option value="DS">DS</option>
-                <option value="VAT TNA">VAT TNA</option>
-                <option value="XEM BAN VE CT">XEM BAN VE CT</option>
+                <option value="V" \${lastData && lastData.edge_gluing_width_2 === 'V' ? 'selected' : ''}>V</option>
+                <option value="T" \${lastData && lastData.edge_gluing_width_2 === 'T' ? 'selected' : ''}>T</option>
+                <option value="VAT MOI" \${lastData && lastData.edge_gluing_width_2 === 'VAT MOI' ? 'selected' : ''}>VAT MOI</option>
+                <option value="DS" \${lastData && lastData.edge_gluing_width_2 === 'DS' ? 'selected' : ''}>DS</option>
+                <option value="VAT TNA" \${lastData && lastData.edge_gluing_width_2 === 'VAT TNA' ? 'selected' : ''}>VAT TNA</option>
+                <option value="XEM BAN VE CT" \${lastData && lastData.edge_gluing_width_2 === 'XEM BAN VE CT' ? 'selected' : ''}>XEM BAN VE CT</option>
             </select>
         </td>
-        <td class="border border-neutral-200 w-[85px] min-w-[85px] max-w-[85px]">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][straight_paste_length]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="0" readonly>
+        <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][straight_paste_length]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="${lastData ? lastData.straight_paste_length : '0'}" readonly>
         </td>
-        <td class="border border-neutral-200 w-[85px] min-w-[85px] max-w-[85px]">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][beveled_length]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="0" readonly>
+        <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][beveled_length]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="${lastData ? lastData.beveled_length : '0'}" readonly>
         </td>
-        <td class="border border-neutral-200 w-[85px] min-w-[85px] max-w-[85px]">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][vat_moi_length]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="0" readonly>
+        <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][vat_moi_length]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="${lastData ? lastData.vat_moi_length : '0'}" readonly>
         </td>
-        <td class="border border-neutral-200 w-[105px] min-w-[105px] max-w-[105px]">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][ban_rong_40_59]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="0" readonly>
+        <td style="width: 105px; min-width: 105px; " class="border border-neutral-200">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][ban_rong_40_59]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="${lastData ? lastData.ban_rong_40_59 : '0'}" readonly>
         </td>
-        <td class="border border-neutral-200 w-[105px] min-w-[105px] max-w-[105px]">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][ban_rong_17_39]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="0" readonly>
+        <td style="width: 105px; min-width: 105px; " class="border border-neutral-200">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][ban_rong_17_39]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="${lastData ? lastData.ban_rong_17_39 : '0'}" readonly>
         </td>
-        <td class="border border-neutral-200 w-[105px] min-w-[105px] max-w-[105px]">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][ban_rong_25_35]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="0" readonly>
+        <td style="width: 105px; min-width: 105px; " class="border border-neutral-200">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][ban_rong_25_35]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="${lastData ? lastData.ban_rong_25_35 : '0'}" readonly>
         </td>
-        <td class="border border-neutral-200 w-[85px] min-w-[85px] max-w-[85px]">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][beveled_handle]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="0" readonly>
+        <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][beveled_handle]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="${lastData ? lastData.beveled_handle : '0'}" readonly>
         </td>
-        <td class="border border-neutral-200 w-[75px] min-w-[75px] max-w-[75px]">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][cnc]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="0" value="0" readonly>
+        <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][cnc]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="0" value="${lastData ? lastData.cnc : '0'}" readonly>
         </td>
-        <td class="border border-neutral-200 w-[85px] min-w-[85px] max-w-[85px]">
-            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][direction]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 px-1 py-1 h-8 text-xs" placeholder="Chiều vân">
+        <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
+            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][direction]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 px-1 py-1 h-8 text-xs" placeholder="Chiều vân" value="${lastData ? lastData.direction : ''}">
         </td>
-
-        <td class="border border-neutral-200">
-            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Ghi chú">
+        <td style="min-width: 140px;" class="border border-neutral-200">
+            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Ghi chú" value="${lastData ? lastData.notes : ''}">
         </td>
-        <td class="text-center align-middle border border-neutral-200">
-            <button type="button" onclick="removeMinLateOrderItem(this)" class="text-neutral-400 hover:text-danger-500 transition-colors p-1" title="Xóa sản phẩm">
-                <iconify-icon icon="lucide:trash-2" class="text-base"></iconify-icon>
-            </button>
+        <td style="width: 80px; min-width: 80px; position: sticky; right: 0; z-index: 1; background-color: #fff; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="text-center align-middle border border-neutral-200">
+            <div class="flex items-center gap-1 justify-center">
+                <button type="button" onclick="duplicateMinLateRow(this)" class="text-neutral-400 hover:text-primary-500 transition-colors p-1" title="Nhân bản sản phẩm">
+                    <iconify-icon icon="lucide:copy" class="text-base"></iconify-icon>
+                </button>
+                <button type="button" onclick="removeMinLateOrderItem(this)" class="text-neutral-400 hover:text-danger-500 transition-colors p-1" title="Xóa sản phẩm">
+                    <iconify-icon icon="lucide:trash-2" class="text-base"></iconify-icon>
+                </button>
+            </div>
         </td>
     `;
     container.appendChild(newItem);
@@ -497,10 +573,76 @@ function removeMinLateOrderItem(button) {
 
 function updateMinLateRowIndexes(tbody) {
     if (!tbody) return;
-    tbody.querySelectorAll('.order-item-row').forEach((row, index) => {
+    tbody.querySelectorAll('.order-item-row').forEach((row, itemIndex) => {
         const indexEl = row.querySelector('.row-index');
-        if (indexEl) indexEl.textContent = index + 1;
+        if (indexEl) indexEl.textContent = itemIndex + 1;
+        
+        row.querySelectorAll('input, select, textarea').forEach(input => {
+            const name = input.getAttribute('name');
+            if (name) {
+                const newName = name.replace(/\[items\]\[\d+\]/, `[items][${itemIndex}]`);
+                input.setAttribute('name', newName);
+            }
+        });
     });
+}
+
+function duplicateMinLateRow(button) {
+    const row = button.closest('.order-item-row');
+    const tbody = row.closest('.supply-items-container');
+    const originalSelect = row.querySelector('.tom-select-product');
+    const selectedValue = originalSelect ? originalSelect.value : '';
+    
+    const h1Val = row.querySelector('select[name*="[edge_gluing][height_1]"]').value;
+    const h2Val = row.querySelector('select[name*="[edge_gluing][height_2]"]').value;
+    const w1Val = row.querySelector('select[name*="[edge_gluing][width_1]"]').value;
+    const w2Val = row.querySelector('select[name*="[edge_gluing][width_2]"]').value;
+    
+    const newRow = row.cloneNode(true);
+    
+    // Remove database ID so it creates a new entry
+    const idInput = newRow.querySelector('input[name*="[id]"]');
+    if (idInput) idInput.remove();
+    
+    // Copy select/input values manually
+    const sourceInputs = row.querySelectorAll('input, select, textarea');
+    const targetInputs = newRow.querySelectorAll('input, select, textarea');
+    sourceInputs.forEach((sourceInput, idx) => {
+        if (targetInputs[idx] && sourceInput.name.indexOf('[id]') === -1) {
+            targetInputs[idx].value = sourceInput.value;
+        }
+    });
+    
+    // Set edge_gluing select values manually to be absolutely safe
+    newRow.querySelector('select[name*="[edge_gluing][height_1]"]').value = h1Val;
+    newRow.querySelector('select[name*="[edge_gluing][height_2]"]').value = h2Val;
+    newRow.querySelector('select[name*="[edge_gluing][width_1]"]').value = w1Val;
+    newRow.querySelector('select[name*="[edge_gluing][width_2]"]').value = w2Val;
+    
+    // Reinitialize TomSelect
+    const select = newRow.querySelector('.tom-select-product');
+    if (select) {
+        const tsWrapper = newRow.querySelector('.ts-wrapper');
+        if (tsWrapper) tsWrapper.remove();
+        select.classList.remove('tomselected');
+        select.style.display = '';
+        select.value = selectedValue;
+    }
+    
+    // Insert after current row
+    row.parentNode.insertBefore(newRow, row.nextSibling);
+    
+    if (select && typeof TomSelect !== 'undefined') {
+        new TomSelect(select, {
+            allowEmptyOption: true,
+            placeholder: '-- Chọn --',
+        });
+    }
+    
+    bindMinLateRowEvents(newRow);
+    calculateMinLateRowStats(newRow);
+    updateMinLateRowIndexes(tbody);
+    updateOrderSummary();
 }
 
 function calculateMinLateRowStats(row) {
@@ -644,7 +786,7 @@ function calculateMinLateTotalPrice(row) {
     const unitPrice = parseFloat(unitPriceEl.value) || 0;
     const quantity = parseFloat(row.querySelector('input[name*="[quantity]"]').value) || 0;
     const totalPrice = unitPrice * quantity;
-    totalPriceEl.value = totalPrice.toFixed(2);
+    totalPriceEl.value = Math.round(totalPrice);
     updateOrderSummary();
 }
 
@@ -661,7 +803,7 @@ function fillMinLateProductInfo(selectElement, supplyIndex, itemIndex) {
         
         const unitPriceInput = row.querySelector(`input[name="supplies[${supplyIndex}][items][${itemIndex}][unit_price]"]`);
         if (unitPriceInput) {
-            unitPriceInput.value = supply.unit_price || 0;
+            unitPriceInput.value = supply.unit_price ? Math.round(supply.unit_price) : 0;
             calculateMinLateTotalPrice(row);
         }
     }
@@ -686,28 +828,28 @@ function addPaymentDetail() {
     const newRow = document.createElement('tr');
     newRow.className = 'payment-detail-row';
     newRow.innerHTML = `
-        <td class="text-center align-middle border border-neutral-200">
+        <td style="width: 50px; min-width: 50px; " class="text-center align-middle border border-neutral-200">
             <span class="detail-index font-semibold text-neutral-500">${paymentDetailIndex + 1}</span>
         </td>
         <td class="border border-neutral-200">
             <input type="text" name="payment_details[${paymentDetailIndex}][name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Nhập tên chi phí/dịch vụ" required>
         </td>
-        <td class="border border-neutral-200">
+        <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
             <input type="text" name="payment_details[${paymentDetailIndex}][unit]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs" placeholder="m, tấm...">
         </td>
-        <td class="border border-neutral-200">
+        <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
             <input type="number" name="payment_details[${paymentDetailIndex}][quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs" placeholder="1" step="0.01" value="1">
         </td>
-        <td class="border border-neutral-200">
+        <td style="width: 150px; min-width: 150px; " class="border border-neutral-200">
             <input type="number" name="payment_details[${paymentDetailIndex}][price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs" placeholder="0" min="0" required value="0">
         </td>
-        <td class="border border-neutral-200">
+        <td style="width: 150px; min-width: 150px; " class="border border-neutral-200">
             <input type="number" name="payment_details[${paymentDetailIndex}][price_only]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs" placeholder="0" min="0" value="0">
         </td>
-        <td class="border border-neutral-200">
-            <input type="number" name="payment_details[${paymentDetailIndex}][total]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center h-8 text-xs" placeholder="0" step="0.01" readonly value="0">
+        <td style="width: 160px; min-width: 160px; " class="border border-neutral-200">
+            <input type="number" name="payment_details[${paymentDetailIndex}][total]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center h-8 text-xs" placeholder="0" readonly value="0">
         </td>
-        <td class="text-center align-middle border border-neutral-200">
+        <td style="width: 50px; min-width: 50px; position: sticky; right: 0; z-index: 1; background-color: #fff; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="text-center align-middle border border-neutral-200">
             <button type="button" onclick="removePaymentDetail(this)" class="text-neutral-400 hover:text-danger-500 transition-colors p-1" title="Xóa nội dung này">
                 <iconify-icon icon="lucide:trash-2" class="text-base"></iconify-icon>
             </button>
@@ -741,7 +883,7 @@ function calculatePaymentDetailRowTotal(row) {
     const price = parseFloat(priceInput.value) || 0;
     const total = quantity * price;
     
-    totalInput.value = total.toFixed(2);
+    totalInput.value = Math.round(total);
     updateOrderSummary();
 }
 

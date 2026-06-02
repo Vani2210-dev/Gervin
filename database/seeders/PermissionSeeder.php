@@ -41,11 +41,13 @@ class PermissionSeeder extends Seeder
             'edit customer',
             'delete customer',
 
-            // Acrylic Order permissions
             'view acrylic order',
             'add acrylic order',
             'edit acrylic order',
             'delete acrylic order',
+            
+            // UI permissions
+            'view ui',
         ];
 
         foreach ($permissions as $permission) {

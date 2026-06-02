@@ -206,9 +206,9 @@ class MinLateOrderService
     {
         $totalAmount = 0;
         foreach ($paymentDetails as $detail) {
-            $totalAmount += ($detail['total'] ?? 0);
+            $totalAmount += round($detail['total'] ?? 0);
         }
-        return $totalAmount;
+        return round($totalAmount);
     }
 
     /**
@@ -224,9 +224,9 @@ class MinLateOrderService
                 'name'       => $detail['name'],
                 'unit'       => $detail['unit'] ?? null,
                 'quantity'   => $detail['quantity'] ?? 0,
-                'price'      => $detail['price'] ?? 0,
-                'price_only' => $detail['price_only'] ?? 0,
-                'total'      => $detail['total'] ?? 0,
+                'price'      => round($detail['price'] ?? 0),
+                'price_only' => round($detail['price_only'] ?? 0),
+                'total'      => round($detail['total'] ?? 0),
             ]);
         }
     }

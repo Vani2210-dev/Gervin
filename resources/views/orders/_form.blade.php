@@ -238,7 +238,7 @@ function updateOrderSummary() {
         // Calculate items quantity from supplies.items
         const rows = document.querySelectorAll('.order-item-row');
         rows.forEach(row => {
-            const qtyInput = row.querySelector('input[name*="[quantity]"]');
+            const qtyInput = row.querySelector('input[name*="quantity"]');
             if (qtyInput && !qtyInput.disabled) {
                 totalItems += parseFloat(qtyInput.value) || 0;
             }
@@ -247,7 +247,7 @@ function updateOrderSummary() {
         // Calculate total amount from payment details
         const detailRows = document.querySelectorAll('.payment-detail-row');
         detailRows.forEach(row => {
-            const totalInput = row.querySelector('input[name*="[total]"]');
+            const totalInput = row.querySelector('input[name*="total"]');
             if (totalInput && !totalInput.disabled) {
                 totalAmount += parseFloat(totalInput.value) || 0;
             }
@@ -255,8 +255,8 @@ function updateOrderSummary() {
     } else {
         const rows = document.querySelectorAll('.order-item-row');
         rows.forEach(row => {
-            const qtyInput = row.querySelector('input[name*="[quantity]"]');
-            const priceInput = row.querySelector('input[name*="[total_price]"]');
+            const qtyInput = row.querySelector('input[name*="quantity"]');
+            const priceInput = row.querySelector('input[name*="total_price"]');
             if (qtyInput && !qtyInput.disabled) {
                 const quantity = parseFloat(qtyInput.value) || 0;
                 const totalPrice = parseFloat(priceInput ? priceInput.value : 0) || 0;
@@ -271,8 +271,8 @@ function updateOrderSummary() {
     const grandTotalEl = document.getElementById('grand-total');
     
     if (totalItemsEl) totalItemsEl.textContent = totalItems;
-    if (totalAmountEl) totalAmountEl.textContent = totalAmount.toLocaleString('vi-VN') + ' VNĐ';
-    if (grandTotalEl) grandTotalEl.textContent = totalAmount.toLocaleString('vi-VN') + ' VNĐ';
+    if (totalAmountEl) totalAmountEl.textContent = Math.round(totalAmount).toLocaleString('vi-VN') + ' VNĐ';
+    if (grandTotalEl) grandTotalEl.textContent = Math.round(totalAmount).toLocaleString('vi-VN') + ' VNĐ';
 }
 
 function deleteAttachment(index, imagePath) {

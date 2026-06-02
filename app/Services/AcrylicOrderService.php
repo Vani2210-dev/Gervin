@@ -192,10 +192,11 @@ class AcrylicOrderService
         $totalAmount = 0;
         foreach ($supplies as $supply) {
             foreach ($supply['items'] as $item) {
-                $totalAmount += ($item['unit_price'] * $item['quantity']);
+                $itemTotal = isset($item['total_price']) ? floatval($item['total_price']) : ($item['unit_price'] * $item['quantity']);
+                $totalAmount += $itemTotal;
             }
         }
-        return $totalAmount;
+        return round($totalAmount);
     }
 
     /**
@@ -211,7 +212,8 @@ class AcrylicOrderService
             ]);
 
             foreach ($supplyData['items'] as $item) {
-                $totalPrice = $item['unit_price'] * $item['quantity'];
+                $totalPrice = isset($item['total_price']) ? floatval($item['total_price']) : ($item['unit_price'] * $item['quantity']);
+                $totalPrice = round($totalPrice);
                 
                 AcrylicOrderItem::create([
                     'order_supply_id'    => $orderSupply->id,
@@ -224,7 +226,7 @@ class AcrylicOrderService
                     'wing_area'           => $item['wing_area'] ?? null,
                     'molding_length'      => $item['molding_length'] ?? null,
                     'quantity'            => $item['quantity'],
-                    'unit_price'          => $item['unit_price'],
+                    'unit_price'          => round($item['unit_price']),
                     'total_price'         => $totalPrice,
                     'notes'               => $item['notes'] ?? null,
                     'bevel'               => $item['bevel'] ?? null,
