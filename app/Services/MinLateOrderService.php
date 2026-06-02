@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Order;
 use App\Models\MinLateOrderItem;
 use App\Models\OrderSupply;
+use App\Models\PaymentDetail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -47,8 +48,14 @@ class MinLateOrderService
             'supplies.*.items.*.beveled_handle'        => 'nullable|numeric|min:0',
             'supplies.*.items.*.cnc'                   => 'nullable|integer',
             'supplies.*.items.*.direction'             => 'nullable|string|max:100',
-            'supplies.*.items.*.unit_price'          => 'required|numeric|min:0',
             'supplies.*.items.*.notes'               => 'nullable|string',
+            'payment_details'                          => 'nullable|array',
+            'payment_details.*.name'                   => 'required|string|max:255',
+            'payment_details.*.unit'                   => 'nullable|string|max:255',
+            'payment_details.*.quantity'               => 'nullable|numeric|min:0',
+            'payment_details.*.price'                  => 'required|numeric|min:0',
+            'payment_details.*.price_only'             => 'nullable|numeric|min:0',
+            'payment_details.*.total'                  => 'required|numeric|min:0',
         ];
     }
 
@@ -84,8 +91,8 @@ class MinLateOrderService
         $nextNumber = $lastOrder ? intval(substr($lastOrder->order_code, 2)) + 1 : 1;
         $orderCode = 'DA' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
 
-        // Calculate total amount
-        $totalAmount = $this->calculateTotalAmount($request->supplies);
+        // Calculate total amount from payment details
+        $totalAmount = $this->calculateTotalAmount($request->payment_details ?? []);
 
         $order = Order::create([
             'order_code'    => $orderCode,
@@ -104,6 +111,7 @@ class MinLateOrderService
         ]);
 
         $this->saveSuppliesAndItems($order, $request->supplies);
+        $this->savePaymentDetails($order, $request->payment_details ?? []);
 
         return $order;
     }
@@ -139,7 +147,7 @@ class MinLateOrderService
         }
 
         $allAttachments = array_merge($existingAttachments, $attachmentPaths);
-        $totalAmount = $this->calculateTotalAmount($request->supplies);
+        $totalAmount = $this->calculateTotalAmount($request->payment_details ?? []);
 
         $order->update([
             'type'          => 'min_late',
@@ -163,6 +171,10 @@ class MinLateOrderService
 
         // Recreate supplies and items
         $this->saveSuppliesAndItems($order, $request->supplies);
+
+        // Recreate payment details
+        $order->paymentDetails()->delete();
+        $this->savePaymentDetails($order, $request->payment_details ?? []);
 
         return $order;
     }
@@ -188,17 +200,35 @@ class MinLateOrderService
     }
 
     /**
-     * Calculate total amount helper.
+     * Calculate total amount helper using payment details.
      */
-    protected function calculateTotalAmount(array $supplies): float
+    protected function calculateTotalAmount(array $paymentDetails): float
     {
         $totalAmount = 0;
-        foreach ($supplies as $supply) {
-            foreach ($supply['items'] as $item) {
-                $totalAmount += ($item['unit_price'] * $item['quantity']);
-            }
+        foreach ($paymentDetails as $detail) {
+            $totalAmount += round($detail['total'] ?? 0);
         }
-        return $totalAmount;
+        return round($totalAmount);
+    }
+
+    /**
+     * Save payment details helper.
+     */
+    protected function savePaymentDetails(Order $order, array $paymentDetailsData): void
+    {
+        foreach ($paymentDetailsData as $detail) {
+            if (empty($detail['name'])) continue;
+            
+            PaymentDetail::create([
+                'order_id'   => $order->id,
+                'name'       => $detail['name'],
+                'unit'       => $detail['unit'] ?? null,
+                'quantity'   => $detail['quantity'] ?? 0,
+                'price'      => round($detail['price'] ?? 0),
+                'price_only' => round($detail['price_only'] ?? 0),
+                'total'      => round($detail['total'] ?? 0),
+            ]);
+        }
     }
 
     /**

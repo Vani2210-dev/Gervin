@@ -59,7 +59,7 @@ class OrderController extends Controller
 
     public function show(Order $order)
     {
-        $order->load(['supplies.items', 'supplies.minLateItems', 'supplies.glassItems']);
+        $order->load(['supplies.items', 'supplies.minLateItems', 'supplies.glassItems', 'paymentDetails']);
         $acrylicOrder = $order;
         return view('orders.show', compact('acrylicOrder'));
     }
@@ -71,7 +71,7 @@ class OrderController extends Controller
 
     public function edit(Order $order)
     {
-        $order->load(['supplies.items', 'supplies.minLateItems', 'supplies.glassItems']);
+        $order->load(['supplies.items', 'supplies.minLateItems', 'supplies.glassItems', 'paymentDetails']);
         $acrylicOrder = $order;
         return view('orders.edit', compact('acrylicOrder'));
     }
