@@ -1,7 +1,7 @@
 @extends('layout.layout')
 @php
-    $title    = 'Đơn hàng Acrylic';
-    $subTitle = 'Danh sách đơn hàng Acrylic';
+    $title    = 'Đơn hàng';
+    $subTitle = 'Danh sách đơn hàng';
 @endphp
 
 @section('content')
