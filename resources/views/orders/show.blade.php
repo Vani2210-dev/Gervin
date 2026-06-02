@@ -135,8 +135,14 @@
                             <tbody>
                                 @forelse($supply->minLateItems as $itemIndex => $item)
                                 @php
-                                    $sizes = json_decode($item->size, true) ?? [];
-                                    $edgeGluing = json_decode($item->edge_gluing, true) ?? [];
+                                    $sizes = $item->size ?? [];
+                                    if (is_string($sizes)) {
+                                        $sizes = json_decode($sizes, true) ?? [];
+                                    }
+                                    $edgeGluing = $item->edge_gluing ?? [];
+                                    if (is_string($edgeGluing)) {
+                                        $edgeGluing = json_decode($edgeGluing, true) ?? [];
+                                    }
                                 @endphp
                                 <tr>
                                     <td class="text-center">{{ $itemIndex + 1 }}</td>
@@ -273,6 +279,50 @@
             </div>
         </div>
         @endforeach
+
+        @if($acrylicOrder->type === 'min_late' && isset($acrylicOrder->paymentDetails) && $acrylicOrder->paymentDetails->count() > 0)
+        <div class="card p-0 rounded-xl border-0 overflow-hidden shadow-sm bg-white border-l-4 border-l-primary-500 mt-6">
+            <div class="card-header border-b border-neutral-200 bg-white py-4 px-6 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="p-1.5 bg-primary-50 rounded-lg text-primary-500 flex items-center justify-center">
+                        <iconify-icon icon="lucide:receipt" class="text-base"></iconify-icon>
+                    </div>
+                    <h6 class="font-bold text-base text-neutral-800 m-0">Chi tiết hóa đơn (Min Late)</h6>
+                </div>
+            </div>
+
+            <div class="p-6">
+                <div class="overflow-x-auto">
+                    <table class="table bordered-table sm-table mb-0 min-w-[800px]">
+                        <thead>
+                            <tr class="bg-neutral-50 text-center">
+                                <th scope="col" class="w-10 text-center">STT</th>
+                                <th scope="col">Tên nội dung</th>
+                                <th scope="col" class="w-28 text-center">Đơn vị</th>
+                                <th scope="col" class="w-24 text-center">Số lượng</th>
+                                <th scope="col" class="w-32 text-end">Đơn giá</th>
+                                <th scope="col" class="w-32 text-end">Đơn giá chỉ gỗ</th>
+                                <th scope="col" class="w-32 text-end">Thành tiền</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($acrylicOrder->paymentDetails as $detailIndex => $detail)
+                            <tr>
+                                <td class="text-center font-semibold text-neutral-500">{{ $detailIndex + 1 }}</td>
+                                <td><span class="font-semibold text-neutral-800">{{ $detail->name }}</span></td>
+                                <td class="text-center">{{ $detail->unit ?? '—' }}</td>
+                                <td class="text-center font-medium">{{ number_format($detail->quantity, 2, ',', '.') }}</td>
+                                <td class="text-end font-medium text-neutral-600">{{ number_format($detail->price, 0, ',', '.') }}</td>
+                                <td class="text-end font-medium text-neutral-600">{{ number_format($detail->price_only, 0, ',', '.') }}</td>
+                                <td class="text-end font-bold text-primary-600">{{ number_format($detail->total, 0, ',', '.') }}</td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        @endif
     </div>
 
     {{-- Order Summary --}}

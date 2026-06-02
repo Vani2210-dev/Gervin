@@ -228,20 +228,43 @@ function fillCustomerInfo(customerId) {
 }
 
 function updateOrderSummary() {
-    const rows = document.querySelectorAll('.order-item-row');
+    const typeSelect = document.getElementById('order-type-select');
+    const orderType = typeSelect ? typeSelect.value : 'acrylic';
+    
     let totalItems = 0;
     let totalAmount = 0;
     
-    rows.forEach(row => {
-        const qtyInput = row.querySelector('input[name*="[quantity]"]');
-        const priceInput = row.querySelector('input[name*="[total_price]"]');
-        if (qtyInput && !qtyInput.disabled) {
-            const quantity = parseFloat(qtyInput.value) || 0;
-            const totalPrice = parseFloat(priceInput ? priceInput.value : 0) || 0;
-            totalItems += quantity;
-            totalAmount += totalPrice;
-        }
-    });
+    if (orderType === 'min_late') {
+        // Calculate items quantity from supplies.items
+        const rows = document.querySelectorAll('.order-item-row');
+        rows.forEach(row => {
+            const qtyInput = row.querySelector('input[name*="[quantity]"]');
+            if (qtyInput && !qtyInput.disabled) {
+                totalItems += parseFloat(qtyInput.value) || 0;
+            }
+        });
+        
+        // Calculate total amount from payment details
+        const detailRows = document.querySelectorAll('.payment-detail-row');
+        detailRows.forEach(row => {
+            const totalInput = row.querySelector('input[name*="[total]"]');
+            if (totalInput && !totalInput.disabled) {
+                totalAmount += parseFloat(totalInput.value) || 0;
+            }
+        });
+    } else {
+        const rows = document.querySelectorAll('.order-item-row');
+        rows.forEach(row => {
+            const qtyInput = row.querySelector('input[name*="[quantity]"]');
+            const priceInput = row.querySelector('input[name*="[total_price]"]');
+            if (qtyInput && !qtyInput.disabled) {
+                const quantity = parseFloat(qtyInput.value) || 0;
+                const totalPrice = parseFloat(priceInput ? priceInput.value : 0) || 0;
+                totalItems += quantity;
+                totalAmount += totalPrice;
+            }
+        });
+    }
     
     const totalItemsEl = document.getElementById('total-items');
     const totalAmountEl = document.getElementById('total-amount');

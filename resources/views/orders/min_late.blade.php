@@ -173,28 +173,28 @@
                                     </select>
                                 </td>
                                 <td class="border border-neutral-200 w-[85px] min-w-[85px] max-w-[85px]">
-                                    <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][straight_paste_length]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="{{ $item->straight_paste_length ?? 0 }}">
+                                    <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][straight_paste_length]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="{{ $item->straight_paste_length ?? 0 }}" readonly>
                                 </td>
                                 <td class="border border-neutral-200 w-[85px] min-w-[85px] max-w-[85px]">
-                                    <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][beveled_length]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="{{ $item->beveled_length ?? 0 }}">
+                                    <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][beveled_length]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="{{ $item->beveled_length ?? 0 }}" readonly>
                                 </td>
                                 <td class="border border-neutral-200 w-[85px] min-w-[85px] max-w-[85px]">
-                                    <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][vat_moi_length]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="{{ $item->vat_moi_length ?? 0 }}">
+                                    <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][vat_moi_length]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="{{ $item->vat_moi_length ?? 0 }}" readonly>
                                 </td>
                                 <td class="border border-neutral-200 w-[105px] min-w-[105px] max-w-[105px]">
-                                    <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][ban_rong_40_59]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="{{ $item->ban_rong_40_59 ?? 0 }}">
+                                    <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][ban_rong_40_59]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="{{ $item->ban_rong_40_59 ?? 0 }}" readonly>
                                 </td>
                                 <td class="border border-neutral-200 w-[105px] min-w-[105px] max-w-[105px]">
-                                    <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][ban_rong_17_39]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="{{ $item->ban_rong_17_39 ?? 0 }}">
+                                    <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][ban_rong_17_39]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="{{ $item->ban_rong_17_39 ?? 0 }}" readonly>
                                 </td>
                                 <td class="border border-neutral-200 w-[105px] min-w-[105px] max-w-[105px]">
-                                    <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][ban_rong_25_35]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="{{ $item->ban_rong_25_35 ?? 0 }}">
+                                    <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][ban_rong_25_35]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="{{ $item->ban_rong_25_35 ?? 0 }}" readonly>
                                 </td>
                                 <td class="border border-neutral-200 w-[85px] min-w-[85px] max-w-[85px]">
-                                    <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][beveled_handle]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="{{ $item->beveled_handle ?? 0 }}">
+                                    <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][beveled_handle]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="{{ $item->beveled_handle ?? 0 }}" readonly>
                                 </td>
                                 <td class="border border-neutral-200 w-[75px] min-w-[75px] max-w-[75px]">
-                                    <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][cnc]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" value="{{ $item->cnc ?? 0 }}">
+                                    <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][cnc]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="0" value="{{ $item->cnc ?? 0 }}" readonly>
                                 </td>
                                 <td class="border border-neutral-200 w-[85px] min-w-[85px] max-w-[85px]">
                                     <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][direction]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 px-1 py-1 h-8 text-xs" placeholder="Chiều vân" value="{{ $item->direction ?? '' }}">
@@ -220,6 +220,70 @@
         @else
             @php $minLateSupplyIndex = 0 @endphp
         @endif
+    </div>
+</div>
+
+{{-- Invoice Details Card (Min Late only) --}}
+<div class="bg-white border border-neutral-200 rounded-xl p-6 shadow-sm mt-6">
+    <div class="flex items-center justify-between border-b border-neutral-100 pb-4 mb-5">
+        <div class="flex items-center gap-2">
+            <iconify-icon icon="lucide:receipt" class="text-xl text-primary-500"></iconify-icon>
+            <h6 class="font-bold text-base text-neutral-800 m-0">Chi tiết hóa đơn</h6>
+        </div>
+        <button type="button" onclick="addPaymentDetail()" class="btn btn-sm btn-primary rounded-lg flex items-center gap-1">
+            <iconify-icon icon="lucide:plus" class="text-lg"></iconify-icon> Thêm nội dung
+        </button>
+    </div>
+    <div class="overflow-x-auto pb-3">
+        <table class="table bordered-table sm-table mb-0 min-w-[900px] border border-neutral-200">
+            <thead>
+                <tr class="bg-neutral-50 text-center">
+                    <th scope="col" class="w-[50px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Stt</th>
+                    <th scope="col" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên nội dung <span class="text-danger-500">*</span></th>
+                    <th scope="col" class="w-[100px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn vị</th>
+                    <th scope="col" class="w-[100px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số lượng</th>
+                    <th scope="col" class="w-[150px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá <span class="text-danger-500">*</span></th>
+                    <th scope="col" class="w-[150px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá chỉ gỗ</th>
+                    <th scope="col" class="w-[160px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Thành tiền</th>
+                    <th scope="col" class="w-[50px] border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Xóa</th>
+                </tr>
+            </thead>
+            <tbody id="payment-details-container">
+                @if(isset($acrylicOrder) && $acrylicOrder->type == 'min_late' && isset($acrylicOrder->paymentDetails) && $acrylicOrder->paymentDetails->count() > 0)
+                    @foreach($acrylicOrder->paymentDetails as $detailIndex => $detail)
+                    <tr class="payment-detail-row">
+                        <td class="text-center align-middle border border-neutral-200">
+                            <span class="detail-index font-semibold text-neutral-500">{{ $detailIndex + 1 }}</span>
+                        </td>
+                        <td class="border border-neutral-200">
+                            <input type="text" name="payment_details[{{ $detailIndex }}][name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Nhập tên chi phí/dịch vụ" required value="{{ $detail->name }}">
+                        </td>
+                        <td class="border border-neutral-200">
+                            <input type="text" name="payment_details[{{ $detailIndex }}][unit]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs" placeholder="m, tấm..." value="{{ $detail->unit }}">
+                        </td>
+                        <td class="border border-neutral-200">
+                            <input type="number" name="payment_details[{{ $detailIndex }}][quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs" placeholder="1" step="0.01" value="{{ $detail->quantity }}">
+                        </td>
+                        <td class="border border-neutral-200">
+                            <input type="number" name="payment_details[{{ $detailIndex }}][price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs" placeholder="0" min="0" required value="{{ $detail->price }}">
+                        </td>
+                        <td class="border border-neutral-200">
+                            <input type="number" name="payment_details[{{ $detailIndex }}][price_only]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs" placeholder="0" min="0" value="{{ $detail->price_only }}">
+                        </td>
+                        <td class="border border-neutral-200">
+                            <input type="number" name="payment_details[{{ $detailIndex }}][total]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center h-8 text-xs" placeholder="0" step="0.01" readonly value="{{ $detail->total }}">
+                        </td>
+                        <td class="text-center align-middle border border-neutral-200">
+                            <button type="button" onclick="removePaymentDetail(this)" class="text-neutral-400 hover:text-danger-500 transition-colors p-1" title="Xóa nội dung này">
+                                <iconify-icon icon="lucide:trash-2" class="text-base"></iconify-icon>
+                            </button>
+                        </td>
+                        <input type="hidden" name="payment_details[{{ $detailIndex }}][id]" value="{{ $detail->id }}">
+                    </tr>
+                    @endforeach
+                @endif
+            </tbody>
+        </table>
     </div>
 </div>
 
@@ -368,28 +432,28 @@ function addMinLateOrderItem(button) {
             </select>
         </td>
         <td class="border border-neutral-200 w-[85px] min-w-[85px] max-w-[85px]">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][straight_paste_length]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="0">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][straight_paste_length]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="0" readonly>
         </td>
         <td class="border border-neutral-200 w-[85px] min-w-[85px] max-w-[85px]">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][beveled_length]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="0">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][beveled_length]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="0" readonly>
         </td>
         <td class="border border-neutral-200 w-[85px] min-w-[85px] max-w-[85px]">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][vat_moi_length]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="0">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][vat_moi_length]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="0" readonly>
         </td>
         <td class="border border-neutral-200 w-[105px] min-w-[105px] max-w-[105px]">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][ban_rong_40_59]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="0">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][ban_rong_40_59]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="0" readonly>
         </td>
         <td class="border border-neutral-200 w-[105px] min-w-[105px] max-w-[105px]">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][ban_rong_17_39]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="0">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][ban_rong_17_39]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="0" readonly>
         </td>
         <td class="border border-neutral-200 w-[105px] min-w-[105px] max-w-[105px]">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][ban_rong_25_35]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="0">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][ban_rong_25_35]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="0" readonly>
         </td>
         <td class="border border-neutral-200 w-[85px] min-w-[85px] max-w-[85px]">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][beveled_handle]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="0">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][beveled_handle]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="0" readonly>
         </td>
         <td class="border border-neutral-200 w-[75px] min-w-[75px] max-w-[75px]">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][cnc]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" value="0">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][cnc]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="0" value="0" readonly>
         </td>
         <td class="border border-neutral-200 w-[85px] min-w-[85px] max-w-[85px]">
             <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][direction]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 px-1 py-1 h-8 text-xs" placeholder="Chiều vân">
@@ -611,5 +675,112 @@ document.addEventListener('DOMContentLoaded', function() {
         bindMinLateRowEvents(row);
         calculateMinLateRowStats(row);
     });
+});
+
+let paymentDetailIndex = {{ (isset($acrylicOrder) && $acrylicOrder->type == 'min_late' && isset($acrylicOrder->paymentDetails)) ? $acrylicOrder->paymentDetails->count() : 0 }};
+
+function addPaymentDetail() {
+    const container = document.getElementById('payment-details-container');
+    if (!container) return;
+    
+    const newRow = document.createElement('tr');
+    newRow.className = 'payment-detail-row';
+    newRow.innerHTML = `
+        <td class="text-center align-middle border border-neutral-200">
+            <span class="detail-index font-semibold text-neutral-500">${paymentDetailIndex + 1}</span>
+        </td>
+        <td class="border border-neutral-200">
+            <input type="text" name="payment_details[${paymentDetailIndex}][name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Nhập tên chi phí/dịch vụ" required>
+        </td>
+        <td class="border border-neutral-200">
+            <input type="text" name="payment_details[${paymentDetailIndex}][unit]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs" placeholder="m, tấm...">
+        </td>
+        <td class="border border-neutral-200">
+            <input type="number" name="payment_details[${paymentDetailIndex}][quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs" placeholder="1" step="0.01" value="1">
+        </td>
+        <td class="border border-neutral-200">
+            <input type="number" name="payment_details[${paymentDetailIndex}][price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs" placeholder="0" min="0" required value="0">
+        </td>
+        <td class="border border-neutral-200">
+            <input type="number" name="payment_details[${paymentDetailIndex}][price_only]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs" placeholder="0" min="0" value="0">
+        </td>
+        <td class="border border-neutral-200">
+            <input type="number" name="payment_details[${paymentDetailIndex}][total]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center h-8 text-xs" placeholder="0" step="0.01" readonly value="0">
+        </td>
+        <td class="text-center align-middle border border-neutral-200">
+            <button type="button" onclick="removePaymentDetail(this)" class="text-neutral-400 hover:text-danger-500 transition-colors p-1" title="Xóa nội dung này">
+                <iconify-icon icon="lucide:trash-2" class="text-base"></iconify-icon>
+            </button>
+        </td>
+    `;
+    container.appendChild(newRow);
+    
+    // Bind change/input events for auto-calculating row total
+    bindPaymentDetailEvents(newRow);
+    
+    paymentDetailIndex++;
+    updatePaymentDetailIndexes();
+    updateOrderSummary();
+}
+
+function removePaymentDetail(button) {
+    const row = button.closest('.payment-detail-row');
+    row.remove();
+    updatePaymentDetailIndexes();
+    updateOrderSummary();
+}
+
+function calculatePaymentDetailRowTotal(row) {
+    const qtyInput = row.querySelector('input[name*="[quantity]"]');
+    const priceInput = row.querySelector('input[name*="[price]"]');
+    const totalInput = row.querySelector('input[name*="[total]"]');
+    
+    if (!qtyInput || !priceInput || !totalInput) return;
+    
+    const quantity = parseFloat(qtyInput.value) || 0;
+    const price = parseFloat(priceInput.value) || 0;
+    const total = quantity * price;
+    
+    totalInput.value = total.toFixed(2);
+    updateOrderSummary();
+}
+
+function updatePaymentDetailIndexes() {
+    const rows = document.querySelectorAll('.payment-detail-row');
+    rows.forEach((row, index) => {
+        const indexSpan = row.querySelector('.detail-index');
+        if (indexSpan) {
+            indexSpan.textContent = index + 1;
+        }
+    });
+}
+
+function bindPaymentDetailEvents(row) {
+    const inputs = row.querySelectorAll('input[name*="[quantity]"], input[name*="[price]"]');
+    inputs.forEach(input => {
+        input.addEventListener('input', () => {
+            calculatePaymentDetailRowTotal(row);
+        });
+    });
+}
+
+// Initial setup for Min Late-specific rows and payment details
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.order-item-row').forEach(row => {
+        bindMinLateRowEvents(row);
+        calculateMinLateRowStats(row);
+    });
+
+    // Bind events for existing payment details
+    document.querySelectorAll('.payment-detail-row').forEach(row => {
+        bindPaymentDetailEvents(row);
+        calculatePaymentDetailRowTotal(row);
+    });
+
+    // Ensure at least one payment detail row exists on page load if none loaded
+    const container = document.getElementById('payment-details-container');
+    if (container && container.querySelectorAll('.payment-detail-row').length === 0) {
+        addPaymentDetail();
+    }
 });
 </script>
