@@ -9,6 +9,46 @@
     .table thead tr:nth-child(2) th:last-child::before {
         display: none !important;
     }
+    /* Style TomSelect inside table rows to match compact inputs */
+    .table .ts-wrapper {
+        padding: 0 !important;
+        border: none !important;
+        background: transparent !important;
+        min-height: auto !important;
+        height: 32px !important;
+    }
+    .table .ts-control {
+        padding: 0 8px !important;
+        height: 32px !important; /* matches h-8 (32px) */
+        font-size: 12px !important; /* matches text-xs */
+        line-height: 30px !important; /* 32px minus borders */
+        border-radius: 8px !important; /* matches rounded-lg */
+        border: 1px solid #d1d5db !important; /* matches border-neutral-300 */
+        background-color: #ffffff !important;
+        display: flex !important;
+        align-items: center !important;
+        box-shadow: none !important;
+    }
+    .table .ts-control input {
+        font-size: 12px !important;
+        height: auto !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    .table .ts-control .item {
+        font-size: 12px !important;
+        line-height: 30px !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .table .ts-wrapper.single .ts-control:after {
+        top: 50% !important;
+        margin-top: -3px !important;
+    }
+    .table .ts-wrapper.focus .ts-control {
+        border-color: #3b82f6 !important; /* focus border color (primary-500) */
+        box-shadow: 0 0 0 1px #3b82f6 !important;
+    }
 </style>
 <div class="bg-white border border-neutral-200 rounded-xl p-6 shadow-sm">
     <div class="flex items-center justify-between border-b border-neutral-100 pb-4 mb-5">
@@ -36,9 +76,9 @@
                     </div>
                     <div class="flex items-center gap-2">
                         <button type="button" onclick="addMinLateOrderItem(this)" class="btn btn-sm btn-outline-primary rounded-lg flex items-center gap-1">
-                            <iconify-icon icon="lucide:plus" class="text-sm"></iconify-icon>
+                            <iconify-icon icon="lucide:plus" class="text-sm"></iconify-icon> Thêm sản phẩm
                         </button>
-                        <button type="button" onclick="this.closest('.order-supply-row').remove()" class="text-neutral-400 hover:text-danger-500 transition-colors p-1" title="Xóa vật tư này">
+                        <button type="button" onclick="this.closest('.order-supply-row').remove()" class="text-neutral-400 hover:text-danger-500 transition-colors p-1 flex items-center justify-center" title="Xóa vật tư này">
                             <iconify-icon icon="lucide:trash-2" class="text-lg"></iconify-icon>
                         </button>
                     </div>
@@ -103,7 +143,7 @@
                                     </select>
                                 </td>
                                 <td class="border border-neutral-200">
-                                    <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][product_name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Tên sản phẩm" required value="{{ $item->product_name ?? $item->name ?? '' }}">
+                                    <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][product_name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Tên sản phẩm" required value="{{ $item->product_name ?? $item->name ?? '' }}">
                                 </td>
                                 <td class="border border-neutral-200 w-[85px] min-w-[85px] max-w-[85px]">
                                     <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][height]" class="form-control form-control-sm rounded-lg border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500 bg-yellow-50/30 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="{{ $size['height'] ?? '' }}">
@@ -155,13 +195,13 @@
                                     <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][direction]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 px-1 py-1 h-8 text-xs" placeholder="Chiều vân" value="{{ $item->direction ?? '' }}">
                                 </td>
                                 <td class="border border-neutral-200">
-                                    <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][unit_price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="0" min="0" required value="{{ $item->unit_price ?? 0 }}">
+                                    <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][unit_price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" min="0" required value="{{ $item->unit_price ?? 0 }}">
                                 </td>
                                 <td class="border border-neutral-200">
-                                    <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][total_price]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center" placeholder="0" step="0.01" value="{{ $item->total_price ?? 0 }}" readonly>
+                                    <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][total_price]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="{{ $item->total_price ?? 0 }}" readonly>
                                 </td>
                                 <td class="border border-neutral-200">
-                                    <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Ghi chú" value="{{ $item->notes ?? '' }}">
+                                    <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Ghi chú" value="{{ $item->notes ?? '' }}">
                                 </td>
                                 <td class="text-center align-middle border border-neutral-200">
                                     <button type="button" onclick="removeMinLateOrderItem(this)" class="text-neutral-400 hover:text-danger-500 transition-colors p-1" title="Xóa sản phẩm">
@@ -193,18 +233,18 @@ function addMinLateOrderSupply() {
     newSupply.innerHTML = `
         <div class="flex items-center justify-between gap-4 border-b border-neutral-200 pb-3 mb-4">
             <div class="flex items-center gap-3">
-                <div class="p-1.5 bg-primary-50 rounded-lg text-primary-600 flex items-center justify-center">
+                <div class="p-1.5 bg-primary-50 rounded-lg text-primary-500 flex items-center justify-center">
                     <iconify-icon icon="lucide:clipboard-list" class="text-base"></iconify-icon>
                 </div>
                 <input type="text" name="supplies[${minLateSupplyIndex}][supply_name]" class="form-control form-control-sm rounded-lg w-64 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Tên vật tư (ví dụ: Acrylic, Melamine...)">
                 <input type="number" name="supplies[${minLateSupplyIndex}][quantity]" class="form-control form-control-sm rounded-lg w-24 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="SL" min="0" step="0.01" value="0">
             </div>
             <div class="flex items-center gap-2">
-                <button type="button" onclick="addMinLateOrderItem(this)" class="text-neutral-400 hover:text-primary-600 transition-colors p-1">
-                    <iconify-icon icon="lucide:package-plus" class="text-lg"></iconify-icon> Thêm
+                <button type="button" onclick="addMinLateOrderItem(this)" class="btn btn-sm btn-outline-primary rounded-lg flex items-center gap-1">
+                    <iconify-icon icon="lucide:plus" class="text-sm"></iconify-icon> Thêm sản phẩm
                 </button>
-                <button type="button" onclick="this.closest('.order-supply-row').remove()" class="text-neutral-400 hover:text-danger-500 transition-colors p-1" title="Xóa vật tư này">
-                    <iconify-icon icon="lucide:trash-2" class="text-lg"></iconify-icon> Xóa
+                <button type="button" onclick="this.closest('.order-supply-row').remove()" class="text-neutral-400 hover:text-danger-500 transition-colors p-1 flex items-center justify-center" title="Xóa vật tư này">
+                    <iconify-icon icon="lucide:trash-2" class="text-lg"></iconify-icon>
                 </button>
             </div>
         </div>
@@ -273,7 +313,7 @@ function addMinLateOrderItem(button) {
             </select>
         </td>
         <td class="border border-neutral-200">
-            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][product_name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Tên sản phẩm" required>
+            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][product_name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Tên sản phẩm" required>
         </td>
         <td class="border border-neutral-200 w-[85px] min-w-[85px] max-w-[85px]">
             <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][height]" class="form-control form-control-sm rounded-lg border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500 bg-yellow-50/30 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01">
@@ -325,13 +365,13 @@ function addMinLateOrderItem(button) {
             <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][direction]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 px-1 py-1 h-8 text-xs" placeholder="Chiều vân">
         </td>
         <td class="border border-neutral-200">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][unit_price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="0" min="0" required>
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][unit_price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" min="0" required>
         </td>
         <td class="border border-neutral-200">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][total_price]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center" placeholder="0" step="0.01" readonly>
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][total_price]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" readonly>
         </td>
         <td class="border border-neutral-200">
-            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Ghi chú">
+            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Ghi chú">
         </td>
         <td class="text-center align-middle border border-neutral-200">
             <button type="button" onclick="removeMinLateOrderItem(this)" class="text-neutral-400 hover:text-danger-500 transition-colors p-1" title="Xóa sản phẩm">
@@ -365,10 +405,10 @@ function removeMinLateOrderItem(button) {
     const tbody = row.closest('.supply-items-container');
     row.remove();
     updateOrderSummary();
-    updateRowIndexes(tbody);
+    updateMinLateRowIndexes(tbody);
 }
 
-function updateRowIndexes(tbody) {
+function updateMinLateRowIndexes(tbody) {
     if (!tbody) return;
     tbody.querySelectorAll('.order-item-row').forEach((row, index) => {
         const indexEl = row.querySelector('.row-index');
@@ -410,14 +450,8 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.order-item-row').forEach(row => {
         const unitPriceInput = row.querySelector('input[name*="[unit_price]"]');
         const quantityInput = row.querySelector('input[name*="[quantity]"]');
-        if (unitPriceInput) unitPriceInput.addEventListener('input', () => {
-            if (typeof calculateMinLateTotalPrice === 'function') calculateMinLateTotalPrice(row);
-            else if (typeof calculateTotalPrice === 'function') calculateTotalPrice(row);
-        });
-        if (quantityInput) quantityInput.addEventListener('input', () => {
-            if (typeof calculateMinLateTotalPrice === 'function') calculateMinLateTotalPrice(row);
-            else if (typeof calculateTotalPrice === 'function') calculateTotalPrice(row);
-        });
+        if (unitPriceInput) unitPriceInput.addEventListener('input', () => calculateMinLateTotalPrice(row));
+        if (quantityInput) quantityInput.addEventListener('input', () => calculateMinLateTotalPrice(row));
     });
 });
 </script>
