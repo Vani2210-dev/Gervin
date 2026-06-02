@@ -154,7 +154,7 @@
                                 <label class="form-label font-semibold text-xs text-neutral-500 uppercase tracking-wider mb-2 block">Hình ảnh đã tải</label>
                                 <div class="flex flex-wrap gap-2" id="existing-attachments">
                                     @foreach(json_decode($acrylicOrder->attachments, true) ?? [] as $index => $image)
-                                    <div class="relative group">
+                                    <div class="relative group w-16 h-16">
                                         <img src="{{ route('orders.image', ['filename' => basename($image)]) }}" class="w-16 h-16 object-cover rounded-lg border border-neutral-200 shadow-sm transition-transform group-hover:scale-105">
                                         <button type="button" onclick="deleteAttachment('{{ $index }}', '{{ $image }}')" class="absolute -top-1.5 -right-1.5 bg-danger-100 hover:bg-danger-200 text-danger-600 transition-colors w-6 h-6 flex justify-center items-center rounded-full shadow-sm" title="Xóa ảnh">
                                             <iconify-icon icon="lucide:trash-2" class="text-xs"></iconify-icon>
@@ -302,9 +302,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         const reader = new FileReader();
                         reader.onload = function(e) {
                             const imgWrapper = document.createElement('div');
-                            imgWrapper.className = 'relative';
+                            imgWrapper.className = 'relative w-20 h-20';
                             imgWrapper.innerHTML = `
-                                <img src="\${e.target.result}" class="w-20 h-20 object-cover rounded-lg border border-neutral-200">
+                                <img src="${e.target.result}" class="w-20 h-20 object-cover rounded-lg border border-neutral-200">
                             `;
                             previewDiv.appendChild(imgWrapper);
                         }
