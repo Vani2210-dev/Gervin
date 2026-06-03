@@ -66,7 +66,11 @@ class OrderController extends Controller
 
     public function create()
     {
-        return view('orders.create');
+        $lastOrder = Order::orderBy('id', 'desc')->first();
+        $nextNumber = $lastOrder ? intval(substr($lastOrder->order_code, 2)) + 1 : 1;
+        $nextOrderCode = 'DA' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+
+        return view('orders.create', compact('nextOrderCode'));
     }
 
     public function edit(Order $order)

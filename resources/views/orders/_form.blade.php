@@ -19,6 +19,10 @@
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="form-group">
+                                <label class="form-label font-semibold text-xs text-neutral-500 uppercase tracking-wider mb-2 block">Mã đơn hàng</label>
+                                <input type="text" id="order-code-input" class="form-control rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-600" readonly value="{{ isset($acrylicOrder) ? $acrylicOrder->order_code : ($nextOrderCode ?? '') }}">
+                            </div>
+                            <div class="form-group">
                                 <label class="form-label font-semibold text-xs text-neutral-500 uppercase tracking-wider mb-2 block">Khách hàng</label>
                                 <select name="customer_id" class="form-select rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500" onchange="fillCustomerInfo(this.value)">
                                     <option value="">-- Chọn khách hàng --</option>

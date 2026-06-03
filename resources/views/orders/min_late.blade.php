@@ -123,6 +123,7 @@
                         <div class="p-1.5 bg-primary-50 rounded-lg text-primary-500 flex items-center justify-center">
                             <iconify-icon icon="lucide:clipboard-list" class="text-base"></iconify-icon>
                         </div>
+                        <input type="text" name="supplies[{{ $supplyIndex }}][order_supply_code]" class="order-supply-code-input form-control form-control-sm rounded-lg w-40 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Mã vật tư" value="{{ $supply->order_supply_code ?? '' }}">
                         <input type="text" name="supplies[{{ $supplyIndex }}][supply_name]" class="form-control form-control-sm rounded-lg w-64 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Tên vật tư (ví dụ: Acrylic, Melamine...)" value="{{ $supply->supply_name }}">
                         <input type="number" name="supplies[{{ $supplyIndex }}][quantity]" class="form-control form-control-sm rounded-lg w-24 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="SL" min="0" step="0.01" value="{{ $supply->quantity ?? 0 }}">
                     </div>
@@ -185,16 +186,11 @@
                                     <span class="row-index font-semibold text-neutral-500">{{ $itemIndex + 1 }}</span>
                                 </td>
                                 <td style="width: 160px; min-width: 160px; " class="border border-neutral-200">
-                                    <select name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][product_code]" class="tom-select-product" onchange="fillMinLateProductInfo(this, {{ $supplyIndex }}, {{ $itemIndex }})">
-                                        <option value="">-- Chọn --</option>
-                                        @foreach(\App\Models\Supply::pluck('product_code')->filter()->unique() as $code)
-                                        <option value="{{ $code }}" {{ $item->product_code == $code ? 'selected' : '' }}>{{ $code }}</option>
-                                        @endforeach
-                                    </select>
-                                </td>
-                                <td style="min-width: 180px;" class="border border-neutral-200">
-                                    <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][product_name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Tên sản phẩm" required value="{{ $item->product_name ?? $item->name ?? '' }}">
-                                </td>
+                                     <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][product_code]" class="product-code-input form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs font-semibold text-neutral-600" readonly value="{{ $item->product_code ?? '' }}">
+                                 </td>
+                                 <td style="min-width: 180px;" class="border border-neutral-200">
+                                     <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][product_name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Tên sản phẩm" value="{{ $item->product_name ?? $item->name ?? '' }}">
+                                 </td>
                                 <td style="width: 200px; min-width: 200px; " class="border border-neutral-200">
                                     <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][height]" class="form-control form-control-sm rounded-lg border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500 bg-yellow-50/30 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="{{ $size['height'] ?? '' }}">
                                 </td>
@@ -382,6 +378,7 @@ function addMinLateOrderSupply() {
                 <div class="p-1.5 bg-primary-50 rounded-lg text-primary-500 flex items-center justify-center">
                     <iconify-icon icon="lucide:clipboard-list" class="text-base"></iconify-icon>
                 </div>
+                <input type="text" name="supplies[${minLateSupplyIndex}][order_supply_code]" class="order-supply-code-input form-control form-control-sm rounded-lg w-40 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Mã vật tư">
                 <input type="text" name="supplies[${minLateSupplyIndex}][supply_name]" class="form-control form-control-sm rounded-lg w-64 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Tên vật tư (ví dụ: Acrylic, Melamine...)">
                 <input type="number" name="supplies[${minLateSupplyIndex}][quantity]" class="form-control form-control-sm rounded-lg w-24 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="SL" min="0" step="0.01" value="0">
             </div>
@@ -433,6 +430,13 @@ function addMinLateOrderSupply() {
         </div>
     `;
     container.appendChild(newSupply);
+
+    // Add one product row by default
+    const addProductBtn = newSupply.querySelector('button[onclick^="addMinLateOrderItem"]');
+    if (addProductBtn) {
+        addMinLateOrderItem(addProductBtn);
+    }
+
     minLateSupplyIndex++;
 }
 
@@ -447,7 +451,6 @@ function addMinLateOrderItem(button) {
     let lastData = null;
     if (lastRow) {
         lastData = {
-            product_code: lastRow.querySelector('.tom-select-product') ? lastRow.querySelector('.tom-select-product').value : '',
             product_name: lastRow.querySelector('input[name*="[product_name]"]') ? lastRow.querySelector('input[name*="[product_name]"]').value : '',
             height: lastRow.querySelector('input[name*="[height]"]') ? lastRow.querySelector('input[name*="[height]"]').value : '',
             width: lastRow.querySelector('input[name*="[width]"]') ? lastRow.querySelector('input[name*="[width]"]').value : '',
@@ -476,15 +479,10 @@ function addMinLateOrderItem(button) {
             <span class="row-index font-semibold text-neutral-500">${itemIndex + 1}</span>
         </td>
         <td style="width: 160px; min-width: 160px; " class="border border-neutral-200">
-            <select name="supplies[${supplyIndex}][items][${itemIndex}][product_code]" class="tom-select-product" onchange="fillMinLateProductInfo(this, ${supplyIndex}, ${itemIndex})">
-                <option value="">-- Chọn --</option>
-                @foreach(\App\Models\Supply::pluck('product_code')->filter()->unique() as $code)
-                <option value="{{ $code }}" ${lastData && lastData.product_code === '{{ $code }}' ? 'selected' : ''}>{{ $code }}</option>
-                @endforeach
-            </select>
+            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][product_code]" class="product-code-input form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs font-semibold text-neutral-600" readonly>
         </td>
         <td style="min-width: 180px;" class="border border-neutral-200">
-            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][product_name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Tên sản phẩm" required value="${lastData ? lastData.product_name : ''}">
+            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][product_name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Tên sản phẩm" value="${lastData ? lastData.product_name : ''}">
         </td>
         <td style="width: 200px; min-width: 200px; " class="border border-neutral-200">
             <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][height]" class="form-control form-control-sm rounded-lg border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500 bg-yellow-50/30 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="${lastData ? lastData.height : ''}">
@@ -583,21 +581,12 @@ function addMinLateOrderItem(button) {
     `;
     container.appendChild(newItem);
     
-    // Initialize tom-select for new product code select
     const newRow = container.lastElementChild;
-    const newProductSelect = newRow.querySelector('.tom-select-product');
-    if (newProductSelect && typeof TomSelect !== 'undefined') {
-        new TomSelect(newProductSelect, {
-            allowEmptyOption: true,
-            placeholder: '-- Chọn --',
-        });
-    }
-    
-    // Attach event listeners to new inputs and calculate initial values
     bindMinLateRowEvents(newRow);
     calculateMinLateRowStats(newRow);
     
     updateOrderSummary();
+    updateMinLateRowIndexes(container);
 }
 
 function removeMinLateOrderItem(button) {
@@ -610,10 +599,21 @@ function removeMinLateOrderItem(button) {
 
 function updateMinLateRowIndexes(tbody) {
     if (!tbody) return;
+    const orderCode = document.getElementById('order-code-input')?.value || '';
+    const supplyRow = tbody.closest('.order-supply-row');
+    const supplyCode = supplyRow ? (supplyRow.querySelector('.order-supply-code-input')?.value || '') : '';
+
     tbody.querySelectorAll('.order-item-row').forEach((row, itemIndex) => {
         const indexEl = row.querySelector('.row-index');
         if (indexEl) indexEl.textContent = itemIndex + 1;
         
+        const stt = itemIndex + 1;
+        const generatedCode = `${orderCode}.${supplyCode}.${stt}`;
+        const productCodeInput = row.querySelector('.product-code-input');
+        if (productCodeInput) {
+            productCodeInput.value = generatedCode;
+        }
+
         row.querySelectorAll('input, select, textarea').forEach(input => {
             const name = input.getAttribute('name');
             if (name) {
@@ -627,17 +627,10 @@ function updateMinLateRowIndexes(tbody) {
 function duplicateMinLateRow(button) {
     const row = button.closest('.order-item-row');
     const tbody = row.closest('.supply-items-container');
-    const originalSelect = row.querySelector('.tom-select-product');
-    const selectedValue = originalSelect ? originalSelect.value : '';
-    
-    const h1Val = row.querySelector('select[name*="[edge_gluing][height_1]"]').value;
-    const h2Val = row.querySelector('select[name*="[edge_gluing][height_2]"]').value;
-    const w1Val = row.querySelector('select[name*="[edge_gluing][width_1]"]').value;
-    const w2Val = row.querySelector('select[name*="[edge_gluing][width_2]"]').value;
 
-    // Collect non-TomSelect input/select values BEFORE cloning
+    // Collect input/select/textarea values BEFORE cloning
     const valuesToCopy = [];
-    row.querySelectorAll('input:not(.ts-hidden-accessible):not([type="hidden"]), select:not(.tom-select-product), textarea').forEach(el => {
+    row.querySelectorAll('input:not([type="hidden"]), select, textarea').forEach(el => {
         valuesToCopy.push({ name: el.name, value: el.value });
     });
     
@@ -647,12 +640,6 @@ function duplicateMinLateRow(button) {
     const idInput = newRow.querySelector('input[name*="[id]"]');
     if (idInput) idInput.remove();
     
-    // Set edge_gluing select values
-    newRow.querySelector('select[name*="[edge_gluing][height_1]"]').value = h1Val;
-    newRow.querySelector('select[name*="[edge_gluing][height_2]"]').value = h2Val;
-    newRow.querySelector('select[name*="[edge_gluing][width_1]"]').value = w1Val;
-    newRow.querySelector('select[name*="[edge_gluing][width_2]"]').value = w2Val;
-    
     // Restore other field values by name
     valuesToCopy.forEach(({ name, value }) => {
         if (!name || name.indexOf('[id]') !== -1) return;
@@ -660,31 +647,9 @@ function duplicateMinLateRow(button) {
         if (el) el.value = value;
     });
 
-    // Reinitialize TomSelect for product code select
-    const select = newRow.querySelector('.tom-select-product');
-    if (select) {
-        // Remove cloned TomSelect wrapper/state
-        const tsWrapper = newRow.querySelector('.ts-wrapper');
-        if (tsWrapper) tsWrapper.remove();
-        select.classList.remove('tomselected', 'ts-hidden-accessible');
-        select.removeAttribute('style');
-        // Pre-set the value on the raw <select>
-        select.value = selectedValue;
-    }
-    
     // Insert after current row
     row.parentNode.insertBefore(newRow, row.nextSibling);
     
-    if (select && typeof TomSelect !== 'undefined') {
-        const ts = new TomSelect(select, {
-            allowEmptyOption: true,
-            placeholder: '-- Chọn --',
-        });
-        // Set value via TomSelect API to ensure UI reflects the selected option
-        if (selectedValue) {
-            ts.setValue(selectedValue, true);
-        }
-    }
     
     bindMinLateRowEvents(newRow);
     calculateMinLateRowStats(newRow);
@@ -838,16 +803,13 @@ function calculateMinLateTotalPrice(row) {
 }
 
 function fillMinLateProductInfo(selectElement, supplyIndex, itemIndex) {
-    const productCode = selectElement.value;
+    const productName = selectElement.value;
     const row = selectElement.closest('.order-item-row');
     
     @if(auth()->check())
     const supplies = @json(\App\Models\Supply::all());
-    const supply = supplies.find(s => s.product_code === productCode);
+    const supply = supplies.find(s => s.name === productName);
     if (supply) {
-        const productNameInput = row.querySelector(`input[name="supplies[${supplyIndex}][items][${itemIndex}][product_name]"]`);
-        if (productNameInput) productNameInput.value = supply.name || '';
-        
         const unitPriceInput = row.querySelector(`input[name="supplies[${supplyIndex}][items][${itemIndex}][unit_price]"]`);
         if (unitPriceInput) {
             unitPriceInput.value = supply.unit_price ? Math.round(supply.unit_price) : 0;
@@ -864,6 +826,24 @@ document.addEventListener('DOMContentLoaded', function() {
         bindMinLateRowEvents(row);
         calculateMinLateRowStats(row);
     });
+
+    // Recalculate codes on load
+    document.querySelectorAll('#min-late-supplies-container .supply-items-container').forEach(tbody => {
+        updateMinLateRowIndexes(tbody);
+    });
+});
+
+// Live listener for supply code input changes
+document.addEventListener('input', function(e) {
+    if (e.target.classList.contains('order-supply-code-input')) {
+        const supplyRow = e.target.closest('.order-supply-row');
+        if (supplyRow) {
+            const tbody = supplyRow.querySelector('.supply-items-container');
+            if (tbody) {
+                updateMinLateRowIndexes(tbody);
+            }
+        }
+    }
 });
 
 let paymentDetailIndex = {{ (isset($acrylicOrder) && $acrylicOrder->type == 'min_late' && isset($acrylicOrder->paymentDetails)) ? $acrylicOrder->paymentDetails->count() : 0 }};
