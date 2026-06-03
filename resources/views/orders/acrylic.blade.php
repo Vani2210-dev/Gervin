@@ -9,35 +9,76 @@
     .table thead tr:nth-child(2) th:last-child::before {
         display: none !important;
     }
+    /* === COMPACT TABLE: 75% font scale === */
+    #order-supplies-container .order-supply-row table {
+        font-size: 75% !important;
+    }
+    #order-supplies-container .order-supply-row table input,
+    #order-supplies-container .order-supply-row table select,
+    #order-supplies-container .order-supply-row table textarea {
+        font-size: 75% !important;
+        height: 24px !important;
+        min-height: 24px !important;
+        padding-top: 2px !important;
+        padding-bottom: 2px !important;
+        line-height: 1.2 !important;
+    }
+    #order-supplies-container .order-supply-row table th,
+    #order-supplies-container .order-supply-row table td {
+        padding: 3px 4px !important;
+    }
+    /* Override all td max-widths to 65% of original */
+    #order-supplies-container .order-supply-row table td[style*="width: 45px"],
+    #order-supplies-container .order-supply-row table td[style*="width:45px"] { width: 30px !important; min-width: 30px !important; max-width: 30px !important; }
+    #order-supplies-container .order-supply-row table td[style*="width: 160px"],
+    #order-supplies-container .order-supply-row table td[style*="width:160px"] { width: 110px !important; min-width: 110px !important; max-width: 110px !important; }
+    #order-supplies-container .order-supply-row table td[style*="min-width: 220px"],
+    #order-supplies-container .order-supply-row table td[style*="min-width:220px"] { min-width: 150px !important; }
+    #order-supplies-container .order-supply-row table td[style*="width: 200px"],
+    #order-supplies-container .order-supply-row table td[style*="width:200px"] { width: 130px !important; min-width: 130px !important; max-width: 130px !important; }
+    #order-supplies-container .order-supply-row table td[style*="width: 70px"],
+    #order-supplies-container .order-supply-row table td[style*="width:70px"] { width: 50px !important; min-width: 50px !important; max-width: 50px !important; }
+    #order-supplies-container .order-supply-row table td[style*="width: 100px"],
+    #order-supplies-container .order-supply-row table td[style*="width:100px"] { width: 70px !important; min-width: 70px !important; max-width: 70px !important; }
+    #order-supplies-container .order-supply-row table td[style*="width: 110px"],
+    #order-supplies-container .order-supply-row table td[style*="width:110px"] { width: 80px !important; min-width: 80px !important; max-width: 80px !important; }
+    #order-supplies-container .order-supply-row table td[style*="width: 120px"],
+    #order-supplies-container .order-supply-row table td[style*="width:120px"] { width: 90px !important; min-width: 90px !important; max-width: 90px !important; }
+    #order-supplies-container .order-supply-row table td[style*="min-width: 160px"],
+    #order-supplies-container .order-supply-row table td[style*="min-width:160px"],
+    #order-supplies-container .order-supply-row table td[style*="width: 160px"],
+    #order-supplies-container .order-supply-row table td[style*="width:160px"] { min-width: 120px !important; }
+    #order-supplies-container .order-supply-row table td[style*="width: 80px"],
+    #order-supplies-container .order-supply-row table td[style*="width:80px"] { width: 60px !important; min-width: 60px !important; max-width: 60px !important; }
     /* Style TomSelect inside table rows to match compact inputs */
     .table .ts-wrapper {
         padding: 0 !important;
         border: none !important;
         background: transparent !important;
         min-height: auto !important;
-        height: 32px !important;
+        height: 24px !important;
     }
     .table .ts-control {
-        padding: 0 8px !important;
-        height: 32px !important; /* matches h-8 (32px) */
-        font-size: 12px !important; /* matches text-xs */
-        line-height: 30px !important; /* 32px minus borders */
-        border-radius: 8px !important; /* matches rounded-lg */
-        border: 1px solid #d1d5db !important; /* matches border-neutral-300 */
+        padding: 0 5px !important;
+        height: 24px !important;
+        font-size: 9px !important;
+        line-height: 22px !important;
+        border-radius: 6px !important;
+        border: 1px solid #d1d5db !important;
         background-color: #ffffff !important;
         display: flex !important;
         align-items: center !important;
         box-shadow: none !important;
     }
     .table .ts-control input {
-        font-size: 12px !important;
+        font-size: 9px !important;
         height: auto !important;
         padding: 0 !important;
         margin: 0 !important;
     }
     .table .ts-control .item {
-        font-size: 12px !important;
-        line-height: 30px !important;
+        font-size: 9px !important;
+        line-height: 22px !important;
         margin: 0 !important;
         padding: 0 !important;
     }
@@ -46,7 +87,7 @@
         margin-top: -3px !important;
     }
     .table .ts-wrapper.focus .ts-control {
-        border-color: #3b82f6 !important; /* focus border color (primary-500) */
+        border-color: #3b82f6 !important;
         box-shadow: 0 0 0 1px #3b82f6 !important;
     }
 </style>
@@ -84,28 +125,28 @@
                     </div>
                 </div>
                 <div class="overflow-x-auto pb-3">
-                    <table class="table bordered-table sm-table mb-0 min-w-[1700px] border border-neutral-200">
+                    <table class="table bordered-table sm-table mb-0 min-w-[1100px] border border-neutral-200">
                         <thead>
                             <tr class="bg-neutral-50 text-center">
-                                <th scope="col" rowspan="2" style="width: 45px; min-width: 45px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Stt</th>
-                                <th scope="col" rowspan="2" style="width: 160px; min-width: 160px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Mã SP</th>
-                                <th scope="col" rowspan="2" style="width: 220px; min-width: 220px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên sản phẩm <span class="text-danger-500">*</span></th>
+                                <th scope="col" rowspan="2" style="width: 30px; min-width: 30px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Stt</th>
+                                <th scope="col" rowspan="2" style="width: 110px; min-width: 110px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Mã SP</th>
+                                <th scope="col" rowspan="2" style="width: 150px; min-width: 150px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên sản phẩm <span class="text-danger-500">*</span></th>
                                 <th scope="col" colspan="2" style="white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Kích thước (mm)</th>
-                                <th scope="col" rowspan="2" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số lượng <span class="text-danger-500">*</span></th>
-                                <th scope="col" rowspan="2" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Cạnh Vát</th>
-                                <th scope="col" rowspan="2" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Chiều vân</th>
-                                <th scope="col" rowspan="2" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Cánh (m2)</th>
-                                <th scope="col" rowspan="2" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Phào (m)</th>
-                                <th scope="col" rowspan="2" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Vát</th>
-                                <th scope="col" rowspan="2" style="width: 110px; min-width: 110px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Vân dọc CNC</th>
-                                <th scope="col" rowspan="2" style="width: 110px; min-width: 110px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá <span class="text-danger-500">*</span></th>
-                                <th scope="col" rowspan="2" style="width: 120px; min-width: 120px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Thành tiền</th>
-                                <th scope="col" rowspan="2" style="width: 160px; min-width: 160px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Ghi chú</th>
-                                <th scope="col" rowspan="2" style="width: 80px; min-width: 80px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Hành động</th>
+                                <th scope="col" rowspan="2" style="width: 50px; min-width: 50px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số lượng <span class="text-danger-500">*</span></th>
+                                <th scope="col" rowspan="2" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Cạnh Vát</th>
+                                <th scope="col" rowspan="2" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Chiều vân</th>
+                                <th scope="col" rowspan="2" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Cánh (m2)</th>
+                                <th scope="col" rowspan="2" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Phào (m)</th>
+                                <th scope="col" rowspan="2" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Vát</th>
+                                <th scope="col" rowspan="2" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Vân dọc CNC</th>
+                                <th scope="col" rowspan="2" style="width: 80px; min-width: 80px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá <span class="text-danger-500">*</span></th>
+                                <th scope="col" rowspan="2" style="width: 90px; min-width: 90px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Thành tiền</th>
+                                <th scope="col" rowspan="2" style="min-width: 120px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Ghi chú</th>
+                                <th scope="col" rowspan="2" style="width: 60px; min-width: 60px; white-space: nowrap; position: sticky; right: 0; z-index: 3; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Hành động</th>
                             </tr>
                             <tr class="bg-neutral-50 text-center">
-                                <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="border border-neutral-200 bg-yellow-100/70 font-semibold text-xs text-neutral-700 uppercase">Cao (chiều vân)</th>
-                                <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="border border-neutral-200 font-semibold text-xs text-neutral-700 uppercase">Rộng</th>
+                                <th scope="col" style="width: 130px; min-width: 130px; white-space: nowrap;" class="border border-neutral-200 bg-yellow-100/70 font-semibold text-xs text-neutral-700 uppercase">Cao (chiều vân)</th>
+                                <th scope="col" style="width: 130px; min-width: 130px; white-space: nowrap;" class="border border-neutral-200 font-semibold text-xs text-neutral-700 uppercase">Rộng</th>
                             </tr>
                         </thead>
                         <tbody class="supply-items-container" data-supply-index="{{ $supplyIndex }}">
@@ -530,6 +571,11 @@ function fillProductInfo(selectElement, supplyIndex, itemIndex) {
 
 // Initial attachment setup for Acrylic-specific rows if DOM loaded
 document.addEventListener('DOMContentLoaded', function() {
+    const container = document.getElementById('order-supplies-container');
+    if (container && container.querySelectorAll('.order-supply-row').length === 0) {
+        addOrderSupply();
+    }
+
     document.querySelectorAll('#order-supplies-container .order-item-row').forEach(row => {
         bindAcrylicRowEvents(row);
         calculateTotalPrice(row);

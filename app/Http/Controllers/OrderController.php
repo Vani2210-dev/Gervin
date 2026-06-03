@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Storage;
 
 class OrderController extends Controller
 {
+    private const ORDER_TYPES = ['acrylic', 'glass', 'min_late'];
+
     protected $acrylicOrderService;
     protected $minLateOrderService;
     protected $glassOrderService;
@@ -67,6 +69,15 @@ class OrderController extends Controller
     public function create()
     {
         return view('orders.create');
+    }
+
+    public function createByType(string $type)
+    {
+        abort_unless(in_array($type, self::ORDER_TYPES, true), 404);
+
+        $orderType = $type;
+
+        return view('orders.create', compact('orderType'));
     }
 
     public function edit(Order $order)

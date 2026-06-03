@@ -1,3 +1,11 @@
+@php
+    $currentOrderType = $orderType ?? ($acrylicOrder->type ?? old('type', 'acrylic'));
+    $orderTypeLabels = [
+        'acrylic' => 'Acrylic',
+        'glass' => 'Glass',
+        'min_late' => 'Min Late',
+    ];
+@endphp
 <div class="card p-0 rounded-xl border-0 overflow-hidden">
     <div class="card-header border-b border-neutral-200 bg-white py-4 px-6">
         <h5 class="font-semibold text-base">{{ $title ?? 'Tạo đơn hàng' }}</h5>
@@ -19,35 +27,11 @@
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="form-group">
-                                <label class="form-label font-semibold text-xs text-neutral-500 uppercase tracking-wider mb-2 block">Khách hàng</label>
-                                <select name="customer_id" class="form-select rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500" onchange="fillCustomerInfo(this.value)">
-                                    <option value="">-- Chọn khách hàng --</option>
-                                    @foreach(\App\Models\Customer::all() as $customer)
-                                    <option value="{{ $customer->id }}" {{ isset($acrylicOrder) && $acrylicOrder?->customer_id == $customer->id ? 'selected' : '' }}>{{ $customer->customer_code }} - {{ $customer->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="form-group md:col-span-2">
-                                <label class="form-label font-semibold text-xs text-neutral-500 uppercase tracking-wider mb-2 block">Tên khách hàng <span class="text-danger-500">*</span></label>
-                                <input type="text" name="customer_name" class="form-control rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Nhập tên khách hàng" required value="{{ old('customer_name', $acrylicOrder?->customer_name ?? '') }}">
-                            </div>
-                            <div class="form-group">
                                 <label class="form-label font-semibold text-xs text-neutral-500 uppercase tracking-wider mb-2 block">Loại đơn</label>
-                                @if(isset($acrylicOrder))
-                                    <select id="order-type-select" class="form-select rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-neutral-500 font-medium" disabled>
-                                        <option value="acrylic" {{ $acrylicOrder->type == 'acrylic' ? 'selected' : '' }}>Acrylic</option>
-                                        <option value="min_late" {{ $acrylicOrder->type == 'min_late' ? 'selected' : '' }}>Min Late</option>
-                                        <option value="glass" {{ $acrylicOrder->type == 'glass' ? 'selected' : '' }}>Glass</option>
-                                    </select>
-                                    <input type="hidden" name="type" value="{{ $acrylicOrder->type }}">
-                                @else
-                                    <select name="type" id="order-type-select" class="form-select rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500" onchange="switchOrderType(this.value)">
-                                        <option value="">-- Chọn --</option>
-                                        <option value="acrylic" {{ old('type', 'acrylic') == 'acrylic' ? 'selected' : '' }}>Acrylic</option>
-                                        <option value="min_late" {{ old('type') == 'min_late' ? 'selected' : '' }}>Min Late</option>
-                                        <option value="glass" {{ old('type') == 'glass' ? 'selected' : '' }}>Glass</option>
-                                    </select>
-                                @endif
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge rounded-pill text-bg-primary px-3 py-2">{{ $orderTypeLabels[$currentOrderType] ?? $currentOrderType }}</span>
+                                </div>
+                                <input type="hidden" name="type" value="{{ $currentOrderType }}">
                             </div>
                             <div class="form-group">
                                 <label class="form-label font-semibold text-xs text-neutral-500 uppercase tracking-wider mb-2 block">Số điện thoại</label>
@@ -85,17 +69,6 @@
                             </div>
                             @endif
                         </div>
-                    </div>
-
-                    {{-- Dynamic Items Container based on selected type --}}
-                    <div id="items-section-acrylic" class="type-items-section">
-                        @include('orders.acrylic')
-                    </div>
-                    <div id="items-section-min_late" class="type-items-section hidden">
-                        @include('orders.min_late')
-                    </div>
-                    <div id="items-section-glass" class="type-items-section hidden">
-                        @include('orders.glass')
                     </div>
                 </div>
 
@@ -142,7 +115,7 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             {{-- Preview Container for newly selected images --}}
                             <div class="mt-4 hidden" id="new-attachments-preview-container">
                                 <label class="form-label font-semibold text-xs text-neutral-500 uppercase tracking-wider mb-2 block">Hình ảnh mới chọn</label>
@@ -168,6 +141,17 @@
                         </div>
                     </div>
                 </div>
+            </div>
+
+            {{-- Dynamic Items Container - Full width (col-12) --}}
+            <div class="mt-6 space-y-6">
+                @if($currentOrderType === 'acrylic')
+                    @include('orders.acrylic')
+                @elseif($currentOrderType === 'min_late')
+                    @include('orders.min_late')
+                @elseif($currentOrderType === 'glass')
+                    @include('orders.glass')
+                @endif
             </div>
         </div>
         <div class="px-6 py-4 border-t border-neutral-100 bg-neutral-50/50 flex items-center justify-end gap-3 rounded-b-xl">
@@ -228,8 +212,7 @@ function fillCustomerInfo(customerId) {
 }
 
 function updateOrderSummary() {
-    const typeSelect = document.getElementById('order-type-select');
-    const orderType = typeSelect ? typeSelect.value : 'acrylic';
+    const orderType = @json($currentOrderType);
     
     let totalItems = 0;
     let totalAmount = 0;
@@ -293,13 +276,6 @@ function deleteAttachment(index, imagePath) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Initial active section check based on selected value
-    const typeSelect = document.getElementById('order-type-select');
-    if (typeSelect) {
-        const initialType = typeSelect.value || 'acrylic';
-        switchOrderType(initialType);
-    }
-
     // Initialize tom-select for existing product code selects
     if (typeof TomSelect !== 'undefined') {
         document.querySelectorAll('.tom-select-product').forEach(function(element) {
