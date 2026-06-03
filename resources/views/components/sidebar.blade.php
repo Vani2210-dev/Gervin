@@ -47,14 +47,6 @@
                 </ul>
             </li>
             <li class="sidebar-menu-group-title">Ứng dụng</li>
-            @can('view supply')
-            <li>
-                <a href="{{ route('supplies.index') }}">
-                    <iconify-icon icon="mdi:package-variant-closed" class="menu-icon"></iconify-icon>
-                    <span>Vật tư</span>
-                </a>
-            </li>
-            @endcan
             @can('view customer')
             <li>
                 <a href="{{ route('customers.index') }}">
@@ -71,6 +63,25 @@
                 </a>
             </li>
             @endcan
+            <li class="dropdown">
+                <a href="javascript:void(0)">
+                    <iconify-icon icon="mingcute:storage-line" class="menu-icon"></iconify-icon>
+                    <span>Quản lý kho</span>
+                </a>
+                <ul class="sidebar-submenu">
+                    @can('view supply')
+                    <li>
+                        <a href="{{ route('warehouses.index') }}"><i class="ri-circle-fill circle-icon text-primary-600 w-auto"></i> Kho vật tư</a>
+                    </li>
+                    <li>
+                        <a href="{{ route('supplies.index') }}"><i class="ri-circle-fill circle-icon text-info-600 w-auto"></i> Danh mục vật tư</a>
+                    </li>
+                    @endcan
+                    <li>
+                        <a href="#"><i class="ri-circle-fill circle-icon text-warning-600 w-auto"></i> Kho đồ cũ(DC)</a>
+                    </li>
+                </ul>
+            </li>
             @can('view media')
             <li>
                 <a href="{{ route('media.index') }}">
