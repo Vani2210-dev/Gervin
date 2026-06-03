@@ -9,7 +9,7 @@
 <div class="grid grid-cols-12 gap-6">
     {{-- Main Order Info --}}
     <div class="col-span-12 lg:col-span-8 space-y-6">
-        <div class="card p-0 rounded-xl border-0 overflow-hidden shadow-sm bg-white">
+        <div class="card p-0 rounded-xl border-0 overflow-hidden shadow-sm bg-white mb-2">
             <div class="card-header border-b border-neutral-200 bg-white py-4 px-6 flex items-center justify-between flex-wrap gap-3">
                 <div class="flex items-center gap-3">
                     <div class="p-2 bg-primary-50 rounded-lg text-primary-500">
@@ -93,7 +93,7 @@
 
         {{-- Supplies & Items list --}}
         @foreach($acrylicOrder->supplies as $supply)
-        <div class="card p-0 rounded-xl border-0 overflow-hidden shadow-sm bg-white border-l-4 border-l-primary-500">
+        <div class="card p-0 rounded-xl border-0 overflow-hidden shadow-sm bg-white border-l-4 border-l-primary-500 mb-2">
             <div class="card-header border-b border-neutral-200 bg-white py-4 px-6 flex items-center justify-between">
                 <div class="flex items-center gap-3">
                     <div class="p-1.5 bg-primary-50 rounded-lg text-primary-500 flex items-center justify-center">
@@ -283,7 +283,7 @@
         @endforeach
 
         @if($acrylicOrder->type === 'min_late' && isset($acrylicOrder->paymentDetails) && $acrylicOrder->paymentDetails->count() > 0)
-        <div class="card p-0 rounded-xl border-0 overflow-hidden shadow-sm bg-white border-l-4 border-l-primary-500 mt-6">
+        <div class="card p-0 rounded-xl border-0 overflow-hidden shadow-sm bg-white border-l-4 border-l-primary-500">
             <div class="card-header border-b border-neutral-200 bg-white py-4 px-6 flex items-center justify-between">
                 <div class="flex items-center gap-3">
                     <div class="p-1.5 bg-primary-50 rounded-lg text-primary-500 flex items-center justify-center">
@@ -329,7 +329,7 @@
 
     {{-- Order Summary --}}
     <div class="col-span-12 lg:col-span-4 space-y-6">
-        <div class="card p-0 rounded-xl border-0 overflow-hidden shadow-sm bg-white">
+        <div class="card p-0 rounded-xl border-0 overflow-hidden shadow-sm bg-white mb-2">
             <div class="card-header border-b border-neutral-200 bg-white py-4 px-6 flex items-center gap-2">
                 <iconify-icon icon="lucide:receipt-text" class="text-xl text-primary-500"></iconify-icon>
                 <h6 class="font-bold text-base text-neutral-800 m-0">Tóm tắt đơn hàng</h6>

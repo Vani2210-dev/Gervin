@@ -18,6 +18,7 @@ use App\Http\Controllers\MediaController;
 use App\Http\Controllers\SupplyController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\ManufactureController;
 
 Route::middleware(['auth'])->group(function () {
     Route::controller(DashboardController::class)->group(function () {
@@ -215,6 +216,14 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth'])->group(function () {
     Route::resource('orders', OrderController::class)->names('orders');
     Route::get('orders/image/{filename}', [OrderController::class, 'serveImage'])->name('orders.image');
+});
+
+// Manufacture Orders
+Route::middleware(['auth'])->group(function () {
+    Route::resource('manufactures', ManufactureController::class)->names('manufactures');
+    Route::post('manufactures/{manufacture}/approve/{step}', [ManufactureController::class, 'approveStep'])->name('manufactures.approve');
+    Route::get('manufactures/{manufacture}/print-stamps', [ManufactureController::class, 'printStamps'])->name('manufactures.print-stamps');
+    Route::get('manufactures/qr/{product_code}', [ManufactureController::class, 'serveQrCode'])->name('manufactures.qr');
 });
 
 require __DIR__.'/auth.php';

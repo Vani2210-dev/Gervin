@@ -71,6 +71,14 @@
                 </a>
             </li>
             @endcan
+            @can('view manufacture')
+            <li>
+                <a href="{{ route('manufactures.index') }}">
+                    <iconify-icon icon="mdi:factory" class="menu-icon"></iconify-icon>
+                    <span>Lệnh sản xuất</span>
+                </a>
+            </li>
+            @endcan
             @can('view media')
             <li>
                 <a href="{{ route('media.index') }}">
