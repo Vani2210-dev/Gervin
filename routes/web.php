@@ -163,7 +163,7 @@ Route::prefix('settings')->group(function () {
 });
 
 // Table
-Route::prefix('table')->group(function () {
+Route::prefix('table')->group(function () { 
     Route::controller(TableController::class)->group(function () {
         Route::get('/table-basic', 'tableBasic')->name('tableBasic');
         Route::get('/table-data', 'tableData')->name('tableData');

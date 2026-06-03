@@ -99,7 +99,7 @@
                     <div class="p-1.5 bg-primary-50 rounded-lg text-primary-500 flex items-center justify-center">
                         <iconify-icon icon="lucide:clipboard-list" class="text-base"></iconify-icon>
                     </div>
-                    <h6 class="font-bold text-base text-neutral-800 m-0">Vật tư: {{ $supply->supply_name }}</h6>
+                    <h6 class="font-bold text-base text-neutral-800 m-0">Vật tư: {{ $supply->order_supply_code ? '[' . $supply->order_supply_code . '] ' : '' }}{{ $supply->supply_name }}</h6>
                 </div>
                 @if($supply->quantity)
                 <span class="text-sm font-semibold bg-neutral-100 px-3 py-1 rounded-lg text-neutral-700">
@@ -116,6 +116,7 @@
                             <thead>
                                 <tr>
                                     <th scope="col" class="w-10 text-center">STT</th>
+                                    <th scope="col" class="w-32">Mã SP</th>
                                     <th scope="col" class="w-64">Tên SP</th>
                                     <th scope="col" class="w-20">SL</th>
                                     <th scope="col" class="w-20">Cao</th>
@@ -146,6 +147,7 @@
                                 @endphp
                                 <tr>
                                     <td class="text-center">{{ $itemIndex + 1 }}</td>
+                                    <td><span class="text-neutral-500 text-xs">{{ $item->product_code ?? '—' }}</span></td>
                                     <td><span class="font-medium text-neutral-800">{{ $item->name }}</span></td>
                                     <td>{{ $item->quantity }}</td>
                                     <td>{{ $sizes['height'] ?? '—' }}</td>
@@ -175,7 +177,7 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="15" class="text-center text-neutral-400 py-4">Chưa có sản phẩm nào</td>
+                                    <td colspan="16" class="text-center text-neutral-400 py-4">Chưa có sản phẩm nào</td>
                                 </tr>
                                 @endforelse
                             </tbody>

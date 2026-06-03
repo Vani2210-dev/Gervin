@@ -28,12 +28,13 @@ class GlassOrderService
             'notes'          => 'nullable|string',
             'attachments'    => 'nullable|array',
             'attachments.*'  => 'image|mimes:jpg,jpeg,png|max:2048',
-            'supplies'       => 'required|array|min:1',
+            'supplies'       => 'nullable|array',
+            'supplies.*.order_supply_code'   => 'nullable|string|max:255',
             'supplies.*.supply_name'         => 'nullable|string|max:255',
             'supplies.*.quantity'            => 'nullable|numeric|min:0',
-            'supplies.*.items'               => 'required|array|min:1',
+            'supplies.*.items'               => 'nullable|array',
             'supplies.*.items.*.id'                   => 'nullable|integer',
-            'supplies.*.items.*.product_name'        => 'required|string|max:255',
+            'supplies.*.items.*.product_name'        => 'nullable|string|max:255',
             'supplies.*.items.*.product_code'        => 'nullable|string|max:50',
             'supplies.*.items.*.wing_opening_direction' => 'nullable|string|max:100',
             'supplies.*.items.*.aluminum_color'      => 'nullable|string|max:100',
@@ -81,7 +82,7 @@ class GlassOrderService
         $orderCode = 'DA' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
 
         // Calculate total amount
-        $totalAmount = $this->calculateTotalAmount($request->supplies);
+        $totalAmount = $this->calculateTotalAmount($request->supplies ?? []);
 
         $order = Order::create([
             'order_code'    => $orderCode,
@@ -99,7 +100,7 @@ class GlassOrderService
             'attachments'   => !empty($attachmentPaths) ? json_encode($attachmentPaths) : null,
         ]);
 
-        $this->saveSuppliesAndItems($order, $request->supplies);
+        $this->saveSuppliesAndItems($order, $request->supplies ?? []);
 
         return $order;
     }
@@ -135,7 +136,7 @@ class GlassOrderService
         }
 
         $allAttachments = array_merge($existingAttachments, $attachmentPaths);
-        $totalAmount = $this->calculateTotalAmount($request->supplies);
+        $totalAmount = $this->calculateTotalAmount($request->supplies ?? []);
 
         $order->update([
             'type'          => 'glass',
@@ -158,7 +159,7 @@ class GlassOrderService
         $order->supplies()->delete();
 
         // Recreate supplies and items
-        $this->saveSuppliesAndItems($order, $request->supplies);
+        $this->saveSuppliesAndItems($order, $request->supplies ?? []);
 
         return $order;
     }
@@ -205,9 +206,10 @@ class GlassOrderService
     {
         foreach ($suppliesData as $supplyData) {
             $orderSupply = OrderSupply::create([
-                'order_id'    => $order->id,
-                'supply_name' => $supplyData['supply_name'] ?? 'Vật tư',
-                'quantity'    => $supplyData['quantity'] ?? 1,
+                'order_id'          => $order->id,
+                'order_supply_code' => $supplyData['order_supply_code'] ?? null,
+                'supply_name'       => $supplyData['supply_name'] ?? 'Vật tư',
+                'quantity'          => $supplyData['quantity'] ?? 1,
             ]);
 
             foreach ($supplyData['items'] as $item) {

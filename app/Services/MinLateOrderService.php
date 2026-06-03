@@ -29,12 +29,14 @@ class MinLateOrderService
             'notes'          => 'nullable|string',
             'attachments'    => 'nullable|array',
             'attachments.*'  => 'image|mimes:jpg,jpeg,png|max:2048',
-            'supplies'       => 'required|array|min:1',
+            'supplies'       => 'nullable|array',
+            'supplies.*.order_supply_code'   => 'nullable|string|max:255',
             'supplies.*.supply_name'         => 'nullable|string|max:255',
             'supplies.*.quantity'            => 'nullable|numeric|min:0',
-            'supplies.*.items'               => 'required|array|min:1',
+            'supplies.*.items'               => 'nullable|array',
             'supplies.*.items.*.id'                   => 'nullable|integer',
-            'supplies.*.items.*.product_name'        => 'required|string|max:255',
+            'supplies.*.items.*.product_code'        => 'nullable|string|max:50',
+            'supplies.*.items.*.product_name'        => 'nullable|string|max:255',
             'supplies.*.items.*.height'              => 'nullable|numeric|min:0',
             'supplies.*.items.*.width'               => 'nullable|numeric|min:0',
             'supplies.*.items.*.quantity'            => 'required|integer|min:1',
@@ -110,7 +112,7 @@ class MinLateOrderService
             'attachments'   => !empty($attachmentPaths) ? json_encode($attachmentPaths) : null,
         ]);
 
-        $this->saveSuppliesAndItems($order, $request->supplies);
+        $this->saveSuppliesAndItems($order, $request->supplies ?? []);
         $this->savePaymentDetails($order, $request->payment_details ?? []);
 
         return $order;
@@ -170,7 +172,7 @@ class MinLateOrderService
         $order->supplies()->delete();
 
         // Recreate supplies and items
-        $this->saveSuppliesAndItems($order, $request->supplies);
+        $this->saveSuppliesAndItems($order, $request->supplies ?? []);
 
         // Recreate payment details
         $order->paymentDetails()->delete();
@@ -238,14 +240,16 @@ class MinLateOrderService
     {
         foreach ($suppliesData as $supplyData) {
             $orderSupply = OrderSupply::create([
-                'order_id'    => $order->id,
-                'supply_name' => $supplyData['supply_name'] ?? 'Vật tư',
-                'quantity'    => $supplyData['quantity'] ?? 1,
+                'order_id'          => $order->id,
+                'order_supply_code' => $supplyData['order_supply_code'] ?? null,
+                'supply_name'       => $supplyData['supply_name'] ?? 'Vật tư',
+                'quantity'          => $supplyData['quantity'] ?? 1,
             ]);
 
             foreach ($supplyData['items'] as $item) {
                 MinLateOrderItem::create([
                     'order_supply_id'       => $orderSupply->id,
+                    'product_code'          => $item['product_code'] ?? null,
                     'name'                  => $item['product_name'],
                     'size'                  => [
                         'height' => $item['height'] ?? null,

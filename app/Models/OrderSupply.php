@@ -10,6 +10,7 @@ class OrderSupply extends Model
 
     protected $fillable = [
         'order_id',
+        'order_supply_code',
         'supply_name',
         'quantity',
     ];
