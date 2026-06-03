@@ -24,35 +24,72 @@
     .hide-arrow option {
         text-align: center;
     }
+    /* === COMPACT TABLE: 75% font scale === */
+    #min-late-supplies-container .order-supply-row table {
+        font-size: 75% !important;
+    }
+    #min-late-supplies-container .order-supply-row table input,
+    #min-late-supplies-container .order-supply-row table select,
+    #min-late-supplies-container .order-supply-row table textarea {
+        font-size: 75% !important;
+        height: 24px !important;
+        min-height: 24px !important;
+        padding-top: 2px !important;
+        padding-bottom: 2px !important;
+        line-height: 1.2 !important;
+    }
+    #min-late-supplies-container .order-supply-row table th,
+    #min-late-supplies-container .order-supply-row table td {
+        padding: 3px 4px !important;
+    }
+    /* Override td widths to ~65% of original */
+    #min-late-supplies-container .order-supply-row table td[style*="width: 45px"],
+    #min-late-supplies-container .order-supply-row table td[style*="width:45px"] { width: 30px !important; min-width: 30px !important; max-width: 30px !important; }
+    #min-late-supplies-container .order-supply-row table td[style*="width: 160px"],
+    #min-late-supplies-container .order-supply-row table td[style*="width:160px"] { width: 110px !important; min-width: 110px !important; max-width: 110px !important; }
+    #min-late-supplies-container .order-supply-row table td[style*="width: 200px"],
+    #min-late-supplies-container .order-supply-row table td[style*="width:200px"] { width: 130px !important; min-width: 130px !important; max-width: 130px !important; }
+    #min-late-supplies-container .order-supply-row table td[style*="width: 70px"],
+    #min-late-supplies-container .order-supply-row table td[style*="width:70px"] { width: 50px !important; min-width: 50px !important; max-width: 50px !important; }
+    #min-late-supplies-container .order-supply-row table td[style*="width: 100px"],
+    #min-late-supplies-container .order-supply-row table td[style*="width:100px"] { width: 65px !important; min-width: 65px !important; max-width: 65px !important; }
+    #min-late-supplies-container .order-supply-row table td[style*="width: 105px"],
+    #min-late-supplies-container .order-supply-row table td[style*="width:105px"] { width: 70px !important; min-width: 70px !important; max-width: 70px !important; }
+    #min-late-supplies-container .order-supply-row table td[style*="width: 110px"],
+    #min-late-supplies-container .order-supply-row table td[style*="width:110px"] { width: 75px !important; min-width: 75px !important; max-width: 75px !important; }
+    #min-late-supplies-container .order-supply-row table td[style*="width: 80px"],
+    #min-late-supplies-container .order-supply-row table td[style*="width:80px"] { width: 55px !important; min-width: 55px !important; max-width: 55px !important; }
+    #min-late-supplies-container .order-supply-row table td[style*="min-width: 140px"],
+    #min-late-supplies-container .order-supply-row table td[style*="min-width:140px"] { min-width: 90px !important; }
     /* Style TomSelect inside table rows to match compact inputs */
     .table .ts-wrapper {
         padding: 0 !important;
         border: none !important;
         background: transparent !important;
         min-height: auto !important;
-        height: 32px !important;
+        height: 24px !important;
     }
     .table .ts-control {
-        padding: 0 8px !important;
-        height: 32px !important; /* matches h-8 (32px) */
-        font-size: 12px !important; /* matches text-xs */
-        line-height: 30px !important; /* 32px minus borders */
-        border-radius: 8px !important; /* matches rounded-lg */
-        border: 1px solid #d1d5db !important; /* matches border-neutral-300 */
+        padding: 0 5px !important;
+        height: 24px !important;
+        font-size: 9px !important;
+        line-height: 22px !important;
+        border-radius: 6px !important;
+        border: 1px solid #d1d5db !important;
         background-color: #ffffff !important;
         display: flex !important;
         align-items: center !important;
         box-shadow: none !important;
     }
     .table .ts-control input {
-        font-size: 12px !important;
+        font-size: 9px !important;
         height: auto !important;
         padding: 0 !important;
         margin: 0 !important;
     }
     .table .ts-control .item {
-        font-size: 12px !important;
-        line-height: 30px !important;
+        font-size: 9px !important;
+        line-height: 22px !important;
         margin: 0 !important;
         padding: 0 !important;
     }
@@ -61,7 +98,7 @@
         margin-top: -3px !important;
     }
     .table .ts-wrapper.focus .ts-control {
-        border-color: #3b82f6 !important; /* focus border color (primary-500) */
+        border-color: #3b82f6 !important;
         box-shadow: 0 0 0 1px #3b82f6 !important;
     }
 </style>
