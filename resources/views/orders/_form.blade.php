@@ -86,17 +86,6 @@
                             @endif
                         </div>
                     </div>
-
-                    {{-- Dynamic Items Container based on selected type --}}
-                    <div id="items-section-acrylic" class="type-items-section">
-                        @include('orders.acrylic')
-                    </div>
-                    <div id="items-section-min_late" class="type-items-section hidden">
-                        @include('orders.min_late')
-                    </div>
-                    <div id="items-section-glass" class="type-items-section hidden">
-                        @include('orders.glass')
-                    </div>
                 </div>
 
                 {{-- Order Summary & Attachments - col-lg-4 --}}
@@ -142,7 +131,7 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             {{-- Preview Container for newly selected images --}}
                             <div class="mt-4 hidden" id="new-attachments-preview-container">
                                 <label class="form-label font-semibold text-xs text-neutral-500 uppercase tracking-wider mb-2 block">Hình ảnh mới chọn</label>
@@ -167,6 +156,19 @@
                             @endif
                         </div>
                     </div>
+                </div>
+            </div>
+
+            {{-- Dynamic Items Container - Full width (col-12) --}}
+            <div class="mt-6 space-y-6">
+                <div id="items-section-acrylic" class="type-items-section">
+                    @include('orders.acrylic')
+                </div>
+                <div id="items-section-min_late" class="type-items-section hidden">
+                    @include('orders.min_late')
+                </div>
+                <div id="items-section-glass" class="type-items-section hidden">
+                    @include('orders.glass')
                 </div>
             </div>
         </div>
