@@ -31,7 +31,7 @@
     @else
         @php
             $title = 'Chọn loại đơn hàng';
-            $subTitle = 'Vui lòng chọn hình thức đặt hàng phù hợp';
+            $subTitle = 'Chọn loại đơn hàng';
         @endphp
 
         <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 items-stretch order-type-page__grid">
@@ -91,7 +91,7 @@
         </div>
         <style>
             .order-type-card__body{
-                height: 300px;
+                height: 400px;
             }
         </style>
     @endif
