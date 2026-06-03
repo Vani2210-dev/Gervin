@@ -408,42 +408,49 @@ function duplicateAcrylicRow(button) {
     const tbody = row.closest('.supply-items-container');
     const originalSelect = row.querySelector('.tom-select-product');
     const selectedValue = originalSelect ? originalSelect.value : '';
-    
+
+    // Collect non-TomSelect input/select values BEFORE cloning (avoids TomSelect internal DOM confusion)
+    const valuesToCopy = [];
+    row.querySelectorAll('input:not(.ts-hidden-accessible):not([type="hidden"]), select:not(.tom-select-product), textarea').forEach(el => {
+        valuesToCopy.push({ name: el.name, value: el.value });
+    });
+
     const newRow = row.cloneNode(true);
-    
+
     // Remove database ID so it creates a new entry
     const idInput = newRow.querySelector('input[name*="[id]"]');
     if (idInput) idInput.remove();
-    
-    // Copy select/input values manually
-    const sourceInputs = row.querySelectorAll('input, select, textarea');
-    const targetInputs = newRow.querySelectorAll('input, select, textarea');
-    sourceInputs.forEach((sourceInput, idx) => {
-        if (targetInputs[idx] && sourceInput.name.indexOf('[id]') === -1) {
-            targetInputs[idx].value = sourceInput.value;
-        }
+
+    // Restore field values by name
+    valuesToCopy.forEach(({ name, value }) => {
+        if (!name || name.indexOf('[id]') !== -1) return;
+        const el = newRow.querySelector(`[name="${name}"]`);
+        if (el) el.value = value;
     });
-    
-    // Reinitialize TomSelect
+
+    // Reinitialize TomSelect for product code select
     const select = newRow.querySelector('.tom-select-product');
     if (select) {
         const tsWrapper = newRow.querySelector('.ts-wrapper');
         if (tsWrapper) tsWrapper.remove();
-        select.classList.remove('tomselected');
-        select.style.display = '';
+        select.classList.remove('tomselected', 'ts-hidden-accessible');
+        select.removeAttribute('style');
         select.value = selectedValue;
     }
-    
+
     // Insert after current row
     row.parentNode.insertBefore(newRow, row.nextSibling);
-    
+
     if (select && typeof TomSelect !== 'undefined') {
-        new TomSelect(select, {
+        const ts = new TomSelect(select, {
             allowEmptyOption: true,
             placeholder: '-- Chọn --',
         });
+        if (selectedValue) {
+            ts.setValue(selectedValue, true);
+        }
     }
-    
+
     bindAcrylicRowEvents(newRow);
     updateAcrylicRowIndexes(tbody);
     updateOrderSummary();
