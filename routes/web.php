@@ -19,6 +19,7 @@ use App\Http\Controllers\SupplyController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ManufactureController;
+use App\Http\Controllers\WarehouseController;
 
 Route::middleware(['auth'])->group(function () {
     Route::controller(DashboardController::class)->group(function () {
@@ -205,6 +206,20 @@ Route::middleware(['auth'])->prefix('media')->name('media.')->group(function () 
 // Supplies
 Route::middleware(['auth'])->group(function () {
     Route::resource('supplies', SupplyController::class)->names('supplies');
+});
+
+// Warehouses
+Route::middleware(['auth'])->group(function () {
+    Route::resource('warehouses', WarehouseController::class)->names('warehouses');
+    Route::post('warehouses/{warehouse}/config', [WarehouseController::class, 'updateConfig'])->name('warehouses.config.update');
+    Route::post('warehouses/{warehouse}/records', [WarehouseController::class, 'storeRecord'])->name('warehouses.records.store');
+    Route::put('warehouses/{warehouse}/records/{record}', [WarehouseController::class, 'updateRecord'])->name('warehouses.records.update');
+    Route::delete('warehouses/{warehouse}/records/{record}', [WarehouseController::class, 'destroyRecord'])->name('warehouses.records.destroy');
+    Route::get('warehouses/{warehouse}/export-template', [WarehouseController::class, 'exportTemplate'])->name('warehouses.export-template');
+    Route::get('warehouses/{warehouse}/export-data', [WarehouseController::class, 'exportData'])->name('warehouses.export-data');
+    Route::post('warehouses/{warehouse}/import', [WarehouseController::class, 'import'])->name('warehouses.import');
+    Route::post('warehouses/{warehouse}/import-json', [WarehouseController::class, 'importJson'])->name('warehouses.import-json');
+    Route::get('warehouses/{warehouse}/records/{record}/print', [WarehouseController::class, 'printRecordVoucher'])->name('warehouses.records.print');
 });
 
 // Customers
