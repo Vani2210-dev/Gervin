@@ -488,6 +488,11 @@ function calculateGlassTotalPrice(row, sourceEvent) {
 
 // Initial setup for Glass-specific rows if DOM loaded
 document.addEventListener('DOMContentLoaded', function() {
+    const container = document.getElementById('glass-supplies-container');
+    if (container && container.querySelectorAll('.order-supply-row').length === 0) {
+        addGlassOrderSupply();
+    }
+
     document.querySelectorAll('#glass-supplies-container .order-item-row').forEach(row => {
         bindGlassRowEvents(row);
         calculateGlassTotalPrice(row);

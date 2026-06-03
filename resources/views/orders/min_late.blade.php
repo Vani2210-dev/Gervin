@@ -822,6 +822,11 @@ function fillMinLateProductInfo(selectElement, supplyIndex, itemIndex) {
 
 // Initial setup for Min Late-specific rows if DOM loaded
 document.addEventListener('DOMContentLoaded', function() {
+    const container = document.getElementById('min-late-supplies-container');
+    if (container && container.querySelectorAll('.order-supply-row').length === 0) {
+        addMinLateOrderSupply();
+    }
+
     document.querySelectorAll('.order-item-row').forEach(row => {
         bindMinLateRowEvents(row);
         calculateMinLateRowStats(row);

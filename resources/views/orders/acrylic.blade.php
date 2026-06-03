@@ -528,6 +528,11 @@ function updateEdgeBevel(row) {
 
 // Initial attachment setup for Acrylic-specific rows if DOM loaded
 document.addEventListener('DOMContentLoaded', function() {
+    const container = document.getElementById('order-supplies-container');
+    if (container && container.querySelectorAll('.order-supply-row').length === 0) {
+        addOrderSupply();
+    }
+
     document.querySelectorAll('#order-supplies-container .order-item-row').forEach(row => {
         bindAcrylicRowEvents(row);
         calculateTotalPrice(row);

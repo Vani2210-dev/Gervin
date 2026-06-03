@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Storage;
 
 class OrderController extends Controller
 {
+    private const ORDER_TYPES = ['acrylic', 'glass', 'min_late'];
+
     protected $acrylicOrderService;
     protected $minLateOrderService;
     protected $glassOrderService;
@@ -66,11 +68,20 @@ class OrderController extends Controller
 
     public function create()
     {
+        return view('orders.create');
+    }
+
+    public function createByType(string $type)
+    {
+        abort_unless(in_array($type, self::ORDER_TYPES, true), 404);
+
+        $orderType = $type;
+
         $lastOrder = Order::orderBy('id', 'desc')->first();
         $nextNumber = $lastOrder ? intval(substr($lastOrder->order_code, 2)) + 1 : 1;
         $nextOrderCode = 'DA' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
 
-        return view('orders.create', compact('nextOrderCode'));
+        return view('orders.create', compact('orderType', 'nextOrderCode'));
     }
 
     public function edit(Order $order)
