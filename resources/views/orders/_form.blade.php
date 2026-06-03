@@ -43,13 +43,7 @@
                                 <label class="form-label font-semibold text-xs text-neutral-500 uppercase tracking-wider mb-2 block">Tên khách hàng <span class="text-danger-500">*</span></label>
                                 <input type="text" name="customer_name" class="form-control rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Nhập tên khách hàng" required value="{{ old('customer_name', $acrylicOrder?->customer_name ?? '') }}">
                             </div>
-                            <div class="form-group">
-                                <label class="form-label font-semibold text-xs text-neutral-500 uppercase tracking-wider mb-2 block">Loại đơn</label>
-                                <div class="d-flex align-items-center gap-2">
-                                    <span class="badge rounded-pill text-bg-primary px-3 py-2">{{ $orderTypeLabels[$currentOrderType] ?? $currentOrderType }}</span>
-                                </div>
-                                <input type="hidden" name="type" value="{{ $currentOrderType }}">
-                            </div>
+                            <input type="hidden" name="type" value="{{ $currentOrderType }}">
                             <div class="form-group">
                                 <label class="form-label font-semibold text-xs text-neutral-500 uppercase tracking-wider mb-2 block">Số điện thoại</label>
                                 <input type="text" name="phone" class="form-control rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Nhập số điện thoại" value="{{ old('phone', $acrylicOrder?->phone ?? '') }}">
