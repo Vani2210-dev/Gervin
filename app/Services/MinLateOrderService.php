@@ -238,6 +238,7 @@ class MinLateOrderService
      */
     protected function saveSuppliesAndItems(Order $order, array $suppliesData): void
     {
+        $globalPieceIndex = 1;
         foreach ($suppliesData as $supplyData) {
             $orderSupply = OrderSupply::create([
                 'order_id'          => $order->id,
@@ -247,9 +248,8 @@ class MinLateOrderService
             ]);
 
             foreach ($supplyData['items'] as $item) {
-                MinLateOrderItem::create([
+                $orderItem = MinLateOrderItem::create([
                     'order_supply_id'       => $orderSupply->id,
-                    'product_code'          => $item['product_code'] ?? null,
                     'name'                  => $item['product_name'],
                     'size'                  => [
                         'height' => $item['height'] ?? null,
@@ -267,6 +267,26 @@ class MinLateOrderService
                     'cnc'                   => $item['cnc'] ?? 0,
                     'direction'             => $item['direction'] ?? null,
                 ]);
+
+                // Generate N codes based on quantity using global sequential piece index
+                $productCode = $item['product_code'] ?? '';
+                $parts = explode('.', $productCode);
+                if (count($parts) >= 3) {
+                    $prefix = $parts[0] . '.' . $parts[1];
+                    $startIndex = intval($parts[2]);
+                } else {
+                    $prefix = $order->order_code . '.' . ($orderSupply->order_supply_code ?? '');
+                    $startIndex = $globalPieceIndex;
+                }
+
+                $qty = intval($item['quantity']) ?: 1;
+                for ($i = 0; $i < $qty; $i++) {
+                    $orderItem->codes()->create([
+                        'product_id' => $prefix . '.' . ($startIndex + $i),
+                        'status'     => ['pending'],
+                    ]);
+                }
+                $globalPieceIndex += $qty;
             }
         }
     }

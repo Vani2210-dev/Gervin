@@ -204,6 +204,7 @@ class GlassOrderService
      */
     protected function saveSuppliesAndItems(Order $order, array $suppliesData): void
     {
+        $globalPieceIndex = 1;
         foreach ($suppliesData as $supplyData) {
             $orderSupply = OrderSupply::create([
                 'order_id'          => $order->id,
@@ -221,22 +222,41 @@ class GlassOrderService
                 $totalPrice = isset($item['total_price']) ? floatval($item['total_price']) : ($areaM2 > 0 ? ($areaM2 * $item['unit_price']) : ($wingQuantity * $item['unit_price']));
                 $totalPrice = round($totalPrice);
 
-                GlassOrderItem::create([
+                $orderItem = GlassOrderItem::create([
                     'order_supply_id'        => $orderSupply->id,
                     'product_name'           => $item['product_name'],
-                    'product_code'           => $item['product_code'] ?? null,
                     'wing_opening_direction' => $item['wing_opening_direction'] ?? null,
                     'aluminum_color'         => $item['aluminum_color'] ?? null,
                     'glass_color'            => $item['glass_color'] ?? null,
                     'height'                 => $item['height'] ?? null,
                     'width'                  => $item['width'] ?? null,
                     'unit'                   => $item['unit'] ?? 'Bộ',
-                    'wing_quantity'          => $item['wing_quantity'] ?? 1,
+                    'wing_quantity'          => $wingQuantity,
                     'area_m2'                => $areaM2,
                     'unit_price'             => round($item['unit_price']),
                     'total_price'            => $totalPrice,
                     'notes'                  => $item['notes'] ?? null,
                 ]);
+
+                // Generate N codes based on quantity (wing_quantity) using global sequential piece index
+                $productCode = $item['product_code'] ?? '';
+                $parts = explode('.', $productCode);
+                if (count($parts) >= 3) {
+                    $prefix = $parts[0] . '.' . $parts[1];
+                    $startIndex = intval($parts[2]);
+                } else {
+                    $prefix = $order->order_code . '.' . ($orderSupply->order_supply_code ?? '');
+                    $startIndex = $globalPieceIndex;
+                }
+
+                $qty = intval($wingQuantity) ?: 1;
+                for ($i = 0; $i < $qty; $i++) {
+                    $orderItem->codes()->create([
+                        'product_id' => $prefix . '.' . ($startIndex + $i),
+                        'status'     => ['pending'],
+                    ]);
+                }
+                $globalPieceIndex += $qty;
             }
         }
     }

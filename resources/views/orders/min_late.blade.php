@@ -586,47 +586,66 @@ function addMinLateOrderItem(button) {
     calculateMinLateRowStats(newRow);
     
     updateOrderSummary();
-    updateMinLateRowIndexes(container);
+    updateMinLateRowIndexes();
 }
 
 function removeMinLateOrderItem(button) {
     const row = button.closest('.order-item-row');
-    const tbody = row.closest('.supply-items-container');
     row.remove();
     updateOrderSummary();
-    updateMinLateRowIndexes(tbody);
+    updateMinLateRowIndexes();
 }
 
-function updateMinLateRowIndexes(tbody) {
-    if (!tbody) return;
+function updateMinLateRowIndexes() {
     const orderCode = document.getElementById('order-code-input')?.value || '';
-    const supplyRow = tbody.closest('.order-supply-row');
-    const supplyCode = supplyRow ? (supplyRow.querySelector('.order-supply-code-input')?.value || '') : '';
+    let globalPieceIndex = 1;
+    let globalItemIndex = 1;
 
-    tbody.querySelectorAll('.order-item-row').forEach((row, itemIndex) => {
-        const indexEl = row.querySelector('.row-index');
-        if (indexEl) indexEl.textContent = itemIndex + 1;
-        
-        const stt = itemIndex + 1;
-        const generatedCode = `${orderCode}.${supplyCode}.${stt}`;
-        const productCodeInput = row.querySelector('.product-code-input');
-        if (productCodeInput) {
-            productCodeInput.value = generatedCode;
-        }
+    document.querySelectorAll('#min-late-supplies-container .order-supply-row').forEach((supplyRow, supplyIndex) => {
+        const supplyCode = supplyRow.querySelector('.order-supply-code-input')?.value || '';
+        const tbody = supplyRow.querySelector('.supply-items-container');
+        if (!tbody) return;
 
-        row.querySelectorAll('input, select, textarea').forEach(input => {
-            const name = input.getAttribute('name');
-            if (name) {
-                const newName = name.replace(/\[items\]\[\d+\]/, `[items][${itemIndex}]`);
-                input.setAttribute('name', newName);
+        tbody.querySelectorAll('.order-item-row').forEach((row, itemIndex) => {
+            // Update row STT
+            const indexEl = row.querySelector('.row-index');
+            if (indexEl) indexEl.textContent = globalItemIndex;
+
+            // Get quantity
+            const quantityInput = row.querySelector('input[name*="[quantity]"]');
+            const qty = parseInt(quantityInput?.value) || 1;
+
+            // Base code for the item (first piece index)
+            const baseCode = `${orderCode}.${supplyCode}.${globalPieceIndex}`;
+            const productCodeInput = row.querySelector('.product-code-input');
+            if (productCodeInput) {
+                productCodeInput.value = baseCode;
             }
+
+            // Remove product_ids container if it exists
+            const idsContainer = row.querySelector('.product-ids-container');
+            if (idsContainer) {
+                idsContainer.remove();
+            }
+
+            // Update inputs name indexes
+            row.querySelectorAll('input, select, textarea').forEach(input => {
+                const name = input.getAttribute('name');
+                if (name) {
+                    let newName = name.replace(/supplies\[\d+\]/, `supplies[${supplyIndex}]`);
+                    newName = newName.replace(/\[items\]\[\d+\]/, `[items][${itemIndex}]`);
+                    input.setAttribute('name', newName);
+                }
+            });
+
+            globalPieceIndex += qty;
+            globalItemIndex++;
         });
     });
 }
 
 function duplicateMinLateRow(button) {
     const row = button.closest('.order-item-row');
-    const tbody = row.closest('.supply-items-container');
 
     // Collect input/select/textarea values BEFORE cloning
     const valuesToCopy = [];
@@ -650,10 +669,9 @@ function duplicateMinLateRow(button) {
     // Insert after current row
     row.parentNode.insertBefore(newRow, row.nextSibling);
     
-    
     bindMinLateRowEvents(newRow);
     calculateMinLateRowStats(newRow);
-    updateMinLateRowIndexes(tbody);
+    updateMinLateRowIndexes();
     updateOrderSummary();
 }
 
@@ -780,6 +798,9 @@ function bindMinLateRowEvents(row) {
         input.addEventListener('input', () => {
             calculateMinLateRowStats(row);
             if (typeof calculateMinLateTotalPrice === 'function') calculateMinLateTotalPrice(row);
+            if (input.name.indexOf('[quantity]') !== -1) {
+                updateMinLateRowIndexes();
+            }
         });
     });
     
@@ -833,21 +854,18 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Recalculate codes on load
-    document.querySelectorAll('#min-late-supplies-container .supply-items-container').forEach(tbody => {
-        updateMinLateRowIndexes(tbody);
-    });
+    updateMinLateRowIndexes();
+
+    const orderCodeInput = document.getElementById('order-code-input');
+    if (orderCodeInput) {
+        orderCodeInput.addEventListener('input', () => updateMinLateRowIndexes());
+    }
 });
 
 // Live listener for supply code input changes
 document.addEventListener('input', function(e) {
     if (e.target.classList.contains('order-supply-code-input')) {
-        const supplyRow = e.target.closest('.order-supply-row');
-        if (supplyRow) {
-            const tbody = supplyRow.querySelector('.supply-items-container');
-            if (tbody) {
-                updateMinLateRowIndexes(tbody);
-            }
-        }
+        updateMinLateRowIndexes();
     }
 });
 
