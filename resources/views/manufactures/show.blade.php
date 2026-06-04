@@ -230,12 +230,12 @@
         <div class="bg-white border border-neutral-200 rounded-xl overflow-hidden shadow-sm">
             <div class="border-b border-neutral-100 bg-white py-4 px-6 flex items-center justify-between">
                 <h6 class="font-bold text-base text-neutral-800 m-0 flex items-center gap-2">
-                    <iconify-icon icon="lucide:layers" class="text-xl text-primary-600"></iconify-icon>
+                    <iconify-icon icon="lucide:layers" class="text-xl text-neutral-600"></iconify-icon>
                     Danh sách các tấm ({{ $items->count() }})
                 </h6>
                 <div class="flex items-center gap-2">
                     <a href="{{ route('manufactures.print-stamps', $manufacture) }}" target="_blank"
-                       class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-primary-600 hover:text-primary-700 hover:bg-primary-50 border border-primary-200 hover:border-primary-300 rounded-lg transition-colors duration-200">
+                       class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-neutral-700 hover:text-neutral-800 hover:bg-neutral-50 border border-neutral-200 hover:border-neutral-300 rounded-lg transition-colors duration-200">
                         <iconify-icon icon="lucide:printer" class="text-lg"></iconify-icon> In phiếu dán tem
                     </a>
                 </div>
@@ -249,7 +249,7 @@
                     <div id="bulkActionBar" class="hidden bg-neutral-50 border-b border-neutral-100 px-6 py-3 flex items-center justify-between gap-4">
                         <div class="flex items-center gap-2">
                             <span class="text-sm font-semibold text-neutral-700">
-                                Đã chọn <span id="selectedCount" class="text-primary-600 font-bold">0</span> tấm:
+                                Đã chọn <span id="selectedCount" class="text-neutral-900 font-extrabold">0</span> tấm:
                             </span>
                         </div>
                         <div class="flex items-center gap-2 flex-nowrap">
@@ -261,7 +261,7 @@
                                     @endforeach
                                 </select>
                             </div>
-                            <button type="submit" class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-semibold whitespace-nowrap bg-primary-600 hover:bg-primary-700 text-white shadow-sm transition-colors duration-200 cursor-pointer">
+                            <button type="submit" class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-semibold whitespace-nowrap bg-neutral-900 hover:bg-black text-white shadow-sm transition-colors duration-200 cursor-pointer">
                                 <iconify-icon icon="lucide:user-check" class="text-lg"></iconify-icon> Phân công hàng loạt
                             </button>
                         </div>
