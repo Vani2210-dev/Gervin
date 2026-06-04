@@ -497,45 +497,45 @@ function addMinLateOrderItem(button) {
         <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
             <select name="supplies[${supplyIndex}][items][${itemIndex}][edge_gluing][height_1]" class="form-select form-select-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center w-full px-1 py-0.5 h-8 text-xs hide-arrow">
                 <option value=""></option>
-                <option value="V" \${lastData && lastData.edge_gluing_height_1 === 'V' ? 'selected' : ''}>V</option>
-                <option value="T" \${lastData && lastData.edge_gluing_height_1 === 'T' ? 'selected' : ''}>T</option>
-                <option value="VAT MOI" \${lastData && lastData.edge_gluing_height_1 === 'VAT MOI' ? 'selected' : ''}>VAT MOI</option>
-                <option value="DS" \${lastData && lastData.edge_gluing_height_1 === 'DS' ? 'selected' : ''}>DS</option>
-                <option value="VAT TNA" \${lastData && lastData.edge_gluing_height_1 === 'VAT TNA' ? 'selected' : ''}>VAT TNA</option>
-                <option value="XEM BAN VE CT" \${lastData && lastData.edge_gluing_height_1 === 'XEM BAN VE CT' ? 'selected' : ''}>XEM BAN VE CT</option>
+                <option value="V" ${lastData && lastData.edge_gluing_height_1 === 'V' ? 'selected' : ''}>V</option>
+                <option value="T" ${lastData && lastData.edge_gluing_height_1 === 'T' ? 'selected' : ''}>T</option>
+                <option value="VAT MOI" ${lastData && lastData.edge_gluing_height_1 === 'VAT MOI' ? 'selected' : ''}>VAT MOI</option>
+                <option value="DS" ${lastData && lastData.edge_gluing_height_1 === 'DS' ? 'selected' : ''}>DS</option>
+                <option value="VAT TNA" ${lastData && lastData.edge_gluing_height_1 === 'VAT TNA' ? 'selected' : ''}>VAT TNA</option>
+                <option value="XEM BAN VE CT" ${lastData && lastData.edge_gluing_height_1 === 'XEM BAN VE CT' ? 'selected' : ''}>XEM BAN VE CT</option>
             </select>
         </td>
         <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
             <select name="supplies[${supplyIndex}][items][${itemIndex}][edge_gluing][height_2]" class="form-select form-select-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center w-full px-1 py-0.5 h-8 text-xs hide-arrow">
                 <option value=""></option>
-                <option value="V" \${lastData && lastData.edge_gluing_height_2 === 'V' ? 'selected' : ''}>V</option>
-                <option value="T" \${lastData && lastData.edge_gluing_height_2 === 'T' ? 'selected' : ''}>T</option>
-                <option value="VAT MOI" \${lastData && lastData.edge_gluing_height_2 === 'VAT MOI' ? 'selected' : ''}>VAT MOI</option>
-                <option value="DS" \${lastData && lastData.edge_gluing_height_2 === 'DS' ? 'selected' : ''}>DS</option>
-                <option value="VAT TNA" \${lastData && lastData.edge_gluing_height_2 === 'VAT TNA' ? 'selected' : ''}>VAT TNA</option>
-                <option value="XEM BAN VE CT" \${lastData && lastData.edge_gluing_height_2 === 'XEM BAN VE CT' ? 'selected' : ''}>XEM BAN VE CT</option>
+                <option value="V" ${lastData && lastData.edge_gluing_height_2 === 'V' ? 'selected' : ''}>V</option>
+                <option value="T" ${lastData && lastData.edge_gluing_height_2 === 'T' ? 'selected' : ''}>T</option>
+                <option value="VAT MOI" ${lastData && lastData.edge_gluing_height_2 === 'VAT MOI' ? 'selected' : ''}>VAT MOI</option>
+                <option value="DS" ${lastData && lastData.edge_gluing_height_2 === 'DS' ? 'selected' : ''}>DS</option>
+                <option value="VAT TNA" ${lastData && lastData.edge_gluing_height_2 === 'VAT TNA' ? 'selected' : ''}>VAT TNA</option>
+                <option value="XEM BAN VE CT" ${lastData && lastData.edge_gluing_height_2 === 'XEM BAN VE CT' ? 'selected' : ''}>XEM BAN VE CT</option>
             </select>
         </td>
         <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
             <select name="supplies[${supplyIndex}][items][${itemIndex}][edge_gluing][width_1]" class="form-select form-select-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center w-full px-1 py-0.5 h-8 text-xs hide-arrow">
                 <option value=""></option>
-                <option value="V" \${lastData && lastData.edge_gluing_width_1 === 'V' ? 'selected' : ''}>V</option>
-                <option value="T" \${lastData && lastData.edge_gluing_width_1 === 'T' ? 'selected' : ''}>T</option>
-                <option value="VAT MOI" \${lastData && lastData.edge_gluing_width_1 === 'VAT MOI' ? 'selected' : ''}>VAT MOI</option>
-                <option value="DS" \${lastData && lastData.edge_gluing_width_1 === 'DS' ? 'selected' : ''}>DS</option>
-                <option value="VAT TNA" \${lastData && lastData.edge_gluing_width_1 === 'VAT TNA' ? 'selected' : ''}>VAT TNA</option>
-                <option value="XEM BAN VE CT" \${lastData && lastData.edge_gluing_width_1 === 'XEM BAN VE CT' ? 'selected' : ''}>XEM BAN VE CT</option>
+                <option value="V" ${lastData && lastData.edge_gluing_width_1 === 'V' ? 'selected' : ''}>V</option>
+                <option value="T" ${lastData && lastData.edge_gluing_width_1 === 'T' ? 'selected' : ''}>T</option>
+                <option value="VAT MOI" ${lastData && lastData.edge_gluing_width_1 === 'VAT MOI' ? 'selected' : ''}>VAT MOI</option>
+                <option value="DS" ${lastData && lastData.edge_gluing_width_1 === 'DS' ? 'selected' : ''}>DS</option>
+                <option value="VAT TNA" ${lastData && lastData.edge_gluing_width_1 === 'VAT TNA' ? 'selected' : ''}>VAT TNA</option>
+                <option value="XEM BAN VE CT" ${lastData && lastData.edge_gluing_width_1 === 'XEM BAN VE CT' ? 'selected' : ''}>XEM BAN VE CT</option>
             </select>
         </td>
         <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
             <select name="supplies[${supplyIndex}][items][${itemIndex}][edge_gluing][width_2]" class="form-select form-select-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center w-full px-1 py-0.5 h-8 text-xs hide-arrow">
                 <option value=""></option>
-                <option value="V" \${lastData && lastData.edge_gluing_width_2 === 'V' ? 'selected' : ''}>V</option>
-                <option value="T" \${lastData && lastData.edge_gluing_width_2 === 'T' ? 'selected' : ''}>T</option>
-                <option value="VAT MOI" \${lastData && lastData.edge_gluing_width_2 === 'VAT MOI' ? 'selected' : ''}>VAT MOI</option>
-                <option value="DS" \${lastData && lastData.edge_gluing_width_2 === 'DS' ? 'selected' : ''}>DS</option>
-                <option value="VAT TNA" \${lastData && lastData.edge_gluing_width_2 === 'VAT TNA' ? 'selected' : ''}>VAT TNA</option>
-                <option value="XEM BAN VE CT" \${lastData && lastData.edge_gluing_width_2 === 'XEM BAN VE CT' ? 'selected' : ''}>XEM BAN VE CT</option>
+                <option value="V" ${lastData && lastData.edge_gluing_width_2 === 'V' ? 'selected' : ''}>V</option>
+                <option value="T" ${lastData && lastData.edge_gluing_width_2 === 'T' ? 'selected' : ''}>T</option>
+                <option value="VAT MOI" ${lastData && lastData.edge_gluing_width_2 === 'VAT MOI' ? 'selected' : ''}>VAT MOI</option>
+                <option value="DS" ${lastData && lastData.edge_gluing_width_2 === 'DS' ? 'selected' : ''}>DS</option>
+                <option value="VAT TNA" ${lastData && lastData.edge_gluing_width_2 === 'VAT TNA' ? 'selected' : ''}>VAT TNA</option>
+                <option value="XEM BAN VE CT" ${lastData && lastData.edge_gluing_width_2 === 'XEM BAN VE CT' ? 'selected' : ''}>XEM BAN VE CT</option>
             </select>
         </td>
         <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
