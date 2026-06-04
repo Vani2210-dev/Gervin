@@ -25,6 +25,7 @@ class MinLateOrderItem extends Model
         'beveled_handle',
         'cnc',
         'direction',
+        'notes',
     ];
 
     protected $casts = [
