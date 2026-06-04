@@ -72,15 +72,15 @@
             </li>
             @endcan
             <li>
-                <a href="{{ route('processes.cnc') }}">
-                    <iconify-icon icon="lucide:scissors" class="menu-icon"></iconify-icon>
-                    <span>Cắt CNC</span>
-                </a>
-            </li>
-            <li>
                 <a href="{{ route('processes.pressing') }}">
                     <iconify-icon icon="lucide:monitor" class="menu-icon"></iconify-icon>
                     <span>Ép ván</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('processes.cnc') }}">
+                    <iconify-icon icon="lucide:scissors" class="menu-icon"></iconify-icon>
+                    <span>Cắt CNC</span>
                 </a>
             </li>
             <li>

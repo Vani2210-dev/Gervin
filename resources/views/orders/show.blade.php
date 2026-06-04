@@ -8,7 +8,7 @@
 
 <div class="grid grid-cols-12 gap-6">
     {{-- Main Order Info --}}
-    <div class="col-span-12 lg:col-span-8 space-y-6">
+    <div class="col-span-12 md:col-span-8 space-y-6">
         <div class="card p-0 rounded-xl border-0 overflow-hidden shadow-sm bg-white mb-2">
             <div class="card-header border-b border-neutral-200 bg-white py-4 px-6 flex items-center justify-between flex-wrap gap-3">
                 <div class="flex items-center gap-3">
@@ -328,7 +328,7 @@
     </div>
 
     {{-- Order Summary --}}
-    <div class="col-span-12 lg:col-span-4 space-y-6">
+    <div class="col-span-12 md:col-span-4 space-y-6">
         <div class="card p-0 rounded-xl border-0 overflow-hidden shadow-sm bg-white mb-2">
             <div class="card-header border-b border-neutral-200 bg-white py-4 px-6 flex items-center gap-2">
                 <iconify-icon icon="lucide:receipt-text" class="text-xl text-primary-500"></iconify-icon>
@@ -377,15 +377,15 @@
 
         {{-- Navigation Actions --}}
         <div class="flex flex-col gap-3">
-            <a href="{{ route('orders.index') }}" class="btn btn-neutral w-full justify-center flex items-center gap-2 py-3 rounded-xl font-semibold shadow-sm text-sm">
+            <a href="{{ route('orders.index') }}" class="w-full justify-center flex items-center gap-2 py-3 rounded-xl font-semibold border border-neutral-200 text-neutral-700 hover:bg-neutral-50 transition-colors shadow-sm text-sm bg-white cursor-pointer">
                 <iconify-icon icon="lucide:arrow-left" class="text-base"></iconify-icon> Quay lại danh sách
             </a>
             @can('edit acrylic order')
-            <a href="{{ route('orders.edit', $acrylicOrder) }}" class="btn btn-primary w-full justify-center flex items-center gap-2 py-3 rounded-xl font-semibold shadow-sm text-sm">
+            <a href="{{ route('orders.edit', $acrylicOrder) }}" class="w-full justify-center flex items-center gap-2 py-3 rounded-xl font-semibold bg-neutral-900 hover:bg-black text-white shadow-sm text-sm transition-colors cursor-pointer">
                 <iconify-icon icon="lucide:edit-3" class="text-base"></iconify-icon> Chỉnh sửa đơn hàng
             </a>
             @endcan
-            <button type="button" onclick="exportToExcel()" class="btn btn-success w-full justify-center flex items-center gap-2 py-3 rounded-xl font-semibold shadow-sm text-sm text-white">
+            <button type="button" onclick="exportToExcel()" class="w-full justify-center flex items-center gap-2 py-3 rounded-xl font-semibold border border-neutral-200 text-neutral-700 hover:bg-neutral-50 transition-colors shadow-sm text-sm bg-white cursor-pointer">
                 <iconify-icon icon="lucide:file-spreadsheet" class="text-base"></iconify-icon> Xuất Excel (.xlsx)
             </button>
         </div>

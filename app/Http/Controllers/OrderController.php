@@ -7,6 +7,7 @@ use App\Services\AcrylicOrderService;
 use App\Services\MinLateOrderService;
 use App\Services\GlassOrderService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class OrderController extends Controller
@@ -27,7 +28,7 @@ class OrderController extends Controller
         $this->glassOrderService = $glassOrderService;
 
         $this->middleware('permission:view acrylic order',   ['only' => ['index', 'show']]);
-        $this->middleware('permission:add acrylic order',    ['only' => ['create', 'store']]);
+        $this->middleware('permission:add acrylic order',    ['only' => ['create', 'createByType', 'store']]);
         $this->middleware('permission:edit acrylic order',   ['only' => ['edit', 'update']]);
         $this->middleware('permission:delete acrylic order', ['only' => ['destroy']]);
     }
@@ -38,10 +39,15 @@ class OrderController extends Controller
         $search  = $request->input('search', '');
 
         $orders = Order::with('customer')
+            ->when($request->input('filter_status') !== 'draft', function ($q) {
+                $q->where('status', '!=', 'draft');
+            })
             ->when($search, function ($q) use ($search) {
-                $q->where('order_code', 'like', "%$search%")
-                  ->orWhere('customer_name', 'like', "%$search%")
-                  ->orWhere('phone', 'like', "%$search%");
+                $q->where(function ($query) use ($search) {
+                    $query->where('order_code', 'like', "%$search%")
+                        ->orWhere('customer_name', 'like', "%$search%")
+                        ->orWhere('phone', 'like', "%$search%");
+                });
             })
             ->when($request->filled('filter_order_code'), function ($q) use ($request) {
                 $q->where('order_code', 'like', "%{$request->filter_order_code}%");
@@ -76,12 +82,10 @@ class OrderController extends Controller
         abort_unless(in_array($type, self::ORDER_TYPES, true), 404);
 
         $orderType = $type;
+        $acrylicOrder = $this->createDraftOrder($type);
+        $isDraftCreate = true;
 
-        $lastOrder = Order::orderBy('id', 'desc')->first();
-        $nextNumber = $lastOrder ? intval(substr($lastOrder->order_code, 2)) + 1 : 1;
-        $nextOrderCode = 'DA' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
-
-        return view('orders.create', compact('orderType', 'nextOrderCode'));
+        return view('orders.create', compact('orderType', 'acrylicOrder', 'isDraftCreate'));
     }
 
     public function edit(Order $order)
@@ -93,16 +97,21 @@ class OrderController extends Controller
 
     public function store(Request $request)
     {
-        if ($request->type === 'min_late') {
-            $request->validate($this->minLateOrderService->getStoreRules());
-            $this->minLateOrderService->store($request);
-        } elseif ($request->type === 'glass') {
-            $request->validate($this->glassOrderService->getStoreRules());
-            $this->glassOrderService->store($request);
-        } else {
-            $request->validate($this->acrylicOrderService->getStoreRules());
-            $this->acrylicOrderService->store($request);
+        $request->validate([
+            'draft_order_id' => 'required|integer',
+            'type' => 'required|in:acrylic,glass,min_late',
+        ]);
+
+        $draftOrder = Order::where('status', 'draft')->findOrFail($request->draft_order_id);
+
+        if ($draftOrder->type !== $request->type) {
+            abort(422, 'Loại đơn không khớp với đơn nháp.');
         }
+
+        $service = $this->serviceFor($request->type);
+
+        $request->validate($service->getStoreRules());
+        $service->update($request, $draftOrder);
 
         return redirect()->route('orders.index')->with('success', 'Tạo đơn hàng thành công.');
     }
@@ -146,5 +155,30 @@ class OrderController extends Controller
             'Content-Type'        => $mimeType,
             'Content-Disposition' => 'inline; filename="' . basename($filename) . '"',
         ]);
+    }
+
+    private function createDraftOrder(string $type): Order
+    {
+        return DB::transaction(function () use ($type) {
+            $lastOrder = Order::lockForUpdate()->orderBy('id', 'desc')->first();
+            $nextNumber = $lastOrder ? intval(substr($lastOrder->order_code, 2)) + 1 : 1;
+
+            return Order::create([
+                'order_code' => 'DA' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT),
+                'type' => $type,
+                'customer_name' => '',
+                'total_amount' => 0,
+                'status' => 'draft',
+            ]);
+        });
+    }
+
+    private function serviceFor(?string $type)
+    {
+        return match ($type) {
+            'min_late' => $this->minLateOrderService,
+            'glass' => $this->glassOrderService,
+            default => $this->acrylicOrderService,
+        };
     }
 }
