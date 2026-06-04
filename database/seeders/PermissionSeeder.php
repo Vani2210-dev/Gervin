@@ -41,10 +41,21 @@ class PermissionSeeder extends Seeder
             'edit customer',
             'delete customer',
 
+            // Order permissions
             'view acrylic order',
             'add acrylic order',
             'edit acrylic order',
             'delete acrylic order',
+
+            'view glass order',
+            'add glass order',
+            'edit glass order',
+            'delete glass order',
+
+            'view min late order',
+            'add min late order',
+            'edit min late order',
+            'delete min late order',
             
             // Manufacture permissions
             'view manufacture',
@@ -52,10 +63,36 @@ class PermissionSeeder extends Seeder
             'edit manufacture',
             'delete manufacture',
             'approve manufacture',
+
+            // Warehouse permissions
+            'view warehouse',
+            'add warehouse',
+            'edit warehouse',
+            'delete warehouse',
+
+            // Process permissions
+            'view pressing',
+            'complete pressing',
+
+            'view cnc',
+            'complete cnc',
+
+            'view edge banding',
+            'complete edge banding',
+
+            'view finishing',
+            'complete finishing',
+
+            'view qc',
+            'complete qc',
+
+            'view packing',
+            'view shipped',
             
             // UI permissions
             'view ui',
         ];
+
 
         foreach ($permissions as $permission) {
             Permission::firstOrCreate([
@@ -63,5 +100,12 @@ class PermissionSeeder extends Seeder
                 'guard_name' => 'web',
             ]);
         }
+
+        // Cấp tất cả quyền cho role Admin
+        $adminRole = \Spatie\Permission\Models\Role::firstOrCreate([
+            'name'       => 'Admin',
+            'guard_name' => 'web',
+        ]);
+        $adminRole->syncPermissions(Permission::all());
     }
 }

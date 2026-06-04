@@ -5,16 +5,32 @@
     $selectedPermissions = $selectedPermissions ?? old('permissions', []);
 
     $moduleLabels = [
-        'user'       => 'Người dùng',
-        'role'       => 'Vai trò',
-        'media' => 'Tệp tin',
+        'user'          => 'Người dùng',
+        'role'          => 'Vai trò',
+        'media'         => 'Tệp tin',
+        'supply'        => 'Vật tư',
+        'customer'      => 'Khách hàng',
+        'acrylic order' => 'Đơn acrylic',
+        'glass order'   => 'Đơn kính',
+        'min late order'=> 'Đơn min-late',
+        'manufacture'   => 'Lệnh sản xuất',
+        'warehouse'     => 'Kho',
+        'pressing'      => 'Ép ván',
+        'cnc'           => 'Cắt CNC',
+        'edge banding'  => 'Dán cạnh',
+        'finishing'     => 'Làm đẹp',
+        'qc'            => 'Kiểm soát (QC)',
+        'packing'       => 'Đóng gói',
+        'shipped'       => 'Xuất xưởng',
+        'ui'            => 'Giao diện UI',
     ];
     $actionLabels = [
-        'view'    => 'Xem',
-        'add'     => 'Thêm',
-        'edit'    => 'Sửa',
-        'delete'  => 'Xóa',
-        'approve' => 'Duyệt',
+        'view'     => 'Xem',
+        'add'      => 'Thêm',
+        'edit'     => 'Sửa',
+        'delete'   => 'Xóa',
+        'approve'  => 'Duyệt',
+        'complete' => 'Hoàn thành',
     ];
 
     $grouped = [];

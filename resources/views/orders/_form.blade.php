@@ -36,7 +36,7 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label font-semibold text-xs text-neutral-500 uppercase tracking-wider mb-2 block">Khách hàng</label>
-                                <select name="customer_id" class="form-select rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500" onchange="fillCustomerInfo(this.value)">
+                                <select name="customer_id" id="customer-select" class="" onchange="fillCustomerInfo(this.value)">
                                     <option value="">-- Chọn khách hàng --</option>
                                     @foreach(\App\Models\Customer::all() as $customer)
                                     <option value="{{ $customer->id }}" {{ isset($acrylicOrder) && $acrylicOrder?->customer_id == $customer->id ? 'selected' : '' }}>{{ $customer->customer_code }} - {{ $customer->name }}</option>
@@ -293,6 +293,18 @@ function deleteAttachment(index, imagePath) {
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize tom-select for existing product code selects
     if (typeof TomSelect !== 'undefined') {
+        const customerSelect = document.getElementById('customer-select');
+        if (customerSelect) {
+            const customerTomSelect = new TomSelect(customerSelect, {
+                allowEmptyOption: true,
+                placeholder: '-- Chọn khách hàng --',
+                maxOptions: null
+            });
+            customerTomSelect.on('change', function(value) {
+                fillCustomerInfo(value);
+            });
+        }
+
         document.querySelectorAll('.tom-select-product').forEach(function(element) {
             new TomSelect(element, {
                 allowEmptyOption: true,
