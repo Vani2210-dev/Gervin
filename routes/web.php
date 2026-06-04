@@ -248,13 +248,10 @@ Route::middleware(['auth'])->prefix('processes')->name('processes.')->group(func
     Route::get('/cnc', [ManufactureStepController::class, 'cnc'])->name('cnc');
     Route::post('/cnc/complete', [ManufactureStepController::class, 'completeCnc'])->name('cnc.complete');
     Route::get('/pressing', [ManufactureStepController::class, 'pressing'])->name('pressing');
-    Route::post('/pressing/complete', [ManufactureStepController::class, 'completePressing'])->name('pressing.complete');
     Route::get('/edge-banding', [ManufactureStepController::class, 'edgeBanding'])->name('edge-banding');
     Route::post('/edge-banding/complete', [ManufactureStepController::class, 'completeEdgeBanding'])->name('edge-banding.complete');
     Route::get('/finishing', [ManufactureStepController::class, 'finishing'])->name('finishing');
-    Route::post('/finishing/complete', [ManufactureStepController::class, 'completeFinishing'])->name('finishing.complete');
     Route::get('/qc', [ManufactureStepController::class, 'qc'])->name('qc');
-    Route::post('/qc/complete', [ManufactureStepController::class, 'completeQc'])->name('qc.complete');
     Route::get('/packing', [ManufactureStepController::class, 'packing'])->name('packing');
     Route::get('/shipped', [ManufactureStepController::class, 'shipped'])->name('shipped');
 });

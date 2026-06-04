@@ -86,16 +86,277 @@
         border-color: #3b82f6 !important;
         box-shadow: 0 0 0 1px #3b82f6 !important;
     }
+
+    .order-entry-card:not(.is-table-view) .overflow-x-auto {
+        overflow: visible !important;
+    }
+    .order-entry-card:not(.is-table-view) table {
+        display: block;
+        min-width: 0 !important;
+        border: 0 !important;
+    }
+    .order-entry-card:not(.is-table-view) thead {
+        display: none;
+    }
+    .order-entry-card:not(.is-table-view) tbody.supply-items-container {
+        display: grid;
+        gap: 1rem;
+    }
+    .order-entry-card:not(.is-table-view) tr.order-item-row {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 1rem 1.25rem;
+        padding: 1.25rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.75rem;
+        background: #fff;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td {
+        display: block;
+        width: auto !important;
+        min-width: 0 !important;
+        max-width: none !important;
+        padding: 0 !important;
+        border: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        position: static !important;
+    }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td::before {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: #64748b;
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+    .order-entry-card:not(.is-table-view) tr.order-item-row input,
+    .order-entry-card:not(.is-table-view) tr.order-item-row select,
+    .order-entry-card:not(.is-table-view) tr.order-item-row textarea {
+        width: 100% !important;
+        height: 42px !important;
+        min-height: 42px !important;
+        padding: 0.5rem 0.75rem !important;
+        font-size: 0.875rem !important;
+        line-height: 1.25rem !important;
+        text-align: left !important;
+    }
+    .order-entry-card:not(.is-table-view) tr.order-item-row textarea {
+        height: auto !important;
+    }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:first-child,
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:last-child {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+    }
+    .order-entry-card:not(.is-table-view) .order-supply-row > .flex.items-center.justify-between {
+        align-items: flex-start;
+        flex-wrap: wrap;
+    }
+    .order-entry-card:not(.is-table-view) .order-supply-row > .flex.items-center.justify-between > .flex.items-center.gap-3 {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1rem;
+        flex: 1 1 720px;
+        align-items: end;
+    }
+    .order-entry-card:not(.is-table-view) .order-supply-row > .flex.items-center.justify-between > .flex.items-center.gap-3::before {
+        content: "Thông tin vật tư";
+        grid-column: 1 / -1;
+        color: #64748b;
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+    .order-entry-card:not(.is-table-view) .order-supply-row > .flex.items-center.justify-between > .flex.items-center.gap-3 > .p-1\.5 {
+        display: none;
+    }
+    .order-entry-card:not(.is-table-view) .order-supply-row > .flex.items-center.justify-between > .flex.items-center.gap-2 {
+        align-self: flex-end;
+    }
+    .order-entry-card:not(.is-table-view) .order-supply-row > .flex.items-center.justify-between input {
+        width: 100% !important;
+        height: 42px !important;
+        font-size: 0.875rem !important;
+    }
+    .order-entry-card:not(.is-table-view) .order-input-layout {
+        display: grid !important;
+        gap: 1rem;
+        overflow: visible !important;
+    }
+    .order-entry-card:not(.is-table-view) .order-input-layout table {
+        display: none !important;
+    }
+    .order-entry-card:not(.is-table-view) .supply-items-container.order-input-rows {
+        display: grid;
+        gap: 1rem;
+    }
+    .order-entry-card:not(.is-table-view) .order-item-row.order-form-row {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 1rem 1.25rem;
+        padding: 1.25rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.75rem;
+        background: #fff;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+    .order-entry-card:not(.is-table-view) .order-form-field {
+        display: block;
+        min-width: 0;
+    }
+    .order-entry-card:not(.is-table-view) .order-form-section {
+        grid-column: 1 / -1;
+        display: grid;
+        gap: 1rem 1.25rem;
+    }
+    .order-entry-card:not(.is-table-view) .order-form-section--1 {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .order-entry-card:not(.is-table-view) .order-form-section--2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .order-entry-card:not(.is-table-view) .order-form-section--3 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .order-entry-card:not(.is-table-view) .order-form-section--4 {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+    .order-entry-card:not(.is-table-view) .order-form-field__label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: #64748b;
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+    .order-entry-card:not(.is-table-view) .order-form-field input,
+    .order-entry-card:not(.is-table-view) .order-form-field select,
+    .order-entry-card:not(.is-table-view) .order-form-field textarea {
+        width: 100% !important;
+        height: 42px !important;
+        min-height: 42px !important;
+        padding: 0.5rem 0.75rem !important;
+        font-size: 0.875rem !important;
+        line-height: 1.25rem !important;
+        text-align: left !important;
+    }
+    .order-entry-card:not(.is-table-view) .order-form-field--action {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+    }
+    .order-entry-card:not(.is-table-view) .order-form-row__header {
+        grid-column: 1 / -1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    .order-entry-card:not(.is-table-view) .order-form-row__badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        border-radius: 999px;
+        background: #eff6ff;
+        color: #2563eb;
+        padding: 0.375rem 0.75rem;
+        font-size: 0.8125rem;
+        font-weight: 700;
+    }
+    .order-entry-card:not(.is-table-view) .order-form-row__actions {
+        display: inline-flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 0.5rem;
+    }
+    .order-entry-card:not(.is-table-view) .order-form-row__actions > button,
+    .order-entry-card:not(.is-table-view) .order-form-row__quick-actions button {
+        width: 2rem;
+        height: 2rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0.5rem;
+        background: #f8fafc;
+    }
+    .order-entry-card:not(.is-table-view) .order-form-row__quick-actions {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(1)::before { content: "STT"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(2)::before { content: "Mã SP"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(3)::before { content: "Tên sản phẩm"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(4)::before { content: "Chiều mở cánh"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(5)::before { content: "Màu nhôm"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(6)::before { content: "Màu kính"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(7)::before { content: "Dài"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(8)::before { content: "Rộng"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(9)::before { content: "Đơn vị"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(10)::before { content: "Số lượng cánh"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(11)::before { content: "Khối lượng (m2)"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(12)::before { content: "Đơn giá"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(13)::before { content: "Thành tiền"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(14)::before { content: "Ghi chú"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(15)::before { content: "Hành động"; }
+    .order-entry-card .order-preview-table-wrap {
+        display: none;
+    }
+    .order-entry-card.is-table-view .order-input-layout {
+        display: none !important;
+    }
+    .order-entry-card.is-table-view .order-preview-table-wrap {
+        display: block;
+    }
+    .order-entry-card.is-table-view .order-table-form-action {
+        display: none !important;
+    }
+    .order-preview-table td {
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+    .order-entry-card:not(.is-table-view) .order-form-row--focus {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, .16), 0 12px 24px rgba(15, 23, 42, .08);
+    }
+    @media (max-width: 1199px) {
+        .order-entry-card:not(.is-table-view) tr.order-item-row,
+        .order-entry-card:not(.is-table-view) .order-item-row.order-form-row {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+    @media (max-width: 767px) {
+        .order-entry-card:not(.is-table-view) tr.order-item-row,
+        .order-entry-card:not(.is-table-view) .order-item-row.order-form-row,
+        .order-entry-card:not(.is-table-view) .order-supply-row > .flex.items-center.justify-between > .flex.items-center.gap-3,
+        .order-entry-card:not(.is-table-view) .order-form-section {
+            grid-template-columns: 1fr;
+        }
+    }
 </style>
-<div class="bg-white border border-neutral-200 rounded-xl p-6 shadow-sm">
+<div class="bg-white border border-neutral-200 rounded-xl p-6 shadow-sm order-entry-card">
     <div class="flex items-center justify-between border-b border-neutral-100 pb-4 mb-5">
         <div class="flex items-center gap-2">
             <iconify-icon icon="lucide:package-open" class="text-xl text-primary-500"></iconify-icon>
             <h6 class="font-bold text-base text-neutral-800 m-0">Danh sách Vật tư & Sản phẩm (Kính)</h6>
         </div>
-        <button type="button" onclick="addGlassOrderSupply()" class="btn btn-sm btn-primary rounded-lg flex items-center gap-1">
-            <iconify-icon icon="lucide:plus" class="text-lg"></iconify-icon> Thêm vật tư
-        </button>
+        <div class="flex items-center gap-2">
+            <button type="button" onclick="toggleOrderTableView(this)" class="btn btn-sm bg-neutral-100 hover:bg-neutral-200 text-neutral-700 rounded-lg flex items-center gap-1">
+                <iconify-icon icon="lucide:table-2" class="text-lg"></iconify-icon>
+                <span class="order-table-view-label">Xem dạng bảng</span>
+            </button>
+            <button type="button" onclick="addGlassOrderSupply()" class="order-table-form-action btn btn-sm btn-primary rounded-lg flex items-center gap-1">
+                <iconify-icon icon="lucide:plus" class="text-lg"></iconify-icon> Thêm vật tư
+            </button>
+        </div>
     </div>
     <div id="glass-supplies-container" class="space-y-6">
         @if(isset($acrylicOrder) && $acrylicOrder->type == 'glass' && $acrylicOrder->supplies->count() > 0)
@@ -113,10 +374,10 @@
                         <input type="number" name="supplies[{{ $supplyIndex }}][quantity]" class="form-control form-control-sm rounded-lg w-24 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="SL" min="0" step="0.01" value="{{ $supply->quantity ?? 0 }}">
                     </div>
                     <div class="flex items-center gap-2">
-                        <button type="button" onclick="addGlassOrderItem(this)" class="btn btn-sm btn-outline-primary rounded-lg flex items-center gap-1">
+                        <button type="button" onclick="addGlassOrderItem(this)" class="order-table-form-action btn btn-sm btn-outline-primary rounded-lg flex items-center gap-1">
                             <iconify-icon icon="lucide:plus" class="text-sm"></iconify-icon> Thêm sản phẩm
                         </button>
-                        <button type="button" onclick="this.closest('.order-supply-row').remove()" class="text-neutral-400 hover:text-danger-500 transition-colors p-1 flex items-center justify-center" title="Xóa vật tư này">
+                        <button type="button" onclick="this.closest('.order-supply-row').remove()" class="order-table-form-action text-neutral-400 hover:text-danger-500 transition-colors p-1 flex items-center justify-center" title="Xóa vật tư này">
                             <iconify-icon icon="lucide:trash-2" class="text-lg"></iconify-icon>
                         </button>
                     </div>
@@ -233,10 +494,10 @@ function addGlassOrderSupply() {
                 <input type="number" name="supplies[${glassSupplyIndex}][quantity]" class="form-control form-control-sm rounded-lg w-24 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="SL" min="0" step="0.01" value="0">
             </div>
             <div class="flex items-center gap-2">
-                <button type="button" onclick="addGlassOrderItem(this)" class="btn btn-sm btn-outline-primary rounded-lg flex items-center gap-1">
+                <button type="button" onclick="addGlassOrderItem(this)" class="order-table-form-action btn btn-sm btn-outline-primary rounded-lg flex items-center gap-1">
                     <iconify-icon icon="lucide:plus" class="text-sm"></iconify-icon> Thêm sản phẩm
                 </button>
-                <button type="button" onclick="this.closest('.order-supply-row').remove()" class="text-neutral-400 hover:text-danger-500 transition-colors p-1 flex items-center justify-center" title="Xóa vật tư này">
+                <button type="button" onclick="this.closest('.order-supply-row').remove()" class="order-table-form-action text-neutral-400 hover:text-danger-500 transition-colors p-1 flex items-center justify-center" title="Xóa vật tư này">
                     <iconify-icon icon="lucide:trash-2" class="text-lg"></iconify-icon>
                 </button>
             </div>
@@ -281,6 +542,7 @@ function addGlassOrderSupply() {
         addGlassOrderItem(addProductBtn);
     }
 
+    ensureGlassFormLayout(newSupply);
     glassSupplyIndex++;
 }
 
@@ -366,7 +628,8 @@ function addGlassOrderItem(button) {
             </div>
         </td>
     `;
-    container.appendChild(newItem);
+    const rowToAppend = container.classList.contains('order-input-rows') ? buildGlassFormRow(newItem) : newItem;
+    container.appendChild(rowToAppend);
     
     const newRow = container.lastElementChild;
     bindGlassRowEvents(newRow);
@@ -514,12 +777,346 @@ function calculateGlassTotalPrice(row, sourceEvent) {
     updateOrderSummary();
 }
 
+const glassPreviewLabels = [
+    'STT',
+    'Mã SP',
+    'Tên sản phẩm',
+    'Chiều mở cánh',
+    'Màu nhôm',
+    'Màu kính',
+    'Dài',
+    'Rộng',
+    'Đơn vị',
+    'Số lượng cánh',
+    'Khối lượng (m2)',
+    'Đơn giá',
+    'Thành tiền',
+    'Ghi chú',
+    'Hành động',
+];
+
+function getOrderPreviewFieldValue(fieldWrap) {
+    const field = fieldWrap.querySelector('input, select, textarea');
+    if (!field) {
+        return fieldWrap.textContent.trim() || '-';
+    }
+
+    if (field.tagName === 'SELECT') {
+        return field.options[field.selectedIndex]?.text || field.value || '-';
+    }
+
+    return field.value || '-';
+}
+
+function getGlassFieldLabel(index) {
+    return glassPreviewLabels[index] || 'Thông tin';
+}
+
+function getGlassFormLabel(index) {
+    switch (index) {
+        case 0: return 'STT';
+        case 1: return 'Mã SP';
+        case 2: return 'Tên sản phẩm';
+        case 3: return 'Chiều mở cánh';
+        case 4: return 'Màu nhôm';
+        case 5: return 'Màu kính';
+        case 6: return 'Dài (mm)';
+        case 7: return 'Rộng (mm)';
+        case 8: return 'Đơn vị';
+        case 9: return 'Số lượng cánh';
+        case 10: return 'Khối lượng (m2)';
+        case 11: return 'Đơn giá';
+        case 12: return 'Thành tiền';
+        case 13: return 'Ghi chú';
+        case 14: return 'Hành động';
+        default: return 'Thông tin';
+    }
+}
+
+function updateGlassFormSectionClass(section) {
+    section.classList.remove('order-form-section--1', 'order-form-section--2', 'order-form-section--3', 'order-form-section--4');
+    section.classList.add(`order-form-section--${section.children.length}`);
+}
+
+function getOrCreateGlassFormSection(formRow) {
+    let section = formRow._orderFormCurrentSection;
+    if (!section || section.children.length >= 4 || formRow.lastElementChild !== section) {
+        section = document.createElement('div');
+        section.className = 'order-form-section';
+        formRow.appendChild(section);
+        formRow._orderFormCurrentSection = section;
+    }
+
+    return section;
+}
+
+function appendGlassFieldToSection(formRow, fieldWrap) {
+    const section = getOrCreateGlassFormSection(formRow);
+    section.appendChild(fieldWrap);
+    updateGlassFormSectionClass(section);
+}
+
+function appendGlassFormField(formRow, fieldWrap, index) {
+    appendGlassFieldToSection(formRow, fieldWrap);
+}
+
+function buildGlassFormRow(sourceRow) {
+    if (sourceRow.classList.contains('order-form-row')) {
+        return sourceRow;
+    }
+
+    const formRow = document.createElement('div');
+    formRow.className = 'order-item-row order-form-row';
+
+    if (sourceRow.dataset.itemId) {
+        formRow.dataset.itemId = sourceRow.dataset.itemId;
+    }
+
+    const header = document.createElement('div');
+    header.className = 'order-form-row__header';
+    const badge = document.createElement('div');
+    badge.className = 'order-form-row__badge';
+    const actions = document.createElement('div');
+    actions.className = 'order-form-row__actions';
+    actions.appendChild(buildGlassFormQuickActions());
+    header.appendChild(badge);
+    header.appendChild(actions);
+    formRow.appendChild(header);
+
+    const cells = Array.from(sourceRow.querySelectorAll('td'));
+    cells.forEach((cell, index) => {
+        if (index === 0) {
+            badge.appendChild(document.createTextNode('Sản phẩm '));
+            while (cell.firstChild) {
+                badge.appendChild(cell.firstChild);
+            }
+            return;
+        }
+
+        if (index === cells.length - 1) {
+            while (cell.firstChild) {
+                actions.appendChild(cell.firstChild);
+            }
+            return;
+        }
+
+        const fieldWrap = document.createElement('div');
+        fieldWrap.className = 'order-form-field';
+        fieldWrap.dataset.previewLabel = getGlassFormLabel(index);
+
+        const label = document.createElement('label');
+        label.className = 'order-form-field__label';
+        label.textContent = getGlassFormLabel(index);
+        fieldWrap.appendChild(label);
+
+        while (cell.firstChild) {
+            fieldWrap.appendChild(cell.firstChild);
+        }
+
+        appendGlassFormField(formRow, fieldWrap, index);
+    });
+
+    return formRow;
+}
+
+function buildGlassFormQuickActions() {
+    const actionWrap = document.createElement('div');
+    actionWrap.className = 'order-form-row__quick-actions';
+
+    const tableButton = document.createElement('button');
+    tableButton.type = 'button';
+    tableButton.className = 'js-order-table-view text-neutral-400 hover:text-primary-500 transition-colors p-1';
+    tableButton.title = 'Xem dạng bảng';
+
+    const tableIcon = document.createElement('iconify-icon');
+    tableIcon.setAttribute('icon', 'lucide:table-2');
+    tableIcon.className = 'text-base';
+
+    tableButton.appendChild(tableIcon);
+
+    const addButton = document.createElement('button');
+    addButton.type = 'button';
+    addButton.className = 'js-order-add-item text-neutral-400 hover:text-primary-500 transition-colors p-1';
+    addButton.title = 'Thêm sản phẩm';
+
+    const addIcon = document.createElement('iconify-icon');
+    addIcon.setAttribute('icon', 'lucide:plus');
+    addIcon.className = 'text-base';
+
+    addButton.appendChild(addIcon);
+
+    actionWrap.append(tableButton, addButton);
+    return actionWrap;
+}
+
+document.addEventListener('click', function(e) {
+    const tableButton = e.target.closest('.js-order-table-view');
+    if (tableButton) {
+        e.preventDefault();
+        toggleOrderTableView(tableButton);
+        return;
+    }
+
+    const addButton = e.target.closest('.js-order-add-item');
+    if (addButton) {
+        e.preventDefault();
+        addGlassOrderItem(addButton);
+    }
+});
+
+function ensureGlassFormLayout(supplyRow) {
+    const inputWrap = supplyRow.querySelector('.overflow-x-auto:not(.order-preview-table-wrap), .order-input-layout');
+    if (!inputWrap) return null;
+
+    inputWrap.classList.add('order-input-layout');
+
+    const currentContainer = inputWrap.querySelector('.supply-items-container');
+    if (!currentContainer) return null;
+
+    if (currentContainer.classList.contains('order-input-rows')) {
+        return currentContainer;
+    }
+
+    const formContainer = document.createElement('div');
+    formContainer.className = 'supply-items-container order-input-rows';
+    formContainer.dataset.supplyIndex = currentContainer.dataset.supplyIndex || '0';
+
+    currentContainer.querySelectorAll('.order-item-row').forEach(row => {
+        formContainer.appendChild(buildGlassFormRow(row));
+    });
+
+    currentContainer.classList.remove('supply-items-container');
+    currentContainer.dataset.sourceTableBody = 'true';
+    currentContainer.parentElement.insertAdjacentElement('afterend', formContainer);
+
+    return formContainer;
+}
+
+function ensureAllGlassFormLayouts() {
+    document.querySelectorAll('#glass-supplies-container .order-supply-row').forEach(supplyRow => {
+        ensureGlassFormLayout(supplyRow);
+    });
+}
+
+function refreshOrderPreviewTables(card) {
+    card.querySelectorAll('.order-supply-row').forEach(supplyRow => {
+        const inputWrap = supplyRow.querySelector('.order-input-layout, .overflow-x-auto:not(.order-preview-table-wrap)');
+        if (!inputWrap) return;
+
+        const formContainer = ensureGlassFormLayout(supplyRow);
+
+        let previewWrap = supplyRow.querySelector('.order-preview-table-wrap');
+        if (!previewWrap) {
+            previewWrap = document.createElement('div');
+            previewWrap.className = 'order-preview-table-wrap overflow-x-auto pb-3';
+            inputWrap.insertAdjacentElement('afterend', previewWrap);
+        }
+
+        const sourceTable = inputWrap.querySelector('table');
+        const sourceHead = sourceTable?.querySelector('thead');
+        const sourceRows = formContainer ? formContainer.querySelectorAll('.order-item-row') : [];
+        if (!sourceTable || !sourceHead) return;
+
+        const previewTable = document.createElement('table');
+        previewTable.className = `${sourceTable.className} order-preview-table`;
+        const previewHead = sourceHead.cloneNode(true);
+        const actionHeader = previewHead.querySelector('tr:first-child th:last-child');
+        if (actionHeader) {
+            actionHeader.textContent = 'Hành động';
+        }
+        previewTable.appendChild(previewHead);
+
+        const previewBody = document.createElement('tbody');
+        sourceRows.forEach(row => {
+            const targetId = row.dataset.previewTargetId || `order-form-row-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+            row.dataset.previewTargetId = targetId;
+            const previewRow = document.createElement('tr');
+            previewRow.className = 'order-preview-row';
+
+            const indexCell = document.createElement('td');
+            indexCell.className = 'border border-neutral-200 text-center';
+            indexCell.textContent = row.querySelector('.row-index')?.textContent?.trim() || '-';
+            previewRow.appendChild(indexCell);
+
+            row.querySelectorAll('.order-form-field').forEach(field => {
+                const previewCell = document.createElement('td');
+                previewCell.className = 'border border-neutral-200';
+                previewCell.textContent = getOrderPreviewFieldValue(field);
+                previewRow.appendChild(previewCell);
+            });
+
+            const actionCell = document.createElement('td');
+            actionCell.className = 'border border-neutral-200 text-center';
+            const actionButton = buildPreviewJumpButton(targetId);
+            actionCell.appendChild(actionButton);
+            previewRow.appendChild(actionCell);
+
+            previewBody.appendChild(previewRow);
+        });
+
+        previewTable.appendChild(previewBody);
+        previewWrap.replaceChildren(previewTable);
+    });
+}
+
+function buildPreviewJumpButton(targetId) {
+    const actionButton = document.createElement('button');
+    actionButton.type = 'button';
+    actionButton.className = 'btn border border-primary-600 text-primary-600 hover:bg-primary-600 hover:text-white rounded-lg w-9 h-9 p-0 inline-flex items-center justify-center';
+    actionButton.dataset.previewTargetId = targetId;
+    actionButton.title = 'Đi tới dòng nhập liệu';
+    actionButton.onclick = () => jumpToOrderFormRow(actionButton);
+
+    const icon = document.createElement('iconify-icon');
+    icon.setAttribute('icon', 'lucide:edit-3');
+    icon.className = 'text-base';
+
+    actionButton.appendChild(icon);
+    return actionButton;
+}
+
+function jumpToOrderFormRow(button) {
+    const card = button.closest('.order-entry-card');
+    if (!card) return;
+
+    const targetId = button.dataset.previewTargetId;
+    const targetRow = targetId ? card.querySelector(`[data-preview-target-id="${targetId}"]`) : null;
+    if (!targetRow) return;
+
+    card.classList.remove('is-table-view');
+
+    card.querySelectorAll('.order-table-view-label').forEach(label => {
+        label.textContent = 'Xem dạng bảng';
+    });
+
+    targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    targetRow.classList.add('order-form-row--focus');
+    window.setTimeout(() => targetRow.classList.remove('order-form-row--focus'), 1600);
+}
+
+function toggleOrderTableView(button) {
+    const card = button.closest('.order-entry-card');
+    if (!card) return;
+
+    const nextTableView = !card.classList.contains('is-table-view');
+    if (nextTableView) {
+        refreshOrderPreviewTables(card);
+    }
+
+    card.classList.toggle('is-table-view', nextTableView);
+    card.querySelectorAll('.order-table-view-label').forEach(label => {
+        label.textContent = nextTableView ? 'Ẩn dạng bảng' : 'Xem dạng bảng';
+    });
+}
+
 // Initial setup for Glass-specific rows if DOM loaded
 document.addEventListener('DOMContentLoaded', function() {
     const container = document.getElementById('glass-supplies-container');
     if (container && container.querySelectorAll('.order-supply-row').length === 0) {
         addGlassOrderSupply();
     }
+
+    ensureAllGlassFormLayouts();
 
     document.querySelectorAll('#glass-supplies-container .order-item-row').forEach(row => {
         bindGlassRowEvents(row);

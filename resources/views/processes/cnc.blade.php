@@ -178,12 +178,12 @@
                             </td>
                             <td class="py-3 px-4">
                                 @if($item->action === 'quay lại cnc')
-                                <span class="text-xs px-2.5 py-1 rounded-full font-semibold inline-flex items-center gap-1" style="background-color: rgba(249, 115, 22, 0.1); color: rgb(234, 88, 12); border: 1px solid rgba(249, 115, 22, 0.3);">
+                                <span class="bg-amber-100 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50 text-xs px-2.5 py-1 rounded-full font-semibold inline-flex items-center gap-1">
                                     <iconify-icon icon="lucide:refresh-cw" class="text-xs"></iconify-icon>
                                     QUAY LẠI
                                 </span>
                                 @else
-                                <span class="text-xs px-2.5 py-1 rounded-full font-semibold inline-flex items-center gap-1" style="background-color: rgba(16, 185, 129, 0.1); color: rgb(5, 150, 105); border: 1px solid rgba(16, 185, 129, 0.3);">
+                                <span class="bg-emerald-100 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50 text-xs px-2.5 py-1 rounded-full font-semibold inline-flex items-center gap-1">
                                     <iconify-icon icon="lucide:check-circle" class="text-xs"></iconify-icon>
                                     HOÀN THÀNH
                                 </span>
@@ -452,11 +452,11 @@
                     if (noHistoryRow) noHistoryRow.remove();
                     
                     const actionBadge = res.action_type === "rollback" 
-                        ? `<span class="text-xs px-2.5 py-1 rounded-full font-semibold inline-flex items-center gap-1" style="background-color: rgba(249, 115, 22, 0.1); color: rgb(234, 88, 12); border: 1px solid rgba(249, 115, 22, 0.3);">
+                        ? `<span class="bg-amber-100 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50 text-xs px-2.5 py-1 rounded-full font-semibold inline-flex items-center gap-1">
                                 <iconify-icon icon="lucide:refresh-cw" class="text-xs"></iconify-icon>
                                 QUAY LẠI
                            </span>`
-                        : `<span class="text-xs px-2.5 py-1 rounded-full font-semibold inline-flex items-center gap-1" style="background-color: rgba(16, 185, 129, 0.1); color: rgb(5, 150, 105); border: 1px solid rgba(16, 185, 129, 0.3);">
+                        : `<span class="bg-emerald-100 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50 text-xs px-2.5 py-1 rounded-full font-semibold inline-flex items-center gap-1">
                                 <iconify-icon icon="lucide:check-circle" class="text-xs"></iconify-icon>
                                 HOÀN THÀNH
                            </span>`;
