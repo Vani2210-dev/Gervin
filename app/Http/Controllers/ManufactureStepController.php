@@ -3,101 +3,38 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\AcrylicOrderItem;
-use App\Models\GlassOrderItem;
-use App\Models\MinLateOrderItem;
-use App\Models\AcrylicOrderItemCode;
-use App\Models\GlassOrderItemCode;
-use App\Models\MinLateOrderItemCode;
-use Illuminate\Support\Facades\Auth;
+use App\Services\CNCService;
+use App\Services\PressingService;
+use App\Services\EdgeBandingService;
+use App\Services\FinishingService;
+use App\Services\QCService;
 
 class ManufactureStepController extends Controller
 {
-    public function __construct()
-    {
+    protected $cncService;
+    protected $pressingService;
+    protected $edgeBandingService;
+    protected $finishingService;
+    protected $qcService;
+
+    public function __construct(
+        CNCService $cncService,
+        PressingService $pressingService,
+        EdgeBandingService $edgeBandingService,
+        FinishingService $finishingService,
+        QCService $qcService
+    ) {
         $this->middleware('auth');
+        $this->cncService = $cncService;
+        $this->pressingService = $pressingService;
+        $this->edgeBandingService = $edgeBandingService;
+        $this->finishingService = $finishingService;
+        $this->qcService = $qcService;
     }
 
     public function cnc()
     {
-        $acrylicCodes = AcrylicOrderItemCode::whereNotNull('status')
-            ->with('acrylicOrderItem')
-            ->get();
-        $glassCodes = GlassOrderItemCode::whereNotNull('status')
-            ->with('glassOrderItem')
-            ->get();
-        $minLateCodes = MinLateOrderItemCode::whereNotNull('status')
-            ->with('minLateOrderItem')
-            ->get();
-
-        $history = collect();
-
-        foreach ($acrylicCodes as $code) {
-            $item = $code->acrylicOrderItem;
-            if (!$item) continue;
-            $statusLogs = $code->status ?? [];
-            
-            foreach ($statusLogs as $log) {
-                if (isset($log['action']) && in_array($log['action'], ['hoàn thành cnc', 'quay lại cnc'])) {
-                    $history->push((object)[
-                        'product_code' => $code->product_id,
-                        'product_name' => $item->product_name ?? '—',
-                        'type' => 'acrylic',
-                        'action' => $log['action'],
-                        'operator' => $log['operator'] ?? 'Hệ thống',
-                        'time' => $log['time'] ?? $code->updated_at->toDateTimeString(),
-                        'notes' => $log['notes'] ?? $item->notes ?? '',
-                        'item_id' => $item->id
-                    ]);
-                }
-            }
-        }
-
-        foreach ($glassCodes as $code) {
-            $item = $code->glassOrderItem;
-            if (!$item) continue;
-            $statusLogs = $code->status ?? [];
-            
-            foreach ($statusLogs as $log) {
-                if (isset($log['action']) && in_array($log['action'], ['hoàn thành cnc', 'quay lại cnc'])) {
-                    $history->push((object)[
-                        'product_code' => $code->product_id,
-                        'product_name' => $item->product_name ?? '—',
-                        'type' => 'glass',
-                        'action' => $log['action'],
-                        'operator' => $log['operator'] ?? 'Hệ thống',
-                        'time' => $log['time'] ?? $code->updated_at->toDateTimeString(),
-                        'notes' => $log['notes'] ?? $item->notes ?? '',
-                        'item_id' => $item->id
-                    ]);
-                }
-            }
-        }
-
-        foreach ($minLateCodes as $code) {
-            $item = $code->minLateOrderItem;
-            if (!$item) continue;
-            $statusLogs = $code->status ?? [];
-            
-            foreach ($statusLogs as $log) {
-                if (isset($log['action']) && in_array($log['action'], ['hoàn thành cnc', 'quay lại cnc'])) {
-                    $history->push((object)[
-                        'product_code' => $code->product_id,
-                        'product_name' => $item->product_name ?? $item->name ?? '—',
-                        'type' => 'min_late',
-                        'action' => $log['action'],
-                        'operator' => $log['operator'] ?? 'Hệ thống',
-                        'time' => $log['time'] ?? $code->updated_at->toDateTimeString(),
-                        'notes' => $log['notes'] ?? $item->notes ?? '',
-                        'item_id' => $item->id
-                    ]);
-                }
-            }
-        }
-
-        // Sort history by time descending
-        $history = $history->sortByDesc('time')->values();
-
+        $history = $this->cncService->getHistory();
         return view('processes.cnc', compact('history'));
     }
 
@@ -110,226 +47,43 @@ class ManufactureStepController extends Controller
             'cnc_machine' => 'nullable|string',
         ]);
 
-        $codeStr = trim($request->product_code);
-        $notes = $request->notes;
-        $actionType = $request->input('action_type', 'complete');
-        $cncMachine = $request->input('cnc_machine');
-
-        // Search in Acrylic
-        $codeRecord = AcrylicOrderItemCode::where('product_id', $codeStr)->first();
-        $type = 'acrylic';
-        $nameField = 'product_name';
-        $item = null;
-
-        if ($codeRecord) {
-            $item = $codeRecord->acrylicOrderItem;
-        } else {
-            // Search in Glass
-            $codeRecord = GlassOrderItemCode::where('product_id', $codeStr)->first();
-            $type = 'glass';
-            $nameField = 'product_name';
-            if ($codeRecord) {
-                $item = $codeRecord->glassOrderItem;
-            }
-        }
-
-        if (!$codeRecord) {
-            // Search in Min Late
-            $codeRecord = MinLateOrderItemCode::where('product_id', $codeStr)->first();
-            $type = 'min_late';
-            $nameField = 'name';
-            if ($codeRecord) {
-                $item = $codeRecord->minLateOrderItem;
-            }
-        }
-
-        if (!$codeRecord || !$item) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Không tìm thấy sản phẩm với mã định danh: ' . $codeStr
-            ], 404);
-        }
-
-        $currentStatus = $codeRecord->status ?? [];
-        $logTime = now()->toDateTimeString();
-        $operatorName = Auth::user()->name ?? 'Hệ thống';
-
-        // 1. Find the latest CNC stage log (either 'hoàn thành cnc' or 'quay lại cnc')
-        $latestCncLog = null;
-        for ($i = count($currentStatus) - 1; $i >= 0; $i--) {
-            $log = $currentStatus[$i];
-            if (isset($log['action']) && in_array($log['action'], ['hoàn thành cnc', 'quay lại cnc'])) {
-                $latestCncLog = $log;
-                break;
-            }
-        }
-
-        // 2. Find the index of the latest 'hoàn thành cnc' log (for truncation on rollback)
-        $lastCompletedCncIndex = -1;
-        for ($i = count($currentStatus) - 1; $i >= 0; $i--) {
-            $log = $currentStatus[$i];
-            if (isset($log['action']) && $log['action'] === 'hoàn thành cnc') {
-                $lastCompletedCncIndex = $i;
-                break;
-            }
-        }
-
-        if ($actionType === 'rollback') {
-            if (!$latestCncLog || $latestCncLog['action'] !== 'hoàn thành cnc' || $lastCompletedCncIndex === -1) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Sản phẩm này chưa ghi nhận hoàn thành CNC nên không thể quay lại.'
-                ], 400);
-            }
-
-            // Slice the status array to remove the CNC action and all logs after it
-            $currentStatus = array_slice($currentStatus, 0, $lastCompletedCncIndex);
-
-            // Record new rollback log
-            $newLog = [
-                'action' => 'quay lại cnc',
-                'operator' => $operatorName,
-                'operator_id' => Auth::id(),
-                'time' => $logTime,
-                'notes' => $notes,
-                'cnc_machine' => $cncMachine,
-            ];
-
-            $currentStatus[] = $newLog;
-            $codeRecord->status = $currentStatus;
-            $codeRecord->save();
-
-            $message = 'Đã hoàn tác (quay lại) công đoạn cắt CNC cho sản phẩm này.';
-        } else {
-            if ($latestCncLog && $latestCncLog['action'] === 'hoàn thành cnc') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Sản phẩm này đã được ghi nhận hoàn thành CNC trước đó.'
-                ], 400);
-            }
-
-            $newLog = [
-                'action' => 'hoàn thành cnc',
-                'operator' => $operatorName,
-                'operator_id' => Auth::id(),
-                'time' => $logTime,
-                'notes' => $notes,
-                'cnc_machine' => $cncMachine,
-            ];
-
-            $currentStatus[] = $newLog;
-            $codeRecord->status = $currentStatus;
-            $codeRecord->save();
-
-            // Also update notes on the item if complete
-            $item->notes = $notes;
-            $item->save();
-
-            $message = 'Xác nhận hoàn thành công đoạn cắt CNC thành công.';
-        }
-
-        $productName = $item->$nameField ?? '—';
+        $res = $this->cncService->completeOrRollback($request->all());
 
         return response()->json([
-            'success' => true,
-            'action_type' => $actionType,
-            'message' => $message,
-            'data' => [
-                'product_code' => $codeRecord->product_id,
-                'product_name' => $productName,
-                'type' => $type,
-                'operator' => $operatorName,
-                'time' => $logTime,
-                'notes' => $notes ?? ($actionType === 'complete' ? 'Hoàn thành CNC' : 'Quay lại CNC'),
-            ]
-        ]);
+            'success' => $res['success'],
+            'message' => $res['message'],
+            'action_type' => $res['action_type'] ?? null,
+            'data' => $res['data'] ?? null
+        ], $res['status_code']);
     }
 
     public function pressing()
     {
-        return view('processes.pressing');
+        $history = $this->pressingService->getHistory();
+        return view('processes.pressing', compact('history'));
+    }
+
+    public function completePressing(Request $request)
+    {
+        $request->validate([
+            'product_code' => 'required|string',
+            'notes' => 'nullable|string',
+            'action_type' => 'required|string|in:làm lệnh ép,xuất kho ván,ép đơn,ép dự trữ,rollback',
+        ]);
+
+        $res = $this->pressingService->completeOrRollback($request->all());
+
+        return response()->json([
+            'success' => $res['success'],
+            'message' => $res['message'],
+            'is_bulk' => $res['is_bulk'] ?? null,
+            'data' => $res['data'] ?? null
+        ], $res['status_code']);
     }
 
     public function edgeBanding()
     {
-        $acrylicCodes = AcrylicOrderItemCode::whereNotNull('status')
-            ->with('acrylicOrderItem')
-            ->get();
-        $glassCodes = GlassOrderItemCode::whereNotNull('status')
-            ->with('glassOrderItem')
-            ->get();
-        $minLateCodes = MinLateOrderItemCode::whereNotNull('status')
-            ->with('minLateOrderItem')
-            ->get();
-
-        $history = collect();
-
-        foreach ($acrylicCodes as $code) {
-            $item = $code->acrylicOrderItem;
-            if (!$item) continue;
-            $statusLogs = $code->status ?? [];
-            foreach ($statusLogs as $log) {
-                if (isset($log['action']) && in_array($log['action'], ['hoàn thành dán cạnh', 'quay lại dán cạnh'])) {
-                    $history->push((object)[
-                        'product_code' => $code->product_id,
-                        'product_name' => $item->product_name ?? '—',
-                        'type' => 'acrylic',
-                        'action' => $log['action'],
-                        'operator' => $log['operator'] ?? 'Hệ thống',
-                        'time' => $log['time'] ?? $code->updated_at->toDateTimeString(),
-                        'notes' => $log['notes'] ?? $item->notes ?? '',
-                        'edge_banding_length' => $log['edge_banding_length'] ?? 0,
-                        'item_id' => $item->id
-                    ]);
-                }
-            }
-        }
-
-        foreach ($glassCodes as $code) {
-            $item = $code->glassOrderItem;
-            if (!$item) continue;
-            $statusLogs = $code->status ?? [];
-            foreach ($statusLogs as $log) {
-                if (isset($log['action']) && in_array($log['action'], ['hoàn thành dán cạnh', 'quay lại dán cạnh'])) {
-                    $history->push((object)[
-                        'product_code' => $code->product_id,
-                        'product_name' => $item->product_name ?? '—',
-                        'type' => 'glass',
-                        'action' => $log['action'],
-                        'operator' => $log['operator'] ?? 'Hệ thống',
-                        'time' => $log['time'] ?? $code->updated_at->toDateTimeString(),
-                        'notes' => $log['notes'] ?? $item->notes ?? '',
-                        'edge_banding_length' => $log['edge_banding_length'] ?? 0,
-                        'item_id' => $item->id
-                    ]);
-                }
-            }
-        }
-
-        foreach ($minLateCodes as $code) {
-            $item = $code->minLateOrderItem;
-            if (!$item) continue;
-            $statusLogs = $code->status ?? [];
-            foreach ($statusLogs as $log) {
-                if (isset($log['action']) && in_array($log['action'], ['hoàn thành dán cạnh', 'quay lại dán cạnh'])) {
-                    $history->push((object)[
-                        'product_code' => $code->product_id,
-                        'product_name' => $item->product_name ?? $item->name ?? '—',
-                        'type' => 'min_late',
-                        'action' => $log['action'],
-                        'operator' => $log['operator'] ?? 'Hệ thống',
-                        'time' => $log['time'] ?? $code->updated_at->toDateTimeString(),
-                        'notes' => $log['notes'] ?? $item->notes ?? '',
-                        'edge_banding_length' => $log['edge_banding_length'] ?? 0,
-                        'item_id' => $item->id
-                    ]);
-                }
-            }
-        }
-
-        // Sort history by time descending
-        $history = $history->sortByDesc('time')->values();
-
+        $history = $this->edgeBandingService->getHistory();
         return view('processes.edge_banding', compact('history'));
     }
 
@@ -342,222 +96,19 @@ class ManufactureStepController extends Controller
             'action_type' => 'nullable|string|in:complete,rollback',
         ]);
 
-        $codeStr = trim($request->product_code);
-        $notes = $request->notes;
-        $length = $request->edge_banding_length;
-        $actionType = $request->input('action_type', 'complete');
-
-        // Search in Acrylic
-        $codeRecord = AcrylicOrderItemCode::where('product_id', $codeStr)->first();
-        $type = 'acrylic';
-        $nameField = 'product_name';
-        $item = null;
-
-        if ($codeRecord) {
-            $item = $codeRecord->acrylicOrderItem;
-        } else {
-            // Search in Glass
-            $codeRecord = GlassOrderItemCode::where('product_id', $codeStr)->first();
-            $type = 'glass';
-            $nameField = 'product_name';
-            if ($codeRecord) {
-                $item = $codeRecord->glassOrderItem;
-            }
-        }
-
-        if (!$codeRecord) {
-            // Search in Min Late
-            $codeRecord = MinLateOrderItemCode::where('product_id', $codeStr)->first();
-            $type = 'min_late';
-            $nameField = 'name';
-            if ($codeRecord) {
-                $item = $codeRecord->minLateOrderItem;
-            }
-        }
-
-        if (!$codeRecord || !$item) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Không tìm thấy sản phẩm với mã định danh: ' . $codeStr
-            ], 404);
-        }
-
-        $currentStatus = $codeRecord->status ?? [];
-        $logTime = now()->toDateTimeString();
-        $operatorName = Auth::user()->name ?? 'Hệ thống';
-
-        // 1. Find the latest Edge Banding stage log (either 'hoàn thành dán cạnh' or 'quay lại dán cạnh')
-        $latestEdgeLog = null;
-        for ($i = count($currentStatus) - 1; $i >= 0; $i--) {
-            $log = $currentStatus[$i];
-            if (isset($log['action']) && in_array($log['action'], ['hoàn thành dán cạnh', 'quay lại dán cạnh'])) {
-                $latestEdgeLog = $log;
-                break;
-            }
-        }
-
-        // 2. Find the index of the latest 'hoàn thành dán cạnh' log (for truncation on rollback)
-        $lastCompletedEdgeIndex = -1;
-        for ($i = count($currentStatus) - 1; $i >= 0; $i--) {
-            $log = $currentStatus[$i];
-            if (isset($log['action']) && $log['action'] === 'hoàn thành dán cạnh') {
-                $lastCompletedEdgeIndex = $i;
-                break;
-            }
-        }
-
-        if ($actionType === 'rollback') {
-            if (!$latestEdgeLog || $latestEdgeLog['action'] !== 'hoàn thành dán cạnh' || $lastCompletedEdgeIndex === -1) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Sản phẩm này chưa ghi nhận hoàn thành dán cạnh nên không thể quay lại.'
-                ], 400);
-            }
-
-            // Slice the status array to remove the completed edge banding action and all logs after it
-            $currentStatus = array_slice($currentStatus, 0, $lastCompletedEdgeIndex);
-
-            // Record new rollback log
-            $newLog = [
-                'action' => 'quay lại dán cạnh',
-                'operator' => $operatorName,
-                'operator_id' => Auth::id(),
-                'time' => $logTime,
-                'notes' => $notes,
-                'edge_banding_length' => $length ?? 0,
-            ];
-
-            $currentStatus[] = $newLog;
-            $codeRecord->status = $currentStatus;
-            $codeRecord->save();
-
-            $message = 'Đã hoàn tác (quay lại) công đoạn dán cạnh cho sản phẩm này.';
-        } else {
-            if ($latestEdgeLog && $latestEdgeLog['action'] === 'hoàn thành dán cạnh') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Sản phẩm này đã được ghi nhận hoàn thành dán cạnh trước đó.'
-                ], 400);
-            }
-
-            $newLog = [
-                'action' => 'hoàn thành dán cạnh',
-                'operator' => $operatorName,
-                'operator_id' => Auth::id(),
-                'time' => $logTime,
-                'notes' => $notes,
-                'edge_banding_length' => $length ?? 0,
-            ];
-
-            $currentStatus[] = $newLog;
-            $codeRecord->status = $currentStatus;
-            $codeRecord->save();
-
-            // Also update notes on the item if complete
-            $item->notes = $notes;
-            $item->save();
-
-            $message = 'Xác nhận hoàn thành công đoạn dán cạnh thành công.';
-        }
-
-        $productName = $item->$nameField ?? '—';
+        $res = $this->edgeBandingService->completeOrRollback($request->all());
 
         return response()->json([
-            'success' => true,
-            'action_type' => $actionType,
-            'message' => $message,
-            'data' => [
-                'product_code' => $codeRecord->product_id,
-                'product_name' => $productName,
-                'type' => $type,
-                'operator' => $operatorName,
-                'time' => $logTime,
-                'notes' => $notes ?? ($actionType === 'complete' ? 'Hoàn thành dán cạnh' : 'Quay lại dán cạnh'),
-                'edge_banding_length' => $length ?? 0,
-            ]
-        ]);
+            'success' => $res['success'],
+            'message' => $res['message'],
+            'action_type' => $res['action_type'] ?? null,
+            'data' => $res['data'] ?? null
+        ], $res['status_code']);
     }
 
     public function finishing()
     {
-        $acrylicCodes = AcrylicOrderItemCode::whereNotNull('status')
-            ->with('acrylicOrderItem')
-            ->get();
-        $glassCodes = GlassOrderItemCode::whereNotNull('status')
-            ->with('glassOrderItem')
-            ->get();
-        $minLateCodes = MinLateOrderItemCode::whereNotNull('status')
-            ->with('minLateOrderItem')
-            ->get();
-
-        $history = collect();
-
-        foreach ($acrylicCodes as $code) {
-            $item = $code->acrylicOrderItem;
-            if (!$item) continue;
-            $statusLogs = $code->status ?? [];
-            
-            foreach ($statusLogs as $log) {
-                if (isset($log['action']) && in_array($log['action'], ['hoàn thành làm đẹp', 'quay lại làm đẹp'])) {
-                    $history->push((object)[
-                        'product_code' => $code->product_id,
-                        'product_name' => $item->product_name ?? '—',
-                        'type' => 'acrylic',
-                        'action' => $log['action'],
-                        'operator' => $log['operator'] ?? 'Hệ thống',
-                        'time' => $log['time'] ?? $code->updated_at->toDateTimeString(),
-                        'notes' => $log['notes'] ?? $item->notes ?? '',
-                        'item_id' => $item->id
-                    ]);
-                }
-            }
-        }
-
-        foreach ($glassCodes as $code) {
-            $item = $code->glassOrderItem;
-            if (!$item) continue;
-            $statusLogs = $code->status ?? [];
-            
-            foreach ($statusLogs as $log) {
-                if (isset($log['action']) && in_array($log['action'], ['hoàn thành làm đẹp', 'quay lại làm đẹp'])) {
-                    $history->push((object)[
-                        'product_code' => $code->product_id,
-                        'product_name' => $item->product_name ?? '—',
-                        'type' => 'glass',
-                        'action' => $log['action'],
-                        'operator' => $log['operator'] ?? 'Hệ thống',
-                        'time' => $log['time'] ?? $code->updated_at->toDateTimeString(),
-                        'notes' => $log['notes'] ?? $item->notes ?? '',
-                        'item_id' => $item->id
-                    ]);
-                }
-            }
-        }
-
-        foreach ($minLateCodes as $code) {
-            $item = $code->minLateOrderItem;
-            if (!$item) continue;
-            $statusLogs = $code->status ?? [];
-            
-            foreach ($statusLogs as $log) {
-                if (isset($log['action']) && in_array($log['action'], ['hoàn thành làm đẹp', 'quay lại làm đẹp'])) {
-                    $history->push((object)[
-                        'product_code' => $code->product_id,
-                        'product_name' => $item->product_name ?? $item->name ?? '—',
-                        'type' => 'min_late',
-                        'action' => $log['action'],
-                        'operator' => $log['operator'] ?? 'Hệ thống',
-                        'time' => $log['time'] ?? $code->updated_at->toDateTimeString(),
-                        'notes' => $log['notes'] ?? $item->notes ?? '',
-                        'item_id' => $item->id
-                    ]);
-                }
-            }
-        }
-
-        // Sort history by time descending
-        $history = $history->sortByDesc('time')->values();
-
+        $history = $this->finishingService->getHistory();
         return view('processes.finishing', compact('history'));
     }
 
@@ -569,215 +120,19 @@ class ManufactureStepController extends Controller
             'action_type' => 'nullable|string|in:complete,rollback',
         ]);
 
-        $codeStr = trim($request->product_code);
-        $notes = $request->notes;
-        $actionType = $request->input('action_type', 'complete');
-
-        // Search in Acrylic
-        $codeRecord = AcrylicOrderItemCode::where('product_id', $codeStr)->first();
-        $type = 'acrylic';
-        $nameField = 'product_name';
-        $item = null;
-
-        if ($codeRecord) {
-            $item = $codeRecord->acrylicOrderItem;
-        } else {
-            // Search in Glass
-            $codeRecord = GlassOrderItemCode::where('product_id', $codeStr)->first();
-            $type = 'glass';
-            $nameField = 'product_name';
-            if ($codeRecord) {
-                $item = $codeRecord->glassOrderItem;
-            }
-        }
-
-        if (!$codeRecord) {
-            // Search in Min Late
-            $codeRecord = MinLateOrderItemCode::where('product_id', $codeStr)->first();
-            $type = 'min_late';
-            $nameField = 'name';
-            if ($codeRecord) {
-                $item = $codeRecord->minLateOrderItem;
-            }
-        }
-
-        if (!$codeRecord || !$item) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Không tìm thấy sản phẩm với mã định danh: ' . $codeStr
-            ], 404);
-        }
-
-        $currentStatus = $codeRecord->status ?? [];
-        $logTime = now()->toDateTimeString();
-        $operatorName = Auth::user()->name ?? 'Hệ thống';
-
-        // 1. Find the latest log for 'làm đẹp'
-        $latestFinishingLog = null;
-        for ($i = count($currentStatus) - 1; $i >= 0; $i--) {
-            $log = $currentStatus[$i];
-            if (isset($log['action']) && in_array($log['action'], ['hoàn thành làm đẹp', 'quay lại làm đẹp'])) {
-                $latestFinishingLog = $log;
-                break;
-            }
-        }
-
-        // 2. Find the index of the latest 'hoàn thành làm đẹp' log (for truncation on rollback)
-        $lastCompletedFinishingIndex = -1;
-        for ($i = count($currentStatus) - 1; $i >= 0; $i--) {
-            $log = $currentStatus[$i];
-            if (isset($log['action']) && $log['action'] === 'hoàn thành làm đẹp') {
-                $lastCompletedFinishingIndex = $i;
-                break;
-            }
-        }
-
-        if ($actionType === 'rollback') {
-            if (!$latestFinishingLog || $latestFinishingLog['action'] !== 'hoàn thành làm đẹp' || $lastCompletedFinishingIndex === -1) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Sản phẩm này chưa ghi nhận hoàn thành làm đẹp nên không thể quay lại.'
-                ], 400);
-            }
-
-            // Slice status array to remove completed and subsequent logs
-            $currentStatus = array_slice($currentStatus, 0, $lastCompletedFinishingIndex);
-
-            // Record rollback log
-            $newLog = [
-                'action' => 'quay lại làm đẹp',
-                'operator' => $operatorName,
-                'operator_id' => Auth::id(),
-                'time' => $logTime,
-                'notes' => $notes,
-            ];
-
-            $currentStatus[] = $newLog;
-            $codeRecord->status = $currentStatus;
-            $codeRecord->save();
-
-            $message = 'Đã hoàn tác (quay lại) công đoạn làm đẹp cho sản phẩm này.';
-        } else {
-            if ($latestFinishingLog && $latestFinishingLog['action'] === 'hoàn thành làm đẹp') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Sản phẩm này đã được ghi nhận hoàn thành làm đẹp trước đó.'
-                ], 400);
-            }
-
-            $newLog = [
-                'action' => 'hoàn thành làm đẹp',
-                'operator' => $operatorName,
-                'operator_id' => Auth::id(),
-                'time' => $logTime,
-                'notes' => $notes,
-            ];
-
-            $currentStatus[] = $newLog;
-            $codeRecord->status = $currentStatus;
-            $codeRecord->save();
-
-            // Update item notes
-            $item->notes = $notes;
-            $item->save();
-
-            $message = 'Xác nhận hoàn thành công đoạn làm đẹp thành công.';
-        }
-
-        $productName = $item->$nameField ?? '—';
+        $res = $this->finishingService->completeOrRollback($request->all());
 
         return response()->json([
-            'success' => true,
-            'action_type' => $actionType,
-            'message' => $message,
-            'data' => [
-                'product_code' => $codeRecord->product_id,
-                'product_name' => $productName,
-                'type' => $type,
-                'operator' => $operatorName,
-                'time' => $logTime,
-                'notes' => $notes ?? ($actionType === 'complete' ? 'Hoàn thành làm đẹp' : 'Quay lại làm đẹp'),
-            ]
-        ]);
+            'success' => $res['success'],
+            'message' => $res['message'],
+            'action_type' => $res['action_type'] ?? null,
+            'data' => $res['data'] ?? null
+        ], $res['status_code']);
     }
 
     public function qc()
     {
-        $acrylicCodes = AcrylicOrderItemCode::whereNotNull('status')
-            ->with('acrylicOrderItem')
-            ->get();
-        $glassCodes = GlassOrderItemCode::whereNotNull('status')
-            ->with('glassOrderItem')
-            ->get();
-        $minLateCodes = MinLateOrderItemCode::whereNotNull('status')
-            ->with('minLateOrderItem')
-            ->get();
-
-        $history = collect();
-
-        foreach ($acrylicCodes as $code) {
-            $item = $code->acrylicOrderItem;
-            if (!$item) continue;
-            $statusLogs = $code->status ?? [];
-            foreach ($statusLogs as $log) {
-                if (isset($log['action']) && in_array($log['action'], ['Hoàn thành QC', 'Ghi nhận lỗi'])) {
-                    $history->push((object)[
-                        'product_code' => $code->product_id,
-                        'product_name' => $item->product_name ?? '—',
-                        'type' => 'acrylic',
-                        'action' => $log['action'],
-                        'operator' => $log['operator'] ?? 'Hệ thống',
-                        'time' => $log['time'] ?? $code->updated_at->toDateTimeString(),
-                        'notes' => $log['notes'] ?? $item->notes ?? '',
-                        'item_id' => $item->id
-                    ]);
-                }
-            }
-        }
-
-        foreach ($glassCodes as $code) {
-            $item = $code->glassOrderItem;
-            if (!$item) continue;
-            $statusLogs = $code->status ?? [];
-            foreach ($statusLogs as $log) {
-                if (isset($log['action']) && in_array($log['action'], ['Hoàn thành QC', 'Ghi nhận lỗi'])) {
-                    $history->push((object)[
-                        'product_code' => $code->product_id,
-                        'product_name' => $item->product_name ?? '—',
-                        'type' => 'glass',
-                        'action' => $log['action'],
-                        'operator' => $log['operator'] ?? 'Hệ thống',
-                        'time' => $log['time'] ?? $code->updated_at->toDateTimeString(),
-                        'notes' => $log['notes'] ?? $item->notes ?? '',
-                        'item_id' => $item->id
-                    ]);
-                }
-            }
-        }
-
-        foreach ($minLateCodes as $code) {
-            $item = $code->minLateOrderItem;
-            if (!$item) continue;
-            $statusLogs = $code->status ?? [];
-            foreach ($statusLogs as $log) {
-                if (isset($log['action']) && in_array($log['action'], ['Hoàn thành QC', 'Ghi nhận lỗi'])) {
-                    $history->push((object)[
-                        'product_code' => $code->product_id,
-                        'product_name' => $item->product_name ?? $item->name ?? '—',
-                        'type' => 'min_late',
-                        'action' => $log['action'],
-                        'operator' => $log['operator'] ?? 'Hệ thống',
-                        'time' => $log['time'] ?? $code->updated_at->toDateTimeString(),
-                        'notes' => $log['notes'] ?? $item->notes ?? '',
-                        'item_id' => $item->id
-                    ]);
-                }
-            }
-        }
-
-        // Sort history by time descending
-        $history = $history->sortByDesc('time')->values();
-
+        $history = $this->qcService->getHistory();
         return view('processes.qc', compact('history'));
     }
 
@@ -789,116 +144,14 @@ class ManufactureStepController extends Controller
             'action_type' => 'nullable|string|in:complete,rollback',
         ]);
 
-        $codeStr = trim($request->product_code);
-        $notes = $request->notes;
-        $actionType = $request->input('action_type', 'complete');
-
-        // Search in Acrylic
-        $codeRecord = AcrylicOrderItemCode::where('product_id', $codeStr)->first();
-        $type = 'acrylic';
-        $nameField = 'product_name';
-        $item = null;
-
-        if ($codeRecord) {
-            $item = $codeRecord->acrylicOrderItem;
-        } else {
-            // Search in Glass
-            $codeRecord = GlassOrderItemCode::where('product_id', $codeStr)->first();
-            $type = 'glass';
-            $nameField = 'product_name';
-            if ($codeRecord) {
-                $item = $codeRecord->glassOrderItem;
-            }
-        }
-
-        if (!$codeRecord) {
-            // Search in Min Late
-            $codeRecord = MinLateOrderItemCode::where('product_id', $codeStr)->first();
-            $type = 'min_late';
-            $nameField = 'name';
-            if ($codeRecord) {
-                $item = $codeRecord->minLateOrderItem;
-            }
-        }
-
-        if (!$codeRecord || !$item) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Không tìm thấy sản phẩm với mã định danh: ' . $codeStr
-            ], 404);
-        }
-
-        $currentStatus = $codeRecord->status ?? [];
-        $logTime = now()->toDateTimeString();
-        $operatorName = Auth::user()->name ?? 'Hệ thống';
-
-        if ($actionType === 'rollback') {
-            // Ghi nhận lỗi là hành động độc lập, ngang hàng với Hoàn thành QC
-            $newLog = [
-                'action' => 'Ghi nhận lỗi',
-                'operator' => $operatorName,
-                'operator_id' => Auth::id(),
-                'time' => $logTime,
-                'notes' => $notes,
-            ];
-
-            $currentStatus[] = $newLog;
-            $codeRecord->status = $currentStatus;
-            $codeRecord->save();
-
-            $message = 'Đã ghi nhận lỗi cho sản phẩm này.';
-        } else {
-            // Check if already completed
-            $alreadyCompleted = false;
-            for ($i = count($currentStatus) - 1; $i >= 0; $i--) {
-                if (isset($currentStatus[$i]['action']) && $currentStatus[$i]['action'] === 'Hoàn thành QC') {
-                    $alreadyCompleted = true;
-                    break;
-                }
-            }
-
-            if ($alreadyCompleted) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Sản phẩm này đã được ghi nhận hoàn thành QC trước đó.'
-                ], 400);
-            }
-
-            $newLog = [
-                'action' => 'Hoàn thành QC',
-                'operator' => $operatorName,
-                'operator_id' => Auth::id(),
-                'time' => $logTime,
-                'notes' => $notes,
-            ];
-
-            $currentStatus[] = $newLog;
-            $codeRecord->status = $currentStatus;
-            $codeRecord->save();
-
-            // Also update notes on the item if complete
-            $item->notes = $notes;
-            $item->save();
-
-            $message = 'Xác nhận hoàn thành công đoạn QC thành công.';
-        }
-
-
-        $productName = $item->$nameField ?? '—';
+        $res = $this->qcService->completeOrRollback($request->all());
 
         return response()->json([
-            'success' => true,
-            'action_type' => $actionType,
-            'message' => $message,
-            'data' => [
-                'product_code' => $codeRecord->product_id,
-                'product_name' => $productName,
-                'type' => $type,
-                'operator' => $operatorName,
-                'time' => $logTime,
-                'notes' => $notes ?? ($actionType === 'complete' ? 'Hoàn thành QC' : 'Ghi nhận lỗi'),
-            ]
-        ]);
+            'success' => $res['success'],
+            'message' => $res['message'],
+            'action_type' => $res['action_type'] ?? null,
+            'data' => $res['data'] ?? null
+        ], $res['status_code']);
     }
 
     public function packing()

@@ -71,58 +71,74 @@
                 </a>
             </li>
             @endcan
+            @can('view pressing')
             <li>
                 <a href="{{ route('processes.pressing') }}">
                     <iconify-icon icon="lucide:monitor" class="menu-icon"></iconify-icon>
                     <span>Ép ván</span>
                 </a>
             </li>
+            @endcan
+            @can('view cnc')
             <li>
                 <a href="{{ route('processes.cnc') }}">
                     <iconify-icon icon="lucide:scissors" class="menu-icon"></iconify-icon>
                     <span>Cắt CNC</span>
                 </a>
             </li>
+            @endcan
+            @can('view edge banding')
             <li>
                 <a href="{{ route('processes.edge-banding') }}">
                     <iconify-icon icon="lucide:layers" class="menu-icon"></iconify-icon>
                     <span>Dán cạnh</span>
                 </a>
             </li>
+            @endcan
+            @can('view finishing')
             <li>
                 <a href="{{ route('processes.finishing') }}">
                     <iconify-icon icon="lucide:brush" class="menu-icon"></iconify-icon>
                     <span>Làm đẹp</span>
                 </a>
             </li>
+            @endcan
+            @can('view qc')
             <li>
                 <a href="{{ route('processes.qc') }}">
                     <iconify-icon icon="lucide:check-circle" class="menu-icon"></iconify-icon>
                     <span>Kiểm soát (QC)</span>
                 </a>
             </li>
+            @endcan
+            @can('view packing')
             <li>
                 <a href="{{ route('processes.packing') }}">
                     <iconify-icon icon="lucide:package" class="menu-icon"></iconify-icon>
                     <span>Đóng gói</span>
                 </a>
             </li>
+            @endcan
+            @can('view shipped')
             <li>
                 <a href="{{ route('processes.shipped') }}">
                     <iconify-icon icon="lucide:truck" class="menu-icon"></iconify-icon>
                     <span>Xuất xưởng</span>
                 </a>
             </li>
+            @endcan
             <li class="dropdown">
                 <a href="javascript:void(0)">
                     <iconify-icon icon="mingcute:storage-line" class="menu-icon"></iconify-icon>
                     <span>Quản lý kho</span>
                 </a>
                 <ul class="sidebar-submenu">
-                    @can('view supply')
+                    @can('view warehouse')
                     <li>
                         <a href="{{ route('warehouses.index') }}"><i class="ri-circle-fill circle-icon text-primary-600 w-auto"></i> Kho vật tư</a>
                     </li>
+                    @endcan
+                    @can('view supply')
                     <li>
                         <a href="{{ route('supplies.index') }}"><i class="ri-circle-fill circle-icon text-info-600 w-auto"></i> Danh mục vật tư</a>
                     </li>

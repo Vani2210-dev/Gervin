@@ -172,11 +172,43 @@ class ManufactureController extends Controller
                 if ($manufacture->status !== 'manager_approved') {
                     return back()->with('error', 'Trạng thái không hợp lệ để nhận tem.');
                 }
+                
                 $manufacture->update([
                     'status' => 'stamps_received',
                     'stamps_received_by' => $user->id,
                     'stamps_received_at' => $now,
                 ]);
+
+                // Update status log for all associated plates to "đã nhận tem"
+                $orderIds = $manufacture->orders->pluck('id')->toArray();
+                $supplyIds = \App\Models\OrderSupply::whereIn('order_id', $orderIds)->pluck('id')->toArray();
+                
+                $newStatus = [
+                    [
+                        'time' => $now->format('Y-m-d H:i:s'),
+                        'notes' => null,
+                        'action' => 'đã nhận tem',
+                        'operator' => $user->name ?? 'Hệ thống',
+                        'operator_id' => $user->id,
+                    ]
+                ];
+                $newStatusJson = json_encode($newStatus);
+
+                // Acrylic
+                $acrylicItemIds = \App\Models\AcrylicOrderItem::whereIn('order_supply_id', $supplyIds)->pluck('id')->toArray();
+                \App\Models\AcrylicOrderItemCode::whereIn('acrylic_order_item_id', $acrylicItemIds)
+                    ->update(['status' => $newStatusJson]);
+
+                // Glass
+                $glassItemIds = \App\Models\GlassOrderItem::whereIn('order_supply_id', $supplyIds)->pluck('id')->toArray();
+                \App\Models\GlassOrderItemCode::whereIn('glass_order_item_id', $glassItemIds)
+                    ->update(['status' => $newStatusJson]);
+
+                // Min Late
+                $minLateItemIds = \App\Models\MinLateOrderItem::whereIn('order_supply_id', $supplyIds)->pluck('id')->toArray();
+                \App\Models\MinLateOrderItemCode::whereIn('min_late_order_item_id', $minLateItemIds)
+                    ->update(['status' => $newStatusJson]);
+
                 $msg = 'Xác nhận nhận tem thành công.';
                 break;
 

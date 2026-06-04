@@ -11,7 +11,7 @@ class RoleSeeder extends Seeder
     public function run(): void
     {
         $adminRole = Role::firstOrCreate([
-            'name' => 'Quản trị viên',
+            'name' => 'Admin',
             'guard_name' => 'web',
         ]);
 
@@ -20,6 +20,5 @@ class RoleSeeder extends Seeder
             'guard_name' => 'web',
         ]);
 
-        $adminRole->givePermissionTo(Permission::all());
     }
 }

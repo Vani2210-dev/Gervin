@@ -56,7 +56,7 @@ async function exportToExcel() {
         };
 
         // Helper to set cell value, font, alignment
-        const setCell = (row, col, value, bold = false, align = 'left', size = 11, italic = false) => {
+        const setCell = (row, col, value, bold = false, align = 'center', size = 11, italic = false) => {
             const cell = worksheet.getCell(row, col);
             cell.value = value;
             cell.font = { name: 'Times New Roman', size: size, bold: bold, italic: italic, color: { argb: 'FF000000' } };
@@ -64,36 +64,34 @@ async function exportToExcel() {
             return cell;
         };
 
-        if (orderData.type !== 'glass') {
-            // Setup general layout (Logo, Company info)
-            worksheet.getRow(1).height = 20;
-            worksheet.getRow(2).height = 20;
-            worksheet.getRow(3).height = 20;
-            worksheet.getRow(4).height = 20;
+        // ─── Always render Logo + Company header (rows 1-4) for ALL order types ───
+        worksheet.getRow(1).height = 20;
+        worksheet.getRow(2).height = 20;
+        worksheet.getRow(3).height = 20;
+        worksheet.getRow(4).height = 20;
 
-            worksheet.mergeCells('C1:J1');
-            worksheet.mergeCells('C2:J2');
-            worksheet.mergeCells('C3:J3');
-            worksheet.mergeCells('C4:J4');
+        worksheet.mergeCells('C1:J1');
+        worksheet.mergeCells('C2:J2');
+        worksheet.mergeCells('C3:J3');
+        worksheet.mergeCells('C4:J4');
 
-            setCell(1, 3, 'CÔNG TY TNHH GỖ GERVIN', true, 'left', 14);
-            setCell(2, 3, 'Địa chỉ: Xóm 3, Hưng Thịnh, Hưng Nguyên, Nghệ An', false, 'left', 10);
-            setCell(3, 3, 'Điện thoại: 0967.181.786 - Email: contact@gervinwood.com', false, 'left', 10);
-            setCell(4, 3, 'WWW.GERVINWOOD.COM', true, 'left', 10);
+        setCell(1, 3, 'CÔNG TY TNHH GỖ GERVIN', true, 'left', 14);
+        setCell(2, 3, 'Địa chỉ: Xóm 3, Hưng Thịnh, Hưng Nguyên, Nghệ An', false, 'left', 10);
+        setCell(3, 3, 'Điện thoại: 0967.181.786 - Email: contact@gervinwood.com', false, 'left', 10);
+        setCell(4, 3, 'WWW.GERVINWOOD.COM', true, 'left', 10);
 
-            // Embed logo in A1:B4
-            const logoBase64 = await getLogoBase64('/logo.png');
-            if (logoBase64) {
-                const logoId = workbook.addImage({
-                    base64: logoBase64,
-                    extension: 'png',
-                });
-                worksheet.addImage(logoId, {
-                    tl: { col: 0.1, row: 0.1 },
-                    br: { col: 2.0, row: 3.9 },
-                    editAs: 'oneCell'
-                });
-            }
+        // Embed square logo in A1:B4 (ext ensures 1:1 ratio, no stretching)
+        const logoBase64 = await getLogoBase64('/logo.png');
+        if (logoBase64) {
+            const logoId = workbook.addImage({
+                base64: logoBase64,
+                extension: 'png',
+            });
+            worksheet.addImage(logoId, {
+                tl: { col: 0.1, row: 0.1 },
+                ext: { width: 80, height: 80 },
+                editAs: 'oneCell'
+            });
         }
 
         // Parse Dates
@@ -157,7 +155,7 @@ async function exportToExcel() {
             ];
             colWidths.forEach(w => { worksheet.getColumn(w.col).width = w.width; });
 
-            // Metadata rows (using C:K merge instead of A:O to prevent swallowing columns L & M)
+            // Metadata rows (using C:K merge)
             worksheet.getRow(5).height = 25;
             worksheet.mergeCells('C5:K5');
             setCell(5, 3, 'BÁO GIÁ KIÊM ĐƠN ĐẶT HÀNG', true, 'center', 16);
@@ -240,11 +238,11 @@ async function exportToExcel() {
 
             currentRow = 14;
 
-            // Loop supplies
+            // Loop supplies — supply header row shows supply_name only (no roman numeral in col 1)
             orderData.supplies.forEach((supply, supplyIdx) => {
                 const supplyRow = worksheet.getRow(currentRow);
                 supplyRow.height = 22;
-                supplyRow.getCell(1).value = romanize(supplyIdx + 1);
+                supplyRow.getCell(1).value = '';
                 supplyRow.getCell(3).value = supply.supply_name;
                 supplyRow.getCell(6).value = 0;
                 supplyRow.getCell(9).value = 0;
@@ -270,7 +268,7 @@ async function exportToExcel() {
                     itemRow.getCell(2).alignment = { horizontal: 'center', vertical: 'middle' };
 
                     itemRow.getCell(3).value = item.product_name || '';
-                    itemRow.getCell(3).alignment = { horizontal: 'left', vertical: 'middle' };
+                    itemRow.getCell(3).alignment = { horizontal: 'center', vertical: 'middle' };
 
                     itemRow.getCell(4).value = parseFloat(item.height) || 0;
                     itemRow.getCell(4).alignment = { horizontal: 'center', vertical: 'middle' };
@@ -295,14 +293,14 @@ async function exportToExcel() {
 
                     itemRow.getCell(11).value = parseFloat(item.unit_price) || 0;
                     itemRow.getCell(11).numFmt = '#,##0';
-                    itemRow.getCell(11).alignment = { horizontal: 'right', vertical: 'middle' };
+                    itemRow.getCell(11).alignment = { horizontal: 'center', vertical: 'middle' };
 
                     itemRow.getCell(12).value = parseFloat(item.total_price) || 0;
                     itemRow.getCell(12).numFmt = '#,##0';
-                    itemRow.getCell(12).alignment = { horizontal: 'right', vertical: 'middle' };
+                    itemRow.getCell(12).alignment = { horizontal: 'center', vertical: 'middle' };
 
                     itemRow.getCell(13).value = item.notes || '';
-                    itemRow.getCell(13).alignment = { horizontal: 'left', vertical: 'middle' };
+                    itemRow.getCell(13).alignment = { horizontal: 'center', vertical: 'middle' };
 
                     itemRow.getCell(14).value = item.bevel || '0';
                     itemRow.getCell(14).alignment = { horizontal: 'center', vertical: 'middle' };
@@ -324,12 +322,12 @@ async function exportToExcel() {
             totalRow.height = 22;
             totalRow.getCell(11).value = "TỔNG TIỀN HÀNG:";
             totalRow.getCell(11).font = { name: 'Times New Roman', size: 11, bold: true };
-            totalRow.getCell(11).alignment = { horizontal: 'right', vertical: 'middle' };
+            totalRow.getCell(11).alignment = { horizontal: 'center', vertical: 'middle' };
 
             totalRow.getCell(12).value = parseFloat(orderData.total_amount);
             totalRow.getCell(12).font = { name: 'Times New Roman', size: 11, bold: true, color: { argb: 'FFDC2626' } };
             totalRow.getCell(12).numFmt = '#,##0';
-            totalRow.getCell(12).alignment = { horizontal: 'right', vertical: 'middle' };
+            totalRow.getCell(12).alignment = { horizontal: 'center', vertical: 'middle' };
 
             for (let c = 1; c <= 15; c++) {
                 totalRow.getCell(c).border = {
@@ -337,6 +335,149 @@ async function exportToExcel() {
                     bottom: { style: 'double', color: { argb: 'FF1F2937' } }
                 };
             }
+
+            // ─── Sheet 2: BAZIS-PM (only for acrylic orders) ───
+            const ws2 = workbook.addWorksheet('BAZIS-PM');
+
+            // Column widths for BAZIS-PM
+            const bazisColWidths = [
+                { col: 'A', width: 8 },   // Cắt
+                { col: 'B', width: 12 },  // Đơn hàng
+                { col: 'C', width: 30 },  // Sản phẩm
+                { col: 'D', width: 18 },  // STT
+                { col: 'E', width: 30 },  // Tên
+                { col: 'F', width: 50 },  // Vật liệu
+                { col: 'G', width: 10 },  // Dài
+                { col: 'H', width: 10 },  // Rộng
+                { col: 'I', width: 8 },   // Dày
+                { col: 'J', width: 12 },  // Chiều vân
+                { col: 'K', width: 10 },  // Số lượng
+                { col: 'L', width: 14 },  // Kí hiệu nẹp L1
+                { col: 'M', width: 14 },  // Kí hiệu nẹp L2
+                { col: 'N', width: 14 },  // Kí hiệu nẹp W1
+                { col: 'O', width: 14 },  // Kí hiệu nẹp W2
+                { col: 'P', width: 12 },  // Dày nẹp L1
+                { col: 'Q', width: 12 },  // Dày nẹp L2
+                { col: 'R', width: 12 },  // Dày nẹp W1
+                { col: 'S', width: 12 },  // Dày nẹp W2
+                { col: 'T', width: 15 },  // Ghi chú
+                { col: 'U', width: 18 },  // Bao trong-Dịch trái
+                { col: 'V', width: 18 },  // Bao trong-Dịch phải
+                { col: 'W', width: 18 },  // Bao trong-Dịch trên
+                { col: 'X', width: 18 },  // Bao trong-Dịch dưới
+                { col: 'Y', width: 16 },  // Xoi-Dịch trái-1
+                { col: 'Z', width: 16 },  // Xoi-Dịch phải-1
+                { col: 'AA', width: 16 }, // Xoi-Dịch trên-1
+                { col: 'AB', width: 16 }, // Xoi-Dịch dưới-1
+                { col: 'AC', width: 12 }, // Xoi-Rộng-1
+                { col: 'AD', width: 12 }, // Xoi-Sâu-1
+            ];
+            bazisColWidths.forEach(w => { ws2.getColumn(w.col).width = w.width; });
+
+            // Row 1: Vietnamese headers
+            const viHeaders = [
+                'Cắt', 'Đơn hàng', 'Sản phẩm', 'STT', 'Tên', 'Vật liệu',
+                'Dài', 'Rộng', 'Dày', 'Chiều vân', 'Số lượng',
+                'Kí hiệu nẹp L1', 'Kí hiệu nẹp L2', 'Kí hiệu nẹp W1', 'Kí hiệu nẹp W2',
+                'Dày nẹp L1', 'Dày nẹp L2', 'Dày nẹp W1', 'Dày nẹp W2',
+                'Ghi chú',
+                'Bao trong-Dịch trái', 'Bao trong-Dịch phải', 'Bao trong-Dịch trên', 'Bao trong-Dịch dưới',
+                'Xoi-Dịch trái-1', 'Xoi-Dịch phải-1', 'Xoi-Dịch trên-1', 'Xoi-Dịch dưới-1',
+                'Xoi-Rộng-1', 'Xoi-Sâu-1'
+            ];
+            const viRow = ws2.getRow(1);
+            viHeaders.forEach((h, i) => {
+                const cell = viRow.getCell(i + 1);
+                cell.value = h;
+                cell.font = { name: 'Times New Roman', size: 11, bold: true };
+                cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+                cell.fill = headerFill;
+                cell.border = thinBorder;
+            });
+            viRow.height = 20;
+
+            // Row 2: English headers
+            const enHeaders = [
+                'Cutting', 'Order', 'Product Name', 'Order Number', 'Detail Name', 'Material',
+                'Height', 'Width', 'Thickness', 'Texture Orientation', 'Quantity',
+                'Edge Banding L1', 'Edge Banding L2', 'Edge Banding W1', 'Edge Banding W2',
+                'L1 Thickness', 'L2 Thickness', 'W1 Thickness', 'W2 Thickness',
+                'Note',
+                'Internal Cutting Left Offset', 'Internal Cutting Right Offset',
+                'Internal Cutting Top Offset', 'Internal Cutting Bottom Offset',
+                'Milling Left Offset 1', 'Milling Right Offset 1',
+                'Milling Top Offset 1', 'Milling Bottom Offset 1',
+                'Milling Width 1', 'Milling Depth 1'
+            ];
+            const enRow = ws2.getRow(2);
+            enHeaders.forEach((h, i) => {
+                const cell = enRow.getCell(i + 1);
+                cell.value = h;
+                cell.font = { name: 'Times New Roman', size: 11, bold: true };
+                cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+                cell.fill = headerFill;
+                cell.border = thinBorder;
+            });
+            enRow.height = 20;
+
+            // Data rows: one row per item across all supplies
+            let bazisRow = 3;
+            const customerLabel = `${orderData.order_code} - ${orderData.customer_name || ''}`;
+
+            orderData.supplies.forEach(supply => {
+                supply.items.forEach(item => {
+                    const row = ws2.getRow(bazisRow);
+
+                    // Determine edge banding symbols from edge_bevel (e.g. 'Vát 0' or 'Vát 2')
+                    // Convention: 'T' = straight edge (thẳng), 'V' = beveled (vát)
+                    const isBeveled = item.edge_bevel && item.edge_bevel !== 'Vát 0';
+                    const edgeL1 = 'T';
+                    const edgeL2 = isBeveled ? 'V' : 'T';
+                    const edgeW1 = 'T';
+                    const edgeW2 = isBeveled ? 'V' : 'T';
+
+                    row.getCell(1).value  = 'V';                              // Cắt
+                    row.getCell(2).value  = 'ACRILYC';                        // Đơn hàng
+                    row.getCell(3).value  = customerLabel;                    // Sản phẩm (tên KH)
+                    row.getCell(4).value  = item.product_code || '';          // STT / mã SP
+                    row.getCell(5).value  = item.product_name || '';          // Tên chi tiết
+                    row.getCell(6).value  = supply.supply_name || '';         // Vật liệu
+                    row.getCell(7).value  = parseFloat(item.height) || 0;    // Dài
+                    row.getCell(8).value  = parseFloat(item.width) || 0;     // Rộng
+                    row.getCell(9).value  = 19;                               // Dày (cố định 19mm)
+                    row.getCell(10).value = item.grain_direction !== null
+                        ? parseInt(item.grain_direction) : 2;                // Chiều vân
+                    row.getCell(11).value = parseInt(item.quantity) || 1;    // Số lượng
+                    row.getCell(12).value = edgeL1;                           // Kí hiệu nẹp L1
+                    row.getCell(13).value = edgeL2;                           // Kí hiệu nẹp L2
+                    row.getCell(14).value = edgeW1;                           // Kí hiệu nẹp W1
+                    row.getCell(15).value = edgeW2;                           // Kí hiệu nẹp W2
+                    row.getCell(16).value = 0.00001;                          // Dày nẹp L1
+                    row.getCell(17).value = 0.00001;                          // Dày nẹp L2
+                    row.getCell(18).value = 0.00001;                          // Dày nẹp W1
+                    row.getCell(19).value = 0.00001;                          // Dày nẹp W2
+                    row.getCell(20).value = item.edge_bevel || 'Vát 0';      // Ghi chú
+
+                    // Columns U-AD (Bao trong / Xoi): empty by default
+                    for (let c = 21; c <= 30; c++) {
+                        row.getCell(c).value = null;
+                    }
+
+                    // Style: all cells centered, Times New Roman 11
+                    for (let c = 1; c <= 30; c++) {
+                        const cell = row.getCell(c);
+                        cell.font = { name: 'Times New Roman', size: 11 };
+                        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+                    }
+                    // Name column left-aligned for readability
+                    row.getCell(5).alignment = { horizontal: 'left', vertical: 'middle' };
+                    row.getCell(6).alignment = { horizontal: 'left', vertical: 'middle' };
+
+                    row.height = 18;
+                    bazisRow++;
+                });
+            });
+
         } else if (orderData.type === 'glass') {
             // Column dimensions
             const colWidths = [
@@ -358,61 +499,61 @@ async function exportToExcel() {
             ];
             colWidths.forEach(w => { worksheet.getColumn(w.col).width = w.width; });
 
-            // Write O1 note
-            setCell(1, 15, 'KT m2/cánh nhỏ hơn 0.35m2 thì tính = 0.35m2', false, 'right', 10, true);
+            // Note in O5 (after logo/header block rows 1-4)
+            setCell(5, 15, 'KT m2/cánh nhỏ hơn 0.35m2 thì tính = 0.35m2', false, 'right', 10, true);
 
-            // Metadata rows (using C:L merge instead of A:N to prevent swallowing columns M & N)
-            worksheet.getRow(2).height = 25;
-            worksheet.mergeCells('C2:L2');
-            setCell(2, 3, 'BÁO GIÁ CÁNH KÍNH', true, 'center', 16);
+            // Metadata rows — shifted down by 4 to accommodate header rows 1-4
+            worksheet.getRow(6).height = 25;
+            worksheet.mergeCells('C6:L6');
+            setCell(6, 3, 'BÁO GIÁ CÁNH KÍNH', true, 'center', 16);
 
-            worksheet.getRow(3).height = 18;
-            worksheet.mergeCells('C3:L3');
-            setCell(3, 3, dateStr, false, 'center', 11, true);
-            setCell(3, 13, 'Ngày giờ chốt đơn:', true, 'right', 10);
-            worksheet.getCell('N3').value = chotDonStr;
-            worksheet.getCell('N3').font = { name: 'Times New Roman', size: 10 };
+            worksheet.getRow(7).height = 18;
+            worksheet.mergeCells('C7:L7');
+            setCell(7, 3, dateStr, false, 'center', 11, true);
+            setCell(7, 13, 'Ngày giờ chốt đơn:', true, 'right', 10);
+            worksheet.getCell('N7').value = chotDonStr;
+            worksheet.getCell('N7').font = { name: 'Times New Roman', size: 10 };
 
-            worksheet.getRow(4).height = 18;
-            worksheet.mergeCells('C4:L4');
-            setCell(4, 3, `Số phiếu: ${orderData.order_code}`, true, 'center', 11);
-            setCell(4, 13, 'Số ngày phải giao từ lúc chốt đơn:', true, 'right', 10);
-            worksheet.getCell('N4').value = parseInt(orderData.delivery_days);
-            worksheet.getCell('N4').font = { name: 'Times New Roman', size: 10 };
+            worksheet.getRow(8).height = 18;
+            worksheet.mergeCells('C8:L8');
+            setCell(8, 3, `Số phiếu: ${orderData.order_code}`, true, 'center', 11);
+            setCell(8, 13, 'Số ngày phải giao từ lúc chốt đơn:', true, 'right', 10);
+            worksheet.getCell('N8').value = parseInt(orderData.delivery_days);
+            worksheet.getCell('N8').font = { name: 'Times New Roman', size: 10 };
 
-            worksheet.getRow(5).height = 18;
-            worksheet.mergeCells('B5:J5');
-            setCell(5, 2, `Khách hàng: ${orderData.customer_name || ''}`, true, 'left', 11);
-            setCell(5, 13, 'Ngày giờ phải giao hàng:', true, 'right', 10);
-            worksheet.getCell('N5').value = deadlineStr;
-            worksheet.getCell('N5').font = { name: 'Times New Roman', size: 10 };
+            worksheet.getRow(9).height = 18;
+            worksheet.mergeCells('B9:J9');
+            setCell(9, 2, `Khách hàng: ${orderData.customer_name || ''}`, true, 'left', 11);
+            setCell(9, 13, 'Ngày giờ phải giao hàng:', true, 'right', 10);
+            worksheet.getCell('N9').value = deadlineStr;
+            worksheet.getCell('N9').font = { name: 'Times New Roman', size: 10 };
 
-            worksheet.getRow(6).height = 18;
-            worksheet.mergeCells('B6:I6');
-            setCell(6, 2, `Địa chỉ: ${orderData.address || ''}`, false, 'left', 10);
+            worksheet.getRow(10).height = 18;
+            worksheet.mergeCells('B10:I10');
+            setCell(10, 2, `Địa chỉ: ${orderData.address || ''}`, false, 'left', 10);
 
-            worksheet.getRow(7).height = 20;
-            worksheet.mergeCells('A7:N7');
-            setCell(7, 1, 'Lời đầu tiên, xin trân trọng cảm ơn quý khách hàng đã quan tâm đến sản phẩm cánh kính của công ty chúng tôi. GERVIN xin gửi tới Quý Khách hàng bảng báo giá chi tiết như sau:', false, 'left', 10, true);
+            worksheet.getRow(11).height = 20;
+            worksheet.mergeCells('A11:N11');
+            setCell(11, 1, 'Lời đầu tiên, xin trân trọng cảm ơn quý khách hàng đã quan tâm đến sản phẩm cánh kính của công ty chúng tôi. GERVIN xin gửi tới Quý Khách hàng bảng báo giá chi tiết như sau:', false, 'left', 10, true);
 
-            // Double Row Headers (Row 8 & 9)
-            worksheet.getRow(8).height = 24;
-            worksheet.getRow(9).height = 24;
+            // Double Row Headers (Row 12 & 13)
+            worksheet.getRow(12).height = 24;
+            worksheet.getRow(13).height = 24;
 
             const headersDef = [
-                { range: 'A8:A9', val: 'STT' },
-                { range: 'B8:B9', val: 'TÊN SẢN PHẨM' },
-                { range: 'C8:C9', val: 'MÃ SP' },
-                { range: 'D8:D9', val: 'CHIỀU MỞ CÁNH' },
-                { range: 'E8:E9', val: 'MÀU NHÔM' },
-                { range: 'F8:F9', val: 'MÀU KÍNH' },
-                { range: 'G8:H8', val: 'KÍCH THƯỚC CÁNH' },
-                { range: 'I8:I9', val: 'ĐƠN VỊ' },
-                { range: 'J8:J9', val: 'SỐ LƯỢNG CÁNH' },
-                { range: 'K8:K9', val: 'KHỐI LƯỢNG (m2)' },
-                { range: 'L8:L9', val: 'ĐƠN GIÁ' },
-                { range: 'M8:M9', val: 'THÀNH TIỀN' },
-                { range: 'N8:N9', val: 'Ghi chú' }
+                { range: 'A12:A13', val: 'STT' },
+                { range: 'B12:B13', val: 'TÊN SẢN PHẨM' },
+                { range: 'C12:C13', val: 'MÃ SP' },
+                { range: 'D12:D13', val: 'CHIỀU MỞ CÁNH' },
+                { range: 'E12:E13', val: 'MÀU NHÔM' },
+                { range: 'F12:F13', val: 'MÀU KÍNH' },
+                { range: 'G12:H12', val: 'KÍCH THƯỚC CÁNH' },
+                { range: 'I12:I13', val: 'ĐƠN VỊ' },
+                { range: 'J12:J13', val: 'SỐ LƯỢNG CÁNH' },
+                { range: 'K12:K13', val: 'KHỐI LƯỢNG (m2)' },
+                { range: 'L12:L13', val: 'ĐƠN GIÁ' },
+                { range: 'M12:M13', val: 'THÀNH TIỀN' },
+                { range: 'N12:N13', val: 'Ghi chú' }
             ];
 
             headersDef.forEach(h => {
@@ -421,11 +562,11 @@ async function exportToExcel() {
                 cell.value = h.val;
             });
 
-            worksheet.getCell('G9').value = 'Dài (mm)';
-            worksheet.getCell('H9').value = 'Rộng (mm)';
+            worksheet.getCell('G13').value = 'Dài (mm)';
+            worksheet.getCell('H13').value = 'Rộng (mm)';
 
             // Style headers
-            for (let r = 8; r <= 9; r++) {
+            for (let r = 12; r <= 13; r++) {
                 for (let c = 1; c <= 14; c++) {
                     const cell = worksheet.getCell(r, c);
                     cell.font = { name: 'Times New Roman', size: 11, bold: true };
@@ -435,7 +576,7 @@ async function exportToExcel() {
                 }
             }
 
-            currentRow = 10;
+            currentRow = 14;
             worksheet.getRow(currentRow).height = 20;
             worksheet.mergeCells(`A${currentRow}:E${currentRow}`);
             setCell(currentRow, 1, 'GIÁ CÁNH KÍNH, KHUNG NHÔM HOÀN THIỆN:', true, 'left', 11);
@@ -444,11 +585,11 @@ async function exportToExcel() {
             }
             currentRow++;
 
-            // Loop supplies
+            // Loop supplies — no roman numeral in col 1
             orderData.supplies.forEach((supply, supplyIdx) => {
                 const supplyRow = worksheet.getRow(currentRow);
                 supplyRow.height = 22;
-                supplyRow.getCell(1).value = romanize(supplyIdx + 1) + '.';
+                supplyRow.getCell(1).value = '';
                 supplyRow.getCell(2).value = supply.supply_name;
                 supplyRow.getCell(10).value = 0;
                 supplyRow.getCell(11).value = 0;
@@ -470,7 +611,7 @@ async function exportToExcel() {
                     itemRow.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
 
                     itemRow.getCell(2).value = item.product_name || '';
-                    itemRow.getCell(2).alignment = { horizontal: 'left', vertical: 'middle' };
+                    itemRow.getCell(2).alignment = { horizontal: 'center', vertical: 'middle' };
 
                     itemRow.getCell(3).value = item.product_code || '';
                     itemRow.getCell(3).alignment = { horizontal: 'center', vertical: 'middle' };
@@ -501,14 +642,14 @@ async function exportToExcel() {
 
                     itemRow.getCell(12).value = parseFloat(item.unit_price) || 0;
                     itemRow.getCell(12).numFmt = '#,##0';
-                    itemRow.getCell(12).alignment = { horizontal: 'right', vertical: 'middle' };
+                    itemRow.getCell(12).alignment = { horizontal: 'center', vertical: 'middle' };
 
                     itemRow.getCell(13).value = parseFloat(item.total_price) || 0;
                     itemRow.getCell(13).numFmt = '#,##0';
-                    itemRow.getCell(13).alignment = { horizontal: 'right', vertical: 'middle' };
+                    itemRow.getCell(13).alignment = { horizontal: 'center', vertical: 'middle' };
 
                     itemRow.getCell(14).value = item.notes || '';
-                    itemRow.getCell(14).alignment = { horizontal: 'left', vertical: 'middle' };
+                    itemRow.getCell(14).alignment = { horizontal: 'center', vertical: 'middle' };
 
                     for (let c = 1; c <= 14; c++) {
                         const cell = itemRow.getCell(c);
@@ -525,12 +666,12 @@ async function exportToExcel() {
             worksheet.mergeCells(`K${currentRow}:L${currentRow}`);
             totalRow.getCell(11).value = "TỔNG CỘNG:";
             totalRow.getCell(11).font = { name: 'Times New Roman', size: 11, bold: true };
-            totalRow.getCell(11).alignment = { horizontal: 'right', vertical: 'middle' };
+            totalRow.getCell(11).alignment = { horizontal: 'center', vertical: 'middle' };
 
             totalRow.getCell(13).value = parseFloat(orderData.total_amount);
             totalRow.getCell(13).font = { name: 'Times New Roman', size: 11, bold: true, color: { argb: 'FFDC2626' } };
             totalRow.getCell(13).numFmt = '#,##0';
-            totalRow.getCell(13).alignment = { horizontal: 'right', vertical: 'middle' };
+            totalRow.getCell(13).alignment = { horizontal: 'center', vertical: 'middle' };
 
             for (let c = 1; c <= 14; c++) {
                 totalRow.getCell(c).border = {
@@ -538,6 +679,7 @@ async function exportToExcel() {
                     bottom: { style: 'double', color: { argb: 'FF1F2937' } }
                 };
             }
+
         } else if (orderData.type === 'min_late') {
             // Column dimensions
             const colWidths = [
@@ -567,7 +709,7 @@ async function exportToExcel() {
 
             const maxCol = colWidths.length;
 
-            // Metadata rows (using C:O merge instead of A:R to prevent swallowing columns P & Q)
+            // Metadata rows
             worksheet.getRow(5).height = 25;
             worksheet.mergeCells('C5:O5');
             setCell(5, 3, 'BÁO GIÁ KIÊM ĐƠN ĐẶT HÀNG', true, 'center', 16);
@@ -617,7 +759,7 @@ async function exportToExcel() {
                 { range: 'M11:M12', val: 'Số mét dán vát' },
                 { range: 'N11:N12', val: 'Số mét dán bản rộng 25-35mm' },
                 { range: 'O11:O12', val: 'Số mét dán ván chiều rộng 40-59mm' },
-                { range: 'P11:P12', val: 'Số mét dán bản rộng 17-39mm' },
+                { range: 'P11:P12', val: 'Số mét dán bản rộng 17-39mm' },
                 { range: 'Q11:Q12', val: 'Ghi chú' }
             ];
 
@@ -651,31 +793,11 @@ async function exportToExcel() {
 
             currentRow = 13;
 
-            // Write default VẬT TƯ row
-            const vatTuRow = worksheet.getRow(currentRow);
-            vatTuRow.height = 22;
-            vatTuRow.getCell(1).value = 'A';
-            vatTuRow.getCell(3).value = 'VẬT TƯ';
-            vatTuRow.getCell(6).value = 0;
-            vatTuRow.getCell(12).value = 0;
-            vatTuRow.getCell(13).value = 0;
-            vatTuRow.getCell(14).value = 0;
-            vatTuRow.getCell(15).value = 0;
-            vatTuRow.getCell(16).value = 0;
-            vatTuRow.getCell(18).value = 'Vát ';
-
-            for (let c = 1; c <= maxCol; c++) {
-                const cell = vatTuRow.getCell(c);
-                cell.font = { name: 'Times New Roman', size: 11, bold: true };
-                cell.border = thinBorder;
-            }
-            currentRow++;
-
-            // Loop supplies
+            // Loop supplies — no 'A'/roman numeral in col 1, no separate VẬT TƯ row
             orderData.supplies.forEach((supply, supplyIdx) => {
                 const supplyRow = worksheet.getRow(currentRow);
                 supplyRow.height = 22;
-                supplyRow.getCell(1).value = romanize(supplyIdx + 1);
+                supplyRow.getCell(1).value = '';
                 supplyRow.getCell(3).value = supply.supply_name;
 
                 for (let c = 1; c <= maxCol; c++) {
@@ -717,28 +839,10 @@ async function exportToExcel() {
                     itemRow.getCell(20).value = parseFloat(item.beveled_handle) || 0;
                     itemRow.getCell(21).value = parseInt(item.cnc) || 0;
 
-                    // Alignments
-                    itemRow.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
-                    itemRow.getCell(2).alignment = { horizontal: 'center', vertical: 'middle' };
-                    itemRow.getCell(3).alignment = { horizontal: 'left', vertical: 'middle' };
-                    itemRow.getCell(4).alignment = { horizontal: 'center', vertical: 'middle' };
-                    itemRow.getCell(5).alignment = { horizontal: 'center', vertical: 'middle' };
-                    itemRow.getCell(6).alignment = { horizontal: 'center', vertical: 'middle' };
-                    itemRow.getCell(7).alignment = { horizontal: 'center', vertical: 'middle' };
-                    itemRow.getCell(8).alignment = { horizontal: 'center', vertical: 'middle' };
-                    itemRow.getCell(9).alignment = { horizontal: 'center', vertical: 'middle' };
-                    itemRow.getCell(10).alignment = { horizontal: 'center', vertical: 'middle' };
-                    itemRow.getCell(11).alignment = { horizontal: 'center', vertical: 'middle' };
-                    itemRow.getCell(12).alignment = { horizontal: 'center', vertical: 'middle' };
-                    itemRow.getCell(13).alignment = { horizontal: 'center', vertical: 'middle' };
-                    itemRow.getCell(14).alignment = { horizontal: 'center', vertical: 'middle' };
-                    itemRow.getCell(15).alignment = { horizontal: 'center', vertical: 'middle' };
-                    itemRow.getCell(16).alignment = { horizontal: 'center', vertical: 'middle' };
-                    itemRow.getCell(17).alignment = { horizontal: 'left', vertical: 'middle' };
-                    itemRow.getCell(18).alignment = { horizontal: 'center', vertical: 'middle' };
-                    itemRow.getCell(19).alignment = { horizontal: 'center', vertical: 'middle' };
-                    itemRow.getCell(20).alignment = { horizontal: 'center', vertical: 'middle' };
-                    itemRow.getCell(21).alignment = { horizontal: 'center', vertical: 'middle' };
+                    // All cells centered
+                    for (let c = 1; c <= maxCol; c++) {
+                        itemRow.getCell(c).alignment = { horizontal: 'center', vertical: 'middle' };
+                    }
 
                     for (let c = 1; c <= maxCol; c++) {
                         const cell = itemRow.getCell(c);
@@ -758,12 +862,12 @@ async function exportToExcel() {
                 const payHeaderRow = worksheet.getRow(currentRow);
                 payHeaderRow.height = 24;
 
-                payHeaderRow.getCell(1).value = 'B';
+                payHeaderRow.getCell(1).value = '';
                 payHeaderRow.getCell(3).value = 'Tính giá bán sản phẩm, dịch vụ:';
                 payHeaderRow.getCell(8).value = 'Đơn vị';
                 payHeaderRow.getCell(11).value = 'Số lượng';
                 payHeaderRow.getCell(12).value = 'Đơn giá';
-                payHeaderRow.getCell(13).value = 'Đơn giá chỉ';
+                payHeaderRow.getCell(13).value = 'Đơn giá chỉ';
                 payHeaderRow.getCell(17).value = 'THÀNH TIỀN';
 
                 // Formatting headers (Using #366092 blue background with white bold text)
@@ -777,7 +881,7 @@ async function exportToExcel() {
                     const cell = payHeaderRow.getCell(c);
                     cell.font = { name: 'Times New Roman', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
                     cell.fill = payHeaderFill;
-                    cell.alignment = { horizontal: c === 3 ? 'left' : 'center', vertical: 'middle' };
+                    cell.alignment = { horizontal: 'center', vertical: 'middle' };
                 });
 
                 // Set borders for entire payHeaderRow
@@ -808,14 +912,14 @@ async function exportToExcel() {
                     row.getCell(17).numFmt = '#,##0';
                     row.getCell(17).font = { name: 'Times New Roman', size: 11, bold: true };
 
-                    // Alignments
+                    // All cells centered
                     row.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
-                    row.getCell(3).alignment = { horizontal: 'left', vertical: 'middle' };
+                    row.getCell(3).alignment = { horizontal: 'center', vertical: 'middle' };
                     row.getCell(8).alignment = { horizontal: 'center', vertical: 'middle' };
                     row.getCell(11).alignment = { horizontal: 'center', vertical: 'middle' };
-                    row.getCell(12).alignment = { horizontal: 'right', vertical: 'middle' };
-                    row.getCell(13).alignment = { horizontal: 'right', vertical: 'middle' };
-                    row.getCell(17).alignment = { horizontal: 'right', vertical: 'middle' };
+                    row.getCell(12).alignment = { horizontal: 'center', vertical: 'middle' };
+                    row.getCell(13).alignment = { horizontal: 'center', vertical: 'middle' };
+                    row.getCell(17).alignment = { horizontal: 'center', vertical: 'middle' };
 
                     for (let c = 1; c <= maxCol; c++) {
                         const cell = row.getCell(c);
@@ -830,12 +934,12 @@ async function exportToExcel() {
                 sumRow.height = 22;
                 sumRow.getCell(16).value = "TỔNG TIỀN HÀNG:";
                 sumRow.getCell(16).font = { name: 'Times New Roman', size: 11, bold: true };
-                sumRow.getCell(16).alignment = { horizontal: 'right', vertical: 'middle' };
+                sumRow.getCell(16).alignment = { horizontal: 'center', vertical: 'middle' };
 
                 sumRow.getCell(17).value = parseFloat(orderData.total_amount);
                 sumRow.getCell(17).font = { name: 'Times New Roman', size: 11, bold: true, color: { argb: 'FFDC2626' } };
                 sumRow.getCell(17).numFmt = '#,##0';
-                sumRow.getCell(17).alignment = { horizontal: 'right', vertical: 'middle' };
+                sumRow.getCell(17).alignment = { horizontal: 'center', vertical: 'middle' };
 
                 for (let c = 1; c <= maxCol; c++) {
                     sumRow.getCell(c).border = {
@@ -854,12 +958,12 @@ async function exportToExcel() {
                 remainRow.height = 22;
                 remainRow.getCell(16).value = "Còn lại:";
                 remainRow.getCell(16).font = { name: 'Times New Roman', size: 11, bold: true };
-                remainRow.getCell(16).alignment = { horizontal: 'right', vertical: 'middle' };
+                remainRow.getCell(16).alignment = { horizontal: 'center', vertical: 'middle' };
 
                 remainRow.getCell(17).value = parseFloat(orderData.total_amount);
                 remainRow.getCell(17).font = { name: 'Times New Roman', size: 11, bold: true };
                 remainRow.getCell(17).numFmt = '#,##0';
-                remainRow.getCell(17).alignment = { horizontal: 'right', vertical: 'middle' };
+                remainRow.getCell(17).alignment = { horizontal: 'center', vertical: 'middle' };
 
                 for (let c = 1; c <= maxCol; c++) {
                     remainRow.getCell(c).border = {
@@ -884,13 +988,13 @@ async function exportToExcel() {
             });
         });
 
-        // Specific manual auto-fit for merged address row because Excel does not natively auto-fit merged cells
+        // Specific manual auto-fit for merged address row
         const addressText = 'Địa chỉ: ' + (orderData.address || '');
         let addressRowNumber = 9;
         let addressMergedWidth = 96.5;
 
         if (orderData.type === 'glass') {
-            addressRowNumber = 6;
+            addressRowNumber = 10;
             addressMergedWidth = 133.6;
         } else if (orderData.type === 'min_late') {
             addressRowNumber = 9;
@@ -918,7 +1022,6 @@ async function getLogoBase64(url) {
         const blob = await response.blob();
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
-            const originalOnLoad = reader.onloadend;
             reader.onloadend = () => resolve(reader.result.split(',')[1]);
             reader.onerror = reject;
             reader.readAsDataURL(blob);
@@ -928,3 +1031,6 @@ async function getLogoBase64(url) {
         return null;
     }
 }
+
+// Expose globally for Vite-compiled modules
+window.exportToExcel = exportToExcel;
