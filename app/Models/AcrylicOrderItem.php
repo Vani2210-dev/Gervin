@@ -25,6 +25,9 @@ class AcrylicOrderItem extends Model
         'vertical_grain_cnc',
     ];
 
+    protected $casts = [
+    ];
+
     public function orderSupply()
     {
         return $this->belongsTo(OrderSupply::class, 'order_supply_id');

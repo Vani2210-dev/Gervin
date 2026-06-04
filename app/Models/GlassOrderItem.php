@@ -26,6 +26,9 @@ class GlassOrderItem extends Model
         'notes',
     ];
 
+    protected $casts = [
+    ];
+
     public function orderSupply()
     {
         return $this->belongsTo(OrderSupply::class, 'order_supply_id');
