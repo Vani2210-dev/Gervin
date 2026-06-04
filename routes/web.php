@@ -231,6 +231,7 @@ Route::middleware(['auth'])->group(function () {
 // Orders
 Route::middleware(['auth'])->group(function () {
     Route::resource('orders', OrderController::class)->names('orders');
+    Route::post('orders/bulk-destroy', [OrderController::class, 'bulkDestroy'])->name('orders.bulk-destroy');
     Route::get('orders/create/{type}', [OrderController::class, 'createByType'])->name('orders.create.type');
     Route::get('orders/image/{filename}', [OrderController::class, 'serveImage'])->name('orders.image');
 });

@@ -6,9 +6,22 @@
 
 @section('content')
 
+<style>
+    #orders-list-card .bulk-order-select-col {
+        display: none;
+    }
+    #orders-list-card.is-bulk-delete-mode .bulk-order-select-col {
+        display: table-cell;
+    }
+    #orders-list-card.is-bulk-delete-mode thead th:last-child,
+    #orders-list-card.is-bulk-delete-mode tbody td:last-child {
+        display: none;
+    }
+</style>
+
 <div class="grid grid-cols-12">
     <div class="col-span-12">
-        <div class="card h-full p-0 rounded-xl border-0 overflow-hidden">
+        <div id="orders-list-card" class="card h-full p-0 rounded-xl border-0 overflow-hidden">
             {{-- Header --}}
             <div class="card-header border-b border-neutral-200 bg-white py-4 px-6 flex items-center flex-wrap gap-3 justify-between">
                 <div class="flex items-center flex-wrap gap-3">
@@ -50,6 +63,13 @@
                         Tạo đơn hàng
                     </a>
                     @endcan
+                    @can('delete acrylic order')
+                    <button type="button" onclick="toggleBulkDeleteOrders()"
+                        class="js-toggle-bulk-delete btn bg-danger-600 hover:bg-danger-700 text-white text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2 shadow-sm">
+                        <iconify-icon icon="lucide:trash-2" class="icon text-xl line-height-1 text-white"></iconify-icon>
+                        <span class="bulk-delete-toggle-label">Chọn nhiều</span>
+                    </button>
+                    @endcan
                 </div>
             </div>
 
@@ -65,12 +85,55 @@
             </div>
             @endif
 
+            @php
+                $canBulkDeleteOrders = auth()->user()?->can('delete acrylic order');
+            @endphp
+
+            @if($canBulkDeleteOrders)
+            <form id="bulkDeleteForm" method="POST" action="{{ route('orders.bulk-destroy') }}" onsubmit="return confirmBulkDeleteOrders();">
+                @csrf
+                <input type="hidden" name="search" value="{{ $search }}">
+                <input type="hidden" name="per_page" value="{{ $perPage }}">
+                <input type="hidden" name="filter_order_code" value="{{ request('filter_order_code') }}">
+                <input type="hidden" name="filter_customer_name" value="{{ request('filter_customer_name') }}">
+                <input type="hidden" name="filter_status" value="{{ request('filter_status') }}">
+            </form>
+            <div id="bulkOrderActionBar" class="hidden mx-4 mt-4 mb-0 bg-primary-50 border border-primary-200 rounded-xl px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <span class="w-8 h-8 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center">
+                        <iconify-icon icon="lucide:check-square" class="text-lg"></iconify-icon>
+                    </span>
+                    <div>
+                        <p class="text-sm font-semibold text-neutral-800 mb-0">
+                            Đã chọn <span id="bulkSelectedCount" class="text-primary-600">0</span> đơn hàng
+                        </p>
+                        <p class="text-xs text-secondary-light mb-0">Chỉ xóa những đơn bạn đã chọn trong danh sách hiện tại.</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="clearBulkOrderSelection()" class="btn btn-sm bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-100 rounded-lg px-3 py-2 flex items-center gap-2">
+                        <iconify-icon icon="lucide:x" class="text-base"></iconify-icon>
+                        Bỏ chọn
+                    </button>
+                    <button type="submit" form="bulkDeleteForm" class="btn btn-sm bg-danger-600 hover:bg-danger-700 text-white rounded-lg px-3 py-2 flex items-center gap-2">
+                        <iconify-icon icon="lucide:trash-2" class="text-base"></iconify-icon>
+                        Xóa đã chọn
+                    </button>
+                </div>
+            </div>
+            @endif
+
             {{-- Table --}}
             <div class="card-body">
                 <div class="table-responsive scroll-sm">
                     <table class="table bordered-table sm-table mb-0">
                         <thead>
                             <tr>
+                                @if($canBulkDeleteOrders)
+                                <th scope="col" class="bulk-order-select-col text-center" style="width: 48px; min-width: 48px;">
+                                    <input type="checkbox" id="bulkSelectAllOrders" class="form-check-input rounded border-neutral-300 text-primary-600 focus:ring-primary-500">
+                                </th>
+                                @endif
                                 <th scope="col">STT</th>
                                 <th scope="col">Mã đơn</th>
                                 <th scope="col">Loại đơn</th>
@@ -79,13 +142,22 @@
                                 <th scope="col">Hạn đơn</th>
                                 <th scope="col">Tổng tiền</th>
                                 <th scope="col">Trạng thái</th>
-                                <th scope="col" class="text-center">Hành động</th>
+                                <th scope="col" class="text-center whitespace-nowrap" style="width: 124px; min-width: 124px;">Hành động</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse($orders as $index => $order)
                             @php $stt = $orders->firstItem() + $loop->index; @endphp
                             <tr>
+                                @if($canBulkDeleteOrders)
+                                <td class="bulk-order-select-col text-center align-middle">
+                                    <input type="checkbox"
+                                        name="order_ids[]"
+                                        value="{{ $order->id }}"
+                                        form="bulkDeleteForm"
+                                        class="bulk-order-checkbox form-check-input rounded border-neutral-300 text-primary-600 focus:ring-primary-500">
+                                </td>
+                                @endif
                                 <td>{{ $stt }}</td>
                                 <td>
                                     <span class="text-base font-medium text-secondary-light">{{ $order->order_code }}</span>
@@ -144,16 +216,16 @@
                                         {{ $statusLabels[$order->status] ?? $order->status }}
                                     </span>
                                 </td>
-                                <td class="text-center">
-                                    <div class="flex items-center gap-3 justify-center">
+                                <td class="text-center whitespace-nowrap">
+                                    <div class="flex items-center gap-2 justify-center">
                                         @can('view acrylic order')
-                                        <a href="{{ route('orders.show', $order) }}" class="bg-primary-100 hover:bg-primary-200 text-primary-600 font-medium w-10 h-10 flex justify-center items-center rounded-full">
+                                        <a href="{{ route('orders.show', $order) }}" class="bg-primary-100 hover:bg-primary-200 text-primary-600 font-medium w-8 h-8 flex justify-center items-center rounded-full">
                                             <iconify-icon icon="lucide:eye" class="menu-icon"></iconify-icon>
                                         </a>
                                         @endcan
                                         @can('edit acrylic order')
                                         <a href="{{ route('orders.edit', $order) }}"
-                                            class="bg-success-100 hover:bg-success-200 text-success-600 font-medium w-10 h-10 flex justify-center items-center rounded-full">
+                                            class="bg-success-100 hover:bg-success-200 text-success-600 font-medium w-8 h-8 flex justify-center items-center rounded-full">
                                             <iconify-icon icon="lucide:edit" class="menu-icon"></iconify-icon>
                                         </a>
                                         @endcan
@@ -161,8 +233,13 @@
                                         <form method="POST" action="{{ route('orders.destroy', $order) }}"
                                             onsubmit="return confirm('Xóa đơn hàng này?')">
                                             @csrf @method('DELETE')
+                                            <input type="hidden" name="search" value="{{ $search }}">
+                                            <input type="hidden" name="per_page" value="{{ $perPage }}">
+                                            <input type="hidden" name="filter_order_code" value="{{ request('filter_order_code') }}">
+                                            <input type="hidden" name="filter_customer_name" value="{{ request('filter_customer_name') }}">
+                                            <input type="hidden" name="filter_status" value="{{ request('filter_status') }}">
                                             <button type="submit"
-                                                class="bg-danger-100 hover:bg-danger-200 text-danger-600 font-medium w-10 h-10 flex justify-center items-center rounded-full">
+                                                class="bg-danger-100 hover:bg-danger-200 text-danger-600 font-medium w-8 h-8 flex justify-center items-center rounded-full">
                                                 <iconify-icon icon="fluent:delete-24-regular" class="menu-icon"></iconify-icon>
                                             </button>
                                         </form>
@@ -172,7 +249,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="9" class="text-center py-8">
+                                <td colspan="{{ $canBulkDeleteOrders ? 10 : 9 }}" class="text-center py-8">
                                     <p class="text-neutral-500">Chưa có đơn hàng nào</p>
                                 </td>
                             </tr>
@@ -251,5 +328,144 @@
         </div>
     </form>
 </x-modal>
+
+@if($canBulkDeleteOrders)
+<script>
+    function getOrdersListCard() {
+        return document.getElementById('orders-list-card');
+    }
+
+    function isBulkDeleteMode() {
+        const card = getOrdersListCard();
+        return card ? card.classList.contains('is-bulk-delete-mode') : false;
+    }
+
+    function updateBulkDeleteToggleButton() {
+        const button = document.querySelector('.js-toggle-bulk-delete');
+        if (!button) return;
+
+        const label = button.querySelector('.bulk-delete-toggle-label');
+        const icon = button.querySelector('iconify-icon');
+        const active = isBulkDeleteMode();
+
+        if (label) {
+            label.textContent = active ? 'Thoát' : 'Chọn nhiều';
+        }
+
+        if (icon) {
+            icon.setAttribute('icon', active ? 'lucide:x' : 'lucide:trash-2');
+        }
+
+        button.title = active ? 'Thoát chế độ xóa nhiều' : 'Bật chế độ xóa nhiều';
+    }
+
+    function setBulkDeleteMode(enabled) {
+        const card = getOrdersListCard();
+        if (!card) return;
+
+        card.classList.toggle('is-bulk-delete-mode', enabled);
+        if (!enabled) {
+            clearBulkOrderSelection();
+        }
+
+        updateBulkDeleteToggleButton();
+        updateBulkOrderSelection();
+    }
+
+    function toggleBulkDeleteOrders() {
+        setBulkDeleteMode(!isBulkDeleteMode());
+    }
+
+    function updateBulkOrderSelection() {
+        const selectedCheckboxes = document.querySelectorAll('.bulk-order-checkbox:checked');
+        const selectedCount = selectedCheckboxes.length;
+        const bulkBar = document.getElementById('bulkOrderActionBar');
+        const countEl = document.getElementById('bulkSelectedCount');
+        const selectAll = document.getElementById('bulkSelectAllOrders');
+        const allCheckboxes = document.querySelectorAll('.bulk-order-checkbox');
+
+        if (countEl) {
+            countEl.textContent = selectedCount;
+        }
+
+        if (bulkBar) {
+            bulkBar.classList.toggle('hidden', !isBulkDeleteMode() || selectedCount === 0);
+        }
+
+        if (selectAll) {
+            selectAll.checked = allCheckboxes.length > 0 && selectedCount === allCheckboxes.length;
+            selectAll.indeterminate = selectedCount > 0 && selectedCount < allCheckboxes.length;
+        }
+    }
+
+    function clearBulkOrderSelection() {
+        document.querySelectorAll('.bulk-order-checkbox').forEach(checkbox => {
+            checkbox.checked = false;
+        });
+        updateBulkOrderSelection();
+    }
+
+    function confirmBulkDeleteOrders() {
+        const selectedCount = document.querySelectorAll('.bulk-order-checkbox:checked').length;
+        if (selectedCount === 0) {
+            return false;
+        }
+
+        return confirm(`Xóa ${selectedCount} đơn hàng đã chọn?`);
+    }
+
+    function injectBulkDeleteToggleButton() {
+        const actionHeader = document.querySelector('#orders-list-card thead tr th:last-child');
+        if (!actionHeader || actionHeader.querySelector('.js-toggle-bulk-delete')) return;
+
+        const headerInner = document.createElement('div');
+        headerInner.className = 'flex items-center justify-center gap-2';
+
+        const headerLabel = document.createElement('span');
+        headerLabel.textContent = 'Hành động';
+
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'js-toggle-bulk-delete btn btn-sm bg-danger-50 hover:bg-danger-100 text-danger-600 rounded-lg px-2.5 py-1.5 flex items-center gap-1.5';
+        button.title = 'Bật chế độ xóa nhiều';
+        button.onclick = toggleBulkDeleteOrders;
+
+        const icon = document.createElement('iconify-icon');
+        icon.setAttribute('icon', 'lucide:trash-2');
+        icon.className = 'text-base';
+
+        const label = document.createElement('span');
+        label.className = 'bulk-delete-toggle-label text-xs font-semibold';
+        label.textContent = 'Xóa nhiều';
+
+        button.append(icon, label);
+        headerInner.append(headerLabel, button);
+
+        actionHeader.textContent = '';
+        actionHeader.appendChild(headerInner);
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const selectAll = document.getElementById('bulkSelectAllOrders');
+        const checkboxes = document.querySelectorAll('.bulk-order-checkbox');
+
+        if (selectAll) {
+            selectAll.addEventListener('change', function() {
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = selectAll.checked;
+                });
+                updateBulkOrderSelection();
+            });
+        }
+
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', updateBulkOrderSelection);
+        });
+
+        updateBulkDeleteToggleButton();
+        updateBulkOrderSelection();
+    });
+</script>
+@endif
 
 @endsection
