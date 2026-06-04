@@ -208,7 +208,7 @@ class GlassOrderService
                 for ($i = 0; $i < $qty; $i++) {
                     $orderItem->codes()->create([
                         'product_id' => $prefix . '.' . ($startIndex + $i),
-                        'status'     => ['pending'],
+                        'status'     => [],
                     ]);
                 }
                 $globalPieceIndex += $qty;

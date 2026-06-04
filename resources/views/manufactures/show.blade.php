@@ -241,7 +241,7 @@
                 </div>
             </div>
             
-            <div class="p-0">
+            <div class="p-1">
                 <form id="assignStampsForm" action="{{ route('manufactures.assign-stamps', $manufacture) }}" method="POST">
                     @csrf
                     

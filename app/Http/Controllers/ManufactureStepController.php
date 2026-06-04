@@ -250,7 +250,311 @@ class ManufactureStepController extends Controller
 
     public function pressing()
     {
-        return view('processes.pressing');
+        $acrylicCodes = AcrylicOrderItemCode::whereNotNull('status')
+            ->with('acrylicOrderItem')
+            ->get();
+        $glassCodes = GlassOrderItemCode::whereNotNull('status')
+            ->with('glassOrderItem')
+            ->get();
+        $minLateCodes = MinLateOrderItemCode::whereNotNull('status')
+            ->with('minLateOrderItem')
+            ->get();
+
+        $history = collect();
+        $pressingActions = ['làm lệnh ép', 'xuất kho ván', 'ép đơn', 'ép dự trữ', 'quay lại ép'];
+
+        foreach ($acrylicCodes as $code) {
+            $item = $code->acrylicOrderItem;
+            if (!$item) continue;
+            $statusLogs = $code->status ?? [];
+            
+            foreach ($statusLogs as $log) {
+                if (isset($log['action']) && in_array($log['action'], $pressingActions)) {
+                    $history->push((object)[
+                        'product_code' => $code->product_id,
+                        'product_name' => $item->product_name ?? '—',
+                        'type' => 'acrylic',
+                        'action' => $log['action'],
+                        'operator' => $log['operator'] ?? 'Hệ thống',
+                        'time' => $log['time'] ?? $code->updated_at->toDateTimeString(),
+                        'notes' => $log['notes'] ?? $item->notes ?? '',
+                        'item_id' => $item->id
+                    ]);
+                }
+            }
+        }
+
+        foreach ($glassCodes as $code) {
+            $item = $code->glassOrderItem;
+            if (!$item) continue;
+            $statusLogs = $code->status ?? [];
+            
+            foreach ($statusLogs as $log) {
+                if (isset($log['action']) && in_array($log['action'], $pressingActions)) {
+                    $history->push((object)[
+                        'product_code' => $code->product_id,
+                        'product_name' => $item->product_name ?? '—',
+                        'type' => 'glass',
+                        'action' => $log['action'],
+                        'operator' => $log['operator'] ?? 'Hệ thống',
+                        'time' => $log['time'] ?? $code->updated_at->toDateTimeString(),
+                        'notes' => $log['notes'] ?? $item->notes ?? '',
+                        'item_id' => $item->id
+                    ]);
+                }
+            }
+        }
+
+        foreach ($minLateCodes as $code) {
+            $item = $code->minLateOrderItem;
+            if (!$item) continue;
+            $statusLogs = $code->status ?? [];
+            
+            foreach ($statusLogs as $log) {
+                if (isset($log['action']) && in_array($log['action'], $pressingActions)) {
+                    $history->push((object)[
+                        'product_code' => $code->product_id,
+                        'product_name' => $item->product_name ?? $item->name ?? '—',
+                        'type' => 'min_late',
+                        'action' => $log['action'],
+                        'operator' => $log['operator'] ?? 'Hệ thống',
+                        'time' => $log['time'] ?? $code->updated_at->toDateTimeString(),
+                        'notes' => $log['notes'] ?? $item->notes ?? '',
+                        'item_id' => $item->id
+                    ]);
+                }
+            }
+        }
+
+        // Sort history by time descending
+        $history = $history->sortByDesc('time')->values();
+
+        return view('processes.pressing', compact('history'));
+    }
+
+    public function completePressing(Request $request)
+    {
+        $request->validate([
+            'product_code' => 'required|string',
+            'notes' => 'nullable|string',
+            'action_type' => 'required|string|in:làm lệnh ép,xuất kho ván,ép đơn,ép dự trữ,rollback',
+        ]);
+
+        $codeStr = trim($request->product_code);
+        $notes = $request->notes;
+        $actionType = $request->action_type;
+        $logTime = now()->toDateTimeString();
+        $operatorName = Auth::user()->name ?? 'Hệ thống';
+
+        $pressingActions = ['làm lệnh ép', 'xuất kho ván', 'ép đơn', 'ép dự trữ'];
+
+        // Try to find a ManufactureOrder by this code first (bulk operation)
+        $manufacture = \App\Models\ManufactureOrder::with('orders.supplies')->where('code', $codeStr)->first();
+        if ($manufacture) {
+            $items = $manufacture->getAllItems();
+            if ($items->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Lệnh sản xuất này không có sản phẩm nào.'
+                ], 400);
+            }
+
+            $updatedCount = 0;
+            foreach ($items as $itemObj) {
+                $codeRecord = null;
+                if ($itemObj->type === 'acrylic') {
+                    $codeRecord = AcrylicOrderItemCode::find($itemObj->id);
+                } elseif ($itemObj->type === 'glass') {
+                    $codeRecord = GlassOrderItemCode::find($itemObj->id);
+                } elseif ($itemObj->type === 'min_late') {
+                    $codeRecord = MinLateOrderItemCode::find($itemObj->id);
+                }
+
+                if ($codeRecord) {
+                    $currentStatus = $codeRecord->status ?? [];
+                    
+                    // Find latest pressing log
+                    $latestPressingLog = null;
+                    $latestPressingIndex = -1;
+                    for ($i = count($currentStatus) - 1; $i >= 0; $i--) {
+                        $log = $currentStatus[$i];
+                        if (isset($log['action']) && in_array($log['action'], $pressingActions)) {
+                            $latestPressingLog = $log;
+                            $latestPressingIndex = $i;
+                            break;
+                        }
+                    }
+
+                    if ($actionType === 'rollback') {
+                        if ($latestPressingLog && $latestPressingIndex !== -1) {
+                            $currentStatus = array_slice($currentStatus, 0, $latestPressingIndex);
+                            $newLog = [
+                                'action' => 'quay lại ép',
+                                'operator' => $operatorName,
+                                'operator_id' => Auth::id(),
+                                'time' => $logTime,
+                                'notes' => $notes,
+                            ];
+                            $currentStatus[] = $newLog;
+                            $codeRecord->status = $currentStatus;
+                            $codeRecord->save();
+                            $updatedCount++;
+                        }
+                    } else {
+                        // Avoid duplicate consecutive action
+                        if (!$latestPressingLog || $latestPressingLog['action'] !== $actionType) {
+                            $newLog = [
+                                'action' => $actionType,
+                                'operator' => $operatorName,
+                                'operator_id' => Auth::id(),
+                                'time' => $logTime,
+                                'notes' => $notes,
+                            ];
+                            $currentStatus[] = $newLog;
+                            $codeRecord->status = $currentStatus;
+                            $codeRecord->save();
+                            $updatedCount++;
+                        }
+                    }
+                }
+            }
+
+            if ($updatedCount === 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tất cả sản phẩm trong lệnh này đã ở trạng thái này hoặc không thể hoàn tác.'
+                ], 400);
+            }
+
+            $msg = $actionType === 'rollback'
+                ? "Đã hoàn tác (quay lại) quy trình ép ván cho {$updatedCount} sản phẩm trong Lệnh sản xuất {$codeStr}."
+                : "Đã ghi nhận bước \"" . ucwords($actionType) . "\" cho {$updatedCount} sản phẩm trong Lệnh sản xuất {$codeStr}.";
+
+            return response()->json([
+                'success' => true,
+                'is_bulk' => true,
+                'message' => $msg,
+                'data' => [
+                    'product_code' => $codeStr,
+                    'product_name' => "Lệnh sản xuất: {$codeStr}",
+                    'type' => 'manufacture_order',
+                    'operator' => $operatorName,
+                    'time' => $logTime,
+                    'notes' => $notes ?? $msg,
+                    'action' => $actionType === 'rollback' ? 'quay lại ép' : $actionType,
+                ]
+            ]);
+        }
+
+        // Single plate item code scan
+        $codeRecord = AcrylicOrderItemCode::where('product_id', $codeStr)->first();
+        $type = 'acrylic';
+        $nameField = 'product_name';
+        $item = null;
+
+        if ($codeRecord) {
+            $item = $codeRecord->acrylicOrderItem;
+        } else {
+            $codeRecord = GlassOrderItemCode::where('product_id', $codeStr)->first();
+            $type = 'glass';
+            $nameField = 'product_name';
+            if ($codeRecord) {
+                $item = $codeRecord->glassOrderItem;
+            }
+        }
+
+        if (!$codeRecord) {
+            $codeRecord = MinLateOrderItemCode::where('product_id', $codeStr)->first();
+            $type = 'min_late';
+            $nameField = 'name';
+            if ($codeRecord) {
+                $item = $codeRecord->minLateOrderItem;
+            }
+        }
+
+        if (!$codeRecord || !$item) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy sản phẩm hoặc lệnh sản xuất với mã định danh: ' . $codeStr
+            ], 404);
+        }
+
+        $currentStatus = $codeRecord->status ?? [];
+        
+        $latestPressingLog = null;
+        $latestPressingIndex = -1;
+        for ($i = count($currentStatus) - 1; $i >= 0; $i--) {
+            $log = $currentStatus[$i];
+            if (isset($log['action']) && in_array($log['action'], $pressingActions)) {
+                $latestPressingLog = $log;
+                $latestPressingIndex = $i;
+                break;
+            }
+        }
+
+        if ($actionType === 'rollback') {
+            if (!$latestPressingLog || $latestPressingIndex === -1) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Sản phẩm này chưa ghi nhận quy trình ép ván nên không thể quay lại.'
+                ], 400);
+            }
+
+            $currentStatus = array_slice($currentStatus, 0, $latestPressingIndex);
+            $newLog = [
+                'action' => 'quay lại ép',
+                'operator' => $operatorName,
+                'operator_id' => Auth::id(),
+                'time' => $logTime,
+                'notes' => $notes,
+            ];
+            $currentStatus[] = $newLog;
+            $codeRecord->status = $currentStatus;
+            $codeRecord->save();
+
+            $msg = "Đã hoàn tác (quay lại) quy trình ép ván cho sản phẩm {$codeStr}.";
+        } else {
+            if ($latestPressingLog && $latestPressingLog['action'] === $actionType) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Sản phẩm này đã được ghi nhận bước \"" . ucwords($actionType) . "\" trước đó."
+                ], 400);
+            }
+
+            $newLog = [
+                'action' => $actionType,
+                'operator' => $operatorName,
+                'operator_id' => Auth::id(),
+                'time' => $logTime,
+                'notes' => $notes,
+            ];
+            $currentStatus[] = $newLog;
+            $codeRecord->status = $currentStatus;
+            $codeRecord->save();
+
+            // Save notes on item if completed
+            $item->notes = $notes;
+            $item->save();
+
+            $msg = "Đã ghi nhận bước \"" . ucwords($actionType) . "\" cho sản phẩm {$codeStr} thành công.";
+        }
+
+        $productName = $item->$nameField ?? '—';
+
+        return response()->json([
+            'success' => true,
+            'is_bulk' => false,
+            'message' => $msg,
+            'data' => [
+                'product_code' => $codeRecord->product_id,
+                'product_name' => $productName,
+                'type' => $type,
+                'operator' => $operatorName,
+                'time' => $logTime,
+                'notes' => $notes ?? $msg,
+                'action' => $actionType === 'rollback' ? 'quay lại ép' : $actionType,
+            ]
+        ]);
     }
 
     public function edgeBanding()
