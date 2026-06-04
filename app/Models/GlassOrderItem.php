@@ -24,11 +24,9 @@ class GlassOrderItem extends Model
         'unit_price',
         'total_price',
         'notes',
-        'status',
     ];
 
     protected $casts = [
-        'status' => 'array',
     ];
 
     public function orderSupply()

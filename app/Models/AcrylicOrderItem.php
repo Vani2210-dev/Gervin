@@ -23,11 +23,9 @@ class AcrylicOrderItem extends Model
         'notes',
         'bevel',
         'vertical_grain_cnc',
-        'status',
     ];
 
     protected $casts = [
-        'status' => 'array',
     ];
 
     public function orderSupply()
