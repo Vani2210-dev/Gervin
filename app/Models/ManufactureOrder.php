@@ -79,7 +79,7 @@ class ManufactureOrder extends Model
         foreach ($this->orders as $order) {
             // Load items based on order type
             if ($order->type === 'min_late') {
-                $order->load('supplies.minLateItems.codes');
+                $order->load('supplies.minLateItems.codes.assignedWorker');
                 foreach ($order->supplies as $supply) {
                     foreach ($supply->minLateItems as $item) {
                         $size = $item->size ?? [];
@@ -92,65 +92,74 @@ class ManufactureOrder extends Model
                         
                         foreach ($item->codes as $code) {
                             $items->push((object)[
-                                'product_code' => $code->product_id,
-                                'product_name' => $item->product_name ?? $item->name ?? '—',
-                                'dimensions'   => $dims,
-                                'height'       => $h,
-                                'width'        => $w,
-                                'quantity'     => 1,
-                                'type'         => 'min_late',
-                                'order_code'   => $order->order_code,
-                                'notes'        => $item->notes,
-                                'supply_name'  => $supply->supply_name,
-                                'status'       => $code->status,
-                                'raw_item'     => $item,
+                                'id'                 => $code->id,
+                                'product_code'       => $code->product_id,
+                                'product_name'       => $item->product_name ?? $item->name ?? '—',
+                                'dimensions'         => $dims,
+                                'height'             => $h,
+                                'width'              => $w,
+                                'quantity'           => 1,
+                                'type'               => 'min_late',
+                                'order_code'         => $order->order_code,
+                                'notes'              => $item->notes,
+                                'supply_name'        => $supply->supply_name,
+                                'status'             => $code->status,
+                                'assigned_worker_id' => $code->assigned_worker_id,
+                                'assigned_worker'    => $code->assignedWorker,
+                                'raw_item'           => $item,
                             ]);
                         }
                     }
                 }
             } elseif ($order->type === 'glass') {
-                $order->load('supplies.glassItems.codes');
+                $order->load('supplies.glassItems.codes.assignedWorker');
                 foreach ($order->supplies as $supply) {
                     foreach ($supply->glassItems as $item) {
                         $dims = ($item->height && $item->width) ? "{$item->height} x {$item->width}" : '';
                         foreach ($item->codes as $code) {
                             $items->push((object)[
-                                'product_code' => $code->product_id,
-                                'product_name' => $item->product_name ?? '—',
-                                'dimensions'   => $dims,
-                                'height'       => $item->height,
-                                'width'        => $item->width,
-                                'quantity'     => 1,
-                                'type'         => 'glass',
-                                'order_code'   => $order->order_code,
-                                'notes'        => $item->notes,
-                                'supply_name'  => $supply->supply_name,
-                                'status'       => $code->status,
-                                'raw_item'     => $item,
+                                'id'                 => $code->id,
+                                'product_code'       => $code->product_id,
+                                'product_name'       => $item->product_name ?? '—',
+                                'dimensions'         => $dims,
+                                'height'             => $item->height,
+                                'width'              => $item->width,
+                                'quantity'           => 1,
+                                'type'               => 'glass',
+                                'order_code'         => $order->order_code,
+                                'notes'              => $item->notes,
+                                'supply_name'        => $supply->supply_name,
+                                'status'             => $code->status,
+                                'assigned_worker_id' => $code->assigned_worker_id,
+                                'assigned_worker'    => $code->assignedWorker,
+                                'raw_item'           => $item,
                             ]);
                         }
                     }
                 }
             } else {
                 // acrylic
-                $order->load('supplies.items.codes');
+                $order->load('supplies.items.codes.assignedWorker');
                 foreach ($order->supplies as $supply) {
                     foreach ($supply->items as $item) {
                         $dims = ($item->height && $item->width) ? "{$item->height} x {$item->width}" : '';
                         foreach ($item->codes as $code) {
                             $items->push((object)[
-                                'product_code' => $code->product_id,
-                                'product_name' => $item->product_name ?? '—',
-                                'dimensions'   => $dims,
-                                'height'       => $item->height,
-                                'width'        => $item->width,
-                                'quantity'     => 1,
-                                'type'         => 'acrylic',
-                                'order_code'   => $order->order_code,
-                                'notes'        => $item->notes,
-                                'supply_name'  => $supply->supply_name,
-                                'status'       => $code->status,
-                                'raw_item'     => $item,
+                                'id'                 => $code->id,
+                                'product_code'       => $code->product_id,
+                                'product_name'       => $item->product_name ?? '—',
+                                'dimensions'         => $dims,
+                                'height'             => $item->height,
+                                'width'              => $item->width,
+                                'quantity'           => 1,
+                                'type'               => 'acrylic',
+                                'order_code'         => $order->order_code,
+                                'notes'              => $item->notes,
+                                'supply_name'        => $supply->supply_name,
+                                'status'             => $code->status,
+                                'assigned_worker_id' => $code->assigned_worker_id,
+                                'assigned_worker'    => $code->assignedWorker,
+                                'raw_item'           => $item,
                             ]);
                         }
                     }

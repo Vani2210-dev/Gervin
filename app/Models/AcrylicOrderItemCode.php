@@ -12,6 +12,7 @@ class AcrylicOrderItemCode extends Model
         'acrylic_order_item_id',
         'product_id',
         'status',
+        'assigned_worker_id',
     ];
 
     protected $casts = [
@@ -21,5 +22,10 @@ class AcrylicOrderItemCode extends Model
     public function acrylicOrderItem()
     {
         return $this->belongsTo(AcrylicOrderItem::class, 'acrylic_order_item_id');
+    }
+
+    public function assignedWorker()
+    {
+        return $this->belongsTo(User::class, 'assigned_worker_id');
     }
 }

@@ -1,10 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>In Tem QR - {{ $manufacture->code }}</title>
-    <!-- Include basic tailwind or styling -->
+    <title>Phiếu Phân Dán Tem - {{ $manufacture->code }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @media print {
@@ -12,119 +11,223 @@
                 background: white;
                 color: black;
                 margin: 0;
-                padding: 0;
+                padding: 10mm;
             }
             .no-print {
                 display: none !important;
             }
-            .print-page-break {
-                page-break-after: always;
+            table {
+                page-break-inside: auto;
             }
-            .stamp-card {
+            tr {
                 page-break-inside: avoid;
-                border: 1.5px solid #000 !important;
-                margin-bottom: 10px;
+                page-break-after: auto;
             }
-        }
-        /* Style for thermal tag/label printers */
-        .stamp-card {
-            width: 100%;
-            max-width: 400px;
-            height: 180px;
-            border: 1px solid #e2e8f0;
-            padding: 8px;
-            display: flex;
-            align-items: center;
-            background: white;
-            border-radius: 6px;
-            font-family: system-ui, -apple-system, sans-serif;
-            box-sizing: border-box;
         }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen p-6">
+<body class="bg-gray-50 min-h-screen p-6">
 
     {{-- Controls --}}
-    <div class="no-print max-w-4xl mx-auto mb-6 bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between">
+    <div class="no-print max-w-5xl mx-auto mb-6 bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-            <h1 class="text-lg font-bold text-gray-800">In Tem Lệnh Sản Xuất</h1>
-            <p class="text-sm text-gray-500">Mã lệnh: <span class="font-semibold">{{ $manufacture->code }}</span> — Tổng số tem: <span class="font-semibold">{{ $items->sum('quantity') }}</span></p>
+            <h1 class="text-lg font-bold text-gray-800 font-sans">In Phiếu Phân Dán Tem</h1>
+            <p class="text-sm text-gray-500 font-sans">
+                Mã lệnh: <span class="font-semibold">{{ $manufacture->code }}</span> — 
+                Hiển thị: <span id="displayedCount" class="font-semibold text-indigo-600">{{ $items->count() }}</span>/<span class="font-semibold">{{ $items->count() }}</span> tấm
+            </p>
         </div>
-        <div class="flex items-center gap-3">
-            <button onclick="window.print()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-2 rounded-lg text-sm shadow flex items-center gap-1.5 transition-all">
+        <div class="flex flex-wrap items-center gap-3">
+            <div class="flex items-center gap-2">
+                <span class="text-xs font-bold text-gray-500 uppercase tracking-wider font-sans">Lọc nhân viên:</span>
+                <select id="workerFilter" onchange="filterStampsByWorker(this.value)" class="form-select text-xs py-1.5 px-3 rounded-lg border-gray-300 font-sans bg-gray-50 border focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                    <option value="all">-- Tất cả nhân viên --</option>
+                    <option value="unassigned">-- Chưa phân công --</option>
+                    @foreach($workers as $w)
+                        <option value="{{ $w->id }}">{{ $w->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            
+            <button onclick="window.print()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-2 rounded-lg text-sm shadow flex items-center gap-1.5 transition-all font-sans">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                 </svg>
-                In Tem Ngay
+                In Phiếu Ngay
             </button>
-            <button onclick="window.close()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold px-4 py-2 rounded-lg text-sm transition-all">
+            <button onclick="window.close()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold px-4 py-2 rounded-lg text-sm transition-all font-sans">
                 Đóng lại
             </button>
         </div>
     </div>
 
-    {{-- Stamps Grid --}}
-    <div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4 justify-items-center">
-        @foreach($items as $item)
-            @php
-                $totalQty = 1;
-                $currentIdx = 1;
-                if (isset($item->raw_item)) {
-                    $totalQty = $item->raw_item->quantity ?? $item->raw_item->wing_quantity ?? 1;
-                }
-                $parts = explode('.', $item->product_code);
-                if (count($parts) > 0) {
-                    $lastPart = end($parts);
-                    if (is_numeric($lastPart)) {
-                        $currentIdx = intval($lastPart);
-                    }
-                }
-            @endphp
-            <div class="stamp-card shadow-sm border border-gray-200">
-                {{-- QR code side --}}
-                <div class="w-1/3 flex flex-col items-center justify-center border-r border-dashed border-gray-300 pr-3 mr-3 h-full">
-                    @if($item->product_code)
-                        <img src="{{ route('manufactures.qr', $item->product_code) }}" class="w-24 h-24 object-contain">
-                    @else
-                        <div class="w-20 h-20 bg-gray-100 flex items-center justify-center text-xs text-gray-400">No QR</div>
-                    @endif
-                    <span class="text-[8px] font-bold text-gray-500 mt-1 select-all">{{ $item->product_code }}</span>
-                </div>
-                {{-- Metadata side --}}
-                <div class="w-2/3 flex flex-col justify-between h-full py-0.5 leading-tight">
-                    <div>
-                        <div class="flex justify-between items-start">
-                            <span class="text-[10px] font-bold text-indigo-700 uppercase tracking-wide bg-indigo-50 px-1.5 py-0.5 rounded">{{ $manufacture->code }}</span>
-                            <span class="text-[9px] font-semibold text-gray-400">Tem: {{ $currentIdx }}/{{ $totalQty }}</span>
-                        </div>
-                        <h2 class="text-xs font-bold text-gray-800 mt-1 line-clamp-2" title="{{ $item->product_name }}">{{ $item->product_name }}</h2>
-                    </div>
-                    
-                    <div class="text-[10px] text-gray-600 space-y-0.5">
-                        <div class="flex justify-between">
-                            <span class="font-medium text-gray-400">Vật tư:</span>
-                            <span class="font-semibold text-gray-700 truncate max-w-[150px]">{{ $item->supply_name ?? '—' }}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="font-medium text-gray-400">Kích thước:</span>
-                            <span class="font-bold text-red-600">{{ $item->dimensions ?: '—' }} mm</span>
-                        </div>
-                        @if($item->notes)
-                        <div class="flex justify-between">
-                            <span class="font-medium text-gray-400">Ghi chú:</span>
-                            <span class="font-semibold text-gray-700 truncate max-w-[150px]">{{ $item->notes }}</span>
-                        </div>
-                        @endif
-                    </div>
-                    
-                    <div class="border-t border-gray-100 pt-1 flex justify-between items-center text-[9px] text-gray-400">
-                        <span>Đơn: {{ $item->order_code }}</span>
-                        <span class="font-bold text-gray-800">KB TECH</span>
-                    </div>
-                </div>
+    {{-- Main Sheet --}}
+    <div class="max-w-5xl mx-auto bg-white p-8 rounded-xl shadow-sm border border-gray-200 print:border-0 print:shadow-none print:p-0">
+        {{-- Header of Sheet --}}
+        <div class="flex items-center justify-between border-b-2 border-gray-900 pb-4 mb-6">
+            <div>
+                <h1 class="text-2xl font-extrabold text-gray-900 uppercase tracking-wide">Phiếu Phân Dán Tem Sản Xuất</h1>
+                <p class="text-xs text-gray-500 mt-1">Đơn vị gia công: <span class="font-bold text-gray-800">KB TECH (GERVIN)</span></p>
             </div>
-        @endforeach
+            <div class="text-right">
+                <div class="text-sm font-bold text-gray-900">Mã Lệnh: <span class="text-indigo-600">{{ $manufacture->code }}</span></div>
+                <div class="text-xs text-gray-500 mt-0.5">Ngày in: {{ date('d/m/Y H:i') }}</div>
+            </div>
+        </div>
+
+        {{-- Meta Information --}}
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 bg-gray-50 p-4 rounded-lg print:bg-neutral-50 print:border print:border-gray-200">
+            <div>
+                <span class="block text-[10px] uppercase font-bold text-gray-400">Trạng thái lệnh</span>
+                <span class="text-sm font-semibold text-gray-800 text-indigo-600 uppercase">{{ $manufacture->status }}</span>
+            </div>
+            <div>
+                <span class="block text-[10px] uppercase font-bold text-gray-400">Tổng số tấm</span>
+                <span class="text-sm font-bold text-indigo-600 text-base" id="printTotalCount">{{ $items->count() }}</span>
+            </div>
+            <div class="col-span-2">
+                <span class="block text-[10px] uppercase font-bold text-gray-400">Ghi chú lệnh</span>
+                <span class="text-xs text-gray-700 block italic leading-snug">{{ $manufacture->notes ?: 'Không có ghi chú' }}</span>
+            </div>
+        </div>
+
+        {{-- Table List of Pieces --}}
+        <table class="w-full border-collapse border border-gray-300 text-xs">
+            <thead>
+                <tr class="bg-gray-100 print:bg-neutral-100 text-gray-800">
+                    <th class="border border-gray-300 px-2 py-2 text-center font-bold" style="width: 40px;">STT</th>
+                    <th class="border border-gray-300 px-3 py-2 text-left font-bold" style="width: 180px;">Mã Tấm (Mã SP)</th>
+                    <th class="border border-gray-300 px-3 py-2 text-left font-bold">Tên Tấm / Sản phẩm</th>
+                    <th class="border border-gray-300 px-3 py-2 text-left font-bold" style="width: 140px;">Vật tư</th>
+                    <th class="border border-gray-300 px-3 py-2 text-center font-bold" style="width: 100px;">Kích thước (mm)</th>
+                    <th class="border border-gray-300 px-2 py-2 text-center font-bold" style="width: 60px;">Tem số</th>
+                    <th class="border border-gray-300 px-3 py-2 text-left font-bold" style="width: 120px;">Nhân viên dán</th>
+                    <th class="border border-gray-300 px-3 py-2 text-left font-bold">Ghi chú</th>
+                    <th class="border border-gray-300 px-2 py-2 text-center font-bold" style="width: 80px;">Đã dán</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($items as $index => $item)
+                    @php
+                        $totalQty = 1;
+                        $currentIdx = 1;
+                        if (isset($item->raw_item)) {
+                            $totalQty = $item->raw_item->quantity ?? $item->raw_item->wing_quantity ?? 1;
+                        }
+                        $parts = explode('.', $item->product_code);
+                        if (count($parts) > 0) {
+                            $lastPart = end($parts);
+                            if (is_numeric($lastPart)) {
+                                $currentIdx = intval($lastPart);
+                            }
+                        }
+                    @endphp
+                    <tr class="stamp-row hover:bg-gray-50/50 print:hover:bg-transparent" data-worker-id="{{ $item->assigned_worker_id ?? '' }}">
+                        <td class="border border-gray-300 px-2 py-2 text-center font-medium">{{ $index + 1 }}</td>
+                        <td class="border border-gray-300 px-3 py-2 font-mono font-bold text-gray-900 select-all">{{ $item->product_code }}</td>
+                        <td class="border border-gray-300 px-3 py-2">
+                            <span class="font-semibold text-gray-800">{{ $item->product_name }}</span>
+                            <span class="block text-[10px] text-gray-400">Đơn hàng: {{ $item->order_code }}</span>
+                        </td>
+                        <td class="border border-gray-300 px-3 py-2 text-gray-700">{{ $item->supply_name ?? '—' }}</td>
+                        <td class="border border-gray-300 px-3 py-2 text-center font-bold text-red-600">{{ $item->dimensions ?: '—' }}</td>
+                        <td class="border border-gray-300 px-2 py-2 text-center text-gray-500 font-semibold">{{ $currentIdx }}/{{ $totalQty }}</td>
+                        <td class="border border-gray-300 px-3 py-2 text-gray-700 font-medium">{{ $item->assigned_worker ? $item->assigned_worker->name : '—' }}</td>
+                        <td class="border border-gray-300 px-3 py-2 text-gray-500 italic">{{ $item->notes ?? '—' }}</td>
+                        <td class="border border-gray-300 px-2 py-2 text-center">
+                            {{-- Checkbox for physical matching --}}
+                            <div class="w-5 h-5 mx-auto border-2 border-gray-400 rounded flex items-center justify-center print:border-gray-900">
+                                {{-- Empty block for checkmark signature --}}
+                            </div>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="9" class="border border-gray-300 px-4 py-8 text-center text-gray-500">
+                            Không có sản phẩm nào trong lệnh sản xuất này.
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+
+        {{-- Signatures --}}
+        <div class="grid grid-cols-3 gap-6 mt-12 text-center text-xs">
+            <div>
+                <p class="font-bold text-gray-700">Người lập phiếu</p>
+                <p class="text-[10px] text-gray-400 mt-0.5">(Ký, ghi rõ họ tên)</p>
+                <div class="h-20 flex items-center justify-center"></div>
+                <p class="font-semibold text-gray-800">{{ Auth::user()->name ?? '—' }}</p>
+            </div>
+            <div>
+                <p class="font-bold text-gray-700">Nhân viên dán tem</p>
+                <p class="text-[10px] text-gray-400 mt-0.5">(Ký, ghi rõ họ tên)</p>
+                <div class="h-20 flex items-center justify-center font-bold text-gray-800"></div>
+                <p id="assignedWorkerSignatureName" class="text-gray-400">............................</p>
+            </div>
+            <div>
+                <p class="font-bold text-gray-700">Quản đốc xưởng</p>
+                <p class="text-[10px] text-gray-400 mt-0.5">(Ký, ghi rõ họ tên)</p>
+                <div class="h-20"></div>
+                <p class="text-gray-400">............................</p>
+            </div>
+        </div>
     </div>
 
+    <script>
+        function filterStampsByWorker(workerId) {
+            const rows = document.querySelectorAll('tbody tr.stamp-row');
+            let count = 0;
+            let selectedWorkerName = '';
+            
+            if (workerId !== 'all' && workerId !== 'unassigned') {
+                const select = document.getElementById('workerFilter');
+                selectedWorkerName = select.options[select.selectedIndex].text;
+            }
+            
+            rows.forEach((row) => {
+                const rowWorkerId = row.getAttribute('data-worker-id');
+                let matches = false;
+                
+                if (workerId === 'all') {
+                    matches = true;
+                } else if (workerId === 'unassigned') {
+                    matches = !rowWorkerId;
+                } else {
+                    matches = rowWorkerId === workerId;
+                }
+                
+                if (matches) {
+                    row.classList.remove('hidden');
+                    count++;
+                } else {
+                    row.classList.add('hidden');
+                }
+            });
+            
+            // Update displayed counter
+            document.getElementById('displayedCount').textContent = count;
+            
+            // Update printed summary total
+            const printTotal = document.getElementById('printTotalCount');
+            if (printTotal) {
+                printTotal.textContent = count;
+            }
+            
+            // Pre-fill signature name
+            const signatureName = document.getElementById('assignedWorkerSignatureName');
+            if (signatureName) {
+                if (selectedWorkerName) {
+                    signatureName.textContent = selectedWorkerName;
+                    signatureName.classList.remove('text-gray-400');
+                    signatureName.classList.add('text-gray-800', 'font-semibold');
+                } else {
+                    signatureName.textContent = '............................';
+                    signatureName.classList.remove('text-gray-800', 'font-semibold');
+                    signatureName.classList.add('text-gray-400');
+                }
+            }
+        }
+    </script>
 </body>
 </html>
