@@ -434,7 +434,7 @@
     <div id="min-late-supplies-container" class="space-y-6">
         @if(isset($acrylicOrder) && $acrylicOrder->type == 'min_late' && $acrylicOrder->supplies->count() > 0)
             @foreach($acrylicOrder->supplies as $supplyIndex => $supply)
-            <div class="order-supply-row bg-neutral-50/50 border border-neutral-200 rounded-xl p-5 mb-2 relative transition-all hover:border-neutral-300 shadow-sm" data-supply-id="{{ $supply->id }}">
+            <div class="order-supply-row bg-neutral-50/50 border border-primary-600 rounded-xl p-5 mb-2 relative shadow-sm" data-supply-id="{{ $supply->id }}">
                 
                 {{-- Items inside this supply --}}
                 <div class="flex items-center justify-between gap-4 border-b border-neutral-200 pb-3 mb-4">
@@ -696,7 +696,7 @@ let minLateSupplyIndex = {{ $minLateSupplyIndex ?? 0 }};
 function addMinLateOrderSupply() {
     const container = document.getElementById('min-late-supplies-container');
     const newSupply = document.createElement('div');
-    newSupply.className = 'order-supply-row bg-neutral-50/50 border border-neutral-200 rounded-xl p-5 mb-2 relative transition-all hover:border-neutral-300 shadow-sm';
+    newSupply.className = 'order-supply-row bg-neutral-50/50 border border-primary-600 rounded-xl p-5 mb-2 relative shadow-sm';
     newSupply.innerHTML = `
         <div class="flex items-center justify-between gap-4 border-b border-neutral-200 pb-3 mb-4">
             <div class="flex items-center gap-3">
