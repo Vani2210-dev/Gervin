@@ -13,7 +13,7 @@ class ManufactureController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:view manufacture',   ['only' => ['index', 'show', 'serveQrCode', 'printStamps']]);
+        $this->middleware('permission:view manufacture',   ['only' => ['index', 'show', 'printStamps']]);
         $this->middleware('permission:add manufacture',    ['only' => ['create', 'store']]);
         $this->middleware('permission:edit manufacture',   ['only' => ['edit', 'update']]);
         $this->middleware('permission:delete manufacture', ['only' => ['destroy']]);
@@ -94,8 +94,9 @@ class ManufactureController extends Controller
         ]);
 
         $items = $manufacture->getAllItems();
+        $workers = \App\Models\User::orderBy('name')->get();
 
-        return view('manufactures.show', compact('manufacture', 'items'));
+        return view('manufactures.show', compact('manufacture', 'items', 'workers'));
     }
 
     public function edit(ManufactureOrder $manufacture)
@@ -214,51 +215,36 @@ class ManufactureController extends Controller
     {
         $manufacture->load('orders.supplies');
         $items = $manufacture->getAllItems();
+        $workers = \App\Models\User::orderBy('name')->get();
 
-        return view('manufactures.print_stamps', compact('manufacture', 'items'));
+        return view('manufactures.print_stamps', compact('manufacture', 'items', 'workers'));
     }
 
-    public function serveQrCode($product_code)
+    public function assignStamps(Request $request, ManufactureOrder $manufacture)
     {
-        // Safe characters check
-        $cleanCode = preg_replace('/[^A-Za-z0-9\.\-]/', '_', $product_code);
-        $filePath = 'anh-don-hang/QR/' . $cleanCode . '.svg';
-
-        if (!Storage::disk('private')->exists($filePath)) {
-            $this->generateQrCode($cleanCode);
-        }
-
-        if (!Storage::disk('private')->exists($filePath)) {
-            abort(404);
-        }
-
-        $path = storage_path('app/private/' . $filePath);
-        return response()->file($path, [
-            'Content-Type' => 'image/svg+xml',
-            'Content-Disposition' => 'inline; filename="' . $cleanCode . '.svg"',
+        $request->validate([
+            'worker_id' => 'nullable|exists:users,id',
+            'items'     => 'required|array',
+            'items.*.id' => 'required|integer',
+            'items.*.type' => 'required|string|in:acrylic,glass,min_late',
         ]);
-    }
 
-    protected function generateQrCode($product_code)
-    {
-        $directory = 'anh-don-hang/QR';
-        if (!Storage::disk('private')->exists($directory)) {
-            Storage::disk('private')->makeDirectory($directory);
-        }
-
-        $filePath = $directory . '/' . $product_code . '.svg';
-
-        try {
-            $qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" . urlencode($product_code) . "&format=svg";
-            $ctx = stream_context_create([
-                'http' => ['timeout' => 5]
-            ]);
-            $svgContent = @file_get_contents($qrUrl, false, $ctx);
-            if ($svgContent) {
-                Storage::disk('private')->put($filePath, $svgContent);
+        foreach ($request->items as $item) {
+            if (isset($item['checked']) && $item['checked'] == '1') {
+                if ($item['type'] === 'acrylic') {
+                    \App\Models\AcrylicOrderItemCode::where('id', $item['id'])
+                        ->update(['assigned_worker_id' => $request->worker_id]);
+                } elseif ($item['type'] === 'glass') {
+                    \App\Models\GlassOrderItemCode::where('id', $item['id'])
+                        ->update(['assigned_worker_id' => $request->worker_id]);
+                } elseif ($item['type'] === 'min_late') {
+                    \App\Models\MinLateOrderItemCode::where('id', $item['id'])
+                        ->update(['assigned_worker_id' => $request->worker_id]);
+                }
             }
-        } catch (\Exception $e) {
-            \Log::error("QR Generation error for {$product_code}: " . $e->getMessage());
         }
+
+        return back()->with('success', 'Phân công dán tem thành công.');
     }
+
 }

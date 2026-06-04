@@ -541,86 +541,84 @@ async function exportToExcel() {
         } else if (orderData.type === 'min_late') {
             // Column dimensions
             const colWidths = [
-                { col: 'A', width: 4.625 },
-                { col: 'B', width: 6.375 },
-                { col: 'C', width: 11.25 },
-                { col: 'D', width: 47.375 },
-                { col: 'E', width: 6.75 },
-                { col: 'F', width: 13.0 },
-                { col: 'G', width: 7.875 },
-                { col: 'H', width: 11.25 },
-                { col: 'I', width: 7.375 },
+                { col: 'A', width: 6.375 },
+                { col: 'B', width: 11.25 },
+                { col: 'C', width: 47.375 },
+                { col: 'D', width: 6.75 },
+                { col: 'E', width: 13.0 },
+                { col: 'F', width: 7.875 },
+                { col: 'G', width: 11.25 },
+                { col: 'H', width: 7.375 },
+                { col: 'I', width: 13.0 },
                 { col: 'J', width: 13.0 },
-                { col: 'K', width: 13.0 },
-                { col: 'L', width: 7.375 },
-                { col: 'M', width: 10.625 },
+                { col: 'K', width: 7.375 },
+                { col: 'L', width: 10.625 },
+                { col: 'M', width: 13.0 },
                 { col: 'N', width: 13.0 },
                 { col: 'O', width: 13.0 },
                 { col: 'P', width: 13.0 },
-                { col: 'Q', width: 13.0 },
-                { col: 'R', width: 23.75 },
-                { col: 'S', width: 8.0 },
-                { col: 'T', width: 9.0 },
-                { col: 'U', width: 13.0 },
-                { col: 'V', width: 13.0 }
+                { col: 'Q', width: 23.75 },
+                { col: 'R', width: 8.0 },
+                { col: 'S', width: 9.0 },
+                { col: 'T', width: 13.0 },
+                { col: 'U', width: 13.0 }
             ];
             colWidths.forEach(w => { worksheet.getColumn(w.col).width = w.width; });
 
             const maxCol = colWidths.length;
 
-            // Metadata rows (using D:P merge instead of A:S to prevent swallowing columns Q & R)
+            // Metadata rows (using C:O merge instead of A:R to prevent swallowing columns P & Q)
             worksheet.getRow(5).height = 25;
-            worksheet.mergeCells('D5:P5');
-            setCell(5, 4, 'BÁO GIÁ KIÊM ĐƠN ĐẶT HÀNG', true, 'center', 16);
+            worksheet.mergeCells('C5:O5');
+            setCell(5, 3, 'BÁO GIÁ KIÊM ĐƠN ĐẶT HÀNG', true, 'center', 16);
 
             worksheet.getRow(6).height = 18;
-            worksheet.mergeCells('D6:P6');
-            setCell(6, 4, dateStr, false, 'center', 11, true);
-            setCell(6, 17, 'Ngày giờ chốt đơn:', true, 'right', 10);
-            worksheet.getCell('R6').value = chotDonStr;
-            worksheet.getCell('R6').font = { name: 'Times New Roman', size: 10 };
+            worksheet.mergeCells('C6:O6');
+            setCell(6, 3, dateStr, false, 'center', 11, true);
+            setCell(6, 16, 'Ngày giờ chốt đơn:', true, 'right', 10);
+            worksheet.getCell('Q6').value = chotDonStr;
+            worksheet.getCell('Q6').font = { name: 'Times New Roman', size: 10 };
 
             worksheet.getRow(7).height = 18;
-            worksheet.mergeCells('D7:P7');
-            setCell(7, 4, `Số phiếu: ${orderData.order_code}`, true, 'center', 11);
-            setCell(7, 17, 'Số ngày phải giao từ lúc chốt đơn:', true, 'right', 10);
-            worksheet.getCell('R7').value = parseInt(orderData.delivery_days);
-            worksheet.getCell('R7').font = { name: 'Times New Roman', size: 10 };
+            worksheet.mergeCells('C7:O7');
+            setCell(7, 3, `Số phiếu: ${orderData.order_code}`, true, 'center', 11);
+            setCell(7, 16, 'Số ngày phải giao từ lúc chốt đơn:', true, 'right', 10);
+            worksheet.getCell('Q7').value = parseInt(orderData.delivery_days);
+            worksheet.getCell('Q7').font = { name: 'Times New Roman', size: 10 };
 
             worksheet.getRow(8).height = 18;
-            worksheet.mergeCells('D8:P8');
-            setCell(8, 4, `Khách hàng: ${orderData.customer_name || ''}`, true, 'left', 11);
-            setCell(8, 17, 'Ngày giờ phải giao hàng:', true, 'right', 10);
-            worksheet.getCell('R8').value = deadlineStr;
-            worksheet.getCell('R8').font = { name: 'Times New Roman', size: 10 };
+            worksheet.mergeCells('C8:O8');
+            setCell(8, 3, `Khách hàng: ${orderData.customer_name || ''}`, true, 'left', 11);
+            setCell(8, 16, 'Ngày giờ phải giao hàng:', true, 'right', 10);
+            worksheet.getCell('Q8').value = deadlineStr;
+            worksheet.getCell('Q8').font = { name: 'Times New Roman', size: 10 };
 
             worksheet.getRow(9).height = 18;
-            worksheet.mergeCells('D9:P9');
-            setCell(9, 4, `Địa chỉ: ${orderData.address || ''}`, false, 'left', 10);
+            worksheet.mergeCells('C9:O9');
+            setCell(9, 3, `Địa chỉ: ${orderData.address || ''}`, false, 'left', 10);
 
             worksheet.getRow(10).height = 20;
-            worksheet.mergeCells('D10:S10');
-            setCell(10, 4, 'Công ty TNHH Gỗ GERVIN xin cảm ơn quý khách hàng đã tin dùng sản phẩm của chúng tôi và xin được báo giá như sau:', false, 'left', 10, true);
+            worksheet.mergeCells('C10:R10');
+            setCell(10, 3, 'Công ty TNHH Gỗ GERVIN xin cảm ơn quý khách hàng đã tin dùng sản phẩm của chúng tôi và xin được báo giá như sau:', false, 'left', 10, true);
 
             // Double Row Headers (Row 11 & 12)
             worksheet.getRow(11).height = 24;
             worksheet.getRow(12).height = 24;
 
             const headersDef = [
-                { range: 'A11:A12', val: 'Chi tiết' },
-                { range: 'B11:B12', val: 'Stt' },
-                { range: 'C11:C12', val: 'Mã hàng' },
-                { range: 'D11:D12', val: 'Tên hàng hóa, dịch vụ' },
-                { range: 'E11:F11', val: ' Kích thước (mm) ' },
-                { range: 'G11:G12', val: 'Số lượng' },
-                { range: 'H11:H12', val: 'Cạnh vát' },
-                { range: 'I11:L11', val: 'Dán cạnh' },
-                { range: 'M11:M12', val: 'Số mét dán thẳng' },
-                { range: 'N11:N12', val: 'Số mét dán vát' },
-                { range: 'O11:O12', val: 'Số mét dán bản rộng 25-35mm' },
-                { range: 'P11:P12', val: 'Số mét dán ván chiều rộng 40-59mm' },
-                { range: 'Q11:Q12', val: 'Số mét dán bản rộng 17-39mm' },
-                { range: 'R11:R12', val: 'Ghi chú' }
+                { range: 'A11:A12', val: 'Stt' },
+                { range: 'B11:B12', val: 'Mã hàng' },
+                { range: 'C11:C12', val: 'Tên hàng hóa, dịch vụ' },
+                { range: 'D11:E11', val: ' Kích thước (mm) ' },
+                { range: 'F11:F12', val: 'Số lượng' },
+                { range: 'G11:G12', val: 'Cạnh vát' },
+                { range: 'H11:K11', val: 'Dán cạnh' },
+                { range: 'L11:L12', val: 'Số mét dán thẳng' },
+                { range: 'M11:M12', val: 'Số mét dán vát' },
+                { range: 'N11:N12', val: 'Số mét dán bản rộng 25-35mm' },
+                { range: 'O11:O12', val: 'Số mét dán ván chiều rộng 40-59mm' },
+                { range: 'P11:P12', val: 'Số mét dán bản rộng 17-39mm' },
+                { range: 'Q11:Q12', val: 'Ghi chú' }
             ];
 
             headersDef.forEach(h => {
@@ -629,16 +627,16 @@ async function exportToExcel() {
                 cell.value = h.val;
             });
 
-            worksheet.getCell('E12').value = 'Cao (chiều vân gỗ) ';
-            worksheet.getCell('F12').value = 'Rộng';
+            worksheet.getCell('D12').value = 'Cao (chiều vân gỗ) ';
+            worksheet.getCell('E12').value = 'Rộng';
+            worksheet.getCell('H12').value = 'Cao';
             worksheet.getCell('I12').value = 'Cao';
-            worksheet.getCell('J12').value = 'Cao';
+            worksheet.getCell('J12').value = 'Rộng';
             worksheet.getCell('K12').value = 'Rộng';
-            worksheet.getCell('L12').value = 'Rộng';
-            worksheet.getCell('S12').value = 'Chiều vân';
-            worksheet.getCell('T12').value = 'Vát mòi';
-            worksheet.getCell('U12').value = 'Tay nắm vát';
-            worksheet.getCell('V12').value = 'CNC';
+            worksheet.getCell('R12').value = 'Chiều vân';
+            worksheet.getCell('S12').value = 'Vát mòi';
+            worksheet.getCell('T12').value = 'Tay nắm vát';
+            worksheet.getCell('U12').value = 'CNC';
 
             // Style headers
             for (let r = 11; r <= 12; r++) {
@@ -656,16 +654,15 @@ async function exportToExcel() {
             // Write default VẬT TƯ row
             const vatTuRow = worksheet.getRow(currentRow);
             vatTuRow.height = 22;
-            vatTuRow.getCell(1).value = 'CT';
-            vatTuRow.getCell(2).value = 'A';
-            vatTuRow.getCell(4).value = 'VẬT TƯ';
-            vatTuRow.getCell(7).value = 0;
+            vatTuRow.getCell(1).value = 'A';
+            vatTuRow.getCell(3).value = 'VẬT TƯ';
+            vatTuRow.getCell(6).value = 0;
+            vatTuRow.getCell(12).value = 0;
             vatTuRow.getCell(13).value = 0;
             vatTuRow.getCell(14).value = 0;
             vatTuRow.getCell(15).value = 0;
             vatTuRow.getCell(16).value = 0;
-            vatTuRow.getCell(17).value = 0;
-            vatTuRow.getCell(19).value = 'Vát ';
+            vatTuRow.getCell(18).value = 'Vát ';
 
             for (let c = 1; c <= maxCol; c++) {
                 const cell = vatTuRow.getCell(c);
@@ -678,9 +675,8 @@ async function exportToExcel() {
             orderData.supplies.forEach((supply, supplyIdx) => {
                 const supplyRow = worksheet.getRow(currentRow);
                 supplyRow.height = 22;
-                supplyRow.getCell(1).value = 'CT';
-                supplyRow.getCell(2).value = romanize(supplyIdx + 1);
-                supplyRow.getCell(4).value = supply.supply_name;
+                supplyRow.getCell(1).value = romanize(supplyIdx + 1);
+                supplyRow.getCell(3).value = supply.supply_name;
 
                 for (let c = 1; c <= maxCol; c++) {
                     const cell = supplyRow.getCell(c);
@@ -694,39 +690,38 @@ async function exportToExcel() {
                     const itemRow = worksheet.getRow(currentRow);
                     itemRow.height = 20;
 
-                    itemRow.getCell(1).value = 'CT';
-                    itemRow.getCell(2).value = itemIdx + 1;
-                    itemRow.getCell(3).value = item.product_code || '';
-                    itemRow.getCell(4).value = item.name || '';
+                    itemRow.getCell(1).value = itemIdx + 1;
+                    itemRow.getCell(2).value = item.product_code || '';
+                    itemRow.getCell(3).value = item.name || '';
 
-                    itemRow.getCell(5).value = parseFloat(item.height) || 0;
-                    itemRow.getCell(6).value = parseFloat(item.width) || 0;
-                    itemRow.getCell(7).value = parseInt(item.quantity) || 1;
+                    itemRow.getCell(4).value = parseFloat(item.height) || 0;
+                    itemRow.getCell(5).value = parseFloat(item.width) || 0;
+                    itemRow.getCell(6).value = parseInt(item.quantity) || 1;
 
-                    itemRow.getCell(8).value = item.beveled_handle ? 'Vát ' + item.beveled_handle : 'Vát 0';
+                    itemRow.getCell(7).value = item.beveled_handle ? 'Vát ' + item.beveled_handle : 'Vát 0';
 
                     const gluing = item.edge_gluing || {};
-                    itemRow.getCell(9).value = gluing.height_1 || '';
-                    itemRow.getCell(10).value = gluing.height_2 || '';
-                    itemRow.getCell(11).value = gluing.width_1 || '';
-                    itemRow.getCell(12).value = gluing.width_2 || '';
+                    itemRow.getCell(8).value = gluing.height_1 || '';
+                    itemRow.getCell(9).value = gluing.height_2 || '';
+                    itemRow.getCell(10).value = gluing.width_1 || '';
+                    itemRow.getCell(11).value = gluing.width_2 || '';
 
-                    itemRow.getCell(13).value = parseFloat(item.straight_paste_length) || 0;
-                    itemRow.getCell(14).value = parseFloat(item.beveled_length) || 0;
-                    itemRow.getCell(15).value = parseFloat(item.ban_rong_25_35) || 0;
-                    itemRow.getCell(16).value = parseFloat(item.ban_rong_40_59) || 0;
-                    itemRow.getCell(17).value = parseFloat(item.ban_rong_17_39) || 0;
-                    itemRow.getCell(18).value = item.notes || '';
-                    itemRow.getCell(19).value = item.direction || 0;
-                    itemRow.getCell(20).value = parseFloat(item.vat_moi_length) || 0;
-                    itemRow.getCell(21).value = parseFloat(item.beveled_handle) || 0;
-                    itemRow.getCell(22).value = parseInt(item.cnc) || 0;
+                    itemRow.getCell(12).value = parseFloat(item.straight_paste_length) || 0;
+                    itemRow.getCell(13).value = parseFloat(item.beveled_length) || 0;
+                    itemRow.getCell(14).value = parseFloat(item.ban_rong_25_35) || 0;
+                    itemRow.getCell(15).value = parseFloat(item.ban_rong_40_59) || 0;
+                    itemRow.getCell(16).value = parseFloat(item.ban_rong_17_39) || 0;
+                    itemRow.getCell(17).value = item.notes || '';
+                    itemRow.getCell(18).value = item.direction || 0;
+                    itemRow.getCell(19).value = parseFloat(item.vat_moi_length) || 0;
+                    itemRow.getCell(20).value = parseFloat(item.beveled_handle) || 0;
+                    itemRow.getCell(21).value = parseInt(item.cnc) || 0;
 
                     // Alignments
                     itemRow.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
                     itemRow.getCell(2).alignment = { horizontal: 'center', vertical: 'middle' };
-                    itemRow.getCell(3).alignment = { horizontal: 'center', vertical: 'middle' };
-                    itemRow.getCell(4).alignment = { horizontal: 'left', vertical: 'middle' };
+                    itemRow.getCell(3).alignment = { horizontal: 'left', vertical: 'middle' };
+                    itemRow.getCell(4).alignment = { horizontal: 'center', vertical: 'middle' };
                     itemRow.getCell(5).alignment = { horizontal: 'center', vertical: 'middle' };
                     itemRow.getCell(6).alignment = { horizontal: 'center', vertical: 'middle' };
                     itemRow.getCell(7).alignment = { horizontal: 'center', vertical: 'middle' };
@@ -739,12 +734,11 @@ async function exportToExcel() {
                     itemRow.getCell(14).alignment = { horizontal: 'center', vertical: 'middle' };
                     itemRow.getCell(15).alignment = { horizontal: 'center', vertical: 'middle' };
                     itemRow.getCell(16).alignment = { horizontal: 'center', vertical: 'middle' };
-                    itemRow.getCell(17).alignment = { horizontal: 'center', vertical: 'middle' };
-                    itemRow.getCell(18).alignment = { horizontal: 'left', vertical: 'middle' };
+                    itemRow.getCell(17).alignment = { horizontal: 'left', vertical: 'middle' };
+                    itemRow.getCell(18).alignment = { horizontal: 'center', vertical: 'middle' };
                     itemRow.getCell(19).alignment = { horizontal: 'center', vertical: 'middle' };
                     itemRow.getCell(20).alignment = { horizontal: 'center', vertical: 'middle' };
                     itemRow.getCell(21).alignment = { horizontal: 'center', vertical: 'middle' };
-                    itemRow.getCell(22).alignment = { horizontal: 'center', vertical: 'middle' };
 
                     for (let c = 1; c <= maxCol; c++) {
                         const cell = itemRow.getCell(c);
@@ -764,14 +758,13 @@ async function exportToExcel() {
                 const payHeaderRow = worksheet.getRow(currentRow);
                 payHeaderRow.height = 24;
 
-                payHeaderRow.getCell(1).value = 'CT';
-                payHeaderRow.getCell(2).value = 'B';
-                payHeaderRow.getCell(4).value = 'Tính giá bán sản phẩm, dịch vụ:';
-                payHeaderRow.getCell(9).value = 'Đơn vị';
-                payHeaderRow.getCell(12).value = 'Số lượng';
-                payHeaderRow.getCell(13).value = 'Đơn giá';
-                payHeaderRow.getCell(14).value = 'Đơn giá chỉ';
-                payHeaderRow.getCell(18).value = 'THÀNH TIỀN';
+                payHeaderRow.getCell(1).value = 'B';
+                payHeaderRow.getCell(3).value = 'Tính giá bán sản phẩm, dịch vụ:';
+                payHeaderRow.getCell(8).value = 'Đơn vị';
+                payHeaderRow.getCell(11).value = 'Số lượng';
+                payHeaderRow.getCell(12).value = 'Đơn giá';
+                payHeaderRow.getCell(13).value = 'Đơn giá chỉ';
+                payHeaderRow.getCell(17).value = 'THÀNH TIỀN';
 
                 // Formatting headers (Using #366092 blue background with white bold text)
                 const payHeaderFill = {
@@ -779,12 +772,12 @@ async function exportToExcel() {
                     pattern: 'solid',
                     fgColor: { argb: 'FF366092' }
                 };
-                const pCols = [1, 2, 4, 9, 12, 13, 14, 18];
+                const pCols = [1, 3, 8, 11, 12, 13, 17];
                 pCols.forEach(c => {
                     const cell = payHeaderRow.getCell(c);
                     cell.font = { name: 'Times New Roman', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
                     cell.fill = payHeaderFill;
-                    cell.alignment = { horizontal: c === 4 ? 'left' : 'center', vertical: 'middle' };
+                    cell.alignment = { horizontal: c === 3 ? 'left' : 'center', vertical: 'middle' };
                 });
 
                 // Set borders for entire payHeaderRow
@@ -802,33 +795,31 @@ async function exportToExcel() {
                     const row = worksheet.getRow(currentRow);
                     row.height = 20;
 
-                    row.getCell(1).value = 'GC';
-                    row.getCell(2).value = detailIdx + 1;
-                    row.getCell(4).value = detail.name;
-                    row.getCell(9).value = detail.unit || 'tấm';
+                    row.getCell(1).value = detailIdx + 1;
+                    row.getCell(3).value = detail.name;
+                    row.getCell(8).value = detail.unit || 'tấm';
 
-                    row.getCell(12).value = parseFloat(detail.quantity) || 0;
-                    row.getCell(13).value = parseFloat(detail.price) || 0;
+                    row.getCell(11).value = parseFloat(detail.quantity) || 0;
+                    row.getCell(12).value = parseFloat(detail.price) || 0;
+                    row.getCell(12).numFmt = '#,##0';
+                    row.getCell(13).value = parseFloat(detail.price_only) || 0;
                     row.getCell(13).numFmt = '#,##0';
-                    row.getCell(14).value = parseFloat(detail.price_only) || 0;
-                    row.getCell(14).numFmt = '#,##0';
-                    row.getCell(18).value = parseFloat(detail.total) || 0;
-                    row.getCell(18).numFmt = '#,##0';
-                    row.getCell(18).font = { name: 'Times New Roman', size: 11, bold: true };
+                    row.getCell(17).value = parseFloat(detail.total) || 0;
+                    row.getCell(17).numFmt = '#,##0';
+                    row.getCell(17).font = { name: 'Times New Roman', size: 11, bold: true };
 
                     // Alignments
                     row.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
-                    row.getCell(2).alignment = { horizontal: 'center', vertical: 'middle' };
-                    row.getCell(4).alignment = { horizontal: 'left', vertical: 'middle' };
-                    row.getCell(9).alignment = { horizontal: 'center', vertical: 'middle' };
-                    row.getCell(12).alignment = { horizontal: 'center', vertical: 'middle' };
+                    row.getCell(3).alignment = { horizontal: 'left', vertical: 'middle' };
+                    row.getCell(8).alignment = { horizontal: 'center', vertical: 'middle' };
+                    row.getCell(11).alignment = { horizontal: 'center', vertical: 'middle' };
+                    row.getCell(12).alignment = { horizontal: 'right', vertical: 'middle' };
                     row.getCell(13).alignment = { horizontal: 'right', vertical: 'middle' };
-                    row.getCell(14).alignment = { horizontal: 'right', vertical: 'middle' };
-                    row.getCell(18).alignment = { horizontal: 'right', vertical: 'middle' };
+                    row.getCell(17).alignment = { horizontal: 'right', vertical: 'middle' };
 
                     for (let c = 1; c <= maxCol; c++) {
                         const cell = row.getCell(c);
-                        if (c !== 18) cell.font = { name: 'Times New Roman', size: 11 };
+                        if (c !== 17) cell.font = { name: 'Times New Roman', size: 11 };
                         cell.border = thinBorder;
                     }
                     currentRow++;
@@ -837,14 +828,14 @@ async function exportToExcel() {
                 // Payment summary: TỔNG TIỀN HÀNG:
                 const sumRow = worksheet.getRow(currentRow);
                 sumRow.height = 22;
-                sumRow.getCell(17).value = "TỔNG TIỀN HÀNG:";
-                sumRow.getCell(17).font = { name: 'Times New Roman', size: 11, bold: true };
-                sumRow.getCell(17).alignment = { horizontal: 'right', vertical: 'middle' };
+                sumRow.getCell(16).value = "TỔNG TIỀN HÀNG:";
+                sumRow.getCell(16).font = { name: 'Times New Roman', size: 11, bold: true };
+                sumRow.getCell(16).alignment = { horizontal: 'right', vertical: 'middle' };
 
-                sumRow.getCell(18).value = parseFloat(orderData.total_amount);
-                sumRow.getCell(18).font = { name: 'Times New Roman', size: 11, bold: true, color: { argb: 'FFDC2626' } };
-                sumRow.getCell(18).numFmt = '#,##0';
-                sumRow.getCell(18).alignment = { horizontal: 'right', vertical: 'middle' };
+                sumRow.getCell(17).value = parseFloat(orderData.total_amount);
+                sumRow.getCell(17).font = { name: 'Times New Roman', size: 11, bold: true, color: { argb: 'FFDC2626' } };
+                sumRow.getCell(17).numFmt = '#,##0';
+                sumRow.getCell(17).alignment = { horizontal: 'right', vertical: 'middle' };
 
                 for (let c = 1; c <= maxCol; c++) {
                     sumRow.getCell(c).border = {
@@ -861,14 +852,14 @@ async function exportToExcel() {
                 // Payment summary: Còn lại:
                 const remainRow = worksheet.getRow(currentRow);
                 remainRow.height = 22;
-                remainRow.getCell(17).value = "Còn lại:";
-                remainRow.getCell(17).font = { name: 'Times New Roman', size: 11, bold: true };
-                remainRow.getCell(17).alignment = { horizontal: 'right', vertical: 'middle' };
+                remainRow.getCell(16).value = "Còn lại:";
+                remainRow.getCell(16).font = { name: 'Times New Roman', size: 11, bold: true };
+                remainRow.getCell(16).alignment = { horizontal: 'right', vertical: 'middle' };
 
-                remainRow.getCell(18).value = parseFloat(orderData.total_amount);
-                remainRow.getCell(18).font = { name: 'Times New Roman', size: 11, bold: true };
-                remainRow.getCell(18).numFmt = '#,##0';
-                remainRow.getCell(18).alignment = { horizontal: 'right', vertical: 'middle' };
+                remainRow.getCell(17).value = parseFloat(orderData.total_amount);
+                remainRow.getCell(17).font = { name: 'Times New Roman', size: 11, bold: true };
+                remainRow.getCell(17).numFmt = '#,##0';
+                remainRow.getCell(17).alignment = { horizontal: 'right', vertical: 'middle' };
 
                 for (let c = 1; c <= maxCol; c++) {
                     remainRow.getCell(c).border = {

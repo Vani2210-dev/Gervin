@@ -239,7 +239,7 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('manufactures', ManufactureController::class)->names('manufactures');
     Route::post('manufactures/{manufacture}/approve/{step}', [ManufactureController::class, 'approveStep'])->name('manufactures.approve');
     Route::get('manufactures/{manufacture}/print-stamps', [ManufactureController::class, 'printStamps'])->name('manufactures.print-stamps');
-    Route::get('manufactures/qr/{product_code}', [ManufactureController::class, 'serveQrCode'])->name('manufactures.qr');
+    Route::post('manufactures/{manufacture}/assign-stamps', [ManufactureController::class, 'assignStamps'])->name('manufactures.assign-stamps');
 });
 
 require __DIR__.'/auth.php';
