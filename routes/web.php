@@ -20,6 +20,7 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ManufactureController;
 use App\Http\Controllers\WarehouseController;
+use App\Http\Controllers\ManufactureStepController;
 
 Route::middleware(['auth'])->group(function () {
     Route::controller(DashboardController::class)->group(function () {
@@ -240,6 +241,18 @@ Route::middleware(['auth'])->group(function () {
     Route::post('manufactures/{manufacture}/approve/{step}', [ManufactureController::class, 'approveStep'])->name('manufactures.approve');
     Route::get('manufactures/{manufacture}/print-stamps', [ManufactureController::class, 'printStamps'])->name('manufactures.print-stamps');
     Route::get('manufactures/qr/{product_code}', [ManufactureController::class, 'serveQrCode'])->name('manufactures.qr');
+});
+
+// Manufacture Steps / Processes
+Route::middleware(['auth'])->prefix('processes')->name('processes.')->group(function () {
+    Route::get('/cnc', [ManufactureStepController::class, 'cnc'])->name('cnc');
+    Route::post('/cnc/complete', [ManufactureStepController::class, 'completeCnc'])->name('cnc.complete');
+    Route::get('/pressing', [ManufactureStepController::class, 'pressing'])->name('pressing');
+    Route::get('/edge-banding', [ManufactureStepController::class, 'edgeBanding'])->name('edge-banding');
+    Route::get('/finishing', [ManufactureStepController::class, 'finishing'])->name('finishing');
+    Route::get('/qc', [ManufactureStepController::class, 'qc'])->name('qc');
+    Route::get('/packing', [ManufactureStepController::class, 'packing'])->name('packing');
+    Route::get('/shipped', [ManufactureStepController::class, 'shipped'])->name('shipped');
 });
 
 require __DIR__.'/auth.php';

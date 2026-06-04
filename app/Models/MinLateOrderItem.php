@@ -24,11 +24,14 @@ class MinLateOrderItem extends Model
         'beveled_handle',
         'cnc',
         'direction',
+        'status',
+        'notes',
     ];
 
     protected $casts = [
         'size' => 'array',
         'edge_gluing' => 'array',
+        'status' => 'array',
     ];
 
     public function orderSupply()
