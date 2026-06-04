@@ -399,29 +399,50 @@ function removeOrderItem(button) {
     updateAcrylicRowIndexes(tbody);
 }
 
-function updateAcrylicRowIndexes(tbody) {
-    if (!tbody) return;
+function updateAcrylicRowIndexes() {
     const orderCode = document.getElementById('order-code-input')?.value || '';
-    const supplyRow = tbody.closest('.order-supply-row');
-    const supplyCode = supplyRow ? (supplyRow.querySelector('.order-supply-code-input')?.value || '') : '';
+    let globalPieceIndex = 1;
+    let globalItemIndex = 1;
 
-    tbody.querySelectorAll('.order-item-row').forEach((row, itemIndex) => {
-        const indexEl = row.querySelector('.row-index');
-        if (indexEl) indexEl.textContent = itemIndex + 1;
-        
-        const stt = itemIndex + 1;
-        const generatedCode = `${orderCode}.${supplyCode}.${stt}`;
-        const productCodeInput = row.querySelector('.product-code-input');
-        if (productCodeInput) {
-            productCodeInput.value = generatedCode;
-        }
+    document.querySelectorAll('#order-supplies-container .order-supply-row').forEach((supplyRow, supplyIndex) => {
+        const supplyCode = supplyRow.querySelector('.order-supply-code-input')?.value || '';
+        const tbody = supplyRow.querySelector('.supply-items-container');
+        if (!tbody) return;
 
-        row.querySelectorAll('input, select, textarea').forEach(input => {
-            const name = input.getAttribute('name');
-            if (name) {
-                const newName = name.replace(/\[items\]\[\d+\]/, `[items][${itemIndex}]`);
-                input.setAttribute('name', newName);
+        tbody.querySelectorAll('.order-item-row').forEach((row, itemIndex) => {
+            // Update row STT
+            const indexEl = row.querySelector('.row-index');
+            if (indexEl) indexEl.textContent = globalItemIndex;
+
+            // Get quantity
+            const quantityInput = row.querySelector('input[name*="[quantity]"]');
+            const qty = parseInt(quantityInput?.value) || 1;
+
+            // Base code for the item (first piece index)
+            const baseCode = `${orderCode}.${supplyCode}.${globalPieceIndex}`;
+            const productCodeInput = row.querySelector('.product-code-input');
+            if (productCodeInput) {
+                productCodeInput.value = baseCode;
             }
+
+            // Remove product_ids container if it exists
+            const idsContainer = row.querySelector('.product-ids-container');
+            if (idsContainer) {
+                idsContainer.remove();
+            }
+
+            // Update inputs name indexes
+            row.querySelectorAll('input, select, textarea').forEach(input => {
+                const name = input.getAttribute('name');
+                if (name) {
+                    let newName = name.replace(/supplies\[\d+\]/, `supplies[${supplyIndex}]`);
+                    newName = newName.replace(/\[items\]\[\d+\]/, `[items][${itemIndex}]`);
+                    input.setAttribute('name', newName);
+                }
+            });
+
+            globalPieceIndex += qty;
+            globalItemIndex++;
         });
     });
 }
@@ -437,7 +458,12 @@ function bindAcrylicRowEvents(row) {
     
     if (heightInput) heightInput.addEventListener('input', () => calculateTotalPrice(row, 'height'));
     if (widthInput) widthInput.addEventListener('input', () => calculateTotalPrice(row, 'width'));
-    if (quantityInput) quantityInput.addEventListener('input', () => calculateTotalPrice(row, 'quantity'));
+    if (quantityInput) {
+        quantityInput.addEventListener('input', () => {
+            calculateTotalPrice(row, 'quantity');
+            updateAcrylicRowIndexes();
+        });
+    }
     if (wingAreaInput) wingAreaInput.addEventListener('input', () => calculateTotalPrice(row, 'wing_area'));
     if (moldingLengthInput) moldingLengthInput.addEventListener('input', () => calculateTotalPrice(row, 'molding_length'));
     if (unitPriceInput) unitPriceInput.addEventListener('input', () => calculateTotalPrice(row, 'unit_price'));
@@ -471,7 +497,7 @@ function duplicateAcrylicRow(button) {
     row.parentNode.insertBefore(newRow, row.nextSibling);
 
     bindAcrylicRowEvents(newRow);
-    updateAcrylicRowIndexes(tbody);
+    updateAcrylicRowIndexes();
     updateOrderSummary();
 }
 
@@ -540,21 +566,18 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Recalculate codes on load
-    document.querySelectorAll('#order-supplies-container .supply-items-container').forEach(tbody => {
-        updateAcrylicRowIndexes(tbody);
-    });
+    updateAcrylicRowIndexes();
+
+    const orderCodeInput = document.getElementById('order-code-input');
+    if (orderCodeInput) {
+        orderCodeInput.addEventListener('input', () => updateAcrylicRowIndexes());
+    }
 });
 
 // Live listener for supply code input changes
 document.addEventListener('input', function(e) {
     if (e.target.classList.contains('order-supply-code-input')) {
-        const supplyRow = e.target.closest('.order-supply-row');
-        if (supplyRow) {
-            const tbody = supplyRow.querySelector('.supply-items-container');
-            if (tbody) {
-                updateAcrylicRowIndexes(tbody);
-            }
-        }
+        updateAcrylicRowIndexes();
     }
 });
 </script>

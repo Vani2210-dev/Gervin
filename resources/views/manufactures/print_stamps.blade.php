@@ -66,7 +66,20 @@
     {{-- Stamps Grid --}}
     <div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4 justify-items-center">
         @foreach($items as $item)
-            @for($q = 0; $q < $item->quantity; $q++)
+            @php
+                $totalQty = 1;
+                $currentIdx = 1;
+                if (isset($item->raw_item)) {
+                    $totalQty = $item->raw_item->quantity ?? $item->raw_item->wing_quantity ?? 1;
+                }
+                $parts = explode('.', $item->product_code);
+                if (count($parts) > 0) {
+                    $lastPart = end($parts);
+                    if (is_numeric($lastPart)) {
+                        $currentIdx = intval($lastPart);
+                    }
+                }
+            @endphp
             <div class="stamp-card shadow-sm border border-gray-200">
                 {{-- QR code side --}}
                 <div class="w-1/3 flex flex-col items-center justify-center border-r border-dashed border-gray-300 pr-3 mr-3 h-full">
@@ -82,7 +95,7 @@
                     <div>
                         <div class="flex justify-between items-start">
                             <span class="text-[10px] font-bold text-indigo-700 uppercase tracking-wide bg-indigo-50 px-1.5 py-0.5 rounded">{{ $manufacture->code }}</span>
-                            <span class="text-[9px] font-semibold text-gray-400">Tem: {{ $q + 1 }}/{{ $item->quantity }}</span>
+                            <span class="text-[9px] font-semibold text-gray-400">Tem: {{ $currentIdx }}/{{ $totalQty }}</span>
                         </div>
                         <h2 class="text-xs font-bold text-gray-800 mt-1 line-clamp-2" title="{{ $item->product_name }}">{{ $item->product_name }}</h2>
                     </div>
@@ -110,7 +123,6 @@
                     </div>
                 </div>
             </div>
-            @endfor
         @endforeach
     </div>
 
