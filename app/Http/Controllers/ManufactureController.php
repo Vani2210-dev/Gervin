@@ -90,13 +90,35 @@ class ManufactureController extends Controller
             'managerApprover',
             'stampsReceiver',
             'productionStarter',
-            'completer'
+            'completer',
+            'stampDistributions.worker'
         ]);
 
-        $items = $manufacture->getAllItems();
+        $allItems = $manufacture->getAllItems();
+        $totalItemsCount = $allItems->count();
+
+        $currentPage = \Illuminate\Pagination\LengthAwarePaginator::resolveCurrentPage();
+        $perPage = intval(request()->input('per_page', 10));
+        if ($perPage <= 0) {
+            $perPage = 10;
+        }
+
+        $currentItems = $allItems->slice(($currentPage - 1) * $perPage, $perPage)->values();
+
+        $items = new \Illuminate\Pagination\LengthAwarePaginator(
+            $currentItems,
+            $totalItemsCount,
+            $perPage,
+            $currentPage,
+            [
+                'path' => \Illuminate\Pagination\LengthAwarePaginator::resolveCurrentPath(),
+                'query' => request()->query(),
+            ]
+        );
+
         $workers = \App\Models\User::orderBy('name')->get();
 
-        return view('manufactures.show', compact('manufacture', 'items', 'workers'));
+        return view('manufactures.show', compact('manufacture', 'items', 'workers', 'totalItemsCount'));
     }
 
     public function edit(ManufactureOrder $manufacture)
@@ -245,7 +267,10 @@ class ManufactureController extends Controller
 
     public function printStamps(ManufactureOrder $manufacture)
     {
-        $manufacture->load('orders.supplies');
+        $manufacture->load([
+            'orders.supplies',
+            'stampDistributions.worker'
+        ]);
         $items = $manufacture->getAllItems();
         $workers = \App\Models\User::orderBy('name')->get();
 
@@ -254,29 +279,49 @@ class ManufactureController extends Controller
 
     public function assignStamps(Request $request, ManufactureOrder $manufacture)
     {
-        $request->validate([
-            'worker_id' => 'nullable|exists:users,id',
-            'items'     => 'required|array',
-            'items.*.id' => 'required|integer',
-            'items.*.type' => 'required|string|in:acrylic,glass,min_late',
-        ]);
+        // 1. Quick distribution action
+        if ($request->input('action') === 'quick_distribute') {
+            $request->validate([
+                'worker_id' => 'required|exists:users,id',
+                'quantity'  => 'required|integer|min:1',
+            ]);
 
-        foreach ($request->items as $item) {
-            if (isset($item['checked']) && $item['checked'] == '1') {
-                if ($item['type'] === 'acrylic') {
-                    \App\Models\AcrylicOrderItemCode::where('id', $item['id'])
-                        ->update(['assigned_worker_id' => $request->worker_id]);
-                } elseif ($item['type'] === 'glass') {
-                    \App\Models\GlassOrderItemCode::where('id', $item['id'])
-                        ->update(['assigned_worker_id' => $request->worker_id]);
-                } elseif ($item['type'] === 'min_late') {
-                    \App\Models\MinLateOrderItemCode::where('id', $item['id'])
-                        ->update(['assigned_worker_id' => $request->worker_id]);
-                }
+            $workerId = $request->worker_id;
+            $quantity = intval($request->quantity);
+
+            $totalStampsCount = $manufacture->getAllItems()->count();
+            $assignedStampsCount = \App\Models\ManufactureStampDistribution::where('manufacture_order_id', $manufacture->id)->sum('quantity');
+            $unassignedStampsCount = $totalStampsCount - $assignedStampsCount;
+
+            if ($quantity > $unassignedStampsCount) {
+                return back()->with('error', "Không thể phân phát quá số tem chưa phân phối ({$unassignedStampsCount} tem).");
             }
+
+            // Create or update the distribution row
+            $distribution = \App\Models\ManufactureStampDistribution::where('manufacture_order_id', $manufacture->id)
+                ->where('worker_id', $workerId)
+                ->first();
+
+            if ($distribution) {
+                $distribution->increment('quantity', $quantity);
+            } else {
+                \App\Models\ManufactureStampDistribution::create([
+                    'manufacture_order_id' => $manufacture->id,
+                    'worker_id' => $workerId,
+                    'quantity' => $quantity,
+                ]);
+            }
+
+            return back()->with('success', "Đã phân phát thành công {$quantity} tem cho nhân viên.");
         }
 
-        return back()->with('success', 'Phân công dán tem thành công.');
+        // 2. Reset all assignments action
+        if ($request->input('action') === 'reset_all') {
+            \App\Models\ManufactureStampDistribution::where('manufacture_order_id', $manufacture->id)->delete();
+            return back()->with('success', 'Đã thu hồi toàn bộ phân phát tem.');
+        }
+
+        return back()->with('error', 'Thao tác không hợp lệ.');
     }
 
 }

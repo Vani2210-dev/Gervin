@@ -379,9 +379,6 @@
                         <input type="number" name="supplies[{{ $supplyIndex }}][quantity]" class="form-control form-control-sm rounded-lg w-24 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="SL" min="0" step="0.01" value="{{ $supply->quantity ?? 0 }}">
                     </div>
                     <div class="flex items-center gap-2">
-                        <button type="button" onclick="addOrderItem(this)" class="order-table-form-action btn btn-sm btn-outline-primary rounded-lg flex items-center gap-1">
-                            <iconify-icon icon="lucide:plus" class="text-sm"></iconify-icon> Thêm sản phẩm
-                        </button>
                         <button type="button" onclick="this.closest('.order-supply-row').remove()" class="order-table-form-action text-neutral-400 hover:text-danger-500 transition-colors p-1 flex items-center justify-center" title="Xóa vật tư này">
                             <iconify-icon icon="lucide:trash-2" class="text-lg"></iconify-icon>
                         </button>
@@ -479,6 +476,12 @@
                         </tbody>
                     </table>
                 </div>
+                
+                {{-- Nút thêm sản phẩm mới (Sao chép từ sản phẩm cuối) --}}
+                <button type="button" onclick="addOrderItem(this)" class="order-table-form-action w-full mt-4 py-3 border-2 border-dashed border-primary-300 hover:border-primary-500 rounded-xl bg-primary-50/50 hover:bg-primary-50 text-primary-600 font-semibold text-sm flex items-center justify-center gap-1.5 transition-all duration-200">
+                    <iconify-icon icon="lucide:plus" class="text-lg"></iconify-icon>
+                    Thêm sản phẩm mới (Sao chép từ sản phẩm cuối)
+                </button>
             </div>
             @endforeach
             @php $supplyIndex = $acrylicOrder->supplies->count() @endphp
@@ -506,9 +509,6 @@ function addOrderSupply() {
                 <input type="number" name="supplies[${supplyIndex}][quantity]" class="form-control form-control-sm rounded-lg w-24 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="SL" min="0" step="0.01" value="0">
             </div>
             <div class="flex items-center gap-2">
-                <button type="button" onclick="addOrderItem(this)" class="order-table-form-action btn btn-sm btn-outline-primary rounded-lg flex items-center gap-1">
-                    <iconify-icon icon="lucide:plus" class="text-sm"></iconify-icon> Thêm sản phẩm
-                </button>
                 <button type="button" onclick="this.closest('.order-supply-row').remove()" class="order-table-form-action text-neutral-400 hover:text-danger-500 transition-colors p-1 flex items-center justify-center" title="Xóa vật tư này">
                     <iconify-icon icon="lucide:trash-2" class="text-lg"></iconify-icon>
                 </button>
@@ -543,6 +543,10 @@ function addOrderSupply() {
                 </tbody>
             </table>
         </div>
+        <button type="button" onclick="addOrderItem(this)" class="order-table-form-action w-full mt-4 py-3 border-2 border-dashed border-primary-300 hover:border-primary-500 rounded-xl bg-primary-50/50 hover:bg-primary-50 text-primary-600 font-semibold text-sm flex items-center justify-center gap-1.5 transition-all duration-200">
+            <iconify-icon icon="lucide:plus" class="text-lg"></iconify-icon>
+            Thêm sản phẩm mới (Sao chép từ sản phẩm cuối)
+        </button>
     `;
     container.appendChild(newSupply);
 

@@ -187,28 +187,7 @@
                         Hiển thị {{ $orders->firstItem() ?? 0 }} đến {{ $orders->lastItem() ?? 0 }}
                         trong tổng {{ $orders->total() }} đơn hàng
                     </span>
-                    @if($orders->hasPages())
-                    <ul class="pagination flex flex-wrap items-center gap-2 justify-center">
-                        <li class="page-item {{ $orders->onFirstPage() ? 'disabled' : '' }}">
-                            <a class="page-link bg-neutral-300 text-secondary-light font-semibold rounded-lg border-0 flex items-center justify-center h-8 w-8 text-base"
-                                href="{{ $orders->previousPageUrl() }}">
-                                <iconify-icon icon="ep:d-arrow-left"></iconify-icon>
-                            </a>
-                        </li>
-                        @foreach($orders->getUrlRange(1, $orders->lastPage()) as $page => $url)
-                        <li class="page-item">
-                            <a class="page-link font-semibold rounded-lg border-0 flex items-center justify-center h-8 w-8 text-base {{ $page == $orders->currentPage() ? 'bg-primary-600 text-white' : 'bg-neutral-300 text-secondary-light' }}"
-                                href="{{ $url }}">{{ $page }}</a>
-                        </li>
-                        @endforeach
-                        <li class="page-item {{ !$orders->hasMorePages() ? 'disabled' : '' }}">
-                            <a class="page-link bg-neutral-300 text-secondary-light font-semibold rounded-lg border-0 flex items-center justify-center h-8 w-8 text-base"
-                                href="{{ $orders->nextPageUrl() }}">
-                                <iconify-icon icon="ep:d-arrow-right"></iconify-icon>
-                            </a>
-                        </li>
-                    </ul>
-                    @endif
+                    {{ $orders->links() }}
                 </div>
             </div>
         </div>

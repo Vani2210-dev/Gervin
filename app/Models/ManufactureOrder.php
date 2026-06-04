@@ -69,6 +69,11 @@ class ManufactureOrder extends Model
         return $this->belongsTo(User::class, 'completed_by');
     }
 
+    public function stampDistributions()
+    {
+        return $this->hasMany(ManufactureStampDistribution::class, 'manufacture_order_id');
+    }
+
     /**
      * Aggregate and normalize all items from linked orders.
      */
@@ -79,7 +84,7 @@ class ManufactureOrder extends Model
         foreach ($this->orders as $order) {
             // Load items based on order type
             if ($order->type === 'min_late') {
-                $order->load('supplies.minLateItems.codes.assignedWorker');
+                $order->load('supplies.minLateItems.codes');
                 foreach ($order->supplies as $supply) {
                     foreach ($supply->minLateItems as $item) {
                         $size = $item->size ?? [];
@@ -104,15 +109,13 @@ class ManufactureOrder extends Model
                                 'notes'              => $item->notes,
                                 'supply_name'        => $supply->supply_name,
                                 'status'             => $code->status,
-                                'assigned_worker_id' => $code->assigned_worker_id,
-                                'assigned_worker'    => $code->assignedWorker,
                                 'raw_item'           => $item,
                             ]);
                         }
                     }
                 }
             } elseif ($order->type === 'glass') {
-                $order->load('supplies.glassItems.codes.assignedWorker');
+                $order->load('supplies.glassItems.codes');
                 foreach ($order->supplies as $supply) {
                     foreach ($supply->glassItems as $item) {
                         $dims = ($item->height && $item->width) ? "{$item->height} x {$item->width}" : '';
@@ -130,8 +133,6 @@ class ManufactureOrder extends Model
                                 'notes'              => $item->notes,
                                 'supply_name'        => $supply->supply_name,
                                 'status'             => $code->status,
-                                'assigned_worker_id' => $code->assigned_worker_id,
-                                'assigned_worker'    => $code->assignedWorker,
                                 'raw_item'           => $item,
                             ]);
                         }
@@ -139,7 +140,7 @@ class ManufactureOrder extends Model
                 }
             } else {
                 // acrylic
-                $order->load('supplies.items.codes.assignedWorker');
+                $order->load('supplies.items.codes');
                 foreach ($order->supplies as $supply) {
                     foreach ($supply->items as $item) {
                         $dims = ($item->height && $item->width) ? "{$item->height} x {$item->width}" : '';
@@ -157,8 +158,6 @@ class ManufactureOrder extends Model
                                 'notes'              => $item->notes,
                                 'supply_name'        => $supply->supply_name,
                                 'status'             => $code->status,
-                                'assigned_worker_id' => $code->assigned_worker_id,
-                                'assigned_worker'    => $code->assignedWorker,
                                 'raw_item'           => $item,
                             ]);
                         }

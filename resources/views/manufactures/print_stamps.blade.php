@@ -34,21 +34,10 @@
             <h1 class="text-lg font-bold text-gray-800 font-sans">In Phiếu Phân Dán Tem</h1>
             <p class="text-sm text-gray-500 font-sans">
                 Mã lệnh: <span class="font-semibold">{{ $manufacture->code }}</span> — 
-                Hiển thị: <span id="displayedCount" class="font-semibold text-indigo-600">{{ $items->count() }}</span>/<span class="font-semibold">{{ $items->count() }}</span> tấm
+                Tổng cộng: <span class="font-semibold text-indigo-600">{{ $items->count() }}</span> tấm
             </p>
         </div>
         <div class="flex flex-wrap items-center gap-3">
-            <div class="flex items-center gap-2">
-                <span class="text-xs font-bold text-gray-500 uppercase tracking-wider font-sans">Lọc nhân viên:</span>
-                <select id="workerFilter" onchange="filterStampsByWorker(this.value)" class="form-select text-xs py-1.5 px-3 rounded-lg border-gray-300 font-sans bg-gray-50 border focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
-                    <option value="all">-- Tất cả nhân viên --</option>
-                    <option value="unassigned">-- Chưa phân công --</option>
-                    @foreach($workers as $w)
-                        <option value="{{ $w->id }}">{{ $w->name }}</option>
-                    @endforeach
-                </select>
-            </div>
-            
             <button onclick="window.print()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-2 rounded-lg text-sm shadow flex items-center gap-1.5 transition-all font-sans">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
@@ -91,6 +80,21 @@
             </div>
         </div>
 
+        {{-- Phân phát tem cho nhân viên --}}
+        @if($manufacture->stampDistributions->count() > 0)
+        <div class="mb-6 bg-gray-50 p-4 rounded-lg print:bg-neutral-50 print:border print:border-gray-200 text-xs">
+            <span class="block text-[10px] uppercase font-bold text-gray-400 mb-2">Phân phát tem cho nhân viên</span>
+            <div class="flex flex-wrap gap-4">
+                @foreach($manufacture->stampDistributions as $dist)
+                <div class="bg-white px-3 py-1.5 rounded border border-gray-200 flex items-center gap-1.5 shadow-sm">
+                    <span class="font-semibold text-gray-700">{{ $dist->worker->name ?? 'Nhân viên' }}:</span>
+                    <span class="font-bold text-indigo-600">{{ $dist->quantity }} tem</span>
+                </div>
+                @endforeach
+            </div>
+        </div>
+        @endif
+
         {{-- Table List of Pieces --}}
         <table class="w-full border-collapse border border-gray-300 text-xs">
             <thead>
@@ -101,7 +105,6 @@
                     <th class="border border-gray-300 px-3 py-2 text-left font-bold" style="width: 140px;">Vật tư</th>
                     <th class="border border-gray-300 px-3 py-2 text-center font-bold" style="width: 100px;">Kích thước (mm)</th>
                     <th class="border border-gray-300 px-2 py-2 text-center font-bold" style="width: 60px;">Tem số</th>
-                    <th class="border border-gray-300 px-3 py-2 text-left font-bold" style="width: 120px;">Nhân viên dán</th>
                     <th class="border border-gray-300 px-3 py-2 text-left font-bold">Ghi chú</th>
                     <th class="border border-gray-300 px-2 py-2 text-center font-bold" style="width: 80px;">Đã dán</th>
                 </tr>
@@ -122,7 +125,7 @@
                             }
                         }
                     @endphp
-                    <tr class="stamp-row hover:bg-gray-50/50 print:hover:bg-transparent" data-worker-id="{{ $item->assigned_worker_id ?? '' }}">
+                    <tr class="stamp-row hover:bg-gray-50/50 print:hover:bg-transparent">
                         <td class="border border-gray-300 px-2 py-2 text-center font-medium">{{ $index + 1 }}</td>
                         <td class="border border-gray-300 px-3 py-2 font-mono font-bold text-gray-900 select-all">{{ $item->product_code }}</td>
                         <td class="border border-gray-300 px-3 py-2">
@@ -132,7 +135,6 @@
                         <td class="border border-gray-300 px-3 py-2 text-gray-700">{{ $item->supply_name ?? '—' }}</td>
                         <td class="border border-gray-300 px-3 py-2 text-center font-bold text-red-600">{{ $item->dimensions ?: '—' }}</td>
                         <td class="border border-gray-300 px-2 py-2 text-center text-gray-500 font-semibold">{{ $currentIdx }}/{{ $totalQty }}</td>
-                        <td class="border border-gray-300 px-3 py-2 text-gray-700 font-medium">{{ $item->assigned_worker ? $item->assigned_worker->name : '—' }}</td>
                         <td class="border border-gray-300 px-3 py-2 text-gray-500 italic">{{ $item->notes ?? '—' }}</td>
                         <td class="border border-gray-300 px-2 py-2 text-center">
                             {{-- Checkbox for physical matching --}}
@@ -143,7 +145,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="9" class="border border-gray-300 px-4 py-8 text-center text-gray-500">
+                        <td colspan="8" class="border border-gray-300 px-4 py-8 text-center text-gray-500">
                             Không có sản phẩm nào trong lệnh sản xuất này.
                         </td>
                     </tr>
@@ -174,60 +176,5 @@
         </div>
     </div>
 
-    <script>
-        function filterStampsByWorker(workerId) {
-            const rows = document.querySelectorAll('tbody tr.stamp-row');
-            let count = 0;
-            let selectedWorkerName = '';
-            
-            if (workerId !== 'all' && workerId !== 'unassigned') {
-                const select = document.getElementById('workerFilter');
-                selectedWorkerName = select.options[select.selectedIndex].text;
-            }
-            
-            rows.forEach((row) => {
-                const rowWorkerId = row.getAttribute('data-worker-id');
-                let matches = false;
-                
-                if (workerId === 'all') {
-                    matches = true;
-                } else if (workerId === 'unassigned') {
-                    matches = !rowWorkerId;
-                } else {
-                    matches = rowWorkerId === workerId;
-                }
-                
-                if (matches) {
-                    row.classList.remove('hidden');
-                    count++;
-                } else {
-                    row.classList.add('hidden');
-                }
-            });
-            
-            // Update displayed counter
-            document.getElementById('displayedCount').textContent = count;
-            
-            // Update printed summary total
-            const printTotal = document.getElementById('printTotalCount');
-            if (printTotal) {
-                printTotal.textContent = count;
-            }
-            
-            // Pre-fill signature name
-            const signatureName = document.getElementById('assignedWorkerSignatureName');
-            if (signatureName) {
-                if (selectedWorkerName) {
-                    signatureName.textContent = selectedWorkerName;
-                    signatureName.classList.remove('text-gray-400');
-                    signatureName.classList.add('text-gray-800', 'font-semibold');
-                } else {
-                    signatureName.textContent = '............................';
-                    signatureName.classList.remove('text-gray-800', 'font-semibold');
-                    signatureName.classList.add('text-gray-400');
-                }
-            }
-        }
-    </script>
 </body>
 </html>

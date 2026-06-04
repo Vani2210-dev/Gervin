@@ -114,24 +114,7 @@
                             Hiển thị {{ $roles->firstItem() ?? 0 }} đến {{ $roles->lastItem() ?? 0 }}
                             trong tổng {{ $roles->total() }} vai trò
                         </span>
-                        @if($roles->hasPages())
-                        <ul class="pagination flex flex-wrap items-center gap-2 justify-center">
-                            <li class="page-item {{ $roles->onFirstPage() ? 'disabled' : '' }}">
-                                <a class="page-link bg-neutral-300 text-secondary-light font-semibold rounded-lg border-0 flex items-center justify-center h-8 w-8 text-base"
-                                    href="{{ $roles->previousPageUrl() }}"><iconify-icon icon="ep:d-arrow-left"></iconify-icon></a>
-                            </li>
-                            @foreach($roles->getUrlRange(1, $roles->lastPage()) as $page => $url)
-                            <li class="page-item">
-                                <a class="page-link font-semibold rounded-lg border-0 flex items-center justify-center h-8 w-8 text-base {{ $page == $roles->currentPage() ? 'bg-primary-600 text-white' : 'bg-neutral-300 text-secondary-light' }}"
-                                    href="{{ $url }}">{{ $page }}</a>
-                            </li>
-                            @endforeach
-                            <li class="page-item {{ !$roles->hasMorePages() ? 'disabled' : '' }}">
-                                <a class="page-link bg-neutral-300 text-secondary-light font-semibold rounded-lg border-0 flex items-center justify-center h-8 w-8 text-base"
-                                    href="{{ $roles->nextPageUrl() }}"><iconify-icon icon="ep:d-arrow-right"></iconify-icon></a>
-                            </li>
-                        </ul>
-                        @endif
+                        {{ $roles->links() }}
                     </div>
                 </div>
             </div>
