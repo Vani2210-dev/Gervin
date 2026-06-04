@@ -126,12 +126,14 @@
                                 <td>
                                     @php
                                         $statusColors = [
+                                            'draft' => 'bg-neutral-100 text-neutral-600',
                                             'pending' => 'bg-warning-100 text-warning-600',
                                             'processing' => 'bg-info-100 text-info-600',
                                             'completed' => 'bg-success-100 text-success-600',
                                             'cancelled' => 'bg-danger-100 text-danger-600',
                                         ];
                                         $statusLabels = [
+                                            'draft' => 'Nháp',
                                             'pending' => 'Chờ xử lý',
                                             'processing' => 'Đang xử lý',
                                             'completed' => 'Hoàn thành',
@@ -235,6 +237,7 @@
                 <label class="form-label font-semibold text-sm text-neutral-600">Trạng thái</label>
                 <select name="filter_status" class="form-select rounded-lg">
                     <option value="">Tất cả</option>
+                    <option value="draft" {{ request('filter_status') === 'draft' ? 'selected' : '' }}>Nháp</option>
                     <option value="pending" {{ request('filter_status') === 'pending' ? 'selected' : '' }}>Chờ xử lý</option>
                     <option value="processing" {{ request('filter_status') === 'processing' ? 'selected' : '' }}>Đang xử lý</option>
                     <option value="completed" {{ request('filter_status') === 'completed' ? 'selected' : '' }}>Hoàn thành</option>

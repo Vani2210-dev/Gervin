@@ -9,7 +9,7 @@
 <div class="grid grid-cols-12 gap-6">
     {{-- Main Order Info --}}
     <div class="col-span-12 lg:col-span-8 space-y-6">
-        <div class="card p-0 rounded-xl border-0 overflow-hidden shadow-sm bg-white">
+        <div class="card p-0 rounded-xl border-0 overflow-hidden shadow-sm bg-white mb-2">
             <div class="card-header border-b border-neutral-200 bg-white py-4 px-6 flex items-center justify-between flex-wrap gap-3">
                 <div class="flex items-center gap-3">
                     <div class="p-2 bg-primary-50 rounded-lg text-primary-500">
@@ -93,7 +93,7 @@
 
         {{-- Supplies & Items list --}}
         @foreach($acrylicOrder->supplies as $supply)
-        <div class="card p-0 rounded-xl border-0 overflow-hidden shadow-sm bg-white border-l-4 border-l-primary-500">
+        <div class="card p-0 rounded-xl border-0 overflow-hidden shadow-sm bg-white border-l-4 border-l-primary-500 mb-2">
             <div class="card-header border-b border-neutral-200 bg-white py-4 px-6 flex items-center justify-between">
                 <div class="flex items-center gap-3">
                     <div class="p-1.5 bg-primary-50 rounded-lg text-primary-500 flex items-center justify-center">
@@ -283,7 +283,7 @@
         @endforeach
 
         @if($acrylicOrder->type === 'min_late' && isset($acrylicOrder->paymentDetails) && $acrylicOrder->paymentDetails->count() > 0)
-        <div class="card p-0 rounded-xl border-0 overflow-hidden shadow-sm bg-white border-l-4 border-l-primary-500 mt-6">
+        <div class="card p-0 rounded-xl border-0 overflow-hidden shadow-sm bg-white border-l-4 border-l-primary-500">
             <div class="card-header border-b border-neutral-200 bg-white py-4 px-6 flex items-center justify-between">
                 <div class="flex items-center gap-3">
                     <div class="p-1.5 bg-primary-50 rounded-lg text-primary-500 flex items-center justify-center">
@@ -329,7 +329,7 @@
 
     {{-- Order Summary --}}
     <div class="col-span-12 lg:col-span-4 space-y-6">
-        <div class="card p-0 rounded-xl border-0 overflow-hidden shadow-sm bg-white">
+        <div class="card p-0 rounded-xl border-0 overflow-hidden shadow-sm bg-white mb-2">
             <div class="card-header border-b border-neutral-200 bg-white py-4 px-6 flex items-center gap-2">
                 <iconify-icon icon="lucide:receipt-text" class="text-xl text-primary-500"></iconify-icon>
                 <h6 class="font-bold text-base text-neutral-800 m-0">Tóm tắt đơn hàng</h6>
@@ -385,8 +385,119 @@
                 <iconify-icon icon="lucide:edit-3" class="text-base"></iconify-icon> Chỉnh sửa đơn hàng
             </a>
             @endcan
+            <button type="button" onclick="exportToExcel()" class="btn btn-success w-full justify-center flex items-center gap-2 py-3 rounded-xl font-semibold shadow-sm text-sm text-white">
+                <iconify-icon icon="lucide:file-spreadsheet" class="text-base"></iconify-icon> Xuất Excel (.xlsx)
+            </button>
         </div>
     </div>
 </div>
 
+@php
+    $exportData = [
+        'order_code' => $acrylicOrder->order_code,
+        'created_at' => $acrylicOrder->created_at->format('d/m/Y H:i'),
+        'type' => $acrylicOrder->type,
+        'customer_name' => $acrylicOrder->customer_name,
+        'phone' => $acrylicOrder->phone,
+        'order_date' => $acrylicOrder->order_date ? \Carbon\Carbon::parse($acrylicOrder->order_date)->format('Y-m-d H:i:s') : null,
+        'deadline' => $acrylicOrder->deadline ? \Carbon\Carbon::parse($acrylicOrder->deadline)->format('Y-m-d') : null,
+        'address' => $acrylicOrder->address,
+        'notes' => $acrylicOrder->notes,
+        'total_amount' => $acrylicOrder->total_amount,
+        'delivery_days' => $acrylicOrder->delivery_days ?? ($acrylicOrder->type === 'glass' ? 5 : 2),
+        'supplies' => $acrylicOrder->supplies->map(function($supply) use ($acrylicOrder) {
+            $items = [];
+            if ($acrylicOrder->type === 'min_late') {
+                $items = $supply->minLateItems->map(function($item) {
+                    $sizes = $item->size ?? [];
+                    if (is_string($sizes)) {
+                        $sizes = json_decode($sizes, true) ?? [];
+                    }
+                    $edgeGluing = $item->edge_gluing ?? [];
+                    if (is_string($edgeGluing)) {
+                        $edgeGluing = json_decode($edgeGluing, true) ?? [];
+                    }
+                    return [
+                        'product_code' => $item->product_code,
+                        'name' => $item->product_name ?? $item->name,
+                        'quantity' => $item->quantity,
+                        'height' => $sizes['height'] ?? null,
+                        'width' => $sizes['width'] ?? null,
+                        'edge_gluing' => $edgeGluing,
+                        'straight_paste_length' => $item->straight_paste_length,
+                        'beveled_length' => $item->beveled_length,
+                        'vat_moi_length' => $item->vat_moi_length,
+                        'ban_rong_40_59' => $item->ban_rong_40_59,
+                        'ban_rong_17_39' => $item->call_rong_17_39 ?? $item->ban_rong_17_39,
+                        'ban_rong_25_35' => $item->ban_rong_25_35,
+                        'beveled_handle' => $item->beveled_handle,
+                        'cnc' => $item->cnc,
+                        'direction' => $item->direction,
+                        'notes' => $item->notes,
+                    ];
+                });
+            } elseif ($acrylicOrder->type === 'glass') {
+                $items = $supply->glassItems->map(function($item) {
+                    return [
+                        'product_code' => $item->product_code,
+                        'product_name' => $item->product_name,
+                        'wing_opening_direction' => $item->wing_opening_direction,
+                        'aluminum_color' => $item->aluminum_color,
+                        'glass_color' => $item->glass_color,
+                        'height' => $item->height,
+                        'width' => $item->width,
+                        'unit' => $item->unit ?? 'cánh',
+                        'wing_quantity' => $item->wing_quantity,
+                        'area_m2' => $item->area_m2,
+                        'unit_price' => $item->unit_price,
+                        'total_price' => $item->total_price,
+                        'notes' => $item->notes,
+                    ];
+                });
+            } else {
+                $items = $supply->items->map(function($item) {
+                    return [
+                        'product_code' => $item->product_code,
+                        'product_name' => $item->product_name,
+                        'quantity' => $item->quantity,
+                        'height' => $item->height,
+                        'width' => $item->width,
+                        'edge_bevel' => $item->edge_bevel,
+                        'grain_direction' => $item->grain_direction,
+                        'wing_area' => $item->wing_area,
+                        'molding_length' => $item->molding_length,
+                        'bevel' => $item->bevel,
+                        'vertical_grain_cnc' => $item->vertical_grain_cnc,
+                        'unit_price' => $item->unit_price,
+                        'total_price' => $item->total_price,
+                        'notes' => $item->notes,
+                    ];
+                });
+            }
+            return [
+                'order_supply_code' => $supply->order_supply_code,
+                'supply_name' => $supply->supply_name,
+                'quantity' => $supply->quantity,
+                'items' => $items
+            ];
+        }),
+        'payment_details' => ($acrylicOrder->type === 'min_late' && isset($acrylicOrder->paymentDetails)) ? $acrylicOrder->paymentDetails->map(function($detail) {
+            return [
+                'name' => $detail->name,
+                'unit' => $detail->unit,
+                'quantity' => $detail->quantity,
+                'price' => $detail->price,
+                'price_only' => $detail->price_only,
+                'total' => $detail->total,
+            ];
+        }) : []
+    ];
+@endphp
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<script>
+    window.orderExportData = @json($exportData);
+</script>
+<script src="{{ asset('js/order-export.js') }}"></script>
 @endsection

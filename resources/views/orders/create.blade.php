@@ -20,7 +20,8 @@
             $title = $typeLabels[$orderType] ?? 'Tạo đơn hàng';
             $subTitle = 'Tạo mới: ' . ($typeLabels[$orderType] ?? ucfirst($orderType));
             $action = route('orders.store');
-            $acrylicOrder = null;
+            $acrylicOrder = $acrylicOrder ?? null;
+            $isDraftCreate = $isDraftCreate ?? false;
         @endphp
 
         <div class="grid grid-cols-12">

@@ -46,6 +46,13 @@ class PermissionSeeder extends Seeder
             'edit acrylic order',
             'delete acrylic order',
             
+            // Manufacture permissions
+            'view manufacture',
+            'add manufacture',
+            'edit manufacture',
+            'delete manufacture',
+            'approve manufacture',
+            
             // UI permissions
             'view ui',
         ];

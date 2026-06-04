@@ -20,31 +20,6 @@ class RoleSeeder extends Seeder
             'guard_name' => 'web',
         ]);
 
-        $adminRole->givePermissionTo([
-            // Role permissions
-            'view role',
-            'add role',
-            'edit role',
-            'delete role',
-            'approve role',
-            
-            // User permissions
-            'view user',
-            'add user',
-            'edit user',
-            'delete user',
-            'approve user',
-            
-            // Media permissions
-            'view media',
-            'add media',
-            'delete media',
-
-            // Supply permissions
-            'view supply',
-            'add supply',
-            'edit supply',
-            'delete supply',
-        ]);
+        $adminRole->givePermissionTo(Permission::all());
     }
 }

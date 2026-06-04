@@ -56,54 +56,9 @@ class AcrylicOrderService
     public function getUpdateRules(): array
     {
         $rules = $this->getStoreRules();
-        $rules['status'] = 'nullable|in:pending,processing,completed,cancelled';
+        $rules['status'] = 'nullable|in:draft,pending,processing,completed,cancelled';
         $rules['delete_attachments'] = 'nullable|string';
         return $rules;
-    }
-
-    /**
-     * Store a new Acrylic/Glass order.
-     */
-    public function store(Request $request): Order
-    {
-        // Calculate deadline
-        $deadline = $request->deadline;
-        if ($request->filled('order_date') && $request->filled('delivery_days')) {
-            $orderDate = \Carbon\Carbon::parse($request->order_date);
-            $deliveryDays = (int) $request->delivery_days;
-            $deadline = $orderDate->addDays($deliveryDays)->format('Y-m-d');
-        }
-
-        // Handle file uploads
-        $attachmentPaths = $this->uploadAttachments($request);
-
-        // Generate order code
-        $lastOrder = Order::orderBy('id', 'desc')->first();
-        $nextNumber = $lastOrder ? intval(substr($lastOrder->order_code, 2)) + 1 : 1;
-        $orderCode = 'DA' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
-
-        // Calculate total amount
-        $totalAmount = $this->calculateTotalAmount($request->supplies ?? []);
-
-        $order = Order::create([
-            'order_code'    => $orderCode,
-            'type'          => $request->type ?? 'acrylic',
-            'order_date'    => $request->order_date,
-            'delivery_days' => $request->delivery_days,
-            'customer_id'   => $request->customer_id,
-            'customer_name' => $request->customer_name,
-            'phone'         => $request->phone,
-            'address'       => $request->address,
-            'deadline'      => $deadline,
-            'notes'         => $request->notes,
-            'total_amount'  => $totalAmount,
-            'status'        => 'pending',
-            'attachments'   => !empty($attachmentPaths) ? json_encode($attachmentPaths) : null,
-        ]);
-
-        $this->saveSuppliesAndItems($order, $request->supplies ?? []);
-
-        return $order;
     }
 
     /**
@@ -150,7 +105,7 @@ class AcrylicOrderService
             'deadline'      => $deadline,
             'notes'         => $request->notes,
             'total_amount'  => $totalAmount,
-            'status'        => $request->status ?? $order->status,
+            'status'        => $order->status === 'draft' ? 'pending' : ($request->status ?? $order->status),
             'attachments'   => !empty($allAttachments) ? json_encode($allAttachments) : null,
         ]);
 
