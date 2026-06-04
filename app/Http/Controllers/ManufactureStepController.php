@@ -1205,11 +1205,6 @@ class ManufactureStepController extends Controller
         ]);
     }
 
-    public function packing()
-    {
-        return view('processes.packing');
-    }
-
     public function shipped()
     {
         return view('processes.shipped');

@@ -21,6 +21,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ManufactureController;
 use App\Http\Controllers\WarehouseController;
 use App\Http\Controllers\ManufactureStepController;
+use App\Http\Controllers\PackingPackageController;
 
 Route::middleware(['auth'])->group(function () {
     Route::controller(DashboardController::class)->group(function () {
@@ -256,7 +257,13 @@ Route::middleware(['auth'])->prefix('processes')->name('processes.')->group(func
     Route::post('/finishing/complete', [ManufactureStepController::class, 'completeFinishing'])->name('finishing.complete');
     Route::get('/qc', [ManufactureStepController::class, 'qc'])->name('qc');
     Route::post('/qc/complete', [ManufactureStepController::class, 'completeQc'])->name('qc.complete');
-    Route::get('/packing', [ManufactureStepController::class, 'packing'])->name('packing');
+    Route::get('/packing', [PackingPackageController::class, 'index'])->name('packing');
+    Route::post('/packing', [PackingPackageController::class, 'store'])->name('packing.store');
+    Route::get('/packing/{package}', [PackingPackageController::class, 'show'])->name('packing.show');
+    Route::post('/packing/{package}/items', [PackingPackageController::class, 'storeItem'])->name('packing.items.store');
+    Route::delete('/packing/{package}/items/{item}', [PackingPackageController::class, 'destroyItem'])->name('packing.items.destroy');
+    Route::post('/packing/{package}/complete', [PackingPackageController::class, 'complete'])->name('packing.complete');
+    Route::delete('/packing/{package}', [PackingPackageController::class, 'destroy'])->name('packing.destroy');
     Route::get('/shipped', [ManufactureStepController::class, 'shipped'])->name('shipped');
 });
 
