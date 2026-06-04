@@ -12,6 +12,7 @@ class GlassOrderItemCode extends Model
         'glass_order_item_id',
         'product_id',
         'status',
+        'assigned_worker_id',
     ];
 
     protected $casts = [
@@ -21,5 +22,10 @@ class GlassOrderItemCode extends Model
     public function glassOrderItem()
     {
         return $this->belongsTo(GlassOrderItem::class, 'glass_order_item_id');
+    }
+
+    public function assignedWorker()
+    {
+        return $this->belongsTo(User::class, 'assigned_worker_id');
     }
 }
