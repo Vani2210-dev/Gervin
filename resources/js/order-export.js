@@ -391,6 +391,8 @@ async function exportToExcel() {
                 cell.value = h;
                 cell.font = { name: 'Times New Roman', size: 11, bold: true };
                 cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+                cell.fill = headerFill;
+                cell.border = thinBorder;
             });
             viRow.height = 20;
 
@@ -413,6 +415,8 @@ async function exportToExcel() {
                 cell.value = h;
                 cell.font = { name: 'Times New Roman', size: 11, bold: true };
                 cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+                cell.fill = headerFill;
+                cell.border = thinBorder;
             });
             enRow.height = 20;
 

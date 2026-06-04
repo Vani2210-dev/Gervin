@@ -9,7 +9,30 @@ class DashboardController extends Controller
 
     public function index()
     {
-        return view('dashboard/index');
+        $stats = [
+            'total_orders' => \App\Models\Order::where('status', '!=', 'draft')->count(),
+            'pending_orders' => \App\Models\Order::where('status', 'pending')->count(),
+            'processing_orders' => \App\Models\Order::where('status', 'processing')->count(),
+            'completed_orders' => \App\Models\Order::where('status', 'completed')->count(),
+            'cancelled_orders' => \App\Models\Order::where('status', 'cancelled')->count(),
+            
+            'acrylic_orders' => \App\Models\Order::where('status', '!=', 'draft')->where('type', 'acrylic')->count(),
+            'glass_orders' => \App\Models\Order::where('status', '!=', 'draft')->where('type', 'glass')->count(),
+            'min_late_orders' => \App\Models\Order::where('status', '!=', 'draft')->where('type', 'min_late')->count(),
+
+            'total_customers' => \App\Models\Customer::count(),
+            'total_supplies' => \App\Models\Supply::count(),
+            'total_manufacture_orders' => \App\Models\ManufactureOrder::count(),
+            'total_users' => \App\Models\User::count(),
+        ];
+
+        $recentOrders = \App\Models\Order::with('customer')
+            ->where('status', '!=', 'draft')
+            ->orderBy('id', 'desc')
+            ->limit(5)
+            ->get();
+
+        return view('dashboard/index', compact('stats', 'recentOrders'));
     }
 
     public function index2()
