@@ -1,5 +1,6 @@
 @php
     $currentOrderType = $orderType ?? ($acrylicOrder->type ?? old('type', 'acrylic'));
+    $isDraftCreate = $isDraftCreate ?? false;
     $orderTypeLabels = [
         'acrylic' => 'Acrylic',
         'glass' => 'Glass',
@@ -11,10 +12,13 @@
         <h5 class="font-semibold text-base">{{ $title ?? 'Tạo đơn hàng' }}</h5>
     </div>
     <form action="{{ $action }}" method="POST" id="order-form" enctype="multipart/form-data">
-        @if(isset($acrylicOrder))
+        @if(isset($acrylicOrder) && !$isDraftCreate)
             @method('PUT')
         @endif
         @csrf
+        @if($isDraftCreate && isset($acrylicOrder))
+            <input type="hidden" name="draft_order_id" value="{{ $acrylicOrder->id }}">
+        @endif
         <div class="p-4">
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 {{-- Main Form - col-lg-8 --}}
@@ -43,13 +47,7 @@
                                 <label class="form-label font-semibold text-xs text-neutral-500 uppercase tracking-wider mb-2 block">Tên khách hàng <span class="text-danger-500">*</span></label>
                                 <input type="text" name="customer_name" class="form-control rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Nhập tên khách hàng" required value="{{ old('customer_name', $acrylicOrder?->customer_name ?? '') }}">
                             </div>
-                            <div class="form-group">
-                                <label class="form-label font-semibold text-xs text-neutral-500 uppercase tracking-wider mb-2 block">Loại đơn</label>
-                                <div class="d-flex align-items-center gap-2">
-                                    <span class="badge rounded-pill text-bg-primary px-3 py-2">{{ $orderTypeLabels[$currentOrderType] ?? $currentOrderType }}</span>
-                                </div>
-                                <input type="hidden" name="type" value="{{ $currentOrderType }}">
-                            </div>
+                            <input type="hidden" name="type" value="{{ $currentOrderType }}">
                             <div class="form-group">
                                 <label class="form-label font-semibold text-xs text-neutral-500 uppercase tracking-wider mb-2 block">Số điện thoại</label>
                                 <input type="text" name="phone" class="form-control rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Nhập số điện thoại" value="{{ old('phone', $acrylicOrder?->phone ?? '') }}">
@@ -74,7 +72,7 @@
                                 <label class="form-label font-semibold text-xs text-neutral-500 uppercase tracking-wider mb-2 block">Ghi chú đơn hàng</label>
                                 <textarea name="notes" class="form-control rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Nhập ghi chú" rows="2">{{ old('notes', $acrylicOrder?->notes ?? '') }}</textarea>
                             </div>
-                            @if(isset($acrylicOrder))
+                            @if(isset($acrylicOrder) && !$isDraftCreate)
                             <div class="form-group md:col-span-2">
                                 <label class="form-label font-semibold text-xs text-neutral-500 uppercase tracking-wider mb-2 block">Trạng thái</label>
                                 <select name="status" class="form-select rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500">
@@ -173,7 +171,7 @@
         </div>
         <div class="px-6 py-4 border-t border-neutral-100 bg-neutral-50/50 flex items-center justify-end gap-3 rounded-b-xl">
             <a href="{{ route('orders.index') }}" class="btn btn-outline-neutral px-5 py-2.5 rounded-lg text-sm font-semibold transition-all">Quay lại</a>
-            <button type="submit" class="btn btn-primary px-6 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all">{{ isset($acrylicOrder) ? 'Cập nhật đơn hàng' : 'Lưu đơn hàng' }}</button>
+            <button type="submit" class="btn btn-primary px-6 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all">{{ isset($acrylicOrder) && !$isDraftCreate ? 'Cập nhật đơn hàng' : 'Lưu đơn hàng' }}</button>
         </div>
     </form>
 </div>

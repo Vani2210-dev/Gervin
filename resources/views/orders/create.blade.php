@@ -20,7 +20,8 @@
             $title = $typeLabels[$orderType] ?? 'Tạo đơn hàng';
             $subTitle = 'Tạo mới: ' . ($typeLabels[$orderType] ?? ucfirst($orderType));
             $action = route('orders.store');
-            $acrylicOrder = null;
+            $acrylicOrder = $acrylicOrder ?? null;
+            $isDraftCreate = $isDraftCreate ?? false;
         @endphp
 
         <div class="grid grid-cols-12">
@@ -75,7 +76,8 @@
                             </div>
                             <h6 class="mb-2 text-neutral-900 fw-bold order-type-card__title">{{ $label }}</h6>
                             <p class="card-text mb-2 text-secondary-light order-type-card__description">
-                                {{ $typeDescriptions[$type] ?? '' }}</p>
+                                {{ $typeDescriptions[$type] ?? '' }}
+                            </p>
                             <div class="mt-auto pt-4 order-type-card__button-wrap flex justify-start">
                                 <a href="{{ route('orders.create.type', $type) }}"
                                     class="btn {{ $cardMeta['button'] }} rounded-lg px-5 py-[11px] inline-flex items-center justify-center gap-2 order-type-card__button">
@@ -90,10 +92,11 @@
             @endforeach
         </div>
         <style>
-            .order-type-card__body{
-                height: 400px;
+            .order-type-card__body {
+                height: 300px;
             }
         </style>
     @endif
+
 
 @endsection
