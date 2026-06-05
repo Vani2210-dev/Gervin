@@ -18,6 +18,7 @@ use App\Http\Controllers\MediaController;
 use App\Http\Controllers\SupplyController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\QrCodeGeneratorController;
 use App\Http\Controllers\ManufactureController;
 use App\Http\Controllers\WarehouseController;
 use App\Http\Controllers\ManufactureStepController;
@@ -208,6 +209,11 @@ Route::middleware(['auth'])->prefix('media')->name('media.')->group(function () 
 // Supplies
 Route::middleware(['auth'])->group(function () {
     Route::resource('supplies', SupplyController::class)->names('supplies');
+});
+
+// QR Code
+Route::middleware(['auth'])->prefix('qrcode')->name('qrcode.')->group(function () {
+    Route::get('/', [QrCodeGeneratorController::class, 'index'])->name('index');
 });
 
 // Warehouses

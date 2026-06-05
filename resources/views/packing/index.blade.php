@@ -61,7 +61,7 @@
                         <tbody class="packing-page__draft-tbody">
                             @forelse($draftPackages as $package)
                                 <tr class="packing-page__draft-row cursor-pointer hover:bg-neutral-50" onclick="window.location='{{ route('processes.packing.show', $package) }}'">
-                                    <td class="packing-page__draft-cell packing-page__draft-cell--name border-r border-neutral-200 last:border-r-0 font-bold text-neutral-900 border-start border-warning-400 border-4 border-top-0 border-bottom-0 border-end-0">
+                                    <td class="packing-page__draft-cell packing-page__draft-cell--name border-r border-neutral-200 last:border-r-0 font-bold text-neutral-900">
                                         {{ $package->name }}
                                     </td>
                                     <td class="packing-page__draft-cell packing-page__draft-cell--packer border-r border-neutral-200 last:border-r-0">

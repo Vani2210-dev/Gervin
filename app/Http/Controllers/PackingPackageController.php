@@ -77,7 +77,7 @@ class PackingPackageController extends Controller
 
         $found = $this->findItemCode(trim($validated['product_code']));
 
-        if (!$found) {
+        if (! $found) {
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
@@ -90,8 +90,11 @@ class PackingPackageController extends Controller
                 ->with('error', 'Không tìm thấy linh kiện với mã đã quét.');
         }
 
+        $productId = $found['code']->product_id;
+
+        // item_code_id luu theo product_id de khop voi ma quet tren tem/QR.
         $existing = PackingPackageItem::where('item_code_type', $found['class'])
-            ->where('item_code_id', $found['code']->id)
+            ->where('item_code_id', $productId)
             ->with('package')
             ->first();
 
@@ -114,7 +117,7 @@ class PackingPackageController extends Controller
 
         $packageItem = $package->items()->create([
             'item_code_type' => $found['class'],
-            'item_code_id' => $found['code']->id,
+            'item_code_id' => $productId,
         ]);
 
         if ($request->expectsJson()) {
@@ -152,12 +155,12 @@ class PackingPackageController extends Controller
         $itemsCount = $package->items()->count();
 
         if ($request->expectsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Đã xóa linh kiện khỏi kiện.',
-                'items_count' => $itemsCount,
-            ]);
-        }
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Đã xóa linh kiện khỏi kiện.',
+                    'items_count' => $itemsCount,
+                ]);
+            }
 
         return back()->with('success', 'Đã xóa linh kiện khỏi kiện.');
     }
@@ -188,7 +191,7 @@ class PackingPackageController extends Controller
 
     private function findItemCode(string $productCode): ?array
     {
-        $lookups = [
+        foreach ([
             [
                 'class' => AcrylicOrderItemCode::class,
                 'relation' => 'acrylicOrderItem.orderSupply.order',
@@ -201,9 +204,7 @@ class PackingPackageController extends Controller
                 'class' => MinLateOrderItemCode::class,
                 'relation' => 'minLateOrderItem.orderSupply.order',
             ],
-        ];
-
-        foreach ($lookups as $lookup) {
+        ] as $lookup) {
             $code = $lookup['class']::with($lookup['relation'])
                 ->where('product_id', $productCode)
                 ->first();

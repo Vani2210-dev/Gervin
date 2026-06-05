@@ -12,6 +12,10 @@ class PackingPackageItem extends Model
         'item_code_id',
     ];
 
+    protected $casts = [
+        'item_code_id' => 'string',
+    ];
+
     public function package()
     {
         return $this->belongsTo(PackingPackage::class, 'packing_package_id');
@@ -19,6 +23,7 @@ class PackingPackageItem extends Model
 
     public function itemCode()
     {
-        return $this->morphTo(__FUNCTION__, 'item_code_type', 'item_code_id');
+        // item_code_id đang lưu theo product_id nên phải tra qua cột product_id của bảng gốc.
+        return $this->morphTo(__FUNCTION__, 'item_code_type', 'item_code_id', 'product_id');
     }
 }
