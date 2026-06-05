@@ -214,8 +214,8 @@ async function exportNestingFiles() {
 
     orderData.supplies.forEach(supply => {
         const allItems = supply.items || [];
-        const nestItems = allItems.filter(i => (parseFloat(i.height) || 0) > 200 && (parseFloat(i.width) || 0) > 200);
-        const phaoItems = allItems.filter(i => (parseFloat(i.height) || 0) <= 200 || (parseFloat(i.width) || 0) <= 200);
+        const nestItems = allItems.filter(i => (parseFloat(i.height) || 0) > 70 && (parseFloat(i.width) || 0) > 70);
+        const phaoItems = allItems.filter(i => (parseFloat(i.height) || 0) <= 70 || (parseFloat(i.width) || 0) <= 70);
 
         if (nestItems.length) nestingSupplies.push({ ...supply, items: nestItems });
         if (phaoItems.length) phaoSupplies.push({ ...supply, items: phaoItems });
