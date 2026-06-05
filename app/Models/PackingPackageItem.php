@@ -10,10 +10,12 @@ class PackingPackageItem extends Model
         'packing_package_id',
         'item_code_type',
         'item_code_id',
+        'is_packaged',
     ];
 
     protected $casts = [
         'item_code_id' => 'string',
+        'is_packaged' => 'boolean',
     ];
 
     public function package()

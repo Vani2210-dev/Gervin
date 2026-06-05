@@ -21,4 +21,9 @@ class PackingPackage extends Model
     {
         return $this->hasMany(PackingPackageItem::class);
     }
+
+    public function packagedItems()
+    {
+        return $this->hasMany(PackingPackageItem::class)->where('is_packaged', true);
+    }
 }

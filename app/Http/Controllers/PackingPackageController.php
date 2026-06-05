@@ -23,7 +23,7 @@ class PackingPackageController extends Controller
     public function index()
     {
         $packages = PackingPackage::with('packer')
-            ->withCount('items')
+            ->withCount('packagedItems as items_count')
             ->latest()
             ->get();
 
@@ -52,13 +52,30 @@ class PackingPackageController extends Controller
 
     public function show(PackingPackage $package)
     {
-        $package->load(['packer', 'items.itemCode']);
+        $package->load(['packer']);
 
-        $packageItems = $package->items->map(function (PackingPackageItem $packageItem) {
+        $perPage = intval(request()->input('per_page', 15));
+        if ($perPage <= 0) {
+            $perPage = 15;
+        }
+
+        $paginatedItems = $package->items()
+            ->with('itemCode')
+            ->orderBy('is_packaged', 'asc')
+            ->orderBy('id', 'desc')
+            ->paginate($perPage);
+
+        // Load polymorphic relations for the paginated items
+        $codes = $paginatedItems->map(fn($item) => $item->itemCode)->filter();
+        $this->loadMorphCodeRelations($codes);
+
+        $packageItems = $paginatedItems->through(function (PackingPackageItem $packageItem) {
             return $this->formatPackageItem($packageItem);
-        });
+        })->withQueryString();
 
-        return view('packing.show', compact('package', 'packageItems'));
+        $ordersData = $this->getPackageOrdersData($package);
+
+        return view('packing.show', compact('package', 'packageItems', 'ordersData', 'perPage'));
     }
 
     public function storeItem(Request $request, PackingPackage $package)
@@ -95,42 +112,180 @@ class PackingPackageController extends Controller
 
         $productId = $found['code']->product_id;
 
-        // item_code_id luu theo product_id de khop voi ma quet tren tem/QR.
+        // Check if already scanned/packaged in another package
         $existing = PackingPackageItem::where('item_code_type', $found['class'])
             ->where('item_code_id', $productId)
+            ->where('is_packaged', true)
             ->with('package')
             ->first();
 
-        if ($existing) {
+        if ($existing && $existing->packing_package_id !== $package->id) {
+            $packageName = $existing->package?->name ?? 'kiện khác';
             if ($request->expectsJson()) {
-                $jsonPackageName = $existing->package?->name ?? 'kiện khác';
-
                 return response()->json([
                     'success' => false,
-                    'message' => "Linh kiện này đã nằm trong {$jsonPackageName}.",
+                    'message' => "Linh kiện này đã được đóng gói trong {$packageName}.",
                 ], 400);
             }
-
-            $packageName = $existing->package?->name ?? 'kiện khác';
-
-            return back()
-                ->withInput()
-                ->with('error', "Linh kiện này đã nằm trong {$packageName}.");
+            return back()->with('error', "Linh kiện này đã được đóng gói trong {$packageName}.");
         }
 
-        $packageItem = $package->items()->create([
-            'item_code_type' => $found['class'],
-            'item_code_id' => $productId,
-        ]);
+        // Check if already scanned in the current package
+        $existingInCurrent = PackingPackageItem::where('packing_package_id', $package->id)
+            ->where('item_code_type', $found['class'])
+            ->where('item_code_id', $productId)
+            ->first();
+
+        if ($existingInCurrent && $existingInCurrent->is_packaged) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Linh kiện này đã được quét vào kiện hiện tại.',
+                ], 400);
+            }
+            return back()->with('error', 'Linh kiện này đã được quét vào kiện hiện tại.');
+        }
+
+        $packageItem = null;
+
+        // Find the Order of this scanned plate to attach all plates of this order
+        $order = null;
+        $codeObj = $found['code'];
+        if ($codeObj instanceof AcrylicOrderItemCode) {
+            $order = $codeObj->acrylicOrderItem?->orderSupply?->order;
+        } elseif ($codeObj instanceof GlassOrderItemCode) {
+            $order = $codeObj->glassOrderItem?->orderSupply?->order;
+        } elseif ($codeObj instanceof MinLateOrderItemCode) {
+            $order = $codeObj->minLateOrderItem?->orderSupply?->order;
+        }
+
+        if ($order) {
+            $firstItem = $package->items()->first();
+            if ($firstItem) {
+                $firstItem->load('itemCode');
+                if ($firstItem->itemCode) {
+                    $this->loadMorphCodeRelations(collect([$firstItem->itemCode]));
+                }
+                $firstOrderId = null;
+                $firstCode = $firstItem->itemCode;
+                if ($firstCode instanceof AcrylicOrderItemCode) {
+                    $firstOrderId = $firstCode->acrylicOrderItem?->orderSupply?->order_id;
+                } elseif ($firstCode instanceof GlassOrderItemCode) {
+                    $firstOrderId = $firstCode->glassOrderItem?->orderSupply?->order_id;
+                } elseif ($firstCode instanceof MinLateOrderItemCode) {
+                    $firstOrderId = $firstCode->minLateOrderItem?->orderSupply?->order_id;
+                }
+
+                if ($firstOrderId && $firstOrderId !== $order->id) {
+                    if ($request->expectsJson()) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Kiện này đã chứa linh kiện của đơn hàng khác. Mỗi kiện chỉ được chứa tối đa 1 đơn hàng.',
+                        ], 400);
+                    }
+                    return back()->with('error', 'Kiện này đã chứa linh kiện của đơn hàng khác. Mỗi kiện chỉ được chứa tối đa 1 đơn hàng.');
+                }
+            }
+
+            $order->load([
+                'supplies.items.codes',
+                'supplies.glassItems.codes',
+                'supplies.minLateItems.codes'
+            ]);
+
+            $allPlatesInOrder = [];
+            foreach ($order->supplies as $supply) {
+                foreach ($supply->items as $item) {
+                    foreach ($item->codes as $code) {
+                        $allPlatesInOrder[] = [
+                            'class' => AcrylicOrderItemCode::class,
+                            'product_id' => $code->product_id,
+                        ];
+                    }
+                }
+                foreach ($supply->glassItems as $item) {
+                    foreach ($item->codes as $code) {
+                        $allPlatesInOrder[] = [
+                            'class' => GlassOrderItemCode::class,
+                            'product_id' => $code->product_id,
+                        ];
+                    }
+                }
+                foreach ($supply->minLateItems as $item) {
+                    foreach ($item->codes as $code) {
+                        $allPlatesInOrder[] = [
+                            'class' => MinLateOrderItemCode::class,
+                            'product_id' => $code->product_id,
+                        ];
+                    }
+                }
+            }
+
+            \Illuminate\Support\Facades\DB::transaction(function () use ($package, $allPlatesInOrder, $found, $productId, &$packageItem) {
+                foreach ($allPlatesInOrder as $plate) {
+                    $isTarget = ($plate['class'] === $found['class'] && $plate['product_id'] === $productId);
+
+                    $item = PackingPackageItem::where('packing_package_id', $package->id)
+                        ->where('item_code_type', $plate['class'])
+                        ->where('item_code_id', $plate['product_id'])
+                        ->first();
+
+                    if ($item) {
+                        if ($isTarget) {
+                            $item->update(['is_packaged' => true]);
+                            $packageItem = $item;
+                        }
+                    } else {
+                        // Delete any duplicate rows in other packages with is_packaged = false
+                        $existingElsewhere = PackingPackageItem::where('item_code_type', $plate['class'])
+                            ->where('item_code_id', $plate['product_id'])
+                            ->first();
+
+                        if ($existingElsewhere) {
+                            if ($existingElsewhere->is_packaged) {
+                                continue;
+                            } else {
+                                $existingElsewhere->delete();
+                            }
+                        }
+
+                        $newItem = PackingPackageItem::create([
+                            'packing_package_id' => $package->id,
+                            'item_code_type' => $plate['class'],
+                            'item_code_id' => $plate['product_id'],
+                            'is_packaged' => $isTarget,
+                        ]);
+
+                        if ($isTarget) {
+                            $packageItem = $newItem;
+                        }
+                    }
+                }
+            });
+        } else {
+            // Fallback: create the single item
+            $packageItem = PackingPackageItem::updateOrCreate([
+                'packing_package_id' => $package->id,
+                'item_code_type' => $found['class'],
+                'item_code_id' => $productId,
+            ], [
+                'is_packaged' => true,
+            ]);
+        }
 
         if ($request->expectsJson()) {
             $packageItem->load('itemCode');
+            $this->loadMorphCodeRelations(collect([$packageItem->itemCode]));
+
+            $package->load('items.itemCode');
+            $this->loadMorphCodeRelations($package->items->map(fn($item) => $item->itemCode)->filter());
 
             return response()->json([
                 'success' => true,
                 'message' => 'Đã thêm linh kiện vào kiện.',
                 'data' => $this->formatPackageItem($packageItem),
-                'items_count' => $package->items()->count(),
+                'items_count' => $package->packagedItems()->count() . '/' . $package->items()->count(),
+                'orders_data' => $this->getPackageOrdersData($package),
             ]);
         }
 
@@ -154,16 +309,68 @@ class PackingPackageController extends Controller
             abort(404);
         }
 
+        // Find the order of this plate item
+        $code = $item->itemCode;
+        $orderId = null;
+        if ($code instanceof AcrylicOrderItemCode) {
+            $orderId = $code->acrylicOrderItem?->orderSupply?->order_id;
+        } elseif ($code instanceof GlassOrderItemCode) {
+            $orderId = $code->glassOrderItem?->orderSupply?->order_id;
+        } elseif ($code instanceof MinLateOrderItemCode) {
+            $orderId = $code->minLateOrderItem?->orderSupply?->order_id;
+        }
+
+        // Delete the item
         $item->delete();
-        $itemsCount = $package->items()->count();
+
+        // Check if there are other scanned/packaged items of the same order.
+        // If not, clean up the remaining unscanned placeholders of the same order.
+        if ($orderId) {
+            $package->load('items.itemCode');
+            $this->loadMorphCodeRelations($package->items->map(fn($it) => $it->itemCode)->filter());
+
+            $hasOtherScanned = false;
+            $unscannedItemsToClean = [];
+
+            foreach ($package->items as $pkgItem) {
+                $c = $pkgItem->itemCode;
+                $pkgOrderId = null;
+                if ($c instanceof AcrylicOrderItemCode) {
+                    $pkgOrderId = $c->acrylicOrderItem?->orderSupply?->order_id;
+                } elseif ($c instanceof GlassOrderItemCode) {
+                    $pkgOrderId = $c->glassOrderItem?->orderSupply?->order_id;
+                } elseif ($c instanceof MinLateOrderItemCode) {
+                    $pkgOrderId = $c->minLateOrderItem?->orderSupply?->order_id;
+                }
+
+                if ($pkgOrderId === $orderId) {
+                    if ($pkgItem->is_packaged) {
+                        $hasOtherScanned = true;
+                    } else {
+                        $unscannedItemsToClean[] = $pkgItem;
+                    }
+                }
+            }
+
+            if (!$hasOtherScanned) {
+                foreach ($unscannedItemsToClean as $unscannedItem) {
+                    $unscannedItem->delete();
+                }
+            }
+        }
 
         if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Đã xóa linh kiện khỏi kiện.',
-                    'items_count' => $itemsCount,
-                ]);
-            }
+            // Reload package items relationship to make sure it excludes the deleted items
+            $package->load('items.itemCode');
+            $this->loadMorphCodeRelations($package->items->map(fn($it) => $it->itemCode)->filter());
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Đã xóa linh kiện khỏi kiện.',
+                'items_count' => $package->packagedItems()->count() . '/' . $package->items()->count(),
+                'orders_data' => $this->getPackageOrdersData($package),
+            ]);
+        }
 
         return back()->with('success', 'Đã xóa linh kiện khỏi kiện.');
     }
@@ -253,6 +460,7 @@ class PackingPackageController extends Controller
             'product_name' => $productName,
             'order_code' => $orderCode,
             'type' => $type,
+            'is_packaged' => $packageItem->is_packaged,
             'delete_url' => route('processes.packing.items.destroy', [
                 'package' => $packageItem->packing_package_id,
                 'item' => $packageItem->id,
@@ -260,5 +468,123 @@ class PackingPackageController extends Controller
             'created_at' => $packageItem->created_at,
             'created_at_label' => $packageItem->created_at?->format('H:i:s d/m/Y'),
         ];
+    }
+
+    private function getPackageOrdersData(PackingPackage $package): array
+    {
+        // Eager load the items relation if not loaded to prevent N+1 queries
+        if (!$package->relationLoaded('items')) {
+            $package->load('items.itemCode');
+        }
+
+        $codes = $package->items->map(fn($item) => $item->itemCode)->filter();
+        $this->loadMorphCodeRelations($codes);
+
+        $orderIds = [];
+        foreach ($package->items as $packageItem) {
+            $code = $packageItem->itemCode;
+            $orderId = null;
+            if ($code instanceof AcrylicOrderItemCode) {
+                $orderId = $code->acrylicOrderItem?->orderSupply?->order_id;
+            } elseif ($code instanceof GlassOrderItemCode) {
+                $orderId = $code->glassOrderItem?->orderSupply?->order_id;
+            } elseif ($code instanceof MinLateOrderItemCode) {
+                $orderId = $code->minLateOrderItem?->orderSupply?->order_id;
+            }
+            if ($orderId) {
+                $orderIds[$orderId] = true;
+            }
+        }
+
+        $ordersData = [];
+        if (!empty($orderIds)) {
+            $orders = \App\Models\Order::with([
+                'supplies.items.codes',
+                'supplies.glassItems.codes',
+                'supplies.minLateItems.codes'
+            ])->whereIn('id', array_keys($orderIds))->get();
+
+            // Scanned item product codes in this package
+            $scannedProductCodes = $package->items->map(function ($packageItem) {
+                return $packageItem->itemCode?->product_id;
+            })->filter()->toArray();
+
+            foreach ($orders as $order) {
+                $allPlates = [];
+                // Acrylic
+                foreach ($order->supplies as $supply) {
+                    foreach ($supply->items as $item) {
+                        foreach ($item->codes as $code) {
+                            $isScanned = in_array($code->product_id, $scannedProductCodes);
+                            $allPlates[] = [
+                                'product_code' => $code->product_id,
+                                'product_name' => $item->product_name ?? '—',
+                                'type' => 'Acrylic',
+                                'is_scanned' => $isScanned,
+                            ];
+                        }
+                    }
+                    // Glass
+                    foreach ($supply->glassItems as $item) {
+                        foreach ($item->codes as $code) {
+                            $isScanned = in_array($code->product_id, $scannedProductCodes);
+                            $allPlates[] = [
+                                'product_code' => $code->product_id,
+                                'product_name' => $item->product_name ?? '—',
+                                'type' => 'Kính',
+                                'is_scanned' => $isScanned,
+                            ];
+                        }
+                    }
+                    // Min Late
+                    foreach ($supply->minLateItems as $item) {
+                        foreach ($item->codes as $code) {
+                            $isScanned = in_array($code->product_id, $scannedProductCodes);
+                            $allPlates[] = [
+                                'product_code' => $code->product_id,
+                                'product_name' => $item->product_name ?? $item->name ?? '—',
+                                'type' => 'Min-late',
+                                'is_scanned' => $isScanned,
+                            ];
+                        }
+                    }
+                }
+
+                // Sort: unscanned first, scanned last
+                usort($allPlates, function ($a, $b) {
+                    return $a['is_scanned'] <=> $b['is_scanned'];
+                });
+
+                $ordersData[] = [
+                    'order_code' => $order->order_code,
+                    'customer_name' => $order->customer_name,
+                    'plates' => $allPlates,
+                ];
+            }
+        }
+
+        return $ordersData;
+    }
+
+    private function loadMorphCodeRelations($codes)
+    {
+        if ($codes->isEmpty()) {
+            return;
+        }
+
+        $acrylicCodes = $codes->filter(fn($code) => $code instanceof AcrylicOrderItemCode);
+        if ($acrylicCodes->isNotEmpty()) {
+            \Illuminate\Database\Eloquent\Collection::make($acrylicCodes)->load('acrylicOrderItem.orderSupply.order');
+        }
+
+        $glassCodes = $codes->filter(fn($code) => $code instanceof GlassOrderItemCode);
+        if ($glassCodes->isNotEmpty()) {
+            \Illuminate\Database\Eloquent\Collection::make($glassCodes)->load('glassOrderItem.orderSupply.order');
+        }
+
+        $minLateCodes = $codes->filter(fn($code) => $code instanceof MinLateOrderItemCode);
+        if ($minLateCodes->isNotEmpty()) {
+            \Illuminate\Database\Eloquent\Collection::make($minLateCodes)->load('minLateOrderItem.orderSupply.order');
+        }
     }
 }
