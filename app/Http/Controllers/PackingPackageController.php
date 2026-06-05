@@ -14,7 +14,10 @@ class PackingPackageController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth');
+        $this->middleware('permission:view packing')->only(['index', 'show']);
+        $this->middleware('permission:add packing')->only(['store', 'storeItem']);
+        $this->middleware('permission:delete packing')->only(['destroyItem', 'destroy']);
+        $this->middleware('permission:complete packing')->only(['complete']);
     }
 
     public function index()

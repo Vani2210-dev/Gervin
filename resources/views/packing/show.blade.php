@@ -3,7 +3,14 @@
 @php
     $title = "Chi tiết đóng gói";
     $subTitle = 'Đóng gói';
+    $currentUser = auth()->user();
     $isCompleted = $package->status === 'completed';
+    $canAddPacking = $currentUser?->can('add packing') ?? false;
+    $canDeletePacking = $currentUser?->can('delete packing') ?? false;
+    $canCompletePacking = $currentUser?->can('complete packing') ?? false;
+    $showScanCard = ! $isCompleted && $canAddPacking;
+    $showDeleteColumn = ! $isCompleted && $canDeletePacking;
+    $showCompleteButton = ! $isCompleted && $canCompletePacking;
 @endphp
 
 @section('content')
@@ -19,7 +26,7 @@
 
     <div class="-mt-4 mb-6">
         <p class="text-sm text-neutral-500 dark:text-neutral-400">
-            {{ $isCompleted ? 'Kiện này đã hoàn tất, bạn chỉ có thể xem danh sách linh kiện bên dưới.' : 'Quét mã QR hoặc barcode linh kiện để thêm nhanh vào kiện đang đóng gói.' }}
+            {{ $isCompleted ? 'Kiện này đã hoàn tất, bạn chỉ có thể xem danh sách linh kiện bên dưới.' : ($canAddPacking ? 'Quét mã QR hoặc barcode linh kiện để thêm nhanh vào kiện đang đóng gói.' : 'Bạn đang xem kiện này ở chế độ chỉ xem.') }}
         </p>
     </div>
 
@@ -34,7 +41,7 @@
             </div>
         </div>
 
-        @if(!$isCompleted)
+        @if($showCompleteButton)
             <form method="POST" action="{{ route('processes.packing.complete', $package) }}" onsubmit="return confirm('Hoàn tất đóng gói kiện này?')" class="packing-package-page__complete-form packing-package-page__header-complete-form shrink-0">
                 @csrf
                 <button type="submit" class="packing-package-page__complete-button packing-package-page__header-complete-button btn bg-primary-600 hover:bg-primary-700 text-white px-5 py-3 rounded-lg font-semibold">
@@ -57,7 +64,7 @@
     @endif
 
     <div class="packing-package-page__layout grid grid-cols-1 lg:grid-cols-12 gap-6">
-        @unless($isCompleted)
+        @if($showScanCard)
             <div class="packing-package-page__scan-column lg:col-span-4">
                 <div class="packing-package-page__scan-card packing-package-page__scan-card--form card h-full border border-neutral-200 rounded-xl shadow-sm">
                     <div class="packing-package-page__scan-body card-body p-6">
@@ -100,9 +107,9 @@
                     </div>
                 </div>
             </div>
-        @endunless
+        @endif
 
-        <div class="packing-package-page__items-column {{ $isCompleted ? 'lg:col-span-12' : 'lg:col-span-8' }}">
+        <div class="packing-package-page__items-column {{ $showScanCard ? 'lg:col-span-8' : 'lg:col-span-12' }}">
             <div class="packing-package-page__items-card packing-package-page__items-card--list card border-0 overflow-hidden shadow-sm">
                 <div class="packing-package-page__items-header card-header bg-white border-b border-neutral-200 px-6 py-4 flex items-center justify-between gap-3">
                     <h6 id="packageItemsTitle" class="packing-package-page__items-title text-lg font-bold text-neutral-900 mb-0">Danh sách linh kiện trong kiện ({{ $packageItems->count() }})</h6>
@@ -124,9 +131,9 @@
                                     <th scope="col" class="packing-package-page__items-head-cell packing-package-page__items-head-cell--type border-r border-neutral-200 last:border-r-0 px-5 py-3 text-secondary-light font-semibold">Loại</th>
                                     <th scope="col" class="packing-package-page__items-head-cell packing-package-page__items-head-cell--order-code border-r border-neutral-200 last:border-r-0 px-5 py-3 text-secondary-light font-semibold">Mã đơn</th>
                                     <th scope="col" class="packing-package-page__items-head-cell packing-package-page__items-head-cell--time border-r border-neutral-200 last:border-r-0 px-5 py-3 text-secondary-light font-semibold">Thời gian thêm</th>
-                                    @unless($isCompleted)
+                                    @if($showDeleteColumn)
                                         <th scope="col" class="packing-package-page__items-head-cell packing-package-page__items-head-cell--action border-r border-neutral-200 last:border-r-0 px-5 py-3 text-secondary-light font-semibold text-end">Hành động</th>
-                                    @endunless
+                                    @endif
                                 </tr>
                             </thead>
                             <tbody id="packageItemsTableBody" class="packing-package-page__items-tbody">
@@ -141,7 +148,7 @@
                                         <td class="packing-package-page__items-cell packing-package-page__items-cell--type border-r border-neutral-200 last:border-r-0 px-5 py-3 text-secondary-light">{{ $item->type }}</td>
                                         <td class="packing-package-page__items-cell packing-package-page__items-cell--order-code border-r border-neutral-200 last:border-r-0 px-5 py-3 text-secondary-light">{{ $item->order_code }}</td>
                                         <td class="packing-package-page__items-cell packing-package-page__items-cell--time border-r border-neutral-200 last:border-r-0 px-5 py-3 text-secondary-light">{{ $item->created_at_label }}</td>
-                                        @unless($isCompleted)
+                                        @if($showDeleteColumn)
                                             <td class="packing-package-page__items-cell packing-package-page__items-cell--action border-r border-neutral-200 last:border-r-0 px-5 py-3 text-end">
                                                 <form method="POST" action="{{ $item->delete_url }}" class="packing-package-page__item-delete-form inline-flex items-center" data-package-item-delete-form>
                                                     @csrf
@@ -151,7 +158,7 @@
                                                     </button>
                                                 </form>
                                             </td>
-                                        @endunless
+                                        @endif
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -162,7 +169,7 @@
         </div>
     </div>
 
-    @unless($isCompleted)
+    @if($showScanCard)
         <div id="scannerModal" class="packing-package-page__scanner-modal fixed inset-0 bg-neutral-900/80 backdrop-blur-sm z-50 flex items-center justify-center hidden">
             <div class="packing-package-page__scanner-panel packing-package-page__scanner-panel--modal bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl w-full max-w-md mx-4 overflow-hidden shadow-2xl">
                 <div class="packing-package-page__scanner-header px-5 py-4 border-b border-neutral-100 dark:border-neutral-800 flex justify-between items-center bg-neutral-50 dark:bg-neutral-900/50">
@@ -180,9 +187,11 @@
                 </div>
             </div>
         </div>
+    @endif
 
+    @if($showScanCard || $showDeleteColumn)
         <div id="toastContainer" class="packing-package-page__toast-container fixed bottom-5 right-5 z-50 flex flex-col gap-2"></div>
-    @endunless
+    @endif
 @endsection
 
 @php
@@ -190,7 +199,7 @@
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script>
         let html5QrCode = null;
-        const canDeletePackageItems = ' . json_encode(!$isCompleted) . ';
+        const canDeletePackageItems = ' . json_encode($showDeleteColumn) . ';
         const packageItemDeleteToken = ' . json_encode(csrf_token()) . ';
 
         function toggleSubmitButton() {
@@ -332,7 +341,7 @@
                 toggleSubmitButton();
             }
 
-            if (!form || !submitBtn || !productCodeInput) return;
+            if (form && submitBtn && productCodeInput) {
 
             form.addEventListener("submit", function (e) {
                 e.preventDefault();
@@ -377,6 +386,8 @@
                     toggleSubmitButton();
                 });
             });
+
+            }
 
             if (canDeletePackageItems) {
                 document.addEventListener("submit", function (e) {
