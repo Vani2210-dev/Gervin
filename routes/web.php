@@ -254,6 +254,7 @@ Route::middleware(['auth'])->prefix('processes')->name('processes.')->group(func
     Route::get('/finishing', [ManufactureStepController::class, 'finishing'])->name('finishing');
     Route::post('/finishing/complete', [ManufactureStepController::class, 'completeFinishing'])->name('finishing.complete');
     Route::get('/qc', [ManufactureStepController::class, 'qc'])->name('qc');
+    Route::get('/qc/product-info', [ManufactureStepController::class, 'getProductInfo'])->name('qc.product-info');
     Route::post('/qc/complete', [ManufactureStepController::class, 'completeQc'])->name('qc.complete');
     Route::get('/packing', [ManufactureStepController::class, 'packing'])->name('packing');
     Route::get('/shipped', [ManufactureStepController::class, 'shipped'])->name('shipped');

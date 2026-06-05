@@ -154,6 +154,17 @@ class ManufactureStepController extends Controller
         ], $res['status_code']);
     }
 
+    public function getProductInfo(Request $request)
+    {
+        $request->validate([
+            'product_code' => 'required|string',
+        ]);
+
+        $res = $this->qcService->getProductInfo($request->product_code);
+
+        return response()->json($res, $res['status_code'] ?? 200);
+    }
+
     public function packing()
     {
         return view('processes.packing');
