@@ -206,11 +206,25 @@ class OrderController extends Controller
     private function createDraftOrder(string $type): Order
     {
         return DB::transaction(function () use ($type) {
-            $lastOrder = Order::lockForUpdate()->orderBy('id', 'desc')->first();
-            $nextNumber = $lastOrder ? intval(substr($lastOrder->order_code, 2)) + 1 : 1;
+            $dateStr = now()->format('ymd');
+            $prefix = 'DH' . $dateStr;
+
+            $lastOrder = Order::where('order_code', 'like', $prefix . '%')
+                ->lockForUpdate()
+                ->orderBy('order_code', 'desc')
+                ->first();
+
+            if ($lastOrder) {
+                $lastNumber = intval(substr($lastOrder->order_code, 8));
+                $nextNumber = $lastNumber + 1;
+            } else {
+                $nextNumber = 1;
+            }
+
+            $orderCode = $prefix . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
 
             return Order::create([
-                'order_code' => 'DA' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT),
+                'order_code' => $orderCode,
                 'type' => $type,
                 'customer_name' => '',
                 'total_amount' => 0,

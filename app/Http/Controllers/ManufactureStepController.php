@@ -32,10 +32,37 @@ class ManufactureStepController extends Controller
         $this->qcService = $qcService;
     }
 
-    public function cnc()
+    private function paginateHistory($history, Request $request)
     {
-        $history = $this->cncService->getHistory();
-        return view('processes.cnc', compact('history'));
+        $perPage = $request->input('per_page', 15);
+        $search = $request->input('search', '');
+        $page = $request->input('page', 1);
+
+        if ($search) {
+            $history = $history->filter(function ($item) use ($search) {
+                return str_contains(mb_strtolower($item->product_code ?? ''), mb_strtolower($search))
+                    || str_contains(mb_strtolower($item->product_name ?? ''), mb_strtolower($search))
+                    || str_contains(mb_strtolower($item->operator ?? ''), mb_strtolower($search))
+                    || str_contains(mb_strtolower($item->notes ?? ''), mb_strtolower($search));
+            });
+        }
+
+        $offset = ($page * $perPage) - $perPage;
+        return new \Illuminate\Pagination\LengthAwarePaginator(
+            $history->slice($offset, $perPage)->values(),
+            $history->count(),
+            $perPage,
+            $page,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
+    }
+
+    public function cnc(Request $request)
+    {
+        $perPage = $request->input('per_page', 15);
+        $search = $request->input('search', '');
+        $history = $this->paginateHistory($this->cncService->getHistory(), $request);
+        return view('processes.cnc', compact('history', 'perPage', 'search'));
     }
 
     public function completeCnc(Request $request)
@@ -68,10 +95,12 @@ class ManufactureStepController extends Controller
         return response()->json($res, $res['status_code'] ?? 200);
     }
 
-    public function pressing()
+    public function pressing(Request $request)
     {
-        $history = $this->pressingService->getHistory();
-        return view('processes.pressing', compact('history'));
+        $perPage = $request->input('per_page', 15);
+        $search = $request->input('search', '');
+        $history = $this->paginateHistory($this->pressingService->getHistory(), $request);
+        return view('processes.pressing', compact('history', 'perPage', 'search'));
     }
 
     public function completePressing(Request $request)
@@ -92,10 +121,12 @@ class ManufactureStepController extends Controller
         ], $res['status_code']);
     }
 
-    public function edgeBanding()
+    public function edgeBanding(Request $request)
     {
-        $history = $this->edgeBandingService->getHistory();
-        return view('processes.edge_banding', compact('history'));
+        $perPage = $request->input('per_page', 15);
+        $search = $request->input('search', '');
+        $history = $this->paginateHistory($this->edgeBandingService->getHistory(), $request);
+        return view('processes.edge_banding', compact('history', 'perPage', 'search'));
     }
 
     public function completeEdgeBanding(Request $request)
@@ -124,10 +155,12 @@ class ManufactureStepController extends Controller
         return response()->json($res, $res['status_code'] ?? 200);
     }
 
-    public function finishing()
+    public function finishing(Request $request)
     {
-        $history = $this->finishingService->getHistory();
-        return view('processes.finishing', compact('history'));
+        $perPage = $request->input('per_page', 15);
+        $search = $request->input('search', '');
+        $history = $this->paginateHistory($this->finishingService->getHistory(), $request);
+        return view('processes.finishing', compact('history', 'perPage', 'search'));
     }
 
     public function completeFinishing(Request $request)
@@ -155,10 +188,12 @@ class ManufactureStepController extends Controller
         return response()->json($res, $res['status_code'] ?? 200);
     }
 
-    public function qc()
+    public function qc(Request $request)
     {
-        $history = $this->qcService->getHistory();
-        return view('processes.qc', compact('history'));
+        $perPage = $request->input('per_page', 15);
+        $search = $request->input('search', '');
+        $history = $this->paginateHistory($this->qcService->getHistory(), $request);
+        return view('processes.qc', compact('history', 'perPage', 'search'));
     }
 
     public function completeQc(Request $request)

@@ -136,7 +136,6 @@
                                     class="px-5 py-3.5 text-white rounded-xl flex items-center gap-2 font-semibold text-sm transition-all duration-200 hover:opacity-90 active:scale-95 whitespace-nowrap shadow-sm"
                                     style="background-color: rgb(2, 100, 155);">
                                     <iconify-icon icon="lucide:camera" class="text-base"></iconify-icon>
-                                    Quét Camera
                                 </button>
                             </div>
 
@@ -303,29 +302,43 @@
 
 
     <!-- History list section -->
-    <div class="mt-8 card bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-sm">
-        <div class="card-body p-6">
-            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-                <h5 class="text-lg font-bold text-neutral-800 dark:text-neutral-100 flex items-center gap-2">
-                    Lịch sử kiểm soát chất lượng
-                </h5>
+    <div class="mt-8 card bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-sm overflow-hidden">
+        <div class="card-header border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/50 py-4 px-6 flex items-center flex-wrap gap-3 justify-between">
+            <h5 class="text-lg font-bold text-neutral-800 dark:text-neutral-100 mb-0 flex items-center gap-2">
+                Lịch sử kiểm soát chất lượng
+            </h5>
+            <div class="flex items-center flex-wrap gap-3">
+                {{-- Per page --}}
+                <span class="text-sm font-medium text-secondary-light mb-0">Hiển thị</span>
+                <form method="GET" action="{{ route('processes.qc') }}" id="perPageForm">
+                    <input type="hidden" name="search" value="{{ $search }}">
+                    <select name="per_page" class="form-select form-select-sm w-auto border border-neutral-200 dark:border-neutral-700 rounded-lg py-1 px-2 text-xs bg-transparent dark:text-neutral-300"
+                        onchange="document.getElementById('perPageForm').submit()">
+                        @foreach([15, 25, 50, 100] as $option)
+                        <option value="{{ $option }}" {{ $perPage == $option ? 'selected' : '' }}>{{ $option }}</option>
+                        @endforeach
+                    </select>
+                </form>
 
-                <!-- Search bar -->
-                <div class="relative w-48 sm:w-56">
+                {{-- Search bar --}}
+                <form method="GET" action="{{ route('processes.qc') }}" class="relative w-48 sm:w-56">
+                    <input type="hidden" name="per_page" value="{{ $perPage }}">
                     <span class="absolute top-1/2 -translate-y-1/2 text-neutral-400 flex items-center justify-center pointer-events-none" style="left: 10px;">
                         <iconify-icon icon="lucide:search" class="text-base"></iconify-icon>
                     </span>
-                    <input type="text" id="historySearch" oninput="filterHistoryTable()"
+                    <input type="text" name="search" id="historySearch"
                         class="w-full pr-3 py-1.5 border border-neutral-300 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 text-xs focus:outline-none focus:ring-2 focus:ring-sky-500"
                         style="padding-left: 34px;"
-                        placeholder="Tìm kiếm lịch sử...">
-                </div>
+                        placeholder="Tìm kiếm lịch sử..." value="{{ $search }}">
+                </form>
             </div>
+        </div>
 
+        <div class="card-body p-6">
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse text-sm" id="historyTable">
                     <thead>
-                        <tr class="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50">
+                        <tr class="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50 whitespace-nowrap">
                             <th class="py-3 px-4 font-semibold text-neutral-600 dark:text-neutral-400">MÃ ĐỊNH DANH</th>
                             <th class="py-3 px-4 font-semibold text-neutral-600 dark:text-neutral-400">HÀNH ĐỘNG</th>
                             <th class="py-3 px-4 font-semibold text-neutral-600 dark:text-neutral-400">TÊN SẢN PHẨM</th>
@@ -395,6 +408,17 @@
                     </tbody>
                 </table>
             </div>
+
+            {{-- Pagination --}}
+            @if($history instanceof \Illuminate\Pagination\LengthAwarePaginator && $history->total() > $perPage)
+                <div class="flex items-center justify-between flex-wrap gap-2 mt-6">
+                    <span class="text-secondary-light text-sm">
+                        Hiển thị {{ $history->firstItem() ?? 0 }} đến {{ $history->lastItem() ?? 0 }}
+                        trong tổng {{ $history->total() }} bản ghi lịch sử
+                    </span>
+                    {{ $history->links() }}
+                </div>
+            @endif
         </div>
     </div>
 
@@ -865,21 +889,6 @@
 
             document.getElementById("selectedOutcome").value = card.dataset.value;
         });
-
-        function filterHistoryTable() {
-            const query = document.getElementById("historySearch").value.toLowerCase();
-            const rows = document.querySelectorAll("#historyTableBody tr");
-
-            rows.forEach(row => {
-                if (row.id === "noHistoryRow") return;
-                const text = row.textContent.toLowerCase();
-                if (text.includes(query)) {
-                    row.style.display = "";
-                } else {
-                    row.style.display = "none";
-                }
-            });
-        }
 
         function toggleSubmitButton() {
             const productCodeInput = document.getElementById("product_code");

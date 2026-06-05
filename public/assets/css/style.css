@@ -7076,7 +7076,7 @@ h6, .h6 {
   display: flex;
   min-height: 100vh;
   flex-direction: column;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, -webkit-backdrop-filter;
   transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
   transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter, -webkit-backdrop-filter;
