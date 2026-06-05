@@ -328,15 +328,20 @@ class QCService
         }
         $completedSteps = array_values(array_unique($completedSteps));
 
+        $isQcCompleted = collect($status)->contains(function ($log) {
+            return ($log['action'] ?? '') === 'Hoàn thành QC';
+        });
+
         return [
             'success' => true,
             'status_code' => 200,
             'data' => [
-                'product_code' => $codeRecord->product_id,
-                'product_name' => $productName,
-                'order_code' => $orderCode,
-                'dimensions' => $dimensions,
+                'product_code'    => $codeRecord->product_id,
+                'product_name'    => $productName,
+                'order_code'      => $orderCode,
+                'dimensions'      => $dimensions,
                 'completed_steps' => $completedSteps,
+                'is_qc_completed' => $isQcCompleted,
             ]
         ];
     }

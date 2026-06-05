@@ -282,7 +282,7 @@
                     <input type="hidden" id="selectedOutcome" value="complete">
 
                     <!-- QC Notes -->
-                    <div class="flex flex-col gap-2">
+                    <div class="flex flex-col gap-2" id="qcNotesSection">
                         <label for="qcNotes" class="block text-xs font-bold text-neutral-450 dark:text-neutral-400 uppercase tracking-wider">Ghi chú QC</label>
                         <textarea id="qcNotes" rows="3" 
                             class="w-full px-4 py-3 border border-neutral-300 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
@@ -608,8 +608,32 @@
                         // Scroll to details section smoothly
                         document.getElementById("productDetailsSection").scrollIntoView({ behavior: "smooth", block: "nearest" });
                         
-                        // Reset form elements in details section
-                        resetQCFormDetails();
+                        if (res.data.is_qc_completed) {
+                            // Ẩn các nút lựa chọn, notes, save button
+                            document.getElementById("outcomeGrid").innerHTML = `
+                                <div class="col-span-2 flex flex-col items-center justify-center gap-3 py-6">
+                                    <div class="w-14 h-14 rounded-full flex items-center justify-center" style="background-color: rgba(16,185,129,0.12);">
+                                        <iconify-icon icon="lucide:check-circle-2" class="text-3xl" style="color: rgb(5,150,105);"></iconify-icon>
+                                    </div>
+                                    <div class="text-center">
+                                        <p class="font-bold text-base" style="color: rgb(5,150,105);">Đã hoàn thành QC</p>
+                                        <p class="text-xs text-neutral-400 mt-0.5">Sản phẩm này đã được kiểm soát chất lượng.</p>
+                                    </div>
+                                </div>
+                            `;
+                            // Ẩn ghi chú và nút lưu
+                            const qcNotesSection = document.getElementById("qcNotesSection");
+                            if (qcNotesSection) qcNotesSection.classList.add("hidden");
+                            const saveQCBtn = document.getElementById("saveQCBtn");
+                            if (saveQCBtn) saveQCBtn.classList.add("hidden");
+                        } else {
+                            // Reset form elements in details section
+                            resetQCFormDetails();
+                            const qcNotesSection = document.getElementById("qcNotesSection");
+                            if (qcNotesSection) qcNotesSection.classList.remove("hidden");
+                            const saveQCBtn = document.getElementById("saveQCBtn");
+                            if (saveQCBtn) saveQCBtn.classList.remove("hidden");
+                        }
                     } else {
                         showToast(res.message || "Không tìm thấy thông tin sản phẩm!", "error");
                         document.getElementById("productDetailsSection").classList.add("hidden");
