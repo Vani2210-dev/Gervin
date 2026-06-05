@@ -93,6 +93,53 @@ class EdgeBandingService
     }
 
     /**
+     * Get product status by code, check if 'lỗi dán cạnh' stage exists.
+     */
+    public function getProductStatus(string $codeStr): array
+    {
+        $codeStr = trim($codeStr);
+
+        $codeRecord = AcrylicOrderItemCode::where('product_id', $codeStr)->first();
+        $item = null;
+
+        if ($codeRecord) {
+            $item = $codeRecord->acrylicOrderItem;
+        } else {
+            $codeRecord = GlassOrderItemCode::where('product_id', $codeStr)->first();
+            if ($codeRecord) {
+                $item = $codeRecord->glassOrderItem;
+            }
+        }
+
+        if (!$codeRecord) {
+            $codeRecord = MinLateOrderItemCode::where('product_id', $codeStr)->first();
+            if ($codeRecord) {
+                $item = $codeRecord->minLateOrderItem;
+            }
+        }
+
+        if (!$codeRecord || !$item) {
+            return [
+                'success'     => false,
+                'status_code' => 404,
+                'message'     => 'Không tìm thấy sản phẩm với mã: ' . $codeStr,
+            ];
+        }
+
+        $statusLogs = $codeRecord->status ?? [];
+
+        $hasLoiDanCanh = collect($statusLogs)->contains(function ($log) {
+            return isset($log['action']) && mb_strtolower($log['action']) === 'lỗi dán cạnh';
+        });
+
+        return [
+            'success'         => true,
+            'status_code'     => 200,
+            'has_loi_dan_canh' => $hasLoiDanCanh,
+        ];
+    }
+
+    /**
      * Process completing or rolling back Edge Banding for a product code.
      */
     public function completeOrRollback(array $data): array
@@ -195,6 +242,12 @@ class EdgeBandingService
                     'message' => 'Sản phẩm này đã được ghi nhận hoàn thành dán cạnh trước đó.'
                 ];
             }
+
+            // Xóa tất cả các action của công đoạn dán cạnh trước đó (hoàn thành, quay lại, lỗi...)
+            $currentStatus = array_values(array_filter($currentStatus, function ($log) {
+                $action = mb_strtolower($log['action'] ?? '');
+                return !str_contains($action, 'dán cạnh');
+            }));
 
             $newLog = [
                 'action' => 'hoàn thành dán cạnh',

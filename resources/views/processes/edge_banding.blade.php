@@ -8,7 +8,6 @@
 @section('content')
     <style>
         #submitBtn:disabled {
-            background-color: rgb(74, 185, 142) !important;
             opacity: 0.45 !important;
             cursor: not-allowed !important;
             pointer-events: none !important;
@@ -42,11 +41,11 @@
 
                     <!-- Toggle Buttons -->
                     <div class="flex gap-4">
-                        <button type="button" class="flex-1 py-3 px-4 border border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 rounded-xl flex items-center justify-center gap-2 font-semibold text-sm">
+                        <button type="button" id="btnTabComplete" class="flex-1 py-3 px-4 border border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 rounded-xl flex items-center justify-center gap-2 font-semibold text-sm transition-all duration-200">
                             <iconify-icon icon="lucide:check-circle" class="text-lg"></iconify-icon>
                             Quét QR Hoàn thành
                         </button>
-                        <button type="button" class="flex-1 py-3 px-4 border border-neutral-200 dark:border-neutral-700 text-neutral-500 dark:text-neutral-400 rounded-xl flex items-center justify-center gap-2 font-semibold text-sm cursor-not-allowed opacity-60">
+                        <button type="button" id="btnTabRollback" class="flex-1 py-3 px-4 border border-neutral-200 dark:border-neutral-700 text-neutral-500 dark:text-neutral-400 rounded-xl flex items-center justify-center gap-2 font-semibold text-sm transition-all duration-200">
                             <iconify-icon icon="lucide:refresh-cw" class="text-lg"></iconify-icon>
                             Quét QR Quay lại
                         </button>
@@ -55,6 +54,8 @@
                     <!-- Input Form -->
                     <form id="edgeBandingForm" class="flex flex-col gap-5">
                         @csrf
+                        <input type="hidden" name="action_type" id="action_type" value="complete">
+
                         <div>
                             <label for="product_code" class="block text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-2">Mã định danh sản phẩm (QR)</label>
                             <div class="flex items-center gap-3">
@@ -74,12 +75,22 @@
                             <!-- Test Codes Badges -->
                             <div class="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-neutral-500">
                                 <span>Mã nhập thử:</span>
-                                <button type="button" onclick="fillTestCode('LSX01-001')" class="px-2 py-0.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 rounded border border-neutral-200 dark:border-neutral-700 font-mono text-[10px]">LSX01-001</button>
-                                <button type="button" onclick="fillTestCode('LSX01-002')" class="px-2 py-0.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 rounded border border-neutral-200 dark:border-neutral-700 font-mono text-[10px]">LSX01-002</button>
-                                <button type="button" onclick="fillTestCode('LSX01-003')" class="px-2 py-0.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 rounded border border-neutral-200 dark:border-neutral-700 font-mono text-[10px]">LSX01-003</button>
-                                <button type="button" onclick="fillTestCode('LSX01-004')" class="px-2 py-0.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 rounded border border-neutral-200 dark:border-neutral-700 font-mono text-[10px]">LSX01-004</button>
-                                <button type="button" onclick="fillTestCode('LSX01-005')" class="px-2 py-0.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 rounded border border-neutral-200 dark:border-neutral-700 font-mono text-[10px]">LSX01-005</button>
-                                <button type="button" onclick="fillTestCode('QR-PBS-003')" class="px-2 py-0.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 rounded border border-neutral-200 dark:border-neutral-700 font-mono text-[10px]">QR-PBS-003</button>
+                                <div id="completeBadges" class="flex flex-wrap gap-1.5 items-center">
+                                    <button type="button" onclick="fillTestCode('LSX01-001')" class="px-2 py-0.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 rounded border border-neutral-200 dark:border-neutral-700 font-mono text-[10px]">LSX01-001</button>
+                                    <button type="button" onclick="fillTestCode('LSX01-002')" class="px-2 py-0.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 rounded border border-neutral-200 dark:border-neutral-700 font-mono text-[10px]">LSX01-002</button>
+                                    <button type="button" onclick="fillTestCode('LSX01-003')" class="px-2 py-0.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 rounded border border-neutral-200 dark:border-neutral-700 font-mono text-[10px]">LSX01-003</button>
+                                    <button type="button" onclick="fillTestCode('LSX01-004')" class="px-2 py-0.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 rounded border border-neutral-200 dark:border-neutral-700 font-mono text-[10px]">LSX01-004</button>
+                                    <button type="button" onclick="fillTestCode('LSX01-005')" class="px-2 py-0.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 rounded border border-neutral-200 dark:border-neutral-700 font-mono text-[10px]">LSX01-005</button>
+                                    <button type="button" onclick="fillTestCode('QR-PBS-003')" class="px-2 py-0.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 rounded border border-neutral-200 dark:border-neutral-700 font-mono text-[10px]">QR-PBS-003</button>
+                                </div>
+                                <div id="rollbackBadges" class="flex flex-wrap gap-1.5 items-center hidden">
+                                    <button type="button" onclick="fillTestCode('LSX01-001')" class="px-2 py-0.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 rounded border border-neutral-200 dark:border-neutral-700 font-mono text-[10px]">LSX01-001</button>
+                                    <button type="button" onclick="fillTestCode('LSX01-002')" class="px-2 py-0.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 rounded border border-neutral-200 dark:border-neutral-700 font-mono text-[10px]">LSX01-002</button>
+                                    <button type="button" onclick="fillTestCode('LSX01-003')" class="px-2 py-0.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 rounded border border-neutral-200 dark:border-neutral-700 font-mono text-[10px]">LSX01-003</button>
+                                    <button type="button" onclick="fillTestCode('LSX01-004')" class="px-2 py-0.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 rounded border border-neutral-200 dark:border-neutral-700 font-mono text-[10px]">LSX01-004</button>
+                                    <button type="button" onclick="fillTestCode('LSX01-005')" class="px-2 py-0.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 rounded border border-neutral-200 dark:border-neutral-700 font-mono text-[10px]">LSX01-005</button>
+                                    <button type="button" onclick="fillTestCode('QR-PRD-001')" class="px-2 py-0.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 rounded border border-neutral-200 dark:border-neutral-700 font-mono text-[10px]">QR-PRD-001</button>
+                                </div>
                             </div>
                         </div>
 
@@ -101,8 +112,8 @@
                         <button type="submit" id="submitBtn" disabled
                             class="w-full py-4 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all transform hover:-translate-y-0.5 opacity-50 cursor-not-allowed pointer-events-none"
                             style="background-color: rgb(0, 140, 100);">
-                            <iconify-icon icon="lucide:check-circle" class="text-xl"></iconify-icon>
-                            Xác nhận HOÀN THÀNH dán cạnh
+                            <iconify-icon icon="lucide:check-circle" class="text-xl" id="submitBtnIcon"></iconify-icon>
+                            <span id="submitBtnText">Xác nhận HOÀN THÀNH dán cạnh</span>
                         </button>
                     </form>
                 </div>
@@ -133,7 +144,7 @@
         <div class="card-body p-6">
             <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
                 <h5 class="text-lg font-bold text-neutral-800 dark:text-neutral-100 flex items-center gap-2">
-                    Lịch sử hoàn thành dán cạnh
+                    Lịch sử dán cạnh
                 </h5>
                 
                 <!-- Search bar -->
@@ -170,9 +181,17 @@
                                 </span>
                             </td>
                             <td class="py-3 px-4">
-                                <span class="bg-emerald-100 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50 text-xs px-2.5 py-1 rounded-full font-semibold">
+                                @if($item->action === 'quay lại dán cạnh')
+                                <span class="text-xs px-2.5 py-1 rounded-full font-semibold inline-flex items-center gap-1" style="background-color: rgba(249, 115, 22, 0.1); color: rgb(234, 88, 12); border: 1px solid rgba(249, 115, 22, 0.3);">
+                                    <iconify-icon icon="lucide:refresh-cw" class="text-xs"></iconify-icon>
+                                    QUAY LẠI
+                                </span>
+                                @else
+                                <span class="text-xs px-2.5 py-1 rounded-full font-semibold inline-flex items-center gap-1" style="background-color: rgba(16, 185, 129, 0.1); color: rgb(5, 150, 105); border: 1px solid rgba(16, 185, 129, 0.3);">
+                                    <iconify-icon icon="lucide:check-circle" class="text-xs"></iconify-icon>
                                     HOÀN THÀNH
                                 </span>
+                                @endif
                             </td>
                             <td class="py-3 px-4 text-neutral-800 dark:text-neutral-200 font-medium">
                                 {{ $item->product_name }}
@@ -259,6 +278,50 @@
             }
         }
 
+        $(document).ready(function() {
+            // Tab complete click handler
+            $("#btnTabComplete").on("click", function() {
+                $(this).removeClass("border-neutral-200 dark:border-neutral-700 text-neutral-500 dark:text-neutral-400")
+                       .addClass("border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400");
+                
+                $("#btnTabRollback").removeClass("border-amber-500 bg-amber-50/50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400")
+                                    .addClass("border-neutral-200 dark:border-neutral-700 text-neutral-500 dark:text-neutral-400");
+                
+                $("#action_type").val("complete");
+                $("#product_code").attr("placeholder", "Quét mã để HOÀN THÀNH...");
+                
+                $("#completeBadges").removeClass("hidden");
+                $("#rollbackBadges").addClass("hidden");
+                
+                $("#submitBtn").css("background-color", "rgb(0, 140, 100)");
+                $("#submitBtnIcon").attr("icon", "lucide:check-circle");
+                $("#submitBtnText").text("Xác nhận HOÀN THÀNH dán cạnh");
+                
+                toggleSubmitButton();
+            });
+
+            // Tab rollback click handler
+            $("#btnTabRollback").on("click", function() {
+                $(this).removeClass("border-neutral-200 dark:border-neutral-700 text-neutral-500 dark:text-neutral-400")
+                       .addClass("border-amber-500 bg-amber-50/50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400");
+                
+                $("#btnTabComplete").removeClass("border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400")
+                                     .addClass("border-neutral-200 dark:border-neutral-700 text-neutral-500 dark:text-neutral-400");
+                
+                $("#action_type").val("rollback");
+                $("#product_code").attr("placeholder", "Quét mã để QUAY LẠI...");
+                
+                $("#rollbackBadges").removeClass("hidden");
+                $("#completeBadges").addClass("hidden");
+                
+                $("#submitBtn").css("background-color", "rgb(217, 119, 6)");
+                $("#submitBtnIcon").attr("icon", "lucide:refresh-cw");
+                $("#submitBtnText").text("Xác nhận QUAY LẠI dán cạnh");
+                
+                toggleSubmitButton();
+            });
+        });
+
         function startScanning() {
             document.getElementById("scannerModal").classList.remove("hidden");
             html5QrCode = new Html5Qrcode("reader");
@@ -307,13 +370,18 @@
 
         function showToast(message, type = "success") {
             const toast = document.createElement("div");
-            toast.className = `flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border text-sm font-semibold transition-all transform translate-y-2 opacity-0 duration-300 ${
-                type === "success" 
-                    ? "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-400" 
-                    : "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800 text-red-800 dark:text-red-400"
-            }`;
-            
-            const icon = type === "success" ? "lucide:check-circle" : "lucide:alert-circle";
+            let colorClass, icon;
+            if (type === "success") {
+                colorClass = "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-400";
+                icon = "lucide:check-circle";
+            } else if (type === "warning") {
+                colorClass = "bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-400";
+                icon = "lucide:alert-triangle";
+            } else {
+                colorClass = "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800 text-red-800 dark:text-red-400";
+                icon = "lucide:alert-circle";
+            }
+            toast.className = `flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border text-sm font-semibold transition-all transform translate-y-2 opacity-0 duration-300 ${colorClass}`;
             toast.innerHTML = `
                 <iconify-icon icon="${icon}" class="text-lg"></iconify-icon>
                 <span>${message}</span>
@@ -331,16 +399,59 @@
             }, 3500);
         }
 
-        document.getElementById("edgeBandingForm").addEventListener("submit", function (e) {
+        document.getElementById("edgeBandingForm").addEventListener("submit", async function (e) {
             e.preventDefault();
             
             const submitBtn = document.getElementById("submitBtn");
             const code = document.getElementById("product_code").value.trim();
             const notesValue = document.getElementById("notes").value.trim();
+            const actionType = document.getElementById("action_type").value;
             
             if (!code) {
                 showToast("Vui lòng nhập hoặc quét mã QR!", "error");
                 return;
+            }
+
+            // Nếu đang ở chế độ quay lại, kiểm tra xem có stage "lỗi dán cạnh" không
+            if (actionType === "rollback") {
+                submitBtn.disabled = true;
+                submitBtn.classList.add("opacity-50", "cursor-not-allowed", "pointer-events-none");
+                const originalBtnContentCheck = submitBtn.innerHTML;
+                submitBtn.innerHTML = `
+                    <iconify-icon icon="lucide:loader-2" class="text-xl animate-spin"></iconify-icon>
+                    Đang kiểm tra...
+                `;
+
+                try {
+                    const statusRes = await fetch(`' . route("processes.edge-banding.product-status") . '?product_code=` + encodeURIComponent(code), {
+                        method: "GET",
+                        headers: {
+                            "X-CSRF-TOKEN": "' . csrf_token() . '",
+                            "Accept": "application/json"
+                        }
+                    });
+                    const statusData = await statusRes.json();
+
+                    submitBtn.innerHTML = originalBtnContentCheck;
+
+                    if (!statusData.success) {
+                        showToast(statusData.message || "Không tìm thấy sản phẩm!", "error");
+                        toggleSubmitButton();
+                        return;
+                    }
+
+                    if (!statusData.has_loi_dan_canh) {
+                        showToast("Không có lỗi", "warning");
+                        toggleSubmitButton();
+                        return;
+                    }
+                } catch (checkErr) {
+                    console.error(checkErr);
+                    submitBtn.innerHTML = originalBtnContentCheck;
+                    showToast("Không thể kiểm tra trạng thái sản phẩm!", "error");
+                    toggleSubmitButton();
+                    return;
+                }
             }
             
             // Disable button and show loading state
@@ -360,7 +471,8 @@
                 },
                 body: JSON.stringify({
                     product_code: code,
-                    notes: notesValue
+                    notes: notesValue,
+                    action_type: actionType
                 })
             })
             .then(response => response.json())
@@ -377,11 +489,30 @@
                     toggleSubmitButton();
                     document.getElementById("product_code").focus();
                     
-                    // Add row to top of table
+                    // Remove existing row for this product code
+                    const rows = document.querySelectorAll("#historyTableBody tr");
+                    rows.forEach(row => {
+                        const codeCell = row.querySelector("td.font-mono");
+                        if (codeCell && codeCell.textContent.trim() === res.data.product_code) {
+                            row.remove();
+                        }
+                    });
+
+                    // Add new row to top of table
                     const tbody = document.getElementById("historyTableBody");
                     const noHistoryRow = document.getElementById("noHistoryRow");
                     if (noHistoryRow) noHistoryRow.remove();
                     
+                    const actionBadge = res.action_type === "rollback" 
+                        ? `<span class="text-xs px-2.5 py-1 rounded-full font-semibold inline-flex items-center gap-1" style="background-color: rgba(249, 115, 22, 0.1); color: rgb(234, 88, 12); border: 1px solid rgba(249, 115, 22, 0.3);">
+                                <iconify-icon icon="lucide:refresh-cw" class="text-xs"></iconify-icon>
+                                QUAY LẠI
+                           </span>`
+                        : `<span class="text-xs px-2.5 py-1 rounded-full font-semibold inline-flex items-center gap-1" style="background-color: rgba(16, 185, 129, 0.1); color: rgb(5, 150, 105); border: 1px solid rgba(16, 185, 129, 0.3);">
+                                <iconify-icon icon="lucide:check-circle" class="text-xs"></iconify-icon>
+                                HOÀN THÀNH
+                           </span>`;
+
                     const tr = document.createElement("tr");
                     tr.className = "hover:bg-neutral-50/50 dark:hover:bg-neutral-800/10 transition-colors";
                     tr.innerHTML = `
@@ -391,9 +522,7 @@
                             </span>
                         </td>
                         <td class="py-3 px-4">
-                            <span class="bg-emerald-100 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50 text-xs px-2.5 py-1 rounded-full font-semibold">
-                                HOÀN THÀNH
-                            </span>
+                            ${actionBadge}
                         </td>
                         <td class="py-3 px-4 text-neutral-800 dark:text-neutral-200 font-medium">
                             ${res.data.product_name}

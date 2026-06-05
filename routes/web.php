@@ -246,12 +246,15 @@ Route::middleware(['auth'])->group(function () {
 // Manufacture Steps / Processes
 Route::middleware(['auth'])->prefix('processes')->name('processes.')->group(function () {
     Route::get('/cnc', [ManufactureStepController::class, 'cnc'])->name('cnc');
+    Route::get('/cnc/product-status', [ManufactureStepController::class, 'getCncProductStatus'])->name('cnc.product-status');
     Route::post('/cnc/complete', [ManufactureStepController::class, 'completeCnc'])->name('cnc.complete');
     Route::get('/pressing', [ManufactureStepController::class, 'pressing'])->name('pressing');
     Route::post('/pressing/complete', [ManufactureStepController::class, 'completePressing'])->name('pressing.complete');
     Route::get('/edge-banding', [ManufactureStepController::class, 'edgeBanding'])->name('edge-banding');
+    Route::get('/edge-banding/product-status', [ManufactureStepController::class, 'getEdgeBandingProductStatus'])->name('edge-banding.product-status');
     Route::post('/edge-banding/complete', [ManufactureStepController::class, 'completeEdgeBanding'])->name('edge-banding.complete');
     Route::get('/finishing', [ManufactureStepController::class, 'finishing'])->name('finishing');
+    Route::get('/finishing/product-status', [ManufactureStepController::class, 'getFinishingProductStatus'])->name('finishing.product-status');
     Route::post('/finishing/complete', [ManufactureStepController::class, 'completeFinishing'])->name('finishing.complete');
     Route::get('/qc', [ManufactureStepController::class, 'qc'])->name('qc');
     Route::get('/qc/product-info', [ManufactureStepController::class, 'getProductInfo'])->name('qc.product-info');

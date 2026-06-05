@@ -93,6 +93,53 @@ class FinishingService
     }
 
     /**
+     * Get product status by code, check if 'lỗi làm đẹp' stage exists.
+     */
+    public function getProductStatus(string $codeStr): array
+    {
+        $codeStr = trim($codeStr);
+
+        $codeRecord = AcrylicOrderItemCode::where('product_id', $codeStr)->first();
+        $item = null;
+
+        if ($codeRecord) {
+            $item = $codeRecord->acrylicOrderItem;
+        } else {
+            $codeRecord = GlassOrderItemCode::where('product_id', $codeStr)->first();
+            if ($codeRecord) {
+                $item = $codeRecord->glassOrderItem;
+            }
+        }
+
+        if (!$codeRecord) {
+            $codeRecord = MinLateOrderItemCode::where('product_id', $codeStr)->first();
+            if ($codeRecord) {
+                $item = $codeRecord->minLateOrderItem;
+            }
+        }
+
+        if (!$codeRecord || !$item) {
+            return [
+                'success'     => false,
+                'status_code' => 404,
+                'message'     => 'Không tìm thấy sản phẩm với mã: ' . $codeStr,
+            ];
+        }
+
+        $statusLogs = $codeRecord->status ?? [];
+
+        $hasLoiLamDep = collect($statusLogs)->contains(function ($log) {
+            return isset($log['action']) && mb_strtolower($log['action']) === 'lỗi làm đẹp';
+        });
+
+        return [
+            'success'        => true,
+            'status_code'    => 200,
+            'has_loi_lam_dep' => $hasLoiLamDep,
+        ];
+    }
+
+    /**
      * Process completing or rolling back Finishing for a product code.
      */
     public function completeOrRollback(array $data): array
@@ -193,6 +240,12 @@ class FinishingService
                     'message' => 'Sản phẩm này đã được ghi nhận hoàn thành làm đẹp trước đó.'
                 ];
             }
+
+            // Xóa tất cả các action của công đoạn làm đẹp trước đó
+            $currentStatus = array_values(array_filter($currentStatus, function ($log) {
+                $action = mb_strtolower($log['action'] ?? '');
+                return !str_contains($action, 'làm đẹp');
+            }));
 
             $newLog = [
                 'action' => 'hoàn thành làm đẹp',

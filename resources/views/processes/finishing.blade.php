@@ -361,13 +361,18 @@
 
         function showToast(message, type = "success") {
             const toast = document.createElement("div");
-            toast.className = `flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border text-sm font-semibold transition-all transform translate-y-2 opacity-0 duration-300 ${
-                type === "success" 
-                    ? "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-400" 
-                    : "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800 text-red-800 dark:text-red-400"
-            }`;
-            
-            const icon = type === "success" ? "lucide:check-circle" : "lucide:alert-circle";
+            let colorClass, icon;
+            if (type === "success") {
+                colorClass = "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-400";
+                icon = "lucide:check-circle";
+            } else if (type === "warning") {
+                colorClass = "bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-400";
+                icon = "lucide:alert-triangle";
+            } else {
+                colorClass = "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800 text-red-800 dark:text-red-400";
+                icon = "lucide:alert-circle";
+            }
+            toast.className = `flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border text-sm font-semibold transition-all transform translate-y-2 opacity-0 duration-300 ${colorClass}`;
             toast.innerHTML = `
                 <iconify-icon icon="${icon}" class="text-lg"></iconify-icon>
                 <span>${message}</span>
@@ -385,7 +390,7 @@
             }, 3500);
         }
 
-        document.getElementById("finishingForm").addEventListener("submit", function (e) {
+        document.getElementById("finishingForm").addEventListener("submit", async function (e) {
             e.preventDefault();
             
             const submitBtn = document.getElementById("submitBtn");
@@ -396,6 +401,48 @@
             if (!code) {
                 showToast("Vui lòng nhập hoặc quét mã QR!", "error");
                 return;
+            }
+
+            // Nếu đang ở chế độ quay lại, kiểm tra xem có stage "lỗi làm đẹp" không
+            if (actionType === "rollback") {
+                submitBtn.disabled = true;
+                submitBtn.classList.add("opacity-50", "cursor-not-allowed", "pointer-events-none");
+                const originalBtnContentCheck = submitBtn.innerHTML;
+                submitBtn.innerHTML = `
+                    <iconify-icon icon="lucide:loader-2" class="text-xl animate-spin"></iconify-icon>
+                    Đang kiểm tra...
+                `;
+
+                try {
+                    const statusRes = await fetch(`' . route("processes.finishing.product-status") . '?product_code=` + encodeURIComponent(code), {
+                        method: "GET",
+                        headers: {
+                            "X-CSRF-TOKEN": "' . csrf_token() . '",
+                            "Accept": "application/json"
+                        }
+                    });
+                    const statusData = await statusRes.json();
+
+                    submitBtn.innerHTML = originalBtnContentCheck;
+
+                    if (!statusData.success) {
+                        showToast(statusData.message || "Không tìm thấy sản phẩm!", "error");
+                        toggleSubmitButton();
+                        return;
+                    }
+
+                    if (!statusData.has_loi_lam_dep) {
+                        showToast("Không có lỗi", "warning");
+                        toggleSubmitButton();
+                        return;
+                    }
+                } catch (checkErr) {
+                    console.error(checkErr);
+                    submitBtn.innerHTML = originalBtnContentCheck;
+                    showToast("Không thể kiểm tra trạng thái sản phẩm!", "error");
+                    toggleSubmitButton();
+                    return;
+                }
             }
             
             // Disable button and show loading state

@@ -93,6 +93,58 @@ class CNCService
     }
 
     /**
+     * Get product status by product code, check if 'lỗi cắt cnc' stage exists.
+     */
+    public function getProductStatus(string $codeStr): array
+    {
+        $codeStr = trim($codeStr);
+
+        // Search in Acrylic
+        $codeRecord = AcrylicOrderItemCode::where('product_id', $codeStr)->first();
+        $item = null;
+        $type = 'acrylic';
+
+        if ($codeRecord) {
+            $item = $codeRecord->acrylicOrderItem;
+        } else {
+            $codeRecord = GlassOrderItemCode::where('product_id', $codeStr)->first();
+            $type = 'glass';
+            if ($codeRecord) {
+                $item = $codeRecord->glassOrderItem;
+            }
+        }
+
+        if (!$codeRecord) {
+            $codeRecord = MinLateOrderItemCode::where('product_id', $codeStr)->first();
+            $type = 'min_late';
+            if ($codeRecord) {
+                $item = $codeRecord->minLateOrderItem;
+            }
+        }
+
+        if (!$codeRecord || !$item) {
+            return [
+                'success' => false,
+                'status_code' => 404,
+                'message' => 'Không tìm thấy sản phẩm với mã: ' . $codeStr,
+            ];
+        }
+
+        $statusLogs = $codeRecord->status ?? [];
+
+        $hasLoiCatCnc = collect($statusLogs)->contains(function ($log) {
+            return isset($log['action']) && mb_strtolower($log['action']) === 'lỗi cắt cnc';
+        });
+
+        return [
+            'success' => true,
+            'status_code' => 200,
+            'has_loi_cat_cnc' => $hasLoiCatCnc,
+            'status' => $statusLogs,
+        ];
+    }
+
+    /**
      * Process completing or rolling back CNC for a product code.
      */
     public function completeOrRollback(array $data): array
@@ -100,7 +152,6 @@ class CNCService
         $codeStr = trim($data['product_code']);
         $notes = $data['notes'] ?? null;
         $actionType = $data['action_type'] ?? 'complete';
-        $cncMachine = $data['cnc_machine'] ?? null;
 
         // Search in Acrylic
         $codeRecord = AcrylicOrderItemCode::where('product_id', $codeStr)->first();
@@ -179,7 +230,6 @@ class CNCService
                 'operator_id' => Auth::id(),
                 'time' => $logTime,
                 'notes' => $notes,
-                'cnc_machine' => $cncMachine,
             ];
 
             $currentStatus[] = $newLog;
@@ -196,13 +246,18 @@ class CNCService
                 ];
             }
 
+            // Xóa tất cả các action của công đoạn CNC trước đó (hoàn thành, quay lại, lỗi...)
+            $currentStatus = array_values(array_filter($currentStatus, function ($log) {
+                $action = mb_strtolower($log['action'] ?? '');
+                return !str_contains($action, 'cnc');
+            }));
+
             $newLog = [
                 'action' => 'hoàn thành cnc',
                 'operator' => $operatorName,
                 'operator_id' => Auth::id(),
                 'time' => $logTime,
                 'notes' => $notes,
-                'cnc_machine' => $cncMachine,
             ];
 
             $currentStatus[] = $newLog;

@@ -141,26 +141,40 @@ class QCService
         $logTime = now()->toDateTimeString();
         $operatorName = Auth::user()->name ?? 'Hệ thống';
 
-        if ($actionType === 'rollback') {
-            $errorType = $data['error_type'] ?? null;
-            $actionName = 'Ghi nhận lỗi';
-            if ($errorType) {
+        $isError = $actionType === 'rollback' || mb_stripos($actionType, 'lỗi') === 0;
+
+        if ($isError) {
+            // Xác định tên action lỗi
+            if (mb_stripos($actionType, 'lỗi') === 0) {
+                // action_type gửi thẳng tên lỗi: "lỗi cắt cnc", "lỗi dán cạnh"...
                 $stepMappings = [
-                    'ép ván' => 'Lỗi Ép ván',
-                    'cắt cnc' => 'Lỗi Cắt CNC',
-                    'dán cạnh' => 'Lỗi Dán cạnh',
-                    'làm đẹp' => 'Lỗi Làm đẹp'
+                    'lỗi ép ván'   => 'Lỗi Ép ván',
+                    'lỗi cắt cnc'  => 'Lỗi Cắt CNC',
+                    'lỗi dán cạnh' => 'Lỗi Dán cạnh',
+                    'lỗi làm đẹp'  => 'Lỗi Làm đẹp',
                 ];
-                $actionName = $stepMappings[strtolower($errorType)] ?? 'Lỗi ' . ucwords($errorType);
+                $actionName = $stepMappings[mb_strtolower($actionType)] ?? ucfirst($actionType);
+            } else {
+                // action_type = 'rollback' (legacy) — dùng error_type
+                $errorType = $data['error_type'] ?? null;
+                $actionName = 'Ghi nhận lỗi';
+                if ($errorType) {
+                    $stepMappings = [
+                        'ép ván'   => 'Lỗi Ép ván',
+                        'cắt cnc'  => 'Lỗi Cắt CNC',
+                        'dán cạnh' => 'Lỗi Dán cạnh',
+                        'làm đẹp'  => 'Lỗi Làm đẹp',
+                    ];
+                    $actionName = $stepMappings[strtolower($errorType)] ?? 'Lỗi ' . ucwords($errorType);
+                }
             }
 
-            // Record error log (corresponds to rollback action type in controller)
             $newLog = [
-                'action' => $actionName,
-                'operator' => $operatorName,
+                'action'      => $actionName,
+                'operator'    => $operatorName,
                 'operator_id' => Auth::id(),
-                'time' => $logTime,
-                'notes' => $notes,
+                'time'        => $logTime,
+                'notes'       => $notes,
             ];
 
             $currentStatus[] = $newLog;
@@ -207,18 +221,18 @@ class QCService
         $productName = $item->$nameField ?? '—';
 
         return [
-            'success' => true,
+            'success'     => true,
             'status_code' => 200,
-            'action_type' => $actionType,
-            'message' => $message,
-            'data' => [
+            'action_type' => $isError ? 'rollback' : 'complete',
+            'message'     => $message,
+            'data'        => [
                 'product_code' => $codeRecord->product_id,
                 'product_name' => $productName,
-                'type' => $type,
-                'operator' => $operatorName,
-                'time' => $logTime,
-                'notes' => $notes ?? ($actionType === 'complete' ? 'Hoàn thành QC' : 'Ghi nhận lỗi'),
-                'action' => $actionType === 'complete' ? 'Hoàn thành QC' : ($actionName ?? 'Ghi nhận lỗi')
+                'type'         => $type,
+                'operator'     => $operatorName,
+                'time'         => $logTime,
+                'notes'        => $notes ?? ($isError ? 'Ghi nhận lỗi' : 'Hoàn thành QC'),
+                'action'       => $isError ? ($actionName ?? 'Ghi nhận lỗi') : 'Hoàn thành QC',
             ]
         ];
     }

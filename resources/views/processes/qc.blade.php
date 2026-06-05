@@ -651,9 +651,7 @@
             let notesValue = notesInput;
 
             if (outcome !== "complete") {
-                actionType = "rollback";
-                // Prefix notes with the specific error type
-                notesValue = `[Lỗi: ${outcome.toUpperCase()}]` + (notesInput ? " " + notesInput : "");
+                actionType = "lỗi " + outcome;
             }
 
             fetch("' . route("processes.qc.complete") . '", {

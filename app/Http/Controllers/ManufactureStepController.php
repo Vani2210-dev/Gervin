@@ -57,6 +57,17 @@ class ManufactureStepController extends Controller
         ], $res['status_code']);
     }
 
+    public function getCncProductStatus(Request $request)
+    {
+        $request->validate([
+            'product_code' => 'required|string',
+        ]);
+
+        $res = $this->cncService->getProductStatus($request->product_code);
+
+        return response()->json($res, $res['status_code'] ?? 200);
+    }
+
     public function pressing()
     {
         $history = $this->pressingService->getHistory();
@@ -106,6 +117,13 @@ class ManufactureStepController extends Controller
         ], $res['status_code']);
     }
 
+    public function getEdgeBandingProductStatus(Request $request)
+    {
+        $request->validate(['product_code' => 'required|string']);
+        $res = $this->edgeBandingService->getProductStatus($request->product_code);
+        return response()->json($res, $res['status_code'] ?? 200);
+    }
+
     public function finishing()
     {
         $history = $this->finishingService->getHistory();
@@ -130,6 +148,13 @@ class ManufactureStepController extends Controller
         ], $res['status_code']);
     }
 
+    public function getFinishingProductStatus(Request $request)
+    {
+        $request->validate(['product_code' => 'required|string']);
+        $res = $this->finishingService->getProductStatus($request->product_code);
+        return response()->json($res, $res['status_code'] ?? 200);
+    }
+
     public function qc()
     {
         $history = $this->qcService->getHistory();
@@ -141,7 +166,8 @@ class ManufactureStepController extends Controller
         $request->validate([
             'product_code' => 'required|string',
             'notes' => 'nullable|string',
-            'action_type' => 'nullable|string|in:complete,rollback',
+            'action_type' => 'nullable|string',
+            'error_type' => 'nullable|string',
         ]);
 
         $res = $this->qcService->completeOrRollback($request->all());
