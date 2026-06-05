@@ -85,6 +85,17 @@
                             @endif
                         </div>
                     </div>
+
+                    {{-- Dynamic Items Container --}}
+                    <div class="mt-6 space-y-6">
+                        @if($currentOrderType === 'acrylic')
+                            @include('orders.acrylic')
+                        @elseif($currentOrderType === 'min_late')
+                            @include('orders.min_late')
+                        @elseif($currentOrderType === 'glass')
+                            @include('orders.glass')
+                        @endif
+                    </div>
                 </div>
 
                 {{-- Order Summary & Attachments - col-lg-4 --}}
@@ -121,12 +132,13 @@
                             </div>
                             <div class="form-group mb-4">
                                 <label class="form-label font-semibold text-xs text-neutral-500 uppercase tracking-wider mb-2 block">Tải lên hình ảnh</label>
-                                <div class="relative flex items-center justify-center border-2 border-dashed border-neutral-300 rounded-xl p-4 hover:bg-neutral-50 hover:border-primary-400 transition-colors cursor-pointer group">
+                                <div class="relative flex flex-col items-center justify-center border-2 border-dashed border-neutral-300 rounded-xl py-12 px-4 hover:bg-neutral-50 hover:border-primary-400 transition-colors cursor-pointer group min-h-[220px]">
                                     <input type="file" id="attachments-input" name="attachments[]" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" multiple accept="image/*">
                                     <div class="text-center pointer-events-none">
-                                        <iconify-icon icon="lucide:image-plus" class="text-3xl text-neutral-400 group-hover:text-primary-500 transition-colors mb-2"></iconify-icon>
-                                        <p class="text-xs font-semibold text-neutral-600">Chọn hoặc thả ảnh tại đây</p>
-                                        <p class="text-[10px] text-neutral-400 mt-1">Hỗ trợ JPG, PNG — tối đa 2MB/ảnh</p>
+                                        <iconify-icon icon="lucide:image-plus" class="text-4xl text-neutral-400 group-hover:text-primary-500 transition-colors mb-3"></iconify-icon>
+                                        <p class="text-sm font-semibold text-neutral-700">Chọn hoặc thả ảnh tại đây</p>
+                                        <p class="text-xs text-neutral-400 mt-1.5">Hỗ trợ JPG, PNG — tối đa 2MB/ảnh</p>
+                                        <p class="text-[10px] text-primary-500 font-semibold mt-2 bg-primary-50 px-2 py-0.5 rounded-full inline-block">Hoặc nhấn Ctrl + V để dán ảnh</p>
                                     </div>
                                 </div>
                             </div>
@@ -134,18 +146,18 @@
                             {{-- Preview Container for newly selected images --}}
                             <div class="mt-4 hidden" id="new-attachments-preview-container">
                                 <label class="form-label font-semibold text-xs text-neutral-500 uppercase tracking-wider mb-2 block">Hình ảnh mới chọn</label>
-                                <div class="flex flex-wrap gap-2" id="new-attachments-preview"></div>
+                                <div class="flex flex-col gap-3" id="new-attachments-preview"></div>
                             </div>
 
                             @if(isset($acrylicOrder) && $acrylicOrder->attachments)
                             <div class="mt-4">
                                 <label class="form-label font-semibold text-xs text-neutral-500 uppercase tracking-wider mb-2 block">Hình ảnh đã tải</label>
-                                <div class="flex flex-wrap gap-2" id="existing-attachments">
+                                <div class="flex flex-col gap-3" id="existing-attachments">
                                     @foreach(json_decode($acrylicOrder->attachments, true) ?? [] as $index => $image)
-                                    <div class="relative group w-16 h-16">
-                                        <img src="{{ route('orders.image', ['filename' => basename($image)]) }}" class="w-16 h-16 object-cover rounded-lg border border-neutral-200 shadow-sm transition-transform group-hover:scale-105">
-                                        <button type="button" onclick="deleteAttachment('{{ $index }}', '{{ $image }}')" class="absolute bg-danger-100 hover:bg-danger-200 text-danger-600 transition-colors w-6 h-6 flex justify-center items-center rounded-full shadow-sm z-10" style="top: -6px; right: -6px;" title="Xóa ảnh">
-                                            <iconify-icon icon="lucide:trash-2" class="text-xs"></iconify-icon>
+                                    <div class="relative group w-full">
+                                        <img src="{{ route('orders.image', ['filename' => basename($image)]) }}" class="w-full object-contain max-h-[300px] rounded-lg border border-neutral-200 shadow-sm">
+                                        <button type="button" onclick="deleteAttachment('{{ $index }}', '{{ $image }}')" class="absolute bg-danger-100 hover:bg-danger-200 text-danger-600 transition-colors w-7 h-7 flex justify-center items-center rounded-full shadow-sm z-10" style="top: 8px; right: 8px;" title="Xóa ảnh">
+                                            <iconify-icon icon="lucide:trash-2" class="text-sm"></iconify-icon>
                                         </button>
                                     </div>
                                     @endforeach
@@ -156,17 +168,6 @@
                         </div>
                     </div>
                 </div>
-            </div>
-
-            {{-- Dynamic Items Container - Full width (col-12) --}}
-            <div class="mt-6 space-y-6">
-                @if($currentOrderType === 'acrylic')
-                    @include('orders.acrylic')
-                @elseif($currentOrderType === 'min_late')
-                    @include('orders.min_late')
-                @elseif($currentOrderType === 'glass')
-                    @include('orders.glass')
-                @endif
             </div>
         </div>
         <div class="px-6 py-4 border-t border-neutral-100 bg-neutral-50/50 flex items-center justify-end gap-3 rounded-b-xl">
@@ -314,32 +315,60 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Image preview handler
+    let newAttachments = [];
     const attachmentsInput = document.getElementById('attachments-input');
+    const previewContainer = document.getElementById('new-attachments-preview-container');
+    const previewDiv = document.getElementById('new-attachments-preview');
+
+    function renderNewAttachmentsPreview() {
+        if (!previewDiv) return;
+        previewDiv.innerHTML = ''; // Clear previous previews
+
+        if (newAttachments.length > 0) {
+            previewContainer.classList.remove('hidden');
+        } else {
+            previewContainer.classList.add('hidden');
+        }
+
+        newAttachments.forEach((file, index) => {
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const imgWrapper = document.createElement('div');
+                    imgWrapper.className = 'relative group w-full';
+                    imgWrapper.innerHTML = `
+                        <img src="${e.target.result}" class="w-full object-contain max-h-[300px] rounded-lg border border-neutral-200 shadow-sm">
+                        <button type="button" class="absolute bg-danger-100 hover:bg-danger-200 text-danger-600 transition-colors w-7 h-7 flex justify-center items-center rounded-full shadow-sm z-10 remove-new-attachment" data-index="${index}" style="top: 8px; right: 8px;" title="Xóa ảnh">
+                            <iconify-icon icon="lucide:trash-2" class="text-sm"></iconify-icon>
+                        </button>
+                    `;
+
+                    // Add delete handler for newly selected/pasted images
+                    imgWrapper.querySelector('.remove-new-attachment').addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const idx = parseInt(this.getAttribute('data-index'));
+                        newAttachments.splice(idx, 1);
+
+                        // Sync to file input
+                        const dataTransfer = new DataTransfer();
+                        newAttachments.forEach(f => dataTransfer.items.add(f));
+                        attachmentsInput.files = dataTransfer.files;
+
+                        // Re-render
+                        renderNewAttachmentsPreview();
+                    });
+
+                    previewDiv.appendChild(imgWrapper);
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
     if (attachmentsInput) {
         attachmentsInput.addEventListener('change', function() {
-            const previewContainer = document.getElementById('new-attachments-preview-container');
-            const previewDiv = document.getElementById('new-attachments-preview');
-            previewDiv.innerHTML = ''; // Clear previous previews
-
-            if (this.files && this.files.length > 0) {
-                previewContainer.classList.remove('hidden');
-                Array.from(this.files).forEach(file => {
-                    if (file.type.startsWith('image/')) {
-                        const reader = new FileReader();
-                        reader.onload = function(e) {
-                            const imgWrapper = document.createElement('div');
-                            imgWrapper.className = 'relative w-20 h-20';
-                            imgWrapper.innerHTML = `
-                                <img src="${e.target.result}" class="w-20 h-20 object-cover rounded-lg border border-neutral-200">
-                            `;
-                            previewDiv.appendChild(imgWrapper);
-                        }
-                        reader.readAsDataURL(file);
-                    }
-                });
-            } else {
-                previewContainer.classList.add('hidden');
-            }
+            newAttachments = Array.from(this.files || []);
+            renderNewAttachmentsPreview();
         });
     }
 

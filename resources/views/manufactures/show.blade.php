@@ -231,9 +231,21 @@
             <div class="border-b border-neutral-100 bg-white py-4 px-6 flex items-center justify-between">
                 <h6 class="font-bold text-base text-neutral-800 m-0 flex items-center gap-2">
                     <iconify-icon icon="lucide:layers" class="text-xl text-neutral-600"></iconify-icon>
-                    Danh sách các tấm ({{ $items->count() }})
+                    Danh sách các tấm ({{ $totalItemsCount }})
                 </h6>
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-3">
+                    {{-- Per page --}}
+                    <div class="flex items-center gap-1.5 text-xs text-neutral-500">
+                        <span class="font-medium text-secondary-light">Hiển thị</span>
+                        <select onchange="window.location.href = this.value" class="form-select rounded-lg border-neutral-300 py-1 px-2.5 text-xs focus:border-primary-500 focus:ring-primary-500 bg-white cursor-pointer font-medium text-neutral-700 w-auto">
+                            @foreach([10, 25, 50, 100] as $size)
+                                <option value="{{ request()->fullUrlWithQuery(['per_page' => $size, 'page' => 1]) }}" {{ $items->perPage() == $size ? 'selected' : '' }}>
+                                    {{ $size }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
                     <a href="{{ route('manufactures.print-stamps', $manufacture) }}" target="_blank"
                        class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-neutral-700 hover:text-neutral-800 hover:bg-neutral-50 border border-neutral-200 hover:border-neutral-300 rounded-lg transition-colors duration-200">
                         <iconify-icon icon="lucide:printer" class="text-lg"></iconify-icon> In phiếu dán tem
@@ -242,102 +254,63 @@
             </div>
             
             <div class="p-1">
-                <form id="assignStampsForm" action="{{ route('manufactures.assign-stamps', $manufacture) }}" method="POST">
-                    @csrf
-                    
-                    {{-- Bulk Action Bar --}}
-                    <div id="bulkActionBar" class="hidden bg-neutral-50 border-b border-neutral-100 px-6 py-3 flex items-center justify-between gap-4">
-                        <div class="flex items-center gap-2">
-                            <span class="text-sm font-semibold text-neutral-700">
-                                Đã chọn <span id="selectedCount" class="text-neutral-900 font-extrabold">0</span> tấm:
-                            </span>
-                        </div>
-                        <div class="flex items-center gap-2 flex-nowrap">
-                            <div class="w-64">
-                                <select name="worker_id" id="bulkWorkerSelect" class="tom-select" placeholder="Chọn nhân viên dán tem...">
-                                    <option value="">-- Chưa phân công / Bỏ phân công --</option>
-                                    @foreach($workers as $worker)
-                                        <option value="{{ $worker->id }}">{{ $worker->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <button type="submit" class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-semibold whitespace-nowrap bg-neutral-900 hover:bg-black text-white shadow-sm transition-colors duration-200 cursor-pointer">
-                                <iconify-icon icon="lucide:user-check" class="text-lg"></iconify-icon> Phân công hàng loạt
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="table-responsive border-0 overflow-x-auto scroll-sm">
-                        <table class="table bordered-table sm-table mb-0">
-                            <thead class="bg-neutral-50">
-                                <tr>
-                                    <th scope="col" style="width: 40px;" class="text-center">
-                                        <input type="checkbox" id="selectAllCheckbox" class="form-check-input rounded border-neutral-300 text-primary-600 focus:ring-primary-500">
-                                    </th>
-                                    <th scope="col" style="width: 50px;" class="text-center">Stt</th>
-                                    <th scope="col">Mã SP</th>
-                                    <th scope="col">Sản phẩm</th>
-                                    <th scope="col">Loại gỗ / Vật tư</th>
-                                    <th scope="col" class="text-center">Kích thước (mm)</th>
-                                    <th scope="col" class="text-center">SL</th>
-                                    <th scope="col">Nhân viên dán</th>
-                                    <th scope="col">Ghi chú</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($items as $index => $item)
-                                <tr>
-                                    <td class="text-center align-middle">
-                                        <input type="checkbox" name="items[{{ $index }}][checked]" value="1" class="item-checkbox form-check-input rounded border-neutral-300 text-primary-600 focus:ring-primary-500">
-                                        <input type="hidden" name="items[{{ $index }}][id]" value="{{ $item->id }}">
-                                        <input type="hidden" name="items[{{ $index }}][type]" value="{{ $item->type }}">
-                                    </td>
-                                    <td class="text-center align-middle">{{ $index + 1 }}</td>
-                                    <td>
-                                        <span class="font-semibold text-secondary-light">{{ $item->product_code ?? '—' }}</span>
-                                    </td>
-                                    <td>
-                                        <span class="text-base text-secondary-light font-medium">{{ $item->product_name }}</span>
-                                        <span class="block text-xs text-neutral-400">Đơn hàng: {{ $item->order_code }}</span>
-                                    </td>
-                                    <td>
-                                        <span class="text-base text-secondary-light">{{ $item->supply_name ?? '—' }}</span>
-                                    </td>
-                                    <td class="text-center align-middle font-medium text-secondary-light">
-                                        {{ $item->dimensions ?: '—' }}
-                                    </td>
-                                    <td class="text-center align-middle font-semibold text-secondary-light">
-                                        {{ $item->quantity }}
-                                    </td>
-                                    <td class="align-middle">
-                                        @if($item->assigned_worker)
-                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold bg-primary-50 text-primary-700 border border-primary-100">
-                                                <iconify-icon icon="lucide:user" class="text-sm"></iconify-icon>
-                                                {{ $item->assigned_worker->name }}
-                                            </span>
-                                        @else
-                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold bg-neutral-50 text-neutral-400 border border-neutral-100">
-                                                <iconify-icon icon="lucide:user-minus" class="text-sm"></iconify-icon>
-                                                Chưa phân công
-                                            </span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        <span class="text-xs text-neutral-500 block max-w-xs truncate" title="{{ $item->notes }}">{{ $item->notes ?? '—' }}</span>
-                                    </td>
-                                </tr>
-                                @empty
-                                <tr>
-                                    <td colspan="9" class="text-center py-8">
-                                        <p class="text-neutral-500 mb-0">Không có tấm gỗ/sản phẩm nào trong lệnh sản xuất này.</p>
-                                    </td>
-                                </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                </form>
+                <div class="table-responsive border-0 overflow-x-auto scroll-sm">
+                    <table class="table bordered-table sm-table mb-0">
+                        <thead class="bg-neutral-50">
+                            <tr>
+                                <th scope="col" style="width: 50px;" class="text-center">Stt</th>
+                                <th scope="col">Mã SP</th>
+                                <th scope="col">Sản phẩm</th>
+                                <th scope="col">Loại gỗ / Vật tư</th>
+                                <th scope="col" class="text-center">Kích thước (mm)</th>
+                                <th scope="col" class="text-center">SL</th>
+                                <th scope="col">Ghi chú</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($items as $index => $item)
+                            <tr>
+                                <td class="text-center align-middle">{{ ($items->currentPage() - 1) * $items->perPage() + $index + 1 }}</td>
+                                <td>
+                                    <span class="font-semibold text-secondary-light">{{ $item->product_code ?? '—' }}</span>
+                                </td>
+                                <td>
+                                    <span class="text-base text-secondary-light font-medium">{{ $item->product_name }}</span>
+                                    <span class="block text-xs text-neutral-400">Đơn hàng: {{ $item->order_code }}</span>
+                                </td>
+                                <td>
+                                    <span class="text-base text-secondary-light">{{ $item->supply_name ?? '—' }}</span>
+                                </td>
+                                <td class="text-center align-middle font-medium text-secondary-light">
+                                    {{ $item->dimensions ?: '—' }}
+                                </td>
+                                <td class="text-center align-middle font-semibold text-secondary-light">
+                                    {{ $item->quantity }}
+                                </td>
+                                <td>
+                                    <span class="text-xs text-neutral-500 block max-w-xs truncate" title="{{ $item->notes }}">{{ $item->notes ?? '—' }}</span>
+                                </td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="7" class="text-center py-8">
+                                    <p class="text-neutral-500 mb-0">Không có tấm gỗ/sản phẩm nào trong lệnh sản xuất này.</p>
+                                </td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
             </div>
+
+            @if($items->hasPages() || $totalItemsCount > 10)
+            <div class="px-6 py-4 border-t border-neutral-100 bg-neutral-50/50 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <span class="text-neutral-500 text-xs font-medium">
+                    Hiển thị từ {{ $items->firstItem() ?? 0 }} đến {{ $items->lastItem() ?? 0 }} trong tổng số {{ $items->total() }} tấm
+                </span>
+                {{ $items->links() }}
+            </div>
+            @endif
         </div>
     </div>
 
@@ -416,6 +389,70 @@
         @endif
         @endcan
 
+        {{-- Phân phát tem nhanh --}}
+        @if(in_array($manufacture->status, ['manager_approved', 'stamps_received', 'in_production']))
+        <div class="bg-white border border-neutral-200 rounded-xl p-5 shadow-sm">
+            <h6 class="font-bold text-sm text-neutral-800 uppercase tracking-wider mb-4 flex items-center gap-2 border-b border-neutral-100 pb-3">
+                <iconify-icon icon="solar:tag-bold-duotone" class="text-lg text-primary-600"></iconify-icon>
+                Phân phát tem nhanh
+            </h6>
+            
+            <div class="mb-4 text-xs text-neutral-500">
+                @php
+                    $totalStampsCount = $totalItemsCount;
+                    $assignedStampsCount = $manufacture->stampDistributions->sum('quantity');
+                    $unassignedStampsCount = max(0, $totalStampsCount - $assignedStampsCount);
+                @endphp
+                <div class="flex justify-between mb-1.5">
+                    <span>Đã phân phát:</span>
+                    <span class="font-semibold text-neutral-800">{{ $assignedStampsCount }} / {{ $totalStampsCount }} tem</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>Chưa phân phát:</span>
+                    <span class="font-bold text-primary-600">{{ $unassignedStampsCount }} tem</span>
+                </div>
+            </div>
+
+            <form action="{{ route('manufactures.assign-stamps', $manufacture) }}" method="POST" class="space-y-4">
+                @csrf
+                <input type="hidden" name="action" value="quick_distribute">
+                
+                <div class="form-group">
+                    <label class="form-label text-xs font-semibold text-neutral-500 mb-1.5 block">Nhân viên nhận tem</label>
+                    <select name="worker_id" class="form-select rounded-lg border-neutral-300 text-sm py-2 px-3 focus:border-primary-500 focus:ring-primary-500 w-full" required>
+                        <option value="">-- Chọn nhân viên --</option>
+                        @foreach($workers as $worker)
+                            <option value="{{ $worker->id }}">{{ $worker->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label text-xs font-semibold text-neutral-500 mb-1.5 block">Số lượng tem cần phát</label>
+                    <input type="number" name="quantity" min="1" max="{{ $unassignedStampsCount }}" class="form-control rounded-lg border-neutral-300 text-sm focus:border-primary-500 focus:ring-primary-500 w-full" placeholder="Ví dụ: 100" required>
+                </div>
+
+                <button type="submit" {{ $unassignedStampsCount == 0 ? 'disabled' : '' }} class="w-full py-2 px-4 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 bg-neutral-900 hover:bg-black text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 cursor-pointer">
+                    <iconify-icon icon="lucide:check-circle" class="text-sm"></iconify-icon>
+                    Phân phát tem
+                </button>
+            </form>
+
+            @if($assignedStampsCount > 0)
+            <div class="mt-4 pt-4 border-t border-neutral-100">
+                <form action="{{ route('manufactures.assign-stamps', $manufacture) }}" method="POST" onsubmit="return confirm('Bạn có chắc muốn thu hồi toàn bộ tem đã phân phát cho nhân viên?')">
+                    @csrf
+                    <input type="hidden" name="action" value="reset_all">
+                    <button type="submit" class="w-full py-2 px-4 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 border border-danger-200 text-danger-600 hover:bg-danger-50 transition-colors duration-200 cursor-pointer">
+                        <iconify-icon icon="lucide:rotate-ccw" class="text-sm"></iconify-icon>
+                        Thu hồi toàn bộ tem đã phát
+                    </button>
+                </form>
+            </div>
+            @endif
+        </div>
+        @endif
+
         {{-- Thông tin lệnh --}}
         <div class="bg-white border border-neutral-200 rounded-xl p-5 shadow-sm">
             <h6 class="font-bold text-sm text-neutral-800 uppercase tracking-wider mb-4 flex items-center gap-2 border-b border-neutral-100 pb-3">
@@ -436,7 +473,7 @@
                 </div>
                 <div class="flex justify-between items-center py-2 border-b border-neutral-50">
                     <span class="text-neutral-500 font-medium">Tổng số tem:</span>
-                    <span class="font-bold text-neutral-800 text-base">{{ $items->sum('quantity') }}</span>
+                    <span class="font-bold text-neutral-800 text-base">{{ $totalItemsCount }}</span>
                 </div>
                 <div class="py-2">
                     <span class="text-neutral-500 font-medium block mb-1">Ghi chú lệnh:</span>
@@ -548,66 +585,4 @@
 
     </div>
 </div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize Tom Select on the bulk worker select
-    if (typeof TomSelect !== 'undefined') {
-        const bulkWorkerSelect = document.getElementById('bulkWorkerSelect');
-        if (bulkWorkerSelect) {
-            new TomSelect(bulkWorkerSelect, {
-                create: false,
-                sortField: {
-                    field: 'text',
-                    direction: 'asc'
-                }
-            });
-        }
-    }
-
-    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
-    const itemCheckboxes = document.querySelectorAll('.item-checkbox');
-    const bulkActionBar = document.getElementById('bulkActionBar');
-    const selectedCount = document.getElementById('selectedCount');
-
-    function updateBulkActionBar() {
-        const checkedCount = document.querySelectorAll('.item-checkbox:checked').length;
-        if (selectedCount) {
-            selectedCount.textContent = checkedCount;
-        }
-        if (bulkActionBar) {
-            if (checkedCount > 0) {
-                bulkActionBar.classList.remove('hidden');
-            } else {
-                bulkActionBar.classList.add('hidden');
-            }
-        }
-    }
-
-    if (selectAllCheckbox) {
-        selectAllCheckbox.addEventListener('change', function() {
-            const isChecked = this.checked;
-            itemCheckboxes.forEach(function(checkbox) {
-                checkbox.checked = isChecked;
-            });
-            updateBulkActionBar();
-        });
-    }
-
-    itemCheckboxes.forEach(function(checkbox) {
-        checkbox.addEventListener('change', function() {
-            updateBulkActionBar();
-            
-            // Update selectAllCheckbox status
-            if (selectAllCheckbox) {
-                const allChecked = Array.from(itemCheckboxes).every(cb => cb.checked);
-                const someChecked = Array.from(itemCheckboxes).some(cb => cb.checked);
-                selectAllCheckbox.checked = allChecked;
-                selectAllCheckbox.indeterminate = someChecked && !allChecked;
-            }
-        });
-    });
-});
-</script>
-
 @endsection

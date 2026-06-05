@@ -214,28 +214,7 @@
                         Hiển thị {{ $files->firstItem() ?? 0 }} đến {{ $files->lastItem() ?? 0 }}
                         trong tổng {{ $files->total() }} mục
                     </span>
-                    @if($files->hasPages())
-                    <ul class="pagination flex flex-wrap items-center gap-2 justify-center">
-                        <li class="page-item {{ $files->onFirstPage() ? 'disabled' : '' }}">
-                            <a class="page-link bg-neutral-300 text-secondary-light font-semibold rounded-lg border-0 flex items-center justify-center h-8 w-8 text-base"
-                                href="{{ $files->previousPageUrl() }}">
-                                <iconify-icon icon="ep:d-arrow-left"></iconify-icon>
-                            </a>
-                        </li>
-                        @foreach($files->getUrlRange(1, $files->lastPage()) as $page => $url)
-                        <li class="page-item">
-                            <a class="page-link font-semibold rounded-lg border-0 flex items-center justify-center h-8 w-8 text-base {{ $page == $files->currentPage() ? 'bg-primary-600 text-white' : 'bg-neutral-300 text-secondary-light' }}"
-                                href="{{ $url }}">{{ $page }}</a>
-                        </li>
-                        @endforeach
-                        <li class="page-item {{ !$files->hasMorePages() ? 'disabled' : '' }}">
-                            <a class="page-link bg-neutral-300 text-secondary-light font-semibold rounded-lg border-0 flex items-center justify-center h-8 w-8 text-base"
-                                href="{{ $files->nextPageUrl() }}">
-                                <iconify-icon icon="ep:d-arrow-right"></iconify-icon>
-                            </a>
-                        </li>
-                    </ul>
-                    @endif
+                    {{ $files->links() }}
                 </div>
             </div>
         </div>

@@ -174,28 +174,7 @@
                         Hiển thị {{ $manufactures->firstItem() ?? 0 }} đến {{ $manufactures->lastItem() ?? 0 }}
                         trong tổng {{ $manufactures->total() }} lệnh sản xuất
                     </span>
-                    @if($manufactures->hasPages())
-                    <ul class="pagination flex flex-wrap items-center gap-2 justify-center">
-                        <li class="page-item {{ $manufactures->onFirstPage() ? 'disabled' : '' }}">
-                            <a class="page-link bg-neutral-300 text-secondary-light font-semibold rounded-lg border-0 flex items-center justify-center h-8 w-8 text-base"
-                                href="{{ $manufactures->previousPageUrl() }}">
-                                <iconify-icon icon="ep:d-arrow-left"></iconify-icon>
-                            </a>
-                        </li>
-                        @foreach($manufactures->getUrlRange(1, $manufactures->lastPage()) as $page => $url)
-                        <li class="page-item">
-                            <a class="page-link font-semibold rounded-lg border-0 flex items-center justify-center h-8 w-8 text-base {{ $page == $manufactures->currentPage() ? 'bg-primary-600 text-white' : 'bg-neutral-300 text-secondary-light' }}"
-                                href="{{ $url }}">{{ $page }}</a>
-                        </li>
-                        @endforeach
-                        <li class="page-item {{ !$manufactures->hasMorePages() ? 'disabled' : '' }}">
-                            <a class="page-link bg-neutral-300 text-secondary-light font-semibold rounded-lg border-0 flex items-center justify-center h-8 w-8 text-base"
-                                href="{{ $manufactures->nextPageUrl() }}">
-                                <iconify-icon icon="ep:d-arrow-right"></iconify-icon>
-                            </a>
-                        </li>
-                    </ul>
-                    @endif
+                    {{ $manufactures->links() }}
                 </div>
             </div>
         </div>

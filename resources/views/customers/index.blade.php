@@ -135,28 +135,7 @@
                         Hiển thị {{ $customers->firstItem() ?? 0 }} đến {{ $customers->lastItem() ?? 0 }}
                         trong tổng {{ $customers->total() }} khách hàng
                     </span>
-                    @if($customers->hasPages())
-                    <ul class="pagination flex flex-wrap items-center gap-2 justify-center">
-                        <li class="page-item {{ $customers->onFirstPage() ? 'disabled' : '' }}">
-                            <a class="page-link bg-neutral-300 text-secondary-light font-semibold rounded-lg border-0 flex items-center justify-center h-8 w-8 text-base"
-                                href="{{ $customers->previousPageUrl() }}">
-                                <iconify-icon icon="ep:d-arrow-left"></iconify-icon>
-                            </a>
-                        </li>
-                        @foreach($customers->getUrlRange(1, $customers->lastPage()) as $page => $url)
-                        <li class="page-item">
-                            <a class="page-link font-semibold rounded-lg border-0 flex items-center justify-center h-8 w-8 text-base {{ $page == $customers->currentPage() ? 'bg-primary-600 text-white' : 'bg-neutral-300 text-secondary-light' }}"
-                                href="{{ $url }}">{{ $page }}</a>
-                        </li>
-                        @endforeach
-                        <li class="page-item {{ !$customers->hasMorePages() ? 'disabled' : '' }}">
-                            <a class="page-link bg-neutral-300 text-secondary-light font-semibold rounded-lg border-0 flex items-center justify-center h-8 w-8 text-base"
-                                href="{{ $customers->nextPageUrl() }}">
-                                <iconify-icon icon="ep:d-arrow-right"></iconify-icon>
-                            </a>
-                        </li>
-                    </ul>
-                    @endif
+                    {{ $customers->links() }}
                 </div>
             </div>
         </div>

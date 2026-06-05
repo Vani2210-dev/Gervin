@@ -187,28 +187,7 @@
                         Hiển thị {{ $supplies->firstItem() ?? 0 }} đến {{ $supplies->lastItem() ?? 0 }}
                         trong tổng {{ $supplies->total() }} vật tư
                     </span>
-                    @if($supplies->hasPages())
-                    <ul class="pagination flex flex-wrap items-center gap-2 justify-center">
-                        <li class="page-item {{ $supplies->onFirstPage() ? 'disabled' : '' }}">
-                            <a class="page-link bg-neutral-300 text-secondary-light font-semibold rounded-lg border-0 flex items-center justify-center h-8 w-8 text-base"
-                                href="{{ $supplies->previousPageUrl() }}">
-                                <iconify-icon icon="ep:d-arrow-left"></iconify-icon>
-                            </a>
-                        </li>
-                        @foreach($supplies->getUrlRange(1, $supplies->lastPage()) as $page => $url)
-                        <li class="page-item">
-                            <a class="page-link font-semibold rounded-lg border-0 flex items-center justify-center h-8 w-8 text-base {{ $page == $supplies->currentPage() ? 'bg-primary-600 text-white' : 'bg-neutral-300 text-secondary-light' }}"
-                                href="{{ $url }}">{{ $page }}</a>
-                        </li>
-                        @endforeach
-                        <li class="page-item {{ !$supplies->hasMorePages() ? 'disabled' : '' }}">
-                            <a class="page-link bg-neutral-300 text-secondary-light font-semibold rounded-lg border-0 flex items-center justify-center h-8 w-8 text-base"
-                                href="{{ $supplies->nextPageUrl() }}">
-                                <iconify-icon icon="ep:d-arrow-right"></iconify-icon>
-                            </a>
-                        </li>
-                    </ul>
-                    @endif
+                    {{ $supplies->links() }}
                 </div>
             </div>
         </div>
