@@ -201,6 +201,7 @@
                                             'draft' => 'bg-neutral-100 text-neutral-600',
                                             'pending' => 'bg-warning-100 text-warning-600',
                                             'processing' => 'bg-info-100 text-info-600',
+                                            'in_production' => 'bg-indigo-100 text-indigo-600 border border-indigo-200',
                                             'completed' => 'bg-success-100 text-success-600',
                                             'cancelled' => 'bg-danger-100 text-danger-600',
                                         ];
@@ -208,6 +209,7 @@
                                             'draft' => 'Nháp',
                                             'pending' => 'Chờ xử lý',
                                             'processing' => 'Đang xử lý',
+                                            'in_production' => 'Đang sản xuất',
                                             'completed' => 'Hoàn thành',
                                             'cancelled' => 'Đã hủy',
                                         ];
@@ -224,10 +226,16 @@
                                         </a>
                                         @endcan
                                         @can('edit acrylic order')
-                                        <a href="{{ route('orders.edit', $order) }}"
-                                            class="bg-success-100 hover:bg-success-200 text-success-600 font-medium w-8 h-8 flex justify-center items-center rounded-full">
-                                            <iconify-icon icon="lucide:edit" class="menu-icon"></iconify-icon>
-                                        </a>
+                                            @if($order->status !== 'in_production')
+                                                <a href="{{ route('orders.edit', $order) }}"
+                                                    class="bg-success-100 hover:bg-success-200 text-success-600 font-medium w-8 h-8 flex justify-center items-center rounded-full">
+                                                    <iconify-icon icon="lucide:edit" class="menu-icon"></iconify-icon>
+                                                </a>
+                                            @else
+                                                <span class="bg-neutral-100 text-neutral-400 cursor-not-allowed font-medium w-8 h-8 flex justify-center items-center rounded-full" title="Đơn hàng đang sản xuất, không thể chỉnh sửa">
+                                                    <iconify-icon icon="lucide:edit" class="menu-icon"></iconify-icon>
+                                                </span>
+                                            @endif
                                         @endcan
                                         @can('delete acrylic order')
                                         <form method="POST" action="{{ route('orders.destroy', $order) }}"
@@ -296,6 +304,7 @@
                     <option value="draft" {{ request('filter_status') === 'draft' ? 'selected' : '' }}>Nháp</option>
                     <option value="pending" {{ request('filter_status') === 'pending' ? 'selected' : '' }}>Chờ xử lý</option>
                     <option value="processing" {{ request('filter_status') === 'processing' ? 'selected' : '' }}>Đang xử lý</option>
+                    <option value="in_production" {{ request('filter_status') === 'in_production' ? 'selected' : '' }}>Đang sản xuất</option>
                     <option value="completed" {{ request('filter_status') === 'completed' ? 'selected' : '' }}>Hoàn thành</option>
                     <option value="cancelled" {{ request('filter_status') === 'cancelled' ? 'selected' : '' }}>Đã hủy</option>
                 </select>

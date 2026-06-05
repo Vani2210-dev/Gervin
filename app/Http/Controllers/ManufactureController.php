@@ -22,7 +22,7 @@ class ManufactureController extends Controller
 
     public function index(Request $request)
     {
-        $perPage = $request->input('per_page', 10);
+        $perPage = $request->input('per_page', 15);
         $search  = $request->input('search', '');
         $status  = $request->input('status', '');
 
@@ -98,9 +98,9 @@ class ManufactureController extends Controller
         $totalItemsCount = $allItems->count();
 
         $currentPage = \Illuminate\Pagination\LengthAwarePaginator::resolveCurrentPage();
-        $perPage = intval(request()->input('per_page', 10));
+        $perPage = intval(request()->input('per_page', 15));
         if ($perPage <= 0) {
-            $perPage = 10;
+            $perPage = 15;
         }
 
         $currentItems = $allItems->slice(($currentPage - 1) * $perPage, $perPage)->values();
@@ -238,11 +238,14 @@ class ManufactureController extends Controller
                 if ($manufacture->status !== 'stamps_received') {
                     return back()->with('error', 'Trạng thái không hợp lệ để bắt đầu sản xuất.');
                 }
-                $manufacture->update([
-                    'status' => 'in_production',
-                    'production_started_by' => $user->id,
-                    'production_started_at' => $now,
-                ]);
+                \Illuminate\Support\Facades\DB::transaction(function () use ($manufacture, $user, $now) {
+                    $manufacture->update([
+                        'status' => 'in_production',
+                        'production_started_by' => $user->id,
+                        'production_started_at' => $now,
+                    ]);
+                    $manufacture->orders()->update(['status' => 'in_production']);
+                });
                 $msg = 'Bắt đầu sản xuất thành công.';
                 break;
 
