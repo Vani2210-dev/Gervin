@@ -485,13 +485,25 @@
 
         function showToast(message, type = "success") {
             const toast = document.createElement("div");
-            toast.className = `flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border text-sm font-semibold transition-all transform translate-y-2 opacity-0 duration-300 ${
-                type === "success"
-                    ? "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-400"
-                    : "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800 text-red-800 dark:text-red-400"
-            }`;
-
-            const icon = type === "success" ? "lucide:check-circle" : "lucide:alert-circle";
+            let icon = "";
+            const isDark = document.documentElement.classList.contains("dark");
+            if (type === "success") {
+                toast.style.backgroundColor = isDark ? "rgba(16, 185, 129, 0.15)" : "rgb(240, 253, 250)";
+                toast.style.borderColor = isDark ? "rgba(16, 185, 129, 0.3)" : "rgb(204, 251, 241)";
+                toast.style.color = isDark ? "rgb(52, 211, 153)" : "rgb(6, 95, 70)";
+                icon = "lucide:check-circle";
+            } else if (type === "warning") {
+                toast.style.backgroundColor = isDark ? "rgba(245, 158, 11, 0.15)" : "rgb(254, 243, 199)";
+                toast.style.borderColor = isDark ? "rgba(245, 158, 11, 0.3)" : "rgb(253, 230, 138)";
+                toast.style.color = isDark ? "rgb(251, 191, 36)" : "rgb(146, 64, 14)";
+                icon = "lucide:alert-triangle";
+            } else {
+                toast.style.backgroundColor = isDark ? "rgba(239, 68, 68, 0.15)" : "rgb(254, 242, 242)";
+                toast.style.borderColor = isDark ? "rgba(239, 68, 68, 0.3)" : "rgb(254, 226, 226)";
+                toast.style.color = isDark ? "rgb(248, 113, 113)" : "rgb(153, 27, 27)";
+                icon = "lucide:alert-circle";
+            }
+            toast.className = `flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border text-sm font-semibold transition-all transform translate-y-2 opacity-0 duration-300`;
             toast.innerHTML = `
                 <iconify-icon icon="${icon}" class="text-lg"></iconify-icon>
                 <span>${message}</span>
@@ -698,7 +710,8 @@
                 saveBtn.classList.remove("opacity-50", "cursor-not-allowed");
 
                 if (res.success) {
-                    showToast(res.message, "success");
+                    const toastType = res.action_type === "rollback" ? "error" : "success";
+                    showToast(res.message, toastType);
                     
                     // Clear inputs and hide details section
                     document.getElementById("product_code").value = "";
