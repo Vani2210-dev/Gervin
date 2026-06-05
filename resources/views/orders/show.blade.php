@@ -499,5 +499,5 @@
 <script>
     window.orderExportData = @json($exportData);
 </script>
-@vite(['resources/js/order-export.js'])
+<script src="{{ asset('assets/js/order-export.js') }}"></script>
 @endsection

@@ -543,7 +543,7 @@ async function exportToExcel() {
             const headersDef = [
                 { range: 'A12:A13', val: 'STT' },
                 { range: 'B12:B13', val: 'TÊN SẢN PHẨM' },
-                { range: 'C12:C13', val: 'MÃ SP' },
+                { range: 'C12:C13', val: 'MÀU SP' },
                 { range: 'D12:D13', val: 'CHIỀU MỞ CÁNH' },
                 { range: 'E12:E13', val: 'MÀU NHÔM' },
                 { range: 'F12:F13', val: 'MÀU KÍNH' },

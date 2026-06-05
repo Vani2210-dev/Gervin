@@ -22,6 +22,8 @@ use App\Http\Controllers\QrCodeGeneratorController;
 use App\Http\Controllers\ManufactureController;
 use App\Http\Controllers\WarehouseController;
 use App\Http\Controllers\ManufactureStepController;
+use App\Http\Controllers\DispatchPackageController;
+use App\Http\Controllers\DeliveryPackageController;
 use App\Http\Controllers\PackingPackageController;
 
 Route::middleware(['auth'])->group(function () {
@@ -254,23 +256,33 @@ Route::middleware(['auth'])->group(function () {
 // Manufacture Steps / Processes
 Route::middleware(['auth'])->prefix('processes')->name('processes.')->group(function () {
     Route::get('/cnc', [ManufactureStepController::class, 'cnc'])->name('cnc');
+    Route::get('/cnc/product-status', [ManufactureStepController::class, 'getCncProductStatus'])->name('cnc.product-status');
     Route::post('/cnc/complete', [ManufactureStepController::class, 'completeCnc'])->name('cnc.complete');
     Route::get('/pressing', [ManufactureStepController::class, 'pressing'])->name('pressing');
     Route::post('/pressing/complete', [ManufactureStepController::class, 'completePressing'])->name('pressing.complete');
     Route::get('/edge-banding', [ManufactureStepController::class, 'edgeBanding'])->name('edge-banding');
+    Route::get('/edge-banding/product-status', [ManufactureStepController::class, 'getEdgeBandingProductStatus'])->name('edge-banding.product-status');
     Route::post('/edge-banding/complete', [ManufactureStepController::class, 'completeEdgeBanding'])->name('edge-banding.complete');
     Route::get('/finishing', [ManufactureStepController::class, 'finishing'])->name('finishing');
+    Route::get('/finishing/product-status', [ManufactureStepController::class, 'getFinishingProductStatus'])->name('finishing.product-status');
     Route::post('/finishing/complete', [ManufactureStepController::class, 'completeFinishing'])->name('finishing.complete');
     Route::get('/qc', [ManufactureStepController::class, 'qc'])->name('qc');
+    Route::get('/qc/product-info', [ManufactureStepController::class, 'getProductInfo'])->name('qc.product-info');
     Route::post('/qc/complete', [ManufactureStepController::class, 'completeQc'])->name('qc.complete');
     Route::get('/packing', [PackingPackageController::class, 'index'])->name('packing');
     Route::post('/packing', [PackingPackageController::class, 'store'])->name('packing.store');
     Route::get('/packing/{package}', [PackingPackageController::class, 'show'])->name('packing.show');
+    Route::get('/packing/{package}/print', [PackingPackageController::class, 'print'])->name('packing.print');
     Route::post('/packing/{package}/items', [PackingPackageController::class, 'storeItem'])->name('packing.items.store');
     Route::delete('/packing/{package}/items/{item}', [PackingPackageController::class, 'destroyItem'])->name('packing.items.destroy');
     Route::post('/packing/{package}/complete', [PackingPackageController::class, 'complete'])->name('packing.complete');
     Route::delete('/packing/{package}', [PackingPackageController::class, 'destroy'])->name('packing.destroy');
-    Route::get('/shipped', [ManufactureStepController::class, 'shipped'])->name('shipped');
+    Route::get('/dispatch', [DispatchPackageController::class, 'index'])->name('dispatch');
+    Route::post('/dispatch/check', [DispatchPackageController::class, 'preview'])->name('dispatch.check');
+    Route::post('/dispatch/confirm', [DispatchPackageController::class, 'confirm'])->name('dispatch.confirm');
+    Route::get('/delivery', [DeliveryPackageController::class, 'index'])->name('delivery');
+    Route::post('/delivery/check', [DeliveryPackageController::class, 'preview'])->name('delivery.check');
+    Route::post('/delivery/confirm', [DeliveryPackageController::class, 'confirm'])->name('delivery.confirm');
 });
 
 require __DIR__.'/auth.php';

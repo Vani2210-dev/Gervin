@@ -41,7 +41,15 @@
             </div>
         </div>
 
-        @if($showCompleteButton)
+        @if($isCompleted)
+            <a href="{{ route('processes.packing.print', $package) }}"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="packing-package-page__print-button packing-package-page__header-print-button btn bg-primary-600 hover:bg-primary-700 text-white px-5 py-3 rounded-lg font-semibold inline-flex items-center gap-2">
+                <iconify-icon icon="lucide:printer" class="packing-package-page__print-icon packing-package-page__header-print-icon text-lg"></iconify-icon>
+                In tem dán
+            </a>
+        @elseif($showCompleteButton)
             <form method="POST" action="{{ route('processes.packing.complete', $package) }}" onsubmit="return confirm('Hoàn tất đóng gói kiện này?')" class="packing-package-page__complete-form packing-package-page__header-complete-form shrink-0">
                 @csrf
                 <button type="submit" class="packing-package-page__complete-button packing-package-page__header-complete-button btn bg-primary-600 hover:bg-primary-700 text-white px-5 py-3 rounded-lg font-semibold">
@@ -65,8 +73,8 @@
 
     <div class="packing-package-page__layout grid grid-cols-1 lg:grid-cols-12 gap-6">
         @if($showScanCard)
-            <div class="packing-package-page__scan-column lg:col-span-4">
-                <div class="packing-package-page__scan-card packing-package-page__scan-card--form card h-full border border-neutral-200 rounded-xl shadow-sm">
+            <div class="packing-package-page__scan-column lg:col-span-4 lg:self-start">
+                <div class="packing-package-page__scan-card packing-package-page__scan-card--form card border border-neutral-200 rounded-xl shadow-sm">
                     <div class="packing-package-page__scan-body card-body p-6">
                         <div class="packing-package-page__scan-heading flex items-start gap-4 mb-6">
                             <span class="packing-package-page__scan-icon-wrap w-12 h-12 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center">
@@ -112,7 +120,20 @@
         <div class="packing-package-page__items-column {{ $showScanCard ? 'lg:col-span-8' : 'lg:col-span-12' }}">
             <div class="packing-package-page__items-card packing-package-page__items-card--list card border-0 overflow-hidden shadow-sm">
                 <div class="packing-package-page__items-header card-header bg-white border-b border-neutral-200 px-6 py-4 flex items-center justify-between gap-3">
-                    <h6 id="packageItemsTitle" class="packing-package-page__items-title text-lg font-bold text-neutral-900 mb-0">Danh sách linh kiện trong kiện ({{ $packageItems->count() }})</h6>
+                    <h6 id="packageItemsTitle" class="packing-package-page__items-title text-lg font-bold text-neutral-900 mb-0">
+                        Danh sách linh kiện trong kiện ({{ $package->packagedItems()->count() }}/{{ $package->items()->count() }})
+                    </h6>
+                    <div class="flex items-center gap-3">
+                        <span class="text-sm font-medium text-secondary-light mb-0">Hiển thị</span>
+                        <form method="GET" action="{{ route('processes.packing.show', $package) }}" id="perPageForm">
+                            <select name="per_page" class="form-select form-select-sm w-auto border-neutral-200 rounded-lg py-1 px-2 text-xs"
+                                onchange="document.getElementById('perPageForm').submit()">
+                                @foreach([15, 25, 50, 100] as $option)
+                                <option value="{{ $option }}" {{ request()->input('per_page', 15) == $option ? 'selected' : '' }}>{{ $option }}</option>
+                                @endforeach
+                            </select>
+                        </form>
+                    </div>
                 </div>
 
                 <div class="packing-package-page__items-card-body card-body">
@@ -138,25 +159,35 @@
                             </thead>
                             <tbody id="packageItemsTableBody" class="packing-package-page__items-tbody">
                                 @foreach($packageItems as $item)
-                                    <tr class="packing-package-page__items-row packing-package-page__items-row--static" data-package-item-row-id="{{ $item->id }}">
+                                    <tr class="packing-package-page__items-row packing-package-page__items-row--static transition-all {{ $item->is_packaged ? 'bg-white' : 'bg-neutral-50/50 opacity-40 blur-[0.5px] hover:opacity-60 hover:blur-none' }}" data-package-item-row-id="{{ $item->id }}">
                                         <td class="packing-package-page__items-cell packing-package-page__items-cell--code border-r border-neutral-200 last:border-r-0 px-5 py-3">
-                                            <span class="packing-package-page__code-pill px-2.5 py-1 rounded bg-neutral-100 text-neutral-800 font-mono text-xs border border-neutral-200">
+                                            <span class="packing-package-page__code-pill px-2.5 py-1 rounded {{ $item->is_packaged ? 'bg-success-50 text-success-800 border-success-200' : 'bg-neutral-100 text-neutral-800 border-neutral-200' }} font-mono text-xs border">
                                                 {{ $item->product_code }}
                                             </span>
                                         </td>
-                                        <td class="packing-package-page__items-cell packing-package-page__items-cell--name border-r border-neutral-200 last:border-r-0 px-5 py-3 font-semibold text-neutral-900">{{ $item->product_name }}</td>
+                                        <td class="packing-package-page__items-cell packing-package-page__items-cell--name border-r border-neutral-200 last:border-r-0 px-5 py-3 font-semibold {{ $item->is_packaged ? 'text-neutral-900' : 'text-neutral-500' }}">{{ $item->product_name }}</td>
                                         <td class="packing-package-page__items-cell packing-package-page__items-cell--type border-r border-neutral-200 last:border-r-0 px-5 py-3 text-secondary-light">{{ $item->type }}</td>
                                         <td class="packing-package-page__items-cell packing-package-page__items-cell--order-code border-r border-neutral-200 last:border-r-0 px-5 py-3 text-secondary-light">{{ $item->order_code }}</td>
-                                        <td class="packing-package-page__items-cell packing-package-page__items-cell--time border-r border-neutral-200 last:border-r-0 px-5 py-3 text-secondary-light">{{ $item->created_at_label }}</td>
+                                        <td class="packing-package-page__items-cell packing-package-page__items-cell--time border-r border-neutral-200 last:border-r-0 px-5 py-3 text-secondary-light">
+                                            @if($item->is_packaged)
+                                                {{ $item->created_at_label }}
+                                            @else
+                                                <span class="text-xs text-neutral-400 italic font-medium">Chờ quét</span>
+                                            @endif
+                                        </td>
                                         @if($showDeleteColumn)
                                             <td class="packing-package-page__items-cell packing-package-page__items-cell--action border-r border-neutral-200 last:border-r-0 px-5 py-3 text-end">
-                                                <form method="POST" action="{{ $item->delete_url }}" class="packing-package-page__item-delete-form inline-flex items-center" data-package-item-delete-form>
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="packing-package-page__item-delete-button w-8 h-8 rounded-lg bg-danger-50 text-danger-600 border border-danger-100 hover:bg-danger-600 hover:text-white hover:border-danger-600 transition-colors inline-flex items-center justify-center shadow-sm">
-                                                        <iconify-icon icon="lucide:trash-2" class="packing-package-page__item-delete-icon text-base"></iconify-icon>
-                                                    </button>
-                                                </form>
+                                                @if($item->is_packaged)
+                                                    <form method="POST" action="{{ $item->delete_url }}" class="packing-package-page__item-delete-form inline-flex items-center" data-package-item-delete-form>
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="packing-package-page__item-delete-button w-8 h-8 rounded-lg bg-danger-50 text-danger-600 border border-danger-100 hover:bg-danger-600 hover:text-white hover:border-danger-600 transition-colors inline-flex items-center justify-center shadow-sm">
+                                                            <iconify-icon icon="lucide:trash-2" class="packing-package-page__item-delete-icon text-base"></iconify-icon>
+                                                        </button>
+                                                    </form>
+                                                @else
+                                                    <span class="text-neutral-400 text-xs italic font-medium">Chưa quét</span>
+                                                @endif
                                             </td>
                                         @endif
                                     </tr>
@@ -164,6 +195,16 @@
                             </tbody>
                         </table>
                     </div>
+                    
+                    {{-- Pagination --}}
+                    @if($packageItems instanceof \Illuminate\Pagination\LengthAwarePaginator && $packageItems->isNotEmpty())
+                        <div class="flex items-center justify-between flex-wrap gap-2 mt-6 border-t border-neutral-100 pt-6">
+                            <span class="text-secondary-light text-sm">
+                                Hiển thị {{ $packageItems->firstItem() ?? 0 }} đến {{ $packageItems->lastItem() ?? 0 }} trong tổng {{ $packageItems->total() }} linh kiện
+                            </span>
+                            {{ $packageItems->links() }}
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
@@ -201,6 +242,7 @@
         let html5QrCode = null;
         const canDeletePackageItems = ' . json_encode($showDeleteColumn) . ';
         const packageItemDeleteToken = ' . json_encode(csrf_token()) . ';
+        let packingIsSubmitting = false;
 
         function toggleSubmitButton() {
             const productCodeInput = document.getElementById("product_code");
@@ -227,6 +269,7 @@
                     toggleSubmitButton();
                     stopScanning();
                     playScanBeep();
+                    submitPackingItem();
                 },
                 () => {}
             ).catch((err) => {
@@ -277,58 +320,57 @@
             }, 3500);
         }
 
-        function updatePackageItemsTitle(count) {
-            const title = document.getElementById("packageItemsTitle");
-            if (title) {
-                title.textContent = `Danh sách linh kiện trong kiện (${count})`;
+        function submitPackingItem() {
+            const form = document.getElementById("packingScanForm");
+            const productCodeInput = document.getElementById("product_code");
+            const submitBtn = document.getElementById("packingSubmitBtn");
+
+            if (!form || !productCodeInput || !submitBtn || packingIsSubmitting) {
+                return;
             }
-        }
 
-        function syncPackageItemsState() {
-            const tbody = document.getElementById("packageItemsTableBody");
-            const emptyState = document.getElementById("emptyPackageItemsState");
-            const tableWrap = document.getElementById("packageItemsTableWrap");
-            if (!tbody || !emptyState || !tableWrap) return;
+            const code = productCodeInput.value.trim();
+            if (!code) {
+                return;
+            }
 
-            const hasRows = tbody.querySelectorAll("tr").length > 0;
-            emptyState.classList.toggle("hidden", hasRows);
-            tableWrap.classList.toggle("hidden", !hasRows);
-        }
+            // Chặn gửi trùng khi quét hoặc nhập liên tiếp.
+            packingIsSubmitting = true;
 
-        function appendPackageItemRow(item) {
-            const tbody = document.getElementById("packageItemsTableBody");
-            const emptyState = document.getElementById("emptyPackageItemsState");
-            const tableWrap = document.getElementById("packageItemsTableWrap");
-            if (!tbody || !emptyState || !tableWrap) return;
+            const originalBtnContent = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.classList.add("opacity-50", "cursor-not-allowed", "pointer-events-none");
+            submitBtn.innerHTML = `<iconify-icon icon="lucide:loader-2" class="text-xl animate-spin"></iconify-icon> Đang xử lý...`;
 
-            emptyState.classList.add("hidden");
-            tableWrap.classList.remove("hidden");
-
-            const tr = document.createElement("tr");
-            tr.className = "packing-package-page__items-row packing-package-page__items-row--dynamic";
-            tr.innerHTML = `
-                <td class="packing-package-page__items-cell packing-package-page__items-cell--code border-r border-neutral-200 last:border-r-0 px-5 py-3">
-                    <span class="packing-package-page__code-pill px-2.5 py-1 rounded bg-neutral-100 text-neutral-800 font-mono text-xs border border-neutral-200">
-                        ${item.product_code}
-                    </span>
-                </td>
-                <td class="packing-package-page__items-cell packing-package-page__items-cell--name border-r border-neutral-200 last:border-r-0 px-5 py-3 font-semibold text-neutral-900">${item.product_name}</td>
-                <td class="packing-package-page__items-cell packing-package-page__items-cell--type border-r border-neutral-200 last:border-r-0 px-5 py-3 text-secondary-light">${item.type}</td>
-                <td class="packing-package-page__items-cell packing-package-page__items-cell--order-code border-r border-neutral-200 last:border-r-0 px-5 py-3 text-secondary-light">${item.order_code}</td>
-                <td class="packing-package-page__items-cell packing-package-page__items-cell--time border-r border-neutral-200 last:border-r-0 px-5 py-3 text-secondary-light">${item.created_at_label}</td>
-                ${canDeletePackageItems ? `
-                    <td class="packing-package-page__items-cell packing-package-page__items-cell--action border-r border-neutral-200 last:border-r-0 px-5 py-3 text-end">
-                        <form method="POST" action="${item.delete_url}" class="packing-package-page__item-delete-form inline-flex items-center" data-package-item-delete-form>
-                            <input type="hidden" name="_token" value="${packageItemDeleteToken}">
-                            <input type="hidden" name="_method" value="DELETE">
-                            <button type="submit" class="packing-package-page__item-delete-button w-8 h-8 rounded-lg bg-danger-50 text-danger-600 border border-danger-100 hover:bg-danger-600 hover:text-white hover:border-danger-600 transition-colors inline-flex items-center justify-center shadow-sm">
-                                <iconify-icon icon="lucide:trash-2" class="packing-package-page__item-delete-icon text-base"></iconify-icon>
-                            </button>
-                        </form>
-                    </td>
-                ` : ""}
-            `;
-            tbody.insertBefore(tr, tbody.firstChild);
+            fetch("' . route('processes.packing.items.store', $package) . '", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                    "X-CSRF-TOKEN": "' . csrf_token() . '"
+                },
+                body: JSON.stringify({ product_code: code })
+            })
+            .then(async (response) => {
+                const data = await response.json();
+                if (!response.ok) throw data;
+                return data;
+            })
+            .then((res) => {
+                showToast(res.message, "success");
+                // Thêm xong thì tải lại để đồng bộ số lượng và danh sách.
+                setTimeout(() => {
+                    window.location.reload();
+                }, 500);
+            })
+            .catch((err) => {
+                showToast(err.message || "Không thể thêm linh kiện vào kiện.", "error");
+            })
+            .finally(() => {
+                packingIsSubmitting = false;
+                submitBtn.innerHTML = originalBtnContent;
+                toggleSubmitButton();
+            });
         }
 
         document.addEventListener("DOMContentLoaded", function () {
@@ -337,56 +379,55 @@
             const submitBtn = document.getElementById("packingSubmitBtn");
 
             if (productCodeInput) {
-                productCodeInput.addEventListener("input", toggleSubmitButton);
+                productCodeInput.addEventListener("input", function () {
+                    toggleSubmitButton();
+                });
                 toggleSubmitButton();
             }
 
             if (form && submitBtn && productCodeInput) {
-
-            form.addEventListener("submit", function (e) {
-                e.preventDefault();
-
-                const code = productCodeInput.value.trim();
-                if (!code) {
-                    showToast("Vui lòng nhập hoặc quét mã QR!", "error");
+                form.addEventListener("submit", function (e) {
+                    e.preventDefault();
+                    submitPackingItem();
                     return;
-                }
 
-                const originalBtnContent = submitBtn.innerHTML;
-                submitBtn.disabled = true;
-                submitBtn.classList.add("opacity-50", "cursor-not-allowed", "pointer-events-none");
-                submitBtn.innerHTML = `<iconify-icon icon="lucide:loader-2" class="text-xl animate-spin"></iconify-icon> Đang xử lý...`;
+                    const code = productCodeInput.value.trim();
+                    if (!code) {
+                        showToast("Vui lòng nhập hoặc quét mã QR!", "error");
+                        return;
+                    }
 
-                fetch("' . route('processes.packing.items.store', $package) . '", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Accept": "application/json",
-                        "X-CSRF-TOKEN": "' . csrf_token() . '"
-                    },
-                    body: JSON.stringify({ product_code: code })
-                })
-                .then(async (response) => {
-                    const data = await response.json();
-                    if (!response.ok) throw data;
-                    return data;
-                })
-                .then((res) => {
-                    showToast(res.message, "success");
-                    appendPackageItemRow(res.data);
-                    updatePackageItemsTitle(res.items_count);
-                    productCodeInput.value = "";
-                    productCodeInput.focus();
-                    submitBtn.innerHTML = originalBtnContent;
-                    toggleSubmitButton();
-                })
-                .catch((err) => {
-                    showToast(err.message || "Không thể thêm linh kiện vào kiện.", "error");
-                    submitBtn.innerHTML = originalBtnContent;
-                    toggleSubmitButton();
+                    const originalBtnContent = submitBtn.innerHTML;
+                    submitBtn.disabled = true;
+                    submitBtn.classList.add("opacity-50", "cursor-not-allowed", "pointer-events-none");
+                    submitBtn.innerHTML = `<iconify-icon icon="lucide:loader-2" class="text-xl animate-spin"></iconify-icon> Đang xử lý...`;
+
+                    fetch("' . route('processes.packing.items.store', $package) . '", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Accept": "application/json",
+                            "X-CSRF-TOKEN": "' . csrf_token() . '"
+                        },
+                        body: JSON.stringify({ product_code: code })
+                    })
+                    .then(async (response) => {
+                        const data = await response.json();
+                        if (!response.ok) throw data;
+                        return data;
+                    })
+                    .then((res) => {
+                        showToast(res.message, "success");
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 500);
+                    })
+                    .catch((err) => {
+                        showToast(err.message || "Không thể thêm linh kiện vào kiện.", "error");
+                        submitBtn.innerHTML = originalBtnContent;
+                        toggleSubmitButton();
+                    });
                 });
-            });
-
             }
 
             if (canDeletePackageItems) {
@@ -424,11 +465,10 @@
                         return data;
                     })
                     .then((res) => {
-                        const row = deleteForm.closest("tr");
-                        if (row) row.remove();
-                        updatePackageItemsTitle(res.items_count);
-                        syncPackageItemsState();
                         showToast(res.message, "success");
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 500);
                     })
                     .catch((err) => {
                         showToast(err.message || "Không thể xóa linh kiện khỏi kiện.", "error");

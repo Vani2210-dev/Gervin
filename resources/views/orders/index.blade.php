@@ -201,6 +201,7 @@
                                             'draft' => 'bg-neutral-100 text-neutral-600',
                                             'pending' => 'bg-warning-100 text-warning-600',
                                             'processing' => 'bg-info-100 text-info-600',
+                                            'in_production' => 'bg-indigo-100 text-indigo-600 border border-indigo-200',
                                             'completed' => 'bg-success-100 text-success-600',
                                             'cancelled' => 'bg-danger-100 text-danger-600',
                                         ];
@@ -208,6 +209,7 @@
                                             'draft' => 'Nháp',
                                             'pending' => 'Chờ xử lý',
                                             'processing' => 'Đang xử lý',
+                                            'in_production' => 'Đang sản xuất',
                                             'completed' => 'Hoàn thành',
                                             'cancelled' => 'Đã hủy',
                                         ];
@@ -224,10 +226,16 @@
                                         </a>
                                         @endcan
                                         @can('edit acrylic order')
-                                        <a href="{{ route('orders.edit', $order) }}"
-                                            class="bg-success-100 hover:bg-success-200 text-success-600 font-medium w-8 h-8 flex justify-center items-center rounded-full">
-                                            <iconify-icon icon="lucide:edit" class="menu-icon"></iconify-icon>
-                                        </a>
+                                            @if($order->status !== 'in_production')
+                                                <a href="{{ route('orders.edit', $order) }}"
+                                                    class="bg-success-100 hover:bg-success-200 text-success-600 font-medium w-8 h-8 flex justify-center items-center rounded-full">
+                                                    <iconify-icon icon="lucide:edit" class="menu-icon"></iconify-icon>
+                                                </a>
+                                            @else
+                                                <span class="bg-neutral-100 text-neutral-400 cursor-not-allowed font-medium w-8 h-8 flex justify-center items-center rounded-full" title="Đơn hàng đang sản xuất, không thể chỉnh sửa">
+                                                    <iconify-icon icon="lucide:edit" class="menu-icon"></iconify-icon>
+                                                </span>
+                                            @endif
                                         @endcan
                                         @can('delete acrylic order')
                                         <form method="POST" action="{{ route('orders.destroy', $order) }}"
@@ -264,28 +272,7 @@
                         Hiển thị {{ $orders->firstItem() ?? 0 }} đến {{ $orders->lastItem() ?? 0 }}
                         trong tổng {{ $orders->total() }} đơn hàng
                     </span>
-                    @if($orders->hasPages())
-                    <ul class="pagination flex flex-wrap items-center gap-2 justify-center">
-                        <li class="page-item {{ $orders->onFirstPage() ? 'disabled' : '' }}">
-                            <a class="page-link bg-neutral-300 text-secondary-light font-semibold rounded-lg border-0 flex items-center justify-center h-8 w-8 text-base"
-                                href="{{ $orders->previousPageUrl() }}">
-                                <iconify-icon icon="ep:d-arrow-left"></iconify-icon>
-                            </a>
-                        </li>
-                        @foreach($orders->getUrlRange(1, $orders->lastPage()) as $page => $url)
-                        <li class="page-item">
-                            <a class="page-link font-semibold rounded-lg border-0 flex items-center justify-center h-8 w-8 text-base {{ $page == $orders->currentPage() ? 'bg-primary-600 text-white' : 'bg-neutral-300 text-secondary-light' }}"
-                                href="{{ $url }}">{{ $page }}</a>
-                        </li>
-                        @endforeach
-                        <li class="page-item {{ !$orders->hasMorePages() ? 'disabled' : '' }}">
-                            <a class="page-link bg-neutral-300 text-secondary-light font-semibold rounded-lg border-0 flex items-center justify-center h-8 w-8 text-base"
-                                href="{{ $orders->nextPageUrl() }}">
-                                <iconify-icon icon="ep:d-arrow-right"></iconify-icon>
-                            </a>
-                        </li>
-                    </ul>
-                    @endif
+                    {{ $orders->links() }}
                 </div>
             </div>
         </div>
@@ -317,6 +304,7 @@
                     <option value="draft" {{ request('filter_status') === 'draft' ? 'selected' : '' }}>Nháp</option>
                     <option value="pending" {{ request('filter_status') === 'pending' ? 'selected' : '' }}>Chờ xử lý</option>
                     <option value="processing" {{ request('filter_status') === 'processing' ? 'selected' : '' }}>Đang xử lý</option>
+                    <option value="in_production" {{ request('filter_status') === 'in_production' ? 'selected' : '' }}>Đang sản xuất</option>
                     <option value="completed" {{ request('filter_status') === 'completed' ? 'selected' : '' }}>Hoàn thành</option>
                     <option value="cancelled" {{ request('filter_status') === 'cancelled' ? 'selected' : '' }}>Đã hủy</option>
                 </select>

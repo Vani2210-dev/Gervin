@@ -9,6 +9,28 @@ class PermissionSeeder extends Seeder
 {
     public function run(): void
     {
+        // Chuyển quyền cũ sau khi đổi nghiệp vụ xuất xưởng từ shipped sang dispatch.
+        foreach ([
+            'view shipped' => 'view dispatch',
+            'complete shipped' => 'complete dispatch',
+        ] as $oldName => $newName) {
+            $oldPermission = Permission::where('name', $oldName)->first();
+            if (! $oldPermission) {
+                continue;
+            }
+
+            $newPermission = Permission::firstOrCreate([
+                'name' => $newName,
+                'guard_name' => 'web',
+            ]);
+
+            foreach ($oldPermission->roles as $role) {
+                $role->givePermissionTo($newPermission);
+            }
+
+            $oldPermission->delete();
+        }
+
         $permissions = [
             // Role permissions
             'view role',
@@ -91,7 +113,11 @@ class PermissionSeeder extends Seeder
             'delete packing',
             'complete packing',
 
-            'view shipped',
+            'view dispatch',
+            'complete dispatch',
+
+            'view delivery', // Quyền xem trang giao hàng
+            'complete delivery', // Quyền hoàn tất giao hàng
             
             // UI permissions
             'view ui',

@@ -8,9 +8,20 @@
 @endphp
 
 @section('content')
+    <style>
+        /* Đảm bảo cột tên kiện luôn canh lề trái */
+        .packing-page__draft-head-cell--name,
+        .packing-page__draft-cell--name,
+        .packing-page__completed-head-cell--name,
+        .packing-page__completed-cell--name {
+            text-align: left !important;
+        }
+    </style>
+
     <div class="-mt-4 mb-6">
         <p class="text-sm text-neutral-500 dark:text-neutral-400">Theo dõi các kiện đang đóng gói, tạo kiện mới và xem nhanh trạng thái hoàn tất.</p>
     </div>
+
 
     <div class="packing-page__toolbar mb-6 flex w-full flex-col items-end gap-4">
         <div class="packing-page__toolbar-actions flex w-auto flex-wrap items-center justify-end gap-3">
@@ -45,7 +56,25 @@
             <div class="packing-page__draft-card-header card-header bg-white border-b border-neutral-200 px-6 py-4 flex items-center justify-between gap-3">
                 <div class="packing-page__draft-title-group flex items-center gap-2">
                     <span class="packing-page__draft-status-dot w-4 h-4 rounded-full bg-warning-400 border-4 border-warning-100"></span>
-                    <h6 class="packing-page__draft-title text-lg font-bold mb-0 text-neutral-900">Đang đóng gói ({{ $draftPackages->count() }})</h6>
+                    <h6 class="packing-page__draft-title text-lg font-bold mb-0 text-neutral-900">Đang đóng gói ({{ $draftPackages->total() }})</h6>
+                </div>
+                <!-- Chọn số lượng hiển thị cho bảng đang đóng gói -->
+                <div class="flex items-center gap-3">
+                    <span class="text-sm font-medium text-secondary-light mb-0">Hiển thị</span>
+                    <form method="GET" action="{{ route('processes.packing') }}" id="draftPerPageForm">
+                        @if(request()->has('completed_page'))
+                            <input type="hidden" name="completed_page" value="{{ request()->input('completed_page') }}">
+                        @endif
+                        @if(request()->has('completed_per_page'))
+                            <input type="hidden" name="completed_per_page" value="{{ request()->input('completed_per_page') }}">
+                        @endif
+                        <select name="draft_per_page" class="form-select form-select-sm w-auto border-neutral-200 rounded-lg py-1 px-2 text-xs"
+                            onchange="document.getElementById('draftPerPageForm').submit()">
+                            @foreach([15, 25, 50, 100] as $option)
+                                <option value="{{ $option }}" {{ $perPageDraft == $option ? 'selected' : '' }}>{{ $option }}</option>
+                            @endforeach
+                        </select>
+                    </form>
                 </div>
             </div>
 
@@ -54,6 +83,7 @@
                     <table class="packing-page__draft-table table basic-border-table mb-0">
                         <thead class="packing-page__draft-thead">
                             <tr class="packing-page__draft-head-row">
+                                <th scope="col" class="packing-page__draft-head-cell col-package-code border-r border-neutral-200 last:border-r-0">Mã kiện</th>
                                 <th scope="col" class="packing-page__draft-head-cell packing-page__draft-head-cell--name border-r border-neutral-200 last:border-r-0">Tên kiện</th>
                                 <th scope="col" class="packing-page__draft-head-cell packing-page__draft-head-cell--packer border-r border-neutral-200 last:border-r-0">Người đóng gói</th>
                                 <th scope="col" class="packing-page__draft-head-cell packing-page__draft-head-cell--created-at border-r border-neutral-200 last:border-r-0">Thời gian tạo</th>
@@ -66,6 +96,12 @@
                         <tbody class="packing-page__draft-tbody">
                             @forelse($draftPackages as $package)
                                 <tr class="packing-page__draft-row cursor-pointer hover:bg-neutral-50" onclick="window.location='{{ route('processes.packing.show', $package) }}'">
+                                    <!-- Cột mã kiện ở danh sách đang đóng gói -->
+                                    <td class="packing-page__draft-cell col-package-code border-r border-neutral-200 last:border-r-0">
+                                        <span class="inline-flex items-center rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-1.5 font-mono text-xs font-semibold text-neutral-800">
+                                            {{ $package->id }}
+                                        </span>
+                                    </td>
                                     <td class="packing-page__draft-cell packing-page__draft-cell--name border-r border-neutral-200 last:border-r-0 font-bold text-neutral-900">
                                         {{ $package->name }}
                                     </td>
@@ -94,12 +130,21 @@
                                 </tr>
                             @empty
                                 <tr class="packing-page__draft-empty-row">
-                                    <td colspan="{{ $canDeletePacking ? 5 : 4 }}" class="packing-page__draft-empty-cell px-6 py-14 text-center text-neutral-400">Không có kiện nào đang đóng gói.</td>
+                                    <td colspan="{{ $canDeletePacking ? 6 : 5 }}" class="packing-page__draft-empty-cell px-6 py-14 text-center text-neutral-400">Không có kiện nào đang đóng gói.</td>
                                 </tr>
                             @endforelse
                         </tbody>
                     </table>
                 </div>
+                {{-- Phân trang danh sách đang đóng gói --}}
+                @if($draftPackages instanceof \Illuminate\Pagination\LengthAwarePaginator && $draftPackages->isNotEmpty())
+                    <div class="flex items-center justify-between flex-wrap gap-2 mt-6 border-t border-neutral-100 pt-6">
+                        <span class="text-secondary-light text-sm">
+                            Hiển thị {{ $draftPackages->firstItem() ?? 0 }} đến {{ $draftPackages->lastItem() ?? 0 }} trong tổng {{ $draftPackages->total() }} kiện đang đóng gói
+                        </span>
+                        {{ $draftPackages->links() }}
+                    </div>
+                @endif
             </div>
         </div>
 
@@ -107,7 +152,25 @@
             <div class="packing-page__completed-card-header card-header bg-white border-b border-neutral-200 px-6 py-4 flex items-center justify-between gap-3">
                 <div class="packing-page__completed-title-group flex items-center gap-2">
                     <span class="packing-page__completed-status-dot w-4 h-4 rounded-full bg-success-500"></span>
-                    <h6 class="packing-page__completed-title text-lg font-bold mb-0 text-neutral-900">Đã hoàn tất ({{ $completedPackages->count() }})</h6>
+                    <h6 class="packing-page__completed-title text-lg font-bold mb-0 text-neutral-900">Đã hoàn tất ({{ $completedPackages->total() }})</h6>
+                </div>
+                <!-- Chọn số lượng hiển thị cho bảng đã hoàn tất -->
+                <div class="flex items-center gap-3">
+                    <span class="text-sm font-medium text-secondary-light mb-0">Hiển thị</span>
+                    <form method="GET" action="{{ route('processes.packing') }}" id="completedPerPageForm">
+                        @if(request()->has('draft_page'))
+                            <input type="hidden" name="draft_page" value="{{ request()->input('draft_page') }}">
+                        @endif
+                        @if(request()->has('draft_per_page'))
+                            <input type="hidden" name="draft_per_page" value="{{ request()->input('draft_per_page') }}">
+                        @endif
+                        <select name="completed_per_page" class="form-select form-select-sm w-auto border-neutral-200 rounded-lg py-1 px-2 text-xs"
+                            onchange="document.getElementById('completedPerPageForm').submit()">
+                            @foreach([15, 25, 50, 100] as $option)
+                                <option value="{{ $option }}" {{ $perPageCompleted == $option ? 'selected' : '' }}>{{ $option }}</option>
+                            @endforeach
+                        </select>
+                    </form>
                 </div>
             </div>
 
@@ -116,6 +179,7 @@
                     <table class="packing-page__completed-table table basic-border-table mb-0">
                         <thead class="packing-page__completed-thead">
                             <tr class="packing-page__completed-head-row">
+                                <th scope="col" class="packing-page__completed-head-cell col-package-code border-r border-neutral-200 last:border-r-0">Mã kiện</th>
                                 <th scope="col" class="packing-page__completed-head-cell packing-page__completed-head-cell--name border-r border-neutral-200 last:border-r-0">Tên kiện</th>
                                 <th scope="col" class="packing-page__completed-head-cell packing-page__completed-head-cell--packer border-r border-neutral-200 last:border-r-0">Người đóng gói</th>
                                 <th scope="col" class="packing-page__completed-head-cell packing-page__completed-head-cell--created-at border-r border-neutral-200 last:border-r-0">Thời gian tạo</th>
@@ -126,6 +190,12 @@
                         <tbody class="packing-page__completed-tbody">
                             @forelse($completedPackages as $package)
                                 <tr class="packing-page__completed-row cursor-pointer hover:bg-neutral-50" onclick="window.location='{{ route('processes.packing.show', $package) }}'">
+                                    <!-- Cột mã kiện ở danh sách đã hoàn tất -->
+                                    <td class="packing-page__completed-cell col-package-code border-r border-neutral-200 last:border-r-0">
+                                        <span class="inline-flex items-center rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-1.5 font-mono text-xs font-semibold text-neutral-800">
+                                            {{ $package->id }}
+                                        </span>
+                                    </td>
                                     <td class="packing-page__completed-cell packing-page__completed-cell--name border-r border-neutral-200 last:border-r-0 font-bold text-neutral-900">{{ $package->name }}</td>
                                     <td class="packing-page__completed-cell packing-page__completed-cell--packer border-r border-neutral-200 last:border-r-0">
                                         <div class="packing-page__completed-packer flex items-center gap-2">
@@ -146,12 +216,21 @@
                                 </tr>
                             @empty
                                 <tr class="packing-page__completed-empty-row">
-                                    <td colspan="5" class="packing-page__completed-empty-cell px-6 py-14 text-center text-neutral-400">Không có kiện nào đã hoàn tất.</td>
+                                    <td colspan="6" class="packing-page__completed-empty-cell px-6 py-14 text-center text-neutral-400">Không có kiện nào đã hoàn tất.</td>
                                 </tr>
                             @endforelse
                         </tbody>
                     </table>
                 </div>
+                {{-- Phân trang danh sách đã hoàn tất --}}
+                @if($completedPackages instanceof \Illuminate\Pagination\LengthAwarePaginator && $completedPackages->isNotEmpty())
+                    <div class="flex items-center justify-between flex-wrap gap-2 mt-6 border-t border-neutral-100 pt-6">
+                        <span class="text-secondary-light text-sm">
+                            Hiển thị {{ $completedPackages->firstItem() ?? 0 }} đến {{ $completedPackages->lastItem() ?? 0 }} trong tổng {{ $completedPackages->total() }} kiện đã hoàn tất
+                        </span>
+                        {{ $completedPackages->links() }}
+                    </div>
+                @endif
             </div>
         </div>
     </div>
@@ -180,7 +259,7 @@
 
                     <div class="packing-page__create-modal-field">
                         <label for="packing_package_name" class="packing-page__create-modal-label form-label font-semibold text-sm text-neutral-700">Tên kiện / Biển số</label>
-                        <input type="text" id="packing_package_name" name="name" value="{{ old('name') }}" class="packing-page__create-modal-input form-control rounded-lg" placeholder="Ví dụ: Kiện 2" required autofocus>
+                        <input type="text" id="packing_package_name" name="name" value="{{ old('name') }}" class="packing-page__create-modal-input form-control rounded-lg" placeholder="Ví dụ: Kiện 1" required autofocus>
                         @error('name')
                             <p class="packing-page__create-modal-error text-danger-600 text-sm mt-2 mb-0">{{ $message }}</p>
                         @enderror
@@ -205,4 +284,6 @@
             </script>
         @endif
     @endcan
+
+
 @endsection
