@@ -30,7 +30,7 @@ class OrderController extends Controller
         $this->middleware('permission:view acrylic order',   ['only' => ['index', 'show']]);
         $this->middleware('permission:add acrylic order',    ['only' => ['create', 'createByType', 'store']]);
         $this->middleware('permission:edit acrylic order',   ['only' => ['edit', 'update']]);
-        $this->middleware('permission:delete acrylic order', ['only' => ['destroy']]);
+        $this->middleware('permission:delete acrylic order', ['only' => ['destroy', 'bulkDestroy']]);
     }
 
     public function index(Request $request)
@@ -90,6 +90,9 @@ class OrderController extends Controller
 
     public function edit(Order $order)
     {
+        if ($order->status === 'in_production') {
+            return redirect()->route('orders.index')->with('error', 'Đơn hàng đang trong quá trình sản xuất, không thể chỉnh sửa.');
+        }
         $order->load(['supplies.items', 'supplies.minLateItems', 'supplies.glassItems', 'paymentDetails']);
         $acrylicOrder = $order;
         return view('orders.edit', compact('acrylicOrder'));
@@ -118,6 +121,9 @@ class OrderController extends Controller
 
     public function update(Request $request, Order $order)
     {
+        if ($order->status === 'in_production') {
+            return redirect()->route('orders.index')->with('error', 'Đơn hàng đang trong quá trình sản xuất, không thể chỉnh sửa.');
+        }
         if ($request->type === 'min_late') {
             $request->validate($this->minLateOrderService->getUpdateRules());
             $this->minLateOrderService->update($request, $order);
@@ -132,10 +138,50 @@ class OrderController extends Controller
         return redirect()->route('orders.index')->with('success', 'Cập nhật đơn hàng thành công.');
     }
 
-    public function destroy(Order $order)
+    public function destroy(Request $request, Order $order)
     {
         $order->delete();
-        return redirect()->route('orders.index')->with('success', 'Xóa đơn hàng thành công.');
+        return redirect()
+            ->route('orders.index', $request->only([
+                'search',
+                'per_page',
+                'filter_order_code',
+                'filter_customer_name',
+                'filter_status',
+            ]))
+            ->with('success', 'Xóa đơn hàng thành công.');
+    }
+
+    public function bulkDestroy(Request $request)
+    {
+        $validated = $request->validate([
+            'order_ids' => 'required|array|min:1',
+            'order_ids.*' => 'integer|distinct|exists:orders,id',
+        ]);
+
+        $orderIds = array_values(array_unique($validated['order_ids']));
+
+        $deletedCount = DB::transaction(function () use ($orderIds) {
+            $orders = Order::whereIn('id', $orderIds)->get();
+            $deletedCount = 0;
+
+            foreach ($orders as $order) {
+                $order->delete();
+                $deletedCount++;
+            }
+
+            return $deletedCount;
+        });
+
+        return redirect()
+            ->route('orders.index', $request->only([
+                'search',
+                'per_page',
+                'filter_order_code',
+                'filter_customer_name',
+                'filter_status',
+            ]))
+            ->with('success', "Xóa {$deletedCount} đơn hàng thành công.");
     }
 
     public function serveImage($filename)

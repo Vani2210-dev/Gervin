@@ -87,6 +87,10 @@ class PermissionSeeder extends Seeder
             'complete qc',
 
             'view packing',
+            'add packing',
+            'delete packing',
+            'complete packing',
+
             'view shipped',
             
             // UI permissions

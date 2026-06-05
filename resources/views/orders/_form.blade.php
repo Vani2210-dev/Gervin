@@ -7,7 +7,7 @@
         'min_late' => 'Min Late',
     ];
 @endphp
-<div class="card p-0 rounded-xl border-0 overflow-hidden">
+<div class="card p-0 rounded-xl border-0">
     <div class="card-header border-b border-neutral-200 bg-white py-4 px-6">
         <h5 class="font-semibold text-base">{{ $title ?? 'Tạo đơn hàng' }}</h5>
     </div>
@@ -98,10 +98,8 @@
                     </div>
                 </div>
 
-                {{-- Order Summary & Attachments - col-lg-4 --}}
-                <div class="lg:col-span-4">
-                    <div class="sticky top-6 space-y-6">
-                        {{-- Summary Card --}}
+                <div class="lg:col-span-4 space-y-6">
+                    {{-- Summary Card --}}
                         <div class="bg-white border border-neutral-200 rounded-xl p-6 shadow-sm mb-2">
                             <div class="flex items-center gap-2 border-b border-neutral-100 pb-4 mb-4">
                                 <iconify-icon icon="lucide:receipt-text" class="text-xl text-primary-500"></iconify-icon>
@@ -125,7 +123,7 @@
                         </div>
 
                         {{-- Attachments Card --}}
-                        <div class="bg-white border border-neutral-200 rounded-xl p-6 shadow-sm">
+                        <div class="bg-white border border-neutral-200 rounded-xl p-6 shadow-sm" style="position: -webkit-sticky; position: sticky; top: 96px; z-index: 10;">
                             <div class="flex items-center gap-2 border-b border-neutral-100 pb-4 mb-4">
                                 <iconify-icon icon="lucide:paperclip" class="text-xl text-primary-500"></iconify-icon>
                                 <h6 class="font-bold text-base text-neutral-800 m-0">Tệp tin đính kèm</h6>
@@ -166,7 +164,6 @@
                             </div>
                             @endif
                         </div>
-                    </div>
                 </div>
             </div>
         </div>

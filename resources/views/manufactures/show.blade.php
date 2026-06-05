@@ -238,7 +238,7 @@
                     <div class="flex items-center gap-1.5 text-xs text-neutral-500">
                         <span class="font-medium text-secondary-light">Hiển thị</span>
                         <select onchange="window.location.href = this.value" class="form-select rounded-lg border-neutral-300 py-1 px-2.5 text-xs focus:border-primary-500 focus:ring-primary-500 bg-white cursor-pointer font-medium text-neutral-700 w-auto">
-                            @foreach([10, 25, 50, 100] as $size)
+                            @foreach([15, 25, 50, 100] as $size)
                                 <option value="{{ request()->fullUrlWithQuery(['per_page' => $size, 'page' => 1]) }}" {{ $items->perPage() == $size ? 'selected' : '' }}>
                                     {{ $size }}
                                 </option>
@@ -303,7 +303,7 @@
                 </div>
             </div>
 
-            @if($items->hasPages() || $totalItemsCount > 10)
+            @if($items->hasPages() || $totalItemsCount > 15)
             <div class="px-6 py-4 border-t border-neutral-100 bg-neutral-50/50 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <span class="text-neutral-500 text-xs font-medium">
                     Hiển thị từ {{ $items->firstItem() ?? 0 }} đến {{ $items->lastItem() ?? 0 }} trong tổng số {{ $items->total() }} tấm
@@ -437,6 +437,23 @@
                     Phân phát tem
                 </button>
             </form>
+
+            @if($assignedStampsCount > 0)
+            <div class="mt-3">
+                <button type="button" onclick="toggleDistributionList()" class="w-full py-2 px-4 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 transition-colors duration-200 cursor-pointer">
+                    <iconify-icon icon="lucide:users" class="text-sm"></iconify-icon>
+                    Xem người đã nhận & số lượng
+                </button>
+                <div id="distribution-list-details" class="hidden mt-3 p-3 bg-neutral-50 rounded-lg border border-neutral-100 space-y-2 text-xs">
+                    @foreach($manufacture->stampDistributions as $dist)
+                    <div class="flex justify-between items-center py-1.5 border-b border-neutral-200 last:border-b-0">
+                        <span class="font-medium text-neutral-700">{{ $dist->worker->name ?? 'Không rõ' }}</span>
+                        <span class="font-bold text-neutral-900 bg-neutral-200 px-2 py-0.5 rounded-full">{{ $dist->quantity }} tem</span>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+            @endif
 
             @if($assignedStampsCount > 0)
             <div class="mt-4 pt-4 border-t border-neutral-100">
@@ -585,4 +602,13 @@
 
     </div>
 </div>
+
+<script>
+function toggleDistributionList() {
+    const list = document.getElementById('distribution-list-details');
+    if (list) {
+        list.classList.toggle('hidden');
+    }
+}
+</script>
 @endsection
