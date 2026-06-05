@@ -11,6 +11,7 @@ class AcrylicOrderItem extends Model
     protected $fillable = [
         'order_supply_id',
         'product_name',
+        'thickness',
         'height',
         'width',
         'grain_direction',

@@ -344,24 +344,25 @@
     .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(1)::before { content: "STT"; }
     .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(2)::before { content: "Mã hàng"; }
     .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(3)::before { content: "Tên hàng hóa, dịch vụ"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(4)::before { content: "Cao"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(5)::before { content: "Rộng"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(6)::before { content: "Số lượng"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(7)::before { content: "Dán cạnh cao 1"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(8)::before { content: "Dán cạnh cao 2"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(9)::before { content: "Dán cạnh rộng 1"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(10)::before { content: "Dán cạnh rộng 2"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(11)::before { content: "Mét dán thẳng"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(12)::before { content: "Mét dán vát"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(13)::before { content: "Mét vát mòi"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(14)::before { content: "Bản rộng 40-59"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(15)::before { content: "Bản rộng 17-39"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(16)::before { content: "Bản rộng 25-35"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(17)::before { content: "Vát tay nắm âm"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(18)::before { content: "Tấm CNC"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(19)::before { content: "Chiều vân"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(20)::before { content: "Ghi chú"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(21)::before { content: "Hành động"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(4)::before { content: "Độ dày"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(5)::before { content: "Cao"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(6)::before { content: "Rộng"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(7)::before { content: "Số lượng"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(8)::before { content: "Dán cạnh cao 1"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(9)::before { content: "Dán cạnh cao 2"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(10)::before { content: "Dán cạnh rộng 1"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(11)::before { content: "Dán cạnh rộng 2"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(12)::before { content: "Mét dán thẳng"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(13)::before { content: "Mét dán vát"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(14)::before { content: "Mét vát mòi"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(15)::before { content: "Bản rộng 40-59"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(16)::before { content: "Bản rộng 17-39"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(17)::before { content: "Bản rộng 25-35"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(18)::before { content: "Vát tay nắm âm"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(19)::before { content: "Tấm CNC"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(20)::before { content: "Chiều vân"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(21)::before { content: "Ghi chú"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(22)::before { content: "Hành động"; }
     .payment-entry-card:not(.is-table-view) tr.payment-detail-row td:nth-child(1)::before { content: "STT"; }
     .payment-entry-card:not(.is-table-view) tr.payment-detail-row td:nth-child(2)::before { content: "Tên chi phí/dịch vụ"; }
     .payment-entry-card:not(.is-table-view) tr.payment-detail-row td:nth-child(3)::before { content: "Đơn vị"; }
@@ -459,6 +460,7 @@
                                 <th scope="col" rowspan="2" style="width: 45px; min-width: 45px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Stt</th>
                                 <th scope="col" rowspan="2" style="width: 160px; min-width: 160px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Mã hàng</th>
                                 <th scope="col" rowspan="2" style="min-width: 180px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên hàng hóa, dịch vụ <span class="text-danger-500">*</span></th>
+                                <th scope="col" rowspan="2" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Độ dày</th>
                                 <th scope="col" colspan="2" style="white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Kích thước (mm)</th>
                                 <th scope="col" rowspan="2" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số lượng</th>
                                 <th scope="col" colspan="4" style="white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Dán cạnh</th>
@@ -507,6 +509,9 @@
                                  <td style="min-width: 180px;" class="border border-neutral-200">
                                      <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][product_name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Tên sản phẩm" value="{{ $item->product_name ?? $item->name ?? '' }}">
                                  </td>
+                                <td style="width: 100px; min-width: 100px;" class="border border-neutral-200">
+                                    <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][thickness]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs text-center px-1" placeholder="Độ dày" value="{{ $item->thickness }}">
+                                </td>
                                 <td style="width: 200px; min-width: 200px; " class="border border-neutral-200">
                                     <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][height]" class="form-control form-control-sm rounded-lg border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500 bg-yellow-50/30 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="{{ $size['height'] ?? '' }}">
                                 </td>
@@ -722,6 +727,7 @@ function addMinLateOrderSupply() {
                         <th scope="col" rowspan="2" style="width: 45px; min-width: 45px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Stt</th>
                         <th scope="col" rowspan="2" style="width: 160px; min-width: 160px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Mã hàng</th>
                         <th scope="col" rowspan="2" style="min-width: 180px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên hàng hóa, dịch vụ <span class="text-danger-500">*</span></th>
+                        <th scope="col" rowspan="2" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Độ dày</th>
                         <th scope="col" colspan="2" style="white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Kích thước (mm)</th>
                         <th scope="col" rowspan="2" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số lượng</th>
                         <th scope="col" colspan="4" style="white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Dán cạnh</th>
@@ -781,6 +787,7 @@ function addMinLateOrderItem(button) {
     if (lastRow) {
         lastData = {
             product_name: lastRow.querySelector('input[name*="[product_name]"]') ? lastRow.querySelector('input[name*="[product_name]"]').value : '',
+            thickness: lastRow.querySelector('input[name*="[thickness]"]') ? lastRow.querySelector('input[name*="[thickness]"]').value : '',
             height: lastRow.querySelector('input[name*="[height]"]') ? lastRow.querySelector('input[name*="[height]"]').value : '',
             width: lastRow.querySelector('input[name*="[width]"]') ? lastRow.querySelector('input[name*="[width]"]').value : '',
             quantity: lastRow.querySelector('input[name*="[quantity]"]') ? lastRow.querySelector('input[name*="[quantity]"]').value : '1',
@@ -812,6 +819,9 @@ function addMinLateOrderItem(button) {
         </td>
         <td style="min-width: 180px;" class="border border-neutral-200">
             <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][product_name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Tên sản phẩm" value="${lastData ? lastData.product_name : ''}">
+        </td>
+        <td style="width: 100px; min-width: 100px;" class="border border-neutral-200">
+            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][thickness]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs text-center px-1" placeholder="Độ dày" value="${lastData ? lastData.thickness : ''}">
         </td>
         <td style="width: 200px; min-width: 200px; " class="border border-neutral-200">
             <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][height]" class="form-control form-control-sm rounded-lg border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500 bg-yellow-50/30 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="${lastData ? lastData.height : ''}">
@@ -1157,6 +1167,7 @@ const minLatePreviewLabels = [
     'STT',
     'Mã hàng',
     'Tên hàng hóa, dịch vụ',
+    'Độ dày',
     'Cao',
     'Rộng',
     'Số lượng',
@@ -1220,24 +1231,25 @@ function getMinLateFormLabel(index, isPaymentRow) {
         case 0: return 'STT';
         case 1: return 'Mã hàng';
         case 2: return 'Tên hàng hóa, dịch vụ';
-        case 3: return 'Cao (vân)';
-        case 4: return 'Rộng';
-        case 5: return 'Số lượng';
-        case 6: return 'Cao';
+        case 3: return 'Độ dày';
+        case 4: return 'Cao (vân)';
+        case 5: return 'Rộng';
+        case 6: return 'Số lượng';
         case 7: return 'Cao';
-        case 8: return 'Rộng';
+        case 8: return 'Cao';
         case 9: return 'Rộng';
-        case 10: return 'Mét dán thẳng';
-        case 11: return 'Mét dán vát';
-        case 12: return 'Mét vát mòi';
-        case 13: return 'Bản rộng 40-59mm';
-        case 14: return 'Bản rộng 17-39mm';
-        case 15: return 'Bản rộng 25-35mm';
-        case 16: return 'Vát tay nắm âm';
-        case 17: return 'Tấm CNC';
-        case 18: return 'Chiều vân';
-        case 19: return 'Ghi chú';
-        case 20: return 'Hành động';
+        case 10: return 'Rộng';
+        case 11: return 'Mét dán thẳng';
+        case 12: return 'Mét dán vát';
+        case 13: return 'Mét vát mòi';
+        case 14: return 'Bản rộng 40-59mm';
+        case 15: return 'Bản rộng 17-39mm';
+        case 16: return 'Bản rộng 25-35mm';
+        case 17: return 'Vát tay nắm âm';
+        case 18: return 'Tấm CNC';
+        case 19: return 'Chiều vân';
+        case 20: return 'Ghi chú';
+        case 21: return 'Hành động';
         default: return 'Thông tin';
     }
 }

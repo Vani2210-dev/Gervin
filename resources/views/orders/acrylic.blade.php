@@ -91,6 +91,72 @@
         box-shadow: 0 0 0 1px #3b82f6 !important;
     }
 
+    /* Style TomSelect for Mã vật tư dropdown in the header row */
+    .order-supply-row .ts-wrapper.tom-select-supply-code {
+        width: 190px !important;
+        display: block;
+        flex-shrink: 0;
+    }
+    /* Hide dropdown arrow - make it look like a plain text input */
+    .order-supply-row .ts-wrapper.tom-select-supply-code.single .ts-control:after {
+        display: none !important;
+    }
+    .order-supply-row .ts-wrapper.tom-select-supply-code .ts-control {
+        padding: 8px 12px !important;
+        font-size: 13px !important;
+        border-radius: 8px !important;
+        min-height: 38px !important;
+        height: 38px !important;
+        line-height: 20px !important;
+        background-color: #ffffff !important;
+        border: 1px solid #d1d5db !important;
+        box-shadow: none !important;
+        display: flex !important;
+        align-items: center !important;
+        flex-wrap: nowrap !important;
+        overflow: hidden !important;
+    }
+    .order-supply-row .ts-wrapper.tom-select-supply-code .ts-control input {
+        font-size: 13px !important;
+        height: auto !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        min-width: 0 !important;
+        flex: 1 !important;
+    }
+    .order-supply-row .ts-wrapper.tom-select-supply-code .ts-control .item {
+        font-size: 13px !important;
+        line-height: 20px !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+    }
+    .order-supply-row .ts-wrapper.tom-select-supply-code .ts-dropdown .option {
+        padding: 8px 12px !important;
+        font-size: 13px !important;
+    }
+    /* In card view: fill the grid column 100% and match input height */
+    .order-entry-card:not(.is-table-view) .order-supply-row .ts-wrapper.tom-select-supply-code {
+        width: 100% !important;
+        display: block !important;
+        flex-shrink: unset;
+    }
+    .order-entry-card:not(.is-table-view) .order-supply-row .ts-wrapper.tom-select-supply-code .ts-control {
+        height: 42px !important;
+        min-height: 42px !important;
+        border-radius: 0.5rem !important;
+        padding: 0.5rem 0.75rem !important;
+        font-size: 0.875rem !important;
+    }
+    .order-entry-card:not(.is-table-view) .order-supply-row .ts-wrapper.tom-select-supply-code .ts-control input {
+        font-size: 0.875rem !important;
+    }
+    .order-entry-card:not(.is-table-view) .order-supply-row .ts-wrapper.tom-select-supply-code .ts-control .item {
+        font-size: 0.875rem !important;
+    }
+
     .order-entry-card:not(.is-table-view) .overflow-x-auto {
         overflow: visible !important;
     }
@@ -299,19 +365,20 @@
     .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(1)::before { content: "STT"; }
     .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(2)::before { content: "Mã SP"; }
     .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(3)::before { content: "Tên sản phẩm"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(4)::before { content: "Cao"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(5)::before { content: "Rộng"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(6)::before { content: "Số lượng"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(7)::before { content: "Cạnh vát"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(8)::before { content: "Chiều vân"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(9)::before { content: "Cánh (m2)"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(10)::before { content: "Phào (m)"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(11)::before { content: "Vát"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(12)::before { content: "Vân dọc CNC"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(13)::before { content: "Đơn giá"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(14)::before { content: "Thành tiền"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(15)::before { content: "Ghi chú"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(16)::before { content: "Hành động"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(4)::before { content: "Độ dày"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(5)::before { content: "Cao"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(6)::before { content: "Rộng"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(7)::before { content: "Số lượng"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(8)::before { content: "Cạnh vát"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(9)::before { content: "Chiều vân"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(10)::before { content: "Cánh (m2)"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(11)::before { content: "Phào (m)"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(12)::before { content: "Vát"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(13)::before { content: "Vân dọc CNC"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(14)::before { content: "Đơn giá"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(15)::before { content: "Thành tiền"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(16)::before { content: "Ghi chú"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(17)::before { content: "Hành động"; }
     .order-entry-card .order-preview-table-wrap {
         display: none;
     }
@@ -374,7 +441,15 @@
                         <div class="p-1.5 bg-primary-50 rounded-lg text-primary-500 flex items-center justify-center">
                             <iconify-icon icon="lucide:clipboard-list" class="text-base"></iconify-icon>
                         </div>
-                        <input type="text" name="supplies[{{ $supplyIndex }}][order_supply_code]" class="order-supply-code-input form-control form-control-sm rounded-lg w-40 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Mã vật tư" value="{{ $supply->order_supply_code ?? '' }}">
+                        <select name="supplies[{{ $supplyIndex }}][order_supply_code]" class="order-supply-code-select tom-select-supply-code w-48">
+                            <option value="">-- Mã vật tư --</option>
+                            @foreach($woodBoardPrices as $price)
+                                <option value="{{ $price->code }}" {{ (isset($supply->order_supply_code) && $supply->order_supply_code == $price->code) ? 'selected' : '' }}>{{ $price->code }}</option>
+                            @endforeach
+                            @if(isset($supply->order_supply_code) && !$woodBoardPrices->contains('code', $supply->order_supply_code))
+                                <option value="{{ $supply->order_supply_code }}" selected>{{ $supply->order_supply_code }}</option>
+                            @endif
+                        </select>
                         <input type="text" name="supplies[{{ $supplyIndex }}][supply_name]" class="form-control form-control-sm rounded-lg w-64 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Tên vật tư (ví dụ: Acrylic, Melamine...)" value="{{ $supply->supply_name }}">
                         <input type="number" name="supplies[{{ $supplyIndex }}][quantity]" class="form-control form-control-sm rounded-lg w-24 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="SL" min="0" step="0.01" value="{{ $supply->quantity ?? 0 }}">
                     </div>
@@ -391,6 +466,7 @@
                                 <th scope="col" rowspan="2" style="width: 30px; min-width: 30px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Stt</th>
                                 <th scope="col" rowspan="2" style="width: 110px; min-width: 110px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Mã SP</th>
                                 <th scope="col" rowspan="2" style="width: 150px; min-width: 150px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên sản phẩm <span class="text-danger-500">*</span></th>
+                                <th scope="col" rowspan="2" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Độ dày</th>
                                 <th scope="col" colspan="2" style="white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Kích thước (mm)</th>
                                 <th scope="col" rowspan="2" style="width: 50px; min-width: 50px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số lượng <span class="text-danger-500">*</span></th>
                                 <th scope="col" rowspan="2" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Cạnh Vát</th>
@@ -420,6 +496,9 @@
                                 </td>
                                 <td style="min-width: 220px;" class="border border-neutral-200">
                                     <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][product_name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Tên sản phẩm" value="{{ $item->product_name }}">
+                                </td>
+                                <td style="width: 100px; min-width: 100px;" class="border border-neutral-200">
+                                    <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][thickness]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs text-center px-1" placeholder="Độ dày" value="{{ $item->thickness }}">
                                 </td>
                                 <td style="width: 200px; min-width: 200px; " class="border border-neutral-200">
                                     <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][height]" class="form-control form-control-sm rounded-lg border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500 bg-yellow-50/30 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="{{ $item->height }}">
@@ -492,6 +571,49 @@
 </div>
 
 <script>
+const woodBoardPricesData = @json($woodBoardPrices);
+
+function handleSupplyCodeChange(selectEl, value) {
+    if (!value) return;
+    
+    const price = woodBoardPricesData.find(p => p.code === value);
+    if (!price) return;
+    
+    const supplyRow = selectEl.closest('.order-supply-row');
+    if (!supplyRow) return;
+    
+    const supplyNameInput = supplyRow.querySelector('input[name*="[supply_name]"]');
+    if (supplyNameInput) {
+        supplyNameInput.value = price.name || '';
+        applyFlashEffect(supplyNameInput);
+    }
+    
+    const itemRows = supplyRow.querySelectorAll('.order-item-row');
+    itemRows.forEach(itemRow => {
+        const thicknessInput = itemRow.querySelector('input[name*="[thickness]"]');
+        const unitPriceInput = itemRow.querySelector('input[name*="[unit_price]"]');
+        
+        if (thicknessInput) {
+            thicknessInput.value = price.thickness || '';
+            applyFlashEffect(thicknessInput);
+        }
+        if (unitPriceInput) {
+            unitPriceInput.value = price.price_m2 ? parseInt(price.price_m2) : 0;
+            applyFlashEffect(unitPriceInput);
+            calculateTotalPrice(itemRow, 'unit_price');
+        }
+    });
+}
+
+function applyFlashEffect(el) {
+    if (!el) return;
+    el.style.transition = 'background-color 0.4s ease';
+    el.style.backgroundColor = '#ecfdf5';
+    setTimeout(() => {
+        el.style.backgroundColor = '';
+    }, 850);
+}
+
 let supplyIndex = {{ $supplyIndex ?? 0 }};
 
 function addOrderSupply() {
@@ -504,7 +626,10 @@ function addOrderSupply() {
                 <div class="p-1.5 bg-primary-50 rounded-lg text-primary-500 flex items-center justify-center">
                     <iconify-icon icon="lucide:clipboard-list" class="text-base"></iconify-icon>
                 </div>
-                <input type="text" name="supplies[${supplyIndex}][order_supply_code]" class="order-supply-code-input form-control form-control-sm rounded-lg w-40 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Mã vật tư">
+                <select name="supplies[${supplyIndex}][order_supply_code]" class="order-supply-code-select tom-select-supply-code w-48">
+                    <option value="">-- Mã vật tư --</option>
+                    ${woodBoardPricesData.map(p => `<option value="${p.code}">${p.code}</option>`).join('')}
+                </select>
                 <input type="text" name="supplies[${supplyIndex}][supply_name]" class="form-control form-control-sm rounded-lg w-64 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Tên vật tư (ví dụ: Acrylic, Melamine...)">
                 <input type="number" name="supplies[${supplyIndex}][quantity]" class="form-control form-control-sm rounded-lg w-24 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="SL" min="0" step="0.01" value="0">
             </div>
@@ -521,6 +646,7 @@ function addOrderSupply() {
                         <th scope="col" rowspan="2" style="width: 45px; min-width: 45px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Stt</th>
                         <th scope="col" rowspan="2" style="width: 160px; min-width: 160px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Mã SP</th>
                         <th scope="col" rowspan="2" style="min-width: 220px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên sản phẩm <span class="text-danger-500">*</span></th>
+                        <th scope="col" rowspan="2" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Độ dày</th>
                         <th scope="col" colspan="2" style="white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Kích thước (mm)</th>
                         <th scope="col" rowspan="2" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số lượng <span class="text-danger-500">*</span></th>
                         <th scope="col" rowspan="2" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Cạnh Vát</th>
@@ -557,6 +683,21 @@ function addOrderSupply() {
     }
 
     ensureAcrylicFormLayout(newSupply);
+
+    const selectEl = newSupply.querySelector('.tom-select-supply-code');
+    if (selectEl && typeof TomSelect !== 'undefined') {
+        const ts = new TomSelect(selectEl, {
+            create: true,
+            placeholder: '-- Mã vật tư --',
+            allowEmptyOption: true,
+            maxOptions: null
+        });
+        ts.on('change', function(value) {
+            handleSupplyCodeChange(selectEl, value);
+            updateAcrylicRowIndexes();
+        });
+    }
+
     supplyIndex++;
 }
 
@@ -572,6 +713,7 @@ function addOrderItem(button) {
     if (lastRow) {
         lastData = {
             product_name: lastRow.querySelector('input[name*="[product_name]"]') ? lastRow.querySelector('input[name*="[product_name]"]').value : '',
+            thickness: lastRow.querySelector('input[name*="[thickness]"]') ? lastRow.querySelector('input[name*="[thickness]"]').value : '',
             height: lastRow.querySelector('input[name*="[height]"]') ? lastRow.querySelector('input[name*="[height]"]').value : '',
             width: lastRow.querySelector('input[name*="[width]"]') ? lastRow.querySelector('input[name*="[width]"]').value : '',
             quantity: lastRow.querySelector('input[name*="[quantity]"]') ? lastRow.querySelector('input[name*="[quantity]"]').value : '1',
@@ -598,6 +740,9 @@ function addOrderItem(button) {
         </td>
         <td style="min-width: 220px;" class="border border-neutral-200">
             <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][product_name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Tên sản phẩm" value="${lastData ? lastData.product_name : ''}">
+        </td>
+        <td style="width: 100px; min-width: 100px;" class="border border-neutral-200">
+            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][thickness]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs text-center px-1" placeholder="Độ dày" value="${lastData ? lastData.thickness : ''}">
         </td>
         <td style="width: 200px; min-width: 200px; " class="border border-neutral-200">
             <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][height]" class="form-control form-control-sm rounded-lg border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500 bg-yellow-50/30 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="${lastData ? lastData.height : ''}">
@@ -673,7 +818,7 @@ function updateAcrylicRowIndexes() {
     let globalItemIndex = 1;
 
     document.querySelectorAll('#order-supplies-container .order-supply-row').forEach((supplyRow, supplyIndex) => {
-        const supplyCode = supplyRow.querySelector('.order-supply-code-input')?.value || '';
+        const supplyCode = (supplyRow.querySelector('.order-supply-code-select')?.value || supplyRow.querySelector('.order-supply-code-input')?.value || '');
         const tbody = supplyRow.querySelector('.supply-items-container');
         if (!tbody) return;
 
@@ -807,6 +952,7 @@ const acrylicPreviewLabels = [
     'STT',
     'Mã SP',
     'Tên sản phẩm',
+    'Độ dày',
     'Cao',
     'Rộng',
     'Số lượng',
@@ -844,19 +990,20 @@ function getAcrylicFormLabel(index) {
         case 0: return 'STT';
         case 1: return 'Mã SP';
         case 2: return 'Tên sản phẩm';
-        case 3: return 'Cao (chiều vân)';
-        case 4: return 'Rộng';
-        case 5: return 'Số lượng';
-        case 6: return 'Cạnh vát';
-        case 7: return 'Chiều vân';
-        case 8: return 'Cánh (m2)';
-        case 9: return 'Phào (m)';
-        case 10: return 'Vát';
-        case 11: return 'Vân dọc CNC';
-        case 12: return 'Đơn giá';
-        case 13: return 'Thành tiền';
-        case 14: return 'Ghi chú';
-        case 15: return 'Hành động';
+        case 3: return 'Độ dày';
+        case 4: return 'Cao (chiều vân)';
+        case 5: return 'Rộng';
+        case 6: return 'Số lượng';
+        case 7: return 'Cạnh vát';
+        case 8: return 'Chiều vân';
+        case 9: return 'Cánh (m2)';
+        case 10: return 'Phào (m)';
+        case 11: return 'Vát';
+        case 12: return 'Vân dọc CNC';
+        case 13: return 'Đơn giá';
+        case 14: return 'Thành tiền';
+        case 15: return 'Ghi chú';
+        case 16: return 'Hành động';
         default: return 'Thông tin';
     }
 }
@@ -1168,6 +1315,21 @@ document.addEventListener('DOMContentLoaded', function() {
         calculateTotalPrice(row);
         updateEdgeBevel(row);
     });
+
+    if (typeof TomSelect !== 'undefined') {
+        document.querySelectorAll('.tom-select-supply-code').forEach(function(element) {
+            const ts = new TomSelect(element, {
+                create: true,
+                placeholder: '-- Mã vật tư --',
+                allowEmptyOption: true,
+                maxOptions: null
+            });
+            ts.on('change', function(value) {
+                handleSupplyCodeChange(element, value);
+                updateAcrylicRowIndexes();
+            });
+        });
+    }
 
     // Recalculate codes on load
     updateAcrylicRowIndexes();

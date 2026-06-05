@@ -118,6 +118,7 @@
                                     <th scope="col" class="w-10 text-center">STT</th>
                                     <th scope="col" class="w-32">Mã SP</th>
                                     <th scope="col" class="w-64">Tên SP</th>
+                                    <th scope="col" class="w-20">Độ dày</th>
                                     <th scope="col" class="w-20">SL</th>
                                     <th scope="col" class="w-20">Cao</th>
                                     <th scope="col" class="w-20">Rộng</th>
@@ -149,6 +150,7 @@
                                     <td class="text-center">{{ $itemIndex + 1 }}</td>
                                     <td><span class="text-neutral-500 text-xs">{{ $item->product_code ?? '—' }}</span></td>
                                     <td><span class="font-medium text-neutral-800">{{ $item->name }}</span></td>
+                                    <td>{{ $item->thickness ?? '—' }}</td>
                                     <td>{{ $item->quantity }}</td>
                                     <td>{{ $sizes['height'] ?? '—' }}</td>
                                     <td>{{ $sizes['width'] ?? '—' }}</td>
@@ -177,7 +179,7 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="16" class="text-center text-neutral-400 py-4">Chưa có sản phẩm nào</td>
+                                    <td colspan="17" class="text-center text-neutral-400 py-4">Chưa có sản phẩm nào</td>
                                 </tr>
                                 @endforelse
                             </tbody>
@@ -190,6 +192,7 @@
                                     <th scope="col" class="w-10 text-center">STT</th>
                                     <th scope="col" class="w-32">Mã SP</th>
                                     <th scope="col" class="w-64">Tên SP</th>
+                                    <th scope="col" class="w-20">Độ dày</th>
                                     <th scope="col" class="w-28">Chiều mở cánh</th>
                                     <th scope="col" class="w-28">Màu nhôm</th>
                                     <th scope="col" class="w-28">Màu kính</th>
@@ -209,6 +212,7 @@
                                     <td class="text-center">{{ $itemIndex + 1 }}</td>
                                     <td><span class="text-neutral-500 text-xs">{{ $item->product_code ?? '—' }}</span></td>
                                     <td><span class="font-medium text-neutral-800">{{ $item->product_name }}</span></td>
+                                    <td>{{ $item->thickness ?? '—' }}</td>
                                     <td>{{ $item->wing_opening_direction ?? '—' }}</td>
                                     <td>{{ $item->aluminum_color ?? '—' }}</td>
                                     <td>{{ $item->glass_color ?? '—' }}</td>
@@ -223,7 +227,7 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="14" class="text-center text-neutral-400 py-4">Chưa có sản phẩm nào</td>
+                                    <td colspan="15" class="text-center text-neutral-400 py-4">Chưa có sản phẩm nào</td>
                                 </tr>
                                 @endforelse
                             </tbody>
@@ -236,6 +240,7 @@
                                     <th scope="col" class="w-10 text-center">STT</th>
                                     <th scope="col" class="w-32">Mã SP</th>
                                     <th scope="col" class="w-64">Tên SP</th>
+                                    <th scope="col" class="w-20">Độ dày</th>
                                     <th scope="col" class="w-20">SL</th>
                                     <th scope="col" class="w-20">Cao</th>
                                     <th scope="col" class="w-20">Rộng</th>
@@ -256,6 +261,7 @@
                                     <td class="text-center">{{ $itemIndex + 1 }}</td>
                                     <td><span class="text-neutral-500 text-xs">{{ $item->product_code ?? '—' }}</span></td>
                                     <td><span class="font-medium text-neutral-800">{{ $item->product_name }}</span></td>
+                                    <td>{{ $item->thickness ?? '—' }}</td>
                                     <td>{{ $item->quantity }}</td>
                                     <td>{{ $item->height ?? '—' }}</td>
                                     <td>{{ $item->width ?? '—' }}</td>
@@ -271,7 +277,7 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="15" class="text-center text-neutral-400 py-4">Chưa có sản phẩm nào</td>
+                                    <td colspan="16" class="text-center text-neutral-400 py-4">Chưa có sản phẩm nào</td>
                                 </tr>
                                 @endforelse
                             </tbody>
@@ -388,6 +394,11 @@
             <button type="button" onclick="exportToExcel()" class="w-full justify-center flex items-center gap-2 py-3 rounded-xl font-semibold border border-neutral-200 text-neutral-700 hover:bg-neutral-50 transition-colors shadow-sm text-sm bg-white cursor-pointer">
                 <iconify-icon icon="lucide:file-spreadsheet" class="text-base"></iconify-icon> Xuất Excel (.xlsx)
             </button>
+            @if($acrylicOrder->type === 'acrylic')
+            <button type="button" onclick="exportNestingFiles()" class="w-full justify-center flex items-center gap-2 py-3 rounded-xl font-semibold border border-emerald-200 text-emerald-700 hover:bg-emerald-50 transition-colors shadow-sm text-sm bg-white cursor-pointer">
+                <iconify-icon icon="lucide:table-2" class="text-base"></iconify-icon> Xuất Nesting (.xlsx)
+            </button>
+            @endif
         </div>
     </div>
 </div>
@@ -420,6 +431,7 @@
                     return [
                         'product_code' => $item->product_code,
                         'name' => $item->product_name ?? $item->name,
+                        'thickness' => $item->thickness,
                         'quantity' => $item->quantity,
                         'height' => $sizes['height'] ?? null,
                         'width' => $sizes['width'] ?? null,
@@ -441,6 +453,7 @@
                     return [
                         'product_code' => $item->product_code,
                         'product_name' => $item->product_name,
+                        'thickness' => $item->thickness,
                         'wing_opening_direction' => $item->wing_opening_direction,
                         'aluminum_color' => $item->aluminum_color,
                         'glass_color' => $item->glass_color,
@@ -458,7 +471,9 @@
                 $items = $supply->items->map(function($item) {
                     return [
                         'product_code' => $item->product_code,
+                        'product_codes' => $item->codes->pluck('product_id')->toArray(),
                         'product_name' => $item->product_name,
+                        'thickness' => $item->thickness,
                         'quantity' => $item->quantity,
                         'height' => $item->height,
                         'width' => $item->width,
@@ -500,4 +515,27 @@
     window.orderExportData = @json($exportData);
 </script>
 <script src="{{ asset('assets/js/order-export.js') }}"></script>
+@if($acrylicOrder->type === 'acrylic')
+<script src="{{ asset('assets/js/nesting-export.js') }}"></script>
+@endif
+<script>
+    // Auto-export when accessed with ?export=1 (from orders index list button)
+    (function() {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('export') === '1') {
+            window.addEventListener('load', function() {
+                // Small delay to ensure exceljs + FileSaver are ready
+                setTimeout(function() {
+                    if (typeof exportToExcel === 'function') {
+                        exportToExcel();
+                    }
+                    // Navigate back to orders list after triggering download
+                    setTimeout(function() {
+                        window.history.back();
+                    }, 800);
+                }, 400);
+            });
+        }
+    })();
+</script>
 @endsection

@@ -67,7 +67,7 @@ class OrderController extends Controller
 
     public function show(Order $order)
     {
-        $order->load(['supplies.items', 'supplies.minLateItems', 'supplies.glassItems', 'paymentDetails']);
+        $order->load(['supplies.items.codes', 'supplies.minLateItems', 'supplies.glassItems', 'paymentDetails']);
         $acrylicOrder = $order;
         return view('orders.show', compact('acrylicOrder'));
     }
@@ -84,8 +84,9 @@ class OrderController extends Controller
         $orderType = $type;
         $acrylicOrder = $this->createDraftOrder($type);
         $isDraftCreate = true;
+        $woodBoardPrices = \App\Models\WoodBoardPrice::orderBy('code', 'asc')->get();
 
-        return view('orders.create', compact('orderType', 'acrylicOrder', 'isDraftCreate'));
+        return view('orders.create', compact('orderType', 'acrylicOrder', 'isDraftCreate', 'woodBoardPrices'));
     }
 
     public function edit(Order $order)
@@ -95,7 +96,8 @@ class OrderController extends Controller
         }
         $order->load(['supplies.items', 'supplies.minLateItems', 'supplies.glassItems', 'paymentDetails']);
         $acrylicOrder = $order;
-        return view('orders.edit', compact('acrylicOrder'));
+        $woodBoardPrices = \App\Models\WoodBoardPrice::orderBy('code', 'asc')->get();
+        return view('orders.edit', compact('acrylicOrder', 'woodBoardPrices'));
     }
 
     public function store(Request $request)

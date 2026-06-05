@@ -36,6 +36,7 @@ class AcrylicOrderService
             'supplies.*.items.*.id'                   => 'nullable|integer',
             'supplies.*.items.*.product_code'        => 'nullable|string|max:50',
             'supplies.*.items.*.product_name'        => 'nullable|string|max:255',
+            'supplies.*.items.*.thickness'           => 'nullable|string|max:100',
             'supplies.*.items.*.height'              => 'nullable|numeric|min:0',
             'supplies.*.items.*.width'               => 'nullable|numeric|min:0',
             'supplies.*.items.*.grain_direction'     => 'nullable|in:0,2',
@@ -109,9 +110,15 @@ class AcrylicOrderService
             'attachments'   => !empty($allAttachments) ? json_encode($allAttachments) : null,
         ]);
 
-        // Clean up old supplies and items
+        // Clean up old supplies and items (explicitly delete codes first to avoid duplicate key on unique constraint)
         $existingSupplyIds = $order->supplies()->pluck('id')->toArray();
-        AcrylicOrderItem::whereIn('order_supply_id', $existingSupplyIds)->delete();
+        if (!empty($existingSupplyIds)) {
+            $existingItemIds = AcrylicOrderItem::whereIn('order_supply_id', $existingSupplyIds)->pluck('id')->toArray();
+            if (!empty($existingItemIds)) {
+                \App\Models\AcrylicOrderItemCode::whereIn('acrylic_order_item_id', $existingItemIds)->delete();
+            }
+            AcrylicOrderItem::whereIn('order_supply_id', $existingSupplyIds)->delete();
+        }
         $order->supplies()->delete();
 
         // Recreate supplies and items
@@ -176,6 +183,7 @@ class AcrylicOrderService
                 $orderItem = AcrylicOrderItem::create([
                     'order_supply_id'    => $orderSupply->id,
                     'product_name'        => $item['product_name'],
+                    'thickness'           => $item['thickness'] ?? null,
                     'height'              => $item['height'] ?? null,
                     'width'               => $item['width'] ?? null,
                     'grain_direction'     => $item['grain_direction'] ?? 0,
@@ -190,21 +198,16 @@ class AcrylicOrderService
                     'vertical_grain_cnc'  => $item['vertical_grain_cnc'] ?? null,
                 ]);
 
-                // Generate N codes based on quantity using global sequential piece index
-                $productCode = $item['product_code'] ?? '';
-                $parts = explode('.', $productCode);
-                if (count($parts) >= 3) {
-                    $prefix = $parts[0] . '.' . $parts[1];
-                    $startIndex = intval($parts[2]);
-                } else {
-                    $prefix = $order->order_code . '.' . ($orderSupply->order_supply_code ?? '');
-                    $startIndex = $globalPieceIndex;
-                }
+                // Always regenerate codes from order_code + supply_code + global sequential index
+                // Never parse product_code from the form — supply codes may contain dots (e.g. 'GV05.TP')
+                // causing explode('.') to split incorrectly and produce wrong codes.
+                $supplyCodePart = $orderSupply->order_supply_code ?? '';
+                $prefix = $order->order_code . ($supplyCodePart !== '' ? '.' . $supplyCodePart : '');
 
                 $qty = intval($item['quantity']) ?: 1;
                 for ($i = 0; $i < $qty; $i++) {
                     $orderItem->codes()->create([
-                        'product_id' => $prefix . '.' . ($startIndex + $i),
+                        'product_id' => $prefix . '.' . ($globalPieceIndex + $i),
                         'status'     => [],
                     ]);
                 }

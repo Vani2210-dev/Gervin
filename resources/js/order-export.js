@@ -444,7 +444,7 @@ async function exportToExcel() {
                     row.getCell(6).value  = supply.supply_name || '';         // Vật liệu
                     row.getCell(7).value  = parseFloat(item.height) || 0;    // Dài
                     row.getCell(8).value  = parseFloat(item.width) || 0;     // Rộng
-                    row.getCell(9).value  = 19;                               // Dày (cố định 19mm)
+                    row.getCell(9).value  = (item.thickness && !isNaN(parseFloat(item.thickness))) ? parseFloat(item.thickness) : 19; // Dày
                     row.getCell(10).value = item.grain_direction !== null
                         ? parseInt(item.grain_direction) : 2;                // Chiều vân
                     row.getCell(11).value = parseInt(item.quantity) || 1;    // Số lượng

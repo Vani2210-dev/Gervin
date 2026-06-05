@@ -37,6 +37,7 @@ class MinLateOrderService
             'supplies.*.items.*.id'                   => 'nullable|integer',
             'supplies.*.items.*.product_code'        => 'nullable|string|max:50',
             'supplies.*.items.*.product_name'        => 'nullable|string|max:255',
+            'supplies.*.items.*.thickness'           => 'nullable|string|max:100',
             'supplies.*.items.*.height'              => 'nullable|numeric|min:0',
             'supplies.*.items.*.width'               => 'nullable|numeric|min:0',
             'supplies.*.items.*.quantity'            => 'required|integer|min:1',
@@ -120,9 +121,15 @@ class MinLateOrderService
             'attachments'   => !empty($allAttachments) ? json_encode($allAttachments) : null,
         ]);
 
-        // Clean up old supplies and items
+        // Clean up old supplies and items (explicitly delete codes first to avoid duplicate key on unique constraint)
         $existingSupplyIds = $order->supplies()->pluck('id')->toArray();
-        MinLateOrderItem::whereIn('order_supply_id', $existingSupplyIds)->delete();
+        if (!empty($existingSupplyIds)) {
+            $existingItemIds = MinLateOrderItem::whereIn('order_supply_id', $existingSupplyIds)->pluck('id')->toArray();
+            if (!empty($existingItemIds)) {
+                \App\Models\MinLateOrderItemCode::whereIn('min_late_order_item_id', $existingItemIds)->delete();
+            }
+            MinLateOrderItem::whereIn('order_supply_id', $existingSupplyIds)->delete();
+        }
         $order->supplies()->delete();
 
         // Recreate supplies and items
@@ -205,6 +212,7 @@ class MinLateOrderService
                 $orderItem = MinLateOrderItem::create([
                     'order_supply_id'       => $orderSupply->id,
                     'name'                  => $item['product_name'],
+                    'thickness'             => $item['thickness'] ?? null,
                     'size'                  => [
                         'height' => $item['height'] ?? null,
                         'width'  => $item['width'] ?? null,
@@ -222,21 +230,16 @@ class MinLateOrderService
                     'direction'             => $item['direction'] ?? null,
                 ]);
 
-                // Generate N codes based on quantity using global sequential piece index
-                $productCode = $item['product_code'] ?? '';
-                $parts = explode('.', $productCode);
-                if (count($parts) >= 3) {
-                    $prefix = $parts[0] . '.' . $parts[1];
-                    $startIndex = intval($parts[2]);
-                } else {
-                    $prefix = $order->order_code . '.' . ($orderSupply->order_supply_code ?? '');
-                    $startIndex = $globalPieceIndex;
-                }
+                // Always regenerate codes from order_code + supply_code + global sequential index
+                // Never parse product_code from the form — supply codes may contain dots
+                // causing explode('.') to split incorrectly and produce wrong codes.
+                $supplyCodePart = $orderSupply->order_supply_code ?? '';
+                $prefix = $order->order_code . ($supplyCodePart !== '' ? '.' . $supplyCodePart : '');
 
                 $qty = intval($item['quantity']) ?: 1;
                 for ($i = 0; $i < $qty; $i++) {
                     $orderItem->codes()->create([
-                        'product_id' => $prefix . '.' . ($startIndex + $i),
+                        'product_id' => $prefix . '.' . ($globalPieceIndex + $i),
                         'status'     => [],
                     ]);
                 }

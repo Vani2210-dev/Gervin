@@ -13,9 +13,9 @@
         </div>
         <div class="lg:w-1/2 py-8 px-6 flex flex-col justify-center">
             <div class="lg:max-w-[464px] mx-auto w-full">
-                <div>
-                    <a href="{{ route('index') }}" class="mb-2.5 max-w-[290px]">
-                        <img src="{{ asset('assets/images/logo.png') }}" alt="">
+                <div class="text-center">
+                    <a href="{{ route('index') }}" class="mb-4 inline-block">
+                        <img src="{{ asset('logo.png') }}" alt="Logo" class="w-48 h-48 mx-auto object-contain">
                     </a>
                     <h4 class="mb-3">Đăng nhập vào tài khoản</h4>
                     <p class="mb-8 text-secondary-light text-lg">Chào mừng trở lại! Vui lòng nhập thông tin của bạn</p>

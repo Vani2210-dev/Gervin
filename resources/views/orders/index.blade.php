@@ -142,7 +142,7 @@
                                 <th scope="col">Hạn đơn</th>
                                 <th scope="col">Tổng tiền</th>
                                 <th scope="col">Trạng thái</th>
-                                <th scope="col" class="text-center whitespace-nowrap" style="width: 124px; min-width: 124px;">Hành động</th>
+                                <th scope="col" class="text-center whitespace-nowrap" style="width: 160px; min-width: 160px;">Hành động</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -221,8 +221,11 @@
                                 <td class="text-center whitespace-nowrap">
                                     <div class="flex items-center gap-2 justify-center">
                                         @can('view acrylic order')
-                                        <a href="{{ route('orders.show', $order) }}" class="bg-primary-100 hover:bg-primary-200 text-primary-600 font-medium w-8 h-8 flex justify-center items-center rounded-full">
+                                        <a href="{{ route('orders.show', $order) }}" class="bg-primary-100 hover:bg-primary-200 text-primary-600 font-medium w-8 h-8 flex justify-center items-center rounded-full" title="Xem chi tiết">
                                             <iconify-icon icon="lucide:eye" class="menu-icon"></iconify-icon>
+                                        </a>
+                                        <a href="{{ route('orders.show', $order) }}?export=1" class="bg-success-100 hover:bg-success-200 text-success-600 font-medium w-8 h-8 flex justify-center items-center rounded-full" title="Xuất Excel">
+                                            <iconify-icon icon="lucide:file-spreadsheet" class="menu-icon"></iconify-icon>
                                         </a>
                                         @endcan
                                         @can('edit acrylic order')

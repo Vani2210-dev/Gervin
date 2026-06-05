@@ -295,18 +295,19 @@
     .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(1)::before { content: "STT"; }
     .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(2)::before { content: "Mã SP"; }
     .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(3)::before { content: "Tên sản phẩm"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(4)::before { content: "Chiều mở cánh"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(5)::before { content: "Màu nhôm"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(6)::before { content: "Màu kính"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(7)::before { content: "Dài"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(8)::before { content: "Rộng"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(9)::before { content: "Đơn vị"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(10)::before { content: "Số lượng cánh"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(11)::before { content: "Khối lượng (m2)"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(12)::before { content: "Đơn giá"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(13)::before { content: "Thành tiền"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(14)::before { content: "Ghi chú"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(15)::before { content: "Hành động"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(4)::before { content: "Độ dày"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(5)::before { content: "Chiều mở cánh"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(6)::before { content: "Màu nhôm"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(7)::before { content: "Màu kính"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(8)::before { content: "Dài"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(9)::before { content: "Rộng"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(10)::before { content: "Đơn vị"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(11)::before { content: "Số lượng cánh"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(12)::before { content: "Khối lượng (m2)"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(13)::before { content: "Đơn giá"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(14)::before { content: "Thành tiền"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(15)::before { content: "Ghi chú"; }
+    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(16)::before { content: "Hành động"; }
     .order-entry-card .order-preview-table-wrap {
         display: none;
     }
@@ -386,6 +387,7 @@
                                 <th scope="col" rowspan="2" style="width: 45px; min-width: 45px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Stt</th>
                                 <th scope="col" rowspan="2" style="width: 160px; min-width: 160px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Mã SP</th>
                                 <th scope="col" rowspan="2" style="min-width: 220px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên sản phẩm <span class="text-danger-500">*</span></th>
+                                <th scope="col" rowspan="2" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Độ dày</th>
                                 <th scope="col" rowspan="2" style="width: 110px; min-width: 110px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Chiều mở cánh</th>
                                 <th scope="col" rowspan="2" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Màu nhôm</th>
                                 <th scope="col" rowspan="2" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Màu kính</th>
@@ -414,6 +416,9 @@
                                 </td>
                                 <td style="min-width: 220px;" class="border border-neutral-200">
                                     <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][product_name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Tên sản phẩm" value="{{ $item->product_name }}">
+                                </td>
+                                <td style="width: 100px; min-width: 100px;" class="border border-neutral-200">
+                                    <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][thickness]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs text-center px-1" placeholder="Độ dày" value="{{ $item->thickness }}">
                                 </td>
                                 <td style="width: 110px; min-width: 110px; " class="border border-neutral-200">
                                     <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][wing_opening_direction]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs text-center px-1" placeholder="Chiều mở cánh" value="{{ $item->wing_opening_direction }}">
@@ -508,6 +513,7 @@ function addGlassOrderSupply() {
                         <th scope="col" rowspan="2" style="width: 45px; min-width: 45px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Stt</th>
                         <th scope="col" rowspan="2" style="width: 160px; min-width: 160px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Mã SP</th>
                         <th scope="col" rowspan="2" style="min-width: 220px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên sản phẩm <span class="text-danger-500">*</span></th>
+                        <th scope="col" rowspan="2" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Độ dày</th>
                         <th scope="col" rowspan="2" style="width: 110px; min-width: 110px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Chiều mở cánh</th>
                         <th scope="col" rowspan="2" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Màu nhôm</th>
                         <th scope="col" rowspan="2" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Màu kính</th>
@@ -561,6 +567,7 @@ function addGlassOrderItem(button) {
     if (lastRow) {
         lastData = {
             product_name: lastRow.querySelector('input[name*="[product_name]"]') ? lastRow.querySelector('input[name*="[product_name]"]').value : '',
+            thickness: lastRow.querySelector('input[name*="[thickness]"]') ? lastRow.querySelector('input[name*="[thickness]"]').value : '',
             wing_opening_direction: lastRow.querySelector('input[name*="[wing_opening_direction]"]') ? lastRow.querySelector('input[name*="[wing_opening_direction]"]').value : '',
             aluminum_color: lastRow.querySelector('input[name*="[aluminum_color]"]') ? lastRow.querySelector('input[name*="[aluminum_color]"]').value : '',
             glass_color: lastRow.querySelector('input[name*="[glass_color]"]') ? lastRow.querySelector('input[name*="[glass_color]"]').value : '',
@@ -586,6 +593,9 @@ function addGlassOrderItem(button) {
         </td>
         <td style="min-width: 220px;" class="border border-neutral-200">
             <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][product_name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Tên sản phẩm" value="${lastData ? lastData.product_name : ''}">
+        </td>
+        <td style="width: 100px; min-width: 100px;" class="border border-neutral-200">
+            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][thickness]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs text-center px-1" placeholder="Độ dày" value="${lastData ? lastData.thickness : ''}">
         </td>
         <td style="width: 110px; min-width: 110px; " class="border border-neutral-200">
             <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][wing_opening_direction]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs text-center px-1" placeholder="Chiều mở cánh" value="${lastData ? lastData.wing_opening_direction : ''}">
@@ -820,18 +830,19 @@ function getGlassFormLabel(index) {
         case 0: return 'STT';
         case 1: return 'Mã SP';
         case 2: return 'Tên sản phẩm';
-        case 3: return 'Chiều mở cánh';
-        case 4: return 'Màu nhôm';
-        case 5: return 'Màu kính';
-        case 6: return 'Dài (mm)';
-        case 7: return 'Rộng (mm)';
-        case 8: return 'Đơn vị';
-        case 9: return 'Số lượng cánh';
-        case 10: return 'Khối lượng (m2)';
-        case 11: return 'Đơn giá';
-        case 12: return 'Thành tiền';
-        case 13: return 'Ghi chú';
-        case 14: return 'Hành động';
+        case 3: return 'Độ dày';
+        case 4: return 'Chiều mở cánh';
+        case 5: return 'Màu nhôm';
+        case 6: return 'Màu kính';
+        case 7: return 'Dài (mm)';
+        case 8: return 'Rộng (mm)';
+        case 9: return 'Đơn vị';
+        case 10: return 'Số lượng cánh';
+        case 11: return 'Khối lượng (m2)';
+        case 12: return 'Đơn giá';
+        case 13: return 'Thành tiền';
+        case 14: return 'Ghi chú';
+        case 15: return 'Hành động';
         default: return 'Thông tin';
     }
 }

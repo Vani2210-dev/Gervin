@@ -1,15 +1,50 @@
 function romanize(num) {
     if (isNaN(num)) return '';
     const digits = String(+num).split('');
-    const key = ["","C","CC","CCC","CD","D","DC","DCC","DCCC","CM",
-               "","X","XX","XXX","XL","L","LX","LXX","LXXX","XC",
-               "","I","II","III","IV","V","VI","VII","VIII","IX"];
+    const key = ["", "C", "CC", "CCC", "CD", "D", "DC", "DCC", "DCCC", "CM",
+        "", "X", "XX", "XXX", "XL", "L", "LX", "LXX", "LXXX", "XC",
+        "", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX"];
     let roman = '';
     let i = 3;
     while (i--) {
         roman = (key[+digits.pop() + (i * 10)] || "") + roman;
     }
     return Array(+digits.join("") + 1).join("M") + roman;
+}
+
+function parseMullionMillingDetails(itemName) {
+    const res = {
+        offsetLeft: null, offsetRight: null, offsetTop: null, offsetBottom: null,
+        millLeft: null, millRight: null, millTop: null, millBottom: null,
+        millWidth: null, millDepth: null
+    };
+    if (!itemName) return res;
+
+    const nameLower = itemName.toLowerCase();
+    // Regex to match e.g. "kính đố 70 hèm s5r10" or "kính đố 70 hèm s5 r10"
+    const match = nameLower.match(/kính\s+đố\s+(\d+)\s+hèm\s+s(\d+)r(\d+)/)
+               || nameLower.match(/kính\s+đố\s+(\d+)\s+hèm\s+s(\d+)\s+r(\d+)/);
+
+    if (match) {
+        const border = parseInt(match[1]); // e.g. 70
+        const depth = parseInt(match[2]);  // e.g. 5
+        const width = parseInt(match[3]);  // e.g. 10
+
+        res.offsetLeft = border;
+        res.offsetRight = border;
+        res.offsetTop = border;
+        res.offsetBottom = border;
+
+        const millOffset = border - width;
+        res.millLeft = millOffset;
+        res.millRight = millOffset;
+        res.millTop = millOffset;
+        res.millBottom = millOffset;
+
+        res.millWidth = width;
+        res.millDepth = (depth === 5) ? 6 : depth; // standard depth adjustment for s5 in sample is 6
+    }
+    return res;
 }
 
 // Helper to estimate height of merged cell with wrapped text
@@ -371,6 +406,12 @@ async function exportToExcel() {
                 { col: 'AB', width: 16 }, // Xoi-Dịch dưới-1
                 { col: 'AC', width: 12 }, // Xoi-Rộng-1
                 { col: 'AD', width: 12 }, // Xoi-Sâu-1
+                { col: 'AE', width: 18 }, // Xoi-Dịch trái-2
+                { col: 'AF', width: 18 }, // Xoi-Dịch phải-2
+                { col: 'AG', width: 18 }, // Xoi-Dịch trên-2
+                { col: 'AH', width: 18 }, // Xoi-Dịch dưới-2
+                { col: 'AI', width: 14 }, // Xoi-Rộng-2
+                { col: 'AJ', width: 14 }, // Xoi-Sâu-2
             ];
             bazisColWidths.forEach(w => { ws2.getColumn(w.col).width = w.width; });
 
@@ -383,7 +424,9 @@ async function exportToExcel() {
                 'Ghi chú',
                 'Bao trong-Dịch trái', 'Bao trong-Dịch phải', 'Bao trong-Dịch trên', 'Bao trong-Dịch dưới',
                 'Xoi-Dịch trái-1', 'Xoi-Dịch phải-1', 'Xoi-Dịch trên-1', 'Xoi-Dịch dưới-1',
-                'Xoi-Rộng-1', 'Xoi-Sâu-1'
+                'Xoi-Rộng-1', 'Xoi-Sâu-1',
+                'Xoi-Dịch trái-2', 'Xoi-Dịch phải-2', 'Xoi-Dịch trên-2', 'Xoi-Dịch dưới-2',
+                'Xoi-Rộng-2', 'Xoi-Sâu-2'
             ];
             const viRow = ws2.getRow(1);
             viHeaders.forEach((h, i) => {
@@ -407,7 +450,10 @@ async function exportToExcel() {
                 'Internal Cutting Top Offset', 'Internal Cutting Bottom Offset',
                 'Milling Left Offset 1', 'Milling Right Offset 1',
                 'Milling Top Offset 1', 'Milling Bottom Offset 1',
-                'Milling Width 1', 'Milling Depth 1'
+                'Milling Width 1', 'Milling Depth 1',
+                'Milling Left Offset 2', 'Milling Right Offset 2',
+                'Milling Top Offset 2', 'Milling Bottom Offset 2',
+                'Milling Width 2', 'Milling Depth 2'
             ];
             const enRow = ws2.getRow(2);
             enHeaders.forEach((h, i) => {
@@ -436,15 +482,18 @@ async function exportToExcel() {
                     const edgeW1 = 'T';
                     const edgeW2 = isBeveled ? 'V' : 'T';
 
-                    row.getCell(1).value  = 'V';                              // Cắt
-                    row.getCell(2).value  = 'ACRILYC';                        // Đơn hàng
-                    row.getCell(3).value  = customerLabel;                    // Sản phẩm (tên KH)
-                    row.getCell(4).value  = item.product_code || '';          // STT / mã SP
-                    row.getCell(5).value  = item.product_name || '';          // Tên chi tiết
-                    row.getCell(6).value  = supply.supply_name || '';         // Vật liệu
-                    row.getCell(7).value  = parseFloat(item.height) || 0;    // Dài
-                    row.getCell(8).value  = parseFloat(item.width) || 0;     // Rộng
-                    row.getCell(9).value  = 19;                               // Dày (cố định 19mm)
+                    // Parse Mullion/Milling Details
+                    const parsed = parseMullionMillingDetails(item.product_name || '');
+
+                    row.getCell(1).value = 'V';                              // Cắt
+                    row.getCell(2).value = 'ACRILYC';                        // Đơn hàng
+                    row.getCell(3).value = customerLabel;                    // Sản phẩm (tên KH)
+                    row.getCell(4).value = item.product_code || '';          // STT / mã SP
+                    row.getCell(5).value = item.product_name || '';          // Tên chi tiết
+                    row.getCell(6).value = supply.supply_name || '';         // Vật liệu
+                    row.getCell(7).value = parseFloat(item.height) || 0;    // Dài
+                    row.getCell(8).value = parseFloat(item.width) || 0;     // Rộng
+                    row.getCell(9).value = (item.thickness && !isNaN(parseFloat(item.thickness))) ? parseFloat(item.thickness) : 19; // Dày
                     row.getCell(10).value = item.grain_direction !== null
                         ? parseInt(item.grain_direction) : 2;                // Chiều vân
                     row.getCell(11).value = parseInt(item.quantity) || 1;    // Số lượng
@@ -458,13 +507,25 @@ async function exportToExcel() {
                     row.getCell(19).value = 0.00001;                          // Dày nẹp W2
                     row.getCell(20).value = item.edge_bevel || 'Vát 0';      // Ghi chú
 
-                    // Columns U-AD (Bao trong / Xoi): empty by default
-                    for (let c = 21; c <= 30; c++) {
+                    // Columns U-AD (Bao trong / Xoi 1)
+                    row.getCell(21).value = parsed.offsetLeft;
+                    row.getCell(22).value = parsed.offsetRight;
+                    row.getCell(23).value = parsed.offsetTop;
+                    row.getCell(24).value = parsed.offsetBottom;
+                    row.getCell(25).value = parsed.millLeft;
+                    row.getCell(26).value = parsed.millRight;
+                    row.getCell(27).value = parsed.millTop;
+                    row.getCell(28).value = parsed.millBottom;
+                    row.getCell(29).value = parsed.millWidth;
+                    row.getCell(30).value = parsed.millDepth;
+
+                    // Columns AE-AJ (Xoi 2): empty/null
+                    for (let c = 31; c <= 36; c++) {
                         row.getCell(c).value = null;
                     }
 
                     // Style: all cells centered, Times New Roman 11
-                    for (let c = 1; c <= 30; c++) {
+                    for (let c = 1; c <= 36; c++) {
                         const cell = row.getCell(c);
                         cell.font = { name: 'Times New Roman', size: 11 };
                         cell.alignment = { horizontal: 'center', vertical: 'middle' };
@@ -1034,3 +1095,6 @@ async function getLogoBase64(url) {
 
 // Expose globally for Vite-compiled modules
 window.exportToExcel = exportToExcel;
+
+
+

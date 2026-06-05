@@ -13,6 +13,7 @@ class MinLateOrderItem extends Model
     protected $fillable = [
         'order_supply_id',
         'name',
+        'thickness',
         'size',
         'quantity',
         'edge_gluing',

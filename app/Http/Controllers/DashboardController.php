@@ -21,7 +21,7 @@ class DashboardController extends Controller
             'min_late_orders' => \App\Models\Order::where('status', '!=', 'draft')->where('type', 'min_late')->count(),
 
             'total_customers' => \App\Models\Customer::count(),
-            'total_supplies' => \App\Models\Supply::count(),
+            'total_wood_boards' => \App\Models\WoodBoard::count(),
             'total_manufacture_orders' => \App\Models\ManufactureOrder::count(),
             'total_users' => \App\Models\User::count(),
         ];

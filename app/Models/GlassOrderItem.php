@@ -13,6 +13,7 @@ class GlassOrderItem extends Model
     protected $fillable = [
         'order_supply_id',
         'product_name',
+        'thickness',
         'wing_opening_direction',
         'aluminum_color',
         'glass_color',

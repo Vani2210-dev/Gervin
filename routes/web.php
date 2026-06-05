@@ -15,7 +15,7 @@ use App\Http\Controllers\UsersController;
 use App\Http\Controllers\CryptocurrencyController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\MediaController;
-use App\Http\Controllers\SupplyController;
+use App\Http\Controllers\WoodBoardController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\QrCodeGeneratorController;
@@ -206,9 +206,14 @@ Route::middleware(['auth'])->prefix('media')->name('media.')->group(function () 
 });
 
 
-// Supplies
+// Wood Boards
 Route::middleware(['auth'])->group(function () {
-    Route::resource('supplies', SupplyController::class)->names('supplies');
+    Route::resource('wood-boards', WoodBoardController::class)->names('wood_boards');
+    Route::post('wood-board-types/batch', [WoodBoardController::class, 'batchUpdate'])->name('wood_board_types.batch_update');
+    Route::post('wood-board-types', [WoodBoardController::class, 'storeType'])->name('wood_board_types.store');
+    Route::put('wood-board-types/{type}', [WoodBoardController::class, 'updateType'])->name('wood_board_types.update');
+    Route::delete('wood-board-types/{type}', [WoodBoardController::class, 'destroyType'])->name('wood_board_types.destroy');
+    Route::post('wood-board-price-groups/batch', [WoodBoardController::class, 'batchUpdatePriceGroups'])->name('wood_board_price_groups.batch_update');
 });
 
 // QR Code

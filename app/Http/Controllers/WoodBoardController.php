@@ -1,0 +1,340 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\WoodBoard;
+use App\Models\WoodBoardType;
+use App\Models\WoodBoardPrice;
+use App\Models\WoodBoardPriceGroup;
+use App\Models\WoodBoardPriceGroupPrice;
+use Illuminate\Http\Request;
+
+class WoodBoardController extends Controller
+{
+    public function __construct()
+    {
+        $this->middleware('permission:view supply',   ['only' => ['index']]);
+        $this->middleware('permission:add supply',    ['only' => ['store', 'storeType', 'batchUpdate', 'batchUpdatePriceGroups']]);
+        $this->middleware('permission:edit supply',   ['only' => ['update', 'updateType']]);
+        $this->middleware('permission:delete supply', ['only' => ['destroy', 'destroyType']]);
+    }
+
+    public function index(Request $request)
+    {
+        $perPage = $request->input('per_page', 15);
+        $search  = $request->input('search', '');
+
+                // Fetch all active wood board types ordered by display_order
+        $boardTypes = WoodBoardType::orderBy('display_order', 'asc')->get();
+
+        // Fetch all wood board price groups with their default prices
+        $priceGroups = WoodBoardPriceGroup::with('prices')->get();
+
+        $woodBoards = WoodBoard::with('prices')
+            ->when($search, function ($q) use ($search) {
+                $q->where('color_code', 'like', "%$search%")
+                  ->orWhere('price_group', 'like', "%$search%")
+                  ->orWhereHas('prices', function ($subQ) use ($search) {
+                      $subQ->where('code', 'like', "%$search%")
+                           ->orWhere('name', 'like', "%$search%")
+                           ->orWhere('thickness', 'like', "%$search%");
+                  });
+            })
+            ->when($request->filled('filter_color_code'), function ($q) use ($request) {
+                $q->where('color_code', 'like', "%{$request->filter_color_code}%");
+            })
+            ->when($request->filled('filter_price_group'), function ($q) use ($request) {
+                $q->where('price_group', 'like', "%{$request->filter_price_group}%");
+            })
+            ->orderBy('id', 'desc')
+            ->paginate($perPage)
+            ->withQueryString();
+
+        return view('wood_boards.index', compact('woodBoards', 'boardTypes', 'perPage', 'search', 'priceGroups'));
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'color_code'  => 'required|string|max:100|unique:wood_boards,color_code',
+            'price_group' => 'nullable|string|max:100',
+            'prices'      => 'required|array',
+        ]);
+
+        $board = WoodBoard::create([
+            'color_code'  => $request->color_code,
+            'price_group' => $request->price_group,
+        ]);
+
+        $pricesData = $request->input('prices', []);
+        $boardTypes = WoodBoardType::all();
+
+        foreach ($boardTypes as $type) {
+            $typeData = $pricesData[$type->id] ?? null;
+            if ($typeData) {
+                // Compute code = color_code . prefix
+                $computedCode = $board->color_code . ($type->prefix ?? '');
+
+                $board->prices()->create([
+                    'wood_board_type_id' => $type->id,
+                    'code'               => $computedCode,
+                    'name'               => $typeData['name'] ?? null,
+                    'thickness'          => $typeData['thickness'] ?? null,
+                    'price_board'        => floatval($typeData['price_board'] ?? 0),
+                    'price_m2'           => floatval($typeData['price_m2'] ?? 0),
+                ]);
+            }
+        }
+
+        return redirect()->route('wood_boards.index')->with('success', 'Thêm dòng bảng giá thành công.');
+    }
+
+    public function update(Request $request, WoodBoard $woodBoard)
+    {
+        $request->validate([
+            'color_code'  => 'required|string|max:100|unique:wood_boards,color_code,' . $woodBoard->id,
+            'price_group' => 'nullable|string|max:100',
+            'prices'      => 'required|array',
+        ]);
+
+        $woodBoard->update([
+            'color_code'  => $request->color_code,
+            'price_group' => $request->price_group,
+        ]);
+
+        $pricesData = $request->input('prices', []);
+        $boardTypes = WoodBoardType::all();
+
+        foreach ($boardTypes as $type) {
+            $typeData = $pricesData[$type->id] ?? null;
+            if ($typeData) {
+                // Compute code = color_code . prefix
+                $computedCode = $woodBoard->color_code . ($type->prefix ?? '');
+
+                $woodBoard->prices()->updateOrCreate(
+                    ['wood_board_type_id' => $type->id],
+                    [
+                        'code'               => $computedCode,
+                        'name'               => $typeData['name'] ?? null,
+                        'thickness'          => $typeData['thickness'] ?? null,
+                        'price_board'        => floatval($typeData['price_board'] ?? 0),
+                        'price_m2'           => floatval($typeData['price_m2'] ?? 0),
+                    ]
+                );
+            }
+        }
+
+        return redirect()->route('wood_boards.index')->with('success', 'Cập nhật dòng bảng giá thành công.');
+    }
+
+    public function destroy(WoodBoard $woodBoard)
+    {
+        $woodBoard->delete();
+        return redirect()->route('wood_boards.index')->with('success', 'Xóa dòng bảng giá thành công.');
+    }
+
+    // Dynamic Board Type Management
+    public function storeType(Request $request)
+    {
+        $request->validate([
+            'name'          => 'required|string|max:255',
+            'prefix'        => 'nullable|string|max:100',
+            'display_order' => 'required|integer',
+        ]);
+
+        WoodBoardType::create([
+            'name'          => $request->name,
+            'prefix'        => $request->prefix,
+            'display_order' => $request->display_order,
+        ]);
+
+        return redirect()->back()->with('success', 'Thêm loại ván thành công.');
+    }
+
+    public function updateType(Request $request, WoodBoardType $type)
+    {
+        $request->validate([
+            'name'          => 'required|string|max:255',
+            'prefix'        => 'nullable|string|max:100',
+            'display_order' => 'required|integer',
+        ]);
+
+        $oldPrefix = $type->prefix;
+        $type->update([
+            'name'          => $request->name,
+            'prefix'        => $request->prefix,
+            'display_order' => $request->display_order,
+        ]);
+
+        // If prefix changed, update all existing prices' codes of this type
+        if ($oldPrefix !== $request->prefix) {
+            $prices = WoodBoardPrice::where('wood_board_type_id', $type->id)
+                ->with('board')
+                ->get();
+            foreach ($prices as $price) {
+                if ($price->board) {
+                    $price->update([
+                        'code' => $price->board->color_code . ($request->prefix ?? ''),
+                    ]);
+                }
+            }
+        }
+
+        return redirect()->back()->with('success', 'Cập nhật loại ván thành công.');
+    }
+
+    public function destroyType(WoodBoardType $type)
+    {
+        $type->delete();
+        return redirect()->back()->with('success', 'Xóa loại ván thành công.');
+    }
+
+    // Batch Update and Batch Insert Board Types
+    public function batchUpdate(Request $request)
+    {
+        $request->validate([
+            'types'                     => 'nullable|array',
+            'types.*.name'              => 'required|string|max:255',
+            'types.*.prefix'            => 'nullable|string|max:100',
+            'types.*.display_order'     => 'required|integer',
+
+            'new_types'                 => 'nullable|array',
+            'new_types.*.name'          => 'required|string|max:255',
+            'new_types.*.prefix'        => 'nullable|string|max:100',
+            'new_types.*.display_order' => 'required|integer',
+
+            'deleted_types'             => 'nullable|array',
+            'deleted_types.*'           => 'required|integer|exists:wood_board_types,id',
+        ]);
+
+        \DB::transaction(function () use ($request) {
+            // 1. Delete types
+            $deletedIds = $request->input('deleted_types', []);
+            if (!empty($deletedIds)) {
+                WoodBoardType::whereIn('id', $deletedIds)->delete();
+            }
+
+            // 2. Update existing types
+            $existingTypesData = $request->input('types', []);
+            foreach ($existingTypesData as $id => $data) {
+                if (in_array($id, $deletedIds)) {
+                    continue;
+                }
+                $type = WoodBoardType::find($id);
+                if ($type) {
+                    $oldPrefix = $type->prefix;
+                    $type->update([
+                        'name'          => $data['name'],
+                        'prefix'        => $data['prefix'],
+                        'display_order' => $data['display_order'],
+                    ]);
+
+                    // If prefix changed, update all existing prices' codes of this type
+                    if ($oldPrefix !== $data['prefix']) {
+                        $prices = WoodBoardPrice::where('wood_board_type_id', $type->id)
+                            ->with('board')
+                            ->get();
+                        foreach ($prices as $price) {
+                            if ($price->board) {
+                                $price->update([
+                                    'code' => $price->board->color_code . ($data['prefix'] ?? ''),
+                                ]);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 3. Insert new types
+            $newTypesData = $request->input('new_types', []);
+            foreach ($newTypesData as $data) {
+                WoodBoardType::create([
+                    'name'          => $data['name'],
+                    'prefix'        => $data['prefix'],
+                    'display_order' => $data['display_order'],
+                ]);
+            }
+        });
+
+        return redirect()->back()->with('success', 'Cập nhật cấu hình loại ván thành công.');
+    }
+
+    // Batch Update and Batch Insert Price Groups
+    public function batchUpdatePriceGroups(Request $request)
+    {
+        $request->validate([
+            'groups'                              => 'nullable|array',
+            'groups.*.name'                       => 'required|string|max:255',
+            'groups.*.prices'                     => 'required|array',
+            'groups.*.prices.*.name'              => 'nullable|string|max:255',
+            'groups.*.prices.*.thickness'         => 'nullable|string|max:100',
+            'groups.*.prices.*.price_board'       => 'required|numeric|min:0',
+            'groups.*.prices.*.price_m2'          => 'required|numeric|min:0',
+
+            'new_groups'                          => 'nullable|array',
+            'new_groups.*.name'                   => 'required|string|max:255',
+            'new_groups.*.prices'                 => 'required|array',
+            'new_groups.*.prices.*.name'          => 'nullable|string|max:255',
+            'new_groups.*.prices.*.thickness'     => 'nullable|string|max:100',
+            'new_groups.*.prices.*.price_board'   => 'required|numeric|min:0',
+            'new_groups.*.prices.*.price_m2'      => 'required|numeric|min:0',
+
+            'deleted_groups'                      => 'nullable|array',
+            'deleted_groups.*'                    => 'required|integer|exists:wood_board_price_groups,id',
+        ]);
+
+        \DB::transaction(function () use ($request) {
+            // 1. Delete price groups
+            $deletedIds = $request->input('deleted_groups', []);
+            if (!empty($deletedIds)) {
+                WoodBoardPriceGroup::whereIn('id', $deletedIds)->delete();
+            }
+
+            // 2. Update existing price groups
+            $existingGroupsData = $request->input('groups', []);
+            foreach ($existingGroupsData as $id => $data) {
+                if (in_array($id, $deletedIds)) {
+                    continue;
+                }
+                $group = WoodBoardPriceGroup::find($id);
+                if ($group) {
+                    $group->update(['name' => $data['name']]);
+
+                    // Sync/update type prices
+                    $pricesData = $data['prices'] ?? [];
+                    foreach ($pricesData as $typeId => $priceData) {
+                        $group->prices()->updateOrCreate(
+                            ['wood_board_type_id' => $typeId],
+                            [
+                                'name'        => $priceData['name'] ?? null,
+                                'thickness'   => $priceData['thickness'] ?? null,
+                                'price_board' => floatval($priceData['price_board'] ?? 0),
+                                'price_m2'    => floatval($priceData['price_m2'] ?? 0),
+                            ]
+                        );
+                    }
+                }
+            }
+
+            // 3. Insert new price groups
+            $newGroupsData = $request->input('new_groups', []);
+            foreach ($newGroupsData as $data) {
+                $group = WoodBoardPriceGroup::create(['name' => $data['name']]);
+
+                // Insert type prices
+                $pricesData = $data['prices'] ?? [];
+                foreach ($pricesData as $typeId => $priceData) {
+                    $group->prices()->create([
+                        'wood_board_type_id' => $typeId,
+                        'name'               => $priceData['name'] ?? null,
+                        'thickness'          => $priceData['thickness'] ?? null,
+                        'price_board'        => floatval($priceData['price_board'] ?? 0),
+                        'price_m2'           => floatval($priceData['price_m2'] ?? 0),
+                    ]);
+                }
+            }
+        });
+
+        return redirect()->back()->with('success', 'Cập nhật cấu hình nhóm giá thành công.');
+    }
+}

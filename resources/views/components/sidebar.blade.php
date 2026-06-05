@@ -1,12 +1,27 @@
+<style>
+    .sidebar-logo .logo-text {
+        display: flex;
+    }
+    .sidebar.active .sidebar-logo .logo-text {
+        display: none;
+    }
+    .sidebar.active:hover .sidebar-logo .logo-text {
+        display: flex;
+    }
+</style>
 <aside class="sidebar">
     <button type="button" class="sidebar-close-btn !mt-4">
         <iconify-icon icon="radix-icons:cross-2"></iconify-icon>
     </button>
     <div>
-        <a href="{{ route('index') }}" class="sidebar-logo">
-            <img src="{{ asset('assets/images/logo.png') }}" alt="site logo" class="light-logo">
-            <img src="{{ asset('assets/images/logo-light.png') }}" alt="site logo" class="dark-logo">
-            <img src="{{ asset('assets/images/logo-icon.png') }}" alt="site logo" class="logo-icon">
+        <a href="{{ route('index') }}" class="sidebar-logo flex items-center gap-3">
+            <img src="{{ asset('logo.png') }}" alt="site logo" class="light-logo">
+            <img src="{{ asset('logo.png') }}" alt="site logo" class="dark-logo">
+            <img src="{{ asset('logo.png') }}" alt="site logo" class="logo-icon">
+            <div class="logo-text flex flex-col">
+                <span class="font-bold text-base leading-tight text-neutral-800 dark:text-neutral-200 whitespace-nowrap">GERVIN WOOD</span>
+                <span class="text-[10px] text-neutral-500 dark:text-neutral-400 whitespace-nowrap mt-0.5 uppercase tracking-wider">Quản lý nội bộ</span>
+            </div>
         </a>
     </div>
     <div class="sidebar-menu-area">
@@ -18,8 +33,9 @@
                 </a>
                 <ul class="sidebar-submenu">
                     <li>
-                        <a href="{{ route('index') }}"><i class="ri-circle-fill circle-icon text-primary-600 w-auto"></i> AI</a>
+                        <a href="{{ route('index') }}"><i class="ri-circle-fill circle-icon text-primary-600 w-auto"></i> Dashboard</a>
                     </li>
+                    @can('view ui')
                     <li>
                         <a href="{{ route('index2') }}"><i class="ri-circle-fill circle-icon text-warning-600 w-auto"></i> CRM</a>
                     </li>
@@ -44,6 +60,7 @@
                     <li>
                         <a href="{{ route('index9') }}"><i class="ri-circle-fill circle-icon text-purple-600 w-auto"></i> Phân tích</a>
                     </li>
+                    @endcan
                 </ul>
             </li>
             <li class="sidebar-menu-group-title">Ứng dụng</li>
@@ -140,9 +157,10 @@
                     @endcan
                     @can('view supply')
                     <li>
-                        <a href="{{ route('supplies.index') }}"><i class="ri-circle-fill circle-icon text-info-600 w-auto"></i> Danh mục vật tư</a>
+                        <a href="{{ route('wood_boards.index') }}"><i class="ri-circle-fill circle-icon text-info-600 w-auto"></i> Bảng giá tấm</a>
                     </li>
                     @endcan
+
                     <li>
                         <a href="#"><i class="ri-circle-fill circle-icon text-warning-600 w-auto"></i> Kho đồ cũ(DC)</a>
                     </li>

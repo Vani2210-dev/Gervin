@@ -128,21 +128,21 @@
         </div>
         @endcan
 
-        {{-- Vật tư --}}
+        {{-- Bảng giá tấm --}}
         @can('view supply')
         <div class="card shadow-none border border-neutral-200 rounded-xl h-full bg-gradient-to-r from-rose-600/10 to-white">
             <div class="card-body p-5">
                 <div class="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                        <p class="font-medium text-neutral-600 mb-1 text-sm">Danh mục vật tư</p>
-                        <h4 class="mb-0 font-bold text-neutral-900">{{ number_format($stats['total_supplies']) }}</h4>
+                        <p class="font-medium text-neutral-600 mb-1 text-sm">Bảng giá tấm</p>
+                        <h4 class="mb-0 font-bold text-neutral-900">{{ number_format($stats['total_wood_boards']) }}</h4>
                     </div>
                     <div class="w-[50px] h-[50px] bg-rose-600 rounded-full flex justify-center items-center text-white shrink-0">
                         <iconify-icon icon="solar:box-minimalistic-bold-duotone" class="text-2xl"></iconify-icon>
                     </div>
                 </div>
                 <p class="text-xs text-neutral-500 mt-3 border-t border-neutral-100 pt-2 mb-0">
-                    Quản lý vật tư, phụ kiện, chất liệu gỗ
+                    Quản lý bảng giá tấm gỗ m2
                 </p>
             </div>
         </div>

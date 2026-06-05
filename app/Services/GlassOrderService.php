@@ -35,6 +35,7 @@ class GlassOrderService
             'supplies.*.items'               => 'nullable|array',
             'supplies.*.items.*.id'                   => 'nullable|integer',
             'supplies.*.items.*.product_name'        => 'nullable|string|max:255',
+            'supplies.*.items.*.thickness'           => 'nullable|string|max:100',
             'supplies.*.items.*.product_code'        => 'nullable|string|max:50',
             'supplies.*.items.*.wing_opening_direction' => 'nullable|string|max:100',
             'supplies.*.items.*.aluminum_color'      => 'nullable|string|max:100',
@@ -108,9 +109,15 @@ class GlassOrderService
             'attachments'   => !empty($allAttachments) ? json_encode($allAttachments) : null,
         ]);
 
-        // Clean up old supplies and items
+        // Clean up old supplies and items (explicitly delete codes first to avoid duplicate key on unique constraint)
         $existingSupplyIds = $order->supplies()->pluck('id')->toArray();
-        GlassOrderItem::whereIn('order_supply_id', $existingSupplyIds)->delete();
+        if (!empty($existingSupplyIds)) {
+            $existingItemIds = GlassOrderItem::whereIn('order_supply_id', $existingSupplyIds)->pluck('id')->toArray();
+            if (!empty($existingItemIds)) {
+                \App\Models\GlassOrderItemCode::whereIn('glass_order_item_id', $existingItemIds)->delete();
+            }
+            GlassOrderItem::whereIn('order_supply_id', $existingSupplyIds)->delete();
+        }
         $order->supplies()->delete();
 
         // Recreate supplies and items
@@ -180,6 +187,7 @@ class GlassOrderService
                 $orderItem = GlassOrderItem::create([
                     'order_supply_id'        => $orderSupply->id,
                     'product_name'           => $item['product_name'],
+                    'thickness'              => $item['thickness'] ?? null,
                     'wing_opening_direction' => $item['wing_opening_direction'] ?? null,
                     'aluminum_color'         => $item['aluminum_color'] ?? null,
                     'glass_color'            => $item['glass_color'] ?? null,
@@ -193,21 +201,16 @@ class GlassOrderService
                     'notes'                  => $item['notes'] ?? null,
                 ]);
 
-                // Generate N codes based on quantity (wing_quantity) using global sequential piece index
-                $productCode = $item['product_code'] ?? '';
-                $parts = explode('.', $productCode);
-                if (count($parts) >= 3) {
-                    $prefix = $parts[0] . '.' . $parts[1];
-                    $startIndex = intval($parts[2]);
-                } else {
-                    $prefix = $order->order_code . '.' . ($orderSupply->order_supply_code ?? '');
-                    $startIndex = $globalPieceIndex;
-                }
+                // Always regenerate codes from order_code + supply_code + global sequential index
+                // Never parse product_code from the form — supply codes may contain dots
+                // causing explode('.') to split incorrectly and produce wrong codes.
+                $supplyCodePart = $orderSupply->order_supply_code ?? '';
+                $prefix = $order->order_code . ($supplyCodePart !== '' ? '.' . $supplyCodePart : '');
 
                 $qty = intval($wingQuantity) ?: 1;
                 for ($i = 0; $i < $qty; $i++) {
                     $orderItem->codes()->create([
-                        'product_id' => $prefix . '.' . ($startIndex + $i),
+                        'product_id' => $prefix . '.' . ($globalPieceIndex + $i),
                         'status'     => [],
                     ]);
                 }
