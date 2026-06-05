@@ -154,11 +154,6 @@ class ManufactureStepController extends Controller
         ], $res['status_code']);
     }
 
-    public function packing()
-    {
-        return view('processes.packing');
-    }
-
     public function shipped()
     {
         return view('processes.shipped');
