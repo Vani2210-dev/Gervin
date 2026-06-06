@@ -136,11 +136,19 @@
                 </a>
             </li>
             @endcan
-            @can('view shipped')
+            @can('view dispatch')
             <li>
-                <a href="{{ route('processes.shipped') }}">
+                <a href="{{ route('processes.dispatch') }}">
                     <iconify-icon icon="lucide:truck" class="menu-icon"></iconify-icon>
                     <span>Xuất xưởng</span>
+                </a>
+            </li>
+            @endcan
+            @can('view delivery')
+            <li>
+                <a href="{{ route('processes.delivery') }}">
+                    <iconify-icon icon="lucide:navigation" class="menu-icon"></iconify-icon>
+                    <span>Giao hàng</span>
                 </a>
             </li>
             @endcan

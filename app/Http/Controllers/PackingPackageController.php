@@ -9,12 +9,13 @@ use App\Models\PackingPackage;
 use App\Models\PackingPackageItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class PackingPackageController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:view packing')->only(['index', 'show']);
+        $this->middleware('permission:view packing')->only(['index', 'show', 'print']);
         $this->middleware('permission:add packing')->only(['store', 'storeItem']);
         $this->middleware('permission:delete packing')->only(['destroyItem', 'destroy']);
         $this->middleware('permission:complete packing')->only(['complete']);
@@ -22,14 +23,39 @@ class PackingPackageController extends Controller
 
     public function index()
     {
-        $packages = PackingPackage::with('packer')
+        // Lấy số lượng hiển thị trên trang của danh sách đang đóng gói (mặc định 15)
+        $perPageDraft = intval(request()->input('draft_per_page', 15));
+        if ($perPageDraft <= 0) {
+            $perPageDraft = 15;
+        }
+
+        // Lấy số lượng hiển thị trên trang của danh sách đã hoàn tất (mặc định 15)
+        $perPageCompleted = intval(request()->input('completed_per_page', 15));
+        if ($perPageCompleted <= 0) {
+            $perPageCompleted = 15;
+        }
+
+        // Phân trang danh sách đang đóng gói
+        $draftPackages = PackingPackage::with('packer')
             ->withCount('packagedItems as items_count')
+            ->where('status', 'draft')
             ->latest()
-            ->get();
+            ->paginate($perPageDraft, ['*'], 'draft_page')
+            ->withQueryString();
+
+        // Phân trang danh sách đã hoàn tất
+        $completedPackages = PackingPackage::with('packer')
+            ->withCount('packagedItems as items_count')
+            ->where('status', 'completed')
+            ->latest()
+            ->paginate($perPageCompleted, ['*'], 'completed_page')
+            ->withQueryString();
 
         return view('packing.index', [
-            'draftPackages' => $packages->where('status', 'draft'),
-            'completedPackages' => $packages->where('status', 'completed'),
+            'draftPackages' => $draftPackages,
+            'completedPackages' => $completedPackages,
+            'perPageDraft' => $perPageDraft,
+            'perPageCompleted' => $perPageCompleted,
         ]);
     }
 
@@ -61,8 +87,6 @@ class PackingPackageController extends Controller
 
         $paginatedItems = $package->items()
             ->with('itemCode')
-            ->orderBy('is_packaged', 'asc')
-            ->orderBy('id', 'desc')
             ->paginate($perPage);
 
         // Load polymorphic relations for the paginated items
@@ -76,6 +100,59 @@ class PackingPackageController extends Controller
         $ordersData = $this->getPackageOrdersData($package);
 
         return view('packing.show', compact('package', 'packageItems', 'ordersData', 'perPage'));
+    }
+
+    public function print(PackingPackage $package)
+    {
+        if ($package->status !== 'completed') {
+            return redirect()
+                ->route('processes.packing.show', $package)
+                ->with('error', 'Chỉ có thể in tem khi kiện đã hoàn tất.');
+        }
+
+        $package->load(['packer', 'items.itemCode']);
+
+        $codes = $package->items->map(fn($item) => $item->itemCode)->filter();
+        $this->loadMorphCodeRelations($codes);
+
+        $items = $package->items->map(function (PackingPackageItem $packageItem) {
+            return $this->formatPackageItem($packageItem);
+        })->withQueryString();
+
+        // Khi in tem chỉ lấy dữ liệu từ linh kiện đã quét, bỏ qua item nháp/placeholder.
+        $scannedItems = $items->where('is_packaged', true);
+        $printItems = $scannedItems->isNotEmpty() ? $scannedItems : $items;
+        $printPackageItems = $package->items->where('is_packaged', true);
+        $printPackageItems = $printPackageItems->isNotEmpty() ? $printPackageItems : $package->items;
+        // Lấy thông tin khách hàng theo đơn đầu tiên có linh kiện được in trên tem.
+        $packageOrder = $this->resolvePackageOrder($printPackageItems);
+
+        $totalItems = $printItems->count();
+        $orderCode = $printItems->first()?->order_code ?? '—';
+        $typeSummary = $printItems->pluck('type')->filter()->unique()->values()->implode(', ') ?: '—';
+        // Mã kiện lấy thẳng ID của kiện, không thêm tiền tố.
+        $packageCode = (string) $package->id;
+
+        // QR dùng trực tiếp mã kiện đang lưu trong database.
+        $qrSvg = QrCode::format('svg')
+            ->size(180)
+            ->margin(1)
+            ->encoding('UTF-8')
+            ->errorCorrection('H')
+            ->generate($packageCode);
+        $qrSvg = str_replace('<?xml version="1.0" encoding="UTF-8"?>', '', $qrSvg);
+
+        return view('packing.print', [
+            'package' => $package,
+            'totalItems' => $totalItems,
+            'orderCode' => $orderCode,
+            'typeSummary' => $typeSummary,
+            'packageCode' => $packageCode,
+            'qrSvg' => $qrSvg,
+            'customerName' => $packageOrder?->customer_name ?? '—',
+            'customerPhone' => $packageOrder?->phone ?? '—',
+            'deliveryAddress' => $packageOrder?->address ?? '—',
+        ]);
     }
 
     public function storeItem(Request $request, PackingPackage $package)
@@ -294,6 +371,17 @@ class PackingPackageController extends Controller
 
     public function destroyItem(Request $request, PackingPackage $package, PackingPackageItem $item)
     {
+        if ($package->dispatched_at) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Kiện đã xuất xưởng, không thể xóa linh kiện.',
+                ], 400);
+            }
+
+            return back()->with('error', 'Kiện đã xuất xưởng, không thể xóa linh kiện.');
+        }
+
         if ($package->status === 'completed') {
             if ($request->expectsJson()) {
                 return response()->json([
@@ -392,6 +480,12 @@ class PackingPackageController extends Controller
 
     public function destroy(PackingPackage $package)
     {
+        if ($package->dispatched_at) {
+            return redirect()
+                ->route('processes.packing')
+                ->with('error', 'Kiện đã xuất xưởng, không thể xóa.');
+        }
+
         $package->delete();
 
         return redirect()
@@ -446,7 +540,7 @@ class PackingPackageController extends Controller
             $item = $code->glassOrderItem;
             $productName = $item?->product_name ?? '—';
             $orderCode = $item?->orderSupply?->order?->order_code ?? '—';
-            $type = 'Kính';
+            $type = 'Glass';
         } elseif ($code instanceof MinLateOrderItemCode) {
             $item = $code->minLateOrderItem;
             $productName = $item?->name ?? '—';
@@ -468,6 +562,27 @@ class PackingPackageController extends Controller
             'created_at' => $packageItem->created_at,
             'created_at_label' => $packageItem->created_at?->format('H:i:s d/m/Y'),
         ];
+    }
+
+    private function resolvePackageOrder($packageItems)
+    {
+        foreach ($packageItems as $packageItem) {
+            $code = $packageItem->itemCode;
+
+            if ($code instanceof AcrylicOrderItemCode) {
+                return $code->acrylicOrderItem?->orderSupply?->order;
+            }
+
+            if ($code instanceof GlassOrderItemCode) {
+                return $code->glassOrderItem?->orderSupply?->order;
+            }
+
+            if ($code instanceof MinLateOrderItemCode) {
+                return $code->minLateOrderItem?->orderSupply?->order;
+            }
+        }
+
+        return null;
     }
 
     private function getPackageOrdersData(PackingPackage $package): array
@@ -588,3 +703,4 @@ class PackingPackageController extends Controller
         }
     }
 }
+

@@ -21,7 +21,7 @@
         'finishing'     => 'Làm đẹp',
         'qc'            => 'Kiểm soát (QC)',
         'packing'       => 'Đóng gói',
-        'shipped'       => 'Xuất xưởng',
+        'dispatch'       => 'Xuất xưởng',
         'ui'            => 'Giao diện UI',
     ];
     $actionLabels = [

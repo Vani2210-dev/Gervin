@@ -23,7 +23,7 @@ function parseMullionMillingDetails(itemName) {
     const nameLower = itemName.toLowerCase();
     // Regex to match e.g. "kính đố 70 hèm s5r10" or "kính đố 70 hèm s5 r10"
     const match = nameLower.match(/kính\s+đố\s+(\d+)\s+hèm\s+s(\d+)r(\d+)/)
-               || nameLower.match(/kính\s+đố\s+(\d+)\s+hèm\s+s(\d+)\s+r(\d+)/);
+        || nameLower.match(/kính\s+đố\s+(\d+)\s+hèm\s+s(\d+)\s+r(\d+)/);
 
     if (match) {
         const border = parseInt(match[1]); // e.g. 70

@@ -22,6 +22,8 @@ use App\Http\Controllers\QrCodeGeneratorController;
 use App\Http\Controllers\ManufactureController;
 use App\Http\Controllers\WarehouseController;
 use App\Http\Controllers\ManufactureStepController;
+use App\Http\Controllers\DispatchPackageController;
+use App\Http\Controllers\DeliveryPackageController;
 use App\Http\Controllers\PackingPackageController;
 
 Route::middleware(['auth'])->group(function () {
@@ -275,11 +277,17 @@ Route::middleware(['auth'])->prefix('processes')->name('processes.')->group(func
     Route::get('/packing', [PackingPackageController::class, 'index'])->name('packing');
     Route::post('/packing', [PackingPackageController::class, 'store'])->name('packing.store');
     Route::get('/packing/{package}', [PackingPackageController::class, 'show'])->name('packing.show');
+    Route::get('/packing/{package}/print', [PackingPackageController::class, 'print'])->name('packing.print');
     Route::post('/packing/{package}/items', [PackingPackageController::class, 'storeItem'])->name('packing.items.store');
     Route::delete('/packing/{package}/items/{item}', [PackingPackageController::class, 'destroyItem'])->name('packing.items.destroy');
     Route::post('/packing/{package}/complete', [PackingPackageController::class, 'complete'])->name('packing.complete');
     Route::delete('/packing/{package}', [PackingPackageController::class, 'destroy'])->name('packing.destroy');
-    Route::get('/shipped', [ManufactureStepController::class, 'shipped'])->name('shipped');
+    Route::get('/dispatch', [DispatchPackageController::class, 'index'])->name('dispatch');
+    Route::post('/dispatch/check', [DispatchPackageController::class, 'preview'])->name('dispatch.check');
+    Route::post('/dispatch/confirm', [DispatchPackageController::class, 'confirm'])->name('dispatch.confirm');
+    Route::get('/delivery', [DeliveryPackageController::class, 'index'])->name('delivery');
+    Route::post('/delivery/check', [DeliveryPackageController::class, 'preview'])->name('delivery.check');
+    Route::post('/delivery/confirm', [DeliveryPackageController::class, 'confirm'])->name('delivery.confirm');
 });
 
 require __DIR__.'/auth.php';

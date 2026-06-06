@@ -41,7 +41,15 @@
             </div>
         </div>
 
-        @if($showCompleteButton)
+        @if($isCompleted)
+            <a href="{{ route('processes.packing.print', $package) }}"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="packing-package-page__print-button packing-package-page__header-print-button btn bg-primary-600 hover:bg-primary-700 text-white px-5 py-3 rounded-lg font-semibold inline-flex items-center gap-2">
+                <iconify-icon icon="lucide:printer" class="packing-package-page__print-icon packing-package-page__header-print-icon text-lg"></iconify-icon>
+                In tem dán
+            </a>
+        @elseif($showCompleteButton)
             <form method="POST" action="{{ route('processes.packing.complete', $package) }}" onsubmit="return confirm('Hoàn tất đóng gói kiện này?')" class="packing-package-page__complete-form packing-package-page__header-complete-form shrink-0">
                 @csrf
                 <button type="submit" class="packing-package-page__complete-button packing-package-page__header-complete-button btn bg-primary-600 hover:bg-primary-700 text-white px-5 py-3 rounded-lg font-semibold">
@@ -65,8 +73,8 @@
 
     <div class="packing-package-page__layout grid grid-cols-1 lg:grid-cols-12 gap-6">
         @if($showScanCard)
-            <div class="packing-package-page__scan-column lg:col-span-4">
-                <div class="packing-package-page__scan-card packing-package-page__scan-card--form card h-full border border-neutral-200 rounded-xl shadow-sm">
+            <div class="packing-package-page__scan-column lg:col-span-4 lg:self-start">
+                <div class="packing-package-page__scan-card packing-package-page__scan-card--form card border border-neutral-200 rounded-xl shadow-sm">
                     <div class="packing-package-page__scan-body card-body p-6">
                         <div class="packing-package-page__scan-heading flex items-start gap-4 mb-6">
                             <span class="packing-package-page__scan-icon-wrap w-12 h-12 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center">
@@ -189,11 +197,10 @@
                     </div>
                     
                     {{-- Pagination --}}
-                    @if($packageItems instanceof \Illuminate\Pagination\LengthAwarePaginator && $packageItems->total() > $perPage)
-                        <div class="flex items-center justify-between flex-wrap gap-2 mt-6 px-6 pb-6">
+                    @if($packageItems instanceof \Illuminate\Pagination\LengthAwarePaginator && $packageItems->isNotEmpty())
+                        <div class="flex items-center justify-between flex-wrap gap-2 mt-6 border-t border-neutral-100 pt-6">
                             <span class="text-secondary-light text-sm">
-                                Hiển thị {{ $packageItems->firstItem() ?? 0 }} đến {{ $packageItems->lastItem() ?? 0 }}
-                                trong tổng {{ $packageItems->total() }} linh kiện
+                                Hiển thị {{ $packageItems->firstItem() ?? 0 }} đến {{ $packageItems->lastItem() ?? 0 }} trong tổng {{ $packageItems->total() }} linh kiện
                             </span>
                             {{ $packageItems->links() }}
                         </div>
@@ -235,6 +242,7 @@
         let html5QrCode = null;
         const canDeletePackageItems = ' . json_encode($showDeleteColumn) . ';
         const packageItemDeleteToken = ' . json_encode(csrf_token()) . ';
+        let packingIsSubmitting = false;
 
         function toggleSubmitButton() {
             const productCodeInput = document.getElementById("product_code");
@@ -261,6 +269,7 @@
                     toggleSubmitButton();
                     stopScanning();
                     playScanBeep();
+                    submitPackingItem();
                 },
                 () => {}
             ).catch((err) => {
@@ -311,19 +320,76 @@
             }, 3500);
         }
 
+        function submitPackingItem() {
+            const form = document.getElementById("packingScanForm");
+            const productCodeInput = document.getElementById("product_code");
+            const submitBtn = document.getElementById("packingSubmitBtn");
+
+            if (!form || !productCodeInput || !submitBtn || packingIsSubmitting) {
+                return;
+            }
+
+            const code = productCodeInput.value.trim();
+            if (!code) {
+                return;
+            }
+
+            // Chặn gửi trùng khi quét hoặc nhập liên tiếp.
+            packingIsSubmitting = true;
+
+            const originalBtnContent = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.classList.add("opacity-50", "cursor-not-allowed", "pointer-events-none");
+            submitBtn.innerHTML = `<iconify-icon icon="lucide:loader-2" class="text-xl animate-spin"></iconify-icon> Đang xử lý...`;
+
+            fetch("' . route('processes.packing.items.store', $package) . '", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                    "X-CSRF-TOKEN": "' . csrf_token() . '"
+                },
+                body: JSON.stringify({ product_code: code })
+            })
+            .then(async (response) => {
+                const data = await response.json();
+                if (!response.ok) throw data;
+                return data;
+            })
+            .then((res) => {
+                showToast(res.message, "success");
+                // Thêm xong thì tải lại để đồng bộ số lượng và danh sách.
+                setTimeout(() => {
+                    window.location.reload();
+                }, 500);
+            })
+            .catch((err) => {
+                showToast(err.message || "Không thể thêm linh kiện vào kiện.", "error");
+            })
+            .finally(() => {
+                packingIsSubmitting = false;
+                submitBtn.innerHTML = originalBtnContent;
+                toggleSubmitButton();
+            });
+        }
+
         document.addEventListener("DOMContentLoaded", function () {
             const form = document.getElementById("packingScanForm");
             const productCodeInput = document.getElementById("product_code");
             const submitBtn = document.getElementById("packingSubmitBtn");
 
             if (productCodeInput) {
-                productCodeInput.addEventListener("input", toggleSubmitButton);
+                productCodeInput.addEventListener("input", function () {
+                    toggleSubmitButton();
+                });
                 toggleSubmitButton();
             }
 
             if (form && submitBtn && productCodeInput) {
                 form.addEventListener("submit", function (e) {
                     e.preventDefault();
+                    submitPackingItem();
+                    return;
 
                     const code = productCodeInput.value.trim();
                     if (!code) {
