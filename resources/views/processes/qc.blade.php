@@ -136,6 +136,7 @@
                                     class="px-5 py-3.5 text-white rounded-xl flex items-center gap-2 font-semibold text-sm transition-all duration-200 hover:opacity-90 active:scale-95 whitespace-nowrap shadow-sm"
                                     style="background-color: rgb(2, 100, 155);">
                                     <iconify-icon icon="lucide:camera" class="text-base"></iconify-icon>
+                                    Quét Camera
                                 </button>
                             </div>
 
@@ -309,145 +310,22 @@
                     Lịch sử kiểm soát chất lượng
                 </h5>
 
-        <!-- Section Body -->
-        <div class="card-body p-6">
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                <!-- Left Column: Product Info -->
-                <div class="lg:col-span-7 flex flex-col gap-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <!-- Product Name Card -->
-                        <div class="bg-neutral-50 dark:bg-neutral-800/40 border border-neutral-100 dark:border-neutral-800/60 p-4 rounded-xl">
-                            <span class="block text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-1">Tên sản phẩm</span>
-                            <span id="infoProductName" class="text-sm font-bold text-neutral-850 dark:text-neutral-100">Sản phẩm từ Bazix #002</span>
-                        </div>
-                        
-                        <!-- Order Code Card -->
-                        <div class="bg-neutral-50 dark:bg-neutral-800/40 border border-neutral-100 dark:border-neutral-800/60 p-4 rounded-xl">
-                            <span class="block text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-1">Đơn hàng</span>
-                            <span id="infoOrderCode" class="text-sm font-bold text-indigo-650 dark:text-indigo-400">ORD-024</span>
-                        </div>
-
-                        <!-- Dimensions Card (Spans full width on md+) -->
-                        <div class="md:col-span-2 bg-neutral-50 dark:bg-neutral-800/40 border border-neutral-100 dark:border-neutral-800/60 p-4 rounded-xl">
-                            <span class="block text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-1">Kích thước</span>
-                            <span id="infoDimensions" class="text-sm font-bold text-neutral-800 dark:text-neutral-100">1200 × 600 × 17 mm</span>
-                        </div>
-                    </div>
-
-                    <!-- Manufacturing Steps -->
-                    <div>
-                        <span class="block text-xs font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-3">Hạng mục gia công</span>
-                        <div id="infoCompletedSteps" class="flex flex-wrap gap-2.5">
-                            <!-- Badges will be generated here -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Right Column: QC Result Form -->
-                <div class="lg:col-span-5 border-t lg:border-t-0 lg:border-l border-neutral-100 dark:border-neutral-800 pt-6 lg:pt-0 lg:pl-8 flex flex-col gap-5">
-                    <span class="block text-xs font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">Kết quả kiểm soát chất lượng</span>
-                    
-                    <!-- Outcome Grid -->
-                    <div class="grid grid-cols-2 gap-3" id="outcomeGrid">
-                        <!-- Hoàn thành -->
-                        <div data-value="complete" class="outcome-card cursor-pointer border border-indigo-500 bg-indigo-50/30 dark:bg-indigo-950/10 p-4 rounded-xl flex flex-col items-center justify-center text-center gap-1.5 transition-all duration-200 hover:shadow-sm">
-                            <div class="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
-                                <iconify-icon icon="lucide:check-circle" class="text-lg"></iconify-icon>
-                            </div>
-                            <span class="block font-bold text-xs text-neutral-800 dark:text-neutral-250">Hoàn thành</span>
-                            <span class="block text-[9px] text-neutral-400 dark:text-neutral-500">Chuyển qua đóng gói</span>
-                        </div>
-
-                        <!-- Cắt hụt -->
-                        <div data-value="cắt hụt" class="outcome-card cursor-pointer border border-neutral-200 dark:border-neutral-700 p-4 rounded-xl flex flex-col items-center justify-center text-center gap-1.5 transition-all duration-200 hover:shadow-sm">
-                            <div class="w-8 h-8 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 flex items-center justify-center">
-                                <iconify-icon icon="lucide:x-circle" class="text-lg"></iconify-icon>
-                            </div>
-                            <span class="block font-bold text-xs text-neutral-800 dark:text-neutral-250">Cắt hụt</span>
-                            <span class="block text-[9px] text-neutral-400 dark:text-neutral-500">Cắt lại từ đầu</span>
-                        </div>
-
-                        <!-- Cắt thừa -->
-                        <div data-value="cắt thừa" class="outcome-card cursor-pointer border border-neutral-200 dark:border-neutral-700 p-4 rounded-xl flex flex-col items-center justify-center text-center gap-1.5 transition-all duration-200 hover:shadow-sm">
-                            <div class="w-8 h-8 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 flex items-center justify-center">
-                                <iconify-icon icon="lucide:scissors" class="text-lg"></iconify-icon>
-                            </div>
-                            <span class="block font-bold text-xs text-neutral-800 dark:text-neutral-250">Cắt thừa</span>
-                            <span class="block text-[9px] text-neutral-400 dark:text-neutral-500">Cắt lại CNC & Đánh bóng</span>
-                        </div>
-
-                        <!-- Bị Xước -->
-                        <div data-value="bị xước" class="outcome-card cursor-pointer border border-neutral-200 dark:border-neutral-700 p-4 rounded-xl flex flex-col items-center justify-center text-center gap-1.5 transition-all duration-200 hover:shadow-sm">
-                            <div class="w-8 h-8 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 flex items-center justify-center">
-                                <iconify-icon icon="lucide:alert-circle" class="text-lg"></iconify-icon>
-                            </div>
-                            <span class="block font-bold text-xs text-neutral-800 dark:text-neutral-250">Bị Xước</span>
-                            <span class="block text-[9px] text-neutral-400 dark:text-neutral-500">Cắt lấy tận dụng DC</span>
-                        </div>
-                    </div>
-
-                    <!-- Hidden Input for selected outcome -->
-                    <input type="hidden" id="selectedOutcome" value="complete">
-
-                    <!-- QC Notes -->
-                    <div class="flex flex-col gap-2" id="qcNotesSection">
-                        <label for="qcNotes" class="block text-xs font-bold text-neutral-450 dark:text-neutral-400 uppercase tracking-wider">Ghi chú QC</label>
-                        <textarea id="qcNotes" rows="3" 
-                            class="w-full px-4 py-3 border border-neutral-300 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-                            placeholder="Nhập lý do không đạt hoặc ghi chú thêm..."></textarea>
-                    </div>
-
-                    <!-- Save Button -->
-                    <button type="button" onclick="submitQCResult()" id="saveQCBtn"
-                        class="w-full py-3.5 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all duration-200 hover:opacity-90 active:scale-95 text-sm"
-                        style="background-color: rgb(139, 92, 246);">
-                        <iconify-icon icon="lucide:save" class="text-lg"></iconify-icon>
-                        Lưu kết quả kiểm soát
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-
-    <!-- History list section -->
-    <div class="mt-8 card bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-sm overflow-hidden">
-        <div class="card-header border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/50 py-4 px-6 flex items-center flex-wrap gap-3 justify-between">
-            <h5 class="text-lg font-bold text-neutral-800 dark:text-neutral-100 mb-0 flex items-center gap-2">
-                Lịch sử kiểm soát chất lượng
-            </h5>
-            <div class="flex items-center flex-wrap gap-3">
-                {{-- Per page --}}
-                <span class="text-sm font-medium text-secondary-light mb-0">Hiển thị</span>
-                <form method="GET" action="{{ route('processes.qc') }}" id="perPageForm">
-                    <input type="hidden" name="search" value="{{ $search }}">
-                    <select name="per_page" class="form-select form-select-sm w-auto border border-neutral-200 dark:border-neutral-700 rounded-lg py-1 px-2 text-xs bg-transparent dark:text-neutral-300"
-                        onchange="document.getElementById('perPageForm').submit()">
-                        @foreach([15, 25, 50, 100] as $option)
-                        <option value="{{ $option }}" {{ $perPage == $option ? 'selected' : '' }}>{{ $option }}</option>
-                        @endforeach
-                    </select>
-                </form>
-
-                {{-- Search bar --}}
-                <form method="GET" action="{{ route('processes.qc') }}" class="relative w-48 sm:w-56">
-                    <input type="hidden" name="per_page" value="{{ $perPage }}">
+                <!-- Search bar -->
+                <div class="relative w-48 sm:w-56">
                     <span class="absolute top-1/2 -translate-y-1/2 text-neutral-400 flex items-center justify-center pointer-events-none" style="left: 10px;">
                         <iconify-icon icon="lucide:search" class="text-base"></iconify-icon>
                     </span>
-                    <input type="text" name="search" id="historySearch"
+                    <input type="text" id="historySearch" oninput="filterHistoryTable()"
                         class="w-full pr-3 py-1.5 border border-neutral-300 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 text-xs focus:outline-none focus:ring-2 focus:ring-sky-500"
                         style="padding-left: 34px;"
-                        placeholder="Tìm kiếm lịch sử..." value="{{ $search }}">
-                </form>
+                        placeholder="Tìm kiếm lịch sử...">
+                </div>
             </div>
-        </div>
 
-        <div class="card-body p-6">
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse text-sm" id="historyTable">
                     <thead>
-                        <tr class="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50 whitespace-nowrap">
+                        <tr class="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50">
                             <th class="py-3 px-4 font-semibold text-neutral-600 dark:text-neutral-400">MÃ ĐỊNH DANH</th>
                             <th class="py-3 px-4 font-semibold text-neutral-600 dark:text-neutral-400">HÀNH ĐỘNG</th>
                             <th class="py-3 px-4 font-semibold text-neutral-600 dark:text-neutral-400">TÊN SẢN PHẨM</th>
@@ -517,17 +395,6 @@
                     </tbody>
                 </table>
             </div>
-
-            {{-- Pagination --}}
-            @if($history instanceof \Illuminate\Pagination\LengthAwarePaginator && $history->total() > $perPage)
-                <div class="flex items-center justify-between flex-wrap gap-2 mt-6">
-                    <span class="text-secondary-light text-sm">
-                        Hiển thị {{ $history->firstItem() ?? 0 }} đến {{ $history->lastItem() ?? 0 }}
-                        trong tổng {{ $history->total() }} bản ghi lịch sử
-                    </span>
-                    {{ $history->links() }}
-                </div>
-            @endif
         </div>
     </div>
 
@@ -999,74 +866,20 @@
             document.getElementById("selectedOutcome").value = card.dataset.value;
         });
 
-        function resetQCFormDetails() {
-            document.getElementById("qcNotes").value = "";
-            document.getElementById("selectedOutcome").value = "complete";
-            
-            // Set first outcome card as active, others inactive
-            const cards = document.querySelectorAll(".outcome-card");
-            cards.forEach((card, idx) => {
-                if (idx === 0) {
-                    card.classList.add("border-indigo-500", "bg-indigo-50/30", "dark:bg-indigo-950/10");
-                    card.classList.remove("border-neutral-200", "dark:border-neutral-700");
-                    const iconContainer = card.querySelector("div");
-                    if (iconContainer) {
-                        iconContainer.classList.add("bg-indigo-100", "dark:bg-indigo-900/50", "text-indigo-600", "dark:text-indigo-400");
-                        iconContainer.classList.remove("bg-neutral-100", "dark:bg-neutral-800", "text-neutral-500", "dark:text-neutral-400");
-                    }
+        function filterHistoryTable() {
+            const query = document.getElementById("historySearch").value.toLowerCase();
+            const rows = document.querySelectorAll("#historyTableBody tr");
+
+            rows.forEach(row => {
+                if (row.id === "noHistoryRow") return;
+                const text = row.textContent.toLowerCase();
+                if (text.includes(query)) {
+                    row.style.display = "";
                 } else {
-                    card.classList.remove("border-indigo-500", "bg-indigo-50/30", "dark:bg-indigo-950/10");
-                    card.classList.add("border-neutral-200", "dark:border-neutral-700");
-                    const iconContainer = card.querySelector("div");
-                    if (iconContainer) {
-                        iconContainer.classList.remove("bg-indigo-100", "dark:bg-indigo-900/50", "text-indigo-600", "dark:text-indigo-400");
-                        iconContainer.classList.add("bg-neutral-100", "dark:bg-neutral-800", "text-neutral-500", "dark:text-neutral-400");
-                    }
+                    row.style.display = "none";
                 }
             });
         }
-
-        function closeProductDetails() {
-            document.getElementById("productDetailsSection").classList.add("hidden");
-            document.getElementById("product_code").value = "";
-            toggleSubmitButton();
-        }
-
-        document.getElementById("qcForm").addEventListener("submit", function (e) {
-            e.preventDefault();
-            const code = document.getElementById("product_code").value.trim();
-            if (code) {
-                fetchProductInfo(code);
-            }
-        });
-
-        // Outcome Grid Card click selection (Event Delegation)
-        document.getElementById("outcomeGrid").addEventListener("click", function(e) {
-            const card = e.target.closest(".outcome-card");
-            if (!card) return;
-
-            document.querySelectorAll(".outcome-card").forEach(c => {
-                c.classList.remove("border-indigo-500", "bg-indigo-50/30", "dark:bg-indigo-950/10");
-                c.classList.add("border-neutral-200", "dark:border-neutral-700");
-                
-                const iconContainer = c.querySelector("div");
-                if (iconContainer) {
-                    iconContainer.classList.remove("bg-indigo-100", "dark:bg-indigo-900/50", "text-indigo-600", "dark:text-indigo-400");
-                    iconContainer.classList.add("bg-neutral-100", "dark:bg-neutral-800", "text-neutral-500", "dark:text-neutral-400");
-                }
-            });
-
-            card.classList.add("border-indigo-500", "bg-indigo-50/30", "dark:bg-indigo-950/10");
-            card.classList.remove("border-neutral-200", "dark:border-neutral-700");
-            
-            const iconContainer = card.querySelector("div");
-            if (iconContainer) {
-                iconContainer.classList.add("bg-indigo-100", "dark:bg-indigo-900/50", "text-indigo-600", "dark:text-indigo-400");
-                iconContainer.classList.remove("bg-neutral-100", "dark:bg-neutral-800", "text-neutral-500", "dark:text-neutral-400");
-            }
-
-            document.getElementById("selectedOutcome").value = card.dataset.value;
-        });
 
         function toggleSubmitButton() {
             const productCodeInput = document.getElementById("product_code");
