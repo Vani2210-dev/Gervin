@@ -19,6 +19,7 @@ class Order extends Model
         'address',
         'deadline',
         'notes',
+        'customer_policy',
         'total_amount',
         'status',
         'attachments',

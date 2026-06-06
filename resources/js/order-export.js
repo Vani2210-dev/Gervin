@@ -187,7 +187,7 @@ async function exportToExcel() {
 
             worksheet.getRow(10).height = 18;
             worksheet.mergeCells('C10:O10');
-            setCell(10, 3, `Chính sách KH: `, false, 'left', 10);
+            setCell(10, 3, `Chính sách KH: ${orderData.customer_policy || ''}`, false, 'left', 10);
 
             worksheet.getRow(11).height = 20;
             worksheet.mergeCells('C11:O11');

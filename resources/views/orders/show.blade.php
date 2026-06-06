@@ -87,6 +87,10 @@
                         <span class="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Ghi chú đơn hàng</span>
                         <span class="text-neutral-600 italic bg-neutral-50 p-3 rounded-lg border border-neutral-100">{{ $acrylicOrder->notes ?? 'Không có ghi chú' }}</span>
                     </div>
+                    <div class="flex flex-col gap-1 md:col-span-2">
+                        <span class="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Chính sách KH</span>
+                        <span class="text-neutral-600 italic bg-neutral-50 p-3 rounded-lg border border-neutral-100">{{ $acrylicOrder->customer_policy ?? 'Không có chính sách' }}</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -414,6 +418,7 @@
         'deadline' => $acrylicOrder->deadline ? \Carbon\Carbon::parse($acrylicOrder->deadline)->format('Y-m-d') : null,
         'address' => $acrylicOrder->address,
         'notes' => $acrylicOrder->notes,
+        'customer_policy' => $acrylicOrder->customer_policy,
         'total_amount' => $acrylicOrder->total_amount,
         'delivery_days' => $acrylicOrder->delivery_days ?? ($acrylicOrder->type === 'glass' ? 5 : 2),
         'supplies' => $acrylicOrder->supplies->map(function($supply) use ($acrylicOrder) {

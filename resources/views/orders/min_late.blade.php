@@ -1589,23 +1589,6 @@ function toggleOrderTableView(button) {
     });
 }
 
-function fillMinLateProductInfo(selectElement, supplyIndex, itemIndex) {
-    const productName = selectElement.value;
-    const row = selectElement.closest('.order-item-row');
-    
-    @if(auth()->check())
-    const supplies = @json(\App\Models\Supply::all());
-    const supply = supplies.find(s => s.name === productName);
-    if (supply) {
-        const unitPriceInput = row.querySelector(`input[name="supplies[${supplyIndex}][items][${itemIndex}][unit_price]"]`);
-        if (unitPriceInput) {
-            unitPriceInput.value = supply.unit_price ? Math.round(supply.unit_price) : 0;
-            calculateMinLateTotalPrice(row);
-        }
-    }
-    @endif
-    updateOrderSummary();
-}
 
 // Initial setup for Min Late-specific rows if DOM loaded
 document.addEventListener('DOMContentLoaded', function() {
