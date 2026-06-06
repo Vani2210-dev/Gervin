@@ -39,9 +39,4 @@ class PackingPackage extends Model
             ->where('is_packaged', true)
             ->orderBy('id', 'asc');
     }
-
-    public function packagedItems()
-    {
-        return $this->hasMany(PackingPackageItem::class)->where('is_packaged', true);
-    }
 }
