@@ -145,8 +145,37 @@ async function generateNestingWorkbook(orderData, suppliesData, filename) {
                 }
             }
 
-            // Parse Mullion/Milling Details
-            const parsed = parseMullionMillingDetails(item.product_name || '');
+            // Parse Mullion/Milling Details:
+            // Prefer saved DB values; fall back to regex parser for legacy records.
+            const hasDbParams = (item.offset_left !== null && item.offset_left !== undefined);
+            let milling;
+            if (hasDbParams) {
+                milling = {
+                    offsetLeft:   item.offset_left,
+                    offsetRight:  item.offset_right,
+                    offsetTop:    item.offset_top,
+                    offsetBottom: item.offset_bottom,
+                    millLeft:     item.mill_left,
+                    millRight:    item.mill_right,
+                    millTop:      item.mill_top,
+                    millBottom:   item.mill_bottom,
+                    millWidth:    item.mill_width,
+                    millDepth:    item.mill_depth,
+                    millLeft2:    item.mill_left_2,
+                    millRight2:   item.mill_right_2,
+                    millTop2:     item.mill_top_2,
+                    millBottom2:  item.mill_bottom_2,
+                    millWidth2:   item.mill_width_2,
+                    millDepth2:   item.mill_depth_2,
+                };
+            } else {
+                const parsed = parseMullionMillingDetails(item.product_name || '');
+                milling = {
+                    ...parsed,
+                    millLeft2: null, millRight2: null, millTop2: null,
+                    millBottom2: null, millWidth2: null, millDepth2: null,
+                };
+            }
 
             const qty = parseInt(item.quantity) || 1;
             const codes = item.product_codes || [];
@@ -173,10 +202,12 @@ async function generateNestingWorkbook(orderData, suppliesData, filename) {
                     edgeL1, edgeL2, edgeW1, edgeW2,                         // L M N O Nẹp
                     0.00001, 0.00001, 0.00001, 0.00001,                     // P Q R S Dày nẹp
                     item.edge_bevel || '',                                    // T Ghi chú
-                    parsed.offsetLeft, parsed.offsetRight, parsed.offsetTop, parsed.offsetBottom, // U-X Bao trong
-                    parsed.millLeft, parsed.millRight, parsed.millTop, parsed.millBottom,         // Y-AB Xoi 1
-                    parsed.millWidth, parsed.millDepth,                                       // AC-AD Rộng/Sâu 1
-                    null, null, null, null, null, null                        // AE-AJ Xoi 2 (null)
+                    milling.offsetLeft, milling.offsetRight, milling.offsetTop, milling.offsetBottom, // U-X Bao trong
+                    milling.millLeft, milling.millRight, milling.millTop, milling.millBottom,         // Y-AB Xoi 1
+                    milling.millWidth, milling.millDepth,                                             // AC-AD Rộng/Sâu 1
+                    milling.millLeft2 ?? null, milling.millRight2 ?? null,
+                    milling.millTop2 ?? null, milling.millBottom2 ?? null,
+                    milling.millWidth2 ?? null, milling.millDepth2 ?? null   // AE-AJ Xoi 2
                 ];
 
                 vals.forEach((v, idx) => {

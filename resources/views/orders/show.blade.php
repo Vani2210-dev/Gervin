@@ -87,6 +87,10 @@
                         <span class="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Ghi chú đơn hàng</span>
                         <span class="text-neutral-600 italic bg-neutral-50 p-3 rounded-lg border border-neutral-100">{{ $acrylicOrder->notes ?? 'Không có ghi chú' }}</span>
                     </div>
+                    <div class="flex flex-col gap-1 md:col-span-2">
+                        <span class="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Chính sách KH</span>
+                        <span class="text-neutral-600 italic bg-neutral-50 p-3 rounded-lg border border-neutral-100">{{ $acrylicOrder->customer_policy ?? 'Không có chính sách' }}</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -414,6 +418,7 @@
         'deadline' => $acrylicOrder->deadline ? \Carbon\Carbon::parse($acrylicOrder->deadline)->format('Y-m-d') : null,
         'address' => $acrylicOrder->address,
         'notes' => $acrylicOrder->notes,
+        'customer_policy' => $acrylicOrder->customer_policy,
         'total_amount' => $acrylicOrder->total_amount,
         'delivery_days' => $acrylicOrder->delivery_days ?? ($acrylicOrder->type === 'glass' ? 5 : 2),
         'supplies' => $acrylicOrder->supplies->map(function($supply) use ($acrylicOrder) {
@@ -483,6 +488,22 @@
                         'molding_length' => $item->molding_length,
                         'bevel' => $item->bevel,
                         'vertical_grain_cnc' => $item->vertical_grain_cnc,
+                        'offset_left'   => $item->offset_left,
+                        'offset_right'  => $item->offset_right,
+                        'offset_top'    => $item->offset_top,
+                        'offset_bottom' => $item->offset_bottom,
+                        'mill_left'     => $item->mill_left,
+                        'mill_right'    => $item->mill_right,
+                        'mill_top'      => $item->mill_top,
+                        'mill_bottom'   => $item->mill_bottom,
+                        'mill_width'    => $item->mill_width,
+                        'mill_depth'    => $item->mill_depth,
+                        'mill_left_2'   => $item->mill_left_2,
+                        'mill_right_2'  => $item->mill_right_2,
+                        'mill_top_2'    => $item->mill_top_2,
+                        'mill_bottom_2' => $item->mill_bottom_2,
+                        'mill_width_2'  => $item->mill_width_2,
+                        'mill_depth_2'  => $item->mill_depth_2,
                         'unit_price' => $item->unit_price,
                         'total_price' => $item->total_price,
                         'notes' => $item->notes,

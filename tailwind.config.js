@@ -9,6 +9,13 @@ export default {
         './resources/views/**/*.blade.php',
     ],
 
+    safelist: [
+        'grid-cols-3',
+        'grid-cols-4',
+        'gap-x-3',
+        'gap-y-4',
+    ],
+
     theme: {
         extend: {
             fontFamily: {

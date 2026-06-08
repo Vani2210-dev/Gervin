@@ -137,295 +137,15 @@
         padding: 8px 12px !important;
         font-size: 13px !important;
     }
-    /* In card view: fill the grid column 100% and match input height */
-    .order-entry-card:not(.is-table-view) .order-supply-row .ts-wrapper.tom-select-supply-code {
-        width: 100% !important;
-        display: block !important;
-        flex-shrink: unset;
-    }
-    .order-entry-card:not(.is-table-view) .order-supply-row .ts-wrapper.tom-select-supply-code .ts-control {
-        height: 42px !important;
-        min-height: 42px !important;
-        border-radius: 0.5rem !important;
-        padding: 0.5rem 0.75rem !important;
-        font-size: 0.875rem !important;
-    }
-    .order-entry-card:not(.is-table-view) .order-supply-row .ts-wrapper.tom-select-supply-code .ts-control input {
-        font-size: 0.875rem !important;
-    }
-    .order-entry-card:not(.is-table-view) .order-supply-row .ts-wrapper.tom-select-supply-code .ts-control .item {
-        font-size: 0.875rem !important;
-    }
-
-    .order-entry-card:not(.is-table-view) .overflow-x-auto {
-        overflow: visible !important;
-    }
-    .order-entry-card:not(.is-table-view) table {
-        display: block;
-        min-width: 0 !important;
-        border: 0 !important;
-    }
-    .order-entry-card:not(.is-table-view) thead {
-        display: none;
-    }
-    .order-entry-card:not(.is-table-view) tbody.supply-items-container {
-        display: grid;
-        gap: 1rem;
-    }
-    .order-entry-card:not(.is-table-view) tr.order-item-row {
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 1rem 1.25rem;
-        padding: 1.25rem;
-        border: 1px solid #e5e7eb;
-        border-radius: 0.75rem;
-        background: #fff;
-        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-    }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td {
-        display: block;
-        width: auto !important;
-        min-width: 0 !important;
-        max-width: none !important;
-        padding: 0 !important;
-        border: 0 !important;
-        background: transparent !important;
-        box-shadow: none !important;
-        position: static !important;
-    }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td::before {
-        display: block;
-        margin-bottom: 0.5rem;
-        color: #64748b;
-        font-size: 0.75rem;
-        font-weight: 600;
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
-    }
-    .order-entry-card:not(.is-table-view) tr.order-item-row input,
-    .order-entry-card:not(.is-table-view) tr.order-item-row select,
-    .order-entry-card:not(.is-table-view) tr.order-item-row textarea {
-        width: 100% !important;
-        height: 42px !important;
-        min-height: 42px !important;
-        padding: 0.5rem 0.75rem !important;
-        font-size: 0.875rem !important;
-        line-height: 1.25rem !important;
-        text-align: left !important;
-    }
-    .order-entry-card:not(.is-table-view) tr.order-item-row textarea {
-        height: auto !important;
-    }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:first-child,
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:last-child {
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-end;
-    }
-    .order-entry-card:not(.is-table-view) .order-supply-row > .flex.items-center.justify-between {
-        align-items: flex-start;
-        flex-wrap: wrap;
-    }
-    .order-entry-card:not(.is-table-view) .order-supply-row > .flex.items-center.justify-between > .flex.items-center.gap-3 {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 1rem;
-        flex: 1 1 720px;
-        align-items: end;
-    }
-    .order-entry-card:not(.is-table-view) .order-supply-row > .flex.items-center.justify-between > .flex.items-center.gap-3::before {
-        content: "Thông tin vật tư";
-        grid-column: 1 / -1;
-        color: #64748b;
-        font-size: 0.75rem;
-        font-weight: 600;
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
-    }
-    .order-entry-card:not(.is-table-view) .order-supply-row > .flex.items-center.justify-between > .flex.items-center.gap-3 > .p-1\.5 {
-        display: none;
-    }
-    .order-entry-card:not(.is-table-view) .order-supply-row > .flex.items-center.justify-between > .flex.items-center.gap-2 {
-        align-self: flex-end;
-    }
-    .order-entry-card:not(.is-table-view) .order-supply-row > .flex.items-center.justify-between input {
-        width: 100% !important;
-        height: 42px !important;
-        font-size: 0.875rem !important;
-    }
-    .order-entry-card:not(.is-table-view) .order-input-layout {
-        display: grid !important;
-        gap: 1rem;
-        overflow: visible !important;
-    }
-    .order-entry-card:not(.is-table-view) .order-input-layout table {
-        display: none !important;
-    }
-    .order-entry-card:not(.is-table-view) .supply-items-container.order-input-rows {
-        display: grid;
-        gap: 1rem;
-    }
-    .order-entry-card:not(.is-table-view) .order-item-row.order-form-row {
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 1rem 1.25rem;
-        padding: 1.25rem;
-        border: 1px solid #e5e7eb;
-        border-radius: 0.75rem;
-        background: #fff;
-        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-    }
-    .order-entry-card:not(.is-table-view) .order-form-field {
-        display: block;
-        min-width: 0;
-    }
-    .order-entry-card:not(.is-table-view) .order-form-section {
-        grid-column: 1 / -1;
-        display: grid;
-        gap: 1rem 1.25rem;
-    }
-    .order-entry-card:not(.is-table-view) .order-form-section--1 {
-        grid-template-columns: minmax(0, 1fr);
-    }
-    .order-entry-card:not(.is-table-view) .order-form-section--2 {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-    .order-entry-card:not(.is-table-view) .order-form-section--3 {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-    .order-entry-card:not(.is-table-view) .order-form-section--4 {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
-    .order-entry-card:not(.is-table-view) .order-form-field__label {
-        display: block;
-        margin-bottom: 0.5rem;
-        color: #64748b;
-        font-size: 0.75rem;
-        font-weight: 600;
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
-    }
-    .order-entry-card:not(.is-table-view) .order-form-field input,
-    .order-entry-card:not(.is-table-view) .order-form-field select,
-    .order-entry-card:not(.is-table-view) .order-form-field textarea {
-        width: 100% !important;
-        height: 42px !important;
-        min-height: 42px !important;
-        padding: 0.5rem 0.75rem !important;
-        font-size: 0.875rem !important;
-        line-height: 1.25rem !important;
-        text-align: left !important;
-    }
-    .order-entry-card:not(.is-table-view) .order-form-field--action {
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-end;
-    }
-    .order-entry-card:not(.is-table-view) .order-form-row__header {
-        grid-column: 1 / -1;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 1rem;
-        padding-bottom: 0.75rem;
-        border-bottom: 1px solid #f1f5f9;
-    }
-    .order-entry-card:not(.is-table-view) .order-form-row__badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        border-radius: 999px;
-        background: #eff6ff;
-        color: #2563eb;
-        padding: 0.375rem 0.75rem;
-        font-size: 0.8125rem;
-        font-weight: 700;
-    }
-    .order-entry-card:not(.is-table-view) .order-form-row__actions {
-        display: inline-flex;
-        align-items: center;
-        justify-content: flex-end;
-        gap: 0.5rem;
-    }
-    .order-entry-card:not(.is-table-view) .order-form-row__actions > button,
-    .order-entry-card:not(.is-table-view) .order-form-row__quick-actions button {
-        width: 2rem;
-        height: 2rem;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 0.5rem;
-        background: #f8fafc;
-    }
-    .order-entry-card:not(.is-table-view) .order-form-row__quick-actions {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(1)::before { content: "STT"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(2)::before { content: "Mã SP"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(3)::before { content: "Tên sản phẩm"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(4)::before { content: "Độ dày"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(5)::before { content: "Cao"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(6)::before { content: "Rộng"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(7)::before { content: "Số lượng"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(8)::before { content: "Cạnh vát"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(9)::before { content: "Chiều vân"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(10)::before { content: "Cánh (m2)"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(11)::before { content: "Phào (m)"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(12)::before { content: "Vát"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(13)::before { content: "Vân dọc CNC"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(14)::before { content: "Đơn giá"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(15)::before { content: "Thành tiền"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(16)::before { content: "Ghi chú"; }
-    .order-entry-card:not(.is-table-view) tr.order-item-row td:nth-child(17)::before { content: "Hành động"; }
-    .order-entry-card .order-preview-table-wrap {
-        display: none;
-    }
-    .order-entry-card.is-table-view .order-input-layout {
-        display: none !important;
-    }
-    .order-entry-card.is-table-view .order-preview-table-wrap {
-        display: block;
-    }
-    .order-entry-card.is-table-view .order-table-form-action {
-        display: none !important;
-    }
-    .order-preview-table td {
-        vertical-align: middle;
-        white-space: nowrap;
-    }
-    .order-entry-card:not(.is-table-view) .order-form-row--focus {
-        border-color: #3b82f6 !important;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, .16), 0 12px 24px rgba(15, 23, 42, .08);
-    }
-    @media (max-width: 1199px) {
-        .order-entry-card:not(.is-table-view) tr.order-item-row,
-        .order-entry-card:not(.is-table-view) .order-item-row.order-form-row {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-    }
-    @media (max-width: 767px) {
-        .order-entry-card:not(.is-table-view) tr.order-item-row,
-        .order-entry-card:not(.is-table-view) .order-item-row.order-form-row,
-        .order-entry-card:not(.is-table-view) .order-supply-row > .flex.items-center.justify-between > .flex.items-center.gap-3,
-        .order-entry-card:not(.is-table-view) .order-form-section {
-            grid-template-columns: 1fr;
-        }
-    }
 </style>
-<div class="bg-white border border-neutral-200 rounded-xl p-6 shadow-sm order-entry-card">
+<div class="bg-white border border-neutral-200 rounded-xl p-6 shadow-sm">
     <div class="flex items-center justify-between border-b border-neutral-100 pb-4 mb-5">
         <div class="flex items-center gap-2">
             <iconify-icon icon="lucide:package-open" class="text-xl text-primary-500"></iconify-icon>
             <h6 class="font-bold text-base text-neutral-800 m-0">Danh sách Vật tư & Sản phẩm (Acrylic)</h6>
         </div>
         <div class="flex items-center gap-2">
-            <button type="button" onclick="toggleOrderTableView(this)" class="btn btn-sm bg-neutral-100 hover:bg-neutral-200 text-neutral-700 rounded-lg flex items-center gap-1">
-                <iconify-icon icon="lucide:table-2" class="text-lg"></iconify-icon>
-                <span class="order-table-view-label">Xem dạng bảng</span>
-            </button>
-            <button type="button" onclick="addOrderSupply()" class="order-table-form-action btn btn-sm btn-primary rounded-lg flex items-center gap-1">
+            <button type="button" onclick="addOrderSupply()" class="btn btn-sm btn-primary rounded-lg flex items-center gap-1">
                 <iconify-icon icon="lucide:plus" class="text-lg"></iconify-icon> Thêm vật tư
             </button>
         </div>
@@ -454,7 +174,7 @@
                         <input type="number" name="supplies[{{ $supplyIndex }}][quantity]" class="form-control form-control-sm rounded-lg w-24 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="SL" min="0" step="0.01" value="{{ $supply->quantity ?? 0 }}">
                     </div>
                     <div class="flex items-center gap-2">
-                        <button type="button" onclick="this.closest('.order-supply-row').remove()" class="order-table-form-action text-neutral-400 hover:text-danger-500 transition-colors p-1 flex items-center justify-center" title="Xóa vật tư này">
+                        <button type="button" onclick="this.closest('.order-supply-row').remove()" class="text-neutral-400 hover:text-danger-500 transition-colors p-1 flex items-center justify-center" title="Xóa vật tư này">
                             <iconify-icon icon="lucide:trash-2" class="text-lg"></iconify-icon>
                         </button>
                     </div>
@@ -509,8 +229,8 @@
                                 <td style="width: 70px; min-width: 70px; " class="border border-neutral-200">
                                     <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="1" min="1" required value="{{ $item->quantity }}">
                                 </td>
-                                <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
-                                    <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][edge_bevel]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Cạnh vát" value="{{ $item->edge_bevel }}">
+                                <td style="width: 100px; min-width: 100px; " class="border border-neutral-200 cursor-not-allowed">
+                                    <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][edge_bevel]" class="product-edge-bevel-input form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="Cạnh vát" value="{{ $item->edge_bevel }}" readonly tabindex="-1" style="pointer-events: none;">
                                 </td>
                                 <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
                                     <select name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][grain_direction]" class="form-select form-select-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 px-1 py-1 h-8 text-xs">
@@ -525,10 +245,43 @@
                                     <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][molding_length]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="{{ $item->molding_length }}">
                                 </td>
                                 <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
-                                    <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][bevel]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Vát" value="{{ $item->bevel }}">
+                                    <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][bevel]" class="product-bevel-input form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Vát" value="{{ $item->bevel }}" list="bevel-list-{{ $supplyIndex }}-{{ $itemIndex }}">
+                                    <datalist class="bevel-datalist" id="bevel-list-{{ $supplyIndex }}-{{ $itemIndex }}">
+                                        @if($item->width)
+                                            <option value="{{ $item->width }}">Rộng ({{ $item->width }})</option>
+                                        @endif
+                                        @if($item->height)
+                                            <option value="{{ $item->height }}">Cao ({{ $item->height }})</option>
+                                        @endif
+                                    </datalist>
                                 </td>
-                                <td style="width: 110px; min-width: 110px; " class="border border-neutral-200">
-                                    <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][vertical_grain_cnc]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Vân dọc CNC" value="{{ $item->vertical_grain_cnc }}">
+                                <td style="width: 130px; min-width: 130px; " class="border border-neutral-200">
+                                    <select name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][vertical_grain_cnc]" class="cnc-template-select form-select form-select-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 px-1 py-1 h-8 text-xs" onchange="onCncTemplateChange(this)">
+                                        <option value="">-- CNC --</option>
+                                        @foreach($cncTemplates ?? [] as $cncTpl)
+                                        <option value="{{ $cncTpl->name }}" data-params='{{ json_encode($cncTpl) }}' {{ ($item->vertical_grain_cnc === $cncTpl->name) ? 'selected' : '' }}>{{ $cncTpl->name }}</option>
+                                        @endforeach
+                                        @if($item->vertical_grain_cnc && !($cncTemplates ?? collect())->where('name', $item->vertical_grain_cnc)->count())
+                                        <option value="{{ $item->vertical_grain_cnc }}" selected>{{ $item->vertical_grain_cnc }}</option>
+                                        @endif
+                                    </select>
+                                    {{-- Hidden parameter fields --}}
+                                    <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][offset_left]"   class="cnc-offset-left"   value="{{ $item->offset_left }}">
+                                    <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][offset_right]"  class="cnc-offset-right"  value="{{ $item->offset_right }}">
+                                    <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][offset_top]"    class="cnc-offset-top"    value="{{ $item->offset_top }}">
+                                    <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][offset_bottom]" class="cnc-offset-bottom" value="{{ $item->offset_bottom }}">
+                                    <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][mill_left]"     class="cnc-mill-left"     value="{{ $item->mill_left }}">
+                                    <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][mill_right]"    class="cnc-mill-right"    value="{{ $item->mill_right }}">
+                                    <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][mill_top]"      class="cnc-mill-top"      value="{{ $item->mill_top }}">
+                                    <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][mill_bottom]"   class="cnc-mill-bottom"   value="{{ $item->mill_bottom }}">
+                                    <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][mill_width]"    class="cnc-mill-width"    value="{{ $item->mill_width }}">
+                                    <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][mill_depth]"    class="cnc-mill-depth"    value="{{ $item->mill_depth }}">
+                                    <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][mill_left_2]"   class="cnc-mill-left-2"   value="{{ $item->mill_left_2 }}">
+                                    <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][mill_right_2]"  class="cnc-mill-right-2"  value="{{ $item->mill_right_2 }}">
+                                    <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][mill_top_2]"    class="cnc-mill-top-2"    value="{{ $item->mill_top_2 }}">
+                                    <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][mill_bottom_2]" class="cnc-mill-bottom-2" value="{{ $item->mill_bottom_2 }}">
+                                    <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][mill_width_2]"  class="cnc-mill-width-2"  value="{{ $item->mill_width_2 }}">
+                                    <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][mill_depth_2]"  class="cnc-mill-depth-2"  value="{{ $item->mill_depth_2 }}">
                                 </td>
                                 <td style="width: 110px; min-width: 110px; " class="border border-neutral-200">
                                     <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][unit_price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" min="0" required value="{{ $item->unit_price ? round($item->unit_price) : '' }}">
@@ -557,7 +310,7 @@
                 </div>
                 
                 {{-- Nút thêm sản phẩm mới (Sao chép từ sản phẩm cuối) --}}
-                <button type="button" onclick="addOrderItem(this)" class="order-table-form-action w-full mt-4 py-3 border-2 border-dashed border-primary-300 hover:border-primary-500 rounded-xl bg-primary-50/50 hover:bg-primary-50 text-primary-600 font-semibold text-sm flex items-center justify-center gap-1.5 transition-all duration-200">
+                <button type="button" onclick="addOrderItem(this)" class="w-full mt-4 py-3 border-2 border-dashed border-primary-300 hover:border-primary-500 rounded-xl bg-primary-50/50 hover:bg-primary-50 text-primary-600 font-semibold text-sm flex items-center justify-center gap-1.5 transition-all duration-200">
                     <iconify-icon icon="lucide:plus" class="text-lg"></iconify-icon>
                     Thêm sản phẩm mới (Sao chép từ sản phẩm cuối)
                 </button>
@@ -634,42 +387,42 @@ function addOrderSupply() {
                 <input type="number" name="supplies[${supplyIndex}][quantity]" class="form-control form-control-sm rounded-lg w-24 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="SL" min="0" step="0.01" value="0">
             </div>
             <div class="flex items-center gap-2">
-                <button type="button" onclick="this.closest('.order-supply-row').remove()" class="order-table-form-action text-neutral-400 hover:text-danger-500 transition-colors p-1 flex items-center justify-center" title="Xóa vật tư này">
+                <button type="button" onclick="this.closest('.order-supply-row').remove()" class="text-neutral-400 hover:text-danger-500 transition-colors p-1 flex items-center justify-center" title="Xóa vật tư này">
                     <iconify-icon icon="lucide:trash-2" class="text-lg"></iconify-icon>
                 </button>
             </div>
         </div>
         <div class="overflow-x-auto pb-3">
-            <table class="table bordered-table sm-table mb-0 min-w-[1700px] border border-neutral-200">
+            <table class="table bordered-table sm-table mb-0 min-w-[1100px] border border-neutral-200">
                 <thead>
                     <tr class="bg-neutral-50 text-center">
-                        <th scope="col" rowspan="2" style="width: 45px; min-width: 45px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Stt</th>
-                        <th scope="col" rowspan="2" style="width: 160px; min-width: 160px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Mã SP</th>
-                        <th scope="col" rowspan="2" style="min-width: 220px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên sản phẩm <span class="text-danger-500">*</span></th>
+                        <th scope="col" rowspan="2" style="width: 30px; min-width: 30px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Stt</th>
+                        <th scope="col" rowspan="2" style="width: 110px; min-width: 110px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Mã SP</th>
+                        <th scope="col" rowspan="2" style="width: 150px; min-width: 150px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên sản phẩm <span class="text-danger-500">*</span></th>
                         <th scope="col" rowspan="2" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Độ dày</th>
                         <th scope="col" colspan="2" style="white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Kích thước (mm)</th>
-                        <th scope="col" rowspan="2" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số lượng <span class="text-danger-500">*</span></th>
-                        <th scope="col" rowspan="2" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Cạnh Vát</th>
-                        <th scope="col" rowspan="2" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Chiều vân</th>
-                        <th scope="col" rowspan="2" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Cánh (m2)</th>
-                        <th scope="col" rowspan="2" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Phào (m)</th>
-                        <th scope="col" rowspan="2" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Vát</th>
-                        <th scope="col" rowspan="2" style="width: 110px; min-width: 110px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Vân dọc CNC</th>
-                        <th scope="col" rowspan="2" style="width: 110px; min-width: 110px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá <span class="text-danger-500">*</span></th>
-                        <th scope="col" rowspan="2" style="width: 120px; min-width: 120px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Thành tiền</th>
-                        <th scope="col" rowspan="2" style="min-width: 160px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Ghi chú</th>
-                        <th scope="col" rowspan="2" style="width: 80px; min-width: 80px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Hành động</th>
+                        <th scope="col" rowspan="2" style="width: 50px; min-width: 50px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số lượng <span class="text-danger-500">*</span></th>
+                        <th scope="col" rowspan="2" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Cạnh Vát</th>
+                        <th scope="col" rowspan="2" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Chiều vân</th>
+                        <th scope="col" rowspan="2" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Cánh (m2)</th>
+                        <th scope="col" rowspan="2" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Phào (m)</th>
+                        <th scope="col" rowspan="2" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Vát</th>
+                        <th scope="col" rowspan="2" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Vân dọc CNC</th>
+                        <th scope="col" rowspan="2" style="width: 80px; min-width: 80px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá <span class="text-danger-500">*</span></th>
+                        <th scope="col" rowspan="2" style="width: 90px; min-width: 90px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Thành tiền</th>
+                        <th scope="col" rowspan="2" style="min-width: 120px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Ghi chú</th>
+                        <th scope="col" rowspan="2" style="width: 60px; min-width: 60px; white-space: nowrap; position: sticky; right: 0; z-index: 3; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Hành động</th>
                     </tr>
                     <tr class="bg-neutral-50 text-center">
-                        <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="border border-neutral-200 bg-yellow-100/70 font-semibold text-xs text-neutral-700 uppercase">Cao (chiều vân)</th>
-                        <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="border border-neutral-200 font-semibold text-xs text-neutral-700 uppercase">Rộng</th>
+                        <th scope="col" style="width: 130px; min-width: 130px; white-space: nowrap;" class="border border-neutral-200 bg-yellow-100/70 font-semibold text-xs text-neutral-700 uppercase">Cao (chiều vân)</th>
+                        <th scope="col" style="width: 130px; min-width: 130px; white-space: nowrap;" class="border border-neutral-200 font-semibold text-xs text-neutral-700 uppercase">Rộng</th>
                     </tr>
                 </thead>
                 <tbody class="supply-items-container" data-supply-index="${supplyIndex}">
                 </tbody>
             </table>
         </div>
-        <button type="button" onclick="addOrderItem(this)" class="order-table-form-action w-full mt-4 py-3 border-2 border-dashed border-primary-300 hover:border-primary-500 rounded-xl bg-primary-50/50 hover:bg-primary-50 text-primary-600 font-semibold text-sm flex items-center justify-center gap-1.5 transition-all duration-200">
+        <button type="button" onclick="addOrderItem(this)" class="w-full mt-4 py-3 border-2 border-dashed border-primary-300 hover:border-primary-500 rounded-xl bg-primary-50/50 hover:bg-primary-50 text-primary-600 font-semibold text-sm flex items-center justify-center gap-1.5 transition-all duration-200">
             <iconify-icon icon="lucide:plus" class="text-lg"></iconify-icon>
             Thêm sản phẩm mới (Sao chép từ sản phẩm cuối)
         </button>
@@ -681,8 +434,6 @@ function addOrderSupply() {
     if (addProductBtn) {
         addOrderItem(addProductBtn);
     }
-
-    ensureAcrylicFormLayout(newSupply);
 
     const selectEl = newSupply.querySelector('.tom-select-supply-code');
     if (selectEl && typeof TomSelect !== 'undefined') {
@@ -753,8 +504,8 @@ function addOrderItem(button) {
         <td style="width: 70px; min-width: 70px; " class="border border-neutral-200">
             <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="1" min="1" required value="${lastData ? lastData.quantity : '1'}">
         </td>
-        <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
-            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][edge_bevel]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Cạnh vát" value="${lastData ? lastData.edge_bevel : ''}">
+        <td style="width: 100px; min-width: 100px; " class="border border-neutral-200 cursor-not-allowed">
+            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][edge_bevel]" class="product-edge-bevel-input form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="Cạnh vát" value="${lastData ? lastData.edge_bevel : ''}" readonly tabindex="-1" style="pointer-events: none;">
         </td>
         <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
             <select name="supplies[${supplyIndex}][items][${itemIndex}][grain_direction]" class="form-select form-select-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 px-1 py-1 h-8 text-xs">
@@ -769,10 +520,33 @@ function addOrderItem(button) {
             <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][molding_length]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="${lastData ? lastData.molding_length : ''}">
         </td>
         <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
-            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][bevel]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Vát" value="${lastData ? lastData.bevel : ''}">
+            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][bevel]" class="product-bevel-input form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Vát" value="${lastData ? lastData.bevel : ''}" list="bevel-list-${supplyIndex}-${itemIndex}">
+            <datalist class="bevel-datalist" id="bevel-list-${supplyIndex}-${itemIndex}">
+                ${lastData && lastData.width ? `<option value="${lastData.width}">Rộng (${lastData.width})</option>` : ''}
+                ${lastData && lastData.height ? `<option value="${lastData.height}">Cao (${lastData.height})</option>` : ''}
+            </datalist>
         </td>
-        <td style="width: 110px; min-width: 110px; " class="border border-neutral-200">
-            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][vertical_grain_cnc]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Vân dọc CNC" value="${lastData ? lastData.vertical_grain_cnc : ''}">
+        <td style="width: 130px; min-width: 130px; " class="border border-neutral-200">
+            <select name="supplies[${supplyIndex}][items][${itemIndex}][vertical_grain_cnc]" class="cnc-template-select form-select form-select-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 px-1 py-1 h-8 text-xs" onchange="onCncTemplateChange(this)">
+                <option value="">-- CNC --</option>
+                ${window.cncTemplatesData ? window.cncTemplatesData.map(t => `<option value="${t.name}" data-params='${JSON.stringify(t)}'>${t.name}</option>`).join('') : ''}
+            </select>
+            <input type="hidden" name="supplies[${supplyIndex}][items][${itemIndex}][offset_left]"   class="cnc-offset-left"   value="">
+            <input type="hidden" name="supplies[${supplyIndex}][items][${itemIndex}][offset_right]"  class="cnc-offset-right"  value="">
+            <input type="hidden" name="supplies[${supplyIndex}][items][${itemIndex}][offset_top]"    class="cnc-offset-top"    value="">
+            <input type="hidden" name="supplies[${supplyIndex}][items][${itemIndex}][offset_bottom]" class="cnc-offset-bottom" value="">
+            <input type="hidden" name="supplies[${supplyIndex}][items][${itemIndex}][mill_left]"     class="cnc-mill-left"     value="">
+            <input type="hidden" name="supplies[${supplyIndex}][items][${itemIndex}][mill_right]"    class="cnc-mill-right"    value="">
+            <input type="hidden" name="supplies[${supplyIndex}][items][${itemIndex}][mill_top]"      class="cnc-mill-top"      value="">
+            <input type="hidden" name="supplies[${supplyIndex}][items][${itemIndex}][mill_bottom]"   class="cnc-mill-bottom"   value="">
+            <input type="hidden" name="supplies[${supplyIndex}][items][${itemIndex}][mill_width]"    class="cnc-mill-width"    value="">
+            <input type="hidden" name="supplies[${supplyIndex}][items][${itemIndex}][mill_depth]"    class="cnc-mill-depth"    value="">
+            <input type="hidden" name="supplies[${supplyIndex}][items][${itemIndex}][mill_left_2]"   class="cnc-mill-left-2"   value="">
+            <input type="hidden" name="supplies[${supplyIndex}][items][${itemIndex}][mill_right_2]"  class="cnc-mill-right-2"  value="">
+            <input type="hidden" name="supplies[${supplyIndex}][items][${itemIndex}][mill_top_2]"    class="cnc-mill-top-2"    value="">
+            <input type="hidden" name="supplies[${supplyIndex}][items][${itemIndex}][mill_bottom_2]" class="cnc-mill-bottom-2" value="">
+            <input type="hidden" name="supplies[${supplyIndex}][items][${itemIndex}][mill_width_2]"  class="cnc-mill-width-2"  value="">
+            <input type="hidden" name="supplies[${supplyIndex}][items][${itemIndex}][mill_depth_2]"  class="cnc-mill-depth-2"  value="">
         </td>
         <td style="width: 110px; min-width: 110px; " class="border border-neutral-200">
             <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][unit_price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" min="0" required value="${lastData ? lastData.unit_price : ''}">
@@ -794,14 +568,14 @@ function addOrderItem(button) {
             </div>
         </td>
     `;
-    const rowToAppend = container.classList.contains('order-input-rows') ? buildAcrylicFormRow(newItem) : newItem;
-    container.appendChild(rowToAppend);
+    container.appendChild(newItem);
     
     const newRow = container.lastElementChild;
     bindAcrylicRowEvents(newRow);
+    updateBevelSuggestions(newRow);
     
     updateOrderSummary();
-    updateAcrylicRowIndexes(container);
+    updateAcrylicRowIndexes();
 }
 
 function removeOrderItem(button) {
@@ -869,10 +643,23 @@ function bindAcrylicRowEvents(row) {
     const unitPriceInput = row.querySelector('input[name*="[unit_price]"]');
     const bevelInput = row.querySelector('input[name*="[bevel]"]');
     
-    if (heightInput) heightInput.addEventListener('input', () => calculateTotalPrice(row, 'height'));
-    if (widthInput) widthInput.addEventListener('input', () => calculateTotalPrice(row, 'width'));
+    if (heightInput) {
+        heightInput.addEventListener('input', () => {
+            applyNarrowWidthRule(row);
+            calculateTotalPrice(row, 'height');
+            updateBevelSuggestions(row);
+        });
+    }
+    if (widthInput) {
+        widthInput.addEventListener('input', () => {
+            applyNarrowWidthRule(row);
+            calculateTotalPrice(row, 'width');
+            updateBevelSuggestions(row);
+        });
+    }
     if (quantityInput) {
         quantityInput.addEventListener('input', () => {
+            applyNarrowWidthRule(row);
             calculateTotalPrice(row, 'quantity');
             updateAcrylicRowIndexes();
         });
@@ -910,6 +697,7 @@ function duplicateAcrylicRow(button) {
     row.parentNode.insertBefore(newRow, row.nextSibling);
 
     bindAcrylicRowEvents(newRow);
+    updateBevelSuggestions(newRow);
     updateAcrylicRowIndexes();
     updateOrderSummary();
 }
@@ -927,16 +715,20 @@ function calculateTotalPrice(row, sourceEvent) {
     const height = parseFloat(heightInput.value) || 0;
     const width = parseFloat(widthInput.value) || 0;
     const quantity = parseFloat(quantityInput.value) || 0;
-    const unitPrice = parseFloat(unitPriceInput ? unitPriceInput.value : 0) || 0;
     
     if (sourceEvent !== 'wing_area') {
-        let wingArea = 0;
-        if (height > 0 && width > 0 && quantity > 0) {
-            wingArea = (height * width * quantity) / 1000000;
+        if (!isNaN(width) && width > 0 && width < 55) {
+            wingAreaInput.value = 0;
+        } else {
+            let wingArea = 0;
+            if (height > 0 && width > 0 && quantity > 0) {
+                wingArea = (height * width * quantity) / 1000000;
+            }
+            wingAreaInput.value = wingArea > 0 ? wingArea.toFixed(2) : '';
         }
-        wingAreaInput.value = wingArea > 0 ? wingArea.toFixed(2) : '';
     }
     
+    const unitPrice = parseFloat(unitPriceInput ? unitPriceInput.value : 0) || 0;
     const currentWingArea = parseFloat(wingAreaInput.value) || 0;
     const moldingLength = parseFloat(moldingLengthInput.value) || 0;
     
@@ -948,341 +740,80 @@ function calculateTotalPrice(row, sourceEvent) {
     updateOrderSummary();
 }
 
-const acrylicPreviewLabels = [
-    'STT',
-    'Mã SP',
-    'Tên sản phẩm',
-    'Độ dày',
-    'Cao',
-    'Rộng',
-    'Số lượng',
-    'Cạnh vát',
-    'Chiều vân',
-    'Cánh (m2)',
-    'Phào (m)',
-    'Vát',
-    'Vân dọc CNC',
-    'Đơn giá',
-    'Thành tiền',
-    'Ghi chú',
-    'Hành động',
-];
+/**
+ * Narrow-width rule: width < 55mm → Phào = (cao × SL) / 1000, Đơn giá = 100.000, Cánh = 0.
+ * Width input gets red border as visual warning.
+ */
+function applyNarrowWidthRule(row) {
+    const heightInput       = row.querySelector('input[name*="[height]"]');
+    const widthInput        = row.querySelector('input[name*="[width]"]');
+    const quantityInput     = row.querySelector('input[name*="[quantity]"]');
+    const wingAreaInput     = row.querySelector('input[name*="[wing_area]"]');
+    const moldingLengthInput= row.querySelector('input[name*="[molding_length]"]');
+    const unitPriceInput    = row.querySelector('input[name*="[unit_price]"]');
 
-function getOrderPreviewFieldValue(fieldWrap) {
-    const field = fieldWrap.querySelector('input, select, textarea');
-    if (!field) {
-        return fieldWrap.textContent.trim() || '-';
-    }
+    if (!widthInput) return;
 
-    if (field.tagName === 'SELECT') {
-        return field.options[field.selectedIndex]?.text || field.value || '-';
-    }
+    const width    = parseFloat(widthInput.value);
+    const height   = parseFloat(heightInput ? heightInput.value : 0) || 0;
+    const quantity = parseFloat(quantityInput ? quantityInput.value : 1) || 1;
 
-    return field.value || '-';
-}
+    const lastWidth = parseFloat(widthInput.dataset.lastWidth);
+    const isPreviousNarrow = !isNaN(lastWidth) && lastWidth > 0 && lastWidth < 55;
+    const isCurrentNarrow = !isNaN(width) && width > 0 && width < 55;
 
-function getAcrylicFieldLabel(index) {
-    return acrylicPreviewLabels[index] || 'Thông tin';
-}
+    if (isCurrentNarrow) {
+        // Red border warning
+        widthInput.style.borderColor = '#ef4444';
+        widthInput.style.boxShadow   = '0 0 0 1px #ef4444';
 
-function getAcrylicFormLabel(index) {
-    switch (index) {
-        case 0: return 'STT';
-        case 1: return 'Mã SP';
-        case 2: return 'Tên sản phẩm';
-        case 3: return 'Độ dày';
-        case 4: return 'Cao (chiều vân)';
-        case 5: return 'Rộng';
-        case 6: return 'Số lượng';
-        case 7: return 'Cạnh vát';
-        case 8: return 'Chiều vân';
-        case 9: return 'Cánh (m2)';
-        case 10: return 'Phào (m)';
-        case 11: return 'Vát';
-        case 12: return 'Vân dọc CNC';
-        case 13: return 'Đơn giá';
-        case 14: return 'Thành tiền';
-        case 15: return 'Ghi chú';
-        case 16: return 'Hành động';
-        default: return 'Thông tin';
-    }
-}
+        // Phào (m) = (cao × SL) / 1000
+        if (moldingLengthInput) {
+            const phao = height > 0 ? ((height * quantity) / 1000) : 0;
+            moldingLengthInput.value = phao > 0 ? phao.toFixed(3) : '';
+        }
+        // Đơn giá = 100.000
+        if (unitPriceInput) {
+            unitPriceInput.value = 100000;
+        }
+        // Cánh (m2) = 0
+        if (wingAreaInput) {
+            wingAreaInput.value = 0;
+        }
+    } else {
+        // Restore normal border
+        widthInput.style.borderColor = '';
+        widthInput.style.boxShadow   = '';
 
-function updateAcrylicFormSectionClass(section) {
-    section.classList.remove('order-form-section--1', 'order-form-section--2', 'order-form-section--3', 'order-form-section--4');
-    section.classList.add(`order-form-section--${section.children.length}`);
-}
+        // Phào (m) = 0 khi rộng >= 55
+        if (moldingLengthInput) {
+            moldingLengthInput.value = 0;
+        }
 
-function getOrCreateAcrylicFormSection(formRow) {
-    let section = formRow._orderFormCurrentSection;
-    if (!section || section.children.length >= 4 || formRow.lastElementChild !== section) {
-        section = document.createElement('div');
-        section.className = 'order-form-section';
-        formRow.appendChild(section);
-        formRow._orderFormCurrentSection = section;
-    }
-
-    return section;
-}
-
-function appendAcrylicFieldToSection(formRow, fieldWrap) {
-    const section = getOrCreateAcrylicFormSection(formRow);
-    section.appendChild(fieldWrap);
-    updateAcrylicFormSectionClass(section);
-}
-
-function appendAcrylicFormField(formRow, fieldWrap, index) {
-    appendAcrylicFieldToSection(formRow, fieldWrap);
-}
-
-function buildAcrylicFormRow(sourceRow) {
-    if (sourceRow.classList.contains('order-form-row')) {
-        return sourceRow;
-    }
-
-    const formRow = document.createElement('div');
-    formRow.className = 'order-item-row order-form-row';
-
-    if (sourceRow.dataset.itemId) {
-        formRow.dataset.itemId = sourceRow.dataset.itemId;
-    }
-
-    const header = document.createElement('div');
-    header.className = 'order-form-row__header';
-    const badge = document.createElement('div');
-    badge.className = 'order-form-row__badge';
-    const actions = document.createElement('div');
-    actions.className = 'order-form-row__actions';
-    actions.appendChild(buildAcrylicFormQuickActions());
-    header.appendChild(badge);
-    header.appendChild(actions);
-    formRow.appendChild(header);
-
-    const cells = Array.from(sourceRow.querySelectorAll('td'));
-    cells.forEach((cell, index) => {
-        if (index === 0) {
-            badge.appendChild(document.createTextNode('Sản phẩm '));
-            while (cell.firstChild) {
-                badge.appendChild(cell.firstChild);
+        // If it transitioned from narrow to wide, restore the original price
+        if (isPreviousNarrow && unitPriceInput && unitPriceInput.value == 100000) {
+            const supplyRow = row.closest('.order-supply-row');
+            if (supplyRow) {
+                const selectEl = supplyRow.querySelector('.order-supply-code-select') || supplyRow.querySelector('.order-supply-code-input');
+                const supplyCode = selectEl ? selectEl.value : '';
+                if (supplyCode && typeof woodBoardPricesData !== 'undefined') {
+                    const price = woodBoardPricesData.find(p => p.code === supplyCode);
+                    if (price) {
+                        unitPriceInput.value = price.price_m2 ? parseInt(price.price_m2) : '';
+                    }
+                }
             }
-            return;
         }
-
-        if (index === cells.length - 1) {
-            while (cell.firstChild) {
-                actions.appendChild(cell.firstChild);
-            }
-            return;
-        }
-
-        const fieldWrap = document.createElement('div');
-        fieldWrap.className = 'order-form-field';
-        fieldWrap.dataset.previewLabel = getAcrylicFormLabel(index);
-
-        const label = document.createElement('label');
-        label.className = 'order-form-field__label';
-        label.textContent = getAcrylicFormLabel(index);
-        fieldWrap.appendChild(label);
-
-        while (cell.firstChild) {
-            fieldWrap.appendChild(cell.firstChild);
-        }
-
-        appendAcrylicFormField(formRow, fieldWrap, index);
-    });
-
-    return formRow;
-}
-
-function buildAcrylicFormQuickActions() {
-    const actionWrap = document.createElement('div');
-    actionWrap.className = 'order-form-row__quick-actions';
-
-    const tableButton = document.createElement('button');
-    tableButton.type = 'button';
-    tableButton.className = 'js-order-table-view text-neutral-400 hover:text-primary-500 transition-colors p-1';
-    tableButton.title = 'Xem dạng bảng';
-
-    const tableIcon = document.createElement('iconify-icon');
-    tableIcon.setAttribute('icon', 'lucide:table-2');
-    tableIcon.className = 'text-base';
-
-    tableButton.appendChild(tableIcon);
-
-    const addButton = document.createElement('button');
-    addButton.type = 'button';
-    addButton.className = 'js-order-add-item text-neutral-400 hover:text-primary-500 transition-colors p-1';
-    addButton.title = 'Thêm sản phẩm';
-
-    const addIcon = document.createElement('iconify-icon');
-    addIcon.setAttribute('icon', 'lucide:plus');
-    addIcon.className = 'text-base';
-
-    addButton.appendChild(addIcon);
-
-    actionWrap.append(tableButton, addButton);
-    return actionWrap;
-}
-
-document.addEventListener('click', function(e) {
-    const tableButton = e.target.closest('.js-order-table-view');
-    if (tableButton) {
-        e.preventDefault();
-        toggleOrderTableView(tableButton);
-        return;
     }
 
-    const addButton = e.target.closest('.js-order-add-item');
-    if (addButton) {
-        e.preventDefault();
-        addOrderItem(addButton);
+    if (!isNaN(width)) {
+        widthInput.dataset.lastWidth = width;
+    } else {
+        delete widthInput.dataset.lastWidth;
     }
-});
-
-function ensureAcrylicFormLayout(supplyRow) {
-    const inputWrap = supplyRow.querySelector('.overflow-x-auto:not(.order-preview-table-wrap), .order-input-layout');
-    if (!inputWrap) return null;
-
-    inputWrap.classList.add('order-input-layout');
-
-    const currentContainer = inputWrap.querySelector('.supply-items-container');
-    if (!currentContainer) return null;
-
-    if (currentContainer.classList.contains('order-input-rows')) {
-        return currentContainer;
-    }
-
-    const formContainer = document.createElement('div');
-    formContainer.className = 'supply-items-container order-input-rows';
-    formContainer.dataset.supplyIndex = currentContainer.dataset.supplyIndex || '0';
-
-    currentContainer.querySelectorAll('.order-item-row').forEach(row => {
-        formContainer.appendChild(buildAcrylicFormRow(row));
-    });
-
-    currentContainer.classList.remove('supply-items-container');
-    currentContainer.dataset.sourceTableBody = 'true';
-    currentContainer.parentElement.insertAdjacentElement('afterend', formContainer);
-
-    return formContainer;
 }
 
-function ensureAllAcrylicFormLayouts() {
-    document.querySelectorAll('#order-supplies-container .order-supply-row').forEach(supplyRow => {
-        ensureAcrylicFormLayout(supplyRow);
-    });
-}
 
-function refreshOrderPreviewTables(card) {
-    card.querySelectorAll('.order-supply-row').forEach(supplyRow => {
-        const inputWrap = supplyRow.querySelector('.order-input-layout, .overflow-x-auto:not(.order-preview-table-wrap)');
-        if (!inputWrap) return;
-
-        const formContainer = ensureAcrylicFormLayout(supplyRow);
-
-        let previewWrap = supplyRow.querySelector('.order-preview-table-wrap');
-        if (!previewWrap) {
-            previewWrap = document.createElement('div');
-            previewWrap.className = 'order-preview-table-wrap overflow-x-auto pb-3';
-            inputWrap.insertAdjacentElement('afterend', previewWrap);
-        }
-
-        const sourceTable = inputWrap.querySelector('table');
-        const sourceHead = sourceTable?.querySelector('thead');
-        const sourceRows = formContainer ? formContainer.querySelectorAll('.order-item-row') : [];
-        if (!sourceTable || !sourceHead) return;
-
-        const previewTable = document.createElement('table');
-        previewTable.className = `${sourceTable.className} order-preview-table`;
-        const previewHead = sourceHead.cloneNode(true);
-        const actionHeader = previewHead.querySelector('tr:first-child th:last-child');
-        if (actionHeader) {
-            actionHeader.textContent = 'Hành động';
-        }
-        previewTable.appendChild(previewHead);
-
-        const previewBody = document.createElement('tbody');
-        sourceRows.forEach(row => {
-            const targetId = row.dataset.previewTargetId || `order-form-row-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-            row.dataset.previewTargetId = targetId;
-            const previewRow = document.createElement('tr');
-            previewRow.className = 'order-preview-row';
-
-            const indexCell = document.createElement('td');
-            indexCell.className = 'border border-neutral-200 text-center';
-            indexCell.textContent = row.querySelector('.row-index')?.textContent?.trim() || '-';
-            previewRow.appendChild(indexCell);
-
-            row.querySelectorAll('.order-form-field').forEach(field => {
-                const previewCell = document.createElement('td');
-                previewCell.className = 'border border-neutral-200';
-                previewCell.textContent = getOrderPreviewFieldValue(field);
-                previewRow.appendChild(previewCell);
-            });
-
-            const actionCell = document.createElement('td');
-            actionCell.className = 'border border-neutral-200 text-center';
-            const actionButton = buildPreviewJumpButton(targetId);
-            actionCell.appendChild(actionButton);
-            previewRow.appendChild(actionCell);
-
-            previewBody.appendChild(previewRow);
-        });
-
-        previewTable.appendChild(previewBody);
-        previewWrap.replaceChildren(previewTable);
-    });
-}
-
-function buildPreviewJumpButton(targetId) {
-    const actionButton = document.createElement('button');
-    actionButton.type = 'button';
-    actionButton.className = 'btn border border-primary-600 text-primary-600 hover:bg-primary-600 hover:text-white rounded-lg w-9 h-9 p-0 inline-flex items-center justify-center';
-    actionButton.dataset.previewTargetId = targetId;
-    actionButton.title = 'Đi tới dòng nhập liệu';
-    actionButton.onclick = () => jumpToOrderFormRow(actionButton);
-
-    const icon = document.createElement('iconify-icon');
-    icon.setAttribute('icon', 'lucide:edit-3');
-    icon.className = 'text-base';
-
-    actionButton.appendChild(icon);
-    return actionButton;
-}
-
-function jumpToOrderFormRow(button) {
-    const card = button.closest('.order-entry-card');
-    if (!card) return;
-
-    const targetId = button.dataset.previewTargetId;
-    const targetRow = targetId ? card.querySelector(`[data-preview-target-id="${targetId}"]`) : null;
-    if (!targetRow) return;
-
-    card.classList.remove('is-table-view');
-
-    card.querySelectorAll('.order-table-view-label').forEach(label => {
-        label.textContent = 'Xem dạng bảng';
-    });
-
-    targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    targetRow.classList.add('order-form-row--focus');
-    window.setTimeout(() => targetRow.classList.remove('order-form-row--focus'), 1600);
-}
-
-function toggleOrderTableView(button) {
-    const card = button.closest('.order-entry-card');
-    if (!card) return;
-
-    const nextTableView = !card.classList.contains('is-table-view');
-    if (nextTableView) {
-        refreshOrderPreviewTables(card);
-    }
-
-    card.classList.toggle('is-table-view', nextTableView);
-    card.querySelectorAll('.order-table-view-label').forEach(label => {
-        label.textContent = nextTableView ? 'Ẩn dạng bảng' : 'Xem dạng bảng';
-    });
-}
 
 function updateEdgeBevel(row) {
     const bevelInput = row.querySelector('input[name*="[bevel]"]');
@@ -1301,6 +832,58 @@ function updateEdgeBevel(row) {
     }
 }
 
+function updateBevelSuggestions(row) {
+    const heightInput = row.querySelector('input[name*="[height]"]');
+    const widthInput = row.querySelector('input[name*="[width]"]');
+    const bevelInput = row.querySelector('input[name*="[bevel]"]');
+    const datalist = row.querySelector('.bevel-datalist');
+    
+    if (!heightInput || !widthInput || !bevelInput || !datalist) return;
+    
+    const height = heightInput.value.trim();
+    const width = widthInput.value.trim();
+    
+    const lastWidth = bevelInput.dataset.lastWidth || '';
+    const lastHeight = bevelInput.dataset.lastHeight || '';
+    const currentBevel = bevelInput.value.trim();
+    
+    // Update datalist options dynamically
+    let optionsHtml = '';
+    if (width) {
+        optionsHtml += `<option value="${width}">Rộng (${width})</option>`;
+    }
+    if (height) {
+        optionsHtml += `<option value="${height}">Cao (${height})</option>`;
+    }
+    datalist.innerHTML = optionsHtml;
+    
+    // Auto-update logic based on defaults/manual inputs
+    if (currentBevel === '') {
+        if (width) {
+            bevelInput.value = width;
+        } else if (height) {
+            bevelInput.value = height;
+        }
+    } else if (currentBevel === lastWidth || lastWidth === '') {
+        if (width) {
+            bevelInput.value = width;
+        } else if (height) {
+            bevelInput.value = height;
+        }
+    } else if (currentBevel === lastHeight) {
+        if (height) {
+            bevelInput.value = height;
+        } else if (width) {
+            bevelInput.value = width;
+        }
+    }
+    
+    updateEdgeBevel(row);
+    
+    bevelInput.dataset.lastWidth = width;
+    bevelInput.dataset.lastHeight = height;
+}
+
 // Initial attachment setup for Acrylic-specific rows if DOM loaded
 document.addEventListener('DOMContentLoaded', function() {
     const container = document.getElementById('order-supplies-container');
@@ -1308,11 +891,11 @@ document.addEventListener('DOMContentLoaded', function() {
         addOrderSupply();
     }
 
-    ensureAllAcrylicFormLayouts();
-
     document.querySelectorAll('#order-supplies-container .order-item-row').forEach(row => {
         bindAcrylicRowEvents(row);
+        applyNarrowWidthRule(row);
         calculateTotalPrice(row);
+        updateBevelSuggestions(row);
         updateEdgeBevel(row);
     });
 
@@ -1346,4 +929,45 @@ document.addEventListener('input', function(e) {
         updateAcrylicRowIndexes();
     }
 });
+
+// ---- CNC Template Selection Logic ----
+window.cncTemplatesData = @json($cncTemplates ?? []);
+
+function onCncTemplateChange(selectEl) {
+    const td = selectEl.closest('td');
+    if (!selectEl.value) {
+        // Clear all hidden fields
+        td.querySelectorAll('input[type="hidden"]').forEach(el => el.value = '');
+        return;
+    }
+    const selectedOption = selectEl.options[selectEl.selectedIndex];
+    let params = null;
+    try {
+        params = JSON.parse(selectedOption.getAttribute('data-params') || 'null');
+    } catch(e) { params = null; }
+    if (!params) return;
+
+    const fieldMap = {
+        'cnc-offset-left':   params.offset_left,
+        'cnc-offset-right':  params.offset_right,
+        'cnc-offset-top':    params.offset_top,
+        'cnc-offset-bottom': params.offset_bottom,
+        'cnc-mill-left':     params.mill_left,
+        'cnc-mill-right':    params.mill_right,
+        'cnc-mill-top':      params.mill_top,
+        'cnc-mill-bottom':   params.mill_bottom,
+        'cnc-mill-width':    params.mill_width,
+        'cnc-mill-depth':    params.mill_depth,
+        'cnc-mill-left-2':   params.mill_left_2,
+        'cnc-mill-right-2':  params.mill_right_2,
+        'cnc-mill-top-2':    params.mill_top_2,
+        'cnc-mill-bottom-2': params.mill_bottom_2,
+        'cnc-mill-width-2':  params.mill_width_2,
+        'cnc-mill-depth-2':  params.mill_depth_2,
+    };
+    Object.entries(fieldMap).forEach(([cls, val]) => {
+        const input = td.querySelector('.' + cls);
+        if (input) input.value = (val !== null && val !== undefined) ? val : '';
+    });
+}
 </script>

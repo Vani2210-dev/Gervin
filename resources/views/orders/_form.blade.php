@@ -7,6 +7,22 @@
         'min_late' => 'Min Late',
     ];
 @endphp
+<style>
+    @media (min-width: 1024px) {
+        .attachment-wrapper {
+            transition: transform 0.25s ease-in-out, box-shadow 0.25s ease-in-out;
+            cursor: zoom-in;
+            position: relative;
+            z-index: 1;
+        }
+        .attachment-wrapper:hover {
+            transform: scale(2.0);
+            transform-origin: right center;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.15);
+            z-index: 50;
+        }
+    }
+</style>
 <div class="card p-0 rounded-xl border-0">
     <div class="card-header border-b border-neutral-200 bg-white py-4 px-6">
         <h5 class="font-semibold text-base">{{ $title ?? 'Tạo đơn hàng' }}</h5>
@@ -71,6 +87,10 @@
                             <div class="form-group md:col-span-2">
                                 <label class="form-label font-semibold text-xs text-neutral-500 uppercase tracking-wider mb-2 block">Ghi chú đơn hàng</label>
                                 <textarea name="notes" class="form-control rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Nhập ghi chú" rows="2">{{ old('notes', $acrylicOrder?->notes ?? '') }}</textarea>
+                            </div>
+                            <div class="form-group md:col-span-2">
+                                <label class="form-label font-semibold text-xs text-neutral-500 uppercase tracking-wider mb-2 block">Chính sách KH</label>
+                                <textarea name="customer_policy" class="form-control rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Nhập chính sách khách hàng" rows="2">{{ old('customer_policy', $acrylicOrder?->customer_policy ?? '') }}</textarea>
                             </div>
                             @if(isset($acrylicOrder) && !$isDraftCreate)
                             <div class="form-group md:col-span-2">
@@ -152,7 +172,7 @@
                                 <label class="form-label font-semibold text-xs text-neutral-500 uppercase tracking-wider mb-2 block">Hình ảnh đã tải</label>
                                 <div class="flex flex-col gap-3" id="existing-attachments">
                                     @foreach(json_decode($acrylicOrder->attachments, true) ?? [] as $index => $image)
-                                    <div class="relative group w-full">
+                                    <div class="relative group w-full attachment-wrapper">
                                         <img src="{{ route('orders.image', ['filename' => basename($image)]) }}" class="w-full object-contain max-h-[300px] rounded-lg border border-neutral-200 shadow-sm">
                                         <button type="button" onclick="deleteAttachment('{{ $index }}', '{{ $image }}')" class="absolute bg-danger-100 hover:bg-danger-200 text-danger-600 transition-colors w-7 h-7 flex justify-center items-center rounded-full shadow-sm z-10" style="top: 8px; right: 8px;" title="Xóa ảnh">
                                             <iconify-icon icon="lucide:trash-2" class="text-sm"></iconify-icon>
@@ -332,7 +352,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     const imgWrapper = document.createElement('div');
-                    imgWrapper.className = 'relative group w-full';
+                    imgWrapper.className = 'relative group w-full attachment-wrapper';
                     imgWrapper.innerHTML = `
                         <img src="${e.target.result}" class="w-full object-contain max-h-[300px] rounded-lg border border-neutral-200 shadow-sm">
                         <button type="button" class="absolute bg-danger-100 hover:bg-danger-200 text-danger-600 transition-colors w-7 h-7 flex justify-center items-center rounded-full shadow-sm z-10 remove-new-attachment" data-index="${index}" style="top: 8px; right: 8px;" title="Xóa ảnh">
