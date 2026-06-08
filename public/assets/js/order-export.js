@@ -482,8 +482,37 @@ async function exportToExcel() {
                     const edgeW1 = 'T';
                     const edgeW2 = isBeveled ? 'V' : 'T';
 
-                    // Parse Mullion/Milling Details
-                    const parsed = parseMullionMillingDetails(item.product_name || '');
+                    // Parse Mullion/Milling Details:
+                    // Prefer saved DB values; fall back to regex parser for legacy records.
+                    const hasDbParams = (item.offset_left !== null && item.offset_left !== undefined);
+                    let milling;
+                    if (hasDbParams) {
+                        milling = {
+                            offsetLeft:   item.offset_left,
+                            offsetRight:  item.offset_right,
+                            offsetTop:    item.offset_top,
+                            offsetBottom: item.offset_bottom,
+                            millLeft:     item.mill_left,
+                            millRight:    item.mill_right,
+                            millTop:      item.mill_top,
+                            millBottom:   item.mill_bottom,
+                            millWidth:    item.mill_width,
+                            millDepth:    item.mill_depth,
+                            millLeft2:    item.mill_left_2,
+                            millRight2:   item.mill_right_2,
+                            millTop2:     item.mill_top_2,
+                            millBottom2:  item.mill_bottom_2,
+                            millWidth2:   item.mill_width_2,
+                            millDepth2:   item.mill_depth_2,
+                        };
+                    } else {
+                        const parsed = parseMullionMillingDetails(item.product_name || '');
+                        milling = {
+                            ...parsed,
+                            millLeft2: null, millRight2: null, millTop2: null,
+                            millBottom2: null, millWidth2: null, millDepth2: null,
+                        };
+                    }
 
                     row.getCell(1).value = 'V';                              // Cắt
                     row.getCell(2).value = 'ACRILYC';                        // Đơn hàng
@@ -507,22 +536,27 @@ async function exportToExcel() {
                     row.getCell(19).value = 0.00001;                          // Dày nẹp W2
                     row.getCell(20).value = item.edge_bevel || 'Vát 0';      // Ghi chú
 
-                    // Columns U-AD (Bao trong / Xoi 1)
-                    row.getCell(21).value = parsed.offsetLeft;
-                    row.getCell(22).value = parsed.offsetRight;
-                    row.getCell(23).value = parsed.offsetTop;
-                    row.getCell(24).value = parsed.offsetBottom;
-                    row.getCell(25).value = parsed.millLeft;
-                    row.getCell(26).value = parsed.millRight;
-                    row.getCell(27).value = parsed.millTop;
-                    row.getCell(28).value = parsed.millBottom;
-                    row.getCell(29).value = parsed.millWidth;
-                    row.getCell(30).value = parsed.millDepth;
+                    // Columns U-X (Bao trong / offset)
+                    row.getCell(21).value = milling.offsetLeft;
+                    row.getCell(22).value = milling.offsetRight;
+                    row.getCell(23).value = milling.offsetTop;
+                    row.getCell(24).value = milling.offsetBottom;
+                    // Columns Y-AB (Xoi 1 offset)
+                    row.getCell(25).value = milling.millLeft;
+                    row.getCell(26).value = milling.millRight;
+                    row.getCell(27).value = milling.millTop;
+                    row.getCell(28).value = milling.millBottom;
+                    // Columns AC-AD (Xoi 1 width/depth)
+                    row.getCell(29).value = milling.millWidth;
+                    row.getCell(30).value = milling.millDepth;
 
-                    // Columns AE-AJ (Xoi 2): empty/null
-                    for (let c = 31; c <= 36; c++) {
-                        row.getCell(c).value = null;
-                    }
+                    // Columns AE-AJ (Xoi 2)
+                    row.getCell(31).value = milling.millLeft2 ?? null;
+                    row.getCell(32).value = milling.millRight2 ?? null;
+                    row.getCell(33).value = milling.millTop2 ?? null;
+                    row.getCell(34).value = milling.millBottom2 ?? null;
+                    row.getCell(35).value = milling.millWidth2 ?? null;
+                    row.getCell(36).value = milling.millDepth2 ?? null;
 
                     // Style: all cells centered, Times New Roman 11
                     for (let c = 1; c <= 36; c++) {

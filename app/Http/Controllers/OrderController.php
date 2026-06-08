@@ -85,8 +85,9 @@ class OrderController extends Controller
         $acrylicOrder = $this->createDraftOrder($type);
         $isDraftCreate = true;
         $woodBoardPrices = \App\Models\WoodBoardPrice::orderBy('code', 'asc')->get();
+        $cncTemplates = \App\Models\CncTemplate::orderBy('id', 'asc')->get();
 
-        return view('orders.create', compact('orderType', 'acrylicOrder', 'isDraftCreate', 'woodBoardPrices'));
+        return view('orders.create', compact('orderType', 'acrylicOrder', 'isDraftCreate', 'woodBoardPrices', 'cncTemplates'));
     }
 
     public function edit(Order $order)
@@ -97,7 +98,8 @@ class OrderController extends Controller
         $order->load(['supplies.items', 'supplies.minLateItems', 'supplies.glassItems', 'paymentDetails']);
         $acrylicOrder = $order;
         $woodBoardPrices = \App\Models\WoodBoardPrice::orderBy('code', 'asc')->get();
-        return view('orders.edit', compact('acrylicOrder', 'woodBoardPrices'));
+        $cncTemplates = \App\Models\CncTemplate::orderBy('id', 'asc')->get();
+        return view('orders.edit', compact('acrylicOrder', 'woodBoardPrices', 'cncTemplates'));
     }
 
     public function store(Request $request)

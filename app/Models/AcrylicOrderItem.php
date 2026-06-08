@@ -24,6 +24,25 @@ class AcrylicOrderItem extends Model
         'notes',
         'bevel',
         'vertical_grain_cnc',
+        
+        'offset_left',
+        'offset_right',
+        'offset_top',
+        'offset_bottom',
+        
+        'mill_left',
+        'mill_right',
+        'mill_top',
+        'mill_bottom',
+        'mill_width',
+        'mill_depth',
+        
+        'mill_left_2',
+        'mill_right_2',
+        'mill_top_2',
+        'mill_bottom_2',
+        'mill_width_2',
+        'mill_depth_2',
     ];
 
     protected $casts = [

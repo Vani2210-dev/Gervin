@@ -168,6 +168,11 @@
                         <a href="{{ route('wood_boards.index') }}"><i class="ri-circle-fill circle-icon text-info-600 w-auto"></i> Bảng giá tấm</a>
                     </li>
                     @endcan
+                    @can('view supply')
+                    <li>
+                        <a href="{{ route('cnc_templates.index') }}"><i class="ri-circle-fill circle-icon text-warning-600 w-auto"></i> Cấu hình CNC</a>
+                    </li>
+                    @endcan
 
                     <li>
                         <a href="#"><i class="ri-circle-fill circle-icon text-warning-600 w-auto"></i> Kho đồ cũ(DC)</a>

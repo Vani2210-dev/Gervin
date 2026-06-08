@@ -16,6 +16,7 @@ use App\Http\Controllers\CryptocurrencyController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\MediaController;
 use App\Http\Controllers\WoodBoardController;
+use App\Http\Controllers\CncTemplateController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\QrCodeGeneratorController;
@@ -216,6 +217,7 @@ Route::middleware(['auth'])->group(function () {
     Route::put('wood-board-types/{type}', [WoodBoardController::class, 'updateType'])->name('wood_board_types.update');
     Route::delete('wood-board-types/{type}', [WoodBoardController::class, 'destroyType'])->name('wood_board_types.destroy');
     Route::post('wood-board-price-groups/batch', [WoodBoardController::class, 'batchUpdatePriceGroups'])->name('wood_board_price_groups.batch_update');
+    Route::resource('cnc-templates', CncTemplateController::class)->names('cnc_templates');
 });
 
 // QR Code
