@@ -9,6 +9,13 @@
     .table thead tr:nth-child(2) th:last-child::before {
         display: none !important;
     }
+    /* Cho ô cuối của hàng header thứ 2 vẫn kéo giãn được */
+    .table thead tr:nth-child(2) th:last-child.order-column-resizable-th {
+        position: relative !important;
+        background-color: inherit !important;
+        box-shadow: none !important;
+        overflow: visible !important;
+    }
     /* Hide dropdown arrow in very narrow select boxes for a clean, centered look */
     .hide-arrow {
         appearance: none !important;
@@ -102,19 +109,35 @@
         box-shadow: 0 0 0 1px #3b82f6 !important;
     }
 </style>
-<div class="bg-white border border-neutral-200 rounded-xl p-6 shadow-sm">
-    <div class="flex items-center justify-between border-b border-neutral-100 pb-4 mb-5">
+<div class="order-supplies-popup bg-white border border-neutral-200 rounded-xl p-6 shadow-sm" data-order-supplies-zoom-panel data-order-supplies-storage-key="min_late" data-order-supplies-zoom="100" data-order-supplies-visible-rows="free">
+    <div class="order-supplies-header flex items-center justify-between border-b border-neutral-100 pb-4 mb-5">
         <div class="flex items-center gap-2">
             <iconify-icon icon="lucide:package-open" class="text-xl text-primary-500"></iconify-icon>
             <h6 class="font-bold text-base text-neutral-800 m-0">Danh sách Vật tư & Sản phẩm (Min Late)</h6>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2">
+            <div class="flex items-center gap-2">
+                <span class="text-xs font-semibold uppercase tracking-wider text-neutral-500">Hiển thị</span>
+                <select data-order-supplies-visible-rows-select class="form-select form-select-sm w-28 rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500">
+                    <option value="free" selected>Tự do</option>
+                    <option value="5">5</option>
+                    <option value="10">10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                </select>
+            </div>
+            <button type="button" onclick="toggleOrderSuppliesPopup(this)" class="btn btn-sm bg-light-100 hover:bg-neutral-200 text-dark rounded-lg flex items-center gap-1" data-order-supplies-popup-button aria-expanded="false">
+                <iconify-icon icon="lucide:maximize-2" class="text-lg" data-order-supplies-popup-icon></iconify-icon>
+                <span data-order-supplies-popup-label>Phóng to</span>
+            </button>
             <button type="button" onclick="addMinLateOrderSupply()" class="btn btn-sm btn-primary rounded-lg flex items-center gap-1">
                 <iconify-icon icon="lucide:plus" class="text-lg"></iconify-icon> Thêm vật tư
             </button>
         </div>
     </div>
-    <div id="min-late-supplies-container" class="space-y-6">
+    <div class="order-supplies-body">
+        <div id="min-late-supplies-container" class="space-y-6">
         @if(isset($acrylicOrder) && $acrylicOrder->type == 'min_late' && $acrylicOrder->supplies->count() > 0)
             @foreach($acrylicOrder->supplies as $supplyIndex => $supply)
             <div class="order-supply-row bg-neutral-50/50 border border-primary-600 rounded-xl p-5 mb-2 relative shadow-sm" data-supply-id="{{ $supply->id }}">
@@ -135,11 +158,12 @@
                         </button>
                     </div>
                 </div>
-                <div class="overflow-x-auto pb-3">
+                <div class="overflow-x-auto pb-3" data-order-supplies-table-scroll>
+                    <div class="order-supplies-table-zoom-wrap" data-order-supplies-table-zoom-wrap>
                     <table class="table bordered-table sm-table mb-0 min-w-[2000px] border border-neutral-200">
                         <thead>
                             <tr class="bg-neutral-50 text-center">
-                                <th scope="col" rowspan="2" style="width: 45px; min-width: 45px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Stt</th>
+                                <th scope="col" rowspan="2" style="width: 45px; min-width: 45px; white-space: nowrap;" class="align-middle text-center border border-neutral-200 font-bold text-xs text-neutral-600 uppercase"><span class="order-stt-header-label">STT</span></th>
                                 <th scope="col" rowspan="2" style="width: 160px; min-width: 160px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Mã hàng</th>
                                 <th scope="col" rowspan="2" style="min-width: 180px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên hàng hóa, dịch vụ <span class="text-danger-500">*</span></th>
                                 <th scope="col" rowspan="2" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Độ dày</th>
@@ -160,8 +184,8 @@
                             </tr>
                             <tr class="bg-neutral-50 text-center">
                                 {{-- Kích thước --}}
-                                <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="border border-neutral-200 bg-yellow-100/70 font-semibold text-xs text-neutral-700 uppercase">Cao (vân)</th>
-                                <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="border border-neutral-200 font-semibold text-xs text-neutral-700 uppercase">Rộng</th>
+                                <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="border border-neutral-200 bg-yellow-100/70 font-semibold text-xs text-neutral-700 uppercase text-center order-header-force-center">Cao (vân)</th>
+                                <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="border border-neutral-200 font-semibold text-xs text-neutral-700 uppercase text-center">Rộng</th>
                                 {{-- Dán cạnh --}}
                                 <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="border border-neutral-200 font-semibold text-xs text-neutral-700 uppercase">Cao</th>
                                 <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="border border-neutral-200 font-semibold text-xs text-neutral-700 uppercase">Cao</th>
@@ -294,6 +318,7 @@
                             @endforeach
                         </tbody>
                     </table>
+                    </div>
                 </div>
                 {{-- Nút thêm sản phẩm mới (Sao chép từ sản phẩm cuối) --}}
                 <button type="button" onclick="addMinLateOrderItem(this)" class="order-table-form-action w-full mt-4 py-3 border-2 border-dashed border-primary-300 hover:border-primary-500 rounded-xl bg-primary-50/50 hover:bg-primary-50 text-primary-600 font-semibold text-sm flex items-center justify-center gap-1.5 transition-all duration-200">
@@ -306,72 +331,81 @@
         @else
             @php $minLateSupplyIndex = 0 @endphp
         @endif
+        </div>
     </div>
 </div>
 
-{{-- Invoice Details Card (Min Late only) --}}
-<div class="bg-white border border-neutral-200 rounded-xl p-6 shadow-sm mt-6">
-    <div class="flex items-center justify-between border-b border-neutral-100 pb-4 mb-5">
+{{-- Bảng chi tiết hóa đơn dùng chung các tính năng hiển thị như bảng vật tư --}}
+<div class="order-supplies-popup bg-white border border-neutral-200 rounded-xl p-6 shadow-sm mt-6" data-order-supplies-zoom-panel data-order-supplies-storage-key="min_late_payment" data-order-supplies-zoom="100" data-order-supplies-visible-rows-disabled="1">
+    <div class="order-supplies-header flex items-center justify-between border-b border-neutral-100 pb-4 mb-5">
         <div class="flex items-center gap-2">
             <iconify-icon icon="lucide:receipt" class="text-xl text-primary-500"></iconify-icon>
             <h6 class="font-bold text-base text-neutral-800 m-0">Chi tiết hóa đơn</h6>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2">
+            <button type="button" onclick="toggleOrderSuppliesPopup(this)" class="btn btn-sm bg-light-100 hover:bg-neutral-200 text-dark rounded-lg flex items-center gap-1" data-order-supplies-popup-button aria-expanded="false">
+                <iconify-icon icon="lucide:maximize-2" class="text-lg" data-order-supplies-popup-icon></iconify-icon>
+                <span data-order-supplies-popup-label>Phóng to</span>
+            </button>
             <button type="button" onclick="addPaymentDetail()" class="btn btn-sm btn-primary rounded-lg flex items-center gap-1">
                 <iconify-icon icon="lucide:plus" class="text-lg"></iconify-icon> Thêm nội dung
             </button>
         </div>
     </div>
-    <div class="overflow-x-auto pb-3">
-        <table class="table bordered-table sm-table mb-0 min-w-[900px] border border-neutral-200">
-            <thead>
-                <tr class="bg-neutral-50 text-center">
-                    <th scope="col" style="width: 50px; min-width: 50px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Stt</th>
-                    <th scope="col" style="white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên nội dung <span class="text-danger-500">*</span></th>
-                    <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn vị</th>
-                    <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số lượng</th>
-                    <th scope="col" style="width: 150px; min-width: 150px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá <span class="text-danger-500">*</span></th>
-                    <th scope="col" style="width: 150px; min-width: 150px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá chỉ gỗ</th>
-                    <th scope="col" style="width: 160px; min-width: 160px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Thành tiền</th>
-                    <th scope="col" style="width: 50px; min-width: 50px; white-space: nowrap; position: sticky; right: 0; z-index: 2; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Xóa</th>
-                </tr>
-            </thead>
-            <tbody id="payment-details-container">
-                @if(isset($acrylicOrder) && $acrylicOrder->type == 'min_late' && isset($acrylicOrder->paymentDetails) && $acrylicOrder->paymentDetails->count() > 0)
-                    @foreach($acrylicOrder->paymentDetails as $detailIndex => $detail)
-                    <tr class="payment-detail-row">
-                        <td style="width: 50px; min-width: 50px; " class="text-center align-middle border border-neutral-200">
-                            <span class="detail-index font-semibold text-neutral-500">{{ $detailIndex + 1 }}</span>
-                        </td>
-                        <td class="border border-neutral-200">
-                            <input type="text" name="payment_details[{{ $detailIndex }}][name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Nhập tên chi phí/dịch vụ" required value="{{ $detail->name }}">
-                        </td>
-                        <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
-                            <input type="text" name="payment_details[{{ $detailIndex }}][unit]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs" placeholder="m, tấm..." value="{{ $detail->unit }}">
-                        </td>
-                        <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
-                            <input type="number" name="payment_details[{{ $detailIndex }}][quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs" placeholder="1" step="0.01" value="{{ $detail->quantity }}">
-                        </td>
-                        <td style="width: 150px; min-width: 150px; " class="border border-neutral-200">
-                            <input type="number" name="payment_details[{{ $detailIndex }}][price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs" placeholder="0" min="0" required value="{{ $detail->price ? round($detail->price) : '0' }}">
-                        </td>
-                        <td style="width: 150px; min-width: 150px; " class="border border-neutral-200">
-                            <input type="number" name="payment_details[{{ $detailIndex }}][price_only]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs" placeholder="0" min="0" value="{{ $detail->price_only ? round($detail->price_only) : '0' }}">
-                        </td>
-                        <td style="width: 160px; min-width: 160px; " class="border border-neutral-200">
-                            <input type="number" name="payment_details[{{ $detailIndex }}][total]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center h-8 text-xs" placeholder="0" readonly value="{{ $detail->total ? round($detail->total) : '0' }}">
-                        </td>
-                        <td style="width: 50px; min-width: 50px; position: sticky; right: 0; z-index: 1; background-color: #fff; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="text-center align-middle border border-neutral-200">
-                            <button type="button" onclick="removePaymentDetail(this)" class="text-neutral-400 hover:text-danger-500 transition-colors p-1" title="Xóa nội dung này">
-                                <iconify-icon icon="lucide:trash-2" class="text-base"></iconify-icon>
-                            </button>
-                            <input type="hidden" name="payment_details[{{ $detailIndex }}][id]" value="{{ $detail->id }}">
-                        </td>
-                    </tr>
-                    @endforeach
-                @endif
-            </tbody>
-        </table>
+    <div class="order-supplies-body">
+        <div class="overflow-x-auto pb-3" data-order-supplies-table-scroll>
+            <div class="order-supplies-table-zoom-wrap" data-order-supplies-table-zoom-wrap>
+                <table class="table bordered-table sm-table mb-0 min-w-[900px] border border-neutral-200" data-order-resize-group="min_late_payment">
+                    <thead>
+                        <tr class="bg-neutral-50 text-center">
+                            <th scope="col" style="width: 50px; min-width: 50px; white-space: nowrap;" class="text-center border border-neutral-200 font-bold text-xs text-neutral-600 uppercase"><span class="order-stt-header-label">STT</span></th>
+                            <th scope="col" style="white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên nội dung <span class="text-danger-500">*</span></th>
+                            <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn vị</th>
+                            <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số lượng</th>
+                            <th scope="col" style="width: 150px; min-width: 150px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá <span class="text-danger-500">*</span></th>
+                            <th scope="col" style="width: 150px; min-width: 150px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá chỉ gỗ</th>
+                            <th scope="col" style="width: 160px; min-width: 160px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Thành tiền</th>
+                            <th scope="col" style="width: 50px; min-width: 50px; white-space: nowrap; position: sticky; right: 0; z-index: 2; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Xóa</th>
+                        </tr>
+                    </thead>
+                    <tbody id="payment-details-container">
+                        @if(isset($acrylicOrder) && $acrylicOrder->type == 'min_late' && isset($acrylicOrder->paymentDetails) && $acrylicOrder->paymentDetails->count() > 0)
+                            @foreach($acrylicOrder->paymentDetails as $detailIndex => $detail)
+                            <tr class="payment-detail-row">
+                                <td style="width: 50px; min-width: 50px; " class="text-center align-middle border border-neutral-200">
+                                    <span class="detail-index font-semibold text-neutral-500">{{ $detailIndex + 1 }}</span>
+                                </td>
+                                <td class="border border-neutral-200">
+                                    <input type="text" name="payment_details[{{ $detailIndex }}][name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Nhập tên chi phí/dịch vụ" required value="{{ $detail->name }}">
+                                </td>
+                                <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
+                                    <input type="text" name="payment_details[{{ $detailIndex }}][unit]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs" placeholder="m, tấm..." value="{{ $detail->unit }}">
+                                </td>
+                                <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
+                                    <input type="number" name="payment_details[{{ $detailIndex }}][quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs" placeholder="1" step="0.01" value="{{ $detail->quantity }}">
+                                </td>
+                                <td style="width: 150px; min-width: 150px; " class="border border-neutral-200">
+                                    <input type="number" name="payment_details[{{ $detailIndex }}][price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs" placeholder="0" min="0" required value="{{ $detail->price ? round($detail->price) : '0' }}">
+                                </td>
+                                <td style="width: 150px; min-width: 150px; " class="border border-neutral-200">
+                                    <input type="number" name="payment_details[{{ $detailIndex }}][price_only]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs" placeholder="0" min="0" value="{{ $detail->price_only ? round($detail->price_only) : '0' }}">
+                                </td>
+                                <td style="width: 160px; min-width: 160px; " class="border border-neutral-200">
+                                    <input type="number" name="payment_details[{{ $detailIndex }}][total]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center h-8 text-xs" placeholder="0" readonly value="{{ $detail->total ? round($detail->total) : '0' }}">
+                                </td>
+                                <td style="width: 50px; min-width: 50px; position: sticky; right: 0; z-index: 1; background-color: #fff; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="text-center align-middle border border-neutral-200">
+                                    <button type="button" onclick="removePaymentDetail(this)" class="text-neutral-400 hover:text-danger-500 transition-colors p-1" title="Xóa nội dung này">
+                                        <iconify-icon icon="lucide:trash-2" class="text-base"></iconify-icon>
+                                    </button>
+                                    <input type="hidden" name="payment_details[{{ $detailIndex }}][id]" value="{{ $detail->id }}">
+                                </td>
+                            </tr>
+                            @endforeach
+                        @endif
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -398,11 +432,12 @@ function addMinLateOrderSupply() {
                 </button>
             </div>
         </div>
-        <div class="overflow-x-auto pb-3">
+        <div class="overflow-x-auto pb-3" data-order-supplies-table-scroll>
+            <div class="order-supplies-table-zoom-wrap" data-order-supplies-table-zoom-wrap>
             <table class="table bordered-table sm-table mb-0 min-w-[2000px] border border-neutral-200">
                 <thead>
                     <tr class="bg-neutral-50 text-center">
-                        <th scope="col" rowspan="2" style="width: 45px; min-width: 45px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Stt</th>
+                        <th scope="col" rowspan="2" style="width: 45px; min-width: 45px; white-space: nowrap;" class="align-middle text-center border border-neutral-200 font-bold text-xs text-neutral-600 uppercase"><span class="order-stt-header-label">STT</span></th>
                         <th scope="col" rowspan="2" style="width: 160px; min-width: 160px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Mã hàng</th>
                         <th scope="col" rowspan="2" style="min-width: 180px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên hàng hóa, dịch vụ <span class="text-danger-500">*</span></th>
                         <th scope="col" rowspan="2" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Độ dày</th>
@@ -423,8 +458,8 @@ function addMinLateOrderSupply() {
                     </tr>
                     <tr class="bg-neutral-50 text-center">
                         {{-- Kích thước --}}
-                        <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="border border-neutral-200 bg-yellow-100/70 font-semibold text-xs text-neutral-700 uppercase">Cao (vân)</th>
-                        <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="border border-neutral-200 font-semibold text-xs text-neutral-700 uppercase">Rộng</th>
+                        <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="border border-neutral-200 bg-yellow-100/70 font-semibold text-xs text-neutral-700 uppercase text-center order-header-force-center">Cao (vân)</th>
+                        <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="border border-neutral-200 font-semibold text-xs text-neutral-700 uppercase text-center">Rộng</th>
                         {{-- Dán cạnh --}}
                         <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="border border-neutral-200 font-semibold text-xs text-neutral-700 uppercase">Cao</th>
                         <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="border border-neutral-200 font-semibold text-xs text-neutral-700 uppercase">Cao</th>
@@ -435,6 +470,7 @@ function addMinLateOrderSupply() {
                 <tbody class="supply-items-container" data-supply-index="${minLateSupplyIndex}">
                 </tbody>
             </table>
+            </div>
         </div>
         <button type="button" onclick="addMinLateOrderItem(this)" class="w-full mt-4 py-3 border-2 border-dashed border-primary-300 hover:border-primary-500 rounded-xl bg-primary-50/50 hover:bg-primary-50 text-primary-600 font-semibold text-sm flex items-center justify-center gap-1.5 transition-all duration-200">
             <iconify-icon icon="lucide:plus" class="text-lg"></iconify-icon>
@@ -447,6 +483,11 @@ function addMinLateOrderSupply() {
     const addProductBtn = newSupply.querySelector('button[onclick^="addMinLateOrderItem"]');
     if (addProductBtn) {
         addMinLateOrderItem(addProductBtn);
+    }
+
+    const panel = newSupply.closest('[data-order-supplies-zoom-panel]');
+    if (panel) {
+        applyOrderSuppliesZoom(panel, panel.dataset.orderSuppliesZoom || 100);
     }
 
     minLateSupplyIndex++;
@@ -874,6 +915,18 @@ document.addEventListener('input', function(e) {
 
 let paymentDetailIndex = {{ (isset($acrylicOrder) && $acrylicOrder->type == 'min_late' && isset($acrylicOrder->paymentDetails)) ? $acrylicOrder->paymentDetails->count() : 0 }};
 
+// Đồng bộ lại chiều cao hiển thị và co giãn cột sau khi thêm/xóa dòng chi tiết.
+function refreshPaymentDetailsTableLayout() {
+    const panel = document.querySelector('[data-order-supplies-storage-key="min_late_payment"]');
+    if (panel && typeof applyOrderSuppliesVisibleRows === 'function') {
+        applyOrderSuppliesVisibleRows(panel, panel.dataset.orderSuppliesVisibleRows || 'free');
+    }
+
+    if (typeof initOrderColumnResize === 'function') {
+        initOrderColumnResize(document);
+    }
+}
+
 function addPaymentDetail() {
     const container = document.getElementById('payment-details-container');
     if (!container) return;
@@ -916,6 +969,7 @@ function addPaymentDetail() {
     paymentDetailIndex++;
     updatePaymentDetailIndexes();
     updateOrderSummary();
+    refreshPaymentDetailsTableLayout();
 }
 
 function removePaymentDetail(button) {
@@ -923,6 +977,7 @@ function removePaymentDetail(button) {
     row.remove();
     updatePaymentDetailIndexes();
     updateOrderSummary();
+    refreshPaymentDetailsTableLayout();
 }
 
 function calculatePaymentDetailRowTotal(row) {

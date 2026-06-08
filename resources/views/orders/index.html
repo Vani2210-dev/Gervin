@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TableEdit</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Làm thanh cuộn ngang/dọc dễ nhìn hơn trên trình duyệt */
+    .sheet-scroll {
+      scrollbar-width: thin;
+      scrollbar-color: rgb(148 163 184) rgb(241 245 249);
+    }
+
+    .sheet-scroll::-webkit-scrollbar {
+      width: 12px;
+      height: 12px;
+    }
+
+    .sheet-scroll::-webkit-scrollbar-track {
+      background: rgb(241 245 249);
+    }
+
+    .sheet-scroll::-webkit-scrollbar-thumb {
+      background: rgb(148 163 184);
+      border-radius: 9999px;
+      border: 3px solid rgb(241 245 249);
+    }
+
+    .sheet-scroll::-webkit-scrollbar-thumb:hover {
+      background: rgb(100 116 139);
+    }
+
+    /* Dùng zoom thay vì transform để sticky vẫn bám đúng khi cuộn */
+    .sheet-zoom {
+      zoom: 1;
+    }
+
+    .sheet-cell {
+      position: relative;
+      min-width: 9rem;
+      height: 3rem;
+      overflow: hidden;
+      vertical-align: top;
+    }
+
+    .cell-content {
+      display: block;
+      width: 100%;
+      height: 100%;
+      padding: 0.5rem 0.75rem;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      box-sizing: border-box;
+      line-height: 1.5rem;
+      max-height: 100%;
+      scrollbar-width: none;
+    }
+
+    .cell-content::-webkit-scrollbar {
+      display: none;
+    }
+
+    .cell-content:focus {
+      outline: none;
+      box-shadow: inset 0 0 0 2px rgb(59 130 246 / 0.9);
+      background: rgb(239 246 255);
+    }
+
+    .resize-handle-col {
+      position: absolute;
+      top: 0;
+      right: -7px;
+      width: 14px;
+      height: 100%;
+      cursor: col-resize;
+      user-select: none;
+      z-index: 40;
+      background: transparent;
+    }
+
+    .resize-handle-row {
+      position: absolute;
+      left: 0;
+      bottom: -7px;
+      width: 100%;
+      height: 14px;
+      cursor: row-resize;
+      user-select: none;
+      z-index: 40;
+      background: transparent;
+    }
+
+    /* Tạo cảm giác bảng tính rõ ràng hơn */
+    .sheet-cell:focus {
+      outline: none;
+      box-shadow: inset 0 0 0 2px rgb(59 130 246 / 0.9);
+      background: rgb(239 246 255);
+    }
+  </style>
+</head>
+<body class="h-screen overflow-hidden bg-slate-50 text-slate-900">
+  <div class="flex h-screen w-screen flex-col">
+    <header class="flex items-center justify-between gap-4 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur">
+      <div>
+        <h1 class="text-lg font-semibold tracking-wide">TableEdit</h1>
+        <p class="text-xs text-slate-500">Bảng toàn màn hình, chỉnh sửa trực tiếp, phóng to thu nhỏ như Excel</p>
+      </div>
+
+      <div class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 shadow-sm">
+        <button id="zoomOut" class="rounded-lg bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 transition hover:bg-slate-100">
+          -
+        </button>
+        <div class="min-w-20 text-center text-sm font-medium text-slate-700">
+          <span id="zoomLabel">100%</span>
+        </div>
+        <button id="zoomIn" class="rounded-lg bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 transition hover:bg-slate-100">
+          +
+        </button>
+        <input id="zoomRange" type="range" min="50" max="200" value="100" class="w-36 accent-blue-500" />
+      </div>
+    </header>
+
+    <main class="relative flex-1 overflow-hidden">
+      <div class="relative flex h-full w-full flex-col p-4">
+        <div class="mb-3 flex items-center justify-between text-xs text-slate-500">
+          <span>Nhấn trực tiếp vào ô để sửa nội dung</span>
+          <span>Ctrl + cuộn chuột để đổi zoom</span>
+        </div>
+
+        <div id="sheetViewport" class="sheet-scroll relative flex-1 overflow-auto border border-slate-200 bg-white shadow-xl shadow-slate-200/60">
+          <div id="sheetStage" class="relative">
+            <div id="sheetWrap" class="sheet-zoom">
+              <table class="w-max table-fixed border-separate border-spacing-0 text-sm">
+                <thead id="tableHead"></thead>
+                <tbody id="tableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Chuyển số cột thành tên kiểu Excel: A, B, C ... Z, AA, AB ...
+    function getColumnName(index) {
+      let name = '';
+      let current = index + 1;
+
+      while (current > 0) {
+        const remainder = (current - 1) % 26;
+        name = String.fromCharCode(65 + remainder) + name;
+        current = Math.floor((current - 1) / 26);
+      }
+
+      return name;
+    }
+
+    const INITIAL_ROWS = 1;
+    const COLS = 26;
+    const DEFAULT_ZOOM = 100;
+    const MIN_ZOOM = 50;
+    const MAX_ZOOM = 200;
+    const STEP_ZOOM = 10;
+    const DEFAULT_COL_WIDTH = 144;
+    const DEFAULT_ROW_HEIGHT = 48;
+    const MIN_COL_WIDTH = 80;
+    const MIN_ROW_HEIGHT = 32;
+
+    const sheetViewport = document.getElementById('sheetViewport');
+    const sheetWrap = document.getElementById('sheetWrap');
+    const tableHead = document.getElementById('tableHead');
+    const tableBody = document.getElementById('tableBody');
+    const zoomLabel = document.getElementById('zoomLabel');
+    const zoomRange = document.getElementById('zoomRange');
+    const zoomInBtn = document.getElementById('zoomIn');
+    const zoomOutBtn = document.getElementById('zoomOut');
+
+    let zoom = DEFAULT_ZOOM;
+    const colWidths = Array.from({ length: COLS }, () => DEFAULT_COL_WIDTH);
+    const rowHeights = [];
+
+    function setZoom(nextZoom) {
+      zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, nextZoom));
+      const scale = zoom / 100;
+
+      // Dùng zoom để sticky vẫn hoạt động đúng khi cuộn
+      sheetWrap.style.zoom = String(scale);
+      zoomLabel.textContent = `${zoom}%`;
+      zoomRange.value = String(zoom);
+    }
+
+    function applyColumnWidth(colIndex, width) {
+      const nextWidth = Math.max(MIN_COL_WIDTH, width);
+      colWidths[colIndex] = nextWidth;
+
+      document.querySelectorAll(`[data-col="${colIndex}"]`).forEach((el) => {
+        el.style.width = `${nextWidth}px`;
+        el.style.minWidth = `${nextWidth}px`;
+        el.style.maxWidth = `${nextWidth}px`;
+      });
+    }
+
+    function applyRowHeight(rowIndex, height) {
+      const nextHeight = Math.max(MIN_ROW_HEIGHT, height);
+      rowHeights[rowIndex] = nextHeight;
+
+      document.querySelectorAll(`[data-row="${rowIndex}"]`).forEach((el) => {
+        el.style.height = `${nextHeight}px`;
+        el.style.minHeight = `${nextHeight}px`;
+        el.style.maxHeight = `${nextHeight}px`;
+      });
+    }
+
+    function rowHasContent(rowIndex) {
+      const row = tableBody.querySelector(`tr[data-row="${rowIndex}"]`);
+      if (!row) return false;
+
+      return Array.from(row.querySelectorAll('.cell-content')).some((cell) => cell.textContent.trim() !== '');
+    }
+
+    function appendBlankRow() {
+      const rowIndex = rowHeights.length;
+      rowHeights.push(DEFAULT_ROW_HEIGHT);
+
+      const tr = document.createElement('tr');
+      tr.dataset.row = String(rowIndex);
+      tr.style.height = `${DEFAULT_ROW_HEIGHT}px`;
+
+      const rowHead = document.createElement('th');
+      rowHead.dataset.rowLabel = 'true';
+      rowHead.textContent = String(rowIndex + 1);
+      rowHead.className = [
+        'relative sticky left-0 z-20 border-b border-r border-slate-200 bg-slate-100 px-3 text-left text-xs font-semibold text-slate-500 overflow-hidden',
+      ].join(' ');
+      rowHead.style.width = '4rem';
+      rowHead.style.minWidth = '4rem';
+      rowHead.style.maxWidth = '4rem';
+      rowHead.style.height = `${DEFAULT_ROW_HEIGHT}px`;
+
+      const rowHandle = document.createElement('div');
+      rowHandle.className = 'resize-handle-row';
+      rowHead.appendChild(rowHandle);
+      setupRowResize(rowHandle, rowIndex);
+
+      tr.appendChild(rowHead);
+
+      for (let col = 0; col < COLS; col += 1) {
+        const td = createCell(
+          'td',
+          '',
+          [
+            'sheet-cell border-b border-r border-slate-200 bg-white text-slate-900 transition-colors overflow-hidden',
+          ].join(' ')
+        );
+
+        td.dataset.col = String(col);
+        td.dataset.row = String(rowIndex);
+        td.style.width = `${colWidths[col]}px`;
+        td.style.minWidth = `${colWidths[col]}px`;
+        td.style.maxWidth = `${colWidths[col]}px`;
+        td.style.height = `${DEFAULT_ROW_HEIGHT}px`;
+
+        const content = td.querySelector('.cell-content');
+        content.addEventListener('input', () => {
+          // Nếu người dùng nhập vào dòng trống cuối cùng thì tự sinh thêm một dòng mới
+          if (rowIndex === rowHeights.length - 1 && rowHasContent(rowIndex)) {
+            appendBlankRow();
+          }
+        });
+
+        tr.appendChild(td);
+      }
+
+      tableBody.appendChild(tr);
+      return tr;
+    }
+
+    function setupColumnResize(handle, colIndex) {
+      let startX = 0;
+      let startWidth = 0;
+
+      const onMouseMove = (event) => {
+        applyColumnWidth(colIndex, startWidth + (event.clientX - startX));
+      };
+
+      const onMouseUp = () => {
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+      };
+
+      handle.addEventListener('mousedown', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        startX = event.clientX;
+        startWidth = colWidths[colIndex];
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+      });
+    }
+
+    function setupRowResize(handle, rowIndex) {
+      let startY = 0;
+      let startHeight = 0;
+
+      const onMouseMove = (event) => {
+        applyRowHeight(rowIndex, startHeight + (event.clientY - startY));
+      };
+
+      const onMouseUp = () => {
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+      };
+
+      handle.addEventListener('mousedown', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        startY = event.clientY;
+        startHeight = rowHeights[rowIndex];
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+      });
+    }
+
+    function createCell(tagName, text, extraClasses = '') {
+      const cell = document.createElement(tagName);
+      cell.className = extraClasses;
+      const content = document.createElement('div');
+      content.className = 'cell-content';
+      content.contentEditable = 'true';
+      content.spellcheck = false;
+      content.textContent = text;
+
+      content.addEventListener('focus', () => {
+        // Giữ vùng nhập bên trong ô ở vị trí đầu khi bắt đầu chỉnh sửa
+        content.scrollTop = 0;
+        content.scrollLeft = 0;
+      });
+
+      content.addEventListener('blur', () => {
+        // Khi rời ô, đưa nội dung bên trong về đầu để ô kế tiếp luôn gọn gàng
+        content.scrollTop = 0;
+        content.scrollLeft = 0;
+      });
+
+      cell.appendChild(content);
+      return cell;
+    }
+
+    function buildTable() {
+      const headRow = document.createElement('tr');
+
+      const corner = document.createElement('th');
+      corner.textContent = '';
+      corner.className = [
+        'relative sticky left-0 top-0 z-30 h-10 min-w-16 border-b border-r border-slate-200 bg-slate-100 px-3 text-left text-xs font-semibold text-slate-500',
+      ].join(' ');
+      headRow.appendChild(corner);
+
+      for (let col = 0; col < COLS; col += 1) {
+        const th = document.createElement('th');
+        th.dataset.col = String(col);
+        th.textContent = getColumnName(col);
+        th.className = [
+          'relative sticky top-0 z-20 h-10 border-b border-r border-slate-200 bg-slate-100 px-3 text-left text-xs font-semibold text-slate-500',
+        ].join(' ');
+
+        th.style.width = `${colWidths[col]}px`;
+        th.style.minWidth = `${colWidths[col]}px`;
+        th.style.maxWidth = `${colWidths[col]}px`;
+
+        const handle = document.createElement('div');
+        handle.className = 'resize-handle-col';
+        th.appendChild(handle);
+        setupColumnResize(handle, col);
+
+        headRow.appendChild(th);
+      }
+
+      tableHead.appendChild(headRow);
+
+      for (let row = 0; row < INITIAL_ROWS; row += 1) {
+        appendBlankRow();
+      }
+    }
+
+    zoomRange.addEventListener('input', (event) => {
+      setZoom(Number(event.target.value));
+    });
+
+    zoomInBtn.addEventListener('click', () => {
+      setZoom(zoom + STEP_ZOOM);
+    });
+
+    zoomOutBtn.addEventListener('click', () => {
+      setZoom(zoom - STEP_ZOOM);
+    });
+
+    sheetViewport.addEventListener('wheel', (event) => {
+      if (!event.ctrlKey) return;
+      event.preventDefault();
+
+      const direction = event.deltaY < 0 ? 1 : -1;
+      setZoom(zoom + direction * STEP_ZOOM);
+    }, { passive: false });
+
+    buildTable();
+    setZoom(DEFAULT_ZOOM);
+  </script>
+</body>
+</html>

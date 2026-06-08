@@ -9,6 +9,13 @@
     .table thead tr:nth-child(2) th:last-child::before {
         display: none !important;
     }
+    /* Cho ô cuối của hàng header thứ 2 vẫn kéo giãn được */
+    .table thead tr:nth-child(2) th:last-child.order-column-resizable-th {
+        position: relative !important;
+        background-color: inherit !important;
+        box-shadow: none !important;
+        overflow: visible !important;
+    }
     /* === COMPACT TABLE: 75% font scale === */
     #glass-supplies-container .order-supply-row table {
         font-size: 75% !important;
@@ -87,19 +94,35 @@
         box-shadow: 0 0 0 1px #3b82f6 !important;
     }
 </style>
-<div class="bg-white border border-neutral-200 rounded-xl p-6 shadow-sm">
-    <div class="flex items-center justify-between border-b border-neutral-100 pb-4 mb-5">
+<div class="order-supplies-popup bg-white border border-neutral-200 rounded-xl p-6 shadow-sm" data-order-supplies-zoom-panel data-order-supplies-storage-key="glass" data-order-supplies-zoom="100" data-order-supplies-visible-rows="free">
+    <div class="order-supplies-header flex items-center justify-between border-b border-neutral-100 pb-4 mb-5">
         <div class="flex items-center gap-2">
             <iconify-icon icon="lucide:package-open" class="text-xl text-primary-500"></iconify-icon>
             <h6 class="font-bold text-base text-neutral-800 m-0">Danh sách Vật tư & Sản phẩm (Kính)</h6>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2">
+            <div class="flex items-center gap-2">
+                <span class="text-xs font-semibold uppercase tracking-wider text-neutral-500">Hiển thị</span>
+                <select data-order-supplies-visible-rows-select class="form-select form-select-sm w-28 rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500">
+                    <option value="free" selected>Tự do</option>
+                    <option value="5">5</option>
+                    <option value="10">10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                </select>
+            </div>
+            <button type="button" onclick="toggleOrderSuppliesPopup(this)" class="btn btn-sm bg-light-100 hover:bg-neutral-200 text-dark rounded-lg flex items-center gap-1" data-order-supplies-popup-button aria-expanded="false">
+                <iconify-icon icon="lucide:maximize-2" class="text-lg" data-order-supplies-popup-icon></iconify-icon>
+                <span data-order-supplies-popup-label>Phóng to</span>
+            </button>
             <button type="button" onclick="addGlassOrderSupply()" class="btn btn-sm btn-primary rounded-lg flex items-center gap-1">
                 <iconify-icon icon="lucide:plus" class="text-lg"></iconify-icon> Thêm vật tư
             </button>
         </div>
     </div>
-    <div id="glass-supplies-container" class="space-y-6">
+    <div class="order-supplies-body">
+        <div id="glass-supplies-container" class="space-y-6">
         @if(isset($acrylicOrder) && $acrylicOrder->type == 'glass' && $acrylicOrder->supplies->count() > 0)
             @foreach($acrylicOrder->supplies as $supplyIndex => $supply)
             <div class="order-supply-row bg-neutral-50/50 border border-primary-600 rounded-xl p-5 mb-2 relative shadow-sm" data-supply-id="{{ $supply->id }}">
@@ -120,11 +143,12 @@
                         </button>
                     </div>
                 </div>
-                <div class="overflow-x-auto pb-3">
+                <div class="overflow-x-auto pb-3" data-order-supplies-table-scroll>
+                    <div class="order-supplies-table-zoom-wrap" data-order-supplies-table-zoom-wrap>
                     <table class="table bordered-table sm-table mb-0 min-w-[1200px] border border-neutral-200">
                         <thead>
                             <tr class="bg-neutral-50 text-center">
-                                <th scope="col" rowspan="2" style="width: 30px; min-width: 30px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Stt</th>
+                                <th scope="col" rowspan="2" style="width: 30px; min-width: 30px; white-space: nowrap;" class="align-middle text-center border border-neutral-200 font-bold text-xs text-neutral-600 uppercase"><span class="order-stt-header-label">STT</span></th>
                                 <th scope="col" rowspan="2" style="width: 110px; min-width: 110px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Mã SP</th>
                                 <th scope="col" rowspan="2" style="width: 150px; min-width: 150px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên sản phẩm <span class="text-danger-500">*</span></th>
                                 <th scope="col" rowspan="2" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Độ dày</th>
@@ -141,13 +165,14 @@
                                 <th scope="col" rowspan="2" style="width: 60px; min-width: 60px; white-space: nowrap; position: sticky; right: 0; z-index: 3; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Hành động</th>
                             </tr>
                             <tr class="bg-neutral-50 text-center">
-                                <th scope="col" style="width: 130px; min-width: 130px; white-space: nowrap;" class="border border-neutral-200 bg-yellow-100/70 font-semibold text-xs text-neutral-700 uppercase">Dài (mm)</th>
-                                <th scope="col" style="width: 130px; min-width: 130px; white-space: nowrap;" class="border border-neutral-200 font-semibold text-xs text-neutral-700 uppercase">Rộng (mm)</th>
+                                <th scope="col" style="width: 130px; min-width: 130px; white-space: nowrap;" class="border border-neutral-200 bg-yellow-100/70 font-semibold text-xs text-neutral-700 uppercase text-center order-header-force-center">Dài (mm)</th>
+                                <th scope="col" style="width: 130px; min-width: 130px; white-space: nowrap;" class="border border-neutral-200 font-semibold text-xs text-neutral-700 uppercase text-center">Rộng (mm)</th>
                             </tr>
                         </thead>
                         <tbody class="supply-items-container" data-supply-index="${glassSupplyIndex}">
                         </tbody>
                     </table>
+                    </div>
                 </div>
                 <button type="button" onclick="addGlassOrderItem(this)" class="w-full mt-4 py-3 border-2 border-dashed border-primary-300 hover:border-primary-500 rounded-xl bg-primary-50/50 hover:bg-primary-50 text-primary-600 font-semibold text-sm flex items-center justify-center gap-1.5 transition-all duration-200">
                     <iconify-icon icon="lucide:plus" class="text-lg"></iconify-icon>
@@ -159,6 +184,7 @@
         @else
             @php $glassSupplyIndex = 0 @endphp
         @endif
+        </div>
     </div>
 </div>
 
@@ -185,11 +211,12 @@ function addGlassOrderSupply() {
                 </button>
             </div>
         </div>
-        <div class="overflow-x-auto pb-3">
+        <div class="overflow-x-auto pb-3" data-order-supplies-table-scroll>
+            <div class="order-supplies-table-zoom-wrap" data-order-supplies-table-zoom-wrap>
             <table class="table bordered-table sm-table mb-0 min-w-[1800px] border border-neutral-200">
                 <thead>
                     <tr class="bg-neutral-50 text-center">
-                        <th scope="col" rowspan="2" style="width: 45px; min-width: 45px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Stt</th>
+                        <th scope="col" rowspan="2" style="width: 45px; min-width: 45px; white-space: nowrap;" class="align-middle text-center border border-neutral-200 font-bold text-xs text-neutral-600 uppercase"><span class="order-stt-header-label">STT</span></th>
                         <th scope="col" rowspan="2" style="width: 160px; min-width: 160px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Mã SP</th>
                         <th scope="col" rowspan="2" style="min-width: 220px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên sản phẩm <span class="text-danger-500">*</span></th>
                         <th scope="col" rowspan="2" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Độ dày</th>
@@ -206,13 +233,14 @@ function addGlassOrderSupply() {
                         <th scope="col" rowspan="2" style="width: 80px; min-width: 80px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Hành động</th>
                     </tr>
                     <tr class="bg-neutral-50 text-center">
-                        <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="border border-neutral-200 bg-yellow-100/70 font-semibold text-xs text-neutral-700 uppercase">Dài (mm)</th>
-                        <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="border border-neutral-200 font-semibold text-xs text-neutral-700 uppercase">Rộng (mm)</th>
+                        <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="border border-neutral-200 bg-yellow-100/70 font-semibold text-xs text-neutral-700 uppercase text-center order-header-force-center">Dài (mm)</th>
+                        <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="border border-neutral-200 font-semibold text-xs text-neutral-700 uppercase text-center">Rộng (mm)</th>
                     </tr>
                 </thead>
                 <tbody class="supply-items-container" data-supply-index="${glassSupplyIndex}">
                 </tbody>
             </table>
+            </div>
         </div>
         <button type="button" onclick="addGlassOrderItem(this)" class="order-table-form-action w-full mt-4 py-3 border-2 border-dashed border-primary-300 hover:border-primary-500 rounded-xl bg-primary-50/50 hover:bg-primary-50 text-primary-600 font-semibold text-sm flex items-center justify-center gap-1.5 transition-all duration-200">
             <iconify-icon icon="lucide:plus" class="text-lg"></iconify-icon>
@@ -228,6 +256,11 @@ function addGlassOrderSupply() {
     const addProductBtn = newSupply.querySelector('button[onclick^="addGlassOrderItem"]');
     if (addProductBtn) {
         addGlassOrderItem(addProductBtn);
+    }
+
+    const panel = newSupply.closest('[data-order-supplies-zoom-panel]');
+    if (panel) {
+        applyOrderSuppliesZoom(panel, panel.dataset.orderSuppliesZoom || 100);
     }
 
     glassSupplyIndex++;

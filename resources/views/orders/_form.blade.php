@@ -22,6 +22,349 @@
             z-index: 50;
         }
     }
+
+    /* Popup và zoom của khối danh sách vật tư/sản phẩm */
+    .order-supplies-popup.is-fullscreen {
+        position: fixed !important;
+        inset: 0 !important;
+        z-index: 999;
+        width: 100vw !important;
+        height: 100vh !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden !important;
+        background: #ffffff !important;
+    }
+
+    .order-supplies-popup.is-fullscreen .order-supplies-header {
+        flex: 0 0 auto;
+    }
+
+    .order-supplies-popup.is-fullscreen .order-supplies-body {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: auto;
+    }
+
+    .order-supplies-table-zoom-wrap {
+        display: inline-block;
+        width: max-content;
+        transform-origin: top left;
+    }
+
+    /* Làm thanh cuộn dọc của bảng giống kiểu sheet trong file mẫu */
+    [data-order-supplies-table-scroll] {
+        scrollbar-width: thin;
+        scrollbar-color: rgb(148 163 184) rgb(241 245 249);
+    }
+
+    [data-order-supplies-table-scroll]::-webkit-scrollbar {
+        width: 12px;
+        height: 12px;
+    }
+
+    [data-order-supplies-table-scroll]::-webkit-scrollbar-track {
+        background: rgb(241 245 249);
+    }
+
+    [data-order-supplies-table-scroll]::-webkit-scrollbar-thumb {
+        background: rgb(148 163 184);
+        border-radius: 9999px;
+        border: 3px solid rgb(241 245 249);
+    }
+
+    [data-order-supplies-table-scroll]::-webkit-scrollbar-thumb:hover {
+        background: rgb(100 116 139);
+    }
+
+    /* Tay nắm kéo giãn cột trong bảng sản phẩm */
+    .order-column-resizable-th {
+        position: relative;
+        overflow: visible !important;
+    }
+
+    .resize-handle-col {
+        position: absolute;
+        top: 0;
+        right: -6px;
+        z-index: 30;
+        width: 12px;
+        height: 100%;
+        cursor: col-resize;
+        touch-action: none;
+        user-select: none;
+        background: transparent;
+    }
+
+    .resize-handle-col::after {
+        position: absolute;
+        top: 0;
+        right: 5px;
+        width: 2px;
+        height: 100%;
+        content: "";
+        background: transparent;
+    }
+
+    body.order-column-resizing {
+        cursor: col-resize !important;
+        user-select: none !important;
+    }
+
+    /* Biến ô nhập trong bảng sản phẩm thành giao diện kiểu spreadsheet */
+    #order-supplies-container .order-supply-row table,
+    #glass-supplies-container .order-supply-row table,
+    #min-late-supplies-container .order-supply-row table {
+        border-color: #dbe5f1 !important;
+        border-collapse: collapse !important;
+        background: #ffffff !important;
+    }
+
+    #order-supplies-container .order-supply-row table th,
+    #glass-supplies-container .order-supply-row table th,
+    #min-late-supplies-container .order-supply-row table th {
+        background: #f1f5f9 !important;
+        border-color: #dbe5f1 !important;
+        color: #475569 !important;
+        font-weight: 600 !important;
+    }
+
+    #order-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td,
+    #glass-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td,
+    #min-late-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td {
+        padding: 0 !important;
+        border-color: #dbe5f1 !important;
+        background: #ffffff !important;
+        vertical-align: middle !important;
+    }
+
+    #order-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .row-index,
+    #glass-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .row-index,
+    #min-late-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .row-index {
+        display: flex !important;
+        min-height: 42px !important;
+        align-items: center !important;
+        justify-content: center !important;
+        background: #f8fafc !important;
+    }
+
+    #order-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td > .flex,
+    #glass-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td > .flex,
+    #min-late-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td > .flex {
+        min-height: 42px !important;
+    }
+
+    #order-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-control,
+    #order-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-select,
+    #glass-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-control,
+    #glass-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-select,
+    #min-late-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-control,
+    #min-late-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-select {
+        width: 100% !important;
+        height: 42px !important;
+        min-height: 42px !important;
+        padding: 0 12px !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        background: #ffffff !important;
+        box-shadow: none !important;
+        color: #0f172a !important;
+        font-size: 12px !important;
+        line-height: 1.4 !important;
+    }
+
+    #order-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-control::placeholder,
+    #glass-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-control::placeholder,
+    #min-late-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-control::placeholder {
+        color: #64748b !important;
+        opacity: 1 !important;
+    }
+
+    #order-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-control:focus,
+    #order-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-select:focus,
+    #glass-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-control:focus,
+    #glass-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-select:focus,
+    #min-late-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-control:focus,
+    #min-late-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-select:focus {
+        position: relative;
+        z-index: 2;
+        background: #eff6ff !important;
+        outline: 2px solid #3b82f6 !important;
+        outline-offset: -2px !important;
+        box-shadow: inset 0 0 0 1px #3b82f6 !important;
+    }
+
+    #order-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-control[readonly],
+    #glass-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-control[readonly],
+    #min-late-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-control[readonly] {
+        background: #f8fafc !important;
+        color: #475569 !important;
+        font-weight: 600 !important;
+    }
+
+    #order-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td input[type="number"]::-webkit-inner-spin-button,
+    #order-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td input[type="number"]::-webkit-outer-spin-button,
+    #glass-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td input[type="number"]::-webkit-inner-spin-button,
+    #glass-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td input[type="number"]::-webkit-outer-spin-button,
+    #min-late-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td input[type="number"]::-webkit-inner-spin-button,
+    #min-late-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td input[type="number"]::-webkit-outer-spin-button {
+        margin: 0;
+        appearance: none;
+        -webkit-appearance: none;
+    }
+
+    #order-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .ts-wrapper,
+    #glass-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .ts-wrapper,
+    #min-late-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .ts-wrapper {
+        width: 100% !important;
+        height: 42px !important;
+    }
+
+    #order-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .ts-control,
+    #glass-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .ts-control,
+    #min-late-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .ts-control {
+        height: 42px !important;
+        min-height: 42px !important;
+        padding: 0 12px !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        background: #ffffff !important;
+        box-shadow: none !important;
+        font-size: 12px !important;
+        line-height: 1.4 !important;
+    }
+
+    #order-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .ts-wrapper.focus .ts-control,
+    #glass-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .ts-wrapper.focus .ts-control,
+    #min-late-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .ts-wrapper.focus .ts-control {
+        background: #eff6ff !important;
+        outline: 2px solid #3b82f6 !important;
+        outline-offset: -2px !important;
+        box-shadow: inset 0 0 0 1px #3b82f6 !important;
+    }
+
+    /* Bảng chi tiết hóa đơn dùng chung giao diện spreadsheet như các bảng vật tư */
+    table[data-order-resize-group="min_late_payment"] {
+        font-size: 75% !important;
+        border-color: #dbe5f1 !important;
+        border-collapse: collapse !important;
+        background: #ffffff !important;
+    }
+
+    table[data-order-resize-group="min_late_payment"] th {
+        padding: 3px 4px !important;
+        background: #f1f5f9 !important;
+        border-color: #dbe5f1 !important;
+        color: #475569 !important;
+        font-weight: 600 !important;
+    }
+
+    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td {
+        padding: 0 !important;
+        border-color: #dbe5f1 !important;
+        background: #ffffff !important;
+        vertical-align: middle !important;
+    }
+
+    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td .detail-index {
+        display: flex !important;
+        min-height: 42px !important;
+        align-items: center !important;
+        justify-content: center !important;
+        background: #f8fafc !important;
+    }
+
+    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td .form-control,
+    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td .form-select {
+        width: 100% !important;
+        height: 42px !important;
+        min-height: 42px !important;
+        padding: 0 12px !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        background: #ffffff !important;
+        box-shadow: none !important;
+        color: #0f172a !important;
+        font-size: 12px !important;
+        line-height: 1.4 !important;
+    }
+
+    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td .form-control::placeholder {
+        color: #64748b !important;
+        opacity: 1 !important;
+    }
+
+    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td .form-control:focus,
+    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td .form-select:focus {
+        position: relative;
+        z-index: 2;
+        background: #eff6ff !important;
+        outline: 2px solid #3b82f6 !important;
+        outline-offset: -2px !important;
+        box-shadow: inset 0 0 0 1px #3b82f6 !important;
+    }
+
+    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td .form-control[readonly] {
+        background: #f8fafc !important;
+        color: #475569 !important;
+        font-weight: 600 !important;
+    }
+
+    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td input[type="number"]::-webkit-inner-spin-button,
+    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td input[type="number"]::-webkit-outer-spin-button {
+        margin: 0;
+        appearance: none;
+        -webkit-appearance: none;
+    }
+
+    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td:last-child {
+        position: sticky !important;
+        right: 0 !important;
+        z-index: 1 !important;
+        background-color: #ffffff !important;
+        box-shadow: -2px 0 4px rgba(0, 0, 0, 0.06) !important;
+    }
+
+    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td:last-child button {
+        display: flex !important;
+        width: 100% !important;
+        min-height: 42px !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    .order-supplies-zoom-label {
+        min-width: 3.5rem;
+    }
+
+    /* Căn giữa riêng tiêu đề STT để không bị lệch bởi padding của th */
+    .order-stt-header-label {
+        display: block;
+        width: 100%;
+        text-align: center !important;
+    }
+
+    /* Ép ô chọn số dòng cao bằng các nút nhỏ ở header */
+    [data-order-supplies-visible-rows-select] {
+        height: 48px !important;
+        min-height: 48px !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        line-height: 48px !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Ép các tiêu đề đầu hàng phụ vẫn căn giữa dù rule chung của bảng ưu tiên ô đầu tiên */
+    .order-header-force-center {
+        text-align: center !important;
+    }
+
+    body.order-supplies-popup-open {
+        overflow: hidden;
+    }
 </style>
 <div class="card p-0 rounded-xl border-0">
     <div class="card-header border-b border-neutral-200 bg-white py-4 px-6">
@@ -197,7 +540,8 @@
 <script>
 function switchOrderType(type) {
     if (!type) return;
-    
+    closeOrderSuppliesPopup();
+
     const targetSection = type;
     
     // Hide all sections and disable inputs inside them
@@ -215,6 +559,12 @@ function switchOrderType(type) {
         activeSection.querySelectorAll('input, select, textarea').forEach(input => {
             input.disabled = false;
         });
+
+        // Khi tab đơn hàng vừa hiện ra, áp lại giới hạn số dòng nếu người dùng đã chọn
+        const panel = activeSection.closest('[data-order-supplies-zoom-panel]');
+        if (panel && typeof applyOrderSuppliesVisibleRows === 'function') {
+            applyOrderSuppliesVisibleRows(panel, panel.dataset.orderSuppliesVisibleRows || 'free');
+        }
         
         // If there are no rows in the active section, add one by default
         const rows = activeSection.querySelectorAll('.order-item-row');
@@ -290,6 +640,659 @@ function updateOrderSummary() {
     if (totalAmountEl) totalAmountEl.textContent = Math.round(totalAmount).toLocaleString('vi-VN') + ' VNĐ';
     if (grandTotalEl) grandTotalEl.textContent = Math.round(totalAmount).toLocaleString('vi-VN') + ' VNĐ';
 }
+
+function getOrderSuppliesPanel(element) {
+    if (!element) return null;
+    return element.closest('[data-order-supplies-zoom-panel]');
+}
+
+function updateOrderSuppliesPopupButton(button, isOpen) {
+    if (!button) return;
+
+    const iconEl = button.querySelector('[data-order-supplies-popup-icon]');
+    const labelEl = button.querySelector('[data-order-supplies-popup-label]');
+
+    button.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+
+    if (iconEl) {
+        iconEl.setAttribute('icon', isOpen ? 'lucide:minimize-2' : 'lucide:maximize-2');
+    }
+
+    if (labelEl) {
+        labelEl.textContent = isOpen ? 'Thu nhỏ' : 'Phóng to';
+    }
+}
+
+function toggleOrderSuppliesPopup(button) {
+    const panel = getOrderSuppliesPanel(button);
+    if (!panel) return;
+
+    const isOpen = panel.classList.contains('is-fullscreen');
+    panel.classList.toggle('is-fullscreen', !isOpen);
+    document.body.classList.toggle('order-supplies-popup-open', !isOpen);
+    updateOrderSuppliesPopupButton(button, !isOpen);
+
+    if (!isOpen) {
+        const body = panel.querySelector('.order-supplies-body');
+        if (body) {
+            body.scrollTop = 0;
+        }
+    }
+}
+
+function closeOrderSuppliesPopup() {
+    const panel = document.querySelector('[data-order-supplies-zoom-panel].is-fullscreen');
+    if (!panel) {
+        document.body.classList.remove('order-supplies-popup-open');
+        return;
+    }
+
+    panel.classList.remove('is-fullscreen');
+    document.body.classList.remove('order-supplies-popup-open');
+
+    const button = panel.querySelector('[data-order-supplies-popup-button]');
+    updateOrderSuppliesPopupButton(button, false);
+}
+
+function applyOrderSuppliesZoom(panel, zoomValue) {
+    if (!panel) return;
+
+    const nextZoom = Math.min(200, Math.max(50, Number(zoomValue) || 100));
+    const zoomLabel = panel.querySelector('[data-order-supplies-zoom-label]');
+    const zoomRange = panel.querySelector('[data-order-supplies-zoom-range]');
+    const zoomWraps = panel.querySelectorAll('[data-order-supplies-table-zoom-wrap]');
+    const previousZoom = panel.dataset.orderSuppliesZoom || '';
+
+    panel.dataset.orderSuppliesZoom = String(nextZoom);
+
+    zoomWraps.forEach((wrap) => {
+        // Dùng zoom giống file mẫu để sticky header/cột vẫn bám đúng khi phóng to
+        wrap.style.zoom = String(nextZoom / 100);
+    });
+
+    // Cập nhật lại chiều cao hiển thị của bảng sau khi đổi zoom
+    applyOrderSuppliesVisibleRows(panel, panel.dataset.orderSuppliesVisibleRows || 'free');
+
+    if (previousZoom !== String(nextZoom)) {
+        persistOrderSuppliesZoom(panel, nextZoom);
+    }
+
+    if (zoomLabel) {
+        zoomLabel.textContent = `${nextZoom}%`;
+    }
+
+    if (zoomRange && zoomRange.value !== String(nextZoom)) {
+        zoomRange.value = String(nextZoom);
+    }
+}
+
+function changeOrderSuppliesZoom(button, delta) {
+    const panel = getOrderSuppliesPanel(button);
+    if (!panel) return;
+
+    const currentZoom = Number(panel.dataset.orderSuppliesZoom || 100);
+    applyOrderSuppliesZoom(panel, currentZoom + delta);
+}
+
+function syncOrderSuppliesZoom(input) {
+    const panel = getOrderSuppliesPanel(input);
+    if (!panel) return;
+
+    applyOrderSuppliesZoom(panel, input.value);
+}
+
+// Lưu cấu hình giao diện của bảng vật tư/sản phẩm theo từng loại đơn.
+const ORDER_SUPPLIES_UI_STORAGE_PREFIX = 'gervin:order-supplies-ui';
+
+function getOrderSuppliesLocalStorage() {
+    try {
+        return window.localStorage;
+    } catch (error) {
+        return null;
+    }
+}
+
+function readOrderSuppliesStorageItem(key) {
+    if (!key) return null;
+
+    const storage = getOrderSuppliesLocalStorage();
+    if (!storage) return null;
+
+    try {
+        return storage.getItem(key);
+    } catch (error) {
+        return null;
+    }
+}
+
+function writeOrderSuppliesStorageItem(key, value) {
+    if (!key) return;
+
+    const storage = getOrderSuppliesLocalStorage();
+    if (!storage) return;
+
+    try {
+        storage.setItem(key, value);
+    } catch (error) {
+        // Bỏ qua khi trình duyệt chặn localStorage hoặc đầy dung lượng.
+    }
+}
+
+function getOrderSuppliesStorageScope(panel) {
+    return panel ? (panel.dataset.orderSuppliesStorageKey || '') : '';
+}
+
+function getOrderSuppliesVisibleRowsStorageKey(panel) {
+    const scope = getOrderSuppliesStorageScope(panel);
+    return scope ? `${ORDER_SUPPLIES_UI_STORAGE_PREFIX}:${scope}:visible-rows` : null;
+}
+
+function isOrderSuppliesVisibleRowsDisabled(panel) {
+    return panel && panel.dataset.orderSuppliesVisibleRowsDisabled === '1';
+}
+
+function getOrderSuppliesZoomStorageKey(panel) {
+    const scope = getOrderSuppliesStorageScope(panel);
+    return scope ? `${ORDER_SUPPLIES_UI_STORAGE_PREFIX}:${scope}:zoom` : null;
+}
+
+function getOrderColumnResizeStorageKey(groupKey) {
+    return groupKey ? `${ORDER_SUPPLIES_UI_STORAGE_PREFIX}:column-widths:${groupKey}` : null;
+}
+
+function persistOrderSuppliesVisibleRows(panel, visibleRowsValue) {
+    const storageKey = getOrderSuppliesVisibleRowsStorageKey(panel);
+    if (!storageKey) return;
+
+    writeOrderSuppliesStorageItem(storageKey, String(visibleRowsValue || 'free'));
+}
+
+function persistOrderSuppliesZoom(panel, zoomValue) {
+    const storageKey = getOrderSuppliesZoomStorageKey(panel);
+    if (!storageKey) return;
+
+    writeOrderSuppliesStorageItem(storageKey, String(zoomValue || 100));
+}
+
+function applyOrderSuppliesVisibleRows(panel, visibleRowsValue) {
+    if (!panel) return;
+    if (isOrderSuppliesVisibleRowsDisabled(panel)) return;
+
+    const nextValue = String(visibleRowsValue || 'free');
+    const rowLimit = nextValue === 'free' ? null : Math.max(1, Number(nextValue) || 0);
+    const select = panel.querySelector('[data-order-supplies-visible-rows-select]');
+    const scrollWrappers = panel.querySelectorAll('[data-order-supplies-table-scroll]');
+    const isVisible = panel.getClientRects().length > 0;
+    const previousValue = panel.dataset.orderSuppliesVisibleRows || '';
+
+    panel.dataset.orderSuppliesVisibleRows = nextValue;
+
+    if (select && select.value !== nextValue) {
+        select.value = nextValue;
+    }
+
+    if (previousValue !== nextValue) {
+        persistOrderSuppliesVisibleRows(panel, nextValue);
+    }
+
+    if (!isVisible) {
+        return;
+    }
+
+    scrollWrappers.forEach((scrollWrapper) => {
+        if (!rowLimit) {
+            scrollWrapper.style.maxHeight = '';
+            scrollWrapper.style.overflowY = '';
+            return;
+        }
+
+        const table = scrollWrapper.querySelector('table');
+        if (!table) return;
+
+        const headerHeight = table.tHead ? table.tHead.getBoundingClientRect().height : 0;
+        const sampleRow = table.tBodies && table.tBodies.length > 0 ? table.tBodies[0].querySelector('tr') : null;
+        const rowHeight = sampleRow ? sampleRow.getBoundingClientRect().height : 42;
+        const nextMaxHeight = Math.ceil(headerHeight + (rowHeight * rowLimit) + 2);
+
+        // Giới hạn số dòng nhìn thấy, phần dư sẽ cuộn trong khung bảng
+        scrollWrapper.style.maxHeight = `${nextMaxHeight}px`;
+        scrollWrapper.style.overflowY = 'auto';
+    });
+}
+
+function syncOrderSuppliesVisibleRows(input) {
+    const panel = getOrderSuppliesPanel(input);
+    if (!panel) return;
+
+    applyOrderSuppliesVisibleRows(panel, input.value);
+}
+
+function initOrderSuppliesVisibleRows() {
+    document.querySelectorAll('[data-order-supplies-zoom-panel]').forEach((panel) => {
+        if (isOrderSuppliesVisibleRowsDisabled(panel)) {
+            return;
+        }
+
+        const select = panel.querySelector('[data-order-supplies-visible-rows-select]');
+        const storedValue = readOrderSuppliesStorageItem(getOrderSuppliesVisibleRowsStorageKey(panel));
+        const initialValue = storedValue || (select ? select.value : (panel.dataset.orderSuppliesVisibleRows || 'free'));
+        applyOrderSuppliesVisibleRows(panel, initialValue);
+
+        if (panel.dataset.orderSuppliesVisibleRowsReady === '1') {
+            return;
+        }
+
+        panel.dataset.orderSuppliesVisibleRowsReady = '1';
+
+        if (select) {
+            select.addEventListener('change', () => {
+                syncOrderSuppliesVisibleRows(select);
+            });
+        }
+    });
+}
+
+function initOrderSuppliesZoom() {
+    document.querySelectorAll('[data-order-supplies-zoom-panel]').forEach((panel) => {
+        const storedValue = readOrderSuppliesStorageItem(getOrderSuppliesZoomStorageKey(panel));
+        const initialValue = storedValue || panel.dataset.orderSuppliesZoom || 100;
+        applyOrderSuppliesZoom(panel, initialValue);
+
+        if (panel.dataset.orderSuppliesZoomReady === '1') {
+            return;
+        }
+
+        panel.dataset.orderSuppliesZoomReady = '1';
+
+        // Ctrl + lăn chuột chỉ đổi zoom của đúng bảng đang trỏ vào.
+        panel.addEventListener('wheel', (event) => {
+            if (!event.ctrlKey) return;
+            event.preventDefault();
+
+            const direction = event.deltaY < 0 ? 1 : -1;
+            const currentZoom = Number(panel.dataset.orderSuppliesZoom || 100);
+            applyOrderSuppliesZoom(panel, currentZoom + direction * 10);
+        }, { passive: false });
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    initOrderSuppliesZoom();
+    initOrderSuppliesVisibleRows();
+});
+
+// Co giãn cột bằng data attribute để không đụng vào name/value/event của input.
+const ORDER_COLUMN_RESIZE_TABLE_SELECTOR = [
+    '#order-supplies-container .order-supply-row table',
+    '#glass-supplies-container .order-supply-row table',
+    '#min-late-supplies-container .order-supply-row table',
+    'table[data-order-resize-group="min_late_payment"]',
+].join(', ');
+const ORDER_COLUMN_RESIZE_MIN_WIDTH = 48;
+let orderColumnResizeTableIndex = 0;
+let orderColumnResizeObserver = null;
+const orderColumnResizeWidths = new Map();
+
+function getOrderColumnResizeStyleElement() {
+    let styleElement = document.getElementById('order-column-resize-styles');
+
+    if (!styleElement) {
+        styleElement = document.createElement('style');
+        styleElement.id = 'order-column-resize-styles';
+        document.head.appendChild(styleElement);
+    }
+
+    return styleElement;
+}
+
+function getOrderColumnResizeTableId(table) {
+    if (!table.dataset.orderResizeTableId) {
+        orderColumnResizeTableIndex += 1;
+        table.dataset.orderResizeTableId = `order-resize-table-${orderColumnResizeTableIndex}`;
+    }
+
+    return table.dataset.orderResizeTableId;
+}
+
+function getOrderColumnResizeGroupKey(table) {
+    if (!table) return null;
+
+    if (table.dataset.orderResizeGroup) {
+        return table.dataset.orderResizeGroup;
+    }
+
+    // Gom các bảng cùng loại để co giãn đồng bộ giữa bảng số 1, 2, 3...
+    const container = table.closest('#order-supplies-container, #glass-supplies-container, #min-late-supplies-container');
+    if (!container) return null;
+
+    let groupKey = null;
+
+    if (container.id === 'order-supplies-container') {
+        groupKey = 'acrylic';
+    } else if (container.id === 'glass-supplies-container') {
+        groupKey = 'glass';
+    } else if (container.id === 'min-late-supplies-container') {
+        groupKey = 'min_late';
+    }
+
+    if (groupKey) {
+        table.dataset.orderResizeGroup = groupKey;
+    }
+
+    return groupKey;
+}
+
+function renderOrderColumnResizeStyles() {
+    const rules = [];
+
+    orderColumnResizeWidths.forEach((width, key) => {
+        const [groupKey, columnIndex] = key.split(':');
+        rules.push(`[data-order-resize-group="${groupKey}"] [data-order-resize-col="${columnIndex}"] { width: ${width}px !important; min-width: ${width}px !important; max-width: ${width}px !important; }`);
+    });
+
+    getOrderColumnResizeStyleElement().textContent = rules.join('\n');
+}
+
+function persistOrderColumnResizeGroup(groupKey) {
+    const storageKey = getOrderColumnResizeStorageKey(groupKey);
+    if (!storageKey) return;
+
+    const widths = {};
+
+    orderColumnResizeWidths.forEach((width, key) => {
+        const [storedGroupKey, columnIndex] = key.split(':');
+        if (storedGroupKey !== groupKey) {
+            return;
+        }
+
+        widths[columnIndex] = width;
+    });
+
+    writeOrderSuppliesStorageItem(storageKey, JSON.stringify(widths));
+}
+
+function loadOrderColumnResizeWidthsFromStorage() {
+    // Nạp lại độ rộng cột đã lưu để áp cho mọi bảng cùng loại ngay khi mở trang.
+    document.querySelectorAll('[data-order-supplies-storage-key]').forEach((panel) => {
+        const groupKey = panel.dataset.orderSuppliesStorageKey;
+        const storageKey = getOrderColumnResizeStorageKey(groupKey);
+        const storedValue = readOrderSuppliesStorageItem(storageKey);
+
+        if (!groupKey || !storedValue) {
+            return;
+        }
+
+        try {
+            const widths = JSON.parse(storedValue);
+            if (!widths || typeof widths !== 'object') {
+                return;
+            }
+
+            Object.entries(widths).forEach(([columnIndex, width]) => {
+                const nextWidth = Number(width);
+                if (!Number.isFinite(nextWidth) || nextWidth < ORDER_COLUMN_RESIZE_MIN_WIDTH) {
+                    return;
+                }
+
+                orderColumnResizeWidths.set(`${groupKey}:${columnIndex}`, nextWidth);
+            });
+        } catch (error) {
+            // Dữ liệu cũ hỏng thì bỏ qua và cho bảng quay về mặc định.
+        }
+    });
+
+    renderOrderColumnResizeStyles();
+}
+
+function getOrderColumnResizeTables(root = document) {
+    const tables = [];
+
+    if (root.matches && root.matches(ORDER_COLUMN_RESIZE_TABLE_SELECTOR)) {
+        tables.push(root);
+    }
+
+    if (root.querySelectorAll) {
+        root.querySelectorAll(ORDER_COLUMN_RESIZE_TABLE_SELECTOR).forEach((table) => {
+            tables.push(table);
+        });
+    }
+
+    return tables;
+}
+
+function mapOrderColumnResizeHeader(table) {
+    const thead = table.tHead;
+    const resizableHeaders = [];
+    const occupiedColumns = [];
+    let columnCount = 0;
+
+    if (!thead) {
+        return { resizableHeaders, columnCount };
+    }
+
+    Array.from(thead.rows).forEach((row, rowIndex) => {
+        let columnIndex = 0;
+
+        // Map header có rowspan/colspan về chỉ số cột thật của tbody.
+        Array.from(row.cells).forEach((cell) => {
+            while (occupiedColumns[columnIndex] > rowIndex) {
+                columnIndex += 1;
+            }
+
+            const colspan = Math.max(1, cell.colSpan || 1);
+            const rowspan = Math.max(1, cell.rowSpan || 1);
+
+            cell.dataset.orderResizeStartCol = String(columnIndex);
+            cell.dataset.orderResizeTargetCol = String(columnIndex + colspan - 1);
+
+            if (colspan === 1) {
+                cell.dataset.orderResizeCol = String(columnIndex);
+            } else {
+                delete cell.dataset.orderResizeCol;
+            }
+
+            resizableHeaders.push(cell);
+
+            for (let offset = 0; offset < colspan; offset += 1) {
+                occupiedColumns[columnIndex + offset] = rowIndex + rowspan;
+            }
+
+            columnCount = Math.max(columnCount, columnIndex + colspan);
+            columnIndex += colspan;
+        });
+    });
+
+    return { resizableHeaders, columnCount };
+}
+
+function ensureOrderColumnResizeColgroup(table, columnCount) {
+    let colgroup = table.querySelector('colgroup[data-order-resize-colgroup]');
+
+    if (!colgroup || colgroup.parentElement !== table) {
+        colgroup = document.createElement('colgroup');
+        colgroup.dataset.orderResizeColgroup = '1';
+        table.insertBefore(colgroup, table.firstElementChild);
+    }
+
+    while (colgroup.children.length < columnCount) {
+        colgroup.appendChild(document.createElement('col'));
+    }
+
+    while (colgroup.children.length > columnCount) {
+        colgroup.lastElementChild.remove();
+    }
+
+    Array.from(colgroup.children).forEach((col, index) => {
+        col.dataset.orderResizeCol = String(index);
+    });
+}
+
+function tagOrderColumnResizeBody(table) {
+    Array.from(table.tBodies).forEach((tbody) => {
+        Array.from(tbody.rows).forEach((row) => {
+            let columnIndex = 0;
+
+            Array.from(row.cells).forEach((cell) => {
+                const colspan = Math.max(1, cell.colSpan || 1);
+
+                if (colspan === 1) {
+                    cell.dataset.orderResizeCol = String(columnIndex);
+                } else {
+                    delete cell.dataset.orderResizeCol;
+                }
+
+                columnIndex += colspan;
+            });
+        });
+    });
+}
+
+function getOrderColumnCurrentWidth(table, columnIndex) {
+    const groupKey = getOrderColumnResizeGroupKey(table);
+    if (!groupKey) {
+        return null;
+    }
+
+    const widthKey = `${groupKey}:${columnIndex}`;
+
+    if (orderColumnResizeWidths.has(widthKey)) {
+        return orderColumnResizeWidths.get(widthKey);
+    }
+
+    const referenceCell = table.querySelector(`[data-order-resize-col="${columnIndex}"]`);
+    if (!referenceCell) {
+        return null;
+    }
+
+    const zoomWrap = table.closest('[data-order-supplies-table-zoom-wrap]');
+    const zoomValue = zoomWrap ? parseFloat(zoomWrap.style.zoom || window.getComputedStyle(zoomWrap).zoom || '1') : 1;
+    const zoom = Number.isFinite(zoomValue) && zoomValue > 0 ? zoomValue : 1;
+
+    return referenceCell.getBoundingClientRect().width / zoom;
+}
+
+function startOrderColumnResize(event) {
+    if (event.button !== undefined && event.button !== 0) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    const handle = event.currentTarget;
+    const headerCell = handle.closest('th');
+    const table = headerCell ? headerCell.closest('table') : null;
+
+    if (!headerCell || !table) return;
+
+    syncOrderColumnResizeTable(table);
+
+    const groupKey = getOrderColumnResizeGroupKey(table);
+    if (!groupKey) return;
+
+    const columnIndex = Number(headerCell.dataset.orderResizeTargetCol || headerCell.dataset.orderResizeCol);
+    if (!Number.isFinite(columnIndex)) return;
+
+    const widthKey = `${groupKey}:${columnIndex}`;
+    const zoomWrap = table.closest('[data-order-supplies-table-zoom-wrap]');
+    const zoomValue = zoomWrap ? parseFloat(zoomWrap.style.zoom || window.getComputedStyle(zoomWrap).zoom || '1') : 1;
+    const zoom = Number.isFinite(zoomValue) && zoomValue > 0 ? zoomValue : 1;
+    const startX = event.clientX;
+    const startWidth = getOrderColumnCurrentWidth(table, columnIndex) || headerCell.getBoundingClientRect().width / zoom;
+
+    document.body.classList.add('order-column-resizing');
+
+    const onPointerMove = (moveEvent) => {
+        const nextWidth = Math.max(ORDER_COLUMN_RESIZE_MIN_WIDTH, Math.round(startWidth + ((moveEvent.clientX - startX) / zoom)));
+        orderColumnResizeWidths.set(widthKey, nextWidth);
+        renderOrderColumnResizeStyles();
+    };
+
+    const stopResize = () => {
+        document.body.classList.remove('order-column-resizing');
+        document.removeEventListener('pointermove', onPointerMove);
+        document.removeEventListener('pointerup', stopResize);
+        document.removeEventListener('pointercancel', stopResize);
+        persistOrderColumnResizeGroup(groupKey);
+    };
+
+    document.addEventListener('pointermove', onPointerMove);
+    document.addEventListener('pointerup', stopResize);
+    document.addEventListener('pointercancel', stopResize);
+}
+
+function ensureOrderColumnResizeHandle(headerCell) {
+    headerCell.classList.add('order-column-resizable-th');
+
+    const existingHandle = Array.from(headerCell.children).find((child) => child.classList.contains('resize-handle-col'));
+    if (existingHandle) {
+        if (existingHandle.dataset.orderResizeBound !== '1') {
+            existingHandle.dataset.orderResizeBound = '1';
+            existingHandle.addEventListener('pointerdown', startOrderColumnResize);
+        }
+        return;
+    }
+
+    const handle = document.createElement('div');
+    handle.className = 'resize-handle-col';
+    handle.setAttribute('aria-hidden', 'true');
+    handle.dataset.orderResizeBound = '1';
+    handle.addEventListener('pointerdown', startOrderColumnResize);
+    headerCell.appendChild(handle);
+}
+
+function syncOrderColumnResizeTable(table) {
+    const groupKey = getOrderColumnResizeGroupKey(table);
+    if (!groupKey) return;
+
+    const { resizableHeaders, columnCount } = mapOrderColumnResizeHeader(table);
+    ensureOrderColumnResizeColgroup(table, columnCount);
+    tagOrderColumnResizeBody(table);
+
+    resizableHeaders.forEach((headerCell) => {
+        ensureOrderColumnResizeHandle(headerCell);
+    });
+
+    table.dataset.orderResizeReady = '1';
+}
+
+function initOrderColumnResize(root = document) {
+    getOrderColumnResizeTables(root).forEach((table) => {
+        syncOrderColumnResizeTable(table);
+    });
+}
+
+function observeOrderColumnResizeTables() {
+    if (orderColumnResizeObserver) return;
+
+    const containers = [
+        document.getElementById('order-supplies-container'),
+        document.getElementById('glass-supplies-container'),
+        document.getElementById('min-late-supplies-container'),
+        document.getElementById('payment-details-container'),
+    ].filter(Boolean);
+
+    orderColumnResizeObserver = new MutationObserver((mutations) => {
+        const hasNewNodes = mutations.some((mutation) => mutation.addedNodes.length > 0);
+        if (!hasNewNodes) return;
+
+        // Dòng/vật tư mới sinh bằng JS cũng cần được gắn lại chỉ số cột.
+        window.requestAnimationFrame(() => {
+            initOrderColumnResize(document);
+        });
+    });
+
+    containers.forEach((container) => {
+        orderColumnResizeObserver.observe(container, {
+            childList: true,
+            subtree: true,
+        });
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadOrderColumnResizeWidthsFromStorage();
+    initOrderColumnResize(document);
+    observeOrderColumnResizeTables();
+});
 
 function deleteAttachment(index, imagePath) {
     if (confirm('Bạn có chắc muốn xóa hình ảnh này?')) {
