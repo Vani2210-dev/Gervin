@@ -115,9 +115,10 @@ class PackingPackageController extends Controller
         $codes = $package->items->map(fn($item) => $item->itemCode)->filter();
         $this->loadMorphCodeRelations($codes);
 
+        // Hàm print chỉ cần danh sách đã format, không phải paginator nên không gọi withQueryString().
         $items = $package->items->map(function (PackingPackageItem $packageItem) {
             return $this->formatPackageItem($packageItem);
-        })->withQueryString();
+        });
 
         // Khi in tem chỉ lấy dữ liệu từ linh kiện đã quét, bỏ qua item nháp/placeholder.
         $scannedItems = $items->where('is_packaged', true);
@@ -703,4 +704,3 @@ class PackingPackageController extends Controller
         }
     }
 }
-
