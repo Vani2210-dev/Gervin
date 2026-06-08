@@ -715,16 +715,20 @@ function calculateTotalPrice(row, sourceEvent) {
     const height = parseFloat(heightInput.value) || 0;
     const width = parseFloat(widthInput.value) || 0;
     const quantity = parseFloat(quantityInput.value) || 0;
-    const unitPrice = parseFloat(unitPriceInput ? unitPriceInput.value : 0) || 0;
     
     if (sourceEvent !== 'wing_area') {
-        let wingArea = 0;
-        if (height > 0 && width > 0 && quantity > 0) {
-            wingArea = (height * width * quantity) / 1000000;
+        if (!isNaN(width) && width > 0 && width < 55) {
+            wingAreaInput.value = 0;
+        } else {
+            let wingArea = 0;
+            if (height > 0 && width > 0 && quantity > 0) {
+                wingArea = (height * width * quantity) / 1000000;
+            }
+            wingAreaInput.value = wingArea > 0 ? wingArea.toFixed(2) : '';
         }
-        wingAreaInput.value = wingArea > 0 ? wingArea.toFixed(2) : '';
     }
     
+    const unitPrice = parseFloat(unitPriceInput ? unitPriceInput.value : 0) || 0;
     const currentWingArea = parseFloat(wingAreaInput.value) || 0;
     const moldingLength = parseFloat(moldingLengthInput.value) || 0;
     
@@ -754,7 +758,11 @@ function applyNarrowWidthRule(row) {
     const height   = parseFloat(heightInput ? heightInput.value : 0) || 0;
     const quantity = parseFloat(quantityInput ? quantityInput.value : 1) || 1;
 
-    if (!isNaN(width) && width > 0 && width < 55) {
+    const lastWidth = parseFloat(widthInput.dataset.lastWidth);
+    const isPreviousNarrow = !isNaN(lastWidth) && lastWidth > 0 && lastWidth < 55;
+    const isCurrentNarrow = !isNaN(width) && width > 0 && width < 55;
+
+    if (isCurrentNarrow) {
         // Red border warning
         widthInput.style.borderColor = '#ef4444';
         widthInput.style.boxShadow   = '0 0 0 1px #ef4444';
@@ -781,6 +789,27 @@ function applyNarrowWidthRule(row) {
         if (moldingLengthInput) {
             moldingLengthInput.value = 0;
         }
+
+        // If it transitioned from narrow to wide, restore the original price
+        if (isPreviousNarrow && unitPriceInput && unitPriceInput.value == 100000) {
+            const supplyRow = row.closest('.order-supply-row');
+            if (supplyRow) {
+                const selectEl = supplyRow.querySelector('.order-supply-code-select') || supplyRow.querySelector('.order-supply-code-input');
+                const supplyCode = selectEl ? selectEl.value : '';
+                if (supplyCode && typeof woodBoardPricesData !== 'undefined') {
+                    const price = woodBoardPricesData.find(p => p.code === supplyCode);
+                    if (price) {
+                        unitPriceInput.value = price.price_m2 ? parseInt(price.price_m2) : '';
+                    }
+                }
+            }
+        }
+    }
+
+    if (!isNaN(width)) {
+        widthInput.dataset.lastWidth = width;
+    } else {
+        delete widthInput.dataset.lastWidth;
     }
 }
 
