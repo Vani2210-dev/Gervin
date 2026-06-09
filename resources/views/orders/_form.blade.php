@@ -171,7 +171,7 @@
         border-radius: 0 !important;
         background: #ffffff !important;
         box-shadow: none !important;
-        color: #0f172a !important;
+        color: #0f172a;
         font-size: 12px !important;
         line-height: 1.4 !important;
     }
@@ -268,7 +268,7 @@
     #min-late-supplies-container .order-supply-row table thead th,
     table[data-order-resize-group="min_late_payment"] thead th {
         position: sticky !important;
-        top: 0;
+        top: -1px;
         z-index: 40 !important;
         background: #f1f5f9 !important;
         background-clip: padding-box !important;
@@ -1004,7 +1004,7 @@ function syncOrderStickyHeaderTable(table) {
     const rows = Array.from(table.tHead.rows);
     const zoom = getOrderSuppliesTableZoomValue(table);
     const rules = [];
-    let topOffset = 0;
+    let topOffset = -1;
 
     rows.forEach((row, rowIndex) => {
         const measuredHeight = row.getBoundingClientRect().height / zoom;
