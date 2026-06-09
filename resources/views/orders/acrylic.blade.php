@@ -1,17 +1,15 @@
 {{-- Order Supplies & Items Section Card --}}
 <style>
-    /* Fix sticky column overlap bug in two-row table headers */
-    .table thead tr:nth-child(2) th:last-child {
-        position: static !important;
+    /* Bo sticky cho o thu 2 cua hang header thu 2, khong dua vao last-child */
+    #order-supplies-container .order-supply-row table thead tr:nth-child(2) th:nth-child(2) {
         background-color: inherit !important;
         box-shadow: none !important;
     }
-    .table thead tr:nth-child(2) th:last-child::before {
+    #order-supplies-container .order-supply-row table thead tr:nth-child(2) th:nth-child(2)::before {
         display: none !important;
     }
-    /* Cho ô cuối của hàng header thứ 2 vẫn kéo giãn được */
-    .table thead tr:nth-child(2) th:last-child.order-column-resizable-th {
-        position: relative !important;
+    /* Giu tay nam keo gian cho o nay */
+    #order-supplies-container .order-supply-row table thead tr:nth-child(2) th:nth-child(2).order-column-resizable-th {
         background-color: inherit !important;
         box-shadow: none !important;
         overflow: visible !important;
@@ -146,7 +144,7 @@
         font-size: 13px !important;
     }
 </style>
-<div class="order-supplies-popup bg-white border border-neutral-200 rounded-xl p-6 shadow-sm" data-order-supplies-zoom-panel data-order-supplies-storage-key="acrylic" data-order-supplies-zoom="100" data-order-supplies-visible-rows="free">
+<div class="order-supplies-popup bg-white border border-neutral-200 rounded-xl p-6 shadow-sm" data-order-supplies-zoom-panel data-order-supplies-storage-key="acrylic" data-order-supplies-zoom="100" data-order-supplies-visible-rows="5">
     <div class="order-supplies-header flex items-center justify-between border-b border-neutral-100 pb-4 mb-5">
         <div class="flex items-center gap-2">
             <iconify-icon icon="lucide:package-open" class="text-xl text-primary-500"></iconify-icon>
@@ -156,8 +154,7 @@
             <div class="flex items-center gap-2">
                 <span class="text-xs font-semibold uppercase tracking-wider text-neutral-500">Hiển thị</span>
                 <select data-order-supplies-visible-rows-select class="form-select form-select-sm w-28 rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500">
-                    <option value="free" selected>Tự do</option>
-                    <option value="5">5</option>
+                    <option value="5" selected>5</option>
                     <option value="10">10</option>
                     <option value="25">25</option>
                     <option value="50">50</option>
@@ -219,7 +216,7 @@
                                 <th scope="col" rowspan="2" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Cánh (m2)</th>
                                 <th scope="col" rowspan="2" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Phào (m)</th>
                                 <th scope="col" rowspan="2" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Vát</th>
-                                <th scope="col" rowspan="2" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Vân dọc CNC</th>
+                                <th scope="col" rowspan="2" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Khoét kính</th>
                                 <th scope="col" rowspan="2" style="width: 80px; min-width: 80px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá <span class="text-danger-500">*</span></th>
                                 <th scope="col" rowspan="2" style="width: 90px; min-width: 90px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Thành tiền</th>
                                 <th scope="col" rowspan="2" style="min-width: 120px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Ghi chú</th>
@@ -435,7 +432,7 @@ function addOrderSupply() {
                         <th scope="col" rowspan="2" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Cánh (m2)</th>
                         <th scope="col" rowspan="2" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Phào (m)</th>
                         <th scope="col" rowspan="2" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Vát</th>
-                        <th scope="col" rowspan="2" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Vân dọc CNC</th>
+                        <th scope="col" rowspan="2" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Khoét kính</th>
                         <th scope="col" rowspan="2" style="width: 80px; min-width: 80px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá <span class="text-danger-500">*</span></th>
                         <th scope="col" rowspan="2" style="width: 90px; min-width: 90px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Thành tiền</th>
                         <th scope="col" rowspan="2" style="min-width: 120px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Ghi chú</th>

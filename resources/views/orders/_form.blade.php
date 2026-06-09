@@ -262,6 +262,26 @@
         font-weight: 600 !important;
     }
 
+    /* Giữ tiêu đề bám trong khung cuộn của bảng, không tạo header nổi ngoài trang */
+    #order-supplies-container .order-supply-row table thead th,
+    #glass-supplies-container .order-supply-row table thead th,
+    #min-late-supplies-container .order-supply-row table thead th,
+    table[data-order-resize-group="min_late_payment"] thead th {
+        position: sticky !important;
+        top: 0;
+        z-index: 40 !important;
+        background: #f1f5f9 !important;
+        background-clip: padding-box !important;
+        border-radius: 0 !important;
+    }
+
+    #order-supplies-container .order-supply-row table thead tr:first-child th,
+    #glass-supplies-container .order-supply-row table thead tr:first-child th,
+    #min-late-supplies-container .order-supply-row table thead tr:first-child th,
+    table[data-order-resize-group="min_late_payment"] thead tr:first-child th {
+        z-index: 50 !important;
+    }
+
     table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td {
         padding: 0 !important;
         border-color: #dbe5f1 !important;
@@ -563,7 +583,11 @@ function switchOrderType(type) {
         // Khi tab đơn hàng vừa hiện ra, áp lại giới hạn số dòng nếu người dùng đã chọn
         const panel = activeSection.closest('[data-order-supplies-zoom-panel]');
         if (panel && typeof applyOrderSuppliesVisibleRows === 'function') {
-            applyOrderSuppliesVisibleRows(panel, panel.dataset.orderSuppliesVisibleRows || 'free');
+            applyOrderSuppliesVisibleRows(panel, panel.dataset.orderSuppliesVisibleRows || ORDER_SUPPLIES_VISIBLE_ROWS_DEFAULT);
+        }
+
+        if (typeof syncOrderStickyHeaders === 'function') {
+            syncOrderStickyHeaders(activeSection);
         }
         
         // If there are no rows in the active section, add one by default
@@ -711,7 +735,8 @@ function applyOrderSuppliesZoom(panel, zoomValue) {
     });
 
     // Cập nhật lại chiều cao hiển thị của bảng sau khi đổi zoom
-    applyOrderSuppliesVisibleRows(panel, panel.dataset.orderSuppliesVisibleRows || 'free');
+    applyOrderSuppliesVisibleRows(panel, panel.dataset.orderSuppliesVisibleRows || ORDER_SUPPLIES_VISIBLE_ROWS_DEFAULT);
+    syncOrderStickyHeaders(panel);
 
     if (previousZoom !== String(nextZoom)) {
         persistOrderSuppliesZoom(panel, nextZoom);
@@ -743,6 +768,15 @@ function syncOrderSuppliesZoom(input) {
 
 // Lưu cấu hình giao diện của bảng vật tư/sản phẩm theo từng loại đơn.
 const ORDER_SUPPLIES_UI_STORAGE_PREFIX = 'gervin:order-supplies-ui';
+const ORDER_SUPPLIES_VISIBLE_ROWS_DEFAULT = '5';
+const ORDER_SUPPLIES_VISIBLE_ROWS_VALUES = ['5', '10', '25', '50', '100'];
+
+function normalizeOrderSuppliesVisibleRowsValue(value) {
+    const nextValue = String(value || ORDER_SUPPLIES_VISIBLE_ROWS_DEFAULT);
+
+    // Dữ liệu cũ nếu không khớp lựa chọn mới sẽ tự quay về 5 dòng.
+    return ORDER_SUPPLIES_VISIBLE_ROWS_VALUES.includes(nextValue) ? nextValue : ORDER_SUPPLIES_VISIBLE_ROWS_DEFAULT;
+}
 
 function getOrderSuppliesLocalStorage() {
     try {
@@ -804,7 +838,7 @@ function persistOrderSuppliesVisibleRows(panel, visibleRowsValue) {
     const storageKey = getOrderSuppliesVisibleRowsStorageKey(panel);
     if (!storageKey) return;
 
-    writeOrderSuppliesStorageItem(storageKey, String(visibleRowsValue || 'free'));
+    writeOrderSuppliesStorageItem(storageKey, normalizeOrderSuppliesVisibleRowsValue(visibleRowsValue));
 }
 
 function persistOrderSuppliesZoom(panel, zoomValue) {
@@ -818,8 +852,8 @@ function applyOrderSuppliesVisibleRows(panel, visibleRowsValue) {
     if (!panel) return;
     if (isOrderSuppliesVisibleRowsDisabled(panel)) return;
 
-    const nextValue = String(visibleRowsValue || 'free');
-    const rowLimit = nextValue === 'free' ? null : Math.max(1, Number(nextValue) || 0);
+    const nextValue = normalizeOrderSuppliesVisibleRowsValue(visibleRowsValue);
+    const rowLimit = Math.max(1, Number(nextValue) || Number(ORDER_SUPPLIES_VISIBLE_ROWS_DEFAULT));
     const select = panel.querySelector('[data-order-supplies-visible-rows-select]');
     const scrollWrappers = panel.querySelectorAll('[data-order-supplies-table-scroll]');
     const isVisible = panel.getClientRects().length > 0;
@@ -840,12 +874,6 @@ function applyOrderSuppliesVisibleRows(panel, visibleRowsValue) {
     }
 
     scrollWrappers.forEach((scrollWrapper) => {
-        if (!rowLimit) {
-            scrollWrapper.style.maxHeight = '';
-            scrollWrapper.style.overflowY = '';
-            return;
-        }
-
         const table = scrollWrapper.querySelector('table');
         if (!table) return;
 
@@ -858,6 +886,8 @@ function applyOrderSuppliesVisibleRows(panel, visibleRowsValue) {
         scrollWrapper.style.maxHeight = `${nextMaxHeight}px`;
         scrollWrapper.style.overflowY = 'auto';
     });
+
+    syncOrderStickyHeaders(panel);
 }
 
 function syncOrderSuppliesVisibleRows(input) {
@@ -875,7 +905,7 @@ function initOrderSuppliesVisibleRows() {
 
         const select = panel.querySelector('[data-order-supplies-visible-rows-select]');
         const storedValue = readOrderSuppliesStorageItem(getOrderSuppliesVisibleRowsStorageKey(panel));
-        const initialValue = storedValue || (select ? select.value : (panel.dataset.orderSuppliesVisibleRows || 'free'));
+        const initialValue = normalizeOrderSuppliesVisibleRowsValue(storedValue || (select ? select.value : panel.dataset.orderSuppliesVisibleRows));
         applyOrderSuppliesVisibleRows(panel, initialValue);
 
         if (panel.dataset.orderSuppliesVisibleRowsReady === '1') {
@@ -932,6 +962,71 @@ const ORDER_COLUMN_RESIZE_MIN_WIDTH = 48;
 let orderColumnResizeTableIndex = 0;
 let orderColumnResizeObserver = null;
 const orderColumnResizeWidths = new Map();
+let orderStickyHeaderTableIndex = 0;
+const orderStickyHeaderRules = new Map();
+
+function getOrderStickyHeaderStyleElement() {
+    let styleElement = document.getElementById('order-sticky-header-styles');
+
+    if (!styleElement) {
+        styleElement = document.createElement('style');
+        styleElement.id = 'order-sticky-header-styles';
+        document.head.appendChild(styleElement);
+    }
+
+    return styleElement;
+}
+
+function renderOrderStickyHeaderStyles() {
+    getOrderStickyHeaderStyleElement().textContent = Array.from(orderStickyHeaderRules.values()).join('\n');
+}
+
+function getOrderStickyHeaderTableId(table) {
+    if (!table.dataset.orderStickyHeaderTableId) {
+        orderStickyHeaderTableIndex += 1;
+        table.dataset.orderStickyHeaderTableId = `order-sticky-header-table-${orderStickyHeaderTableIndex}`;
+    }
+
+    return table.dataset.orderStickyHeaderTableId;
+}
+
+function getOrderSuppliesTableZoomValue(table) {
+    const zoomWrap = table.closest('[data-order-supplies-table-zoom-wrap]');
+    const zoomValue = zoomWrap ? parseFloat(zoomWrap.style.zoom || window.getComputedStyle(zoomWrap).zoom || '1') : 1;
+
+    return Number.isFinite(zoomValue) && zoomValue > 0 ? zoomValue : 1;
+}
+
+function syncOrderStickyHeaderTable(table) {
+    if (!table || !table.tHead) return;
+
+    const tableId = getOrderStickyHeaderTableId(table);
+    const rows = Array.from(table.tHead.rows);
+    const zoom = getOrderSuppliesTableZoomValue(table);
+    const rules = [];
+    let topOffset = 0;
+
+    rows.forEach((row, rowIndex) => {
+        const measuredHeight = row.getBoundingClientRect().height / zoom;
+        const rowHeight = Number.isFinite(measuredHeight) && measuredHeight > 0 ? measuredHeight : row.offsetHeight;
+        const roundedTop = Number(topOffset.toFixed(2));
+        const zIndex = 70 - rowIndex;
+
+        // Tính top cho từng hàng header để sticky không đè lên nhau trong khung cuộn của bảng.
+        rules.push(`[data-order-sticky-header-table-id="${tableId}"] thead tr:nth-child(${rowIndex + 1}) > th { top: ${roundedTop}px !important; z-index: ${zIndex} !important; }`);
+
+        topOffset += rowHeight || 0;
+    });
+
+    orderStickyHeaderRules.set(tableId, rules.join('\n'));
+    renderOrderStickyHeaderStyles();
+}
+
+function syncOrderStickyHeaders(root = document) {
+    getOrderColumnResizeTables(root).forEach((table) => {
+        syncOrderStickyHeaderTable(table);
+    });
+}
 
 function getOrderColumnResizeStyleElement() {
     let styleElement = document.getElementById('order-column-resize-styles');
@@ -1250,6 +1345,8 @@ function syncOrderColumnResizeTable(table) {
     resizableHeaders.forEach((headerCell) => {
         ensureOrderColumnResizeHandle(headerCell);
     });
+
+    syncOrderStickyHeaderTable(table);
 
     table.dataset.orderResizeReady = '1';
 }
