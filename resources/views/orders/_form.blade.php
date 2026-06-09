@@ -1202,3 +1202,61 @@ document.addEventListener('DOMContentLoaded', function() {
     updateOrderSummary();
 });
 </script>
+
+<script>
+// Auto-scroll focused table input to horizontal center of its scroll container
+document.addEventListener('focusin', function(e) {
+    const el = e.target;
+    if (!el.matches('.order-supply-row table input, .order-supply-row table select, .order-supply-row table textarea')) return;
+
+    const scrollContainer = el.closest('[data-order-supplies-table-scroll]');
+    if (!scrollContainer) return;
+
+    // Use requestAnimationFrame to wait for browser to finish focus/layout
+    requestAnimationFrame(function() {
+        const containerRect = scrollContainer.getBoundingClientRect();
+        const elRect = el.getBoundingClientRect();
+
+        // Current offset of element relative to scroll container content
+        const elOffsetLeft = elRect.left - containerRect.left + scrollContainer.scrollLeft;
+        const targetScrollLeft = elOffsetLeft - (containerRect.width / 2) + (elRect.width / 2);
+
+        scrollContainer.scrollTo({
+            left: Math.max(0, targetScrollLeft),
+            behavior: 'smooth'
+        });
+    });
+});
+</script>
+
+@if($isDraftCreate && isset($acrylicOrder))
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let formSaved = false;
+    let hasDiscarded = false;
+
+    const form = document.getElementById('order-form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            if (!e.defaultPrevented) {
+                formSaved = true;
+            }
+        });
+    }
+
+    function discardDraft() {
+        if (formSaved || hasDiscarded) return;
+        hasDiscarded = true;
+        
+        const formData = new FormData();
+        formData.append('draft_order_id', '{{ $acrylicOrder->id }}');
+        
+        navigator.sendBeacon('{{ route('orders.discard-draft') }}', formData);
+    }
+
+    window.addEventListener('pagehide', discardDraft);
+    window.addEventListener('beforeunload', discardDraft);
+});
+</script>
+@endif
+

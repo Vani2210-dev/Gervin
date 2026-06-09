@@ -207,6 +207,19 @@ class OrderController extends Controller
         ]);
     }
 
+    public function discardDraft(Request $request)
+    {
+        $id = $request->input('draft_order_id');
+        if (!$id) return response()->json(['ok' => false], 400);
+
+        $draft = Order::where('status', 'draft')->find($id);
+        if ($draft) {
+            $draft->delete();
+        }
+
+        return response()->json(['ok' => true]);
+    }
+
     private function createDraftOrder(string $type): Order
     {
         return DB::transaction(function () use ($type) {

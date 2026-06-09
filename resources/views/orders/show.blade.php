@@ -6,6 +6,40 @@
 
 @section('content')
 
+<style>
+    /* Bỏ logic sticky cột cuối cùng riêng cho trang này */
+    .table th:last-child {
+        position: static !important;
+        background-color: rgb(243 244 246) !important;
+        z-index: auto !important;
+    }
+    .table td:last-child {
+        position: static !important;
+        background-color: inherit !important;
+        z-index: auto !important;
+    }
+    .table th:last-child::before,
+    .table td:last-child::before {
+        display: none !important;
+    }
+    .dark .table th:last-child {
+        background-color: rgb(31 41 55) !important;
+    }
+    .dark .table td:last-child {
+        background-color: inherit !important;
+    }
+
+    /* Vẽ lại các đường cắt dọc cho bảng */
+    .table th,
+    .table td {
+        border-right: 1px solid rgb(235, 236, 239) !important;
+    }
+    .dark .table th,
+    .dark .table td {
+        border-right: 1px solid rgb(75, 85, 99) !important;
+    }
+</style>
+
 <div class="grid grid-cols-12 gap-6">
     {{-- Main Order Info --}}
     <div class="col-span-12 md:col-span-8 space-y-6">
@@ -237,15 +271,14 @@
                             </tbody>
                         </table>
                     @else
-                        {{-- Acrylic items --}}
+                        {{-- Acrylic items - expand to individual sheets with status --}}
                         <table class="table bordered-table sm-table mb-0 min-w-[1700px]">
                             <thead>
                                 <tr>
                                     <th scope="col" class="w-10 text-center">STT</th>
-                                    <th scope="col" class="w-32">Mã SP</th>
+                                    <th scope="col" class="w-32">Mã tấm</th>
                                     <th scope="col" class="w-64">Tên SP</th>
                                     <th scope="col" class="w-20">Độ dày</th>
-                                    <th scope="col" class="w-20">SL</th>
                                     <th scope="col" class="w-20">Cao</th>
                                     <th scope="col" class="w-20">Rộng</th>
                                     <th scope="col" class="w-24">Cạnh Vát</th>
@@ -256,32 +289,72 @@
                                     <th scope="col" class="w-28">Vân dọc CNC</th>
                                     <th scope="col" class="w-28 text-end">Đơn giá</th>
                                     <th scope="col" class="w-28 text-end">Thành tiền</th>
+                                    <th scope="col" class="w-36">Giai đoạn</th>
+                                    <th scope="col" class="w-28">Người thực hiện</th>
                                     <th scope="col" class="w-44">Ghi chú</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse($supply->items as $itemIndex => $item)
-                                <tr>
-                                    <td class="text-center">{{ $itemIndex + 1 }}</td>
-                                    <td><span class="text-neutral-500 text-xs">{{ $item->product_code ?? '—' }}</span></td>
-                                    <td><span class="font-medium text-neutral-800">{{ $item->product_name }}</span></td>
-                                    <td>{{ $item->thickness ?? '—' }}</td>
-                                    <td>{{ $item->quantity }}</td>
-                                    <td>{{ $item->height ?? '—' }}</td>
-                                    <td>{{ $item->width ?? '—' }}</td>
-                                    <td>{{ $item->edge_bevel ?? '—' }}</td>
-                                    <td>{{ $item->grain_direction ?? '0' }}</td>
-                                    <td>{{ $item->wing_area ?? '—' }}</td>
-                                    <td>{{ $item->molding_length ?? '—' }}</td>
-                                    <td>{{ $item->bevel ?? '—' }}</td>
-                                    <td>{{ $item->vertical_grain_cnc ?? '—' }}</td>
-                                    <td class="text-end font-medium text-neutral-600">{{ number_format($item->unit_price, 0, ',', '.') }}</td>
-                                    <td class="text-end font-semibold text-neutral-800">{{ number_format($item->total_price, 0, ',', '.') }}</td>
-                                    <td><span class="text-neutral-500 text-xs">{{ $item->notes ?? '—' }}</span></td>
+                                @php $globalSheetIndex = 0; @endphp
+                                @forelse($supply->items as $item)
+                                @php
+                                    $codes = $item->codes;
+                                    $hasAnyCode = $codes->count() > 0;
+                                    $rowCount = $hasAnyCode ? $codes->count() : 1;
+                                @endphp
+                                @for($sheetIdx = 0; $sheetIdx < $rowCount; $sheetIdx++)
+                                @php
+                                    $globalSheetIndex++;
+                                    $code = $hasAnyCode ? $codes[$sheetIdx] : null;
+                                    $productId = $code ? $code->product_id : ($item->product_code ?? '—');
+                                    $statusLog = $code ? ($code->status ?? []) : [];
+                                    $lastEntry = !empty($statusLog) ? end($statusLog) : null;
+                                    $currentAction = $lastEntry ? ($lastEntry['action'] ?? '—') : '—';
+                                    $currentOperator = $lastEntry ? ($lastEntry['operator'] ?? '—') : '—';
+                                    $actionColors = [
+                                        'chờ xử lý' => 'bg-neutral-100 text-neutral-500',
+                                        'đang xử lý' => 'bg-info-100 text-info-600',
+                                        'đã nhận tem' => 'bg-warning-100 text-warning-600',
+                                        'hoàn thành' => 'bg-success-100 text-success-600',
+                                        'đã hủy' => 'bg-danger-100 text-danger-600',
+                                    ];
+                                    $actionColor = $actionColors[mb_strtolower($currentAction)] ?? 'bg-primary-50 text-primary-600';
+                                @endphp
+                                <tr class="{{ $sheetIdx === 0 ? 'border-t-2 border-neutral-200' : '' }}">
+                                    <td class="text-center font-semibold text-neutral-500">{{ $globalSheetIndex }}</td>
+                                    <td><span class="text-neutral-500 text-xs font-mono">{{ $productId }}</span></td>
+                                    @if($sheetIdx === 0)
+                                    <td rowspan="{{ $rowCount }}" class="font-medium text-neutral-800 align-top pt-3">{{ $item->product_name }}</td>
+                                    <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->thickness ?? '—' }}</td>
+                                    <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->height ?? '—' }}</td>
+                                    <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->width ?? '—' }}</td>
+                                    <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->edge_bevel ?? '—' }}</td>
+                                    <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->grain_direction ?? '0' }}</td>
+                                    <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->wing_area ?? '—' }}</td>
+                                    <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->molding_length ?? '—' }}</td>
+                                    <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->bevel ?? '—' }}</td>
+                                    <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->vertical_grain_cnc ?? '—' }}</td>
+                                    <td rowspan="{{ $rowCount }}" class="text-end font-medium text-neutral-600 align-top pt-3">{{ number_format($item->unit_price, 0, ',', '.') }}</td>
+                                    <td rowspan="{{ $rowCount }}" class="text-end font-semibold text-neutral-800 align-top pt-3">{{ number_format($item->total_price, 0, ',', '.') }}</td>
+                                    @endif
+                                    <td>
+                                        @if($currentAction !== '—')
+                                        <span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold {{ $actionColor }}">
+                                            {{ $currentAction }}
+                                        </span>
+                                        @else
+                                        <span class="text-neutral-300 text-xs">—</span>
+                                        @endif
+                                    </td>
+                                    <td class="text-xs text-neutral-500">{{ $currentOperator !== '—' ? $currentOperator : '' }}</td>
+                                    @if($sheetIdx === 0)
+                                    <td rowspan="{{ $rowCount }}" class="align-top pt-3"><span class="text-neutral-500 text-xs">{{ $item->notes ?? '—' }}</span></td>
+                                    @endif
                                 </tr>
+                                @endfor
                                 @empty
                                 <tr>
-                                    <td colspan="16" class="text-center text-neutral-400 py-4">Chưa có sản phẩm nào</td>
+                                    <td colspan="17" class="text-center text-neutral-400 py-4">Chưa có sản phẩm nào</td>
                                 </tr>
                                 @endforelse
                             </tbody>

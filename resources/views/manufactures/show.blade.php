@@ -18,18 +18,51 @@
 
 @section('content')
 
+<style>
+    /* Default (Mobile) */
+    .manufacture-desktop-line {
+        display: none !important;
+    }
+    .manufacture-mobile-line {
+        display: block !important;
+    }
+
+    /* Desktop (>= 768px) */
+    @media (min-width: 768px) {
+        .manufacture-stepper {
+            flex-direction: row !important;
+        }
+        .manufacture-stepper .manufacture-step-item {
+            flex-direction: column !important;
+            text-align: center !important;
+            width: 15% !important;
+        }
+        .manufacture-stepper .manufacture-step-text {
+            margin-left: 0 !important;
+            margin-top: 12px !important;
+            text-align: center !important;
+        }
+        .manufacture-desktop-line {
+            display: block !important;
+        }
+        .manufacture-mobile-line {
+            display: none !important;
+        }
+    }
+</style>
+
 {{-- Stepper Progress Tracker --}}
 <div class="bg-white border border-neutral-200 rounded-xl mb-6 shadow-sm overflow-hidden">
     <div class="px-6 py-8">
-        <div class="relative flex flex-col md:flex-row justify-between w-full gap-6 md:gap-0">
+        <div class="relative flex flex-col md:flex-row justify-between w-full gap-6 md:gap-0 manufacture-stepper">
             
             {{-- Desktop Line --}}
-            <div class="hidden md:block absolute left-[5%] right-[5%] top-[24px] h-[3px] bg-neutral-200 z-0 rounded-full">
+            <div class="manufacture-desktop-line hidden md:block absolute left-[5%] right-[5%] top-[24px] h-[3px] bg-neutral-200 z-0 rounded-full">
                 <div class="h-full bg-primary-600 transition-all duration-500 rounded-full" style="width: {{ (($currentStepNum - 1) / 5) * 100 }}%"></div>
             </div>
 
             {{-- Mobile Line --}}
-            <div class="absolute left-[24px] top-[24px] bottom-[24px] w-[3px] bg-neutral-200 z-0 md:hidden rounded-full">
+            <div class="manufacture-mobile-line absolute left-[24px] top-[24px] bottom-[24px] w-[3px] bg-neutral-200 z-0 md:hidden rounded-full">
                 <div class="w-full bg-primary-600 transition-all duration-500 rounded-full" style="height: {{ (($currentStepNum - 1) / 5) * 100 }}%"></div>
             </div>
 
@@ -38,7 +71,7 @@
                 $isCompleted = $currentStepNum > 1;
                 $isActive = $currentStepNum == 1;
             @endphp
-            <div class="flex flex-row md:flex-col items-center md:text-center relative z-10 md:w-[15%] group">
+            <div class="flex flex-row md:flex-col items-center md:text-center relative z-10 md:w-[15%] group manufacture-step-item">
                 <div class="w-12 h-12 rounded-full flex items-center justify-center font-bold transition-all duration-300 flex-shrink-0
                     {{ $isCompleted ? 'bg-success-500 text-white shadow-sm border border-success-500' : '' }}
                     {{ $isActive ? 'bg-primary-600 text-white ring-4 ring-primary-50 shadow-sm border border-primary-600 animate-pulse' : '' }}
@@ -49,7 +82,7 @@
                         <iconify-icon icon="lucide:clock" class="text-xl"></iconify-icon>
                     @endif
                 </div>
-                <div class="ml-4 md:ml-0 md:mt-3 flex-1 text-left md:text-center">
+                <div class="ml-4 md:ml-0 md:mt-3 flex-1 text-left md:text-center manufacture-step-text">
                     <span class="text-xs font-extrabold uppercase tracking-wider block
                         {{ $isCompleted ? 'text-success-600' : '' }}
                         {{ $isActive ? 'text-primary-600 font-bold' : '' }}
@@ -66,7 +99,7 @@
                 $isCompleted = $currentStepNum > 2;
                 $isActive = $currentStepNum == 2;
             @endphp
-            <div class="flex flex-row md:flex-col items-center md:text-center relative z-10 md:w-[15%] group">
+            <div class="flex flex-row md:flex-col items-center md:text-center relative z-10 md:w-[15%] group manufacture-step-item">
                 <div class="w-12 h-12 rounded-full flex items-center justify-center font-bold transition-all duration-300 flex-shrink-0
                     {{ $isCompleted ? 'bg-success-500 text-white shadow-sm border border-success-500' : '' }}
                     {{ $isActive ? 'bg-primary-600 text-white ring-4 ring-primary-50 shadow-sm border border-primary-600 animate-pulse' : '' }}
@@ -77,7 +110,7 @@
                         <iconify-icon icon="lucide:shield-check" class="text-xl"></iconify-icon>
                     @endif
                 </div>
-                <div class="ml-4 md:ml-0 md:mt-3 flex-1 text-left md:text-center">
+                <div class="ml-4 md:ml-0 md:mt-3 flex-1 text-left md:text-center manufacture-step-text">
                     <span class="text-xs font-extrabold uppercase tracking-wider block
                         {{ $isCompleted ? 'text-success-600' : '' }}
                         {{ $isActive ? 'text-primary-600 font-bold' : '' }}
@@ -98,7 +131,7 @@
                 $isCompleted = $currentStepNum > 3;
                 $isActive = $currentStepNum == 3;
             @endphp
-            <div class="flex flex-row md:flex-col items-center md:text-center relative z-10 md:w-[15%] group">
+            <div class="flex flex-row md:flex-col items-center md:text-center relative z-10 md:w-[15%] group manufacture-step-item">
                 <div class="w-12 h-12 rounded-full flex items-center justify-center font-bold transition-all duration-300 flex-shrink-0
                     {{ $isCompleted ? 'bg-success-500 text-white shadow-sm border border-success-500' : '' }}
                     {{ $isActive ? 'bg-primary-600 text-white ring-4 ring-primary-50 shadow-sm border border-primary-600 animate-pulse' : '' }}
@@ -109,7 +142,7 @@
                         <iconify-icon icon="lucide:user-check" class="text-xl"></iconify-icon>
                     @endif
                 </div>
-                <div class="ml-4 md:ml-0 md:mt-3 flex-1 text-left md:text-center">
+                <div class="ml-4 md:ml-0 md:mt-3 flex-1 text-left md:text-center manufacture-step-text">
                     <span class="text-xs font-extrabold uppercase tracking-wider block
                         {{ $isCompleted ? 'text-success-600' : '' }}
                         {{ $isActive ? 'text-primary-600 font-bold' : '' }}
@@ -130,7 +163,7 @@
                 $isCompleted = $currentStepNum > 4;
                 $isActive = $currentStepNum == 4;
             @endphp
-            <div class="flex flex-row md:flex-col items-center md:text-center relative z-10 md:w-[15%] group">
+            <div class="flex flex-row md:flex-col items-center md:text-center relative z-10 md:w-[15%] group manufacture-step-item">
                 <div class="w-12 h-12 rounded-full flex items-center justify-center font-bold transition-all duration-300 flex-shrink-0
                     {{ $isCompleted ? 'bg-success-500 text-white shadow-sm border border-success-500' : '' }}
                     {{ $isActive ? 'bg-primary-600 text-white ring-4 ring-primary-50 shadow-sm border border-primary-600 animate-pulse' : '' }}
@@ -141,7 +174,7 @@
                         <iconify-icon icon="lucide:tag" class="text-xl"></iconify-icon>
                     @endif
                 </div>
-                <div class="ml-4 md:ml-0 md:mt-3 flex-1 text-left md:text-center">
+                <div class="ml-4 md:ml-0 md:mt-3 flex-1 text-left md:text-center manufacture-step-text">
                     <span class="text-xs font-extrabold uppercase tracking-wider block
                         {{ $isCompleted ? 'text-success-600' : '' }}
                         {{ $isActive ? 'text-primary-600 font-bold' : '' }}
@@ -162,7 +195,7 @@
                 $isCompleted = $currentStepNum > 5;
                 $isActive = $currentStepNum == 5;
             @endphp
-            <div class="flex flex-row md:flex-col items-center md:text-center relative z-10 md:w-[15%] group">
+            <div class="flex flex-row md:flex-col items-center md:text-center relative z-10 md:w-[15%] group manufacture-step-item">
                 <div class="w-12 h-12 rounded-full flex items-center justify-center font-bold transition-all duration-300 flex-shrink-0
                     {{ $isCompleted ? 'bg-success-500 text-white shadow-sm border border-success-500' : '' }}
                     {{ $isActive ? 'bg-primary-600 text-white ring-4 ring-primary-50 shadow-sm border border-primary-600 animate-pulse' : '' }}
@@ -173,7 +206,7 @@
                         <iconify-icon icon="lucide:cog" class="text-xl"></iconify-icon>
                     @endif
                 </div>
-                <div class="ml-4 md:ml-0 md:mt-3 flex-1 text-left md:text-center">
+                <div class="ml-4 md:ml-0 md:mt-3 flex-1 text-left md:text-center manufacture-step-text">
                     <span class="text-xs font-extrabold uppercase tracking-wider block
                         {{ $isCompleted ? 'text-success-600' : '' }}
                         {{ $isActive ? 'text-primary-600 font-bold' : '' }}
@@ -194,7 +227,7 @@
                 $isCompleted = $currentStepNum > 6;
                 $isActive = $currentStepNum == 6;
             @endphp
-            <div class="flex flex-row md:flex-col items-center md:text-center relative z-10 md:w-[15%] group">
+            <div class="flex flex-row md:flex-col items-center md:text-center relative z-10 md:w-[15%] group manufacture-step-item">
                 <div class="w-12 h-12 rounded-full flex items-center justify-center font-bold transition-all duration-300 flex-shrink-0
                     {{ $isCompleted ? 'bg-success-500 text-white shadow-sm border border-success-500' : '' }}
                     {{ $isActive ? 'bg-primary-600 text-white ring-4 ring-primary-50 shadow-sm border border-primary-600 animate-pulse' : '' }}
@@ -205,7 +238,7 @@
                         <iconify-icon icon="lucide:flag" class="text-xl"></iconify-icon>
                     @endif
                 </div>
-                <div class="ml-4 md:ml-0 md:mt-3 flex-1 text-left md:text-center">
+                <div class="ml-4 md:ml-0 md:mt-3 flex-1 text-left md:text-center manufacture-step-text">
                     <span class="text-xs font-extrabold uppercase tracking-wider block
                         {{ $currentStepNum == 6 ? 'text-success-600 font-bold' : 'text-neutral-400' }}">
                         Hoàn thành
