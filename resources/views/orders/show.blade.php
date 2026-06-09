@@ -390,7 +390,7 @@
             <a href="{{ route('orders.index') }}" class="w-full justify-center flex items-center gap-2 py-3 rounded-xl font-semibold border border-neutral-200 text-neutral-700 hover:bg-neutral-50 transition-colors shadow-sm text-sm bg-white cursor-pointer">
                 <iconify-icon icon="lucide:arrow-left" class="text-base"></iconify-icon> Quay lại danh sách
             </a>
-            @can('edit acrylic order')
+            @can('edit order')
             <a href="{{ route('orders.edit', $acrylicOrder) }}" class="w-full justify-center flex items-center gap-2 py-3 rounded-xl font-semibold bg-neutral-900 hover:bg-black text-white shadow-sm text-sm transition-colors cursor-pointer">
                 <iconify-icon icon="lucide:edit-3" class="text-base"></iconify-icon> Chỉnh sửa đơn hàng
             </a>

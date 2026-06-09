@@ -88,7 +88,7 @@
         </div>
         <div class="flex flex-wrap items-center gap-2">
             <div class="flex items-center gap-2">
-                <span class="text-xs font-semibold uppercase tracking-wider text-neutral-500">Hiển thị</span>
+                <span class="text-xs font-semibold uppercase tracking-wider text-neutral-500" style="white-space: nowrap !important; flex-shrink: 0 !important;">Hiển thị</span>
                 <select data-order-supplies-visible-rows-select class="form-select form-select-sm w-28 rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500">
                     <option value="5" selected>5</option>
                     <option value="10">10</option>

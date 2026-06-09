@@ -27,10 +27,10 @@ class OrderController extends Controller
         $this->minLateOrderService = $minLateOrderService;
         $this->glassOrderService = $glassOrderService;
 
-        $this->middleware('permission:view acrylic order',   ['only' => ['index', 'show']]);
-        $this->middleware('permission:add acrylic order',    ['only' => ['create', 'createByType', 'store']]);
-        $this->middleware('permission:edit acrylic order',   ['only' => ['edit', 'update']]);
-        $this->middleware('permission:delete acrylic order', ['only' => ['destroy', 'bulkDestroy']]);
+        $this->middleware('permission:view order',   ['only' => ['index', 'show']]);
+        $this->middleware('permission:add order',    ['only' => ['create', 'createByType', 'store']]);
+        $this->middleware('permission:edit order',   ['only' => ['edit', 'update']]);
+        $this->middleware('permission:delete order', ['only' => ['destroy', 'bulkDestroy']]);
     }
 
     public function index(Request $request)

@@ -56,14 +56,14 @@
                         Xóa lọc
                     </a>
                     @endif
-                    @can('add acrylic order')
+                    @can('add order')
                     <a href="{{ route('orders.create') }}"
                         class="btn btn-primary text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2">
                         <iconify-icon icon="ic:baseline-plus" class="icon text-xl line-height-1"></iconify-icon>
                         Tạo đơn hàng
                     </a>
                     @endcan
-                    @can('delete acrylic order')
+                    @can('delete order')
                     <button type="button" onclick="toggleBulkDeleteOrders()"
                         class="js-toggle-bulk-delete btn bg-danger-600 hover:bg-danger-700 text-white text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2 shadow-sm">
                         <iconify-icon icon="lucide:trash-2" class="icon text-xl line-height-1 text-white"></iconify-icon>
@@ -86,7 +86,7 @@
             @endif
 
             @php
-                $canBulkDeleteOrders = auth()->user()?->can('delete acrylic order');
+                $canBulkDeleteOrders = auth()->user()?->can('delete order');
             @endphp
 
             @if($canBulkDeleteOrders)
@@ -220,7 +220,7 @@
                                 </td>
                                 <td class="text-center whitespace-nowrap">
                                     <div class="flex items-center gap-2 justify-center">
-                                        @can('view acrylic order')
+                                        @can('view order')
                                         <a href="{{ route('orders.show', $order) }}" class="bg-primary-100 hover:bg-primary-200 text-primary-600 font-medium w-8 h-8 flex justify-center items-center rounded-full" title="Xem chi tiết">
                                             <iconify-icon icon="lucide:eye" class="menu-icon"></iconify-icon>
                                         </a>
@@ -228,7 +228,7 @@
                                             <iconify-icon icon="lucide:file-spreadsheet" class="menu-icon"></iconify-icon>
                                         </a>
                                         @endcan
-                                        @can('edit acrylic order')
+                                        @can('edit order')
                                             @if($order->status !== 'in_production')
                                                 <a href="{{ route('orders.edit', $order) }}"
                                                     class="bg-success-100 hover:bg-success-200 text-success-600 font-medium w-8 h-8 flex justify-center items-center rounded-full">
@@ -240,7 +240,7 @@
                                                 </span>
                                             @endif
                                         @endcan
-                                        @can('delete acrylic order')
+                                        @can('delete order')
                                         <form method="POST" action="{{ route('orders.destroy', $order) }}"
                                             onsubmit="return confirm('Xóa đơn hàng này?')">
                                             @csrf @method('DELETE')

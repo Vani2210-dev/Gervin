@@ -159,7 +159,7 @@
         </div>
         <div class="flex flex-wrap items-center gap-2">
             <div class="flex items-center gap-2">
-                <span class="text-xs font-semibold uppercase tracking-wider text-neutral-500">Hiển thị</span>
+                <span class="text-xs font-semibold uppercase tracking-wider text-neutral-500" style="white-space: nowrap !important; flex-shrink: 0 !important;">Hiển thị</span>
                 <select data-order-supplies-visible-rows-select class="form-select form-select-sm w-28 rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500">
                     <option value="5" selected>5</option>
                     <option value="10">10</option>
@@ -271,15 +271,18 @@
                                     <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][molding_length]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="{{ $item->molding_length }}">
                                 </td>
                                 <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
-                                    <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][bevel]" class="product-bevel-input form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Vát" value="{{ $item->bevel }}" list="bevel-list-{{ $supplyIndex }}-{{ $itemIndex }}">
-                                    <datalist class="bevel-datalist" id="bevel-list-{{ $supplyIndex }}-{{ $itemIndex }}">
-                                        @if($item->width)
-                                            <option value="{{ $item->width }}">Rộng ({{ $item->width }})</option>
-                                        @endif
-                                        @if($item->height)
-                                            <option value="{{ $item->height }}">Cao ({{ $item->height }})</option>
-                                        @endif
-                                    </datalist>
+                                    <div class="flex items-center gap-1 w-full px-1">
+                                        <select class="product-bevel-select form-select form-select-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 px-1 py-1 h-8 text-xs w-full">
+                                            <option value="">Không</option>
+                                            <option value="width" data-bevel-type="width">{{ $item->width ? $item->width : 'Theo Rộng' }}</option>
+                                            <option value="height" data-bevel-type="height">{{ $item->height ? $item->height : 'Theo Cao' }}</option>
+                                            <option value="custom">Tự nhập...</option>
+                                        </select>
+                                        <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][bevel]" class="product-bevel-input form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs w-full hidden" placeholder="Vát" value="{{ $item->bevel }}">
+                                        <button type="button" class="btn-bevel-switch text-neutral-400 hover:text-primary-500 p-1 hidden" title="Chọn từ danh sách">
+                                            <iconify-icon icon="lucide:list" class="text-sm"></iconify-icon>
+                                        </button>
+                                    </div>
                                 </td>
                                 <td style="width: 130px; min-width: 130px; " class="border border-neutral-200">
                                     <select name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][vertical_grain_cnc]" class="cnc-template-select form-select form-select-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 px-1 py-1 h-8 text-xs" onchange="onCncTemplateChange(this)">
@@ -552,11 +555,18 @@ function addOrderItem(button) {
             <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][molding_length]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="0" step="0.01" value="${lastData ? lastData.molding_length : ''}">
         </td>
         <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
-            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][bevel]" class="product-bevel-input form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Vát" value="${lastData ? lastData.bevel : ''}" list="bevel-list-${supplyIndex}-${itemIndex}">
-            <datalist class="bevel-datalist" id="bevel-list-${supplyIndex}-${itemIndex}">
-                ${lastData && lastData.width ? `<option value="${lastData.width}">Rộng (${lastData.width})</option>` : ''}
-                ${lastData && lastData.height ? `<option value="${lastData.height}">Cao (${lastData.height})</option>` : ''}
-            </datalist>
+            <div class="flex items-center gap-1 w-full px-1">
+                <select class="product-bevel-select form-select form-select-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 px-1 py-1 h-8 text-xs w-full">
+                    <option value="">Không</option>
+                    <option value="width" data-bevel-type="width">${lastData && lastData.width ? lastData.width : 'Theo Rộng'}</option>
+                    <option value="height" data-bevel-type="height">${lastData && lastData.height ? lastData.height : 'Theo Cao'}</option>
+                    <option value="custom">Tự nhập...</option>
+                </select>
+                <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][bevel]" class="product-bevel-input form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs w-full hidden" placeholder="Vát" value="${lastData ? lastData.bevel : ''}">
+                <button type="button" class="btn-bevel-switch text-neutral-400 hover:text-primary-500 p-1 hidden" title="Chọn từ danh sách">
+                    <iconify-icon icon="lucide:list" class="text-sm"></iconify-icon>
+                </button>
+            </div>
         </td>
         <td style="width: 130px; min-width: 130px; " class="border border-neutral-200">
             <select name="supplies[${supplyIndex}][items][${itemIndex}][vertical_grain_cnc]" class="cnc-template-select form-select form-select-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 px-1 py-1 h-8 text-xs" onchange="onCncTemplateChange(this)">
@@ -604,7 +614,7 @@ function addOrderItem(button) {
     
     const newRow = container.lastElementChild;
     bindAcrylicRowEvents(newRow);
-    updateBevelSuggestions(newRow);
+    initBevelField(newRow);
     
     updateOrderSummary();
     updateAcrylicRowIndexes();
@@ -674,19 +684,21 @@ function bindAcrylicRowEvents(row) {
     const moldingLengthInput = row.querySelector('input[name*="[molding_length]"]');
     const unitPriceInput = row.querySelector('input[name*="[unit_price]"]');
     const bevelInput = row.querySelector('input[name*="[bevel]"]');
+    const bevelSelect = row.querySelector('.product-bevel-select');
+    const btnSwitch = row.querySelector('.btn-bevel-switch');
     
     if (heightInput) {
         heightInput.addEventListener('input', () => {
             applyNarrowWidthRule(row);
             calculateTotalPrice(row, 'height');
-            updateBevelSuggestions(row);
+            syncBevelOnSizeChange(row);
         });
     }
     if (widthInput) {
         widthInput.addEventListener('input', () => {
             applyNarrowWidthRule(row);
             calculateTotalPrice(row, 'width');
-            updateBevelSuggestions(row);
+            syncBevelOnSizeChange(row);
         });
     }
     if (quantityInput) {
@@ -699,7 +711,51 @@ function bindAcrylicRowEvents(row) {
     if (wingAreaInput) wingAreaInput.addEventListener('input', () => calculateTotalPrice(row, 'wing_area'));
     if (moldingLengthInput) moldingLengthInput.addEventListener('input', () => calculateTotalPrice(row, 'molding_length'));
     if (unitPriceInput) unitPriceInput.addEventListener('input', () => calculateTotalPrice(row, 'unit_price'));
-    if (bevelInput) bevelInput.addEventListener('input', () => updateEdgeBevel(row));
+    if (bevelInput) {
+        bevelInput.addEventListener('input', () => {
+            updateEdgeBevel(row);
+        });
+    }
+    if (bevelSelect) {
+        bevelSelect.addEventListener('change', () => {
+            const mode = bevelSelect.value;
+            if (mode === 'custom') {
+                bevelSelect.classList.add('hidden');
+                bevelInput.classList.remove('hidden');
+                btnSwitch.classList.remove('hidden');
+                bevelInput.focus();
+            } else if (mode === 'width') {
+                bevelInput.value = widthInput ? widthInput.value.trim() : '';
+                updateEdgeBevel(row);
+            } else if (mode === 'height') {
+                bevelInput.value = heightInput ? heightInput.value.trim() : '';
+                updateEdgeBevel(row);
+            } else {
+                bevelInput.value = '';
+                updateEdgeBevel(row);
+            }
+        });
+    }
+    if (btnSwitch) {
+        btnSwitch.addEventListener('click', () => {
+            bevelInput.classList.add('hidden');
+            btnSwitch.classList.add('hidden');
+            bevelSelect.classList.remove('hidden');
+            const val = bevelInput.value.trim();
+            const width = widthInput ? widthInput.value.trim() : '';
+            const height = heightInput ? heightInput.value.trim() : '';
+            if (val === '') {
+                bevelSelect.value = '';
+            } else if (width !== '' && val === width) {
+                bevelSelect.value = 'width';
+            } else if (height !== '' && val === height) {
+                bevelSelect.value = 'height';
+            } else {
+                bevelSelect.value = 'custom';
+            }
+            bevelSelect.focus();
+        });
+    }
 }
 
 function duplicateAcrylicRow(button) {
@@ -729,7 +785,7 @@ function duplicateAcrylicRow(button) {
     row.parentNode.insertBefore(newRow, row.nextSibling);
 
     bindAcrylicRowEvents(newRow);
-    updateBevelSuggestions(newRow);
+    initBevelField(newRow);
     updateAcrylicRowIndexes();
     updateOrderSummary();
 }
@@ -862,56 +918,82 @@ function updateEdgeBevel(row) {
     }
 }
 
-function updateBevelSuggestions(row) {
+function updateBevelSelectOptions(row) {
+    const heightInput = row.querySelector('input[name*="[height]"]');
+    const widthInput = row.querySelector('input[name*="[width]"]');
+    const bevelSelect = row.querySelector('.product-bevel-select');
+    if (!heightInput || !widthInput || !bevelSelect) return;
+
+    const width = widthInput.value.trim();
+    const height = heightInput.value.trim();
+
+    const widthOpt = bevelSelect.querySelector('option[data-bevel-type="width"]');
+    const heightOpt = bevelSelect.querySelector('option[data-bevel-type="height"]');
+    if (widthOpt) widthOpt.textContent = width ? width : 'Theo Rộng';
+    if (heightOpt) heightOpt.textContent = height ? height : 'Theo Cao';
+}
+
+function initBevelField(row) {
     const heightInput = row.querySelector('input[name*="[height]"]');
     const widthInput = row.querySelector('input[name*="[width]"]');
     const bevelInput = row.querySelector('input[name*="[bevel]"]');
-    const datalist = row.querySelector('.bevel-datalist');
+    const bevelSelect = row.querySelector('.product-bevel-select');
+    const btnSwitch = row.querySelector('.btn-bevel-switch');
     
-    if (!heightInput || !widthInput || !bevelInput || !datalist) return;
+    if (!heightInput || !widthInput || !bevelInput || !bevelSelect || !btnSwitch) return;
     
     const height = heightInput.value.trim();
     const width = widthInput.value.trim();
+    const val = bevelInput.value.trim();
+
+    // Always sync option labels first
+    updateBevelSelectOptions(row);
     
-    const lastWidth = bevelInput.dataset.lastWidth || '';
-    const lastHeight = bevelInput.dataset.lastHeight || '';
-    const currentBevel = bevelInput.value.trim();
-    
-    // Update datalist options dynamically
-    let optionsHtml = '';
-    if (width) {
-        optionsHtml += `<option value="${width}">Rộng (${width})</option>`;
+    if (val === '') {
+        bevelSelect.value = '';
+        bevelSelect.classList.remove('hidden');
+        bevelInput.classList.add('hidden');
+        btnSwitch.classList.add('hidden');
+    } else if (width !== '' && val === width) {
+        bevelSelect.value = 'width';
+        bevelSelect.classList.remove('hidden');
+        bevelInput.classList.add('hidden');
+        btnSwitch.classList.add('hidden');
+    } else if (height !== '' && val === height) {
+        bevelSelect.value = 'height';
+        bevelSelect.classList.remove('hidden');
+        bevelInput.classList.add('hidden');
+        btnSwitch.classList.add('hidden');
+    } else {
+        bevelSelect.value = 'custom';
+        bevelSelect.classList.add('hidden');
+        bevelInput.classList.remove('hidden');
+        btnSwitch.classList.remove('hidden');
     }
-    if (height) {
-        optionsHtml += `<option value="${height}">Cao (${height})</option>`;
+}
+
+function syncBevelOnSizeChange(row) {
+    const heightInput = row.querySelector('input[name*="[height]"]');
+    const widthInput = row.querySelector('input[name*="[width]"]');
+    const bevelInput = row.querySelector('input[name*="[bevel]"]');
+    const bevelSelect = row.querySelector('.product-bevel-select');
+    
+    if (!heightInput || !widthInput || !bevelInput || !bevelSelect) return;
+    
+    const height = heightInput.value.trim();
+    const width = widthInput.value.trim();
+    const selectMode = bevelSelect.value;
+
+    // Always update option labels to reflect current sizes
+    updateBevelSelectOptions(row);
+    
+    if (selectMode === 'width') {
+        bevelInput.value = width;
+        updateEdgeBevel(row);
+    } else if (selectMode === 'height') {
+        bevelInput.value = height;
+        updateEdgeBevel(row);
     }
-    datalist.innerHTML = optionsHtml;
-    
-    // Auto-update logic based on defaults/manual inputs
-    if (currentBevel === '') {
-        if (width) {
-            bevelInput.value = width;
-        } else if (height) {
-            bevelInput.value = height;
-        }
-    } else if (currentBevel === lastWidth || lastWidth === '') {
-        if (width) {
-            bevelInput.value = width;
-        } else if (height) {
-            bevelInput.value = height;
-        }
-    } else if (currentBevel === lastHeight) {
-        if (height) {
-            bevelInput.value = height;
-        } else if (width) {
-            bevelInput.value = width;
-        }
-    }
-    
-    updateEdgeBevel(row);
-    
-    bevelInput.dataset.lastWidth = width;
-    bevelInput.dataset.lastHeight = height;
 }
 
 // Initial attachment setup for Acrylic-specific rows if DOM loaded
@@ -925,7 +1007,7 @@ document.addEventListener('DOMContentLoaded', function() {
         bindAcrylicRowEvents(row);
         applyNarrowWidthRule(row);
         calculateTotalPrice(row);
-        updateBevelSuggestions(row);
+        initBevelField(row);
         updateEdgeBevel(row);
     });
 

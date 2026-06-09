@@ -31,6 +31,40 @@ class PermissionSeeder extends Seeder
             $oldPermission->delete();
         }
 
+        // Chuyển đổi và gộp các quyền order cũ
+        $orderMappings = [
+            'view acrylic order' => 'view order',
+            'view glass order' => 'view order',
+            'view min late order' => 'view order',
+            'add acrylic order' => 'add order',
+            'add glass order' => 'add order',
+            'add min late order' => 'add order',
+            'edit acrylic order' => 'edit order',
+            'edit glass order' => 'edit order',
+            'edit min late order' => 'edit order',
+            'delete acrylic order' => 'delete order',
+            'delete glass order' => 'delete order',
+            'delete min late order' => 'delete order',
+        ];
+        foreach ($orderMappings as $oldName => $newName) {
+            $oldPermission = Permission::where('name', $oldName)->first();
+            if (! $oldPermission) {
+                continue;
+            }
+
+            $newPermission = Permission::firstOrCreate([
+                'name' => $newName,
+                'guard_name' => 'web',
+            ]);
+
+            foreach ($oldPermission->roles as $role) {
+                $role->givePermissionTo($newPermission);
+            }
+
+            $oldPermission->delete();
+        }
+
+
         $permissions = [
             // Role permissions
             'view role',
@@ -64,20 +98,10 @@ class PermissionSeeder extends Seeder
             'delete customer',
 
             // Order permissions
-            'view acrylic order',
-            'add acrylic order',
-            'edit acrylic order',
-            'delete acrylic order',
-
-            'view glass order',
-            'add glass order',
-            'edit glass order',
-            'delete glass order',
-
-            'view min late order',
-            'add min late order',
-            'edit min late order',
-            'delete min late order',
+            'view order',
+            'add order',
+            'edit order',
+            'delete order',
             
             // Manufacture permissions
             'view manufacture',

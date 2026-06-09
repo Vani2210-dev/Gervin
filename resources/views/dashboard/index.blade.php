@@ -27,7 +27,7 @@
     {{-- Khối thống kê tổng quan --}}
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {{-- Tổng đơn hàng --}}
-        @canany(['view acrylic order', 'view glass order', 'view min late order'])
+        @can('view order')
         <div class="card shadow-none border border-neutral-200 rounded-xl h-full bg-gradient-to-r from-blue-600/10 to-white">
             <div class="card-body p-5">
                 <div class="flex flex-wrap items-center justify-between gap-3">
@@ -46,10 +46,10 @@
                 </div>
             </div>
         </div>
-        @endcanany
+        @endcan
 
         {{-- Acrylic Orders --}}
-        @can('view acrylic order')
+        @can('view order')
         <div class="card shadow-none border border-neutral-200 rounded-xl h-full bg-gradient-to-r from-indigo-600/10 to-white">
             <div class="card-body p-5">
                 <div class="flex flex-wrap items-center justify-between gap-3">
@@ -69,7 +69,7 @@
         @endcan
 
         {{-- Glass Orders --}}
-        @can('view glass order')
+        @can('view order')
         <div class="card shadow-none border border-neutral-200 rounded-xl h-full bg-gradient-to-r from-cyan-600/10 to-white">
             <div class="card-body p-5">
                 <div class="flex flex-wrap items-center justify-between gap-3">
@@ -89,7 +89,7 @@
         @endcan
 
         {{-- Min Late Orders --}}
-        @can('view min late order')
+        @can('view order')
         <div class="card shadow-none border border-neutral-200 rounded-xl h-full bg-gradient-to-r from-amber-600/10 to-white">
             <div class="card-body p-5">
                 <div class="flex flex-wrap items-center justify-between gap-3">
@@ -293,7 +293,7 @@
     @endcanany
 
     {{-- Danh sách đơn hàng gần đây --}}
-    @canany(['view acrylic order', 'view glass order', 'view min late order'])
+    @can('view order')
     <div class="grid grid-cols-12 gap-6 mt-8">
         <div class="col-span-12">
             <div class="card h-full p-0 rounded-xl border border-neutral-200 overflow-hidden bg-white">
@@ -381,16 +381,16 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-center">
                                         <div class="flex items-center gap-2 justify-center">
-                                            @canany(['view acrylic order', 'view glass order', 'view min late order'])
+                                            @can('view order')
                                             <a href="{{ route('orders.show', $order) }}" class="bg-primary-100 hover:bg-primary-200 text-primary-600 font-medium w-8 h-8 flex justify-center items-center rounded-full" title="Xem chi tiết">
                                                 <iconify-icon icon="lucide:eye" class="text-base"></iconify-icon>
                                             </a>
-                                            @endcanany
-                                            @canany(['edit acrylic order', 'edit glass order', 'edit min late order'])
+                                            @endcan
+                                            @can('edit order')
                                             <a href="{{ route('orders.edit', $order) }}" class="bg-success-100 hover:bg-success-200 text-success-600 font-medium w-8 h-8 flex justify-center items-center rounded-full" title="Chỉnh sửa">
                                                 <iconify-icon icon="lucide:edit" class="text-base"></iconify-icon>
                                             </a>
-                                            @endcanany
+                                            @endcan
                                         </div>
                                     </td>
                                 </tr>
@@ -408,6 +408,6 @@
             </div>
         </div>
     </div>
-    @endcanany
+    @endcan
 
 @endsection

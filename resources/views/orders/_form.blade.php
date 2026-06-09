@@ -7,385 +7,7 @@
         'min_late' => 'Min Late',
     ];
 @endphp
-<style>
-    @media (min-width: 1024px) {
-        .attachment-wrapper {
-            transition: transform 0.25s ease-in-out, box-shadow 0.25s ease-in-out;
-            cursor: zoom-in;
-            position: relative;
-            z-index: 1;
-        }
-        .attachment-wrapper:hover {
-            transform: scale(2.0);
-            transform-origin: right center;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.15);
-            z-index: 50;
-        }
-    }
-
-    /* Popup và zoom của khối danh sách vật tư/sản phẩm */
-    .order-supplies-popup.is-fullscreen {
-        position: fixed !important;
-        inset: 0 !important;
-        z-index: 999;
-        width: 100vw !important;
-        height: 100vh !important;
-        margin: 0 !important;
-        border-radius: 0 !important;
-        box-shadow: none !important;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden !important;
-        background: #ffffff !important;
-    }
-
-    .order-supplies-popup.is-fullscreen .order-supplies-header {
-        flex: 0 0 auto;
-    }
-
-    .order-supplies-popup.is-fullscreen .order-supplies-body {
-        flex: 1 1 auto;
-        min-height: 0;
-        overflow: auto;
-    }
-
-    .order-supplies-table-zoom-wrap {
-        display: inline-block;
-        width: max-content;
-        transform-origin: top left;
-    }
-
-    /* Làm thanh cuộn dọc của bảng giống kiểu sheet trong file mẫu */
-    [data-order-supplies-table-scroll] {
-        scrollbar-width: thin;
-        scrollbar-color: rgb(148 163 184) rgb(241 245 249);
-    }
-
-    [data-order-supplies-table-scroll]::-webkit-scrollbar {
-        width: 12px;
-        height: 12px;
-    }
-
-    [data-order-supplies-table-scroll]::-webkit-scrollbar-track {
-        background: rgb(241 245 249);
-    }
-
-    [data-order-supplies-table-scroll]::-webkit-scrollbar-thumb {
-        background: rgb(148 163 184);
-        border-radius: 9999px;
-        border: 3px solid rgb(241 245 249);
-    }
-
-    [data-order-supplies-table-scroll]::-webkit-scrollbar-thumb:hover {
-        background: rgb(100 116 139);
-    }
-
-    /* Tay nắm kéo giãn cột trong bảng sản phẩm */
-    .order-column-resizable-th {
-        position: relative;
-        overflow: visible !important;
-    }
-
-    .resize-handle-col {
-        position: absolute;
-        top: 0;
-        right: -6px;
-        z-index: 30;
-        width: 12px;
-        height: 100%;
-        cursor: col-resize;
-        touch-action: none;
-        user-select: none;
-        background: transparent;
-    }
-
-    .resize-handle-col::after {
-        position: absolute;
-        top: 0;
-        right: 5px;
-        width: 2px;
-        height: 100%;
-        content: "";
-        background: transparent;
-    }
-
-    body.order-column-resizing {
-        cursor: col-resize !important;
-        user-select: none !important;
-    }
-
-    /* Biến ô nhập trong bảng sản phẩm thành giao diện kiểu spreadsheet */
-    #order-supplies-container .order-supply-row table,
-    #glass-supplies-container .order-supply-row table,
-    #min-late-supplies-container .order-supply-row table {
-        border-color: #dbe5f1 !important;
-        border-collapse: collapse !important;
-        background: #ffffff !important;
-    }
-
-    #order-supplies-container .order-supply-row table th,
-    #glass-supplies-container .order-supply-row table th,
-    #min-late-supplies-container .order-supply-row table th {
-        background: #f1f5f9 !important;
-        border-color: #dbe5f1 !important;
-        color: #475569 !important;
-        font-weight: 600 !important;
-    }
-
-    #order-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td,
-    #glass-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td,
-    #min-late-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td {
-        padding: 0 !important;
-        border-color: #dbe5f1 !important;
-        background: #ffffff !important;
-        vertical-align: middle !important;
-    }
-
-    #order-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .row-index,
-    #glass-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .row-index,
-    #min-late-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .row-index {
-        display: flex !important;
-        min-height: 42px !important;
-        align-items: center !important;
-        justify-content: center !important;
-        background: #f8fafc !important;
-    }
-
-    #order-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td > .flex,
-    #glass-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td > .flex,
-    #min-late-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td > .flex {
-        min-height: 42px !important;
-    }
-
-    #order-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-control,
-    #order-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-select,
-    #glass-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-control,
-    #glass-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-select,
-    #min-late-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-control,
-    #min-late-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-select {
-        width: 100% !important;
-        height: 42px !important;
-        min-height: 42px !important;
-        padding: 0 12px !important;
-        border: 0 !important;
-        border-radius: 0 !important;
-        background: #ffffff !important;
-        box-shadow: none !important;
-        color: #0f172a;
-        font-size: 12px !important;
-        line-height: 1.4 !important;
-    }
-
-    #order-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-control::placeholder,
-    #glass-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-control::placeholder,
-    #min-late-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-control::placeholder {
-        color: #64748b !important;
-        opacity: 1 !important;
-    }
-
-    #order-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-control:focus,
-    #order-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-select:focus,
-    #glass-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-control:focus,
-    #glass-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-select:focus,
-    #min-late-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-control:focus,
-    #min-late-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-select:focus {
-        position: relative;
-        z-index: 2;
-        background: #eff6ff !important;
-        outline: 2px solid #3b82f6 !important;
-        outline-offset: -2px !important;
-        box-shadow: inset 0 0 0 1px #3b82f6 !important;
-    }
-
-    #order-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-control[readonly],
-    #glass-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-control[readonly],
-    #min-late-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-control[readonly] {
-        background: #f8fafc !important;
-        color: #475569 !important;
-        font-weight: 600 !important;
-    }
-
-    #order-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td input[type="number"]::-webkit-inner-spin-button,
-    #order-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td input[type="number"]::-webkit-outer-spin-button,
-    #glass-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td input[type="number"]::-webkit-inner-spin-button,
-    #glass-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td input[type="number"]::-webkit-outer-spin-button,
-    #min-late-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td input[type="number"]::-webkit-inner-spin-button,
-    #min-late-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td input[type="number"]::-webkit-outer-spin-button {
-        margin: 0;
-        appearance: none;
-        -webkit-appearance: none;
-    }
-
-    #order-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .ts-wrapper,
-    #glass-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .ts-wrapper,
-    #min-late-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .ts-wrapper {
-        width: 100% !important;
-        height: 42px !important;
-    }
-
-    #order-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .ts-control,
-    #glass-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .ts-control,
-    #min-late-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .ts-control {
-        height: 42px !important;
-        min-height: 42px !important;
-        padding: 0 12px !important;
-        border: 0 !important;
-        border-radius: 0 !important;
-        background: #ffffff !important;
-        box-shadow: none !important;
-        font-size: 12px !important;
-        line-height: 1.4 !important;
-    }
-
-    #order-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .ts-wrapper.focus .ts-control,
-    #glass-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .ts-wrapper.focus .ts-control,
-    #min-late-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .ts-wrapper.focus .ts-control {
-        background: #eff6ff !important;
-        outline: 2px solid #3b82f6 !important;
-        outline-offset: -2px !important;
-        box-shadow: inset 0 0 0 1px #3b82f6 !important;
-    }
-
-    /* Bảng chi tiết hóa đơn dùng chung giao diện spreadsheet như các bảng vật tư */
-    table[data-order-resize-group="min_late_payment"] {
-        font-size: 75% !important;
-        border-color: #dbe5f1 !important;
-        border-collapse: collapse !important;
-        background: #ffffff !important;
-    }
-
-    table[data-order-resize-group="min_late_payment"] th {
-        padding: 3px 4px !important;
-        background: #f1f5f9 !important;
-        border-color: #dbe5f1 !important;
-        color: #475569 !important;
-        font-weight: 600 !important;
-    }
-
-    /* Giữ tiêu đề bám trong khung cuộn của bảng, không tạo header nổi ngoài trang */
-    #order-supplies-container .order-supply-row table thead th,
-    #glass-supplies-container .order-supply-row table thead th,
-    #min-late-supplies-container .order-supply-row table thead th,
-    table[data-order-resize-group="min_late_payment"] thead th {
-        position: sticky !important;
-        top: -1px;
-        z-index: 40 !important;
-        background: #f1f5f9 !important;
-        background-clip: padding-box !important;
-        border-radius: 0 !important;
-    }
-
-    #order-supplies-container .order-supply-row table thead tr:first-child th,
-    #glass-supplies-container .order-supply-row table thead tr:first-child th,
-    #min-late-supplies-container .order-supply-row table thead tr:first-child th,
-    table[data-order-resize-group="min_late_payment"] thead tr:first-child th {
-        z-index: 50 !important;
-    }
-
-    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td {
-        padding: 0 !important;
-        border-color: #dbe5f1 !important;
-        background: #ffffff !important;
-        vertical-align: middle !important;
-    }
-
-    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td .detail-index {
-        display: flex !important;
-        min-height: 42px !important;
-        align-items: center !important;
-        justify-content: center !important;
-        background: #f8fafc !important;
-    }
-
-    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td .form-control,
-    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td .form-select {
-        width: 100% !important;
-        height: 42px !important;
-        min-height: 42px !important;
-        padding: 0 12px !important;
-        border: 0 !important;
-        border-radius: 0 !important;
-        background: #ffffff !important;
-        box-shadow: none !important;
-        color: #0f172a !important;
-        font-size: 12px !important;
-        line-height: 1.4 !important;
-    }
-
-    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td .form-control::placeholder {
-        color: #64748b !important;
-        opacity: 1 !important;
-    }
-
-    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td .form-control:focus,
-    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td .form-select:focus {
-        position: relative;
-        z-index: 2;
-        background: #eff6ff !important;
-        outline: 2px solid #3b82f6 !important;
-        outline-offset: -2px !important;
-        box-shadow: inset 0 0 0 1px #3b82f6 !important;
-    }
-
-    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td .form-control[readonly] {
-        background: #f8fafc !important;
-        color: #475569 !important;
-        font-weight: 600 !important;
-    }
-
-    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td input[type="number"]::-webkit-inner-spin-button,
-    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td input[type="number"]::-webkit-outer-spin-button {
-        margin: 0;
-        appearance: none;
-        -webkit-appearance: none;
-    }
-
-    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td:last-child {
-        position: sticky !important;
-        right: 0 !important;
-        z-index: 1 !important;
-        background-color: #ffffff !important;
-        box-shadow: -2px 0 4px rgba(0, 0, 0, 0.06) !important;
-    }
-
-    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td:last-child button {
-        display: flex !important;
-        width: 100% !important;
-        min-height: 42px !important;
-        align-items: center !important;
-        justify-content: center !important;
-    }
-
-    .order-supplies-zoom-label {
-        min-width: 3.5rem;
-    }
-
-    /* Căn giữa riêng tiêu đề STT để không bị lệch bởi padding của th */
-    .order-stt-header-label {
-        display: block;
-        width: 100%;
-        text-align: center !important;
-    }
-
-    /* Ép ô chọn số dòng cao bằng các nút nhỏ ở header */
-    [data-order-supplies-visible-rows-select] {
-        height: 48px !important;
-        min-height: 48px !important;
-        padding-top: 0 !important;
-        padding-bottom: 0 !important;
-        line-height: 48px !important;
-        box-sizing: border-box !important;
-    }
-
-    /* Ép các tiêu đề đầu hàng phụ vẫn căn giữa dù rule chung của bảng ưu tiên ô đầu tiên */
-    .order-header-force-center {
-        text-align: center !important;
-    }
-
-    body.order-supplies-popup-open {
-        overflow: hidden;
-    }
-</style>
+<link rel="stylesheet" href="{{ asset('assets/css/order-form.css') }}?v={{ time() }}">
 <div class="card p-0 rounded-xl border-0">
     <div class="card-header border-b border-neutral-200 bg-white py-4 px-6">
         <h5 class="font-semibold text-base">{{ $title ?? 'Tạo đơn hàng' }}</h5>
@@ -490,8 +112,16 @@
                             </div>
                             <div class="space-y-3">
                                 <div class="flex justify-between items-center text-sm">
-                                    <span class="text-neutral-500 font-medium">Số lượng sản phẩm:</span>
+                                    <span class="text-neutral-500 font-medium">Số sản phẩm:</span>
                                     <span class="font-semibold text-neutral-800" id="total-items">0</span>
+                                </div>
+                                <div class="flex justify-between items-center text-sm">
+                                    <span class="text-neutral-500 font-medium">Tổng số tấm:</span>
+                                    <span class="font-semibold text-neutral-800" id="total-sheets">0 tấm</span>
+                                </div>
+                                <div class="flex justify-between items-center text-sm">
+                                    <span class="text-neutral-500 font-medium">Tổng diện tích:</span>
+                                    <span class="font-semibold text-blue-600" id="total-area">0 m²</span>
                                 </div>
                                 <div class="flex justify-between items-center text-sm">
                                     <span class="text-neutral-500 font-medium">Tổng tiền hàng:</span>
@@ -622,6 +252,8 @@ function updateOrderSummary() {
     const orderType = @json($currentOrderType);
     
     let totalItems = 0;
+    let totalSheets = 0;
+    let totalArea = 0;
     let totalAmount = 0;
     
     if (orderType === 'min_late') {
@@ -630,7 +262,9 @@ function updateOrderSummary() {
         rows.forEach(row => {
             const qtyInput = row.querySelector('input[name*="quantity"]');
             if (qtyInput && !qtyInput.disabled) {
-                totalItems += parseFloat(qtyInput.value) || 0;
+                const qty = parseFloat(qtyInput.value) || 0;
+                totalItems++;
+                totalSheets += qty;
             }
         });
         
@@ -647,20 +281,32 @@ function updateOrderSummary() {
         rows.forEach(row => {
             const qtyInput = row.querySelector('input[name*="quantity"]');
             const priceInput = row.querySelector('input[name*="total_price"]');
+            const heightInput = row.querySelector('input[name*="[height]"]');
+            const widthInput = row.querySelector('input[name*="[width]"]');
             if (qtyInput && !qtyInput.disabled) {
                 const quantity = parseFloat(qtyInput.value) || 0;
                 const totalPrice = parseFloat(priceInput ? priceInput.value : 0) || 0;
-                totalItems += quantity;
+                const height = parseFloat(heightInput ? heightInput.value : 0) || 0;
+                const width = parseFloat(widthInput ? widthInput.value : 0) || 0;
+                totalItems++;
+                totalSheets += quantity;
+                if (height > 0 && width > 0) {
+                    totalArea += (height * width * quantity) / 1000000;
+                }
                 totalAmount += totalPrice;
             }
         });
     }
     
     const totalItemsEl = document.getElementById('total-items');
+    const totalSheetsEl = document.getElementById('total-sheets');
+    const totalAreaEl = document.getElementById('total-area');
     const totalAmountEl = document.getElementById('total-amount');
     const grandTotalEl = document.getElementById('grand-total');
     
     if (totalItemsEl) totalItemsEl.textContent = totalItems;
+    if (totalSheetsEl) totalSheetsEl.textContent = totalSheets + ' tấm';
+    if (totalAreaEl) totalAreaEl.textContent = totalArea.toFixed(3) + ' m²';
     if (totalAmountEl) totalAmountEl.textContent = Math.round(totalAmount).toLocaleString('vi-VN') + ' VNĐ';
     if (grandTotalEl) grandTotalEl.textContent = Math.round(totalAmount).toLocaleString('vi-VN') + ' VNĐ';
 }

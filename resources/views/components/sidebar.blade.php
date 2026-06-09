@@ -72,7 +72,7 @@
                 </a>
             </li>
             @endcan
-            @can('view acrylic order')
+            @can('view order')
             <li>
                 <a href="{{ route('orders.index') }}">
                     <iconify-icon icon="mdi:clipboard-text-outline" class="menu-icon"></iconify-icon>
