@@ -169,16 +169,15 @@
                                         </button>
                                     </div>
 
-                                    {{-- Modal Popup for this image --}}
-                                    <x-modal name="modal-existing-attachment-{{ $index }}" maxWidth="2xl" :hasBackdrop="false">
-                                        <div class="p-5 relative">
-                                            <div class="flex items-center justify-between border-b border-neutral-100 pb-3 mb-4 cursor-move modal-drag-handle">
-                                                <h6 class="font-bold text-sm text-neutral-800 m-0 select-none">{{ basename($image) }}</h6>
-                                                <button type="button" onclick="closeModal('modal-existing-attachment-{{ $index }}')" class="text-neutral-400 hover:text-neutral-600 text-xl leading-none">&times;</button>
-                                            </div>
-                                            <div class="relative overflow-hidden rounded-lg attachment-wrapper bg-neutral-50 flex items-center justify-center p-1 border border-neutral-100 shadow-xs" style="cursor: zoom-in;">
-                                                <img src="{{ route('orders.image', ['filename' => basename($image)]) }}" class="w-full object-contain max-h-[70vh] rounded-md">
-                                            </div>
+                                    {{-- Modal Popup xem ảnh - chỉ hiện ảnh trần + nút X --}}
+                                    <x-modal name="modal-existing-attachment-{{ $index }}" maxWidth="2xl" :hasBackdrop="false" :transparent="true">
+                                        <div class="relative modal-drag-handle cursor-grab">
+                                            {{-- Nút X đóng ở góc phải trên --}}
+                                            <button type="button" onclick="closeModal('modal-existing-attachment-{{ $index }}')" class="absolute -top-3 -right-3 z-10 w-7 h-7 bg-white rounded-full shadow-lg flex items-center justify-center text-neutral-500 hover:text-red-500 hover:bg-red-50 transition-colors border border-neutral-200">
+                                                <iconify-icon icon="lucide:x" class="text-sm"></iconify-icon>
+                                            </button>
+                                            {{-- Ảnh trần - không wrapper --}}
+                                            <img src="{{ route('orders.image', ['filename' => basename($image)]) }}" class="modal-image-viewer rounded-lg shadow-2xl block" style="max-width:672px; max-height:80vh; object-fit:contain;">
                                         </div>
                                     </x-modal>
                                     @endforeach
@@ -205,6 +204,9 @@
         </div>
         <div class="px-6 py-4 border-t border-neutral-100 bg-neutral-50/50 flex items-center justify-end gap-3 rounded-b-xl">
             <a href="{{ route('orders.index') }}" class="btn btn-outline-neutral px-5 py-2.5 rounded-lg text-sm font-semibold transition-all">Quay lại</a>
+            <button type="button" onclick="previewOrder()" class="btn bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center gap-1.5">
+                <iconify-icon icon="lucide:eye" class="text-base"></iconify-icon> Xem trước
+            </button>
             <button type="submit" class="btn btn-primary px-6 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all">{{ isset($acrylicOrder) && !$isDraftCreate ? 'Cập nhật đơn hàng' : 'Lưu đơn hàng' }}</button>
         </div>
     </form>
@@ -267,6 +269,308 @@ function fillCustomerInfo(customerId) {
         document.querySelector('textarea[name="address"]').value = customer.address || '';
     }
     @endif
+}
+
+// === XEM TRƯỚC ĐƠN HÀNG ===
+function closePreviewOrder() {
+    const modal = document.getElementById('preview-order-modal');
+    if (modal) modal.remove();
+    document.body.style.overflow = '';
+}
+
+function previewOrder() {
+    const form = document.getElementById('order-form');
+    if (!form) return;
+
+    // Thu thập thông tin từ form
+    const getVal = (selector) => {
+        const el = form.querySelector(selector);
+        if (!el) return '';
+        if (el.tagName === 'SELECT') {
+            return el.options[el.selectedIndex]?.text || el.value || '';
+        }
+        return el.value || '';
+    };
+
+    const orderCode = document.getElementById('order-code-input')?.value || '';
+    const orderType = getVal('[name="type"]');
+    const typeLabels = { acrylic: 'Acrylic', glass: 'Glass', min_late: 'Min Late' };
+    const typeLabel = typeLabels[orderType] || orderType;
+    const customerName = getVal('[name="customer_name"]');
+    const phone = getVal('[name="phone"]');
+    const orderDate = getVal('[name="order_date"]');
+    const deliveryDays = getVal('[name="delivery_days"]');
+    const deadline = getVal('[name="deadline"]');
+    const address = form.querySelector('[name="address"]')?.value || '';
+    const notes = form.querySelector('[name="notes"]')?.value || '';
+    const customerPolicy = form.querySelector('[name="customer_policy"]')?.value || '';
+    const statusEl = form.querySelector('[name="status"]');
+    const statusText = statusEl ? statusEl.options[statusEl.selectedIndex]?.text : '';
+
+    // Định dạng ngày giờ
+    const formatDate = (val) => {
+        if (!val) return '—';
+        try {
+            const d = new Date(val);
+            return d.toLocaleDateString('vi-VN', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+        } catch { return val; }
+    };
+    const formatDateOnly = (val) => {
+        if (!val) return '—';
+        try {
+            const d = new Date(val);
+            return d.toLocaleDateString('vi-VN', { day:'2-digit', month:'2-digit', year:'numeric' });
+        } catch { return val; }
+    };
+    const formatMoney = (val) => {
+        const n = parseFloat(val) || 0;
+        return n.toLocaleString('vi-VN') + ' đ';
+    };
+
+    // Thu thập tóm tắt từ sidebar
+    const totalItems = document.getElementById('total-items')?.textContent || '0';
+    const totalSheets = document.getElementById('total-sheets')?.textContent || '0';
+    const totalArea = document.getElementById('total-area')?.textContent || '0 m²';
+    const totalAmount = document.getElementById('total-amount')?.textContent || '0 VNĐ';
+    const grandTotal = document.getElementById('grand-total')?.textContent || '0 VNĐ';
+
+    // Thu thập vật tư & sản phẩm
+    let suppliesHTML = '';
+    const supplyRows = document.querySelectorAll('.order-supply-row');
+    supplyRows.forEach((supplyRow, sIdx) => {
+        // Kiểm tra supply có bị disabled không
+        const firstInput = supplyRow.querySelector('input:not([type="hidden"])');
+        if (firstInput && firstInput.disabled) return;
+
+        const supplyCodeEl = supplyRow.querySelector('[name*="order_supply_code"]');
+        const supplyCode = supplyCodeEl ? (supplyCodeEl.tomselect ? supplyCodeEl.tomselect.getItem(supplyCodeEl.tomselect.getValue())?.textContent : supplyCodeEl.options?.[supplyCodeEl.selectedIndex]?.text) : '';
+        const supplyName = supplyRow.querySelector('[name*="supply_name"]')?.value || '';
+        const supplyQty = supplyRow.querySelector('[name*="[quantity]"]:not([name*="items"])')?.value || '';
+
+        // Lấy headers từ bảng
+        const table = supplyRow.querySelector('table');
+        if (!table) return;
+        const headers = [];
+        table.querySelectorAll('thead th').forEach(th => {
+            headers.push(th.textContent.trim().replace(/\s*\*\s*/g, ''));
+        });
+
+        // Lấy dữ liệu từng item row
+        let itemsHTML = '';
+        const itemRows = supplyRow.querySelectorAll('.order-item-row');
+        itemRows.forEach((row, iIdx) => {
+            itemsHTML += '<tr class="border-b border-neutral-100 hover:bg-neutral-50/50">';
+            // STT
+            itemsHTML += `<td class="px-3 py-2 text-center text-xs text-neutral-500 border border-neutral-100">${iIdx + 1}</td>`;
+            // Đọc tất cả td (bỏ STT và Hành động)
+            const tds = row.querySelectorAll('td');
+            tds.forEach((td, tdIdx) => {
+                if (tdIdx === 0) return; // Bỏ STT (đã render ở trên)
+                if (tdIdx === tds.length - 1) return; // Bỏ cột Hành động
+
+                const input = td.querySelector('input, select, textarea');
+                let val = '';
+                if (input) {
+                    if (input.tagName === 'SELECT') {
+                        val = input.options[input.selectedIndex]?.text || '';
+                    } else {
+                        val = input.value || '';
+                    }
+                } else {
+                    val = td.textContent.trim();
+                }
+
+                // Format tiền cho cột đơn giá và thành tiền
+                const name = input?.name || '';
+                if (name.includes('unit_price') || name.includes('total_price') || name.includes('[total]')) {
+                    const num = parseFloat(val);
+                    val = !isNaN(num) && num > 0 ? num.toLocaleString('vi-VN') : val;
+                }
+
+                itemsHTML += `<td class="px-3 py-2 text-xs text-neutral-700 border border-neutral-100 text-center">${val || '—'}</td>`;
+            });
+            itemsHTML += '</tr>';
+        });
+
+        // Tạo headers (bỏ cột Hành động cuối)
+        let headerHTML = '<tr class="bg-primary-50/50">';
+        headers.forEach((h, hIdx) => {
+            if (hIdx === headers.length - 1) return; // Bỏ cột Hành động
+            headerHTML += `<th class="px-3 py-2.5 text-xs font-bold text-neutral-600 uppercase border border-neutral-100 text-center whitespace-nowrap">${h}</th>`;
+        });
+        headerHTML += '</tr>';
+
+        suppliesHTML += `
+            <div class="mb-5">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="p-1.5 bg-primary-50 rounded-lg text-primary-500 flex items-center justify-center">
+                        <iconify-icon icon="lucide:clipboard-list" class="text-base"></iconify-icon>
+                    </div>
+                    <span class="font-bold text-sm text-neutral-800">${supplyCode || 'Vật tư ' + (sIdx + 1)}</span>
+                    ${supplyName ? `<span class="text-xs text-neutral-500">— ${supplyName}</span>` : ''}
+                    ${supplyQty ? `<span class="text-xs bg-primary-50 text-primary-600 px-2 py-0.5 rounded-full font-semibold">SL: ${supplyQty}</span>` : ''}
+                </div>
+                <div class="overflow-x-auto rounded-lg border border-neutral-200">
+                    <table class="w-full">
+                        <thead>${headerHTML}</thead>
+                        <tbody>${itemsHTML || '<tr><td colspan="20" class="text-center text-xs text-neutral-400 py-4">Chưa có sản phẩm</td></tr>'}</tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+    });
+
+    // Tạo info row helper
+    const infoRow = (label, value, icon) => {
+        if (!value || value === '—') return '';
+        return `
+            <div class="flex items-start gap-3 py-2">
+                <iconify-icon icon="${icon}" class="text-base text-neutral-400 mt-0.5 flex-shrink-0"></iconify-icon>
+                <div>
+                    <div class="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">${label}</div>
+                    <div class="text-sm font-medium text-neutral-800 mt-0.5">${value}</div>
+                </div>
+            </div>
+        `;
+    };
+
+    // Tạo modal HTML
+    const modalHTML = `
+        <div id="preview-order-modal" style="position:fixed; inset:0; z-index:99999999; display:flex; align-items:center; justify-content:center;">
+            <div style="position:absolute; inset:0; background:rgba(0,0,0,0.5);" onclick="closePreviewOrder()"></div>
+            <div class="bg-white flex flex-col" style="position:relative; width:100%; height:100%; z-index:1;">
+                <!-- Header -->
+                <div class="flex items-center justify-between px-6 py-4 border-b border-neutral-200 flex-shrink-0">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2 bg-emerald-50 rounded-xl">
+                            <iconify-icon icon="lucide:eye" class="text-xl text-emerald-500"></iconify-icon>
+                        </div>
+                        <div>
+                            <h5 class="font-bold text-base text-neutral-800 m-0">Xem trước đơn hàng</h5>
+                            <p class="text-xs text-neutral-400 m-0 mt-0.5">${orderCode} • ${typeLabel}</p>
+                        </div>
+                    </div>
+                    <button type="button" onclick="closePreviewOrder()" class="w-8 h-8 rounded-lg hover:bg-neutral-100 flex items-center justify-center text-neutral-400 hover:text-neutral-600 transition-colors">
+                        <iconify-icon icon="lucide:x" class="text-xl"></iconify-icon>
+                    </button>
+                </div>
+
+                <!-- Body (scrollable) -->
+                <div class="flex-1 overflow-y-auto p-6 space-y-5" style="min-height:0;">
+                    <!-- Thông tin khách hàng & đơn hàng -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div class="bg-white border border-neutral-200 rounded-xl p-5 shadow-sm">
+                            <div class="flex items-center gap-2 mb-3 pb-3 border-b border-neutral-100">
+                                <iconify-icon icon="lucide:user" class="text-lg text-primary-500"></iconify-icon>
+                                <h6 class="font-bold text-sm text-neutral-800 m-0">Thông tin khách hàng</h6>
+                            </div>
+                            ${infoRow('Tên khách hàng', customerName, 'lucide:user')}
+                            ${infoRow('Số điện thoại', phone, 'lucide:phone')}
+                            ${infoRow('Địa chỉ', address, 'lucide:map-pin')}
+                        </div>
+                        <div class="bg-white border border-neutral-200 rounded-xl p-5 shadow-sm">
+                            <div class="flex items-center gap-2 mb-3 pb-3 border-b border-neutral-100">
+                                <iconify-icon icon="lucide:file-text" class="text-lg text-primary-500"></iconify-icon>
+                                <h6 class="font-bold text-sm text-neutral-800 m-0">Thông tin đơn hàng</h6>
+                            </div>
+                            ${infoRow('Mã đơn hàng', orderCode, 'lucide:hash')}
+                            ${infoRow('Loại đơn', typeLabel, 'lucide:tag')}
+                            ${infoRow('Ngày chốt đơn', formatDate(orderDate), 'lucide:calendar')}
+                            ${infoRow('Số ngày giao', deliveryDays ? deliveryDays + ' ngày' : '', 'lucide:truck')}
+                            ${infoRow('Hạn đơn', formatDateOnly(deadline), 'lucide:clock')}
+                            ${statusText ? infoRow('Trạng thái', statusText, 'lucide:activity') : ''}
+                        </div>
+                    </div>
+
+                    <!-- Ghi chú -->
+                    ${(notes || customerPolicy) ? `
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        ${notes ? `
+                        <div class="bg-amber-50/50 border border-amber-200 rounded-xl p-5">
+                            <div class="flex items-center gap-2 mb-2">
+                                <iconify-icon icon="lucide:sticky-note" class="text-base text-amber-500"></iconify-icon>
+                                <span class="font-bold text-xs text-amber-700 uppercase">Ghi chú đơn hàng</span>
+                            </div>
+                            <p class="text-sm text-neutral-700 whitespace-pre-wrap m-0">${notes}</p>
+                        </div>` : ''}
+                        ${customerPolicy ? `
+                        <div class="bg-blue-50/50 border border-blue-200 rounded-xl p-5">
+                            <div class="flex items-center gap-2 mb-2">
+                                <iconify-icon icon="lucide:shield" class="text-base text-blue-500"></iconify-icon>
+                                <span class="font-bold text-xs text-blue-700 uppercase">Chính sách KH</span>
+                            </div>
+                            <p class="text-sm text-neutral-700 whitespace-pre-wrap m-0">${customerPolicy}</p>
+                        </div>` : ''}
+                    </div>` : ''}
+
+                    <!-- Vật tư & Sản phẩm -->
+                    ${suppliesHTML ? `
+                    <div class="bg-white border border-neutral-200 rounded-xl p-5 shadow-sm">
+                        <div class="flex items-center gap-2 mb-4 pb-3 border-b border-neutral-100">
+                            <iconify-icon icon="lucide:package-open" class="text-lg text-primary-500"></iconify-icon>
+                            <h6 class="font-bold text-sm text-neutral-800 m-0">Danh sách Vật tư & Sản phẩm</h6>
+                        </div>
+                        ${suppliesHTML}
+                    </div>` : ''}
+
+                    <!-- Tóm tắt -->
+                    <div class="bg-gradient-to-r from-primary-50 to-emerald-50 border border-primary-200 rounded-xl p-5">
+                        <div class="flex items-center gap-2 mb-4 pb-3 border-b border-primary-100">
+                            <iconify-icon icon="lucide:receipt-text" class="text-lg text-primary-500"></iconify-icon>
+                            <h6 class="font-bold text-sm text-neutral-800 m-0">Tóm tắt đơn hàng</h6>
+                        </div>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div class="text-center p-3 bg-white/70 rounded-lg">
+                                <div class="text-xs text-neutral-500 font-medium">Số sản phẩm</div>
+                                <div class="text-lg font-bold text-neutral-800 mt-1">${totalItems}</div>
+                            </div>
+                            <div class="text-center p-3 bg-white/70 rounded-lg">
+                                <div class="text-xs text-neutral-500 font-medium">Tổng số tấm</div>
+                                <div class="text-lg font-bold text-neutral-800 mt-1">${totalSheets}</div>
+                            </div>
+                            <div class="text-center p-3 bg-white/70 rounded-lg">
+                                <div class="text-xs text-neutral-500 font-medium">Tổng diện tích</div>
+                                <div class="text-lg font-bold text-blue-600 mt-1">${totalArea}</div>
+                            </div>
+                            <div class="text-center p-3 bg-white/70 rounded-lg">
+                                <div class="text-xs text-neutral-500 font-medium">Tổng tiền hàng</div>
+                                <div class="text-lg font-bold text-neutral-800 mt-1">${totalAmount}</div>
+                            </div>
+                        </div>
+                        <div class="mt-4 pt-4 border-t border-primary-100 flex items-center justify-between">
+                            <span class="font-bold text-sm text-neutral-800">Tổng thanh toán:</span>
+                            <span class="text-2xl font-extrabold text-primary-600">${grandTotal}</span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Footer -->
+                <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-neutral-200 flex-shrink-0 bg-neutral-50/50">
+                    <button type="button" onclick="closePreviewOrder()" class="btn btn-outline-neutral px-5 py-2.5 rounded-lg text-sm font-semibold transition-all">Đóng</button>
+                    <button type="button" onclick="closePreviewOrder(); document.getElementById('order-form').submit();" class="btn btn-primary px-6 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all flex items-center gap-1.5">
+                        <iconify-icon icon="lucide:save" class="text-base"></iconify-icon>
+                        {{ isset($acrylicOrder) && !$isDraftCreate ? 'Cập nhật đơn hàng' : 'Lưu đơn hàng' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Xóa modal cũ nếu có, thêm modal mới
+    const oldModal = document.getElementById('preview-order-modal');
+    if (oldModal) oldModal.remove();
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    document.body.style.overflow = 'hidden';
+
+    // Đóng bằng Esc
+    const escHandler = function(e) {
+        if (e.key === 'Escape') {
+            closePreviewOrder();
+            document.removeEventListener('keydown', escHandler);
+        }
+    };
+    document.addEventListener('keydown', escHandler);
 }
 
 function updateOrderSummary() {
@@ -354,6 +658,109 @@ function updateOrderSuppliesPopupButton(button, isOpen) {
     }
 }
 
+// Đồng bộ tệp đính kèm vào cuối panel khi fullscreen
+function syncAttachmentsToFullscreen(panel, show) {
+    // Xóa clone cũ nếu có
+    const existingClone = panel.querySelector('.fullscreen-attachments-clone');
+    if (existingClone) existingClone.remove();
+
+    if (!show) return;
+
+    const body = panel.querySelector('.order-supplies-body');
+    if (!body) return;
+
+    // Tìm phần tệp đính kèm gốc từ sidebar
+    const originalCard = document.querySelector('.attachments-sticky-card');
+    if (!originalCard) return;
+
+    // Lấy danh sách ảnh đã tải (existing)
+    const existingSection = originalCard.querySelector('#existing-attachments');
+    // Lấy danh sách ảnh mới chọn (new)
+    const newSection = originalCard.querySelector('#new-attachments-preview');
+
+    // Kiểm tra có ảnh nào không
+    const hasExisting = existingSection && existingSection.children.length > 0;
+    const hasNew = newSection && newSection.children.length > 0;
+    if (!hasExisting && !hasNew) return;
+
+    // Tạo container clone
+    const cloneWrapper = document.createElement('div');
+    cloneWrapper.className = 'fullscreen-attachments-clone border-t border-neutral-200 mt-6 pt-5 px-2 pb-4';
+    cloneWrapper.innerHTML = `
+        <div class="flex items-center gap-2 mb-4">
+            <iconify-icon icon="lucide:paperclip" class="text-xl text-primary-500"></iconify-icon>
+            <h6 class="font-bold text-base text-neutral-800 m-0">Tệp tin đính kèm</h6>
+        </div>
+        <div class="flex flex-wrap gap-3" id="fullscreen-attachments-grid"></div>
+    `;
+    const grid = cloneWrapper.querySelector('#fullscreen-attachments-grid');
+
+    // Thêm ảnh đã tải - hiển thị dạng thumbnail có thể click mở popup
+    if (hasExisting) {
+        existingSection.querySelectorAll(':scope > div').forEach(function(item) {
+            const img = item.querySelector('img');
+            const btn = item.querySelector('button[onclick*="openModal"]') || item.querySelector('[onclick*="openModal"]');
+            if (!img) return;
+
+            const thumb = document.createElement('div');
+            thumb.className = 'relative group cursor-pointer';
+            const onclickAttr = btn ? btn.getAttribute('onclick') : (img.getAttribute('onclick') || '');
+            thumb.innerHTML = `
+                <img src="${img.src}" class="w-20 h-20 rounded-lg object-cover border border-neutral-200 shadow-sm hover:shadow-md hover:border-primary-400 transition-all" onclick="${onclickAttr}">
+            `;
+            grid.appendChild(thumb);
+        });
+    }
+
+    // Thêm ảnh mới chọn
+    if (hasNew) {
+        newSection.querySelectorAll(':scope > div').forEach(function(item) {
+            const img = item.querySelector('img');
+            const btn = item.querySelector('button[onclick*="openModal"]') || item.querySelector('[onclick*="openModal"]');
+            if (!img) return;
+
+            const thumb = document.createElement('div');
+            thumb.className = 'relative group cursor-pointer';
+            const onclickAttr = btn ? btn.getAttribute('onclick') : (img.getAttribute('onclick') || '');
+            thumb.innerHTML = `
+                <img src="${img.src}" class="w-20 h-20 rounded-lg object-cover border-2 border-primary-300 shadow-sm hover:shadow-md hover:border-primary-500 transition-all" onclick="${onclickAttr}">
+            `;
+            grid.appendChild(thumb);
+        });
+    }
+
+    body.appendChild(cloneWrapper);
+}
+
+// Hàm cập nhật lại tệp đính kèm trong tất cả panel fullscreen đang mở
+function refreshFullscreenAttachments() {
+    document.querySelectorAll('[data-order-supplies-zoom-panel].is-fullscreen').forEach(function(panel) {
+        syncAttachmentsToFullscreen(panel, true);
+    });
+}
+
+// MutationObserver theo dõi thay đổi ảnh gốc → tự động re-sync vào fullscreen
+document.addEventListener('DOMContentLoaded', function() {
+    const observerConfig = { childList: true, subtree: true };
+    const observer = new MutationObserver(function() {
+        // Debounce: chờ 200ms tránh re-sync quá nhiều lần liên tục
+        clearTimeout(window._attachmentSyncTimer);
+        window._attachmentSyncTimer = setTimeout(refreshFullscreenAttachments, 200);
+    });
+
+    // Theo dõi phần ảnh đã tải
+    const existing = document.getElementById('existing-attachments');
+    if (existing) observer.observe(existing, observerConfig);
+
+    // Theo dõi phần ảnh mới chọn
+    const newPreview = document.getElementById('new-attachments-preview');
+    if (newPreview) observer.observe(newPreview, observerConfig);
+
+    // Theo dõi container cha (để bắt cả khi container bị ẩn/hiện)
+    const newPreviewContainer = document.getElementById('new-attachments-preview-container');
+    if (newPreviewContainer) observer.observe(newPreviewContainer, observerConfig);
+});
+
 function toggleOrderSuppliesPopup(button) {
     const panel = getOrderSuppliesPanel(button);
     if (!panel) return;
@@ -375,6 +782,9 @@ function toggleOrderSuppliesPopup(button) {
             body.scrollTop = 0;
         }
     }
+
+    // Đồng bộ tệp đính kèm vào panel fullscreen
+    syncAttachmentsToFullscreen(panel, nextState);
 }
 
 function closeOrderSuppliesPopup() {
@@ -386,6 +796,9 @@ function closeOrderSuppliesPopup() {
 
     panel.classList.remove('is-fullscreen');
     document.body.classList.remove('order-supplies-popup-open');
+
+    // Xóa clone tệp đính kèm khi thu nhỏ
+    syncAttachmentsToFullscreen(panel, false);
 
     const button = panel.querySelector('[data-order-supplies-popup-button]');
     updateOrderSuppliesPopupButton(button, false);
@@ -635,6 +1048,8 @@ function initOrderSuppliesFullscreen() {
             document.body.classList.add('order-supplies-popup-open');
             const button = panel.querySelector('[data-order-supplies-popup-button]');
             updateOrderSuppliesPopupButton(button, true);
+            // Đồng bộ tệp đính kèm khi auto-restore fullscreen
+            syncAttachmentsToFullscreen(panel, true);
         }
     });
 }
@@ -1194,19 +1609,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     modalDiv.style.cssText = 'display:none; position:fixed; inset:0; z-index:9999999 !important; pointer-events:none;';
                     modalDiv.innerHTML = `
                         <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; padding:1rem; pointer-events:none;">
-                            <div data-modal-content style="position:relative; background:#fff; border-radius:0.75rem; box-shadow:0 20px 60px rgba(0,0,0,0.3); width:100%; max-width:672px; pointer-events:auto;" class="p-5">
-                                <div class="flex items-center justify-between border-b border-neutral-100 pb-3 mb-4 cursor-move modal-drag-handle">
-                                    <h6 class="font-bold text-sm text-neutral-800 m-0 select-none">${file.name}</h6>
-                                    <button type="button" onclick="closeModal('${modalId}')" class="text-neutral-400 hover:text-neutral-600 text-xl leading-none">&times;</button>
-                                </div>
-                                <div class="relative overflow-hidden rounded-lg attachment-wrapper bg-neutral-50 flex items-center justify-center p-1 border border-neutral-100 shadow-xs" style="cursor: zoom-in;">
-                                    <img src="${e.target.result}" class="w-full object-contain max-h-[70vh] rounded-md">
-                                </div>
-                                <!-- Resize Handle -->
-                                <div class="modal-resize-handle" style="position:absolute; right:4px; bottom:4px; width:16px; height:16px; cursor:se-resize; z-index:100; display:flex; align-items:center; justify-content:center; opacity:0.6; hover:opacity:1;">
-                                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M9 1L1 9M9 5L5 9M9 8L8 9" stroke="#9ca3af" stroke-width="1.5" stroke-linecap="round"/>
-                                    </svg>
+                            <div data-modal-content style="position:relative; width:fit-content; pointer-events:auto;">
+                                <div class="relative modal-drag-handle cursor-grab">
+                                    <!-- Nút X đóng ở góc phải trên -->
+                                    <button type="button" onclick="closeModal('${modalId}')" class="absolute -top-3 -right-3 z-10 w-7 h-7 bg-white rounded-full shadow-lg flex items-center justify-center text-neutral-500 hover:text-red-500 hover:bg-red-50 transition-colors border border-neutral-200">
+                                        <iconify-icon icon="lucide:x" class="text-sm"></iconify-icon>
+                                    </button>
+                                    <!-- Ảnh trần - không wrapper -->
+                                    <img src="${e.target.result}" class="modal-image-viewer rounded-lg shadow-2xl block" style="max-width:672px; max-height:80vh; object-fit:contain;">
                                 </div>
                             </div>
                         </div>
@@ -1307,79 +1717,82 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Pan & zoom event handlers for attachments
-    document.addEventListener('wheel', function(e) {
-        const wrapper = e.target.closest('.attachment-wrapper');
-        if (!wrapper) return;
-        
-        const img = wrapper.querySelector('img');
-        if (!img) return;
+    // Phím tắt Ctrl+Alt: ẩn/hiện tất cả popup ảnh đang mở
+    let hiddenImageModals = []; // Lưu popup đã ẩn để hiện lại
+    document.addEventListener('keydown', function(e) {
+        // Bắt khi nhấn Ctrl+Alt (không kèm key khác)
+        const isToggleShortcut = (e.key === 'Alt' && e.ctrlKey) || (e.key === 'Control' && e.altKey);
+        if (!isToggleShortcut) return;
 
-        // Prevent browser scroll
+        // Nếu đang có popup bị ẩn → hiện lại
+        if (hiddenImageModals.length > 0) {
+            hiddenImageModals.forEach(function(modal) {
+                modal.style.display = 'block';
+            });
+            hiddenImageModals = [];
+            return;
+        }
+
+        // Tìm tất cả popup ảnh đang hiển thị (modal có backdrop=false, chứa .modal-image-viewer)
+        const openModals = [];
+        document.querySelectorAll('[data-modal]').forEach(function(modal) {
+            if (modal.style.display !== 'none' && modal.querySelector('.modal-image-viewer')) {
+                openModals.push(modal);
+            }
+        });
+
+        if (openModals.length === 0) return;
+
+        // Ẩn tất cả popup ảnh
+        openModals.forEach(function(modal) {
+            modal.style.display = 'none';
+            hiddenImageModals.push(modal);
+        });
+    });
+
+    // Ctrl + lăn chuột để co giãn kích thước ảnh thật sự (thay đổi width)
+    document.addEventListener('wheel', function(e) {
+        const img = e.target.closest('.modal-image-viewer');
+        if (!img || !e.ctrlKey) return;
+
+        // Ngăn trình duyệt zoom trang
         e.preventDefault();
 
-        let scale = parseFloat(wrapper.getAttribute('data-zoom-scale'));
-        if (isNaN(scale)) {
-            scale = 1.0;
-        }
+        // Lấy chiều rộng hiện tại (width đang set hoặc kích thước thật trên màn hình)
+        let currentWidth = parseInt(img.style.width) || img.offsetWidth;
 
+        // Tăng/giảm 60px mỗi lần lăn
         if (e.deltaY < 0) {
-            scale += 0.2;
+            currentWidth += 60;
         } else {
-            scale -= 0.2;
+            currentWidth -= 60;
         }
-        scale = Math.min(Math.max(scale, 1.0), 6.0); // Limit zoom scale to 6x
-        wrapper.setAttribute('data-zoom-scale', scale);
+        // Giới hạn: nhỏ nhất 80px, lớn nhất 90% viewport
+        currentWidth = Math.max(80, Math.min(currentWidth, window.innerWidth * 0.9));
 
-        const rect = wrapper.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        const xPercent = (x / rect.width) * 100;
-        const yPercent = (y / rect.height) * 100;
-
-        img.style.transformOrigin = `${xPercent}% ${yPercent}%`;
-        img.style.transform = `scale(${scale})`;
+        img.style.width = currentWidth + 'px';
+        img.style.maxWidth = 'none';
+        img.style.maxHeight = 'none';
     }, { passive: false });
 
-    document.addEventListener('mousemove', function(e) {
-        const wrapper = e.target.closest('.attachment-wrapper');
-        if (!wrapper) return;
-        
-        const img = wrapper.querySelector('img');
+    // Double-click để reset kích thước ảnh về mặc định
+    document.addEventListener('dblclick', function(e) {
+        const img = e.target.closest('.modal-image-viewer');
         if (!img) return;
 
-        const rect = wrapper.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        
-        const xPercent = (x / rect.width) * 100;
-        const yPercent = (y / rect.height) * 100;
-        
-        img.style.transformOrigin = `${xPercent}% ${yPercent}%`;
-
-        let scale = parseFloat(wrapper.getAttribute('data-zoom-scale'));
-        if (isNaN(scale)) {
-            scale = 1.0;
-            wrapper.setAttribute('data-zoom-scale', scale);
-        }
-        img.style.transform = `scale(${scale})`;
+        img.style.width = '';
+        img.style.maxWidth = '672px';
+        img.style.maxHeight = '80vh';
+    });
+    // Khi click vào popup ảnh nào thì đẩy z-index lên cao nhất
+    let modalTopZIndex = 10000000;
+    document.addEventListener('mousedown', function(e) {
+        const modal = e.target.closest('[data-modal]');
+        if (!modal) return;
+        modalTopZIndex++;
+        modal.style.zIndex = modalTopZIndex;
     });
 
-    document.addEventListener('mouseout', function(e) {
-        const wrapper = e.target.closest('.attachment-wrapper');
-        if (!wrapper) return;
-        
-        const relatedTarget = e.relatedTarget;
-        if (!relatedTarget || !wrapper.contains(relatedTarget)) {
-            const img = wrapper.querySelector('img');
-            if (img) {
-                img.style.transformOrigin = 'center center';
-                img.style.transform = 'scale(1)';
-                wrapper.removeAttribute('data-zoom-scale');
-            }
-        }
-    });
-    
     // Drag-and-drop modal functionality
     document.addEventListener('mousedown', function(e) {
         const handle = e.target.closest('.modal-drag-handle');
@@ -1418,43 +1831,6 @@ document.addEventListener('DOMContentLoaded', function() {
         document.addEventListener('mouseup', onMouseUp);
     });
 
-    // Drag-resize modal functionality
-    document.addEventListener('mousedown', function(e) {
-        const handle = e.target.closest('.modal-resize-handle');
-        if (!handle) return;
-
-        e.preventDefault();
-
-        const modalBody = handle.closest('[data-modal-content]') || handle.parentElement;
-        if (!modalBody) return;
-
-        const startX = e.clientX;
-        const startY = e.clientY;
-
-        modalBody.style.maxWidth = 'none';
-
-        const startWidth = modalBody.offsetWidth;
-        const startHeight = modalBody.offsetHeight;
-
-        function onMouseMove(moveEvent) {
-            const dx = moveEvent.clientX - startX;
-            const dy = moveEvent.clientY - startY;
-
-            const newWidth = Math.max(300, startWidth + dx);
-            const newHeight = Math.max(200, startHeight + dy);
-
-            modalBody.style.width = newWidth + 'px';
-            modalBody.style.height = newHeight + 'px';
-        }
-
-        function onMouseUp() {
-            document.removeEventListener('mousemove', onMouseMove);
-            document.removeEventListener('mouseup', onMouseUp);
-        }
-
-        document.addEventListener('mousemove', onMouseMove);
-        document.addEventListener('mouseup', onMouseUp);
-    });
 
     // Override openModal to reset translate position when opening
     const originalOpenModal = window.openModal;
@@ -1474,12 +1850,15 @@ document.addEventListener('DOMContentLoaded', function() {
             const modalBody = el.querySelector('[data-modal-content]');
             if (modalBody) {
                 modalBody.style.transform = '';
-                modalBody.style.width = '';
-                modalBody.style.height = '';
-                modalBody.style.maxWidth = '';
                 modalBody.removeAttribute('data-drag-x');
                 modalBody.removeAttribute('data-drag-y');
             }
+            // Reset kích thước ảnh về mặc định khi mở lại modal
+            el.querySelectorAll('.modal-image-viewer').forEach(function(img) {
+                img.style.width = '';
+                img.style.maxWidth = '672px';
+                img.style.maxHeight = '80vh';
+            });
         }
     };
     // Move all existing modal elements to document.body to escape local stacking contexts

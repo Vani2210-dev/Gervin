@@ -46,6 +46,10 @@
     background: #ffffff !important;
 }
 
+/* Nút chỉ hiện khi phóng to */
+.fullscreen-only-btn { display: none !important; }
+.order-supplies-popup.is-fullscreen .fullscreen-only-btn { display: flex !important; }
+
 .order-supplies-popup.is-fullscreen .order-supplies-header {
     flex: 0 0 auto;
     position: relative !important;
