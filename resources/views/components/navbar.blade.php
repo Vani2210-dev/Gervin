@@ -2,7 +2,7 @@
     <div class="flex items-center justify-between">
         <div class="col-auto">
             <div class="flex flex-wrap items-center gap-[16px]">
-                <button type="button" class="sidebar-toggle">
+                <button type="button" class="sidebar-toggle active">
                     <iconify-icon icon="heroicons:bars-3-solid" class="icon non-active"></iconify-icon>
                     <iconify-icon icon="iconoir:arrow-right" class="icon active"></iconify-icon>
                 </button>

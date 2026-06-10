@@ -9,7 +9,7 @@
         display: flex;
     }
 </style>
-<aside class="sidebar">
+<aside class="sidebar active">
     <button type="button" class="sidebar-close-btn !mt-4">
         <iconify-icon icon="radix-icons:cross-2"></iconify-icon>
     </button>

@@ -231,11 +231,11 @@
                                 <th scope="col" style="width: 130px; min-width: 130px; white-space: nowrap;" class="align-middle border border-neutral-200 bg-yellow-100/70 font-bold text-xs text-neutral-600 uppercase text-center">Cao (vân)</th>
                                 <th scope="col" style="width: 130px; min-width: 130px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase text-center">Rộng</th>
                                 <th scope="col" style="width: 50px; min-width: 50px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số lượng <span class="text-danger-500">*</span></th>
-                                <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Cạnh Vát</th>
+                                <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Vát</th>
                                 <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Chiều vân</th>
                                 <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Cánh (m2)</th>
                                 <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Phào (m)</th>
-                                <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Vát</th>
+                                <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Cạnh Vát</th>
                                 <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Khoét kính</th>
                                 <th scope="col" style="width: 80px; min-width: 80px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá <span class="text-danger-500">*</span></th>
                                 <th scope="col" style="width: 90px; min-width: 90px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Thành tiền</th>
@@ -267,8 +267,24 @@
                                 <td style="width: 70px; min-width: 70px; " class="border border-neutral-200">
                                     <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Số lượng" min="1" required value="{{ $item->quantity }}">
                                 </td>
-                                <td style="width: 100px; min-width: 100px; " class="border border-neutral-200 cursor-not-allowed">
-                                    <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][edge_bevel]" class="product-edge-bevel-input form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="Cạnh vát" value="{{ $item->edge_bevel }}" readonly tabindex="-1" style="pointer-events: none;">
+                                <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
+                                    <div class="relative flex items-center w-full px-1">
+                                        <input type="text" 
+                                               name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][bevel]" 
+                                               class="product-bevel-input form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center pr-6 pl-1 py-1 h-8 text-xs w-full" 
+                                               placeholder="Vát" 
+                                               value="{{ $item->bevel }}"
+                                               data-auto-sync="{{ (!$item->bevel || $item->bevel == $item->width) ? 'width' : (($item->bevel == $item->height) ? 'height' : 'none') }}">
+                                        <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center pointer-events-auto">
+                                            <iconify-icon icon="lucide:chevron-down" class="text-neutral-400 text-xs pointer-events-none mr-1"></iconify-icon>
+                                            <select class="product-bevel-select absolute inset-0 opacity-0 cursor-pointer w-5 h-6">
+                                                <option value="">Không</option>
+                                                <option value="width">Theo Rộng</option>
+                                                <option value="height">Theo Cao</option>
+                                                <option value="custom">Tự nhập</option>
+                                            </select>
+                                        </div>
+                                    </div>
                                 </td>
                                 <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
                                     <select name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][grain_direction]" class="form-select form-select-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 px-1 py-1 h-8 text-xs">
@@ -282,19 +298,8 @@
                                 <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
                                     <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][molding_length]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Phào (m)" value="{{ $item->molding_length }}">
                                 </td>
-                                <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
-                                    <div class="flex items-center gap-1 w-full px-1">
-                                        <select class="product-bevel-select form-select form-select-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 px-1 py-1 h-8 text-xs w-full">
-                                            <option value="">Không</option>
-                                            <option value="width" data-bevel-type="width">{{ $item->width ? $item->width : 'Theo Rộng' }}</option>
-                                            <option value="height" data-bevel-type="height">{{ $item->height ? $item->height : 'Theo Cao' }}</option>
-                                            <option value="custom">Tự nhập...</option>
-                                        </select>
-                                        <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][bevel]" class="product-bevel-input form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs w-full hidden" placeholder="Vát" value="{{ $item->bevel }}">
-                                        <button type="button" class="btn-bevel-switch text-neutral-400 hover:text-primary-500 p-1 hidden" title="Chọn từ danh sách">
-                                            <iconify-icon icon="lucide:list" class="text-sm"></iconify-icon>
-                                        </button>
-                                    </div>
+                                <td style="width: 100px; min-width: 100px; " class="border border-neutral-200 cursor-not-allowed">
+                                    <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][edge_bevel]" class="product-edge-bevel-input form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="Cạnh vát" value="{{ $item->edge_bevel }}" readonly tabindex="-1" style="pointer-events: none;">
                                 </td>
                                 <td style="width: 130px; min-width: 130px; " class="border border-neutral-200">
                                     <select name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][vertical_grain_cnc]" class="cnc-template-select form-select form-select-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 px-1 py-1 h-8 text-xs" onchange="onCncTemplateChange(this)">
@@ -447,11 +452,11 @@ function addOrderSupply() {
                         <th scope="col" style="width: 130px; min-width: 130px; white-space: nowrap;" class="align-middle border border-neutral-200 bg-yellow-100/70 font-bold text-xs text-neutral-600 uppercase text-center">Cao (vân)</th>
                         <th scope="col" style="width: 130px; min-width: 130px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase text-center">Rộng</th>
                         <th scope="col" style="width: 50px; min-width: 50px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số lượng <span class="text-danger-500">*</span></th>
-                        <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Cạnh Vát</th>
+                        <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Vát</th>
                         <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Chiều vân</th>
                         <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Cánh (m2)</th>
                         <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Phào (m)</th>
-                        <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Vát</th>
+                        <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Cạnh Vát</th>
                         <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Khoét kính</th>
                         <th scope="col" style="width: 80px; min-width: 80px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá <span class="text-danger-500">*</span></th>
                         <th scope="col" style="width: 90px; min-width: 90px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Thành tiền</th>
@@ -478,7 +483,7 @@ function addOrderSupply() {
     }
 
     const selectEl = newSupply.querySelector('.tom-select-supply-code');
-    if (selectEl && typeof TomSelect !== 'undefined') {
+    if (selectEl && typeof TomSelect !== 'undefined' && !selectEl.tomselect) {
         const ts = new TomSelect(selectEl, {
             create: true,
             placeholder: '-- Mã vật tư --',
@@ -551,8 +556,24 @@ function addOrderItem(button) {
         <td style="width: 70px; min-width: 70px; " class="border border-neutral-200">
             <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Số lượng" min="1" required value="${lastData ? lastData.quantity : '1'}">
         </td>
-        <td style="width: 100px; min-width: 100px; " class="border border-neutral-200 cursor-not-allowed">
-            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][edge_bevel]" class="product-edge-bevel-input form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="Cạnh vát" value="${lastData ? lastData.edge_bevel : ''}" readonly tabindex="-1" style="pointer-events: none;">
+        <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
+            <div class="relative flex items-center w-full px-1">
+                <input type="text" 
+                       name="supplies[${supplyIndex}][items][${itemIndex}][bevel]" 
+                       class="product-bevel-input form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center pr-6 pl-1 py-1 h-8 text-xs w-full" 
+                       placeholder="Vát" 
+                       value="${lastData ? lastData.bevel : ''}"
+                       data-auto-sync="${(!lastData || !lastData.bevel || lastData.bevel === lastData.width) ? 'width' : (lastData.bevel === lastData.height ? 'height' : 'none')}">
+                <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center pointer-events-auto">
+                    <iconify-icon icon="lucide:chevron-down" class="text-neutral-400 text-xs pointer-events-none mr-1"></iconify-icon>
+                    <select class="product-bevel-select absolute inset-0 opacity-0 cursor-pointer w-5 h-6">
+                        <option value="">Không</option>
+                        <option value="width">Theo Rộng</option>
+                        <option value="height">Theo Cao</option>
+                        <option value="custom">Tự nhập</option>
+                    </select>
+                </div>
+            </div>
         </td>
         <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
             <select name="supplies[${supplyIndex}][items][${itemIndex}][grain_direction]" class="form-select form-select-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 px-1 py-1 h-8 text-xs">
@@ -566,19 +587,8 @@ function addOrderItem(button) {
         <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
             <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][molding_length]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Phào (m)" step="0.01" value="${lastData ? lastData.molding_length : ''}">
         </td>
-        <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
-            <div class="flex items-center gap-1 w-full px-1">
-                <select class="product-bevel-select form-select form-select-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 px-1 py-1 h-8 text-xs w-full">
-                    <option value="">Không</option>
-                    <option value="width" data-bevel-type="width">${lastData && lastData.width ? lastData.width : 'Theo Rộng'}</option>
-                    <option value="height" data-bevel-type="height">${lastData && lastData.height ? lastData.height : 'Theo Cao'}</option>
-                    <option value="custom">Tự nhập...</option>
-                </select>
-                <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][bevel]" class="product-bevel-input form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs w-full hidden" placeholder="Vát" value="${lastData ? lastData.bevel : ''}">
-                <button type="button" class="btn-bevel-switch text-neutral-400 hover:text-primary-500 p-1 hidden" title="Chọn từ danh sách">
-                    <iconify-icon icon="lucide:list" class="text-sm"></iconify-icon>
-                </button>
-            </div>
+        <td style="width: 100px; min-width: 100px; " class="border border-neutral-200 cursor-not-allowed">
+            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][edge_bevel]" class="product-edge-bevel-input form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="Cạnh vát" value="${lastData ? lastData.edge_bevel : ''}" readonly tabindex="-1" style="pointer-events: none;">
         </td>
         <td style="width: 130px; min-width: 130px; " class="border border-neutral-200">
             <select name="supplies[${supplyIndex}][items][${itemIndex}][vertical_grain_cnc]" class="cnc-template-select form-select form-select-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 px-1 py-1 h-8 text-xs" onchange="onCncTemplateChange(this)">
@@ -733,47 +743,31 @@ function bindAcrylicRowEvents(row) {
     if (unitPriceInput) unitPriceInput.addEventListener('input', () => calculateTotalPrice(row, 'unit_price'));
     if (bevelInput) {
         bevelInput.addEventListener('input', () => {
+            bevelInput.setAttribute('data-auto-sync', 'none');
+            updateBevelFieldStyle(row);
             updateEdgeBevel(row);
         });
     }
     if (bevelSelect) {
         bevelSelect.addEventListener('change', () => {
             const mode = bevelSelect.value;
-            if (mode === 'custom') {
-                bevelSelect.classList.add('hidden');
-                bevelInput.classList.remove('hidden');
-                btnSwitch.classList.remove('hidden');
-                bevelInput.focus();
-            } else if (mode === 'width') {
+            if (mode === 'width') {
+                bevelInput.setAttribute('data-auto-sync', 'width');
                 bevelInput.value = widthInput ? widthInput.value.trim() : '';
-                updateEdgeBevel(row);
             } else if (mode === 'height') {
+                bevelInput.setAttribute('data-auto-sync', 'height');
                 bevelInput.value = heightInput ? heightInput.value.trim() : '';
-                updateEdgeBevel(row);
-            } else {
+            } else if (mode === '') {
+                bevelInput.setAttribute('data-auto-sync', 'none');
                 bevelInput.value = '';
-                updateEdgeBevel(row);
+            } else if (mode === 'custom') {
+                bevelInput.setAttribute('data-auto-sync', 'none');
+                updateBevelFieldStyle(row);
+                bevelInput.focus();
+                return;
             }
-        });
-    }
-    if (btnSwitch) {
-        btnSwitch.addEventListener('click', () => {
-            bevelInput.classList.add('hidden');
-            btnSwitch.classList.add('hidden');
-            bevelSelect.classList.remove('hidden');
-            const val = bevelInput.value.trim();
-            const width = widthInput ? widthInput.value.trim() : '';
-            const height = heightInput ? heightInput.value.trim() : '';
-            if (val === '') {
-                bevelSelect.value = '';
-            } else if (width !== '' && val === width) {
-                bevelSelect.value = 'width';
-            } else if (height !== '' && val === height) {
-                bevelSelect.value = 'height';
-            } else {
-                bevelSelect.value = 'custom';
-            }
-            bevelSelect.focus();
+            updateBevelFieldStyle(row);
+            updateEdgeBevel(row);
         });
     }
 }
@@ -938,61 +932,37 @@ function updateEdgeBevel(row) {
     }
 }
 
-function updateBevelSelectOptions(row) {
-    const heightInput = row.querySelector('input[name*="[height]"]');
-    const widthInput = row.querySelector('input[name*="[width]"]');
+function updateBevelFieldStyle(row) {
+    const bevelInput = row.querySelector('.product-bevel-input');
     const bevelSelect = row.querySelector('.product-bevel-select');
-    if (!heightInput || !widthInput || !bevelSelect) return;
+    if (!bevelInput || !bevelSelect) return;
 
-    const width = widthInput.value.trim();
-    const height = heightInput.value.trim();
-
-    const widthOpt = bevelSelect.querySelector('option[data-bevel-type="width"]');
-    const heightOpt = bevelSelect.querySelector('option[data-bevel-type="height"]');
-    if (widthOpt) widthOpt.textContent = width ? width : 'Theo Rộng';
-    if (heightOpt) heightOpt.textContent = height ? height : 'Theo Cao';
-}
-
-function initBevelField(row) {
-    const heightInput = row.querySelector('input[name*="[height]"]');
-    const widthInput = row.querySelector('input[name*="[width]"]');
-    const bevelInput = row.querySelector('input[name*="[bevel]"]');
-    const bevelSelect = row.querySelector('.product-bevel-select');
-    const btnSwitch = row.querySelector('.btn-bevel-switch');
+    const syncMode = bevelInput.getAttribute('data-auto-sync') || 'none';
     
-    if (!heightInput || !widthInput || !bevelInput || !bevelSelect || !btnSwitch) return;
-    
-    const height = heightInput.value.trim();
-    const width = widthInput.value.trim();
-    const val = bevelInput.value.trim();
+    // Reset background and border classes
+    bevelInput.classList.remove(
+        'bg-indigo-50', 'text-indigo-900', 'border-indigo-300', 'font-medium',
+        'bg-yellow-50', 'text-yellow-900', 'border-yellow-300',
+        'bg-white', 'text-neutral-800', 'border-neutral-300'
+    );
 
-    // Always sync option labels first
-    updateBevelSelectOptions(row);
-    
-    if (val === '') {
-        bevelSelect.value = '';
-        bevelSelect.classList.remove('hidden');
-        bevelInput.classList.add('hidden');
-        btnSwitch.classList.add('hidden');
-    } else if (width !== '' && val === width) {
+    if (syncMode === 'width') {
+        bevelInput.classList.add('bg-indigo-50', 'text-indigo-900', 'border-indigo-300', 'font-medium');
         bevelSelect.value = 'width';
-        bevelSelect.classList.remove('hidden');
-        bevelInput.classList.add('hidden');
-        btnSwitch.classList.add('hidden');
-    } else if (height !== '' && val === height) {
+    } else if (syncMode === 'height') {
+        bevelInput.classList.add('bg-yellow-50', 'text-yellow-900', 'border-yellow-300', 'font-medium');
         bevelSelect.value = 'height';
-        bevelSelect.classList.remove('hidden');
-        bevelInput.classList.add('hidden');
-        btnSwitch.classList.add('hidden');
     } else {
-        bevelSelect.value = 'custom';
-        bevelSelect.classList.add('hidden');
-        bevelInput.classList.remove('hidden');
-        btnSwitch.classList.remove('hidden');
+        bevelInput.classList.add('bg-white', 'text-neutral-800', 'border-neutral-300');
+        if (bevelInput.value.trim() === '') {
+            bevelSelect.value = '';
+        } else {
+            bevelSelect.value = 'custom';
+        }
     }
 }
 
-function syncBevelOnSizeChange(row) {
+function initBevelField(row) {
     const heightInput = row.querySelector('input[name*="[height]"]');
     const widthInput = row.querySelector('input[name*="[width]"]');
     const bevelInput = row.querySelector('input[name*="[bevel]"]');
@@ -1002,15 +972,45 @@ function syncBevelOnSizeChange(row) {
     
     const height = heightInput.value.trim();
     const width = widthInput.value.trim();
-    const selectMode = bevelSelect.value;
+    let val = bevelInput.value.trim();
 
-    // Always update option labels to reflect current sizes
-    updateBevelSelectOptions(row);
+    if (val === '') {
+        // Default to width sync
+        bevelInput.setAttribute('data-auto-sync', 'width');
+        if (width !== '') {
+            bevelInput.value = width;
+            val = width;
+        }
+    } else {
+        // Check if value matches width or height
+        if (width !== '' && val === width) {
+            bevelInput.setAttribute('data-auto-sync', 'width');
+        } else if (height !== '' && val === height) {
+            bevelInput.setAttribute('data-auto-sync', 'height');
+        } else {
+            bevelInput.setAttribute('data-auto-sync', 'none');
+        }
+    }
+
+    updateBevelFieldStyle(row);
+    updateEdgeBevel(row);
+}
+
+function syncBevelOnSizeChange(row) {
+    const heightInput = row.querySelector('input[name*="[height]"]');
+    const widthInput = row.querySelector('input[name*="[width]"]');
+    const bevelInput = row.querySelector('input[name*="[bevel]"]');
     
-    if (selectMode === 'width') {
+    if (!heightInput || !widthInput || !bevelInput) return;
+    
+    const height = heightInput.value.trim();
+    const width = widthInput.value.trim();
+    const syncMode = bevelInput.getAttribute('data-auto-sync') || 'none';
+
+    if (syncMode === 'width') {
         bevelInput.value = width;
         updateEdgeBevel(row);
-    } else if (selectMode === 'height') {
+    } else if (syncMode === 'height') {
         bevelInput.value = height;
         updateEdgeBevel(row);
     }
@@ -1033,6 +1033,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (typeof TomSelect !== 'undefined') {
         document.querySelectorAll('.tom-select-supply-code').forEach(function(element) {
+            if (element.tomselect) return;
             const ts = new TomSelect(element, {
                 create: true,
                 placeholder: '-- Mã vật tư --',

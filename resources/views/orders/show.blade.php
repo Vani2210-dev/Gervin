@@ -281,11 +281,11 @@
                                     <th scope="col" class="w-20">Độ dày</th>
                                     <th scope="col" class="w-20">Cao</th>
                                     <th scope="col" class="w-20">Rộng</th>
-                                    <th scope="col" class="w-24">Cạnh Vát</th>
+                                    <th scope="col" class="w-24">Vát</th>
                                     <th scope="col" class="w-24">Chiều vân</th>
                                     <th scope="col" class="w-24">Cánh (m2)</th>
                                     <th scope="col" class="w-24">Phào (m)</th>
-                                    <th scope="col" class="w-24">Vát</th>
+                                    <th scope="col" class="w-24">Cạnh Vát</th>
                                     <th scope="col" class="w-28">Vân dọc CNC</th>
                                     <th scope="col" class="w-28 text-end">Đơn giá</th>
                                     <th scope="col" class="w-28 text-end">Thành tiền</th>
@@ -328,11 +328,11 @@
                                     <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->thickness ?? '—' }}</td>
                                     <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->height ?? '—' }}</td>
                                     <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->width ?? '—' }}</td>
-                                    <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->edge_bevel ?? '—' }}</td>
+                                    <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->bevel ?? '—' }}</td>
                                     <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->grain_direction ?? '0' }}</td>
                                     <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->wing_area ?? '—' }}</td>
                                     <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->molding_length ?? '—' }}</td>
-                                    <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->bevel ?? '—' }}</td>
+                                    <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->edge_bevel ?? '—' }}</td>
                                     <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->vertical_grain_cnc ?? '—' }}</td>
                                     <td rowspan="{{ $rowCount }}" class="text-end font-medium text-neutral-600 align-top pt-3">{{ number_format($item->unit_price, 0, ',', '.') }}</td>
                                     <td rowspan="{{ $rowCount }}" class="text-end font-semibold text-neutral-800 align-top pt-3">{{ number_format($item->total_price, 0, ',', '.') }}</td>

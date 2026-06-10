@@ -100,7 +100,15 @@ class ManufactureStepController extends Controller
         $perPage = $request->input('per_page', 15);
         $search = $request->input('search', '');
         $history = $this->paginateHistory($this->pressingService->getHistory(), $request);
-        return view('processes.pressing', compact('history', 'perPage', 'search'));
+        
+        $woodBoardPrices = \App\Models\WoodBoardPrice::with('type')
+            ->orderBy('code', 'asc')
+            ->get()
+            ->groupBy(function ($price) {
+                return $price->type->name ?? 'Loại khác';
+            });
+
+        return view('processes.pressing', compact('history', 'perPage', 'search', 'woodBoardPrices'));
     }
 
     public function completePressing(Request $request)

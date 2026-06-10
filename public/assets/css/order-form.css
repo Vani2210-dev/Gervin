@@ -4,13 +4,30 @@
         cursor: zoom-in;
         position: relative;
         z-index: 1;
+        overflow: hidden;
+        border-radius: 8px;
     }
+
+    .attachment-wrapper img {
+        transition: transform 0.15s ease-out;
+        transform-origin: center center;
+        width: 100%;
+        display: block;
+    }
+
     .attachment-wrapper:hover {
-        transform: scale(2.0);
-        transform-origin: right center;
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.15);
-        z-index: 50;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        z-index: 99999 !important;
     }
+
+    .attachment-wrapper:hover img {
+        /* scale is controlled dynamically by JS mouse wheel listener */
+    }
+}
+
+/* Elevate the attachments sticky card's stacking context when hover is active */
+.attachments-sticky-card:has(.attachment-wrapper:hover) {
+    z-index: 99999 !important;
 }
 
 /* Popup và zoom của khối danh sách vật tư/sản phẩm */
@@ -34,7 +51,7 @@
     position: relative !important;
 }
 
-.order-supplies-popup.is-fullscreen .order-supplies-header > div.absolute {
+.order-supplies-popup.is-fullscreen .order-supplies-header>div.absolute {
     position: static !important;
     padding-left: 0 !important;
     padding-right: 0 !important;
@@ -151,9 +168,9 @@ body.order-column-resizing {
     background: #f8fafc !important;
 }
 
-#order-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td > .flex,
-#glass-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td > .flex,
-#min-late-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td > .flex {
+#order-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td>.flex,
+#glass-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td>.flex,
+#min-late-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td>.flex {
     min-height: 42px !important;
 }
 
@@ -385,8 +402,8 @@ table[data-order-resize-group="min_late_payment"] tbody#payment-details-containe
 }
 
 /* Định vị tuyệt đối cố định cho các nhãn card tiêu đề nổi trên viền ở desktop */
-.relative > div.absolute,
-.order-supplies-header > div.absolute {
+.relative>div.absolute,
+.order-supplies-header>div.absolute {
     position: absolute !important;
     top: -14px !important;
     left: 24px !important;
@@ -406,6 +423,7 @@ body.order-supplies-popup-open {
 
 /* === RESPONSIVE LAYOUT FOR MOBILE DEVICES (<= 768px) === */
 @media (max-width: 768px) {
+
     /* Ẩn cụm điều khiển zoom trên thiết bị di động giống file mẫu */
     .zoom-panel {
         display: none !important;
@@ -418,11 +436,11 @@ body.order-supplies-popup-open {
         gap: 12px !important;
     }
 
-    .order-supplies-header > .flex:first-child {
+    .order-supplies-header>.flex:first-child {
         width: 100% !important;
     }
 
-    .order-supplies-header > .flex:last-child {
+    .order-supplies-header>.flex:last-child {
         width: 100% !important;
         flex-wrap: wrap !important;
         justify-content: flex-start !important;
@@ -430,13 +448,13 @@ body.order-supplies-popup-open {
     }
 
     /* Đưa header thông tin dòng vật tư về dạng cột dọc tránh tràn màn hình */
-    .order-supply-row > div:first-child {
+    .order-supply-row>div:first-child {
         flex-direction: column !important;
         align-items: stretch !important;
         gap: 12px !important;
     }
 
-    .order-supply-row > div:first-child > div:first-child {
+    .order-supply-row>div:first-child>div:first-child {
         flex-direction: column !important;
         align-items: stretch !important;
         width: 100% !important;
@@ -716,8 +734,8 @@ body.order-supplies-popup-open {
     }
 
     /* Reset tiêu đề card về dạng static trên mobile để tránh đè lấp input */
-    .relative > div.absolute[class*="-top-3"],
-    .order-supplies-header > div.absolute[class*="-top-3"] {
+    .relative>div.absolute[class*="-top-3"],
+    .order-supplies-header>div.absolute[class*="-top-3"] {
         position: static !important;
         padding-left: 0 !important;
         padding-right: 0 !important;
@@ -725,6 +743,7 @@ body.order-supplies-popup-open {
         background: transparent !important;
         display: flex !important;
     }
+
     .relative.pt-8 {
         padding-top: 1.5rem !important;
     }
@@ -757,4 +776,3 @@ body.order-supplies-popup-open {
         min-height: 32px !important;
     }
 }
-

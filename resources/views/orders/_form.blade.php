@@ -90,17 +90,6 @@
                             @endif
                         </div>
                     </div>
-
-                    {{-- Dynamic Items Container --}}
-                    <div class="mt-6 space-y-6">
-                        @if($currentOrderType === 'acrylic')
-                            @include('orders.acrylic')
-                        @elseif($currentOrderType === 'min_late')
-                            @include('orders.min_late')
-                        @elseif($currentOrderType === 'glass')
-                            @include('orders.glass')
-                        @endif
-                    </div>
                 </div>
 
                 <div class="lg:col-span-4 space-y-6">
@@ -136,7 +125,7 @@
                         </div>
 
                         {{-- Attachments Card --}}
-                        <div class="bg-white border border-neutral-200 rounded-xl p-6 shadow-sm" style="position: -webkit-sticky; position: sticky; top: 96px; z-index: 10;">
+                        <div class="bg-white border border-neutral-200 rounded-xl p-6 shadow-sm attachments-sticky-card" style="position: -webkit-sticky; position: sticky; top: 96px; z-index: 10;">
                             <div class="flex items-center gap-2 border-b border-neutral-100 pb-4 mb-4">
                                 <iconify-icon icon="lucide:paperclip" class="text-xl text-primary-500"></iconify-icon>
                                 <h6 class="font-bold text-base text-neutral-800 m-0">Tệp tin đính kèm</h6>
@@ -157,26 +146,60 @@
                             {{-- Preview Container for newly selected images --}}
                             <div class="mt-4 hidden" id="new-attachments-preview-container">
                                 <label class="form-label font-semibold text-xs text-neutral-500 uppercase tracking-wider mb-2 block">Hình ảnh mới chọn</label>
-                                <div class="flex flex-col gap-3" id="new-attachments-preview"></div>
+                                <div class="flex flex-col gap-2.5" id="new-attachments-preview"></div>
                             </div>
 
                             @if(isset($acrylicOrder) && $acrylicOrder->attachments)
                             <div class="mt-4">
                                 <label class="form-label font-semibold text-xs text-neutral-500 uppercase tracking-wider mb-2 block">Hình ảnh đã tải</label>
-                                <div class="flex flex-col gap-3" id="existing-attachments">
+                                <div class="flex flex-col gap-2.5" id="existing-attachments">
                                     @foreach(json_decode($acrylicOrder->attachments, true) ?? [] as $index => $image)
-                                    <div class="relative group w-full attachment-wrapper">
-                                        <img src="{{ route('orders.image', ['filename' => basename($image)]) }}" class="w-full object-contain max-h-[300px] rounded-lg border border-neutral-200 shadow-sm">
-                                        <button type="button" onclick="deleteAttachment('{{ $index }}', '{{ $image }}')" class="absolute bg-danger-100 hover:bg-danger-200 text-danger-600 transition-colors w-7 h-7 flex justify-center items-center rounded-full shadow-sm z-10" style="top: 8px; right: 8px;" title="Xóa ảnh">
-                                            <iconify-icon icon="lucide:trash-2" class="text-sm"></iconify-icon>
+                                    <div class="flex items-center justify-between p-2 border border-neutral-100 rounded-xl bg-neutral-50/50 hover:bg-neutral-50 transition-colors">
+                                        <div class="flex items-center gap-3">
+                                            <img src="{{ route('orders.image', ['filename' => basename($image)]) }}" class="w-12 h-12 rounded-lg object-cover border border-neutral-200 shadow-sm cursor-pointer" onclick="openModal('modal-existing-attachment-{{ $index }}')">
+                                            <div>
+                                                <p class="text-xs font-semibold text-neutral-700 truncate max-w-[120px]">{{ basename($image) }}</p>
+                                                <button type="button" onclick="openModal('modal-existing-attachment-{{ $index }}')" class="text-[11px] text-primary-500 hover:text-primary-700 font-bold flex items-center gap-1 mt-0.5">
+                                                    <iconify-icon icon="lucide:eye" class="text-sm"></iconify-icon> Xem chi tiết
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <button type="button" onclick="deleteAttachment('{{ $index }}', '{{ $image }}')" class="text-neutral-400 hover:text-danger-500 transition-colors p-1.5" title="Xóa ảnh">
+                                            <iconify-icon icon="lucide:trash-2" class="text-lg"></iconify-icon>
                                         </button>
                                     </div>
+
+                                    {{-- Modal Popup for this image --}}
+                                    <x-modal name="modal-existing-attachment-{{ $index }}" maxWidth="2xl" :hasBackdrop="false">
+                                        <div class="p-5 relative">
+                                            <div class="flex items-center justify-between border-b border-neutral-100 pb-3 mb-4 cursor-move modal-drag-handle">
+                                                <h6 class="font-bold text-sm text-neutral-800 m-0 select-none">{{ basename($image) }}</h6>
+                                                <button type="button" onclick="closeModal('modal-existing-attachment-{{ $index }}')" class="text-neutral-400 hover:text-neutral-600 text-xl leading-none">&times;</button>
+                                            </div>
+                                            <div class="relative overflow-hidden rounded-lg attachment-wrapper bg-neutral-50 flex items-center justify-center p-1 border border-neutral-100 shadow-xs" style="cursor: zoom-in;">
+                                                <img src="{{ route('orders.image', ['filename' => basename($image)]) }}" class="w-full object-contain max-h-[70vh] rounded-md">
+                                            </div>
+                                        </div>
+                                    </x-modal>
                                     @endforeach
                                 </div>
                                 <input type="hidden" name="delete_attachments" id="delete-attachments" value="">
                             </div>
                             @endif
                         </div>
+                </div>
+            </div>
+
+            {{-- Bottom Section: Full Width Bảng danh sách vật tư --}}
+            <div class="w-full mt-6">
+                <div class="space-y-6">
+                    @if($currentOrderType === 'acrylic')
+                        @include('orders.acrylic')
+                    @elseif($currentOrderType === 'min_late')
+                        @include('orders.min_late')
+                    @elseif($currentOrderType === 'glass')
+                        @include('orders.glass')
+                    @endif
                 </div>
             </div>
         </div>
@@ -232,8 +255,6 @@ function switchOrderType(type) {
             }
         }
     }
-    
-    updateOrderSummary();
 }
 
 function fillCustomerInfo(customerId) {
@@ -1081,11 +1102,30 @@ function deleteAttachment(index, imagePath) {
     }
 }
 
+// Fallback global openModal and closeModal functions in case no x-modal is rendered by Blade on this page
+window.openModal = window.openModal || function(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.display = 'block';
+    if (el.getAttribute('data-has-backdrop') !== 'false') {
+        document.body.style.overflow = 'hidden';
+    }
+};
+
+window.closeModal = window.closeModal || function(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.display = 'none';
+    if (el.getAttribute('data-has-backdrop') !== 'false') {
+        document.body.style.overflow = '';
+    }
+};
+
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize tom-select for existing product code selects
     if (typeof TomSelect !== 'undefined') {
         const customerSelect = document.getElementById('customer-select');
-        if (customerSelect) {
+        if (customerSelect && !customerSelect.tomselect) {
             const customerTomSelect = new TomSelect(customerSelect, {
                 allowEmptyOption: true,
                 placeholder: '-- Chọn khách hàng --',
@@ -1097,6 +1137,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         document.querySelectorAll('.tom-select-product').forEach(function(element) {
+            if (element.tomselect) return;
             new TomSelect(element, {
                 allowEmptyOption: true,
                 placeholder: '-- Chọn --',
@@ -1113,6 +1154,9 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderNewAttachmentsPreview() {
         if (!previewDiv) return;
         previewDiv.innerHTML = ''; // Clear previous previews
+        
+        // Clean up any dynamic modals in document.body
+        document.querySelectorAll('div[id^="modal-new-attachment-"]').forEach(el => el.remove());
 
         if (newAttachments.length > 0) {
             previewContainer.classList.remove('hidden');
@@ -1124,19 +1168,56 @@ document.addEventListener('DOMContentLoaded', function() {
             if (file.type.startsWith('image/')) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
+                    const modalId = `modal-new-attachment-${index}`;
                     const imgWrapper = document.createElement('div');
-                    imgWrapper.className = 'relative group w-full attachment-wrapper';
+                    imgWrapper.className = 'flex items-center justify-between p-2 border border-neutral-100 rounded-xl bg-neutral-50/50 hover:bg-neutral-50 transition-colors';
                     imgWrapper.innerHTML = `
-                        <img src="${e.target.result}" class="w-full object-contain max-h-[300px] rounded-lg border border-neutral-200 shadow-sm">
-                        <button type="button" class="absolute bg-danger-100 hover:bg-danger-200 text-danger-600 transition-colors w-7 h-7 flex justify-center items-center rounded-full shadow-sm z-10 remove-new-attachment" data-index="${index}" style="top: 8px; right: 8px;" title="Xóa ảnh">
-                            <iconify-icon icon="lucide:trash-2" class="text-sm"></iconify-icon>
+                        <div class="flex items-center gap-3">
+                            <img src="${e.target.result}" class="w-12 h-12 rounded-lg object-cover border border-neutral-200 shadow-sm cursor-pointer" onclick="openModal('${modalId}')">
+                            <div>
+                                <p class="text-xs font-semibold text-neutral-700 truncate max-w-[120px]">${file.name}</p>
+                                <button type="button" onclick="openModal('${modalId}')" class="text-[11px] text-primary-500 hover:text-primary-700 font-bold flex items-center gap-1 mt-0.5">
+                                    <iconify-icon icon="lucide:eye" class="text-sm"></iconify-icon> Xem chi tiết
+                                </button>
+                            </div>
+                        </div>
+                        <button type="button" class="text-neutral-400 hover:text-danger-500 transition-colors p-1.5 remove-new-attachment" data-index="${index}" title="Xóa ảnh">
+                            <iconify-icon icon="lucide:trash-2" class="text-lg"></iconify-icon>
                         </button>
                     `;
 
+                    // Create modal element separately and append to document.body to avoid stacking context issues
+                    const modalDiv = document.createElement('div');
+                    modalDiv.id = modalId;
+                    modalDiv.setAttribute('data-modal', '');
+                    modalDiv.setAttribute('data-has-backdrop', 'false');
+                    modalDiv.style.cssText = 'display:none; position:fixed; inset:0; z-index:9999999 !important; pointer-events:none;';
+                    modalDiv.innerHTML = `
+                        <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; padding:1rem; pointer-events:none;">
+                            <div data-modal-content style="position:relative; background:#fff; border-radius:0.75rem; box-shadow:0 20px 60px rgba(0,0,0,0.3); width:100%; max-width:672px; pointer-events:auto;" class="p-5">
+                                <div class="flex items-center justify-between border-b border-neutral-100 pb-3 mb-4 cursor-move modal-drag-handle">
+                                    <h6 class="font-bold text-sm text-neutral-800 m-0 select-none">${file.name}</h6>
+                                    <button type="button" onclick="closeModal('${modalId}')" class="text-neutral-400 hover:text-neutral-600 text-xl leading-none">&times;</button>
+                                </div>
+                                <div class="relative overflow-hidden rounded-lg attachment-wrapper bg-neutral-50 flex items-center justify-center p-1 border border-neutral-100 shadow-xs" style="cursor: zoom-in;">
+                                    <img src="${e.target.result}" class="w-full object-contain max-h-[70vh] rounded-md">
+                                </div>
+                                <!-- Resize Handle -->
+                                <div class="modal-resize-handle" style="position:absolute; right:4px; bottom:4px; width:16px; height:16px; cursor:se-resize; z-index:100; display:flex; align-items:center; justify-content:center; opacity:0.6; hover:opacity:1;">
+                                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M9 1L1 9M9 5L5 9M9 8L8 9" stroke="#9ca3af" stroke-width="1.5" stroke-linecap="round"/>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    document.body.appendChild(modalDiv);
+
                     // Add delete handler for newly selected/pasted images
-                    imgWrapper.querySelector('.remove-new-attachment').addEventListener('click', function(e) {
-                        e.preventDefault();
+                    imgWrapper.querySelector('.remove-new-attachment').addEventListener('click', function(evt) {
+                        evt.preventDefault();
                         const idx = parseInt(this.getAttribute('data-index'));
+                        closeModal(`modal-new-attachment-${idx}`);
                         newAttachments.splice(idx, 1);
 
                         // Sync to file input
@@ -1225,7 +1306,189 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+
+    // Pan & zoom event handlers for attachments
+    document.addEventListener('wheel', function(e) {
+        const wrapper = e.target.closest('.attachment-wrapper');
+        if (!wrapper) return;
+        
+        const img = wrapper.querySelector('img');
+        if (!img) return;
+
+        // Prevent browser scroll
+        e.preventDefault();
+
+        let scale = parseFloat(wrapper.getAttribute('data-zoom-scale'));
+        if (isNaN(scale)) {
+            scale = 1.0;
+        }
+
+        if (e.deltaY < 0) {
+            scale += 0.2;
+        } else {
+            scale -= 0.2;
+        }
+        scale = Math.min(Math.max(scale, 1.0), 6.0); // Limit zoom scale to 6x
+        wrapper.setAttribute('data-zoom-scale', scale);
+
+        const rect = wrapper.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const xPercent = (x / rect.width) * 100;
+        const yPercent = (y / rect.height) * 100;
+
+        img.style.transformOrigin = `${xPercent}% ${yPercent}%`;
+        img.style.transform = `scale(${scale})`;
+    }, { passive: false });
+
+    document.addEventListener('mousemove', function(e) {
+        const wrapper = e.target.closest('.attachment-wrapper');
+        if (!wrapper) return;
+        
+        const img = wrapper.querySelector('img');
+        if (!img) return;
+
+        const rect = wrapper.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        const xPercent = (x / rect.width) * 100;
+        const yPercent = (y / rect.height) * 100;
+        
+        img.style.transformOrigin = `${xPercent}% ${yPercent}%`;
+
+        let scale = parseFloat(wrapper.getAttribute('data-zoom-scale'));
+        if (isNaN(scale)) {
+            scale = 1.0;
+            wrapper.setAttribute('data-zoom-scale', scale);
+        }
+        img.style.transform = `scale(${scale})`;
+    });
+
+    document.addEventListener('mouseout', function(e) {
+        const wrapper = e.target.closest('.attachment-wrapper');
+        if (!wrapper) return;
+        
+        const relatedTarget = e.relatedTarget;
+        if (!relatedTarget || !wrapper.contains(relatedTarget)) {
+            const img = wrapper.querySelector('img');
+            if (img) {
+                img.style.transformOrigin = 'center center';
+                img.style.transform = 'scale(1)';
+                wrapper.removeAttribute('data-zoom-scale');
+            }
+        }
+    });
     
+    // Drag-and-drop modal functionality
+    document.addEventListener('mousedown', function(e) {
+        const handle = e.target.closest('.modal-drag-handle');
+        if (!handle) return;
+
+        // Prevent text selection during drag
+        e.preventDefault();
+
+        // Find the relative container of the modal
+        const modalBody = handle.closest('[data-modal-content]') || handle.parentElement;
+        if (!modalBody) return;
+
+        const startX = e.clientX;
+        const startY = e.clientY;
+
+        const currentX = parseFloat(modalBody.getAttribute('data-drag-x')) || 0;
+        const currentY = parseFloat(modalBody.getAttribute('data-drag-y')) || 0;
+
+        function onMouseMove(moveEvent) {
+            const dx = moveEvent.clientX - startX;
+            const dy = moveEvent.clientY - startY;
+            const newX = currentX + dx;
+            const newY = currentY + dy;
+
+            modalBody.style.transform = `translate(${newX}px, ${newY}px)`;
+            modalBody.setAttribute('data-drag-x', newX);
+            modalBody.setAttribute('data-drag-y', newY);
+        }
+
+        function onMouseUp() {
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+        }
+
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+    });
+
+    // Drag-resize modal functionality
+    document.addEventListener('mousedown', function(e) {
+        const handle = e.target.closest('.modal-resize-handle');
+        if (!handle) return;
+
+        e.preventDefault();
+
+        const modalBody = handle.closest('[data-modal-content]') || handle.parentElement;
+        if (!modalBody) return;
+
+        const startX = e.clientX;
+        const startY = e.clientY;
+
+        modalBody.style.maxWidth = 'none';
+
+        const startWidth = modalBody.offsetWidth;
+        const startHeight = modalBody.offsetHeight;
+
+        function onMouseMove(moveEvent) {
+            const dx = moveEvent.clientX - startX;
+            const dy = moveEvent.clientY - startY;
+
+            const newWidth = Math.max(300, startWidth + dx);
+            const newHeight = Math.max(200, startHeight + dy);
+
+            modalBody.style.width = newWidth + 'px';
+            modalBody.style.height = newHeight + 'px';
+        }
+
+        function onMouseUp() {
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+        }
+
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+    });
+
+    // Override openModal to reset translate position when opening
+    const originalOpenModal = window.openModal;
+    window.openModal = function(id) {
+        const el = document.getElementById(id);
+        if (typeof originalOpenModal === 'function') {
+            originalOpenModal(id);
+        } else {
+            if (el) {
+                el.style.display = 'block';
+                if (el.getAttribute('data-has-backdrop') !== 'false') {
+                    document.body.style.overflow = 'hidden';
+                }
+            }
+        }
+        if (el) {
+            const modalBody = el.querySelector('[data-modal-content]');
+            if (modalBody) {
+                modalBody.style.transform = '';
+                modalBody.style.width = '';
+                modalBody.style.height = '';
+                modalBody.style.maxWidth = '';
+                modalBody.removeAttribute('data-drag-x');
+                modalBody.removeAttribute('data-drag-y');
+            }
+        }
+    };
+    // Move all existing modal elements to document.body to escape local stacking contexts
+    document.querySelectorAll('[data-modal]').forEach(modal => {
+        if (modal.parentElement !== document.body) {
+            document.body.appendChild(modal);
+        }
+    });
+
     updateOrderSummary();
 });
 </script>

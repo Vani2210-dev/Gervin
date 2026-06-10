@@ -10,7 +10,7 @@
     <x-sidebar />
     <!-- ..::  header area end ::.. -->
 
-    <main class="dashboard-main">
+    <main class="dashboard-main active">
 
         <!-- ..::  navbar start ::.. -->
         <x-navbar />
