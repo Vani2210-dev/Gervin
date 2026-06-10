@@ -127,6 +127,12 @@
                     <span>Kiểm soát (QC)</span>
                 </a>
             </li>
+            <li>
+                <a href="{{ route('processes.qr-scans') }}">
+                    <iconify-icon icon="lucide:qr-code" class="menu-icon"></iconify-icon>
+                    <span>Thiết bị quét QR</span>
+                </a>
+            </li>
             @endcan
             @can('view packing')
             <li>

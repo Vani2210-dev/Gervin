@@ -26,6 +26,7 @@ use App\Http\Controllers\ManufactureStepController;
 use App\Http\Controllers\DispatchPackageController;
 use App\Http\Controllers\DeliveryPackageController;
 use App\Http\Controllers\PackingPackageController;
+use App\Http\Controllers\QrScanController;
 
 Route::middleware(['auth'])->group(function () {
     Route::controller(DashboardController::class)->group(function () {
@@ -291,6 +292,14 @@ Route::middleware(['auth'])->prefix('processes')->name('processes.')->group(func
     Route::get('/delivery', [DeliveryPackageController::class, 'index'])->name('delivery');
     Route::post('/delivery/check', [DeliveryPackageController::class, 'preview'])->name('delivery.check');
     Route::post('/delivery/confirm', [DeliveryPackageController::class, 'confirm'])->name('delivery.confirm');
+
+    // QR Devices Configuration & Log Dashboard
+    Route::get('/qr-scans', [QrScanController::class, 'index'])->name('qr-scans');
+    Route::post('/qr-scans/devices/{device}', [QrScanController::class, 'updateDevice'])->name('qr-scans.update-device');
+    Route::delete('/qr-scans/devices/{device}', [QrScanController::class, 'deleteDevice'])->name('qr-scans.delete-device');
 });
+
+// Public API Endpoint for physical QR/barcode scanner devices
+Route::post('/scan', [QrScanController::class, 'receiveScan'])->name('qr-scans.receive');
 
 require __DIR__.'/auth.php';

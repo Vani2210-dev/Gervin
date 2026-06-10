@@ -633,6 +633,36 @@
                 productCodeInput.addEventListener("input", toggleSubmitButton);
                 productCodeInput.addEventListener("change", toggleSubmitButton);
                 productCodeInput.addEventListener("keyup", toggleSubmitButton);
+
+                // ✅ AUTO-SUBMIT khi máy quét QR bắn dữ liệu + Enter
+                // Máy quét QR hoạt động như bàn phím: gõ mã rồi tự nhấn Enter
+                let scanBuffer = "";
+                let scanTimer = null;
+
+                productCodeInput.addEventListener("keydown", function(e) {
+                    if (e.key === "Enter") {
+                        e.preventDefault();
+                        const val = productCodeInput.value.trim();
+                        if (val !== "") {
+                            // Enable button trước khi submit (bypass disabled state)
+                            const submitBtn = document.getElementById("submitBtn");
+                            if (submitBtn) {
+                                submitBtn.disabled = false;
+                                submitBtn.classList.remove("opacity-50", "cursor-not-allowed", "pointer-events-none");
+                            }
+                            // Hiệu ứng flash xanh báo hiệu đang submit
+                            productCodeInput.style.transition = "border-color 0.15s, box-shadow 0.15s";
+                            productCodeInput.style.borderColor = "#10b981";
+                            productCodeInput.style.boxShadow = "0 0 0 3px rgba(16,185,129,0.25)";
+                            setTimeout(() => {
+                                productCodeInput.style.borderColor = "";
+                                productCodeInput.style.boxShadow = "";
+                            }, 600);
+                            // Submit form
+                            document.getElementById("cncForm").dispatchEvent(new Event("submit", { cancelable: true }));
+                        }
+                    }
+                });
             }
             toggleSubmitButton();
         });
