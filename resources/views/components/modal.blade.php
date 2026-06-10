@@ -2,7 +2,8 @@
     'name',
     'show' => false,
     'maxWidth' => '2xl',
-    'hasBackdrop' => true
+    'hasBackdrop' => true,
+    'transparent' => false
 ])
 
 @php
@@ -13,6 +14,11 @@ $maxWidthPx = [
     'xl'  => '576px',
     '2xl' => '672px',
 ][$maxWidth] ?? '672px';
+
+// Khi transparent = true: không nền, không shadow, co vừa kích thước ảnh, không giới hạn max-width (dùng cho image viewer)
+$contentStyle = $transparent
+    ? "position:relative; width:fit-content; pointer-events:auto;"
+    : "position:relative; background:#fff; border-radius:0.75rem; box-shadow:0 20px 60px rgba(0,0,0,0.3); width:100%; max-width:{$maxWidthPx}; pointer-events:auto;";
 @endphp
 
 <div
@@ -31,14 +37,8 @@ $maxWidthPx = [
 
     {{-- Content wrapper --}}
     <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; padding:1rem; pointer-events:none;">
-        <div data-modal-content style="position:relative; background:#fff; border-radius:0.75rem; box-shadow:0 20px 60px rgba(0,0,0,0.3); width:100%; max-width:{{ $maxWidthPx }}; pointer-events:auto;">
+        <div data-modal-content style="{{ $contentStyle }}">
             {{ $slot }}
-            {{-- Resize Handle --}}
-            <div class="modal-resize-handle" style="position:absolute; right:4px; bottom:4px; width:16px; height:16px; cursor:se-resize; z-index:100; display:flex; align-items:center; justify-content:center; opacity:0.6; hover:opacity:1;">
-                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M9 1L1 9M9 5L5 9M9 8L8 9" stroke="#9ca3af" stroke-width="1.5" stroke-linecap="round"/>
-                </svg>
-            </div>
         </div>
     </div>
 </div>
@@ -55,9 +55,6 @@ $maxWidthPx = [
         const modalBody = el.querySelector('[data-modal-content]');
         if (modalBody) {
             modalBody.style.transform = '';
-            modalBody.style.width = '';
-            modalBody.style.height = '';
-            modalBody.style.maxWidth = '';
             modalBody.removeAttribute('data-drag-x');
             modalBody.removeAttribute('data-drag-y');
         }

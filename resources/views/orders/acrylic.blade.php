@@ -168,7 +168,7 @@
                     <option value="100">100</option>
                 </select>
             </div>
-            <div class="zoom-panel flex items-center gap-2 rounded-lg border border-neutral-200 bg-neutral-50 px-2 py-1 shadow-sm hidden sm:flex">
+            <div class="zoom-panel flex items-center gap-2 rounded-lg border border-neutral-200 bg-neutral-50 px-2 py-1 shadow-sm" style="display: none !important;">
                 <button type="button" onclick="changeOrderSuppliesZoom(this, -10)" class="btn btn-icon btn-sm bg-white hover:bg-neutral-100 text-neutral-700 rounded-md p-1 h-7 w-7 flex items-center justify-center border border-neutral-200 shadow-sm transition-all" title="Thu nhỏ">
                     <iconify-icon icon="lucide:minus" class="text-xs"></iconify-icon>
                 </button>
@@ -180,6 +180,10 @@
                 </button>
                 <input data-order-supplies-zoom-range type="range" min="50" max="200" value="100" oninput="syncOrderSuppliesZoom(this)" class="w-24 accent-primary-500 h-1 cursor-pointer bg-neutral-200 rounded-lg appearance-none" />
             </div>
+            <button type="button" onclick="previewOrder()" class="fullscreen-only-btn btn btn-sm bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200 rounded-lg flex items-center gap-1">
+                <iconify-icon icon="lucide:eye" class="text-lg"></iconify-icon>
+                <span>Xem trước</span>
+            </button>
             <button type="button" onclick="toggleOrderSuppliesPopup(this)" class="btn btn-sm bg-light-100 hover:bg-neutral-200 text-dark rounded-lg flex items-center gap-1" data-order-supplies-popup-button aria-expanded="false">
                 <iconify-icon icon="lucide:maximize-2" class="text-lg" data-order-supplies-popup-icon></iconify-icon>
                 <span data-order-supplies-popup-label>Phóng to</span>
