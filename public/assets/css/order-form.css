@@ -31,6 +31,14 @@
 
 .order-supplies-popup.is-fullscreen .order-supplies-header {
     flex: 0 0 auto;
+    position: relative !important;
+}
+
+.order-supplies-popup.is-fullscreen .order-supplies-header > div.absolute {
+    position: static !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    background: transparent !important;
 }
 
 .order-supplies-popup.is-fullscreen .order-supplies-body {
@@ -111,6 +119,8 @@ body.order-column-resizing {
     border-color: #dbe5f1 !important;
     border-collapse: collapse !important;
     background: #ffffff !important;
+    width: max-content !important;
+    table-layout: fixed !important;
 }
 
 #order-supplies-container .order-supply-row table th,
@@ -242,6 +252,8 @@ table[data-order-resize-group="min_late_payment"] {
     border-color: #dbe5f1 !important;
     border-collapse: collapse !important;
     background: #ffffff !important;
+    width: max-content !important;
+    table-layout: fixed !important;
 }
 
 table[data-order-resize-group="min_late_payment"] th {
@@ -372,6 +384,377 @@ table[data-order-resize-group="min_late_payment"] tbody#payment-details-containe
     text-align: center !important;
 }
 
+/* Định vị tuyệt đối cố định cho các nhãn card tiêu đề nổi trên viền ở desktop */
+.relative > div.absolute,
+.order-supplies-header > div.absolute {
+    position: absolute !important;
+    top: -14px !important;
+    left: 24px !important;
+}
+
+.order-supplies-header {
+    justify-content: flex-end !important;
+}
+
+.order-supplies-popup.is-fullscreen .order-supplies-header {
+    justify-content: space-between !important;
+}
+
 body.order-supplies-popup-open {
     overflow: hidden;
 }
+
+/* === RESPONSIVE LAYOUT FOR MOBILE DEVICES (<= 768px) === */
+@media (max-width: 768px) {
+    /* Ẩn cụm điều khiển zoom trên thiết bị di động giống file mẫu */
+    .zoom-panel {
+        display: none !important;
+    }
+
+    /* Đưa header của popup về dạng hàng dọc */
+    .order-supplies-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 12px !important;
+    }
+
+    .order-supplies-header > .flex:first-child {
+        width: 100% !important;
+    }
+
+    .order-supplies-header > .flex:last-child {
+        width: 100% !important;
+        flex-wrap: wrap !important;
+        justify-content: flex-start !important;
+        gap: 8px !important;
+    }
+
+    /* Đưa header thông tin dòng vật tư về dạng cột dọc tránh tràn màn hình */
+    .order-supply-row > div:first-child {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 12px !important;
+    }
+
+    .order-supply-row > div:first-child > div:first-child {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        width: 100% !important;
+        gap: 8px !important;
+    }
+
+    /* Thiết lập lại chiều rộng các input trong header vật tư trên di động */
+    .order-supply-row .order-supply-code-input,
+    .order-supply-row input[name*="[supply_name]"],
+    .order-supply-row input[name*="[quantity]"],
+    .order-supply-row .tom-select-supply-code {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    /* Đảm bảo khung cuộn bảng co giãn đúng màn hình */
+    [data-order-supplies-table-scroll] {
+        width: 100% !important;
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+        max-height: none !important;
+    }
+
+    .order-supplies-table-zoom-wrap {
+        display: block !important;
+        width: 100% !important;
+        min-width: 100% !important;
+        max-width: 100% !important;
+        transform: none !important;
+    }
+
+    /* === CHUYỂN BẢNG THÀNH DẠNG CARD TRÊN DI ĐỘNG === */
+    /* Ẩn header của các bảng */
+    .order-supply-row table thead,
+    table[data-order-resize-group="min_late_payment"] thead {
+        display: none !important;
+    }
+
+    /* Chuyển cấu trúc table/tbody sang block */
+    #order-supplies-container .order-supply-row table,
+    #glass-supplies-container .order-supply-row table,
+    #min-late-supplies-container .order-supply-row table,
+    #order-supplies-container .order-supply-row table tbody.supply-items-container,
+    #glass-supplies-container .order-supply-row table tbody.supply-items-container,
+    #min-late-supplies-container .order-supply-row table tbody.supply-items-container,
+    .order-supply-row table,
+    .order-supply-row table tbody.supply-items-container,
+    table[data-order-resize-group="min_late_payment"],
+    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container {
+        display: block !important;
+        width: 100% !important;
+        min-width: 100% !important;
+        max-width: 100% !important;
+        table-layout: auto !important;
+        border-collapse: separate !important;
+        border: none !important;
+    }
+
+    /* Chuyển hàng trơ thành Grid Card 12 cột */
+    .order-supply-row table tbody.supply-items-container tr.order-item-row,
+    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row {
+        display: grid !important;
+        grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+        gap: 8px !important;
+        padding: 12px !important;
+        margin-bottom: 16px !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 12px !important;
+        background: #ffffff !important;
+        height: auto !important;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05) !important;
+    }
+
+    /* Chuyển các ô thành block */
+    #order-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td,
+    #glass-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td,
+    #min-late-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td,
+    .order-supply-row table tbody.supply-items-container tr.order-item-row td,
+    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td {
+        display: block !important;
+        border: none !important;
+        grid-column: span 12 / span 12 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        height: auto !important;
+        min-height: auto !important;
+        padding: 0 !important;
+        background: transparent !important;
+    }
+
+    /* Cột số thứ tự (STT) - Chiếm 2/12 cột */
+    #order-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td:first-child,
+    #glass-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td:first-child,
+    #min-late-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td:first-child,
+    .order-supply-row table tbody.supply-items-container tr.order-item-row td:first-child,
+    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td:first-child {
+        grid-column: span 2 / span 2 !important;
+        background: #f1f5f9 !important;
+        border-radius: 6px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        height: 34px !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    /* Mặc định tất cả các cột ở giữa (không phải STT và không phải Hành động) hiển thị 50% (6/12 cột) */
+    #order-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td:not(:first-child):not(:last-child),
+    #glass-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td:not(:first-child):not(:last-child),
+    #min-late-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td:not(:first-child):not(:last-child),
+    .order-supply-row table tbody.supply-items-container tr.order-item-row td:not(:first-child):not(:last-child),
+    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td:not(:first-child):not(:last-child) {
+        grid-column: span 6 / span 6 !important;
+    }
+
+    /* Cột Mã SP - Chiếm 10/12 cột còn lại trên cùng hàng với STT */
+    #order-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td:nth-child(2),
+    #glass-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td:nth-child(2),
+    #min-late-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td:nth-child(2),
+    .order-supply-row table tbody.supply-items-container tr.order-item-row td:nth-child(2),
+    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td:nth-child(2) {
+        grid-column: span 10 / span 10 !important;
+    }
+
+    /* Chỉ có cột Tên sản phẩm và Ghi chú hiển thị full dòng (12/12 cột) */
+    #order-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td:has(input[name*="[product_name]"]),
+    #glass-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td:has(input[name*="[product_name]"]),
+    #min-late-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td:has(input[name*="[product_name]"]),
+    .order-supply-row table tbody.supply-items-container tr.order-item-row td:has(input[name*="[product_name]"]),
+    #order-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td:has(input[name*="[notes]"]),
+    #glass-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td:has(input[name*="[notes]"]),
+    #min-late-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td:has(input[name*="[notes]"]),
+    .order-supply-row table tbody.supply-items-container tr.order-item-row td:has(input[name*="[notes]"]),
+    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td:has(input[name*="[name]"]) {
+        grid-column: span 12 / span 12 !important;
+    }
+
+    /* Cột hành động (Xóa/Sao chép) - Chiếm 4/12 cột */
+    #order-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td:last-child,
+    #glass-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td:last-child,
+    #min-late-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td:last-child,
+    .order-supply-row table tbody.supply-items-container tr.order-item-row td:last-child,
+    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td:last-child {
+        grid-column: span 4 / span 4 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        height: 34px !important;
+        position: static !important;
+        box-shadow: none !important;
+    }
+
+    /* Căn chỉnh lại border & style input của cell trên mobile */
+    #order-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-control,
+    #order-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-select,
+    #glass-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-control,
+    #glass-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-select,
+    #min-late-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-control,
+    #min-late-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-select,
+    #order-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td input:not([type="hidden"]),
+    #glass-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td input:not([type="hidden"]),
+    #min-late-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td input:not([type="hidden"]),
+    #order-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td select,
+    #glass-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td select,
+    #min-late-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td select,
+    #order-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .ts-control,
+    #glass-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .ts-control,
+    #min-late-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .ts-control,
+    .order-supply-row table tbody.supply-items-container tr.order-item-row td input:not([type="hidden"]),
+    .order-supply-row table tbody.supply-items-container tr.order-item-row td select,
+    .order-supply-row table tbody.supply-items-container tr.order-item-row td .ts-wrapper,
+    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td input:not([type="hidden"]),
+    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td select,
+    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td .form-control,
+    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td .form-select {
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 6px !important;
+        height: 34px !important;
+        min-height: 34px !important;
+        padding: 0 8px !important;
+        background-color: #ffffff !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .order-supply-row table tbody.supply-items-container tr.order-item-row td *,
+    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td * {
+        max-width: 100% !important;
+    }
+
+    .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-control:focus,
+    .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-select:focus,
+    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td .form-control:focus,
+    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td .form-select:focus {
+        border-color: #3b82f6 !important;
+        background-color: #eff6ff !important;
+        outline: none !important;
+    }
+
+    /* Đảm bảo chỉ mục dòng STT hiển thị gọn */
+    .order-supply-row table tbody.supply-items-container tr.order-item-row td .row-index,
+    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td .detail-index {
+        min-height: auto !important;
+        height: 100% !important;
+        width: 100% !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    /* Đảm bảo menu TomSelect không tràn chiều rộng màn hình */
+    .order-supply-row .ts-dropdown,
+    .table .ts-dropdown {
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Thiết lập nhãn hiển thị trên đường viền giống hình mẫu */
+    .order-supply-row table tbody.supply-items-container tr.order-item-row td:not(:first-child):not(:last-child),
+    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td:not(:first-child):not(:last-child) {
+        position: relative !important;
+        margin-top: 14px !important;
+    }
+
+    .order-supply-row table tbody.supply-items-container tr.order-item-row td:not(:first-child):not(:last-child)::before,
+    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td:not(:first-child):not(:last-child)::before {
+        content: attr(data-label) !important;
+        position: absolute !important;
+        top: -7px !important;
+        left: 10px !important;
+        background: #ffffff !important;
+        padding: 0 4px !important;
+        font-size: 10px !important;
+        font-weight: 600 !important;
+        color: #475569 !important;
+        z-index: 10 !important;
+        pointer-events: none !important;
+        line-height: 1 !important;
+    }
+
+    /* Ẩn placeholder của input khi đã có nhãn nổi trên viền */
+    #order-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-control::placeholder,
+    #glass-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-control::placeholder,
+    #min-late-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-control::placeholder,
+    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td .form-control::placeholder {
+        color: transparent !important;
+        opacity: 0 !important;
+    }
+
+    /* Nhãn nổi cho các input trong phần header của vật tư trên di động */
+    .mobile-floating-label {
+        position: relative !important;
+        margin-top: 14px !important;
+    }
+
+    .mobile-floating-label::before {
+        content: attr(data-label) !important;
+        position: absolute !important;
+        top: -7px !important;
+        left: 10px !important;
+        background: #ffffff !important;
+        padding: 0 4px !important;
+        font-size: 10px !important;
+        font-weight: 600 !important;
+        color: #475569 !important;
+        z-index: 10 !important;
+        pointer-events: none !important;
+        line-height: 1 !important;
+    }
+
+    .mobile-floating-label .form-control::placeholder {
+        color: transparent !important;
+        opacity: 0 !important;
+    }
+
+    /* Reset tiêu đề card về dạng static trên mobile để tránh đè lấp input */
+    .relative > div.absolute[class*="-top-3"],
+    .order-supplies-header > div.absolute[class*="-top-3"] {
+        position: static !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        margin-bottom: 1rem !important;
+        background: transparent !important;
+        display: flex !important;
+    }
+    .relative.pt-8 {
+        padding-top: 1.5rem !important;
+    }
+
+    /* Thu nhỏ select Hiển thị số lượng dòng trên mobile */
+    [data-order-supplies-visible-rows-select] {
+        width: 65px !important;
+        min-width: 65px !important;
+        padding-left: 6px !important;
+        padding-right: 18px !important;
+        font-size: 11px !important;
+        height: 32px !important;
+        min-height: 32px !important;
+        line-height: 32px !important;
+    }
+
+    /* Ẩn chữ của các nút Phóng to / Thu nhỏ và Thêm vật tư trên mobile (chỉ giữ lại icon) */
+    [data-order-supplies-popup-label],
+    .mobile-hide-text {
+        display: none !important;
+    }
+
+    /* Căn chỉnh lại padding của nút chỉ còn chứa icon để thành hình vuông nhỏ gọn */
+    [data-order-supplies-popup-button],
+    .order-supplies-header .btn-primary {
+        padding-left: 8px !important;
+        padding-right: 8px !important;
+        gap: 0 !important;
+        height: 32px !important;
+        min-height: 32px !important;
+    }
+}
+

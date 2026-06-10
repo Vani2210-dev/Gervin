@@ -25,8 +25,8 @@
                 {{-- Main Form - col-lg-8 --}}
                 <div class="lg:col-span-8 space-y-6">
                     {{-- Customer Info Section Card --}}
-                    <div class="bg-white border border-neutral-200 rounded-xl p-6 shadow-sm mb-2">
-                        <div class="flex items-center gap-2 border-b border-neutral-100 pb-4 mb-5">
+                    <div class="bg-white border border-neutral-200 rounded-xl p-6 shadow-sm mb-2 relative pt-8">
+                        <div class="absolute -top-3.5 left-6 bg-white px-3 flex items-center gap-2 z-10">
                             <iconify-icon icon="lucide:user" class="text-xl text-primary-500"></iconify-icon>
                             <h6 class="font-bold text-base text-neutral-800 m-0">Thông tin khách hàng & Đơn hàng</h6>
                         </div>
@@ -338,9 +338,15 @@ function toggleOrderSuppliesPopup(button) {
     if (!panel) return;
 
     const isOpen = panel.classList.contains('is-fullscreen');
-    panel.classList.toggle('is-fullscreen', !isOpen);
-    document.body.classList.toggle('order-supplies-popup-open', !isOpen);
-    updateOrderSuppliesPopupButton(button, !isOpen);
+    const nextState = !isOpen;
+    panel.classList.toggle('is-fullscreen', nextState);
+    document.body.classList.toggle('order-supplies-popup-open', nextState);
+    updateOrderSuppliesPopupButton(button, nextState);
+
+    const scope = getOrderSuppliesStorageScope(panel);
+    if (scope) {
+        writeOrderSuppliesStorageItem(`${ORDER_SUPPLIES_UI_STORAGE_PREFIX}:${scope}:fullscreen`, nextState ? '1' : '0');
+    }
 
     if (!isOpen) {
         const body = panel.querySelector('.order-supplies-body');
@@ -362,6 +368,11 @@ function closeOrderSuppliesPopup() {
 
     const button = panel.querySelector('[data-order-supplies-popup-button]');
     updateOrderSuppliesPopupButton(button, false);
+
+    const scope = getOrderSuppliesStorageScope(panel);
+    if (scope) {
+        writeOrderSuppliesStorageItem(`${ORDER_SUPPLIES_UI_STORAGE_PREFIX}:${scope}:fullscreen`, '0');
+    }
 }
 
 function applyOrderSuppliesZoom(panel, zoomValue) {
@@ -592,9 +603,25 @@ function initOrderSuppliesZoom() {
     });
 }
 
+function initOrderSuppliesFullscreen() {
+    document.querySelectorAll('[data-order-supplies-zoom-panel]').forEach((panel) => {
+        const scope = getOrderSuppliesStorageScope(panel);
+        if (!scope) return;
+
+        const isFullscreenStored = readOrderSuppliesStorageItem(`${ORDER_SUPPLIES_UI_STORAGE_PREFIX}:${scope}:fullscreen`) === '1';
+        if (isFullscreenStored) {
+            panel.classList.add('is-fullscreen');
+            document.body.classList.add('order-supplies-popup-open');
+            const button = panel.querySelector('[data-order-supplies-popup-button]');
+            updateOrderSuppliesPopupButton(button, true);
+        }
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     initOrderSuppliesZoom();
     initOrderSuppliesVisibleRows();
+    initOrderSuppliesFullscreen();
 });
 
 // Co giãn cột bằng data attribute để không đụng vào name/value/event của input.
