@@ -1717,11 +1717,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Phím tắt Ctrl+Shift: ẩn/hiện tất cả popup ảnh đang mở
+    // Phím tắt Ctrl+Alt: ẩn/hiện tất cả popup ảnh đang mở
     let hiddenImageModals = []; // Lưu popup đã ẩn để hiện lại
     document.addEventListener('keydown', function(e) {
-        // Bắt khi nhấn Ctrl+Shift (không kèm key khác)
-        const isToggleShortcut = (e.key === 'Shift' && e.ctrlKey) || (e.key === 'Control' && e.shiftKey);
+        // Bắt khi nhấn Ctrl+Alt (không kèm key khác)
+        const isToggleShortcut = (e.key === 'Alt' && e.ctrlKey) || (e.key === 'Control' && e.altKey);
         if (!isToggleShortcut) return;
 
         // Nếu đang có popup bị ẩn → hiện lại
