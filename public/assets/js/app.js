@@ -23,13 +23,16 @@ document.querySelectorAll(".sidebar-menu .dropdown").forEach(function (dropdown)
   });
 });
 
-// Toggle sidebar visibility and active class
+// Toggle sidebar visibility and active class (chỉ trên desktop)
 const sidebarToggle = document.querySelector(".sidebar-toggle");
 if(sidebarToggle) {
   sidebarToggle.addEventListener("click", function() {
-    this.classList.toggle("active");
-    document.querySelector(".sidebar").classList.toggle("active");
-    document.querySelector(".dashboard-main").classList.toggle("active");
+    // Chỉ toggle trên desktop (>=1024px)
+    if (window.innerWidth >= 1024) {
+      this.classList.toggle("active");
+      document.querySelector(".sidebar").classList.toggle("active");
+      document.querySelector(".dashboard-main").classList.toggle("active");
+    }
   });
 }
 
@@ -72,6 +75,29 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     }
   });
+
+  // ✅ Mobile: ẩn sidebar khỏi layout (dùng overlay mode thay vì thu nhỏ)
+  // Trên mobile (<1024px), sidebar có active sẽ vẫn chiếm space → bỏ active đi
+  function handleMobileSidebar() {
+    var sidebar = document.querySelector(".sidebar");
+    var dashMain = document.querySelector(".dashboard-main");
+    if (!sidebar || !dashMain) return;
+
+    if (window.innerWidth < 1024) {
+      // Mobile: xóa active để sidebar dùng overlay mode
+      sidebar.classList.remove("active");
+      dashMain.classList.remove("active");
+    } else {
+      // Desktop: thêm lại active (collapsed icon-only mode)
+      sidebar.classList.add("active");
+      dashMain.classList.add("active");
+    }
+  }
+
+  handleMobileSidebar();
+
+  // Lắng nghe resize để chuyển đổi khi xoay màn hình
+  window.addEventListener("resize", handleMobileSidebar);
 });
 
 
