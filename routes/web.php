@@ -302,4 +302,14 @@ Route::middleware(['auth'])->prefix('processes')->name('processes.')->group(func
 // Public API Endpoint for physical QR/barcode scanner devices
 Route::post('/scan', [QrScanController::class, 'receiveScan'])->name('qr-scans.receive');
 
+// DC Stock (Kho tấm dư sau cắt CNC)
+use App\Http\Controllers\DcStockController;
+Route::middleware(['auth'])->prefix('dc-stocks')->name('dc-stocks.')->group(function () {
+    Route::get('/', [DcStockController::class, 'index'])->name('index');
+    Route::post('/', [DcStockController::class, 'store'])->name('store');
+    Route::put('/{dcStock}', [DcStockController::class, 'update'])->name('update');
+    Route::delete('/{dcStock}', [DcStockController::class, 'destroy'])->name('destroy');
+    Route::patch('/{dcStock}/status', [DcStockController::class, 'updateStatus'])->name('update-status');
+});
+
 require __DIR__.'/auth.php';

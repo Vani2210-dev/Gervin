@@ -276,6 +276,8 @@ class QrScanController extends Controller
      */
     public function updateDevice(Request $request, QrDevice $device)
     {
+        abort_unless(auth()->user()->can('edit qr device'), 403);
+
         $request->validate([
             'name'             => 'required|string|max:255',
             'process_step'     => 'nullable|string|in:cnc,pressing,edge_banding,finishing,qc',
@@ -306,6 +308,8 @@ class QrScanController extends Controller
      */
     public function deleteDevice(QrDevice $device)
     {
+        abort_unless(auth()->user()->can('delete qr device'), 403);
+
         $device->delete();
 
         return redirect()->route('processes.qr-scans')->with('success', 'Đã xóa thiết bị quét thành công.');

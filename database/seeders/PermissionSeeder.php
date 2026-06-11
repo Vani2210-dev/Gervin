@@ -145,6 +145,17 @@ class PermissionSeeder extends Seeder
             
             // UI permissions
             'view ui',
+
+            // DC Stock permissions (Kho tấm dư)
+            'view dc stock',
+            'add dc stock',
+            'edit dc stock',
+            'delete dc stock',
+
+            // QR Device permissions (Thiết bị quét QR)
+            'view qr device',
+            'edit qr device',
+            'delete qr device',
         ];
 
 
