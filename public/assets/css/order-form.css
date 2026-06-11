@@ -204,6 +204,10 @@ body.order-column-resizing {
     opacity: 1 !important;
 }
 
+#order-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .product-bevel-input {
+    padding-right: 32px !important;
+}
+
 #order-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-control:focus,
 #order-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-select:focus,
 #glass-supplies-container .order-supply-row table tbody.supply-items-container tr.order-item-row td .form-control:focus,

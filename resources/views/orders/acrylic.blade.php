@@ -272,20 +272,20 @@
                                     <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Số lượng" min="1" required value="{{ $item->quantity }}">
                                 </td>
                                 <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
-                                    <div class="relative flex items-center w-full px-1">
+                                    <div class="w-full h-full" style="position: relative;">
                                         <input type="text" 
                                                name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][bevel]" 
                                                class="product-bevel-input form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center pr-6 pl-1 py-1 h-8 text-xs w-full" 
                                                placeholder="Vát" 
                                                value="{{ $item->bevel }}"
                                                data-auto-sync="{{ (!$item->bevel || $item->bevel == $item->width) ? 'width' : (($item->bevel == $item->height) ? 'height' : 'none') }}">
-                                        <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center pointer-events-auto">
-                                            <iconify-icon icon="lucide:chevron-down" class="text-neutral-400 text-xs pointer-events-none mr-1"></iconify-icon>
-                                            <select class="product-bevel-select absolute inset-0 opacity-0 cursor-pointer w-5 h-6">
-                                                <option value="">Không</option>
-                                                <option value="width">Theo Rộng</option>
-                                                <option value="height">Theo Cao</option>
-                                                <option value="custom">Tự nhập</option>
+                                        <div class="pointer-events-auto cursor-pointer" style="position: absolute; right: 4px; top: 0; bottom: 0; width: 24px; display: flex; align-items: center; justify-content: center; z-index: 10;" title="Chọn kiểu vát">
+                                            <iconify-icon icon="lucide:chevron-down" class="text-neutral-500 text-base pointer-events-none"></iconify-icon>
+                                            <select class="product-bevel-select absolute inset-0 opacity-0 cursor-pointer w-full h-full">
+                                                <option value="">-- Không vát --&nbsp;&nbsp;</option>
+                                                <option value="width">▪ Bám theo Rộng&nbsp;&nbsp;</option>
+                                                <option value="height">▪ Bám theo Dài&nbsp;&nbsp;</option>
+                                                <option value="custom">▪ Tự nhập tay&nbsp;&nbsp;</option>
                                             </select>
                                         </div>
                                     </div>
@@ -561,20 +561,20 @@ function addOrderItem(button) {
             <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Số lượng" min="1" required value="${lastData ? lastData.quantity : '1'}">
         </td>
         <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
-            <div class="relative flex items-center w-full px-1">
+            <div class="w-full h-full" style="position: relative;">
                 <input type="text" 
                        name="supplies[${supplyIndex}][items][${itemIndex}][bevel]" 
                        class="product-bevel-input form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center pr-6 pl-1 py-1 h-8 text-xs w-full" 
                        placeholder="Vát" 
                        value="${lastData ? lastData.bevel : ''}"
                        data-auto-sync="${(!lastData || !lastData.bevel || lastData.bevel === lastData.width) ? 'width' : (lastData.bevel === lastData.height ? 'height' : 'none')}">
-                <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center pointer-events-auto">
-                    <iconify-icon icon="lucide:chevron-down" class="text-neutral-400 text-xs pointer-events-none mr-1"></iconify-icon>
-                    <select class="product-bevel-select absolute inset-0 opacity-0 cursor-pointer w-5 h-6">
-                        <option value="">Không</option>
-                        <option value="width">Theo Rộng</option>
-                        <option value="height">Theo Cao</option>
-                        <option value="custom">Tự nhập</option>
+                <div class="pointer-events-auto cursor-pointer" style="position: absolute; right: 4px; top: 0; bottom: 0; width: 24px; display: flex; align-items: center; justify-content: center; z-index: 10;" title="Chọn kiểu vát">
+                    <iconify-icon icon="lucide:chevron-down" class="text-neutral-500 text-base pointer-events-none"></iconify-icon>
+                    <select class="product-bevel-select absolute inset-0 opacity-0 cursor-pointer w-full h-full">
+                        <option value="">-- Không vát --&nbsp;&nbsp;</option>
+                        <option value="width">▪ Bám theo Rộng&nbsp;&nbsp;</option>
+                        <option value="height">▪ Bám theo Dài&nbsp;&nbsp;</option>
+                        <option value="custom">▪ Tự nhập tay&nbsp;&nbsp;</option>
                     </select>
                 </div>
             </div>
