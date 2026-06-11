@@ -12,14 +12,16 @@
         'customer'      => 'Khách hàng',
         'order'         => 'Đơn hàng',
         'manufacture'   => 'Lệnh sản xuất',
-        'warehouse'     => 'Kho',
+        'warehouse'     => 'Kho vật tư',
         'pressing'      => 'Ép ván',
         'cnc'           => 'Cắt CNC',
         'edge banding'  => 'Dán cạnh',
         'finishing'     => 'Làm đẹp',
         'qc'            => 'Kiểm soát (QC)',
         'packing'       => 'Đóng gói',
-        'dispatch'       => 'Xuất xưởng',
+        'dispatch'      => 'Xuất xưởng',
+        'dc stock'      => 'Kho DC (Tấm dư)',
+        'qr device'     => 'Thiết bị quét QR',
         'ui'            => 'Giao diện UI',
     ];
     $actionLabels = [

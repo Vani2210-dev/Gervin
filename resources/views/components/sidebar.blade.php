@@ -180,9 +180,11 @@
                     </li>
                     @endcan
 
+                    @can('view dc stock')
                     <li>
-                        <a href="#"><i class="ri-circle-fill circle-icon text-warning-600 w-auto"></i> Kho đồ cũ(DC)</a>
+                        <a href="{{ route('dc-stocks.index') }}"><i class="ri-circle-fill circle-icon text-orange-500 w-auto"></i> Kho DC (Tấm dư)</a>
                     </li>
+                    @endcan
                 </ul>
             </li>
             @can('view media')
