@@ -106,7 +106,7 @@
         position: -webkit-sticky !important;
         position: sticky !important;
         left: 0 !important;
-        z-index: 15 !important;
+        z-index: 5 !important;
         background-color: #ffffff !important;
         background-clip: padding-box !important;
         box-shadow: 2px 0 4px rgba(0,0,0,0.06) !important;
@@ -116,12 +116,15 @@
     html body div#order-supplies-container .order-supply-row table thead tr th:last-child,
     html body div#glass-supplies-container .order-supply-row table thead tr th:last-child,
     html body div#min-late-supplies-container .order-supply-row table thead tr th:last-child,
-    html body table[data-order-resize-group="min_late_payment"] thead tr th:last-child,
+    html body table[data-order-resize-group="min_late_payment"] thead tr th:last-child {
+        z-index: 15 !important;
+    }
+
     html body div#order-supplies-container .order-supply-row table tbody tr td:last-child,
     html body div#glass-supplies-container .order-supply-row table tbody tr td:last-child,
     html body div#min-late-supplies-container .order-supply-row table tbody tr td:last-child,
     html body table[data-order-resize-group="min_late_payment"] tbody tr td:last-child {
-        z-index: 15 !important;
+        z-index: 5 !important;
     }
 </style>
 <div class="order-supplies-popup bg-white border border-neutral-200 rounded-xl p-6 shadow-sm relative pt-8" data-order-supplies-zoom-panel data-order-supplies-storage-key="glass" data-order-supplies-zoom="100" data-order-supplies-visible-rows="5">
@@ -218,7 +221,7 @@
                 </div>
                 <button type="button" onclick="addGlassOrderItem(this)" class="w-full mt-4 py-3 border-2 border-dashed border-primary-300 hover:border-primary-500 rounded-xl bg-primary-50/50 hover:bg-primary-50 text-primary-600 font-semibold text-sm flex items-center justify-center gap-1.5 transition-all duration-200">
                     <iconify-icon icon="lucide:plus" class="text-lg"></iconify-icon>
-                    Thêm sản phẩm mới (Sao chép từ sản phẩm cuối)
+                    Thêm sản phẩm mới
                 </button>
             </div>
             @endforeach
@@ -283,7 +286,7 @@ function addGlassOrderSupply() {
         </div>
         <button type="button" onclick="addGlassOrderItem(this)" class="order-table-form-action w-full mt-4 py-3 border-2 border-dashed border-primary-300 hover:border-primary-500 rounded-xl bg-primary-50/50 hover:bg-primary-50 text-primary-600 font-semibold text-sm flex items-center justify-center gap-1.5 transition-all duration-200">
             <iconify-icon icon="lucide:plus" class="text-lg"></iconify-icon>
-            Thêm sản phẩm mới (Sao chép từ sản phẩm cuối)
+            Thêm sản phẩm mới
         </button>
     `;
     newSupply.querySelector('.order-supply-code-input').addEventListener('input', function() {
@@ -294,7 +297,7 @@ function addGlassOrderSupply() {
     // Add one product row by default
     const addProductBtn = newSupply.querySelector('button[onclick^="addGlassOrderItem"]');
     if (addProductBtn) {
-        addGlassOrderItem(addProductBtn);
+        addGlassOrderItem(addProductBtn, true);
     }
 
     const panel = newSupply.closest('[data-order-supplies-zoom-panel]');
@@ -305,32 +308,14 @@ function addGlassOrderSupply() {
     glassSupplyIndex++;
 }
 
-function addGlassOrderItem(button) {
+function addGlassOrderItem(button, isInitial = false) {
     const supplyRow = button.closest('.order-supply-row');
     const supplyIndex = supplyRow.querySelector('.supply-items-container').dataset.supplyIndex;
     const container = supplyRow.querySelector('.supply-items-container');
     const itemIndex = container.querySelectorAll('.order-item-row').length;
     
-    // Check if there is an existing last row in the container to copy from
-    const lastRow = container.querySelector('.order-item-row:last-of-type');
+    // Không sao chép từ sản phẩm cuối
     let lastData = null;
-    if (lastRow) {
-        lastData = {
-            product_name: lastRow.querySelector('input[name*="[product_name]"]') ? lastRow.querySelector('input[name*="[product_name]"]').value : '',
-            thickness: lastRow.querySelector('input[name*="[thickness]"]') ? lastRow.querySelector('input[name*="[thickness]"]').value : '',
-            wing_opening_direction: lastRow.querySelector('input[name*="[wing_opening_direction]"]') ? lastRow.querySelector('input[name*="[wing_opening_direction]"]').value : '',
-            aluminum_color: lastRow.querySelector('input[name*="[aluminum_color]"]') ? lastRow.querySelector('input[name*="[aluminum_color]"]').value : '',
-            glass_color: lastRow.querySelector('input[name*="[glass_color]"]') ? lastRow.querySelector('input[name*="[glass_color]"]').value : '',
-            height: lastRow.querySelector('input[name*="[height]"]') ? lastRow.querySelector('input[name*="[height]"]').value : '',
-            width: lastRow.querySelector('input[name*="[width]"]') ? lastRow.querySelector('input[name*="[width]"]').value : '',
-            unit: lastRow.querySelector('input[name*="[unit]"]') ? lastRow.querySelector('input[name*="[unit]"]').value : 'Bộ',
-            wing_quantity: lastRow.querySelector('input[name*="[wing_quantity]"]') ? lastRow.querySelector('input[name*="[wing_quantity]"]').value : '1',
-            area_m2: lastRow.querySelector('input[name*="[area_m2]"]') ? lastRow.querySelector('input[name*="[area_m2]"]').value : '',
-            unit_price: lastRow.querySelector('input[name*="[unit_price]"]') ? lastRow.querySelector('input[name*="[unit_price]"]').value : '',
-            total_price: lastRow.querySelector('input[name*="[total_price]"]') ? lastRow.querySelector('input[name*="[total_price]"]').value : '',
-            notes: lastRow.querySelector('input[name*="[notes]"]') ? lastRow.querySelector('input[name*="[notes]"]').value : '',
-        };
-    }
     
     const newItem = document.createElement('tr');
     newItem.className = 'order-item-row';
@@ -397,6 +382,17 @@ function addGlassOrderItem(button) {
     bindGlassRowEvents(newRow);
     updateOrderSummary();
     updateGlassRowIndexes();
+
+    // Tự động cuộn xuống dòng mới thêm và focus vào ô Tên sản phẩm (chỉ khi được thêm thủ công)
+    if (!isInitial) {
+        setTimeout(() => {
+            newRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            const nameInput = newRow.querySelector('input[name*="[product_name]"]');
+            if (nameInput) {
+                nameInput.focus();
+            }
+        }, 50);
+    }
 }
 
 function removeGlassOrderItem(button) {

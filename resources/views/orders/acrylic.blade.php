@@ -176,7 +176,7 @@
         position: -webkit-sticky !important;
         position: sticky !important;
         left: 0 !important;
-        z-index: 15 !important;
+        z-index: 5 !important;
         background-color: #ffffff !important;
         background-clip: padding-box !important;
         box-shadow: 2px 0 4px rgba(0,0,0,0.06) !important;
@@ -186,12 +186,15 @@
     html body div#order-supplies-container .order-supply-row table thead tr th:last-child,
     html body div#glass-supplies-container .order-supply-row table thead tr th:last-child,
     html body div#min-late-supplies-container .order-supply-row table thead tr th:last-child,
-    html body table[data-order-resize-group="min_late_payment"] thead tr th:last-child,
+    html body table[data-order-resize-group="min_late_payment"] thead tr th:last-child {
+        z-index: 15 !important;
+    }
+
     html body div#order-supplies-container .order-supply-row table tbody tr td:last-child,
     html body div#glass-supplies-container .order-supply-row table tbody tr td:last-child,
     html body div#min-late-supplies-container .order-supply-row table tbody tr td:last-child,
     html body table[data-order-resize-group="min_late_payment"] tbody tr td:last-child {
-        z-index: 15 !important;
+        z-index: 5 !important;
     }
 </style>
 <div class="order-supplies-popup bg-white border border-neutral-200 rounded-xl p-6 shadow-sm relative pt-8" data-order-supplies-zoom-panel data-order-supplies-storage-key="acrylic" data-order-supplies-zoom="100" data-order-supplies-visible-rows="5">
@@ -322,7 +325,7 @@
                                                placeholder="Vát" 
                                                value="{{ $item->bevel }}"
                                                data-auto-sync="{{ (!$item->bevel || $item->bevel == $item->width) ? 'width' : (($item->bevel == $item->height) ? 'height' : 'none') }}">
-                                        <div class="pointer-events-auto cursor-pointer" style="position: absolute; right: 4px; top: 0; bottom: 0; width: 24px; display: flex; align-items: center; justify-content: center; z-index: 10;" title="Chọn kiểu vát">
+                                        <div class="pointer-events-auto cursor-pointer" style="position: absolute; right: 4px; top: 0; bottom: 0; width: 24px; display: flex; align-items: center; justify-content: center; z-index: 4;" title="Chọn kiểu vát">
                                             <iconify-icon icon="lucide:chevron-down" class="text-neutral-500 text-base pointer-events-none"></iconify-icon>
                                             <select class="product-bevel-select absolute inset-0 opacity-0 cursor-pointer w-full h-full">
                                                 <option value="">-- Không vát --&nbsp;&nbsp;</option>
@@ -403,10 +406,10 @@
                     </div>
                 </div>
                 
-                {{-- Nút thêm sản phẩm mới (Sao chép từ sản phẩm cuối) --}}
+                {{-- Nút thêm sản phẩm mới --}}
                 <button type="button" onclick="addOrderItem(this)" class="w-full mt-4 py-3 border-2 border-dashed border-primary-300 hover:border-primary-500 rounded-xl bg-primary-50/50 hover:bg-primary-50 text-primary-600 font-semibold text-sm flex items-center justify-center gap-1.5 transition-all duration-200">
                     <iconify-icon icon="lucide:plus" class="text-lg"></iconify-icon>
-                    Thêm sản phẩm mới (Sao chép từ sản phẩm cuối)
+                    Thêm sản phẩm mới
                 </button>
             </div>
             @endforeach
@@ -518,7 +521,7 @@ function addOrderSupply() {
         </div>
         <button type="button" onclick="addOrderItem(this)" class="w-full mt-4 py-3 border-2 border-dashed border-primary-300 hover:border-primary-500 rounded-xl bg-primary-50/50 hover:bg-primary-50 text-primary-600 font-semibold text-sm flex items-center justify-center gap-1.5 transition-all duration-200">
             <iconify-icon icon="lucide:plus" class="text-lg"></iconify-icon>
-            Thêm sản phẩm mới (Sao chép từ sản phẩm cuối)
+            Thêm sản phẩm mới
         </button>
     `;
     container.appendChild(newSupply);
@@ -526,7 +529,7 @@ function addOrderSupply() {
     // Add one product row by default
     const addProductBtn = newSupply.querySelector('button[onclick^="addOrderItem"]');
     if (addProductBtn) {
-        addOrderItem(addProductBtn);
+        addOrderItem(addProductBtn, true);
     }
 
     const selectEl = newSupply.querySelector('.tom-select-supply-code');
@@ -551,33 +554,21 @@ function addOrderSupply() {
     supplyIndex++;
 }
 
-function addOrderItem(button) {
+function addOrderItem(button, isInitial = false) {
     const supplyRow = button.closest('.order-supply-row');
     const supplyIndex = supplyRow.querySelector('.supply-items-container').dataset.supplyIndex;
     const container = supplyRow.querySelector('.supply-items-container');
     const itemIndex = container.querySelectorAll('.order-item-row').length;
     
-    // Check if there is an existing last row in the container to copy from
-    const lastRow = container.querySelector('.order-item-row:last-of-type');
-    let lastData = null;
-    if (lastRow) {
-        lastData = {
-            product_name: lastRow.querySelector('input[name*="[product_name]"]') ? lastRow.querySelector('input[name*="[product_name]"]').value : '',
-            thickness: lastRow.querySelector('input[name*="[thickness]"]') ? lastRow.querySelector('input[name*="[thickness]"]').value : '',
-            height: lastRow.querySelector('input[name*="[height]"]') ? lastRow.querySelector('input[name*="[height]"]').value : '',
-            width: lastRow.querySelector('input[name*="[width]"]') ? lastRow.querySelector('input[name*="[width]"]').value : '',
-            quantity: lastRow.querySelector('input[name*="[quantity]"]') ? lastRow.querySelector('input[name*="[quantity]"]').value : '1',
-            edge_bevel: lastRow.querySelector('input[name*="[edge_bevel]"]') ? lastRow.querySelector('input[name*="[edge_bevel]"]').value : '',
-            grain_direction: lastRow.querySelector('select[name*="[grain_direction]"]') ? lastRow.querySelector('select[name*="[grain_direction]"]').value : '0',
-            wing_area: lastRow.querySelector('input[name*="[wing_area]"]') ? lastRow.querySelector('input[name*="[wing_area]"]').value : '',
-            molding_length: lastRow.querySelector('input[name*="[molding_length]"]') ? lastRow.querySelector('input[name*="[molding_length]"]').value : '',
-            bevel: lastRow.querySelector('input[name*="[bevel]"]') ? lastRow.querySelector('input[name*="[bevel]"]').value : '',
-            vertical_grain_cnc: lastRow.querySelector('input[name*="[vertical_grain_cnc]"]') ? lastRow.querySelector('input[name*="[vertical_grain_cnc]"]').value : '',
-            unit_price: lastRow.querySelector('input[name*="[unit_price]"]') ? lastRow.querySelector('input[name*="[unit_price]"]').value : '',
-            total_price: lastRow.querySelector('input[name*="[total_price]"]') ? lastRow.querySelector('input[name*="[total_price]"]').value : '',
-            notes: lastRow.querySelector('input[name*="[notes]"]') ? lastRow.querySelector('input[name*="[notes]"]').value : '',
-        };
+    // Lấy thông tin mã vật tư đã chọn để tự điền độ dày và đơn giá (nếu có)
+    const selectEl = supplyRow.querySelector('.order-supply-code-select');
+    let selectedCode = '';
+    if (selectEl) {
+        selectedCode = selectEl.tomselect ? selectEl.tomselect.getValue() : selectEl.value;
     }
+    const price = woodBoardPricesData.find(p => p.code === selectedCode);
+    const defaultThickness = price ? (price.thickness || '') : '';
+    const defaultUnitPrice = price ? (price.price_m2 ? parseInt(price.price_m2) : 0) : '';
     
     const newItem = document.createElement('tr');
     newItem.className = 'order-item-row';
@@ -589,19 +580,19 @@ function addOrderItem(button) {
             <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][product_code]" class="product-code-input form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs font-semibold text-neutral-600" readonly>
         </td>
         <td style="min-width: 220px;" class="border border-neutral-200">
-            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][product_name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Tên sản phẩm" value="${lastData ? lastData.product_name : ''}">
+            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][product_name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Tên sản phẩm" value="">
         </td>
         <td style="width: 100px; min-width: 100px;" class="border border-neutral-200">
-            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][thickness]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs text-center px-1" placeholder="Độ dày" value="${lastData ? lastData.thickness : ''}">
+            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][thickness]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs text-center px-1" placeholder="Độ dày" value="${defaultThickness}">
         </td>
         <td style="width: 200px; min-width: 200px; " class="border border-neutral-200">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][height]" class="form-control form-control-sm rounded-lg border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500 bg-yellow-50/30 text-center px-1 py-1 h-8 text-xs" placeholder="Cao (vân)" step="0.01" value="${lastData ? lastData.height : ''}">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][height]" class="form-control form-control-sm rounded-lg border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500 bg-yellow-50/30 text-center px-1 py-1 h-8 text-xs" placeholder="Cao (vân)" step="0.01" value="">
         </td>
         <td style="width: 200px; min-width: 200px; " class="border border-neutral-200">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][width]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Rộng" step="0.01" value="${lastData ? lastData.width : ''}">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][width]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Rộng" step="0.01" value="">
         </td>
         <td style="width: 70px; min-width: 70px; " class="border border-neutral-200">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Số lượng" min="1" required value="${lastData ? lastData.quantity : '1'}">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Số lượng" min="1" required value="1">
         </td>
         <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
             <div class="w-full h-full" style="position: relative;">
@@ -609,9 +600,9 @@ function addOrderItem(button) {
                        name="supplies[${supplyIndex}][items][${itemIndex}][bevel]" 
                        class="product-bevel-input form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center pr-6 pl-1 py-1 h-8 text-xs w-full" 
                        placeholder="Vát" 
-                       value="${lastData ? lastData.bevel : ''}"
-                       data-auto-sync="${(!lastData || !lastData.bevel || lastData.bevel === lastData.width) ? 'width' : (lastData.bevel === lastData.height ? 'height' : 'none')}">
-                <div class="pointer-events-auto cursor-pointer" style="position: absolute; right: 4px; top: 0; bottom: 0; width: 24px; display: flex; align-items: center; justify-content: center; z-index: 10;" title="Chọn kiểu vát">
+                       value=""
+                       data-auto-sync="width">
+                <div class="pointer-events-auto cursor-pointer" style="position: absolute; right: 4px; top: 0; bottom: 0; width: 24px; display: flex; align-items: center; justify-content: center; z-index: 4;" title="Chọn kiểu vát">
                     <iconify-icon icon="lucide:chevron-down" class="text-neutral-500 text-base pointer-events-none"></iconify-icon>
                     <select class="product-bevel-select absolute inset-0 opacity-0 cursor-pointer w-full h-full">
                         <option value="">-- Không vát --&nbsp;&nbsp;</option>
@@ -624,18 +615,18 @@ function addOrderItem(button) {
         </td>
         <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
             <select name="supplies[${supplyIndex}][items][${itemIndex}][grain_direction]" class="form-select form-select-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 px-1 py-1 h-8 text-xs">
-                <option value="0" ${lastData && lastData.grain_direction === '0' ? 'selected' : ''}>0</option>
-                <option value="2" ${lastData && lastData.grain_direction === '2' ? 'selected' : ''}>2</option>
+                <option value="0">0</option>
+                <option value="2">2</option>
             </select>
         </td>
         <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][wing_area]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Cánh (m2)" step="0.01" value="${lastData ? lastData.wing_area : ''}">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][wing_area]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Cánh (m2)" step="0.01" value="">
         </td>
         <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][molding_length]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Phào (m)" step="0.01" value="${lastData ? lastData.molding_length : ''}">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][molding_length]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Phào (m)" step="0.01" value="">
         </td>
         <td style="width: 100px; min-width: 100px; " class="border border-neutral-200 cursor-not-allowed">
-            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][edge_bevel]" class="product-edge-bevel-input form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="Cạnh vát" value="${lastData ? lastData.edge_bevel : ''}" readonly tabindex="-1" style="pointer-events: none;">
+            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][edge_bevel]" class="product-edge-bevel-input form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="Cạnh vát" value="" readonly tabindex="-1" style="pointer-events: none;">
         </td>
         <td style="width: 130px; min-width: 130px; " class="border border-neutral-200">
             <select name="supplies[${supplyIndex}][items][${itemIndex}][vertical_grain_cnc]" class="cnc-template-select form-select form-select-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 px-1 py-1 h-8 text-xs" onchange="onCncTemplateChange(this)">
@@ -660,13 +651,13 @@ function addOrderItem(button) {
             <input type="hidden" name="supplies[${supplyIndex}][items][${itemIndex}][mill_depth_2]"  class="cnc-mill-depth-2"  value="">
         </td>
         <td style="width: 110px; min-width: 110px; " class="border border-neutral-200">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][unit_price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Đơn giá" min="0" required value="${lastData ? lastData.unit_price : ''}">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][unit_price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Đơn giá" min="0" required value="${defaultUnitPrice}">
         </td>
         <td style="width: 120px; min-width: 120px; " class="border border-neutral-200">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][total_price]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center px-1 py-1 h-8 text-xs" placeholder="Thành tiền" readonly value="${lastData ? lastData.total_price : ''}">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][total_price]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center px-1 py-1 h-8 text-xs" placeholder="Thành tiền" readonly value="">
         </td>
         <td style="min-width: 160px;" class="border border-neutral-200">
-            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Ghi chú" value="${lastData ? lastData.notes : ''}">
+            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Ghi chú" value="">
         </td>
         <td style="width: 80px; min-width: 80px; " class="text-center align-middle border border-neutral-200">
             <div class="flex items-center gap-1 justify-center">
@@ -687,6 +678,17 @@ function addOrderItem(button) {
     
     updateOrderSummary();
     updateAcrylicRowIndexes();
+
+    // Tự động cuộn xuống dòng mới thêm và focus vào ô Tên sản phẩm (chỉ khi được thêm thủ công)
+    if (!isInitial) {
+        setTimeout(() => {
+            newRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            const nameInput = newRow.querySelector('input[name*="[product_name]"]');
+            if (nameInput) {
+                nameInput.focus();
+            }
+        }, 50);
+    }
 }
 
 function removeOrderItem(button) {

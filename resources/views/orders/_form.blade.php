@@ -548,7 +548,7 @@ function previewOrder() {
                 <!-- Footer -->
                 <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-neutral-200 flex-shrink-0 bg-neutral-50/50">
                     <button type="button" onclick="closePreviewOrder()" class="btn btn-outline-neutral px-5 py-2.5 rounded-lg text-sm font-semibold transition-all">Đóng</button>
-                    <button type="button" onclick="closePreviewOrder(); document.getElementById('order-form').submit();" class="btn btn-primary px-6 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all flex items-center gap-1.5">
+                    <button type="button" onclick="closePreviewOrder(); if (typeof closeOrderSuppliesPopup === 'function') closeOrderSuppliesPopup(); document.getElementById('order-form').requestSubmit();" class="btn btn-primary px-6 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all flex items-center gap-1.5">
                         <iconify-icon icon="lucide:save" class="text-base"></iconify-icon>
                         {{ isset($acrylicOrder) && !$isDraftCreate ? 'Cập nhật đơn hàng' : 'Lưu đơn hàng' }}
                     </button>
@@ -705,9 +705,25 @@ function syncAttachmentsToFullscreen(panel, show) {
             const thumb = document.createElement('div');
             thumb.className = 'relative group cursor-pointer';
             const onclickAttr = btn ? btn.getAttribute('onclick') : (img.getAttribute('onclick') || '');
+            
+            const originalDeleteBtn = item.querySelector('button[onclick*="deleteAttachment"]') || item.querySelector('button.remove-new-attachment');
+            
             thumb.innerHTML = `
                 <img src="${img.src}" class="w-20 h-20 rounded-lg object-cover border border-neutral-200 shadow-sm hover:shadow-md hover:border-primary-400 transition-all" onclick="${onclickAttr}">
             `;
+            if (originalDeleteBtn) {
+                const delClone = document.createElement('button');
+                delClone.type = 'button';
+                delClone.className = 'bg-white rounded-full text-danger-500 shadow-sm border border-neutral-200 transition-colors hover:bg-danger-50';
+                delClone.style.cssText = 'position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; z-index: 10;';
+                delClone.title = 'Xóa ảnh';
+                delClone.innerHTML = '<iconify-icon icon="lucide:trash-2" class="text-xs"></iconify-icon>';
+                delClone.onclick = function(e) {
+                    e.stopPropagation();
+                    originalDeleteBtn.click();
+                };
+                thumb.appendChild(delClone);
+            }
             grid.appendChild(thumb);
         });
     }
@@ -722,9 +738,25 @@ function syncAttachmentsToFullscreen(panel, show) {
             const thumb = document.createElement('div');
             thumb.className = 'relative group cursor-pointer';
             const onclickAttr = btn ? btn.getAttribute('onclick') : (img.getAttribute('onclick') || '');
+            
+            const originalDeleteBtn = item.querySelector('button[onclick*="deleteAttachment"]') || item.querySelector('button.remove-new-attachment');
+            
             thumb.innerHTML = `
                 <img src="${img.src}" class="w-20 h-20 rounded-lg object-cover border-2 border-primary-300 shadow-sm hover:shadow-md hover:border-primary-500 transition-all" onclick="${onclickAttr}">
             `;
+            if (originalDeleteBtn) {
+                const delClone = document.createElement('button');
+                delClone.type = 'button';
+                delClone.className = 'bg-white rounded-full text-danger-500 shadow-sm border border-neutral-200 transition-colors hover:bg-danger-50';
+                delClone.style.cssText = 'position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; z-index: 10;';
+                delClone.title = 'Xóa ảnh';
+                delClone.innerHTML = '<iconify-icon icon="lucide:trash-2" class="text-xs"></iconify-icon>';
+                delClone.onclick = function(e) {
+                    e.stopPropagation();
+                    originalDeleteBtn.click();
+                };
+                thumb.appendChild(delClone);
+            }
             grid.appendChild(thumb);
         });
     }
@@ -773,7 +805,7 @@ function toggleOrderSuppliesPopup(button) {
 
     const scope = getOrderSuppliesStorageScope(panel);
     if (scope) {
-        writeOrderSuppliesStorageItem(`${ORDER_SUPPLIES_UI_STORAGE_PREFIX}:${scope}:fullscreen`, nextState ? '1' : '0');
+        // writeOrderSuppliesStorageItem(`${ORDER_SUPPLIES_UI_STORAGE_PREFIX}:${scope}:fullscreen`, nextState ? '1' : '0');
     }
 
     if (!isOpen) {
@@ -805,7 +837,7 @@ function closeOrderSuppliesPopup() {
 
     const scope = getOrderSuppliesStorageScope(panel);
     if (scope) {
-        writeOrderSuppliesStorageItem(`${ORDER_SUPPLIES_UI_STORAGE_PREFIX}:${scope}:fullscreen`, '0');
+        // writeOrderSuppliesStorageItem(`${ORDER_SUPPLIES_UI_STORAGE_PREFIX}:${scope}:fullscreen`, '0');
     }
 }
 
@@ -1038,26 +1070,24 @@ function initOrderSuppliesZoom() {
 }
 
 function initOrderSuppliesFullscreen() {
-    document.querySelectorAll('[data-order-supplies-zoom-panel]').forEach((panel) => {
-        const scope = getOrderSuppliesStorageScope(panel);
-        if (!scope) return;
-
-        const isFullscreenStored = readOrderSuppliesStorageItem(`${ORDER_SUPPLIES_UI_STORAGE_PREFIX}:${scope}:fullscreen`) === '1';
-        if (isFullscreenStored) {
-            panel.classList.add('is-fullscreen');
-            document.body.classList.add('order-supplies-popup-open');
-            const button = panel.querySelector('[data-order-supplies-popup-button]');
-            updateOrderSuppliesPopupButton(button, true);
-            // Đồng bộ tệp đính kèm khi auto-restore fullscreen
-            syncAttachmentsToFullscreen(panel, true);
-        }
-    });
+    // Disabled restoring fullscreen state from localStorage per user request
+    // document.querySelectorAll('[data-order-supplies-zoom-panel]').forEach((panel) => { ... });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     initOrderSuppliesZoom();
     initOrderSuppliesVisibleRows();
     initOrderSuppliesFullscreen();
+
+    // Tự động đóng chế độ toàn màn hình khi lưu/cập nhật đơn hàng
+    const form = document.getElementById('order-form');
+    if (form) {
+        form.addEventListener('submit', () => {
+            if (typeof closeOrderSuppliesPopup === 'function') {
+                closeOrderSuppliesPopup();
+            }
+        });
+    }
 });
 
 // Co giãn cột bằng data attribute để không đụng vào name/value/event của input.

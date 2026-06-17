@@ -121,7 +121,7 @@
         position: -webkit-sticky !important;
         position: sticky !important;
         left: 0 !important;
-        z-index: 15 !important;
+        z-index: 5 !important;
         background-color: #ffffff !important;
         background-clip: padding-box !important;
         box-shadow: 2px 0 4px rgba(0,0,0,0.06) !important;
@@ -131,12 +131,15 @@
     html body div#order-supplies-container .order-supply-row table thead tr th:last-child,
     html body div#glass-supplies-container .order-supply-row table thead tr th:last-child,
     html body div#min-late-supplies-container .order-supply-row table thead tr th:last-child,
-    html body table[data-order-resize-group="min_late_payment"] thead tr th:last-child,
+    html body table[data-order-resize-group="min_late_payment"] thead tr th:last-child {
+        z-index: 15 !important;
+    }
+
     html body div#order-supplies-container .order-supply-row table tbody tr td:last-child,
     html body div#glass-supplies-container .order-supply-row table tbody tr td:last-child,
     html body div#min-late-supplies-container .order-supply-row table tbody tr td:last-child,
     html body table[data-order-resize-group="min_late_payment"] tbody tr td:last-child {
-        z-index: 15 !important;
+        z-index: 5 !important;
     }
 </style>
 <div class="order-supplies-popup bg-white border border-neutral-200 rounded-xl p-6 shadow-sm relative pt-8" data-order-supplies-zoom-panel data-order-supplies-storage-key="min_late" data-order-supplies-zoom="100" data-order-supplies-visible-rows="5">
@@ -359,10 +362,10 @@
                     </table>
                     </div>
                 </div>
-                {{-- Nút thêm sản phẩm mới (Sao chép từ sản phẩm cuối) --}}
+                {{-- Nút thêm sản phẩm mới --}}
                 <button type="button" onclick="addMinLateOrderItem(this)" class="order-table-form-action w-full mt-4 py-3 border-2 border-dashed border-primary-300 hover:border-primary-500 rounded-xl bg-primary-50/50 hover:bg-primary-50 text-primary-600 font-semibold text-sm flex items-center justify-center gap-1.5 transition-all duration-200">
                     <iconify-icon icon="lucide:plus" class="text-lg"></iconify-icon>
-                    Thêm sản phẩm mới (Sao chép từ sản phẩm cuối)
+                    Thêm sản phẩm mới
                 </button>
             </div>
             @endforeach
@@ -523,7 +526,7 @@ function addMinLateOrderSupply() {
         </div>
         <button type="button" onclick="addMinLateOrderItem(this)" class="w-full mt-4 py-3 border-2 border-dashed border-primary-300 hover:border-primary-500 rounded-xl bg-primary-50/50 hover:bg-primary-50 text-primary-600 font-semibold text-sm flex items-center justify-center gap-1.5 transition-all duration-200">
             <iconify-icon icon="lucide:plus" class="text-lg"></iconify-icon>
-            Thêm sản phẩm mới (Sao chép từ sản phẩm cuối)
+            Thêm sản phẩm mới
         </button>
     `;
     container.appendChild(newSupply);
@@ -531,7 +534,7 @@ function addMinLateOrderSupply() {
     // Add one product row by default
     const addProductBtn = newSupply.querySelector('button[onclick^="addMinLateOrderItem"]');
     if (addProductBtn) {
-        addMinLateOrderItem(addProductBtn);
+        addMinLateOrderItem(addProductBtn, true);
     }
 
     const panel = newSupply.closest('[data-order-supplies-zoom-panel]');
@@ -542,38 +545,14 @@ function addMinLateOrderSupply() {
     minLateSupplyIndex++;
 }
 
-function addMinLateOrderItem(button) {
+function addMinLateOrderItem(button, isInitial = false) {
     const supplyRow = button.closest('.order-supply-row');
     const supplyIndex = supplyRow.querySelector('.supply-items-container').dataset.supplyIndex;
     const container = supplyRow.querySelector('.supply-items-container');
     const itemIndex = container.querySelectorAll('.order-item-row').length;
     
-    // Check if there is an existing last row in the container to copy from
-    const lastRow = container.querySelector('.order-item-row:last-of-type');
+    // Không sao chép từ sản phẩm cuối
     let lastData = null;
-    if (lastRow) {
-        lastData = {
-            product_name: lastRow.querySelector('input[name*="[product_name]"]') ? lastRow.querySelector('input[name*="[product_name]"]').value : '',
-            thickness: lastRow.querySelector('input[name*="[thickness]"]') ? lastRow.querySelector('input[name*="[thickness]"]').value : '',
-            height: lastRow.querySelector('input[name*="[height]"]') ? lastRow.querySelector('input[name*="[height]"]').value : '',
-            width: lastRow.querySelector('input[name*="[width]"]') ? lastRow.querySelector('input[name*="[width]"]').value : '',
-            quantity: lastRow.querySelector('input[name*="[quantity]"]') ? lastRow.querySelector('input[name*="[quantity]"]').value : '1',
-            edge_gluing_height_1: lastRow.querySelector('select[name*="[edge_gluing][height_1]"]') ? lastRow.querySelector('select[name*="[edge_gluing][height_1]"]').value : '',
-            edge_gluing_height_2: lastRow.querySelector('select[name*="[edge_gluing][height_2]"]') ? lastRow.querySelector('select[name*="[edge_gluing][height_2]"]').value : '',
-            edge_gluing_width_1: lastRow.querySelector('select[name*="[edge_gluing][width_1]"]') ? lastRow.querySelector('select[name*="[edge_gluing][width_1]"]').value : '',
-            edge_gluing_width_2: lastRow.querySelector('select[name*="[edge_gluing][width_2]"]') ? lastRow.querySelector('select[name*="[edge_gluing][width_2]"]').value : '',
-            straight_paste_length: lastRow.querySelector('input[name*="[straight_paste_length]"]') ? lastRow.querySelector('input[name*="[straight_paste_length]"]').value : '0',
-            beveled_length: lastRow.querySelector('input[name*="[beveled_length]"]') ? lastRow.querySelector('input[name*="[beveled_length]"]').value : '0',
-            vat_moi_length: lastRow.querySelector('input[name*="[vat_moi_length]"]') ? lastRow.querySelector('input[name*="[vat_moi_length]"]').value : '0',
-            ban_rong_40_59: lastRow.querySelector('input[name*="[ban_rong_40_59]"]') ? lastRow.querySelector('input[name*="[ban_rong_40_59]"]').value : '0',
-            ban_rong_17_39: lastRow.querySelector('input[name*="[ban_rong_17_39]"]') ? lastRow.querySelector('input[name*="[ban_rong_17_39]"]').value : '0',
-            ban_rong_25_35: lastRow.querySelector('input[name*="[ban_rong_25_35]"]') ? lastRow.querySelector('input[name*="[ban_rong_25_35]"]').value : '0',
-            beveled_handle: lastRow.querySelector('input[name*="[beveled_handle]"]') ? lastRow.querySelector('input[name*="[beveled_handle]"]').value : '0',
-            cnc: lastRow.querySelector('input[name*="[cnc]"]') ? lastRow.querySelector('input[name*="[cnc]"]').value : '0',
-            direction: lastRow.querySelector('input[name*="[direction]"]') ? lastRow.querySelector('input[name*="[direction]"]').value : '',
-            notes: lastRow.querySelector('input[name*="[notes]"]') ? lastRow.querySelector('input[name*="[notes]"]').value : '',
-        };
-    }
     
     const newItem = document.createElement('tr');
     newItem.className = 'order-item-row';
@@ -693,6 +672,17 @@ function addMinLateOrderItem(button) {
     
     updateOrderSummary();
     updateMinLateRowIndexes();
+
+    // Tự động cuộn xuống dòng mới thêm và focus vào ô Tên sản phẩm (chỉ khi được thêm thủ công)
+    if (!isInitial) {
+        setTimeout(() => {
+            newRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            const nameInput = newRow.querySelector('input[name*="[product_name]"]');
+            if (nameInput) {
+                nameInput.focus();
+            }
+        }, 50);
+    }
 }
 
 function removeMinLateOrderItem(button) {
