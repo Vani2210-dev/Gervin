@@ -1119,7 +1119,7 @@ function syncOrderStickyHeaderTable(table) {
         const measuredHeight = row.getBoundingClientRect().height / zoom;
         const rowHeight = Number.isFinite(measuredHeight) && measuredHeight > 0 ? measuredHeight : row.offsetHeight;
         const roundedTop = Number(topOffset.toFixed(2));
-        const zIndex = 70 - rowIndex;
+        const zIndex = 12 - rowIndex;
 
         // Tính top cho từng hàng header để sticky không đè lên nhau trong khung cuộn của bảng.
         rules.push(`[data-order-sticky-header-table-id="${tableId}"] thead tr:nth-child(${rowIndex + 1}) > th { top: ${roundedTop}px !important; z-index: ${zIndex} !important; }`);

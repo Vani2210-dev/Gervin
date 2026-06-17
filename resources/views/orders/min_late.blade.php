@@ -94,6 +94,50 @@
         border-color: #3b82f6 !important;
         box-shadow: 0 0 0 1px #3b82f6 !important;
     }
+    
+    html body div#order-supplies-container .order-supply-row table,
+    html body div#glass-supplies-container .order-supply-row table,
+    html body div#min-late-supplies-container .order-supply-row table,
+    html body table[data-order-resize-group="min_late_payment"] {
+        border-collapse: separate !important;
+        border-spacing: 0 !important;
+    }
+    
+    /* Sticky STT column */
+    html body div#order-supplies-container .order-supply-row table thead tr th.sticky-stt-th,
+    html body div#glass-supplies-container .order-supply-row table thead tr th.sticky-stt-th,
+    html body div#min-late-supplies-container .order-supply-row table thead tr th.sticky-stt-th,
+    html body table[data-order-resize-group="min_late_payment"] thead tr th.sticky-stt-th,
+    html body .sticky-stt-th {
+        position: -webkit-sticky !important;
+        position: sticky !important;
+        left: 0 !important;
+        z-index: 15 !important;
+        background-color: #f1f5f9 !important; /* Match other headers */
+        background-clip: padding-box !important;
+        box-shadow: 2px 0 4px rgba(0,0,0,0.06) !important;
+    }
+    .sticky-stt-td.sticky-stt-td {
+        position: -webkit-sticky !important;
+        position: sticky !important;
+        left: 0 !important;
+        z-index: 15 !important;
+        background-color: #ffffff !important;
+        background-clip: padding-box !important;
+        box-shadow: 2px 0 4px rgba(0,0,0,0.06) !important;
+    }
+    
+    /* Action column z-index below navbar (20) */
+    html body div#order-supplies-container .order-supply-row table thead tr th:last-child,
+    html body div#glass-supplies-container .order-supply-row table thead tr th:last-child,
+    html body div#min-late-supplies-container .order-supply-row table thead tr th:last-child,
+    html body table[data-order-resize-group="min_late_payment"] thead tr th:last-child,
+    html body div#order-supplies-container .order-supply-row table tbody tr td:last-child,
+    html body div#glass-supplies-container .order-supply-row table tbody tr td:last-child,
+    html body div#min-late-supplies-container .order-supply-row table tbody tr td:last-child,
+    html body table[data-order-resize-group="min_late_payment"] tbody tr td:last-child {
+        z-index: 15 !important;
+    }
 </style>
 <div class="order-supplies-popup bg-white border border-neutral-200 rounded-xl p-6 shadow-sm relative pt-8" data-order-supplies-zoom-panel data-order-supplies-storage-key="min_late" data-order-supplies-zoom="100" data-order-supplies-visible-rows="5">
     <div class="order-supplies-header flex items-center justify-between border-b border-neutral-100 pb-4 mb-5">
@@ -164,7 +208,7 @@
                     <table class="table bordered-table sm-table mb-0 min-w-[2000px] border border-neutral-200">
                         <thead>
                             <tr class="bg-neutral-50 text-center">
-                                <th scope="col" style="width: 45px; min-width: 45px; white-space: nowrap;" class="align-middle text-center border border-neutral-200 font-bold text-xs text-neutral-600 uppercase"><span class="order-stt-header-label">STT</span></th>
+                                <th scope="col" style="width: 45px; min-width: 45px; white-space: nowrap;" class="sticky-stt-th align-middle text-center border border-neutral-200 font-bold text-xs text-neutral-600 uppercase"><span class="order-stt-header-label">STT</span></th>
                                 <th scope="col" style="width: 160px; min-width: 160px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Mã hàng</th>
                                 <th scope="col" style="min-width: 180px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên hàng hóa, dịch vụ <span class="text-danger-500">*</span></th>
                                 <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Độ dày</th>
@@ -201,7 +245,7 @@
                                 }
                             @endphp
                             <tr class="order-item-row" data-item-id="{{ $item->id }}">
-                                <td style="width: 45px; min-width: 45px; " class="text-center align-middle border border-neutral-200">
+                                <td style="width: 45px; min-width: 45px; " class="sticky-stt-td text-center align-middle border border-neutral-200">
                                     <span class="row-index font-semibold text-neutral-500">{{ $itemIndex + 1 }}</span>
                                 </td>
                                 <td style="width: 160px; min-width: 160px; " class="border border-neutral-200">
@@ -369,7 +413,7 @@
                 <table class="table bordered-table sm-table mb-0 min-w-[900px] border border-neutral-200" data-order-resize-group="min_late_payment">
                     <thead>
                         <tr class="bg-neutral-50 text-center">
-                            <th scope="col" style="width: 50px; min-width: 50px; white-space: nowrap;" class="text-center border border-neutral-200 font-bold text-xs text-neutral-600 uppercase"><span class="order-stt-header-label">STT</span></th>
+                            <th scope="col" style="width: 50px; min-width: 50px; white-space: nowrap;" class="sticky-stt-th text-center border border-neutral-200 font-bold text-xs text-neutral-600 uppercase"><span class="order-stt-header-label">STT</span></th>
                             <th scope="col" style="white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên nội dung <span class="text-danger-500">*</span></th>
                             <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn vị</th>
                             <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số lượng</th>
@@ -383,7 +427,7 @@
                         @if(isset($acrylicOrder) && $acrylicOrder->type == 'min_late' && isset($acrylicOrder->paymentDetails) && $acrylicOrder->paymentDetails->count() > 0)
                             @foreach($acrylicOrder->paymentDetails as $detailIndex => $detail)
                             <tr class="payment-detail-row">
-                                <td style="width: 50px; min-width: 50px; " class="text-center align-middle border border-neutral-200">
+                                <td style="width: 50px; min-width: 50px; " class="sticky-stt-td text-center align-middle border border-neutral-200">
                                     <span class="detail-index font-semibold text-neutral-500">{{ $detailIndex + 1 }}</span>
                                 </td>
                                 <td class="border border-neutral-200">
@@ -448,7 +492,7 @@ function addMinLateOrderSupply() {
             <table class="table bordered-table sm-table mb-0 min-w-[2000px] border border-neutral-200">
                 <thead>
                     <tr class="bg-neutral-50 text-center">
-                        <th scope="col" style="width: 45px; min-width: 45px; white-space: nowrap;" class="align-middle text-center border border-neutral-200 font-bold text-xs text-neutral-600 uppercase"><span class="order-stt-header-label">STT</span></th>
+                        <th scope="col" style="width: 45px; min-width: 45px; white-space: nowrap;" class="sticky-stt-th align-middle text-center border border-neutral-200 font-bold text-xs text-neutral-600 uppercase"><span class="order-stt-header-label">STT</span></th>
                         <th scope="col" style="width: 160px; min-width: 160px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Mã hàng</th>
                         <th scope="col" style="min-width: 180px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên hàng hóa, dịch vụ <span class="text-danger-500">*</span></th>
                         <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Độ dày</th>
@@ -534,7 +578,7 @@ function addMinLateOrderItem(button) {
     const newItem = document.createElement('tr');
     newItem.className = 'order-item-row';
     newItem.innerHTML = `
-        <td style="width: 45px; min-width: 45px; " class="text-center align-middle border border-neutral-200">
+        <td style="width: 45px; min-width: 45px; " class="sticky-stt-td text-center align-middle border border-neutral-200">
             <span class="row-index font-semibold text-neutral-500">${itemIndex + 1}</span>
         </td>
         <td style="width: 160px; min-width: 160px; " class="border border-neutral-200">
@@ -947,7 +991,7 @@ function addPaymentDetail() {
     const newRow = document.createElement('tr');
     newRow.className = 'payment-detail-row';
     newRow.innerHTML = `
-        <td style="width: 50px; min-width: 50px; " class="text-center align-middle border border-neutral-200">
+        <td style="width: 50px; min-width: 50px; " class="sticky-stt-td text-center align-middle border border-neutral-200">
             <span class="detail-index font-semibold text-neutral-500">${paymentDetailIndex + 1}</span>
         </td>
         <td class="border border-neutral-200">

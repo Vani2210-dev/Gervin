@@ -296,7 +296,7 @@ table[data-order-resize-group="min_late_payment"] th {
 table[data-order-resize-group="min_late_payment"] thead th {
     position: sticky !important;
     top: -1px;
-    z-index: 40 !important;
+    z-index: 10 !important;
     background: #f1f5f9 !important;
     background-clip: padding-box !important;
     border-radius: 0 !important;
@@ -306,7 +306,7 @@ table[data-order-resize-group="min_late_payment"] thead th {
 #glass-supplies-container .order-supply-row table thead tr:first-child th,
 #min-late-supplies-container .order-supply-row table thead tr:first-child th,
 table[data-order-resize-group="min_late_payment"] thead tr:first-child th {
-    z-index: 50 !important;
+    z-index: 11 !important;
 }
 
 table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td {
