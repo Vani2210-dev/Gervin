@@ -43,11 +43,12 @@ async function generateNestingWorkbook(orderData, suppliesData, filename) {
     const hasItems = suppliesData.some(s => s.items && s.items.length > 0);
     if (!hasItems) {
         console.warn(`[Nesting] No items for "${filename}", skipping.`);
-        return;
+        return null;
     }
 
     const wb = new ExcelJS.Workbook();
-    const ws = wb.addWorksheet('Nesting');
+    const wsName = filename.toLowerCase().includes('phao') ? 'Nesting Phào' : 'Nesting';
+    const ws = wb.addWorksheet(wsName);
 
     const thinBorder = {
         top: { style: 'thin', color: { argb: 'FFD1D5DB' } },
@@ -225,7 +226,7 @@ async function generateNestingWorkbook(orderData, suppliesData, filename) {
 
     const buf = await wb.xlsx.writeBuffer();
     const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    saveAs(blob, filename);
+    return blob;
 }
 
 /**
@@ -253,10 +254,15 @@ async function exportNestingFiles() {
     });
 
     const code = orderData.order_code || 'DH';
-    await generateNestingWorkbook(orderData, nestingSupplies, `Nesting-${code}.xlsx`);
-    // Brief pause so browsers don't block the second download
-    await new Promise(r => setTimeout(r, 600));
-    await generateNestingWorkbook(orderData, phaoSupplies, `Nesting-Phao-${code}.xlsx`);
+    const nestingBlob = await generateNestingWorkbook(orderData, nestingSupplies, `Nesting-${code}.xlsx`);
+    const phaoBlob = await generateNestingWorkbook(orderData, phaoSupplies, `Nesting-Phao-${code}.xlsx`);
+
+    if (nestingBlob) {
+        saveAs(nestingBlob, `Nesting-${code}.xlsx`);
+    }
+    if (phaoBlob) {
+        saveAs(phaoBlob, `Nesting-Phao-${code}.xlsx`);
+    }
 }
 
 window.exportNestingFiles = exportNestingFiles;
