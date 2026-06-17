@@ -570,6 +570,17 @@ function addOrderItem(button, isInitial = false) {
     const defaultThickness = price ? (price.thickness || '') : '';
     const defaultUnitPrice = price ? (price.price_m2 ? parseInt(price.price_m2) : 0) : '';
     
+    // Sao chép đơn giá từ dòng cuối nếu có
+    const lastRow = container.querySelector('.order-item-row:last-of-type');
+    let copiedUnitPrice = '';
+    if (lastRow) {
+        const lastUnitPriceInput = lastRow.querySelector('input[name*="[unit_price]"]');
+        if (lastUnitPriceInput && lastUnitPriceInput.value !== '') {
+            copiedUnitPrice = lastUnitPriceInput.value;
+        }
+    }
+    const unitPriceToUse = copiedUnitPrice !== '' ? copiedUnitPrice : defaultUnitPrice;
+    
     const newItem = document.createElement('tr');
     newItem.className = 'order-item-row';
     newItem.innerHTML = `
@@ -651,7 +662,7 @@ function addOrderItem(button, isInitial = false) {
             <input type="hidden" name="supplies[${supplyIndex}][items][${itemIndex}][mill_depth_2]"  class="cnc-mill-depth-2"  value="">
         </td>
         <td style="width: 110px; min-width: 110px; " class="border border-neutral-200">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][unit_price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Đơn giá" min="0" required value="${defaultUnitPrice}">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][unit_price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Đơn giá" min="0" required value="${unitPriceToUse}">
         </td>
         <td style="width: 120px; min-width: 120px; " class="border border-neutral-200">
             <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][total_price]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center px-1 py-1 h-8 text-xs" placeholder="Thành tiền" readonly value="">
@@ -768,21 +779,34 @@ function bindAcrylicRowEvents(row) {
     
     if (heightInput) {
         heightInput.addEventListener('input', () => {
-            applyNarrowWidthRule(row);
+            applyNarrowWidthRule(row, false);
             calculateTotalPrice(row, 'height');
             syncBevelOnSizeChange(row);
         });
     }
     if (widthInput) {
         widthInput.addEventListener('input', () => {
-            applyNarrowWidthRule(row);
             calculateTotalPrice(row, 'width');
             syncBevelOnSizeChange(row);
+            
+            // Dùng debounce để tránh đổi đơn giá liên tục khi người dùng đang nhập số (ví dụ: gõ 120 không bị nhảy xuống 100k ở số 1 và 12)
+            clearTimeout(widthInput.narrowTimeout);
+            widthInput.narrowTimeout = setTimeout(() => {
+                applyNarrowWidthRule(row, true);
+            }, 500);
+        });
+
+        widthInput.addEventListener('blur', () => {
+            if (widthInput.narrowTimeout) {
+                clearTimeout(widthInput.narrowTimeout);
+                widthInput.narrowTimeout = null;
+                applyNarrowWidthRule(row, true);
+            }
         });
     }
     if (quantityInput) {
         quantityInput.addEventListener('input', () => {
-            applyNarrowWidthRule(row);
+            applyNarrowWidthRule(row, false);
             calculateTotalPrice(row, 'quantity');
             updateAcrylicRowIndexes();
         });
@@ -895,7 +919,7 @@ function calculateTotalPrice(row, sourceEvent) {
  * Narrow-width rule: width < 55mm → Phào = (cao × SL) / 1000, Đơn giá = 100.000, Cánh = 0.
  * Width input gets red border as visual warning.
  */
-function applyNarrowWidthRule(row) {
+function applyNarrowWidthRule(row, triggerCalculation = true) {
     const heightInput       = row.querySelector('input[name*="[height]"]');
     const widthInput        = row.querySelector('input[name*="[width]"]');
     const quantityInput     = row.querySelector('input[name*="[quantity]"]');
@@ -959,6 +983,12 @@ function applyNarrowWidthRule(row) {
         widthInput.dataset.lastWidth = width;
     } else {
         delete widthInput.dataset.lastWidth;
+    }
+
+    // Tính toán lại tổng tiền và tóm tắt đơn sau khi áp dụng/hủy quy tắc chiều rộng nhỏ
+    if (triggerCalculation) {
+        calculateTotalPrice(row);
+        updateOrderSummary();
     }
 }
 

@@ -317,6 +317,16 @@ function addGlassOrderItem(button, isInitial = false) {
     // Không sao chép từ sản phẩm cuối
     let lastData = null;
     
+    // Sao chép đơn giá từ dòng cuối nếu có
+    const lastRow = container.querySelector('.order-item-row:last-of-type');
+    let copiedUnitPrice = '';
+    if (lastRow) {
+        const lastUnitPriceInput = lastRow.querySelector('input[name*="[unit_price]"]');
+        if (lastUnitPriceInput && lastUnitPriceInput.value !== '') {
+            copiedUnitPrice = lastUnitPriceInput.value;
+        }
+    }
+    
     const newItem = document.createElement('tr');
     newItem.className = 'order-item-row';
     newItem.innerHTML = `
@@ -357,7 +367,7 @@ function addGlassOrderItem(button, isInitial = false) {
             <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][area_m2]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Khối lượng (m2)" step="0.01" value="${lastData ? lastData.area_m2 : ''}">
         </td>
         <td style="width: 110px; min-width: 110px; " class="border border-neutral-200">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][unit_price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Đơn giá" min="0" required value="${lastData ? lastData.unit_price : ''}">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][unit_price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Đơn giá" min="0" required value="${copiedUnitPrice}">
         </td>
         <td style="width: 120px; min-width: 120px; " class="border border-neutral-200">
             <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][total_price]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center px-1 py-1 h-8 text-xs" placeholder="Thành tiền" readonly value="${lastData ? lastData.total_price : ''}">
