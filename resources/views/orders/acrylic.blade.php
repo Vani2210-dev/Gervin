@@ -290,7 +290,7 @@
                                 <th scope="col" style="width: 80px; min-width: 80px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá <span class="text-danger-500">*</span></th>
                                 <th scope="col" style="width: 90px; min-width: 90px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Thành tiền</th>
                                 <th scope="col" style="min-width: 120px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Ghi chú</th>
-                                <th scope="col" style="width: 60px; min-width: 60px; white-space: nowrap; position: sticky; right: 0; z-index: 3; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Hành động</th>
+                                <th scope="col" style="width: 90px; min-width: 90px; position: sticky; right: 0; z-index: 3; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Hành động</th>
                             </tr>
                         </thead>
                         <tbody class="supply-items-container" data-supply-index="{{ $supplyIndex }}">
@@ -388,8 +388,11 @@
                                 <td style="min-width: 160px;" class="border border-neutral-200">
                                     <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Ghi chú" value="{{ $item->notes }}">
                                 </td>
-                                <td style="width: 80px; min-width: 80px; " class="text-center align-middle border border-neutral-200">
+                                <td style="width: 90px; min-width: 90px; " class="text-center align-middle border border-neutral-200">
                                     <div class="flex items-center gap-1 justify-center">
+                                        <button type="button" onclick="addFakeThicknessRow(this)" class="text-neutral-400 hover:text-warning-500 transition-colors p-1" title="Tạo công giả dày">
+                                            <iconify-icon icon="lucide:layers" class="text-base"></iconify-icon>
+                                        </button>
                                         <button type="button" onclick="duplicateAcrylicRow(this)" class="text-neutral-400 hover:text-primary-500 transition-colors p-1" title="Nhân bản sản phẩm">
                                             <iconify-icon icon="lucide:copy" class="text-base"></iconify-icon>
                                         </button>
@@ -670,8 +673,11 @@ function addOrderItem(button, isInitial = false) {
         <td style="min-width: 160px;" class="border border-neutral-200">
             <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Ghi chú" value="">
         </td>
-        <td style="width: 80px; min-width: 80px; " class="text-center align-middle border border-neutral-200">
+        <td style="width: 90px; min-width: 90px; " class="text-center align-middle border border-neutral-200">
             <div class="flex items-center gap-1 justify-center">
+                <button type="button" onclick="addFakeThicknessRow(this)" class="text-neutral-400 hover:text-warning-500 transition-colors p-1" title="Tạo công giả dày">
+                    <iconify-icon icon="lucide:layers" class="text-base"></iconify-icon>
+                </button>
                 <button type="button" onclick="duplicateAcrylicRow(this)" class="text-neutral-400 hover:text-primary-500 transition-colors p-1" title="Nhân bản sản phẩm">
                     <iconify-icon icon="lucide:copy" class="text-base"></iconify-icon>
                 </button>
@@ -767,6 +773,7 @@ function updateAcrylicRowIndexes() {
 }
 
 function bindAcrylicRowEvents(row) {
+    const productNameInput = row.querySelector('input[name*="[product_name]"]');
     const heightInput = row.querySelector('input[name*="[height]"]');
     const widthInput = row.querySelector('input[name*="[width]"]');
     const quantityInput = row.querySelector('input[name*="[quantity]"]');
@@ -776,6 +783,12 @@ function bindAcrylicRowEvents(row) {
     const bevelInput = row.querySelector('input[name*="[bevel]"]');
     const bevelSelect = row.querySelector('.product-bevel-select');
     const btnSwitch = row.querySelector('.btn-bevel-switch');
+    
+    if (productNameInput) {
+        productNameInput.addEventListener('input', () => {
+            calculateTotalPrice(row);
+        });
+    }
     
     if (heightInput) {
         heightInput.addEventListener('input', () => {
@@ -877,6 +890,89 @@ function duplicateAcrylicRow(button) {
     updateOrderSummary();
 }
 
+function addFakeThicknessRow(button) {
+    const row = button.closest('.order-item-row');
+    const tbody = row.closest('.supply-items-container');
+    const supplyIndex = tbody.dataset.supplyIndex;
+    
+    // Get height and quantity from current row
+    const heightInput = row.querySelector('input[name*="[height]"]');
+    const qtyInput = row.querySelector('input[name*="[quantity]"]');
+    
+    const parentHeight = heightInput ? parseFloat(heightInput.value) || 0 : 0;
+    const parentQty = qtyInput ? parseFloat(qtyInput.value) || 1 : 1;
+    
+    // Calculate wing area: height / 1000 * qty
+    const wingArea = (parentHeight * parentQty) / 1000;
+    const unitPrice = 35000;
+    const totalPrice = Math.round(wingArea * unitPrice);
+    
+    // Create new row
+    const newRow = row.cloneNode(true);
+    
+    // Clean up database ID
+    const idInput = newRow.querySelector('input[name*="[id]"]');
+    if (idInput) idInput.remove();
+    
+    // Set values for the new row
+    const nameInput = newRow.querySelector('input[name*="[product_name]"]');
+    if (nameInput) nameInput.value = "Công giả dày";
+    
+    const thicknessInput = newRow.querySelector('input[name*="[thickness]"]');
+    if (thicknessInput) thicknessInput.value = "";
+    
+    const newHeightInput = newRow.querySelector('input[name*="[height]"]');
+    if (newHeightInput) newHeightInput.value = parentHeight || "";
+    
+    const newWidthInput = newRow.querySelector('input[name*="[width]"]');
+    if (newWidthInput) newWidthInput.value = "";
+    
+    const newQtyInput = newRow.querySelector('input[name*="[quantity]"]');
+    if (newQtyInput) newQtyInput.value = parentQty;
+    
+    const bevelInput = newRow.querySelector('input[name*="[bevel]"]');
+    if (bevelInput) {
+        bevelInput.value = "";
+        bevelInput.setAttribute('data-auto-sync', 'none');
+    }
+    
+    const wingAreaInput = newRow.querySelector('input[name*="[wing_area]"]');
+    if (wingAreaInput) wingAreaInput.value = wingArea > 0 ? wingArea : "";
+    
+    const moldingLengthInput = newRow.querySelector('input[name*="[molding_length]"]');
+    if (moldingLengthInput) moldingLengthInput.value = "";
+    
+    const edgeBevelInput = newRow.querySelector('input[name*="[edge_bevel]"]');
+    if (edgeBevelInput) edgeBevelInput.value = "";
+    
+    const cncSelect = newRow.querySelector('.cnc-template-select');
+    if (cncSelect) cncSelect.value = "";
+    
+    // Clear cnc hidden parameters
+    newRow.querySelectorAll('input[type="hidden"]').forEach(el => {
+        if (!el.name.includes('[id]')) {
+            el.value = "";
+        }
+    });
+    
+    const newUnitPriceInput = newRow.querySelector('input[name*="[unit_price]"]');
+    if (newUnitPriceInput) newUnitPriceInput.value = unitPrice;
+    
+    const newTotalPriceInput = newRow.querySelector('input[name*="[total_price]"]');
+    if (newTotalPriceInput) newTotalPriceInput.value = totalPrice > 0 ? totalPrice : 0;
+    
+    const notesInput = newRow.querySelector('input[name*="[notes]"]');
+    if (notesInput) notesInput.value = "";
+    
+    // Insert after current row
+    row.parentNode.insertBefore(newRow, row.nextSibling);
+    
+    bindAcrylicRowEvents(newRow);
+    initBevelField(newRow);
+    updateAcrylicRowIndexes();
+    updateOrderSummary();
+}
+
 function calculateTotalPrice(row, sourceEvent) {
     const heightInput = row.querySelector('input[name*="[height]"]');
     const widthInput = row.querySelector('input[name*="[width]"]');
@@ -892,14 +988,25 @@ function calculateTotalPrice(row, sourceEvent) {
     const quantity = parseFloat(quantityInput.value) || 0;
     
     if (sourceEvent !== 'wing_area') {
-        if (!isNaN(width) && width > 0 && width < 55) {
-            wingAreaInput.value = 0;
-        } else {
+        const productNameInput = row.querySelector('input[name*="[product_name]"]');
+        const isFakeThickness = productNameInput && productNameInput.value.trim() === "Công giả dày";
+        
+        if (isFakeThickness) {
             let wingArea = 0;
-            if (height > 0 && width > 0 && quantity > 0) {
-                wingArea = (height * width * quantity) / 1000000;
+            if (height > 0 && quantity > 0) {
+                wingArea = (height * quantity) / 1000;
             }
             wingAreaInput.value = wingArea > 0 ? wingArea : '';
+        } else {
+            if (!isNaN(width) && width > 0 && width < 55) {
+                wingAreaInput.value = 0;
+            } else {
+                let wingArea = 0;
+                if (height > 0 && width > 0 && quantity > 0) {
+                    wingArea = (height * width * quantity) / 1000000;
+                }
+                wingAreaInput.value = wingArea > 0 ? wingArea : '';
+            }
         }
     }
     
@@ -928,6 +1035,12 @@ function applyNarrowWidthRule(row, triggerCalculation = true) {
     const unitPriceInput    = row.querySelector('input[name*="[unit_price]"]');
 
     if (!widthInput) return;
+
+    const productNameInput = row.querySelector('input[name*="[product_name]"]');
+    if (productNameInput && productNameInput.value.trim() === "Công giả dày") {
+        widthInput.classList.remove('input-narrow-warning');
+        return;
+    }
 
     const width    = parseFloat(widthInput.value);
     const height   = parseFloat(heightInput ? heightInput.value : 0) || 0;

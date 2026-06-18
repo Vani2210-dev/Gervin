@@ -55,6 +55,8 @@ class WoodBoardController extends Controller
 
     public function store(Request $request)
     {
+        $this->cleanRequestPrices($request);
+
         $request->validate([
             'color_code'  => 'required|string|max:100|unique:wood_boards,color_code',
             'price_group' => 'nullable|string|max:100',
@@ -91,6 +93,8 @@ class WoodBoardController extends Controller
 
     public function update(Request $request, WoodBoard $woodBoard)
     {
+        $this->cleanRequestPrices($request);
+
         $request->validate([
             'color_code'  => 'required|string|max:100|unique:wood_boards,color_code,' . $woodBoard->id,
             'price_group' => 'nullable|string|max:100',
@@ -262,6 +266,8 @@ class WoodBoardController extends Controller
     // Batch Update and Batch Insert Price Groups
     public function batchUpdatePriceGroups(Request $request)
     {
+        $this->cleanRequestPrices($request);
+
         $request->validate([
             'groups'                              => 'nullable|array',
             'groups.*.name'                       => 'required|string|max:255',
@@ -336,5 +342,107 @@ class WoodBoardController extends Controller
         });
 
         return redirect()->back()->with('success', 'Cập nhật cấu hình nhóm giá thành công.');
+    }
+
+    private function cleanRequestPrices(Request $request)
+    {
+        // For store and update: $request->prices is an array of board type ID -> prices data
+        if ($request->has('prices') && is_array($request->prices)) {
+            $prices = $request->prices;
+            foreach ($prices as $typeId => $typeData) {
+                if (isset($typeData['price_board'])) {
+                    $prices[$typeId]['price_board'] = $this->parseVnd($typeData['price_board']);
+                }
+                if (isset($typeData['price_m2'])) {
+                    $prices[$typeId]['price_m2'] = $this->parseVnd($typeData['price_m2']);
+                }
+            }
+            $request->merge(['prices' => $prices]);
+        }
+
+        // For batchUpdatePriceGroups: groups and new_groups
+        if ($request->has('groups') && is_array($request->groups)) {
+            $groups = $request->groups;
+            foreach ($groups as $groupId => $groupData) {
+                if (isset($groupData['prices']) && is_array($groupData['prices'])) {
+                    foreach ($groupData['prices'] as $typeId => $priceData) {
+                        if (isset($priceData['price_board'])) {
+                            $groups[$groupId]['prices'][$typeId]['price_board'] = $this->parseVnd($priceData['price_board']);
+                        }
+                        if (isset($priceData['price_m2'])) {
+                            $groups[$groupId]['prices'][$typeId]['price_m2'] = $this->parseVnd($priceData['price_m2']);
+                        }
+                    }
+                }
+            }
+            $request->merge(['groups' => $groups]);
+        }
+
+        if ($request->has('new_groups') && is_array($request->new_groups)) {
+            $newGroups = $request->new_groups;
+            foreach ($newGroups as $groupId => $groupData) {
+                if (isset($groupData['prices']) && is_array($groupData['prices'])) {
+                    foreach ($groupData['prices'] as $typeId => $priceData) {
+                        if (isset($priceData['price_board'])) {
+                            $newGroups[$groupId]['prices'][$typeId]['price_board'] = $this->parseVnd($priceData['price_board']);
+                        }
+                        if (isset($priceData['price_m2'])) {
+                            $newGroups[$groupId]['prices'][$typeId]['price_m2'] = $this->parseVnd($priceData['price_m2']);
+                        }
+                    }
+                }
+            }
+            $request->merge(['new_groups' => $newGroups]);
+        }
+    }
+
+    private function parseVnd($value)
+    {
+        if (is_null($value) || $value === '') {
+            return 0;
+        }
+        if (is_numeric($value)) {
+            return floatval($value);
+        }
+        
+        $value = trim($value);
+        
+        // If there's both dot and comma (e.g. 1.234.567,89 or 1,234,567.89)
+        if (strpos($value, '.') !== false && strpos($value, ',') !== false) {
+            if (strrpos($value, ',') > strrpos($value, '.')) {
+                $value = str_replace('.', '', $value);
+                $value = str_replace(',', '.', $value);
+            } else {
+                $value = str_replace(',', '', $value);
+            }
+        } else {
+            // Only dots or only commas
+            if (strpos($value, '.') !== false) {
+                $dotsCount = substr_count($value, '.');
+                if ($dotsCount > 1) {
+                    $value = str_replace('.', '', $value);
+                } else {
+                    $parts = explode('.', $value);
+                    if (isset($parts[1]) && strlen($parts[1]) === 3) {
+                        $value = str_replace('.', '', $value);
+                    }
+                }
+            }
+            if (strpos($value, ',') !== false) {
+                $commasCount = substr_count($value, ',');
+                if ($commasCount > 1) {
+                    $value = str_replace(',', '', $value);
+                } else {
+                    $parts = explode(',', $value);
+                    if (isset($parts[1]) && strlen($parts[1]) === 3) {
+                        $value = str_replace(',', '', $value);
+                    } else {
+                        $value = str_replace(',', '.', $value);
+                    }
+                }
+            }
+        }
+        
+        return floatval($value);
     }
 }
