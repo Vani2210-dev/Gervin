@@ -131,8 +131,8 @@ async function generateNestingWorkbook(orderData, suppliesData, filename) {
 
     suppliesData.forEach(supply => {
         (supply.items || []).forEach(item => {
-            const h = parseFloat(item.height) || 0;
-            const w = parseFloat(item.width) || 0;
+            const h = parseFloat((parseFloat(item.height) || 0).toFixed(2));
+            const w = parseFloat((parseFloat(item.width) || 0).toFixed(2));
 
             // Determine edge banding: 'Vát XXX' → if XXX ≈ W → W2='V', if ≈ H → L2='V'
             const bevelText = (item.edge_bevel || '').replace(/[^0-9.]/g, '');
@@ -196,7 +196,7 @@ async function generateNestingWorkbook(orderData, suppliesData, filename) {
                     supply.supply_name || '',                                 // F Vật liệu
                     h,                                                        // G Dài
                     w,                                                        // H Rộng
-                    (!isNaN(parseFloat(item.thickness)) ? parseFloat(item.thickness) : 19), // I Dày
+                    (!isNaN(parseFloat(item.thickness)) ? parseFloat(parseFloat(item.thickness).toFixed(2)) : 19), // I Dày
                     (item.grain_direction !== null && item.grain_direction !== undefined
                         ? parseInt(item.grain_direction) : 0),               // J Chiều vân
                     1,                                                        // K Số lượng (always 1 per expanded sheet row)

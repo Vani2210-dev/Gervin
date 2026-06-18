@@ -18,6 +18,13 @@ class PaymentDetail extends Model
         'total',
     ];
 
+    protected $casts = [
+        'quantity' => 'float',
+        'price' => 'float',
+        'price_only' => 'float',
+        'total' => 'float',
+    ];
+
     public function order()
     {
         return $this->belongsTo(Order::class, 'order_id');

@@ -28,6 +28,11 @@ class GlassOrderItem extends Model
     ];
 
     protected $casts = [
+        'height' => 'float',
+        'width' => 'float',
+        'area_m2' => 'float',
+        'unit_price' => 'float',
+        'total_price' => 'float',
     ];
 
     public function orderSupply()

@@ -27,6 +27,7 @@ class Order extends Model
 
     protected $casts = [
         'deadline' => 'date',
+        'total_amount' => 'float',
     ];
 
     public function customer()

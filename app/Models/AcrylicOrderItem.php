@@ -46,6 +46,12 @@ class AcrylicOrderItem extends Model
     ];
 
     protected $casts = [
+        'height' => 'float',
+        'width' => 'float',
+        'wing_area' => 'float',
+        'molding_length' => 'float',
+        'unit_price' => 'float',
+        'total_price' => 'float',
     ];
 
     public function orderSupply()

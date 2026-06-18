@@ -32,6 +32,13 @@ class MinLateOrderItem extends Model
     protected $casts = [
         'size' => 'array',
         'edge_gluing' => 'array',
+        'straight_paste_length' => 'float',
+        'beveled_length' => 'float',
+        'vat_moi_length' => 'float',
+        'ban_rong_40_59' => 'float',
+        'ban_rong_17_39' => 'float',
+        'ban_rong_25_35' => 'float',
+        'beveled_handle' => 'float',
     ];
 
     public function orderSupply()

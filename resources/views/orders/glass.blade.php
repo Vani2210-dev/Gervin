@@ -183,7 +183,7 @@
                         </div>
                         <input type="text" name="supplies[{{ $supplyIndex }}][order_supply_code]" class="order-supply-code-input form-control form-control-sm rounded-lg w-40 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Mã vật tư" value="{{ $supply->order_supply_code ?? '' }}">
                         <input type="text" name="supplies[{{ $supplyIndex }}][supply_name]" class="form-control form-control-sm rounded-lg w-64 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Tên vật tư (ví dụ: Acrylic, Melamine...)" value="{{ $supply->supply_name }}">
-                        <input type="number" name="supplies[{{ $supplyIndex }}][quantity]" class="form-control form-control-sm rounded-lg w-24 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="SL" min="0" step="0.01" value="{{ $supply->quantity ?? 0 }}">
+                        <input type="number" name="supplies[{{ $supplyIndex }}][quantity]" class="form-control form-control-sm rounded-lg w-24 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="SL" min="0" step="any" value="{{ $supply->quantity ?? 0 }}">
                     </div>
                     <div class="flex items-center gap-2">
                         <button type="button" onclick="this.closest('.order-supply-row').remove()" class="text-neutral-400 hover:text-danger-500 transition-colors p-1 flex items-center justify-center" title="Xóa vật tư này">
@@ -214,7 +214,69 @@
                                 <th scope="col" style="width: 60px; min-width: 60px; white-space: nowrap; position: sticky; right: 0; z-index: 3; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Hành động</th>
                             </tr>
                         </thead>
-                        <tbody class="supply-items-container" data-supply-index="${glassSupplyIndex}">
+                        <tbody class="supply-items-container" data-supply-index="{{ $supplyIndex }}">
+                            @if(isset($supply->glassItems) && $supply->glassItems->count() > 0)
+                                @foreach($supply->glassItems as $itemIndex => $item)
+                                <tr class="order-item-row" data-item-id="{{ $item->id }}">
+                                    <td style="width: 45px; min-width: 45px; " class="sticky-stt-td text-center align-middle border border-neutral-200">
+                                        <span class="row-index font-semibold text-neutral-500">{{ $itemIndex + 1 }}</span>
+                                    </td>
+                                    <td style="width: 160px; min-width: 160px; " class="border border-neutral-200">
+                                        <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][id]" value="{{ $item->id }}">
+                                        <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][product_code]" class="product-code-input form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs font-semibold text-neutral-600" value="{{ $item->product_code }}" readonly>
+                                    </td>
+                                    <td style="min-width: 220px;" class="border border-neutral-200">
+                                        <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][product_name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Tên sản phẩm" value="{{ $item->product_name }}">
+                                    </td>
+                                    <td style="width: 100px; min-width: 100px;" class="border border-neutral-200">
+                                        <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][thickness]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs text-center px-1" placeholder="Độ dày" value="{{ $item->thickness }}">
+                                    </td>
+                                    <td style="width: 110px; min-width: 110px; " class="border border-neutral-200">
+                                        <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][wing_opening_direction]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs text-center px-1" placeholder="Chiều mở cánh" value="{{ $item->wing_opening_direction }}">
+                                    </td>
+                                    <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
+                                        <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][aluminum_color]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs text-center px-1" placeholder="Màu nhôm" value="{{ $item->aluminum_color }}">
+                                    </td>
+                                    <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
+                                        <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][glass_color]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs text-center px-1" placeholder="Màu kính" value="{{ $item->glass_color }}">
+                                    </td>
+                                    <td style="width: 200px; min-width: 200px; " class="border border-neutral-200">
+                                        <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][height]" class="form-control form-control-sm rounded-lg border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500 bg-yellow-50/30 text-center px-1 py-1 h-8 text-xs" placeholder="Dài cánh (mm)" step="any" value="{{ $item->height }}">
+                                    </td>
+                                    <td style="width: 200px; min-width: 200px; " class="border border-neutral-200">
+                                        <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][width]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Rộng cánh (mm)" step="any" value="{{ $item->width }}">
+                                    </td>
+                                    <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
+                                        <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][unit]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs px-1" placeholder="Đơn vị" value="{{ $item->unit ?? 'Bộ' }}">
+                                    </td>
+                                    <td style="width: 70px; min-width: 70px; " class="border border-neutral-200">
+                                        <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][wing_quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Số lượng cánh" min="1" required value="{{ $item->wing_quantity ?? 1 }}">
+                                    </td>
+                                    <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
+                                        <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][area_m2]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Khối lượng (m2)" step="any" value="{{ $item->area_m2 }}">
+                                    </td>
+                                    <td style="width: 110px; min-width: 110px; " class="border border-neutral-200">
+                                        <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][unit_price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Đơn giá" min="0" step="any" required value="{{ $item->unit_price }}">
+                                    </td>
+                                    <td style="width: 120px; min-width: 120px; " class="border border-neutral-200">
+                                        <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][total_price]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center px-1 py-1 h-8 text-xs" placeholder="Thành tiền" step="any" readonly value="{{ $item->total_price }}">
+                                    </td>
+                                    <td style="min-width: 160px;" class="border border-neutral-200">
+                                        <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Ghi chú" value="{{ $item->notes }}">
+                                    </td>
+                                    <td style="width: 80px; min-width: 80px; " class="text-center align-middle border border-neutral-200">
+                                        <div class="flex items-center gap-1 justify-center">
+                                            <button type="button" onclick="duplicateGlassRow(this)" class="text-neutral-400 hover:text-primary-500 transition-colors p-1" title="Nhân bản sản phẩm">
+                                                <iconify-icon icon="lucide:copy" class="text-base"></iconify-icon>
+                                            </button>
+                                            <button type="button" onclick="removeGlassOrderItem(this)" class="text-neutral-400 hover:text-danger-500 transition-colors p-1" title="Xóa sản phẩm">
+                                                <iconify-icon icon="lucide:trash-2" class="text-base"></iconify-icon>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                @endforeach
+                            @endif
                         </tbody>
                     </table>
                     </div>
@@ -352,10 +414,10 @@ function addGlassOrderItem(button, isInitial = false) {
             <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][glass_color]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs text-center px-1" placeholder="Màu kính" value="${lastData ? lastData.glass_color : ''}">
         </td>
         <td style="width: 200px; min-width: 200px; " class="border border-neutral-200">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][height]" class="form-control form-control-sm rounded-lg border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500 bg-yellow-50/30 text-center px-1 py-1 h-8 text-xs" placeholder="Dài cánh (mm)" step="0.01" value="${lastData ? lastData.height : ''}">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][height]" class="form-control form-control-sm rounded-lg border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500 bg-yellow-50/30 text-center px-1 py-1 h-8 text-xs" placeholder="Dài cánh (mm)" step="any" value="${lastData ? lastData.height : ''}">
         </td>
         <td style="width: 200px; min-width: 200px; " class="border border-neutral-200">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][width]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Rộng cánh (mm)" step="0.01" value="${lastData ? lastData.width : ''}">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][width]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Rộng cánh (mm)" step="any" value="${lastData ? lastData.width : ''}">
         </td>
         <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
             <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][unit]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs px-1" placeholder="Đơn vị" value="${lastData ? lastData.unit : 'Bộ'}">
@@ -364,13 +426,13 @@ function addGlassOrderItem(button, isInitial = false) {
             <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][wing_quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Số lượng cánh" min="1" required value="${lastData ? lastData.wing_quantity : '1'}">
         </td>
         <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][area_m2]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Khối lượng (m2)" step="0.01" value="${lastData ? lastData.area_m2 : ''}">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][area_m2]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Khối lượng (m2)" step="any" value="${lastData ? lastData.area_m2 : ''}">
         </td>
         <td style="width: 110px; min-width: 110px; " class="border border-neutral-200">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][unit_price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Đơn giá" min="0" required value="${copiedUnitPrice}">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][unit_price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Đơn giá" min="0" step="any" required value="${copiedUnitPrice}">
         </td>
         <td style="width: 120px; min-width: 120px; " class="border border-neutral-200">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][total_price]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center px-1 py-1 h-8 text-xs" placeholder="Thành tiền" readonly value="${lastData ? lastData.total_price : ''}">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][total_price]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center px-1 py-1 h-8 text-xs" placeholder="Thành tiền" step="any" readonly value="${lastData ? lastData.total_price : ''}">
         </td>
         <td style="min-width: 160px;" class="border border-neutral-200">
             <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Ghi chú" value="${lastData ? lastData.notes : ''}">
@@ -393,13 +455,13 @@ function addGlassOrderItem(button, isInitial = false) {
     updateOrderSummary();
     updateGlassRowIndexes();
 
-    // Tự động cuộn xuống dòng mới thêm và focus vào ô Tên sản phẩm (chỉ khi được thêm thủ công)
+    // Tự động cuộn xuống dòng mới thêm và focus vào ô Chiều mở cánh (chỉ khi được thêm thủ công)
     if (!isInitial) {
         setTimeout(() => {
             newRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            const nameInput = newRow.querySelector('input[name*="[product_name]"]');
-            if (nameInput) {
-                nameInput.focus();
+            const focusInput = newRow.querySelector('input[name*="[wing_opening_direction]"]');
+            if (focusInput) {
+                focusInput.focus();
             }
         }, 50);
     }
@@ -540,7 +602,7 @@ function calculateGlassTotalPrice(row, sourceEvent) {
         if (height > 0 && width > 0 && wingQty > 0) {
             area = (height * width * wingQty) / 1000000;
         }
-        areaInput.value = area > 0 ? area.toFixed(4) : '';
+        areaInput.value = area > 0 ? area : '';
     }
     
     const currentArea = parseFloat(areaInput.value) || 0;
