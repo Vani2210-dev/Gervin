@@ -243,6 +243,8 @@ Route::middleware(['auth'])->group(function () {
 // Customers
 Route::middleware(['auth'])->group(function () {
     Route::resource('customers', CustomerController::class)->names('customers');
+    Route::get('customers/{customer}/overview', [CustomerController::class, 'overview'])->name('customers.overview');
+    Route::post('customers/quick-create', [CustomerController::class, 'quickCreate'])->name('customers.quick-create');
 });
 
 // Orders

@@ -112,11 +112,31 @@ class AcrylicOrderService
         $allAttachments = array_merge($existingAttachments, $attachmentPaths);
         $totalAmount = $this->calculateTotalAmount($request->supplies ?? []);
 
+        // Auto-create or link customer if customer_name filled but no customer_id
+        $customerId = $request->customer_id ?: null;
+        if (!$customerId && $request->filled('customer_name')) {
+            $existing = \App\Models\Customer::where('name', trim($request->customer_name))->first();
+            if ($existing) {
+                $customerId = $existing->id;
+            } else {
+                $lastCustomer = \App\Models\Customer::orderBy('id', 'desc')->first();
+                $nextNumber   = $lastCustomer ? intval(substr($lastCustomer->customer_code, 2)) + 1 : 1;
+                $customerCode = 'KH' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+                $newCustomer = \App\Models\Customer::create([
+                    'customer_code' => $customerCode,
+                    'name'          => trim($request->customer_name),
+                    'phone'         => $request->phone,
+                    'address'       => $request->address,
+                ]);
+                $customerId = $newCustomer->id;
+            }
+        }
+
         $order->update([
             'type'          => $request->type ?? 'acrylic',
             'order_date'    => $request->order_date,
             'delivery_days' => $request->delivery_days,
-            'customer_id'   => $request->customer_id,
+            'customer_id'   => $customerId,
             'customer_name' => $request->customer_name,
             'phone'         => $request->phone,
             'address'       => $request->address,

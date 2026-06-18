@@ -98,6 +98,13 @@
                                 </td>
                                 <td class="text-center">
                                     <div class="flex items-center gap-3 justify-center">
+                                        {{-- Nút xem tổng quan --}}
+                                        <button type="button"
+                                            onclick="openCustomerOverview({{ $c->id }}, '{{ addslashes($c->customer_code) }}', '{{ addslashes($c->name) }}')"
+                                            class="bg-primary-100 hover:bg-primary-200 text-primary-600 font-medium w-10 h-10 flex justify-center items-center rounded-full"
+                                            title="Xem tổng quan">
+                                            <iconify-icon icon="lucide:bar-chart-2" class="menu-icon"></iconify-icon>
+                                        </button>
                                         @can('edit customer')
                                         <button type="button"
                                             onclick="openEditModal({{ $c->id }}, '{{ addslashes($c->customer_code) }}', '{{ addslashes($c->name) }}', '{{ addslashes($c->phone) }}', '{{ addslashes($c->address) }}')"
@@ -153,6 +160,12 @@
         @csrf
         <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="form-group md:col-span-2">
+                <label class="form-label font-semibold text-sm text-neutral-600">Mã khách hàng
+                    <span class="text-xs font-normal text-neutral-400 ml-1">(để trống sẽ tự tạo tự động)</span>
+                </label>
+                <input type="text" name="customer_code" class="form-control rounded-lg" placeholder="VD: KH00001 — hoặc để trống" value="{{ old('customer_code') }}">
+            </div>
+            <div class="form-group md:col-span-2">
                 <label class="form-label font-semibold text-sm text-neutral-600">Tên khách hàng <span class="text-danger-500">*</span></label>
                 <input type="text" name="name" class="form-control rounded-lg" placeholder="Nhập tên khách hàng" required value="{{ old('name') }}">
             </div>
@@ -185,7 +198,7 @@
         <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="form-group md:col-span-2">
                 <label class="form-label font-semibold text-sm text-neutral-600">Mã khách hàng</label>
-                <input type="text" id="edit_customer_code" name="customer_code" class="form-control rounded-lg bg-neutral-100" readonly>
+                <input type="text" id="edit_customer_code" name="customer_code" class="form-control rounded-lg">
             </div>
             <div class="form-group md:col-span-2">
                 <label class="form-label font-semibold text-sm text-neutral-600">Tên khách hàng <span class="text-danger-500">*</span></label>
@@ -248,5 +261,194 @@ function openEditModal(id, customerCode, name, phone, address) {
         </div>
     </form>
 </x-modal>
+
+{{-- Modal Tổng quan khách hàng --}}
+<div id="customer-overview-backdrop"
+    style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:1050;"
+    onclick="closeCustomerOverview()">
+</div>
+<div id="customer-overview-modal"
+    style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); width:min(800px,95vw); max-height:90vh; overflow-y:auto;
+           background:#fff; border-radius:16px; box-shadow:0 25px 60px rgba(0,0,0,0.25); z-index:1051;">
+
+    {{-- Header --}}
+    <div style="background:linear-gradient(135deg,#6366f1,#8b5cf6); border-radius:16px 16px 0 0; padding:24px 28px 20px;" class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div style="background:rgba(255,255,255,0.2); border-radius:10px; padding:10px;">
+                <iconify-icon icon="lucide:user-circle" style="font-size:26px; color:#fff;"></iconify-icon>
+            </div>
+            <div>
+                <div id="ov-name" style="font-size:18px; font-weight:700; color:#fff;">—</div>
+                <div id="ov-code" style="font-size:12px; color:rgba(255,255,255,0.75); margin-top:2px;">—</div>
+            </div>
+        </div>
+        <button onclick="closeCustomerOverview()" style="background:rgba(255,255,255,0.15); border:none; border-radius:8px; width:36px; height:36px; cursor:pointer; display:flex; align-items:center; justify-content:center;">
+            <iconify-icon icon="lucide:x" style="font-size:18px; color:#fff;"></iconify-icon>
+        </button>
+    </div>
+
+    {{-- Loading --}}
+    <div id="ov-loading" style="padding:60px; text-align:center; display:none;">
+        <iconify-icon icon="lucide:loader-2" style="font-size:36px; color:#8b5cf6; animation:ov-spin 1s linear infinite;"></iconify-icon>
+        <div style="margin-top:12px; color:#6b7280;">Đang tải...</div>
+    </div>
+
+    {{-- Content --}}
+    <div id="ov-content" style="padding:24px 28px; display:none;">
+        {{-- Stat cards --}}
+        <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:22px;" id="ov-stats-grid"></div>
+
+        {{-- Status breakdown --}}
+        <div style="margin-bottom:22px;">
+            <div style="font-size:13px; font-weight:600; color:#374151; margin-bottom:10px; display:flex; align-items:center; gap:6px;">
+                <iconify-icon icon="lucide:pie-chart" style="color:#8b5cf6;"></iconify-icon>
+                Phân bổ trạng thái đơn hàng
+            </div>
+            <div id="ov-status-grid" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
+        </div>
+
+        {{-- Recent orders --}}
+        <div>
+            <div style="font-size:13px; font-weight:600; color:#374151; margin-bottom:10px; display:flex; align-items:center; gap:6px;">
+                <iconify-icon icon="lucide:list" style="color:#8b5cf6;"></iconify-icon>
+                10 đơn hàng gần nhất
+            </div>
+            <div style="overflow-x:auto;">
+                <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                    <thead>
+                        <tr style="background:#f8fafc;">
+                            <th style="padding:8px 10px; text-align:left; color:#64748b; font-weight:600; border-bottom:1px solid #e2e8f0;">Mã đơn</th>
+                            <th style="padding:8px 10px; text-align:left; color:#64748b; font-weight:600; border-bottom:1px solid #e2e8f0;">Ngày</th>
+                            <th style="padding:8px 10px; text-align:right; color:#64748b; font-weight:600; border-bottom:1px solid #e2e8f0;">Giá trị</th>
+                            <th style="padding:8px 10px; text-align:right; color:#64748b; font-weight:600; border-bottom:1px solid #e2e8f0;">Đã thu</th>
+                            <th style="padding:8px 10px; text-align:right; color:#64748b; font-weight:600; border-bottom:1px solid #e2e8f0;">Còn nợ</th>
+                            <th style="padding:8px 10px; text-align:center; color:#64748b; font-weight:600; border-bottom:1px solid #e2e8f0;">Trạng thái</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ov-orders-tbody"></tbody>
+                </table>
+                <div id="ov-no-orders" style="display:none; text-align:center; padding:30px; color:#94a3b8; font-size:13px;">
+                    <iconify-icon icon="lucide:package-open" style="font-size:28px;"></iconify-icon>
+                    <div style="margin-top:8px;">Chưa có đơn hàng nào</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes ov-spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+@media(max-width:600px){
+    #ov-stats-grid { grid-template-columns: repeat(2,1fr) !important; }
+}
+</style>
+
+<script>
+const ovStatusColors = {
+    draft:         { bg:'#f1f5f9', text:'#64748b' },
+    pending:       { bg:'#fef9c3', text:'#854d0e' },
+    processing:    { bg:'#dbeafe', text:'#1d4ed8' },
+    in_production: { bg:'#ede9fe', text:'#6d28d9' },
+    completed:     { bg:'#dcfce7', text:'#15803d' },
+    cancelled:     { bg:'#fee2e2', text:'#b91c1c' },
+};
+
+function ovFmt(n) {
+    if (!n && n !== 0) return '0';
+    return Number(n).toLocaleString('vi-VN');
+}
+
+function openCustomerOverview(id, code, name) {
+    const backdrop = document.getElementById('customer-overview-backdrop');
+    const modal    = document.getElementById('customer-overview-modal');
+    const loading  = document.getElementById('ov-loading');
+    const content  = document.getElementById('ov-content');
+
+    document.getElementById('ov-name').textContent = name;
+    document.getElementById('ov-code').textContent = code;
+
+    backdrop.style.display = 'block';
+    modal.style.display    = 'block';
+    loading.style.display  = 'block';
+    content.style.display  = 'none';
+
+    fetch(`/customers/${id}/overview`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(r => r.json())
+        .then(data => {
+            loading.style.display = 'none';
+            content.style.display = 'block';
+            renderCustomerOverview(data);
+        })
+        .catch(() => {
+            loading.style.display = 'none';
+            content.style.display = 'block';
+            content.innerHTML = '<div style="text-align:center;color:#ef4444;padding:40px;">Không thể tải dữ liệu.</div>';
+        });
+}
+
+function closeCustomerOverview() {
+    document.getElementById('customer-overview-backdrop').style.display = 'none';
+    document.getElementById('customer-overview-modal').style.display    = 'none';
+}
+
+function renderCustomerOverview(data) {
+    const statusLabels = {
+        draft:'Nháp', pending:'Chờ xử lý', processing:'Đang xử lý',
+        in_production:'Đang sản xuất', completed:'Hoàn thành', cancelled:'Đã hủy'
+    };
+
+    // Stat cards
+    const cards = [
+        { label:'Tổng đơn hàng', value: data.total_orders,                  icon:'lucide:shopping-bag',      bg:'#ede9fe', iconColor:'#7c3aed' },
+        { label:'Tổng giá trị',  value: ovFmt(data.total_amount) + '₫',     icon:'lucide:circle-dollar-sign', bg:'#dbeafe', iconColor:'#1d4ed8' },
+        { label:'Đã thu',        value: ovFmt(data.total_paid) + '₫',        icon:'lucide:check-circle',       bg:'#dcfce7', iconColor:'#15803d' },
+        { label:'Còn nợ',        value: ovFmt(data.total_debt) + '₫',        icon:'lucide:alert-circle',
+          bg: data.total_debt > 0 ? '#fee2e2' : '#f0fdf4',
+          iconColor: data.total_debt > 0 ? '#b91c1c' : '#15803d' },
+    ];
+    document.getElementById('ov-stats-grid').innerHTML = cards.map(s => `
+        <div style="background:#f8fafc; border-radius:12px; padding:16px; display:flex; flex-direction:column; gap:8px;">
+            <div style="width:36px; height:36px; background:${s.bg}; border-radius:8px; display:flex; align-items:center; justify-content:center;">
+                <iconify-icon icon="${s.icon}" style="color:${s.iconColor}; font-size:18px;"></iconify-icon>
+            </div>
+            <div style="font-size:11px; color:#64748b; font-weight:500;">${s.label}</div>
+            <div style="font-size:16px; font-weight:700; color:#0f172a;">${s.value}</div>
+        </div>
+    `).join('');
+
+    // Status tags
+    const statusHtml = Object.entries(data.status_counts || {}).map(([s, cnt]) => {
+        const c = ovStatusColors[s] || { bg:'#f1f5f9', text:'#64748b' };
+        return `<span style="background:${c.bg}; color:${c.text}; padding:4px 12px; border-radius:999px; font-size:11px; font-weight:600;">${statusLabels[s]||s}: ${cnt}</span>`;
+    }).join('');
+    document.getElementById('ov-status-grid').innerHTML = statusHtml || '<span style="color:#94a3b8;font-size:12px;">Chưa có đơn hàng</span>';
+
+    // Orders table
+    const tbody = document.getElementById('ov-orders-tbody');
+    const noOv  = document.getElementById('ov-no-orders');
+    if (!data.recent_orders || data.recent_orders.length === 0) {
+        tbody.innerHTML = '';
+        noOv.style.display = 'block';
+    } else {
+        noOv.style.display = 'none';
+        tbody.innerHTML = data.recent_orders.map(o => {
+            const c = ovStatusColors[o.status] || { bg:'#f1f5f9', text:'#64748b' };
+            const debtStyle = o.debt > 0 ? 'color:#b91c1c;font-weight:600;' : 'color:#15803d;';
+            return `<tr style="border-bottom:1px solid #f1f5f9;">
+                <td style="padding:9px 10px;">
+                    <a href="/orders/${o.id}" target="_blank" style="color:#6366f1;font-weight:600;text-decoration:none;">${o.order_code||'—'}</a>
+                </td>
+                <td style="padding:9px 10px; color:#374151;">${o.order_date ? String(o.order_date).substr(0,10) : '—'}</td>
+                <td style="padding:9px 10px; text-align:right; color:#0f172a;">${ovFmt(o.total_amount)}₫</td>
+                <td style="padding:9px 10px; text-align:right; color:#15803d;">${ovFmt(o.paid)}₫</td>
+                <td style="padding:9px 10px; text-align:right; ${debtStyle}">${ovFmt(o.debt)}₫</td>
+                <td style="padding:9px 10px; text-align:center;">
+                    <span style="background:${c.bg}; color:${c.text}; padding:3px 10px; border-radius:999px; font-size:10px; font-weight:600; white-space:nowrap;">${o.status_label}</span>
+                </td>
+            </tr>`;
+        }).join('');
+    }
+}
+</script>
 
 @endsection
