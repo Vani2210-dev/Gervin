@@ -65,6 +65,7 @@ class AcrylicOrderService
             'supplies.*.items.*.mill_bottom_2'        => 'nullable|integer',
             'supplies.*.items.*.mill_width_2'         => 'nullable|integer',
             'supplies.*.items.*.mill_depth_2'         => 'nullable|integer',
+            'supplies.*.items.*.is_labor'              => 'nullable|in:0,1',
         ];
     }
 
@@ -252,20 +253,27 @@ class AcrylicOrderService
                     'mill_depth_2'        => isset($item['mill_depth_2'])  && $item['mill_depth_2']  !== '' ? intval($item['mill_depth_2'])  : null,
                 ]);
 
-                // Always regenerate codes from order_code + supply_code + global sequential index
-                // Never parse product_code from the form — supply codes may contain dots (e.g. 'GV05.TP')
-                // causing explode('.') to split incorrectly and produce wrong codes.
-                $supplyCodePart = $orderSupply->order_supply_code ?? '';
-                $prefix = $order->order_code . ($supplyCodePart !== '' ? '.' . $supplyCodePart : '');
+                // Labor rows (Công giả dày) do NOT get item codes — they are billing-only rows
+                $isLabor = !empty($item['is_labor']) && $item['is_labor'] == '1';
+                $isLabor = $isLabor || (($item['product_name'] ?? '') === 'Công giả dày');
 
-                $qty = intval($item['quantity']) ?: 1;
-                for ($i = 0; $i < $qty; $i++) {
-                    $orderItem->codes()->create([
-                        'product_id' => $prefix . '.' . ($globalPieceIndex + $i),
-                        'status'     => [],
-                    ]);
+                if (!$isLabor) {
+                    // Always regenerate codes from order_code + supply_code + global sequential index
+                    // Never parse product_code from the form — supply codes may contain dots (e.g. 'GV05.TP')
+                    // causing explode('.') to split incorrectly and produce wrong codes.
+                    $supplyCodePart = $orderSupply->order_supply_code ?? '';
+                    $prefix = $order->order_code . ($supplyCodePart !== '' ? '.' . $supplyCodePart : '');
+
+                    $qty = intval($item['quantity']) ?: 1;
+                    for ($i = 0; $i < $qty; $i++) {
+                        $orderItem->codes()->create([
+                            'product_id' => $prefix . '.' . ($globalPieceIndex + $i),
+                            'status'     => [],
+                        ]);
+                    }
+                    $globalPieceIndex += $qty;
                 }
-                $globalPieceIndex += $qty;
+                // else: labor row — no codes, globalPieceIndex unchanged
             }
         }
     }
