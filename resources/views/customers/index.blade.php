@@ -264,27 +264,19 @@ function openEditModal(id, customerCode, name, phone, address) {
 
 {{-- Modal Tổng quan khách hàng --}}
 <div id="customer-overview-backdrop"
-    style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:1050;"
+    style="display:none;" class="fixed inset-0 bg-neutral-900/50 z-[1050] backdrop-blur-sm transition-opacity"
     onclick="closeCustomerOverview()">
 </div>
 <div id="customer-overview-modal"
-    style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); width:min(800px,95vw); max-height:90vh; overflow-y:auto;
-           background:#fff; border-radius:16px; box-shadow:0 25px 60px rgba(0,0,0,0.25); z-index:1051;">
+    style="display:none;" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(800px,95vw)] max-h-[90vh] overflow-y-auto bg-white rounded-2xl shadow-xl z-[1051]">
 
     {{-- Header --}}
-    <div style="background:linear-gradient(135deg,#6366f1,#8b5cf6); border-radius:16px 16px 0 0; padding:24px 28px 20px;" class="flex items-center justify-between">
-        <div class="flex items-center gap-3">
-            <div style="background:rgba(255,255,255,0.2); border-radius:10px; padding:10px;">
-                <iconify-icon icon="lucide:user-circle" style="font-size:26px; color:#fff;"></iconify-icon>
-            </div>
-            <div>
-                <div id="ov-name" style="font-size:18px; font-weight:700; color:#fff;">—</div>
-                <div id="ov-code" style="font-size:12px; color:rgba(255,255,255,0.75); margin-top:2px;">—</div>
-            </div>
-        </div>
-        <button onclick="closeCustomerOverview()" style="background:rgba(255,255,255,0.15); border:none; border-radius:8px; width:36px; height:36px; cursor:pointer; display:flex; align-items:center; justify-content:center;">
-            <iconify-icon icon="lucide:x" style="font-size:18px; color:#fff;"></iconify-icon>
-        </button>
+    <div class="px-6 py-4 border-b border-neutral-200 flex items-center justify-between sticky top-0 bg-white z-10">
+        <h5 class="font-semibold text-base m-0 flex items-baseline gap-2">
+            <span id="ov-name" class="text-neutral-800">—</span>
+            <span id="ov-code" class="text-xs font-normal text-neutral-500 bg-neutral-100 px-2 py-0.5 rounded-md">—</span>
+        </h5>
+        <button type="button" onclick="closeCustomerOverview()" class="text-neutral-400 hover:text-neutral-700 text-2xl leading-none bg-transparent border-none cursor-pointer p-0 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-neutral-100 transition-colors">&times;</button>
     </div>
 
     {{-- Loading --}}
