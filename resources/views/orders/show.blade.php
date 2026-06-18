@@ -431,7 +431,7 @@
                 <div class="border-t border-neutral-100 pt-3 flex justify-between items-center">
                     <span class="text-base font-bold text-neutral-800">Tổng thanh toán:</span>
                     <span class="text-lg font-black text-primary-600" id="summary-total-amount">
-                        {{ number_format($acrylicOrder->total_amount, 0, ',', '.') }} VNĐ
+                        {{ number_format(round($acrylicOrder->total_amount, -3), 0, ',', '.') }} VNĐ
                     </span>
                 </div>
             </div>
@@ -492,7 +492,7 @@
         'address' => $acrylicOrder->address,
         'notes' => $acrylicOrder->notes,
         'customer_policy' => $acrylicOrder->customer_policy,
-        'total_amount' => $acrylicOrder->total_amount,
+        'total_amount' => round($acrylicOrder->total_amount, -3),
         'delivery_days' => $acrylicOrder->delivery_days ?? ($acrylicOrder->type === 'glass' ? 5 : 2),
         'supplies' => $acrylicOrder->supplies->map(function($supply) use ($acrylicOrder) {
             $items = [];

@@ -80,7 +80,7 @@
                                         </td>
                                         <td>
                                             <span class="text-base text-secondary-light font-semibold">
-                                                {{ number_format($order->total_amount, 0, ',', '.') }} VNĐ
+                                                {{ number_format(round($order->total_amount, -3), 0, ',', '.') }} VNĐ
                                             </span>
                                         </td>
                                         <td>

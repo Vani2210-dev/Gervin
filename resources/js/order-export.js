@@ -324,7 +324,7 @@ async function exportToExcel() {
             totalRow.getCell(11).font = { name: 'Times New Roman', size: 11, bold: true };
             totalRow.getCell(11).alignment = { horizontal: 'center', vertical: 'middle' };
 
-            totalRow.getCell(12).value = parseFloat(orderData.total_amount);
+            totalRow.getCell(12).value = Math.round(parseFloat(orderData.total_amount) / 1000) * 1000;
             totalRow.getCell(12).font = { name: 'Times New Roman', size: 11, bold: true, color: { argb: 'FFDC2626' } };
             totalRow.getCell(12).numFmt = '#,##0';
             totalRow.getCell(12).alignment = { horizontal: 'center', vertical: 'middle' };
@@ -671,7 +671,7 @@ async function exportToExcel() {
             totalRow.getCell(11).font = { name: 'Times New Roman', size: 11, bold: true };
             totalRow.getCell(11).alignment = { horizontal: 'center', vertical: 'middle' };
 
-            totalRow.getCell(13).value = parseFloat(orderData.total_amount);
+            totalRow.getCell(13).value = Math.round(parseFloat(orderData.total_amount) / 1000) * 1000;
             totalRow.getCell(13).font = { name: 'Times New Roman', size: 11, bold: true, color: { argb: 'FFDC2626' } };
             totalRow.getCell(13).numFmt = '#,##0';
             totalRow.getCell(13).alignment = { horizontal: 'center', vertical: 'middle' };
@@ -939,7 +939,7 @@ async function exportToExcel() {
                 sumRow.getCell(16).font = { name: 'Times New Roman', size: 11, bold: true };
                 sumRow.getCell(16).alignment = { horizontal: 'center', vertical: 'middle' };
 
-                sumRow.getCell(17).value = parseFloat(orderData.total_amount);
+                sumRow.getCell(17).value = Math.round(parseFloat(orderData.total_amount) / 1000) * 1000;
                 sumRow.getCell(17).font = { name: 'Times New Roman', size: 11, bold: true, color: { argb: 'FFDC2626' } };
                 sumRow.getCell(17).numFmt = '#,##0';
                 sumRow.getCell(17).alignment = { horizontal: 'center', vertical: 'middle' };
@@ -963,7 +963,7 @@ async function exportToExcel() {
                 remainRow.getCell(16).font = { name: 'Times New Roman', size: 11, bold: true };
                 remainRow.getCell(16).alignment = { horizontal: 'center', vertical: 'middle' };
 
-                remainRow.getCell(17).value = parseFloat(orderData.total_amount);
+                remainRow.getCell(17).value = Math.round(parseFloat(orderData.total_amount) / 1000) * 1000;
                 remainRow.getCell(17).font = { name: 'Times New Roman', size: 11, bold: true };
                 remainRow.getCell(17).numFmt = '#,##0';
                 remainRow.getCell(17).alignment = { horizontal: 'center', vertical: 'middle' };

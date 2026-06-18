@@ -173,7 +173,7 @@ class MinLateOrderService
         foreach ($paymentDetails as $detail) {
             $totalAmount += round($detail['total'] ?? 0);
         }
-        return round($totalAmount);
+        return round($totalAmount, -3);
     }
 
     /**

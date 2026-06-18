@@ -177,7 +177,7 @@ class AcrylicOrderService
                 $totalAmount += $itemTotal;
             }
         }
-        return round($totalAmount);
+        return round($totalAmount, -3);
     }
 
     /**

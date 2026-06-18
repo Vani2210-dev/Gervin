@@ -160,7 +160,7 @@ class GlassOrderService
                 $totalAmount += $itemTotal;
             }
         }
-        return round($totalAmount);
+        return round($totalAmount, -3);
     }
 
     /**

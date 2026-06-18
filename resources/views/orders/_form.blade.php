@@ -632,8 +632,9 @@ function updateOrderSummary() {
     if (totalItemsEl) totalItemsEl.textContent = totalItems;
     if (totalSheetsEl) totalSheetsEl.textContent = totalSheets + ' tấm';
     if (totalAreaEl) totalAreaEl.textContent = totalArea.toFixed(3) + ' m²';
-    if (totalAmountEl) totalAmountEl.textContent = Math.round(totalAmount).toLocaleString('vi-VN') + ' VNĐ';
-    if (grandTotalEl) grandTotalEl.textContent = Math.round(totalAmount).toLocaleString('vi-VN') + ' VNĐ';
+    const roundedTotalAmount = Math.round(totalAmount / 1000) * 1000;
+    if (totalAmountEl) totalAmountEl.textContent = roundedTotalAmount.toLocaleString('vi-VN') + ' VNĐ';
+    if (grandTotalEl) grandTotalEl.textContent = roundedTotalAmount.toLocaleString('vi-VN') + ' VNĐ';
 }
 
 function getOrderSuppliesPanel(element) {
@@ -1959,3 +1960,12 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 @endif
 
+
+<script>
+// Prevent mouse wheel from changing number input values
+document.addEventListener('wheel', function(event) {
+    if (document.activeElement.type === 'number') {
+        document.activeElement.blur();
+    }
+});
+</script>
