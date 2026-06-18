@@ -133,15 +133,15 @@ class CustomerController extends Controller
     public function overview(Customer $customer)
     {
         $orders = \App\Models\Order::where('customer_id', $customer->id)
-            ->with('paymentDetails')
+            ->with('orderPayments')
             ->orderBy('order_date', 'desc')
             ->get();
 
-        $totalOrders   = $orders->count();
-        $totalAmount   = $orders->sum('total_amount');
+        $totalOrders = $orders->count();
+        $totalAmount = $orders->sum('total_amount');
 
-        // Tổng số tiền đã thu (từ payment_details)
-        $totalPaid = $orders->flatMap->paymentDetails->sum('price_only');
+        // Tổng đã thu = tổng các đợt thanh toán thực tế (order_payments)
+        $totalPaid = $orders->flatMap->orderPayments->sum('amount');
 
         $statusLabels = [
             'draft'         => 'Nháp',
@@ -155,16 +155,17 @@ class CustomerController extends Controller
         $statusCounts = $orders->groupBy('status')->map->count();
 
         $recentOrders = $orders->take(10)->map(function ($o) use ($statusLabels) {
-            $paid = $o->paymentDetails->sum('price_only');
+            $paid = $o->orderPayments->sum('amount');
             return [
-                'id'          => $o->id,
-                'order_code'  => $o->order_code,
-                'order_date'  => $o->order_date,
-                'status'      => $o->status,
-                'status_label'=> $statusLabels[$o->status] ?? $o->status,
-                'total_amount'=> $o->total_amount,
-                'paid'        => $paid,
-                'debt'        => max(0, ($o->total_amount ?? 0) - $paid),
+                'id'           => $o->id,
+                'order_code'   => $o->order_code,
+                'order_date'   => $o->order_date,
+                'status'       => $o->status,
+                'status_label' => $statusLabels[$o->status] ?? $o->status,
+                'total_amount' => $o->total_amount,
+                'paid'         => $paid,
+                'debt'         => max(0, ($o->total_amount ?? 0) - $paid),
+                'payments_count' => $o->orderPayments->count(),
             ];
         });
 

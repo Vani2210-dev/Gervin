@@ -67,7 +67,7 @@ class OrderController extends Controller
 
     public function show(Order $order)
     {
-        $order->load(['supplies.items.codes', 'supplies.minLateItems', 'supplies.glassItems', 'paymentDetails']);
+        $order->load(['supplies.items.codes', 'supplies.minLateItems', 'supplies.glassItems', 'paymentDetails', 'orderPayments.creator']);
         $acrylicOrder = $order;
         return view('orders.show', compact('acrylicOrder'));
     }

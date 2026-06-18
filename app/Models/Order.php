@@ -59,5 +59,10 @@ class Order extends Model
     {
         return $this->hasMany(PaymentDetail::class, 'order_id');
     }
+
+    public function orderPayments()
+    {
+        return $this->hasMany(OrderPayment::class, 'order_id')->orderBy('payment_date');
+    }
 }
 

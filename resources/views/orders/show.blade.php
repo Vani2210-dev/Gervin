@@ -437,6 +437,151 @@
             </div>
         </div>
 
+        {{-- ===== THANH TOÁN ===== --}}
+        @php
+            $payments    = $acrylicOrder->orderPayments ?? collect();
+            $totalPaid   = $payments->sum('amount');
+            $totalAmount = $acrylicOrder->total_amount ?? 0;
+            $totalDebt   = max(0, $totalAmount - $totalPaid);
+            $paidPct     = $totalAmount > 0 ? min(100, round($totalPaid / $totalAmount * 100)) : 0;
+        @endphp
+        <div class="card p-0 rounded-xl border-0 overflow-hidden shadow-sm bg-white">
+            <div class="card-header border-b border-neutral-200 bg-white py-4 px-6 flex items-center gap-2">
+                <iconify-icon icon="lucide:wallet" class="text-xl text-violet-500"></iconify-icon>
+                <h6 class="font-bold text-base text-neutral-800 m-0 flex-1">Thanh toán</h6>
+                @if($paidPct >= 100)
+                    <span class="text-xs px-2 py-0.5 rounded-full bg-success-100 text-success-600 font-semibold">Đã thanh toán đủ</span>
+                @elseif($totalPaid > 0)
+                    <span class="text-xs px-2 py-0.5 rounded-full bg-warning-100 text-warning-600 font-semibold">{{ $paidPct }}%</span>
+                @endif
+            </div>
+            <div class="p-5 space-y-4">
+                {{-- Stat row --}}
+                <div class="grid grid-cols-3 gap-2 text-center">
+                    <div class="bg-neutral-50 rounded-lg p-3">
+                        <div class="text-xs text-neutral-400 font-medium mb-1">Tổng đơn</div>
+                        <div class="text-sm font-bold text-neutral-800">{{ number_format(round($totalAmount,-3),0,',','.') }}₫</div>
+                    </div>
+                    <div class="bg-success-50 rounded-lg p-3">
+                        <div class="text-xs text-success-500 font-medium mb-1">Đã thu</div>
+                        <div class="text-sm font-bold text-success-600">{{ number_format($totalPaid,0,',','.') }}₫</div>
+                    </div>
+                    <div class="rounded-lg p-3 {{ $totalDebt > 0 ? 'bg-danger-50' : 'bg-success-50' }}">
+                        <div class="text-xs font-medium mb-1 {{ $totalDebt > 0 ? 'text-danger-500' : 'text-success-500' }}">Còn nợ</div>
+                        <div class="text-sm font-bold {{ $totalDebt > 0 ? 'text-danger-600' : 'text-success-600' }}">{{ number_format($totalDebt,0,',','.') }}₫</div>
+                    </div>
+                </div>
+
+                {{-- Progress bar --}}
+                <div>
+                    <div class="flex justify-between text-xs text-neutral-400 mb-1">
+                        <span>Tiến độ thanh toán</span>
+                        <span>{{ $paidPct }}%</span>
+                    </div>
+                    <div class="w-full bg-neutral-100 rounded-full h-2 overflow-hidden">
+                        <div class="h-2 rounded-full transition-all {{ $paidPct >= 100 ? 'bg-success-500' : ($paidPct > 0 ? 'bg-warning-400' : 'bg-neutral-200') }}"
+                            style="width:{{ $paidPct }}%"></div>
+                    </div>
+                </div>
+
+                {{-- Payment history --}}
+                @if($payments->count() > 0)
+                <div>
+                    <div class="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-2">Lịch sử thanh toán</div>
+                    <div class="space-y-2 max-h-56 overflow-y-auto pr-1">
+                        @foreach($payments as $pmt)
+                        <div class="flex items-start gap-2 bg-neutral-50 rounded-lg px-3 py-2 group">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <span class="text-xs font-semibold text-neutral-700">{{ $pmt->payment_date->format('d/m/Y') }}</span>
+                                    <span class="text-xs px-1.5 py-0.5 rounded font-medium
+                                        {{ $pmt->payment_method === 'cash' ? 'bg-amber-100 text-amber-700' : ($pmt->payment_method === 'transfer' ? 'bg-blue-100 text-blue-700' : 'bg-neutral-200 text-neutral-600') }}">
+                                        {{ \App\Models\OrderPayment::methodLabel($pmt->payment_method) }}
+                                    </span>
+                                </div>
+                                <div class="text-sm font-bold text-success-600 mt-0.5">+{{ number_format($pmt->amount,0,',','.') }}₫</div>
+                                @if($pmt->note)
+                                    <div class="text-xs text-neutral-400 mt-0.5 truncate">{{ $pmt->note }}</div>
+                                @endif
+                            </div>
+                            <div class="flex-shrink-0 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button type="button"
+                                    onclick="openEditPayment({{ $pmt->id }}, '{{ $pmt->payment_date->format('Y-m-d') }}', {{ $pmt->amount }}, '{{ $pmt->payment_method }}', '{{ addslashes($pmt->note ?? '') }}')"
+                                    class="text-neutral-400 hover:text-primary-500 p-1 rounded">
+                                    <iconify-icon icon="lucide:edit-2" style="font-size:13px;"></iconify-icon>
+                                </button>
+                                <form method="POST" action="{{ route('orders.payments.destroy', [$acrylicOrder, $pmt]) }}"
+                                    onsubmit="return confirm('Xóa đợt thanh toán này?')">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" class="text-neutral-400 hover:text-danger-500 p-1 rounded">
+                                        <iconify-icon icon="lucide:trash-2" style="font-size:13px;"></iconify-icon>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
+                @else
+                <div class="text-center py-4 text-neutral-300">
+                    <iconify-icon icon="lucide:coins" style="font-size:28px;"></iconify-icon>
+                    <div class="text-xs mt-1">Chưa có đợt thanh toán nào</div>
+                </div>
+                @endif
+
+                {{-- Add payment form --}}
+                <div>
+                    <button type="button" id="toggle-add-payment"
+                        onclick="document.getElementById('add-payment-form').classList.toggle('hidden'); this.classList.toggle('hidden')"
+                        class="w-full flex items-center justify-center gap-2 py-2 rounded-lg border border-dashed border-violet-300 text-violet-600 hover:bg-violet-50 text-sm font-semibold transition-colors">
+                        <iconify-icon icon="lucide:plus-circle" style="font-size:16px;"></iconify-icon>
+                        Thêm đợt thanh toán
+                    </button>
+                    <div id="add-payment-form" class="hidden">
+                        <form method="POST" action="{{ route('orders.payments.store', $acrylicOrder) }}" class="space-y-3">
+                            @csrf
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="text-xs font-semibold text-neutral-500 block mb-1">Ngày <span class="text-danger-500">*</span></label>
+                                    <input type="date" name="payment_date" value="{{ date('Y-m-d') }}" required
+                                        class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-violet-400 focus:ring-violet-400 text-sm">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-semibold text-neutral-500 block mb-1">Số tiền (₫) <span class="text-danger-500">*</span></label>
+                                    <input type="number" name="amount" min="1" step="1000" placeholder="0"
+                                        class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-violet-400 focus:ring-violet-400 text-sm" required>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="text-xs font-semibold text-neutral-500 block mb-1">Hình thức</label>
+                                <select name="payment_method" class="form-select form-select-sm rounded-lg border-neutral-300 focus:border-violet-400 focus:ring-violet-400 text-sm">
+                                    <option value="cash">💵 Tiền mặt</option>
+                                    <option value="transfer">🏦 Chuyển khoản</option>
+                                    <option value="other">📋 Khác</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-xs font-semibold text-neutral-500 block mb-1">Ghi chú</label>
+                                <input type="text" name="note" placeholder="Ghi chú (nếu có)"
+                                    class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-violet-400 focus:ring-violet-400 text-sm">
+                            </div>
+                            <div class="flex gap-2">
+                                <button type="submit"
+                                    class="flex-1 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold transition-colors">
+                                    Lưu thanh toán
+                                </button>
+                                <button type="button"
+                                    onclick="document.getElementById('add-payment-form').classList.add('hidden'); document.getElementById('toggle-add-payment').classList.remove('hidden')"
+                                    class="px-3 py-2 rounded-lg border border-neutral-200 text-neutral-600 text-sm font-semibold hover:bg-neutral-50 transition-colors">
+                                    Hủy
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         {{-- Order Attachments --}}
         @if($acrylicOrder->attachments)
         <div class="card p-0 rounded-xl border-0 overflow-hidden shadow-sm bg-white">
@@ -632,4 +777,91 @@
         }
     })();
 </script>
+
+{{-- ===== EDIT PAYMENT MODAL ===== --}}
+<div id="edit-payment-backdrop"
+    style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:2000;"
+    onclick="closeEditPayment()"></div>
+<div id="edit-payment-modal"
+    style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+           width:min(420px,95vw); background:#fff; border-radius:16px;
+           box-shadow:0 20px 60px rgba(0,0,0,0.3); z-index:2001; overflow:hidden;">
+    <div style="background:linear-gradient(135deg,#7c3aed,#6d28d9); padding:18px 24px; display:flex; align-items:center; justify-content:space-between;">
+        <div style="display:flex; align-items:center; gap:10px;">
+            <div style="background:rgba(255,255,255,0.2); border-radius:8px; padding:8px; display:flex;">
+                <iconify-icon icon="lucide:edit-3" style="font-size:18px; color:#fff;"></iconify-icon>
+            </div>
+            <div style="font-size:15px; font-weight:700; color:#fff;">Sửa đợt thanh toán</div>
+        </div>
+        <button onclick="closeEditPayment()" style="background:rgba(255,255,255,0.15); border:none; border-radius:8px; width:30px; height:30px; cursor:pointer; display:flex; align-items:center; justify-content:center;">
+            <iconify-icon icon="lucide:x" style="font-size:15px; color:#fff;"></iconify-icon>
+        </button>
+    </div>
+    <form id="edit-payment-form" method="POST" style="padding:20px 24px; display:flex; flex-direction:column; gap:14px;">
+        @csrf
+        @method('PUT')
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <div>
+                <label style="font-size:12px; font-weight:600; color:#374151; display:block; margin-bottom:5px;">Ngày <span style="color:#ef4444;">*</span></label>
+                <input id="ep-date" type="date" name="payment_date" required
+                    style="width:100%; padding:9px 12px; border:1.5px solid #d1d5db; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;">
+            </div>
+            <div>
+                <label style="font-size:12px; font-weight:600; color:#374151; display:block; margin-bottom:5px;">Số tiền (₫) <span style="color:#ef4444;">*</span></label>
+                <input id="ep-amount" type="number" name="amount" min="1" step="1000" required
+                    style="width:100%; padding:9px 12px; border:1.5px solid #d1d5db; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;">
+            </div>
+        </div>
+        <div>
+            <label style="font-size:12px; font-weight:600; color:#374151; display:block; margin-bottom:5px;">Hình thức</label>
+            <select id="ep-method" name="payment_method"
+                style="width:100%; padding:9px 12px; border:1.5px solid #d1d5db; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box; background:#fff;">
+                <option value="cash">💵 Tiền mặt</option>
+                <option value="transfer">🏦 Chuyển khoản</option>
+                <option value="other">📋 Khác</option>
+            </select>
+        </div>
+        <div>
+            <label style="font-size:12px; font-weight:600; color:#374151; display:block; margin-bottom:5px;">Ghi chú</label>
+            <input id="ep-note" type="text" name="note" placeholder="Ghi chú (nếu có)"
+                style="width:100%; padding:9px 12px; border:1.5px solid #d1d5db; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;">
+        </div>
+        <div style="display:flex; gap:10px; padding-top:4px;">
+            <button type="submit"
+                style="flex:1; padding:10px; border:none; border-radius:8px; background:linear-gradient(135deg,#7c3aed,#6d28d9); color:#fff; font-size:13px; font-weight:600; cursor:pointer;">
+                Lưu thay đổi
+            </button>
+            <button type="button" onclick="closeEditPayment()"
+                style="padding:10px 18px; border:1.5px solid #d1d5db; border-radius:8px; background:#fff; color:#374151; font-size:13px; font-weight:600; cursor:pointer;">
+                Hủy
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+function openEditPayment(id, date, amount, method, note) {
+    const baseUrl = '{{ route('orders.payments.update', [$acrylicOrder, '__ID__']) }}'.replace('__ID__', id);
+    document.getElementById('edit-payment-form').action = baseUrl;
+    document.getElementById('ep-date').value   = date;
+    document.getElementById('ep-amount').value = amount;
+    document.getElementById('ep-method').value = method;
+    document.getElementById('ep-note').value   = note;
+    document.getElementById('edit-payment-backdrop').style.display = 'block';
+    document.getElementById('edit-payment-modal').style.display    = 'block';
+}
+function closeEditPayment() {
+    document.getElementById('edit-payment-backdrop').style.display = 'none';
+    document.getElementById('edit-payment-modal').style.display    = 'none';
+}
+
+// Auto-open add form on validation error flash
+@if(session('success') && str_contains(session('success'), 'thanh toán'))
+document.addEventListener('DOMContentLoaded', function() {
+    // Briefly highlight the payment card on success
+    const card = document.querySelector('[data-payment-card]');
+});
+@endif
+</script>
+
 @endsection

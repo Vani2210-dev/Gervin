@@ -322,6 +322,7 @@ function openEditModal(id, customerCode, name, phone, address) {
                             <th style="padding:8px 10px; text-align:right; color:#64748b; font-weight:600; border-bottom:1px solid #e2e8f0;">Giá trị</th>
                             <th style="padding:8px 10px; text-align:right; color:#64748b; font-weight:600; border-bottom:1px solid #e2e8f0;">Đã thu</th>
                             <th style="padding:8px 10px; text-align:right; color:#64748b; font-weight:600; border-bottom:1px solid #e2e8f0;">Còn nợ</th>
+                            <th style="padding:8px 10px; text-align:center; color:#64748b; font-weight:600; border-bottom:1px solid #e2e8f0;">Đợt TT</th>
                             <th style="padding:8px 10px; text-align:center; color:#64748b; font-weight:600; border-bottom:1px solid #e2e8f0;">Trạng thái</th>
                         </tr>
                     </thead>
@@ -434,6 +435,9 @@ function renderCustomerOverview(data) {
         tbody.innerHTML = data.recent_orders.map(o => {
             const c = ovStatusColors[o.status] || { bg:'#f1f5f9', text:'#64748b' };
             const debtStyle = o.debt > 0 ? 'color:#b91c1c;font-weight:600;' : 'color:#15803d;';
+            const pmtBadge = o.payments_count > 0
+                ? `<span style="background:#ede9fe;color:#6d28d9;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:600;">${o.payments_count} đợt</span>`
+                : `<span style="color:#94a3b8;font-size:11px;">—</span>`;
             return `<tr style="border-bottom:1px solid #f1f5f9;">
                 <td style="padding:9px 10px;">
                     <a href="/orders/${o.id}" target="_blank" style="color:#6366f1;font-weight:600;text-decoration:none;">${o.order_code||'—'}</a>
@@ -442,6 +446,7 @@ function renderCustomerOverview(data) {
                 <td style="padding:9px 10px; text-align:right; color:#0f172a;">${ovFmt(o.total_amount)}₫</td>
                 <td style="padding:9px 10px; text-align:right; color:#15803d;">${ovFmt(o.paid)}₫</td>
                 <td style="padding:9px 10px; text-align:right; ${debtStyle}">${ovFmt(o.debt)}₫</td>
+                <td style="padding:9px 10px; text-align:center;">${pmtBadge}</td>
                 <td style="padding:9px 10px; text-align:center;">
                     <span style="background:${c.bg}; color:${c.text}; padding:3px 10px; border-radius:999px; font-size:10px; font-weight:600; white-space:nowrap;">${o.status_label}</span>
                 </td>

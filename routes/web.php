@@ -27,6 +27,7 @@ use App\Http\Controllers\DispatchPackageController;
 use App\Http\Controllers\DeliveryPackageController;
 use App\Http\Controllers\PackingPackageController;
 use App\Http\Controllers\QrScanController;
+use App\Http\Controllers\OrderPaymentController;
 
 Route::middleware(['auth'])->group(function () {
     Route::controller(DashboardController::class)->group(function () {
@@ -254,6 +255,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('orders/create/{type}', [OrderController::class, 'createByType'])->name('orders.create.type');
     Route::post('orders/discard-draft', [OrderController::class, 'discardDraft'])->name('orders.discard-draft');
     Route::get('orders/image/{filename}', [OrderController::class, 'serveImage'])->name('orders.image');
+
+    // Order Payments
+    Route::post('orders/{order}/payments', [OrderPaymentController::class, 'store'])->name('orders.payments.store');
+    Route::put('orders/{order}/payments/{payment}', [OrderPaymentController::class, 'update'])->name('orders.payments.update');
+    Route::delete('orders/{order}/payments/{payment}', [OrderPaymentController::class, 'destroy'])->name('orders.payments.destroy');
 });
 
 // Manufacture Orders
