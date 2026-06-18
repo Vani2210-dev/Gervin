@@ -100,9 +100,13 @@
         z-index: 15 !important;
         background-color: #f1f5f9 !important; /* Match other headers */
         background-clip: padding-box !important;
-        box-shadow: 2px 0 4px rgba(0,0,0,0.06) !important;
+        box-shadow: inset -1px 0 0 #e5e7eb, 2px 0 4px rgba(0,0,0,0.06) !important;
     }
-    .sticky-stt-td.sticky-stt-td {
+    html body div#order-supplies-container .order-supply-row table tbody tr td.sticky-stt-td,
+    html body div#glass-supplies-container .order-supply-row table tbody tr td.sticky-stt-td,
+    html body div#min-late-supplies-container .order-supply-row table tbody tr td.sticky-stt-td,
+    html body table[data-order-resize-group="min_late_payment"] tbody tr td.sticky-stt-td,
+    html body .sticky-stt-td.sticky-stt-td {
         position: -webkit-sticky !important;
         position: sticky !important;
         left: 0 !important;
@@ -110,6 +114,18 @@
         background-color: #ffffff !important;
         background-clip: padding-box !important;
         box-shadow: 2px 0 4px rgba(0,0,0,0.06) !important;
+    }
+
+    html body .sticky-stt-th::after,
+    html body .sticky-stt-td::after {
+        content: "" !important;
+        position: absolute !important;
+        top: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 1px !important;
+        background-color: #e5e7eb !important;
+        z-index: 20 !important;
     }
     
     /* Action column z-index below navbar (20) */
