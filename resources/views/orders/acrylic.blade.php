@@ -311,15 +311,24 @@
                         </thead>
                         <tbody class="supply-items-container" data-supply-index="{{ $supplyIndex }}">
                             @foreach($supply->items as $itemIndex => $item)
-                            <tr class="order-item-row" data-item-id="{{ $item->id }}">
+                            @php $isLaborRow = ($item->product_name === 'Công giả dày'); @endphp
+                            <tr class="order-item-row {{ $isLaborRow ? 'bg-amber-50/60' : '' }}" data-item-id="{{ $item->id }}" {{ $isLaborRow ? 'data-is-labor=1' : '' }}>
                                 <td style="width: 45px; min-width: 45px; " class="sticky-stt-td text-center align-middle border border-neutral-200">
                                     <span class="row-index font-semibold text-neutral-500">{{ $itemIndex + 1 }}</span>
                                 </td>
                                 <td style="width: 160px; min-width: 160px; " class="border border-neutral-200">
-                                    <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][product_code]" class="product-code-input form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs font-semibold text-neutral-600" readonly value="{{ $item->product_code ?? '' }}">
+                                    @if($isLaborRow)
+                                        <div class="h-8 flex items-center justify-center text-xs text-amber-600 font-semibold bg-amber-50 rounded-lg border border-amber-200 px-1">
+                                            <iconify-icon icon="lucide:hammer" style="margin-right:4px;"></iconify-icon> Công
+                                        </div>
+                                        <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][product_code]" value="">
+                                    @else
+                                        <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][product_code]" class="product-code-input form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs font-semibold text-neutral-600" readonly value="{{ $item->product_code ?? '' }}">
+                                    @endif
+                                    <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][is_labor]" value="{{ $isLaborRow ? '1' : '0' }}">
                                 </td>
                                 <td style="min-width: 220px;" class="border border-neutral-200">
-                                    <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][product_name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Tên sản phẩm" value="{{ $item->product_name }}">
+                                    <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][product_name]" class="form-control form-control-sm rounded-lg {{ $isLaborRow ? 'border-amber-300 focus:border-amber-500 focus:ring-amber-400 font-semibold text-amber-700' : 'border-neutral-300 focus:border-primary-500 focus:ring-primary-500' }} h-8 text-xs" placeholder="Tên sản phẩm" value="{{ $item->product_name }}">
                                 </td>
                                 <td style="width: 100px; min-width: 100px;" class="border border-neutral-200">
                                     <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][thickness]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs text-center px-1" placeholder="Độ dày" value="{{ $item->thickness }}">
@@ -608,6 +617,7 @@ function addOrderItem(button, isInitial = false) {
         </td>
         <td style="width: 160px; min-width: 160px; " class="border border-neutral-200">
             <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][product_code]" class="product-code-input form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs font-semibold text-neutral-600" readonly>
+            <input type="hidden" name="supplies[${supplyIndex}][items][${itemIndex}][is_labor]" value="0">
         </td>
         <td style="min-width: 220px;" class="border border-neutral-200">
             <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][product_name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Tên sản phẩm" value="">
@@ -743,6 +753,11 @@ function updateAcrylicRowIndexes() {
         if (!tbody) return;
 
         tbody.querySelectorAll('.order-item-row').forEach((row, itemIndex) => {
+            // Detect labor rows (Công giả dày)
+            const isLaborRow = row.dataset.isLabor === '1' ||
+                (row.querySelector('input[name*="[is_labor]"]')?.value === '1') ||
+                (row.querySelector('input[name*="[product_name]"]')?.value?.trim() === 'Công giả dày');
+
             // Update row STT
             const indexEl = row.querySelector('.row-index');
             if (indexEl) indexEl.textContent = globalItemIndex;
@@ -751,18 +766,24 @@ function updateAcrylicRowIndexes() {
             const quantityInput = row.querySelector('input[name*="[quantity]"]');
             const qty = parseInt(quantityInput?.value) || 1;
 
-            // Base code for the item (first piece index)
-            const baseCode = `${orderCode}.${supplyCode}.${globalPieceIndex}`;
-            const productCodeInput = row.querySelector('.product-code-input');
-            if (productCodeInput) {
-                productCodeInput.value = baseCode;
+            if (isLaborRow) {
+                // Labor rows: clear the product-code-input (no mã tấm), do NOT advance globalPieceIndex
+                const productCodeInput = row.querySelector('.product-code-input');
+                if (productCodeInput) productCodeInput.value = '';
+                // Apply amber styling as visual cue
+                row.classList.add('bg-amber-50/60');
+                row.dataset.isLabor = '1';
+            } else {
+                // Normal rows: assign mã tấm
+                const baseCode = `${orderCode}.${supplyCode}.${globalPieceIndex}`;
+                const productCodeInput = row.querySelector('.product-code-input');
+                if (productCodeInput) productCodeInput.value = baseCode;
+                globalPieceIndex += qty;
             }
 
             // Remove product_ids container if it exists
             const idsContainer = row.querySelector('.product-ids-container');
-            if (idsContainer) {
-                idsContainer.remove();
-            }
+            if (idsContainer) idsContainer.remove();
 
             // Update inputs name indexes
             row.querySelectorAll('input, select, textarea').forEach(input => {
@@ -782,7 +803,6 @@ function updateAcrylicRowIndexes() {
                 }
             });
 
-            globalPieceIndex += qty;
             globalItemIndex++;
         });
     });
@@ -980,9 +1000,49 @@ function addFakeThicknessRow(button) {
     const notesInput = newRow.querySelector('input[name*="[notes]"]');
     if (notesInput) notesInput.value = "";
     
+    // Mark new row as labor
+    newRow.dataset.isLabor = '1';
+    newRow.classList.add('bg-amber-50/60');
+
+    // Set is_labor hidden input to 1
+    const isLaborInput = newRow.querySelector('input[name*="[is_labor]"]');
+    if (isLaborInput) {
+        isLaborInput.value = '1';
+    } else {
+        // Create if not present (cloned from JS-created row which may not have it)
+        const hiddenLaborInput = document.createElement('input');
+        hiddenLaborInput.type = 'hidden';
+        hiddenLaborInput.name = 'labor_placeholder'; // will be renamed by updateAcrylicRowIndexes
+        hiddenLaborInput.value = '1';
+        hiddenLaborInput.setAttribute('data-is-labor-flag', '1');
+        newRow.querySelector('td')?.appendChild(hiddenLaborInput);
+    }
+
+    // Replace the product-code-input td content with labor badge
+    const pcInput = newRow.querySelector('.product-code-input');
+    if (pcInput) {
+        const td = pcInput.closest('td');
+        pcInput.value = '';
+        pcInput.style.display = 'none';
+        if (!td.querySelector('.labor-badge')) {
+            const badge = document.createElement('div');
+            badge.className = 'labor-badge h-8 flex items-center justify-center text-xs text-amber-600 font-semibold bg-amber-50 rounded-lg border border-amber-200 px-1';
+            badge.innerHTML = '<iconify-icon icon="lucide:hammer" style="margin-right:4px;"></iconify-icon> Công';
+            td.insertBefore(badge, pcInput);
+        }
+    }
+
+    // Style the product name input
+    const nameInputNew = newRow.querySelector('input[name*="[product_name]"]');
+    if (nameInputNew) {
+        nameInputNew.classList.add('font-semibold', 'text-amber-700');
+        nameInputNew.classList.remove('border-neutral-300', 'focus:border-primary-500', 'focus:ring-primary-500');
+        nameInputNew.classList.add('border-amber-300', 'focus:border-amber-500', 'focus:ring-amber-400');
+    }
+
     // Insert after current row
     row.parentNode.insertBefore(newRow, row.nextSibling);
-    
+
     bindAcrylicRowEvents(newRow);
     initBevelField(newRow);
     updateAcrylicRowIndexes();
