@@ -1556,6 +1556,7 @@ function handleExcelFile(file) {
             for (const row of rawRows) {
                 const stt        = clean(row[0]);
                 const supplyCode = clean(row[1]);
+                const supplyName = clean(row[2]);
                 const height     = num(row[3]);
                 const width      = num(row[4]);
                 const qty        = parseInt(clean(row[5])) || 1;
@@ -1599,8 +1600,10 @@ function handleExcelFile(file) {
                 };
 
                 if (!groups[supplyCode]) {
-                    groups[supplyCode] = { supply_code: supplyCode, supply_name: '', items: [] };
+                    groups[supplyCode] = { supply_code: supplyCode, supply_name: supplyName, items: [] };
                     groupOrder.push(supplyCode);
+                } else if (supplyName && !groups[supplyCode].supply_name) {
+                    groups[supplyCode].supply_name = supplyName;
                 }
                 groups[supplyCode].items.push(item);
             }
@@ -1725,10 +1728,19 @@ function confirmExcelImport() {
             supplyCodeSelect.value = group.supply_code;
         }
 
+        // Set supply name from Excel group
+        const supplyNameInput = newSupplyRow.querySelector('input[name*="[supply_name]"]');
+        if (supplyNameInput && group.supply_name) {
+            supplyNameInput.value = group.supply_name;
+        }
+
         // 3. Add items into the supply
         const itemsContainer = newSupplyRow.querySelector('.supply-items-container');
         const addItemBtn = newSupplyRow.querySelector('[onclick*="addOrderItem"]');
         if (!itemsContainer || !addItemBtn) return;
+
+        // Clear the default empty row added by addOrderSupply()
+        itemsContainer.innerHTML = '';
 
         group.items.forEach(item => {
             addOrderItem(addItemBtn, true);
