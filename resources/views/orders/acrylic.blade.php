@@ -1,4 +1,4 @@
-﻿{{-- Order Supplies & Items Section Card --}}
+{{-- Order Supplies & Items Section Card --}}
 <style>
     .input-narrow-warning,
     input.input-narrow-warning[type='number'],
@@ -250,6 +250,11 @@
                 <iconify-icon icon="lucide:maximize-2" class="text-lg" data-order-supplies-popup-icon></iconify-icon>
                 <span data-order-supplies-popup-label>Phóng to</span>
             </button>
+            <button type="button" onclick="triggerGlobalExcelImport()" class="btn btn-sm bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200 rounded-lg flex items-center gap-1" title="Nhập danh sách từ file Excel">
+                <iconify-icon icon="lucide:file-spreadsheet" class="text-lg"></iconify-icon>
+                <span class="mobile-hide-text">Nhập Excel</span>
+            </button>
+            <input type="file" id="excel-global-file-input" accept=".xlsx,.xls,.csv" style="display:none;">
             <button type="button" onclick="addOrderSupply()" class="btn btn-sm btn-primary rounded-lg flex items-center gap-1">
                 <iconify-icon icon="lucide:plus" class="text-lg"></iconify-icon> <span class="mobile-hide-text">Thêm vật tư</span>
             </button>
@@ -440,11 +445,6 @@
                         <iconify-icon icon="lucide:plus" class="text-lg"></iconify-icon>
                         Thêm sản phẩm mới
                     </button>
-                    <button type="button" onclick="triggerExcelImport(this)" class="py-3 px-5 border-2 border-dashed border-emerald-300 hover:border-emerald-500 rounded-xl bg-emerald-50/50 hover:bg-emerald-50 text-emerald-600 font-semibold text-sm flex items-center justify-center gap-1.5 transition-all duration-200" title="Nhập danh sách từ file Excel (.xlsx)">
-                        <iconify-icon icon="lucide:file-spreadsheet" class="text-lg"></iconify-icon>
-                        Nhập Excel
-                    </button>
-                    <input type="file" class="excel-import-input hidden" accept=".xlsx,.xls,.csv" style="display:none;">
                 </div>
             </div>
             @endforeach
@@ -1459,19 +1459,11 @@ function onCncTemplateChange(selectEl) {
 
 <script>
 // ======== EXCEL IMPORT LOGIC (v2 — grouped by supply code in col B) ========
-let _excelImportTargetBtn = null;
 // _excelSupplyGroups = [{supply_code, supply_name, items:[{...}]}]
 let _excelSupplyGroups = [];
 
-/**
- * "Nhập Excel" button: belongs to a specific .order-supply-row,
- * but the file may create MULTIPLE supply sections, so we'll insert
- * them after the current supply row (or at end of container).
- */
-function triggerExcelImport(btn) {
-    _excelImportTargetBtn = btn;
-    const supplyRow = btn.closest('.order-supply-row');
-    const fileInput = supplyRow ? supplyRow.querySelector('.excel-import-input') : null;
+function triggerGlobalExcelImport() {
+    const fileInput = document.getElementById('excel-global-file-input');
     if (!fileInput) return;
     fileInput.value = '';
     fileInput.onchange = function(e) { handleExcelFile(e.target.files[0]); };
@@ -1668,7 +1660,6 @@ function closeExcelImport() {
     document.getElementById('excel-import-backdrop').style.display = 'none';
     document.getElementById('excel-import-modal').style.display = 'none';
     _excelSupplyGroups = [];
-    _excelImportTargetBtn = null;
 }
 
 function confirmExcelImport() {
@@ -1676,9 +1667,6 @@ function confirmExcelImport() {
 
     const suppliesContainer = document.getElementById('order-supplies-container');
     if (!suppliesContainer) return;
-
-    // Reference supply row (the one the button belongs to) — we'll insert after it
-    const refSupplyRow = _excelImportTargetBtn ? _excelImportTargetBtn.closest('.order-supply-row') : null;
 
     _excelSupplyGroups.forEach(group => {
         // 1. Create a new supply section
