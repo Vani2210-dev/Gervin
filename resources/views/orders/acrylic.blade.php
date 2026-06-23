@@ -1,4 +1,4 @@
-{{-- Order Supplies & Items Section Card --}}
+﻿{{-- Order Supplies & Items Section Card --}}
 <style>
     .input-narrow-warning,
     input.input-narrow-warning[type='number'],
@@ -1458,20 +1458,22 @@ function onCncTemplateChange(selectEl) {
 </div>
 
 <script>
-// ======== EXCEL IMPORT LOGIC ========
-let _excelImportTargetBtn = null;   // the supply-section "Nhập Excel" button
-let _excelParsedRows = [];          // [{name, thickness, height, width, quantity, bevel, grain, wing, molding, unit_price, notes}]
+// ======== EXCEL IMPORT LOGIC (v2 — grouped by supply code in col B) ========
+let _excelImportTargetBtn = null;
+// _excelSupplyGroups = [{supply_code, supply_name, items:[{...}]}]
+let _excelSupplyGroups = [];
 
 /**
- * Called when user clicks "Nhập Excel" button inside a supply row.
- * btn = the button element (inside .order-supply-row)
+ * "Nhập Excel" button: belongs to a specific .order-supply-row,
+ * but the file may create MULTIPLE supply sections, so we'll insert
+ * them after the current supply row (or at end of container).
  */
 function triggerExcelImport(btn) {
     _excelImportTargetBtn = btn;
     const supplyRow = btn.closest('.order-supply-row');
-    const fileInput = supplyRow.querySelector('.excel-import-input');
+    const fileInput = supplyRow ? supplyRow.querySelector('.excel-import-input') : null;
     if (!fileInput) return;
-    fileInput.value = ''; // reset so same file can be re-selected
+    fileInput.value = '';
     fileInput.onchange = function(e) { handleExcelFile(e.target.files[0]); };
     fileInput.click();
 }
@@ -1479,90 +1481,185 @@ function triggerExcelImport(btn) {
 function handleExcelFile(file) {
     if (!file) return;
     document.getElementById('excel-import-filename').textContent = file.name;
-    _excelParsedRows = [];
+    _excelSupplyGroups = [];
 
     const reader = new FileReader();
     reader.onload = function(e) {
         try {
             const wb = XLSX.read(e.target.result, { type: 'array' });
             const ws = wb.Sheets[wb.SheetNames[0]];
-            // Get raw rows as array-of-arrays (no header parsing)
-            const rawRows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+            // Read as array-of-arrays; include formula values via { raw: false } fallback
+            const rawRows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: false });
 
-            if (!rawRows || rawRows.length < 2) {
+            if (!rawRows || rawRows.length === 0) {
                 showExcelModal([]);
                 return;
             }
 
-            // Row 0 = headers (display only), rows 1+ = data
-            const headers = rawRows[0];
-            const dataRows = rawRows.slice(1).filter(r => r.some(c => c !== '' && c !== null && c !== undefined));
+            /*
+             * Column mapping (0-indexed):
+             *  A=0  STT                   (số / La-mã section header)
+             *  B=1  Mã vật tư             ← KEY: repeated = same supply group
+             *  C=2  Tên sản phẩm          (only first row of group usually)
+             *  D=3  Cao (height)
+             *  E=4  Rộng (width)
+             *  F=5  Số lượng
+             *  G=6  Chiều vân
+             *  H=7  (unused)
+             *  I=8  Cánh m2
+             *  J=9  Phào m
+             *  K=10 Đơn giá
+             *  L=11 Thành tiền            (computed — skip)
+             *  M=12 Ghi chú / loại đặc biệt ("Tấm giả dày", "Công giả dày"…)
+             *  N=13 Bevel/width sync
+             */
 
-            // Map each row: col positions:
-            // 0:Tên SP, 1:Độ dày, 2:Cao, 3:Rộng, 4:SL, 5:Vát, 6:Chiều vân, 7:Cánh m2, 8:Phào m, 9:Đơn giá, 10:Ghi chú
-            _excelParsedRows = dataRows.map(r => ({
-                product_name : String(r[0] ?? '').trim(),
-                thickness    : String(r[1] ?? '').trim(),
-                height       : parseFloat(r[2]) || '',
-                width        : parseFloat(r[3]) || '',
-                quantity     : parseInt(r[4]) || 1,
-                bevel        : String(r[5] ?? '').trim(),
-                grain        : String(r[6] ?? '').trim(),          // '0' or '2'
-                wing_area    : parseFloat(r[7]) || '',
-                molding      : parseFloat(r[8]) || '',
-                unit_price   : parseFloat(r[9]) || 0,
-                notes        : String(r[10] ?? '').trim(),
-            })).filter(r => r.product_name !== '');
+            const clean = v => (v === null || v === undefined) ? '' : String(v).trim();
+            const num   = v => { const n = parseFloat(String(v).replace(/[^0-9.\-]/g,'')); return isNaN(n) ? '' : n; };
 
-            showExcelModal(_excelParsedRows, headers);
+            // Roman numeral / section header detector
+            const isHeader = stt => /^[IVX]+$/.test(clean(stt));
+
+            // Group by consecutive col B value (mã vật tư)
+            const groups = {};    // supply_code → {supply_code, supply_name, items[]}
+            const groupOrder = [];
+            let prevSupplyCode = null;
+            let firstNameForGroup = {};
+
+            for (const row of rawRows) {
+                const stt        = clean(row[0]);
+                const supplyCode = clean(row[1]);
+                const nameRaw    = clean(row[2]);
+                const height     = num(row[3]);
+                const width      = num(row[4]);
+                const qty        = parseInt(clean(row[5])) || 1;
+                const grain      = clean(row[6]);
+                const wingArea   = num(row[8]);
+                const molding    = num(row[9]);
+                const unitPrice  = num(row[10]);
+                const notes      = clean(row[12]);
+
+                // Skip header rows (col A = La-mã I, II…) and summary/footer rows
+                if (isHeader(stt)) {
+                    // Section header: col C may hold supply name, col B blank
+                    // We'll treat next supply code group's name from here if needed
+                    continue;
+                }
+
+                // Must have a supply code in col B to be a data row
+                if (!supplyCode) continue;
+
+                // Must have at least height or width to be a real item row
+                if (height === '' && width === '') continue;
+
+                // Determine product_name: use col C if non-empty, else re-use first name of group
+                let productName = nameRaw;
+                if (!productName) {
+                    productName = firstNameForGroup[supplyCode] || '';
+                }
+                if (productName && !firstNameForGroup[supplyCode]) {
+                    firstNameForGroup[supplyCode] = productName;
+                }
+
+                // Detect "Công giả dày" / "Tấm giả dày" via notes col M
+                const isLaborNote = /gi[aả]\s*d[aày]y/i.test(notes) || /c[oô]ng/i.test(notes);
+
+                const item = {
+                    product_name : productName || supplyCode,
+                    thickness    : '',
+                    height,
+                    width,
+                    quantity     : qty,
+                    grain        : grain === '2' ? '2' : '0',
+                    wing_area    : wingArea,
+                    molding,
+                    unit_price   : unitPrice,
+                    notes,
+                    is_labor     : isLaborNote ? 1 : 0,
+                };
+
+                if (!groups[supplyCode]) {
+                    groups[supplyCode] = { supply_code: supplyCode, supply_name: '', items: [] };
+                    groupOrder.push(supplyCode);
+                }
+                groups[supplyCode].items.push(item);
+            }
+
+            _excelSupplyGroups = groupOrder.map(sc => groups[sc]).filter(g => g.items.length > 0);
+
+            showExcelModal(_excelSupplyGroups);
         } catch(err) {
+            console.error(err);
             alert('Không thể đọc file Excel: ' + err.message);
         }
     };
     reader.readAsArrayBuffer(file);
 }
 
-function showExcelModal(rows, headers) {
-    const colHeaders = ['Tên SP', 'Độ dày', 'Cao', 'Rộng', 'SL', 'Vát', 'Chiều vân', 'Cánh m2', 'Phào m', 'Đơn giá', 'Ghi chú'];
-
-    // Build thead
+function showExcelModal(groups) {
     const thead = document.getElementById('excel-preview-thead');
-    thead.innerHTML = '<tr>' + colHeaders.map(h =>
-        `<th style="padding:8px 10px;text-align:left;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;white-space:nowrap;">${h}</th>`
-    ).join('') + '</tr>';
-
-    // Build tbody
     const tbody = document.getElementById('excel-preview-tbody');
     const empty = document.getElementById('excel-preview-empty');
-    if (!rows || rows.length === 0) {
+    const countEl = document.getElementById('excel-import-count');
+    const confirmBtn = document.getElementById('excel-import-confirm-btn');
+
+    thead.innerHTML = `<tr>
+        <th style="padding:8px 10px;text-align:left;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;white-space:nowrap;">Vật tư / Tên SP</th>
+        <th style="padding:8px 10px;text-align:center;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;white-space:nowrap;">Cao</th>
+        <th style="padding:8px 10px;text-align:center;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;white-space:nowrap;">Rộng</th>
+        <th style="padding:8px 10px;text-align:center;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;white-space:nowrap;">SL</th>
+        <th style="padding:8px 10px;text-align:center;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;white-space:nowrap;">Cánh m²</th>
+        <th style="padding:8px 10px;text-align:center;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;white-space:nowrap;">Phào m</th>
+        <th style="padding:8px 10px;text-align:right;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;white-space:nowrap;">Đơn giá</th>
+        <th style="padding:8px 10px;text-align:left;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;white-space:nowrap;">Ghi chú</th>
+    </tr>`;
+
+    if (!groups || groups.length === 0) {
         tbody.innerHTML = '';
         empty.style.display = 'block';
-        document.getElementById('excel-import-count').textContent = 'Không có dữ liệu';
-        document.getElementById('excel-import-confirm-btn').style.opacity = '0.5';
-        document.getElementById('excel-import-confirm-btn').style.pointerEvents = 'none';
-    } else {
-        empty.style.display = 'none';
-        document.getElementById('excel-import-confirm-btn').style.opacity = '1';
-        document.getElementById('excel-import-confirm-btn').style.pointerEvents = 'auto';
-        tbody.innerHTML = rows.map((r, i) => `
-            <tr style="border-bottom:1px solid #f1f5f9;${i % 2 === 1 ? 'background:#fafafa;' : ''}">
-                <td style="padding:7px 10px;font-weight:500;color:#0f172a;">${escHtml(r.product_name)}</td>
-                <td style="padding:7px 10px;color:#374151;">${escHtml(r.thickness)}</td>
-                <td style="padding:7px 10px;color:#374151;">${r.height !== '' ? r.height : '—'}</td>
-                <td style="padding:7px 10px;color:#374151;">${r.width !== '' ? r.width : '—'}</td>
-                <td style="padding:7px 10px;font-weight:600;color:#1d4ed8;">${r.quantity}</td>
-                <td style="padding:7px 10px;color:#374151;">${escHtml(r.bevel)}</td>
-                <td style="padding:7px 10px;text-align:center;">${r.grain || '0'}</td>
-                <td style="padding:7px 10px;color:#374151;">${r.wing_area !== '' ? r.wing_area : '—'}</td>
-                <td style="padding:7px 10px;color:#374151;">${r.molding !== '' ? r.molding : '—'}</td>
-                <td style="padding:7px 10px;font-weight:600;color:#15803d;">${r.unit_price ? Number(r.unit_price).toLocaleString('vi-VN') : '—'}</td>
-                <td style="padding:7px 10px;color:#6b7280;font-style:italic;">${escHtml(r.notes)}</td>
-            </tr>
-        `).join('');
-        document.getElementById('excel-import-count').textContent = `${rows.length} sản phẩm sẽ được nhập`;
+        countEl.textContent = 'Không có dữ liệu';
+        confirmBtn.style.opacity = '0.5';
+        confirmBtn.style.pointerEvents = 'none';
+        document.getElementById('excel-import-backdrop').style.display = 'block';
+        document.getElementById('excel-import-modal').style.display = 'flex';
+        return;
     }
 
-    // Show modal
+    empty.style.display = 'none';
+    confirmBtn.style.opacity = '1';
+    confirmBtn.style.pointerEvents = 'auto';
+
+    let totalItems = 0;
+    let html = '';
+    groups.forEach(g => {
+        // Supply header row
+        html += `<tr style="background:#ede9fe;">
+            <td colspan="8" style="padding:7px 12px;font-weight:700;color:#6d28d9;font-size:12px;">
+                <iconify-icon icon="lucide:package" style="margin-right:6px;font-size:13px;"></iconify-icon>
+                Vật tư: <span style="background:#fff;border:1px solid #c4b5fd;border-radius:6px;padding:1px 8px;margin-left:4px;">${escHtml(g.supply_code)}</span>
+                <span style="color:#94a3b8;font-weight:400;margin-left:8px;">(${g.items.length} sản phẩm)</span>
+            </td>
+        </tr>`;
+        g.items.forEach((item, i) => {
+            totalItems++;
+            const bgClass = item.is_labor ? 'background:#fef9c3;' : (i % 2 === 0 ? '' : 'background:#fafafa;');
+            const laborBadge = item.is_labor ? `<span style="background:#fde68a;color:#92400e;padding:1px 6px;border-radius:999px;font-size:10px;margin-left:6px;">Công</span>` : '';
+            html += `<tr style="border-bottom:1px solid #f1f5f9;${bgClass}">
+                <td style="padding:6px 12px;color:#0f172a;padding-left:24px;">${escHtml(item.product_name)}${laborBadge}</td>
+                <td style="padding:6px 10px;text-align:center;color:#374151;">${item.height !== '' ? item.height : '—'}</td>
+                <td style="padding:6px 10px;text-align:center;color:#374151;">${item.width !== '' ? item.width : '—'}</td>
+                <td style="padding:6px 10px;text-align:center;font-weight:600;color:#1d4ed8;">${item.quantity}</td>
+                <td style="padding:6px 10px;text-align:center;color:#374151;">${item.wing_area !== '' ? item.wing_area : '—'}</td>
+                <td style="padding:6px 10px;text-align:center;color:#374151;">${item.molding !== '' ? item.molding : '—'}</td>
+                <td style="padding:6px 10px;text-align:right;font-weight:600;color:#15803d;">${item.unit_price !== '' ? Number(item.unit_price).toLocaleString('vi-VN') : '—'}</td>
+                <td style="padding:6px 10px;color:#6b7280;font-style:italic;">${escHtml(item.notes)}</td>
+            </tr>`;
+        });
+    });
+    tbody.innerHTML = html;
+
+    countEl.innerHTML = `<b style="color:#6d28d9;">${groups.length} vật tư</b>&nbsp;·&nbsp;<b style="color:#1d4ed8;">${totalItems} sản phẩm</b> sẽ được nhập`;
+
     document.getElementById('excel-import-backdrop').style.display = 'block';
     document.getElementById('excel-import-modal').style.display = 'flex';
 }
@@ -1570,68 +1667,109 @@ function showExcelModal(rows, headers) {
 function closeExcelImport() {
     document.getElementById('excel-import-backdrop').style.display = 'none';
     document.getElementById('excel-import-modal').style.display = 'none';
-    _excelParsedRows = [];
+    _excelSupplyGroups = [];
     _excelImportTargetBtn = null;
 }
 
 function confirmExcelImport() {
-    if (!_excelParsedRows || _excelParsedRows.length === 0 || !_excelImportTargetBtn) return;
+    if (!_excelSupplyGroups || _excelSupplyGroups.length === 0) return;
 
-    const supplyRow = _excelImportTargetBtn.closest('.order-supply-row');
-    const container = supplyRow.querySelector('.supply-items-container');
-    if (!container) return;
+    const suppliesContainer = document.getElementById('order-supplies-container');
+    if (!suppliesContainer) return;
 
-    _excelParsedRows.forEach(row => {
-        // Use existing addOrderItem to create a blank row, then fill it
-        const addBtn = supplyRow.querySelector('[onclick*="addOrderItem"]');
-        if (addBtn) addOrderItem(addBtn, true);  // isInitial=true so no scroll
+    // Reference supply row (the one the button belongs to) — we'll insert after it
+    const refSupplyRow = _excelImportTargetBtn ? _excelImportTargetBtn.closest('.order-supply-row') : null;
 
-        const newRow = container.lastElementChild;
-        if (!newRow) return;
+    _excelSupplyGroups.forEach(group => {
+        // 1. Create a new supply section
+        addOrderSupply();
 
-        const setVal = (selector, val) => {
-            const el = newRow.querySelector(selector);
-            if (el && val !== '' && val !== null && val !== undefined) el.value = val;
-        };
+        // Get the newly created supply row (last child)
+        const newSupplyRow = suppliesContainer.querySelector('.order-supply-row:last-child');
+        if (!newSupplyRow) return;
 
-        setVal('input[name*="[product_name]"]', row.product_name);
-        setVal('input[name*="[thickness]"]',    row.thickness);
-        setVal('input[name*="[height]"]',        row.height);
-        setVal('input[name*="[width]"]',         row.width);
-        setVal('input[name*="[quantity]"]',      row.quantity);
-        setVal('input[name*="[wing_area]"]',     row.wing_area);
-        setVal('input[name*="[molding_length]"]',row.molding);
-        setVal('input[name*="[unit_price]"]',    row.unit_price);
-        setVal('input[name*="[notes]"]',         row.notes);
-
-        // Bevel
-        if (row.bevel) {
-            setVal('input[name*="[bevel]"]', row.bevel);
+        // 2. Set supply code via TomSelect or plain input
+        const supplyCodeSelect = newSupplyRow.querySelector('.order-supply-code-select');
+        if (supplyCodeSelect && supplyCodeSelect.tomselect) {
+            supplyCodeSelect.tomselect.createItem(group.supply_code, true);
+            supplyCodeSelect.tomselect.setValue(group.supply_code);
+        } else if (supplyCodeSelect) {
+            // Add option if not present
+            let opt = Array.from(supplyCodeSelect.options).find(o => o.value === group.supply_code);
+            if (!opt) {
+                opt = new Option(group.supply_code, group.supply_code, true, true);
+                supplyCodeSelect.add(opt);
+            }
+            supplyCodeSelect.value = group.supply_code;
         }
 
-        // Grain direction select
-        const grainSel = newRow.querySelector('select[name*="[grain_direction]"]');
-        if (grainSel && (row.grain === '2' || row.grain === 2)) {
-            grainSel.value = '2';
-        }
+        // 3. Add items into the supply
+        const itemsContainer = newSupplyRow.querySelector('.supply-items-container');
+        const addItemBtn = newSupplyRow.querySelector('[onclick*="addOrderItem"]');
+        if (!itemsContainer || !addItemBtn) return;
 
-        // Trigger recalculate
-        bindAcrylicRowEvents(newRow);
-        calculateTotalPrice(newRow);
-        updateEdgeBevel(newRow);
+        group.items.forEach(item => {
+            addOrderItem(addItemBtn, true);
+            const newRow = itemsContainer.lastElementChild;
+            if (!newRow) return;
+
+            const setVal = (sel, val) => {
+                if (val === '' || val === null || val === undefined) return;
+                const el = newRow.querySelector(sel);
+                if (el) el.value = val;
+            };
+
+            setVal('input[name*="[product_name]"]', item.product_name);
+            setVal('input[name*="[height]"]',        item.height);
+            setVal('input[name*="[width]"]',         item.width);
+            setVal('input[name*="[quantity]"]',      item.quantity);
+            setVal('input[name*="[wing_area]"]',     item.wing_area);
+            setVal('input[name*="[molding_length]"]',item.molding);
+            setVal('input[name*="[unit_price]"]',    item.unit_price);
+            setVal('input[name*="[notes]"]',         item.notes);
+
+            const grainSel = newRow.querySelector('select[name*="[grain_direction]"]');
+            if (grainSel) grainSel.value = item.grain || '0';
+
+            // Handle labor rows
+            if (item.is_labor) {
+                newRow.dataset.isLabor = '1';
+                newRow.classList.add('bg-amber-50/60');
+                const isLaborInput = newRow.querySelector('input[name*="[is_labor]"]');
+                if (isLaborInput) isLaborInput.value = '1';
+
+                // Show labor badge instead of product code
+                const pcInput = newRow.querySelector('.product-code-input');
+                if (pcInput) {
+                    const td = pcInput.closest('td');
+                    pcInput.value = '';
+                    pcInput.style.display = 'none';
+                    if (!td.querySelector('.labor-badge')) {
+                        const badge = document.createElement('div');
+                        badge.className = 'labor-badge h-8 flex items-center justify-center text-xs text-amber-600 font-semibold bg-amber-50 rounded-lg border border-amber-200 px-1';
+                        badge.innerHTML = '<iconify-icon icon="lucide:hammer" style="margin-right:4px;"></iconify-icon> Công';
+                        td.insertBefore(badge, pcInput);
+                    }
+                }
+            }
+
+            bindAcrylicRowEvents(newRow);
+            calculateTotalPrice(newRow);
+            updateEdgeBevel(newRow);
+        });
     });
 
     updateAcrylicRowIndexes();
     updateOrderSummary();
-    closeExcelImport();
 
-    // Flash success
-    const btn = _excelImportTargetBtn || document.querySelector('[onclick*="triggerExcelImport"]');
-    if (supplyRow) {
-        supplyRow.style.transition = 'box-shadow 0.3s';
-        supplyRow.style.boxShadow = '0 0 0 3px #10b981';
-        setTimeout(() => { supplyRow.style.boxShadow = ''; }, 1200);
+    // Flash the container
+    if (suppliesContainer) {
+        suppliesContainer.style.transition = 'box-shadow 0.3s';
+        suppliesContainer.style.boxShadow = '0 0 0 3px #10b981';
+        setTimeout(() => { suppliesContainer.style.boxShadow = ''; }, 1500);
     }
+
+    closeExcelImport();
 }
 
 function escHtml(str) {
