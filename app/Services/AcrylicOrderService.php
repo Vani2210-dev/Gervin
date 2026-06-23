@@ -193,6 +193,7 @@ class AcrylicOrderService
     {
         $totalAmount = 0;
         foreach ($supplies as $supply) {
+            if (!isset($supply['items']) || !is_array($supply['items'])) continue;
             foreach ($supply['items'] as $item) {
                 $itemTotal = isset($item['total_price']) ? floatval($item['total_price']) : ($item['unit_price'] * $item['quantity']);
                 $totalAmount += $itemTotal;
@@ -215,6 +216,7 @@ class AcrylicOrderService
                 'quantity'          => $supplyData['quantity'] ?? 1,
             ]);
 
+            if (!isset($supplyData['items']) || !is_array($supplyData['items'])) continue;
             foreach ($supplyData['items'] as $item) {
                 $totalPrice = isset($item['total_price']) ? floatval($item['total_price']) : ($item['unit_price'] * $item['quantity']);
                 $totalPrice = round($totalPrice);

@@ -230,6 +230,7 @@ class MinLateOrderService
                 'quantity'          => $supplyData['quantity'] ?? 1,
             ]);
 
+            if (!isset($supplyData['items']) || !is_array($supplyData['items'])) continue;
             foreach ($supplyData['items'] as $item) {
                 $orderItem = MinLateOrderItem::create([
                     'order_supply_id'       => $orderSupply->id,

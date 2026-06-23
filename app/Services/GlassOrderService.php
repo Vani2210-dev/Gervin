@@ -175,6 +175,7 @@ class GlassOrderService
     {
         $totalAmount = 0;
         foreach ($supplies as $supply) {
+            if (!isset($supply['items']) || !is_array($supply['items'])) continue;
             foreach ($supply['items'] as $item) {
                 $itemTotal = isset($item['total_price']) ? floatval($item['total_price']) : ($item['unit_price'] * ($item['area_m2'] ?: $item['wing_quantity']));
                 $totalAmount += $itemTotal;
@@ -197,6 +198,7 @@ class GlassOrderService
                 'quantity'          => $supplyData['quantity'] ?? 1,
             ]);
 
+            if (!isset($supplyData['items']) || !is_array($supplyData['items'])) continue;
             foreach ($supplyData['items'] as $item) {
                 $height = $item['height'] ?? 0;
                 $width = $item['width'] ?? 0;
