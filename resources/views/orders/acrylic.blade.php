@@ -1559,11 +1559,13 @@ function handleExcelFile(file) {
                 const height     = num(row[3]);
                 const width      = num(row[4]);
                 const qty        = parseInt(clean(row[5])) || 1;
-                const grain      = clean(row[6]);
+                const edgeBevel  = clean(row[6]);
+                const grain      = clean(row[7]);
                 const wingArea   = num(row[8]);
                 const molding    = num(row[9]);
                 const unitPrice  = num(row[10]);
                 const notes      = clean(row[12]);
+                const bevel      = clean(row[13]);
 
                 // Skip header rows (col A = La-mã I, II…) and summary/footer rows
                 if (isHeader(stt)) {
@@ -1586,11 +1588,13 @@ function handleExcelFile(file) {
                     height,
                     width,
                     quantity     : qty,
+                    edge_bevel   : edgeBevel,
                     grain        : grain === '2' ? '2' : '0',
                     wing_area    : wingArea,
                     molding,
                     unit_price   : unitPrice,
                     notes,
+                    bevel,
                     is_labor     : isLaborNote ? 1 : 0,
                 };
 
@@ -1624,6 +1628,9 @@ function showExcelModal(groups) {
         <th style="padding:8px 10px;text-align:center;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;white-space:nowrap;">Cao</th>
         <th style="padding:8px 10px;text-align:center;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;white-space:nowrap;">Rộng</th>
         <th style="padding:8px 10px;text-align:center;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;white-space:nowrap;">SL</th>
+        <th style="padding:8px 10px;text-align:center;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;white-space:nowrap;">Vát</th>
+        <th style="padding:8px 10px;text-align:center;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;white-space:nowrap;">Chiều vân</th>
+        <th style="padding:8px 10px;text-align:center;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;white-space:nowrap;">Cạnh vát</th>
         <th style="padding:8px 10px;text-align:center;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;white-space:nowrap;">Cánh m²</th>
         <th style="padding:8px 10px;text-align:center;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;white-space:nowrap;">Phào m</th>
         <th style="padding:8px 10px;text-align:right;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;white-space:nowrap;">Đơn giá</th>
@@ -1650,7 +1657,7 @@ function showExcelModal(groups) {
     groups.forEach(g => {
         // Supply header row
         html += `<tr style="background:#ede9fe;">
-            <td colspan="8" style="padding:7px 12px;font-weight:700;color:#6d28d9;font-size:12px;">
+            <td colspan="11" style="padding:7px 12px;font-weight:700;color:#6d28d9;font-size:12px;">
                 <iconify-icon icon="lucide:package" style="margin-right:6px;font-size:13px;"></iconify-icon>
                 Vật tư: <span style="background:#fff;border:1px solid #c4b5fd;border-radius:6px;padding:1px 8px;margin-left:4px;">${escHtml(g.supply_code)}</span>
                 <span style="color:#94a3b8;font-weight:400;margin-left:8px;">(${g.items.length} sản phẩm)</span>
@@ -1665,6 +1672,9 @@ function showExcelModal(groups) {
                 <td style="padding:6px 10px;text-align:center;color:#374151;">${item.height !== '' ? item.height : '—'}</td>
                 <td style="padding:6px 10px;text-align:center;color:#374151;">${item.width !== '' ? item.width : '—'}</td>
                 <td style="padding:6px 10px;text-align:center;font-weight:600;color:#1d4ed8;">${item.quantity}</td>
+                <td style="padding:6px 10px;text-align:center;color:#374151;">${item.bevel !== '' ? item.bevel : '—'}</td>
+                <td style="padding:6px 10px;text-align:center;color:#374151;">${item.grain !== '' ? item.grain : '—'}</td>
+                <td style="padding:6px 10px;text-align:center;color:#374151;">${item.edge_bevel !== '' ? escHtml(item.edge_bevel) : '—'}</td>
                 <td style="padding:6px 10px;text-align:center;color:#374151;">${item.wing_area !== '' ? item.wing_area : '—'}</td>
                 <td style="padding:6px 10px;text-align:center;color:#374151;">${item.molding !== '' ? item.molding : '—'}</td>
                 <td style="padding:6px 10px;text-align:right;font-weight:600;color:#15803d;">${item.unit_price !== '' ? Number(item.unit_price).toLocaleString('vi-VN') : '—'}</td>
@@ -1739,6 +1749,8 @@ function confirmExcelImport() {
             setVal('input[name*="[molding_length]"]',item.molding);
             setVal('input[name*="[unit_price]"]',    item.unit_price);
             setVal('input[name*="[notes]"]',         item.notes);
+            setVal('input[name*="[bevel]"]',         item.bevel);
+            setVal('input[name*="[edge_bevel]"]',    item.edge_bevel);
 
             const grainSel = newRow.querySelector('select[name*="[grain_direction]"]');
             if (grainSel) grainSel.value = item.grain || '0';
@@ -1767,7 +1779,7 @@ function confirmExcelImport() {
 
             bindAcrylicRowEvents(newRow);
             calculateTotalPrice(newRow);
-            updateEdgeBevel(newRow);
+            initBevelField(newRow);
         });
     });
 
