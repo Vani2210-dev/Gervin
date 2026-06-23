@@ -82,7 +82,16 @@ class OrderController extends Controller
         abort_unless(in_array($type, self::ORDER_TYPES, true), 404);
 
         $orderType = $type;
-        $acrylicOrder = $this->createDraftOrder($type);
+        
+        $oldDraftId = old('draft_order_id');
+        if ($oldDraftId) {
+            $acrylicOrder = Order::where('status', 'draft')->find($oldDraftId);
+        }
+        
+        if (!isset($acrylicOrder) || !$acrylicOrder) {
+            $acrylicOrder = $this->createDraftOrder($type);
+        }
+
         $isDraftCreate = true;
         $woodBoardPrices = \App\Models\WoodBoardPrice::orderBy('code', 'asc')->get();
         $cncTemplates = \App\Models\CncTemplate::orderBy('id', 'asc')->get();

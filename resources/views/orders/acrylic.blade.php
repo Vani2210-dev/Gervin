@@ -262,8 +262,65 @@
     </div>
     <div class="order-supplies-body">
         <div id="order-supplies-container" class="space-y-6">
-        @if(isset($acrylicOrder) && in_array($acrylicOrder->type, ['acrylic', 'glass']) && $acrylicOrder->supplies->count() > 0)
-            @foreach($acrylicOrder->supplies as $supplyIndex => $supply)
+        @php
+            $supplies = collect();
+            if (old('supplies')) {
+                foreach (old('supplies') as $sIndex => $sData) {
+                    $supply = new \stdClass();
+                    $supply->id = $sData['id'] ?? null;
+                    $supply->order_supply_code = $sData['order_supply_code'] ?? null;
+                    $supply->supply_name = $sData['supply_name'] ?? '';
+                    $supply->quantity = $sData['quantity'] ?? 0;
+                    
+                    $items = collect();
+                    if (isset($sData['items']) && is_array($sData['items'])) {
+                        foreach ($sData['items'] as $iIndex => $iData) {
+                            $item = new \stdClass();
+                            $item->id = $iData['id'] ?? null;
+                            $item->product_code = $iData['product_code'] ?? null;
+                            $item->product_name = $iData['product_name'] ?? '';
+                            $item->thickness = $iData['thickness'] ?? '';
+                            $item->height = $iData['height'] ?? '';
+                            $item->width = $iData['width'] ?? '';
+                            $item->quantity = $iData['quantity'] ?? 1;
+                            $item->bevel = $iData['bevel'] ?? '';
+                            $item->grain_direction = $iData['grain_direction'] ?? 0;
+                            $item->wing_area = $iData['wing_area'] ?? '';
+                            $item->molding_length = $iData['molding_length'] ?? '';
+                            $item->edge_bevel = $iData['edge_bevel'] ?? '';
+                            $item->vertical_grain_cnc = $iData['vertical_grain_cnc'] ?? null;
+                            $item->offset_left = $iData['offset_left'] ?? '';
+                            $item->offset_right = $iData['offset_right'] ?? '';
+                            $item->offset_top = $iData['offset_top'] ?? '';
+                            $item->offset_bottom = $iData['offset_bottom'] ?? '';
+                            $item->mill_left = $iData['mill_left'] ?? '';
+                            $item->mill_right = $iData['mill_right'] ?? '';
+                            $item->mill_top = $iData['mill_top'] ?? '';
+                            $item->mill_bottom = $iData['mill_bottom'] ?? '';
+                            $item->mill_width = $iData['mill_width'] ?? '';
+                            $item->mill_depth = $iData['mill_depth'] ?? '';
+                            $item->mill_left_2 = $iData['mill_left_2'] ?? '';
+                            $item->mill_right_2 = $iData['mill_right_2'] ?? '';
+                            $item->mill_top_2 = $iData['mill_top_2'] ?? '';
+                            $item->mill_bottom_2 = $iData['mill_bottom_2'] ?? '';
+                            $item->mill_width_2 = $iData['mill_width_2'] ?? '';
+                            $item->mill_depth_2 = $iData['mill_depth_2'] ?? '';
+                            $item->unit_price = $iData['unit_price'] ?? 0;
+                            $item->total_price = $iData['total_price'] ?? 0;
+                            $item->notes = $iData['notes'] ?? '';
+                            $item->is_labor = $iData['is_labor'] ?? 0;
+                            $items->push($item);
+                        }
+                    }
+                    $supply->items = $items;
+                    $supplies->push($supply);
+                }
+            } elseif (isset($acrylicOrder) && in_array($acrylicOrder->type, ['acrylic', 'glass']) && $acrylicOrder->supplies->count() > 0) {
+                $supplies = $acrylicOrder->supplies;
+            }
+        @endphp
+        @if($supplies->count() > 0)
+            @foreach($supplies as $supplyIndex => $supply)
             <div class="order-supply-row bg-neutral-50/50 border border-primary-600 rounded-xl p-5 mb-2 relative shadow-sm" data-supply-id="{{ $supply->id }}">
                 
                 {{-- Items inside this supply --}}
@@ -448,7 +505,7 @@
                 </div>
             </div>
             @endforeach
-            @php $supplyIndex = $acrylicOrder->supplies->count() @endphp
+            @php $supplyIndex = $supplies->count() @endphp
         @else
             @php $supplyIndex = 0 @endphp
         @endif
