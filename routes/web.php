@@ -213,6 +213,7 @@ Route::middleware(['auth'])->prefix('media')->name('media.')->group(function () 
 
 // Wood Boards
 Route::middleware(['auth'])->group(function () {
+    Route::post('wood-boards/import', [WoodBoardController::class, 'import'])->name('wood_boards.import');
     Route::resource('wood-boards', WoodBoardController::class)->names('wood_boards');
     Route::post('wood-board-types/batch', [WoodBoardController::class, 'batchUpdate'])->name('wood_board_types.batch_update');
     Route::post('wood-board-types', [WoodBoardController::class, 'storeType'])->name('wood_board_types.store');

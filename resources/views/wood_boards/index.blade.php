@@ -75,6 +75,15 @@
                         <iconify-icon icon="solar:dollar-minimalistic-bold-duotone" class="icon text-xl line-height-1"></iconify-icon>
                         Cấu hình Nhóm giá
                     </button>
+                    <button type="button" onclick="triggerImportExcel()"
+                        class="btn bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200 text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2">
+                        <iconify-icon icon="lucide:file-spreadsheet" class="icon text-xl line-height-1"></iconify-icon>
+                        Nhập Excel
+                    </button>
+                    <form id="importExcelForm" action="{{ route('wood_boards.import') }}" method="POST" enctype="multipart/form-data" style="display: none;">
+                        @csrf
+                        <input type="file" id="excelImportFileInput" name="file" accept=".xlsx,.xls" onchange="submitImportForm()">
+                    </form>
                     <button type="button" onclick="openModal('create-board-modal')"
                         class="btn btn-primary text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2">
                         <iconify-icon icon="ic:baseline-plus" class="icon text-xl line-height-1"></iconify-icon>
@@ -712,6 +721,16 @@ function deletePriceGroup(id, name) {
             hiddenInput.value = id;
             form.appendChild(hiddenInput);
         }
+    }
+}
+
+function triggerImportExcel() {
+    document.getElementById('excelImportFileInput').click();
+}
+function submitImportForm() {
+    const fileInput = document.getElementById('excelImportFileInput');
+    if (fileInput.files.length > 0) {
+        document.getElementById('importExcelForm').submit();
     }
 }
 </script>

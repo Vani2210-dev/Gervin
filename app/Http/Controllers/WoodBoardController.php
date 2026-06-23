@@ -14,7 +14,7 @@ class WoodBoardController extends Controller
     public function __construct()
     {
         $this->middleware('permission:view supply',   ['only' => ['index']]);
-        $this->middleware('permission:add supply',    ['only' => ['store', 'storeType', 'batchUpdate', 'batchUpdatePriceGroups']]);
+        $this->middleware('permission:add supply',    ['only' => ['store', 'storeType', 'batchUpdate', 'batchUpdatePriceGroups', 'import']]);
         $this->middleware('permission:edit supply',   ['only' => ['update', 'updateType']]);
         $this->middleware('permission:delete supply', ['only' => ['destroy', 'destroyType']]);
     }
@@ -444,5 +444,175 @@ class WoodBoardController extends Controller
         }
         
         return floatval($value);
+    }
+
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls',
+        ]);
+
+        $file = $request->file('file');
+        
+        try {
+            $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($file->getPathname());
+            $sheet = $spreadsheet->getActiveSheet();
+            $rows = $sheet->toArray();
+
+            if (count($rows) < 7) {
+                return back()->with('error', 'File Excel không đúng cấu trúc hoặc không có dữ liệu.');
+            }
+
+            \DB::transaction(function () use ($rows) {
+                \DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+                \App\Models\WoodBoardPrice::truncate();
+                \App\Models\WoodBoard::truncate();
+                \App\Models\WoodBoardType::truncate();
+                \DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+
+                // Create the 6 board types
+                $types = [
+                    [
+                        'id' => 1,
+                        'name' => 'Acrylic Foil',
+                        'prefix' => '',
+                        'display_order' => 1,
+                    ],
+                    [
+                        'id' => 2,
+                        'name' => 'MDF 1 mặt Acrylic',
+                        'prefix' => '.TP',
+                        'display_order' => 2,
+                    ],
+                    [
+                        'id' => 3,
+                        'name' => 'MDF 2 mặt Acrylic',
+                        'prefix' => '.TP.2M',
+                        'display_order' => 3,
+                    ],
+                    [
+                        'id' => 4,
+                        'name' => 'Cốt Nhựa 1 mặt Acrylic',
+                        'prefix' => '.TP.PVC.1M',
+                        'display_order' => 4,
+                    ],
+                    [
+                        'id' => 5,
+                        'name' => 'Cốt Nhựa 1 mặt Acrylic chống cong',
+                        'prefix' => '.TP.PVC',
+                        'display_order' => 5,
+                    ],
+                    [
+                        'id' => 6,
+                        'name' => 'Cốt Nhựa 2 mặt Acrylic',
+                        'prefix' => '.TP.PVC.2M',
+                        'display_order' => 6,
+                    ],
+                ];
+
+                foreach ($types as $type) {
+                    \App\Models\WoodBoardType::create([
+                        'id' => $type['id'],
+                        'name' => $type['name'],
+                        'prefix' => $type['prefix'],
+                        'display_order' => $type['display_order'],
+                    ]);
+                }
+
+                $count = 0;
+                for ($i = 6; $i < count($rows); $i++) {
+                    $row = $rows[$i];
+                    
+                    // Col B is Color Code
+                    $colorCode = isset($row[1]) ? trim((string)$row[1]) : '';
+                    if (empty($colorCode)) {
+                        continue;
+                    }
+
+                    $board = \App\Models\WoodBoard::create([
+                        'color_code'  => $colorCode,
+                        'price_group' => '',
+                    ]);
+
+                    // Map columns
+                    $priceC = $this->cleanPrice($row[2]);
+
+                    $priceD = $this->cleanPrice($row[3]);
+                    $priceE = $this->cleanPrice($row[4]);
+                    $priceF = $this->cleanPrice($row[5]);
+                    $priceG = $this->cleanPrice($row[6]);
+
+                    $priceH = $this->cleanPrice($row[7]);
+                    $priceI = $this->cleanPrice($row[8]);
+                    $priceJ = $this->cleanPrice($row[9]);
+                    $priceK = $this->cleanPrice($row[10]);
+                    $priceL = $this->cleanPrice($row[11]);
+
+                    $pricingData = [
+                        1 => [
+                            'price_board' => $priceC,
+                            'price_m2'    => 0,
+                            'thickness'   => '17mm',
+                        ],
+                        2 => [
+                            'price_board' => $priceH,
+                            'price_m2'    => $priceD,
+                            'thickness'   => '17mm',
+                        ],
+                        3 => [
+                            'price_board' => $priceI,
+                            'price_m2'    => $priceE,
+                            'thickness'   => '17mm',
+                        ],
+                        4 => [
+                            'price_board' => $priceJ,
+                            'price_m2'    => 0,
+                            'thickness'   => '17mm',
+                        ],
+                        5 => [
+                            'price_board' => $priceK,
+                            'price_m2'    => $priceF,
+                            'thickness'   => '17mm',
+                        ],
+                        6 => [
+                            'price_board' => $priceL,
+                            'price_m2'    => $priceG,
+                            'thickness'   => '17mm',
+                        ],
+                    ];
+
+                    foreach ($pricingData as $typeId => $priceVal) {
+                        $boardType = \App\Models\WoodBoardType::find($typeId);
+                        $prefix = $boardType ? ($boardType->prefix ?? '') : '';
+                        $board->prices()->create([
+                            'wood_board_type_id' => $typeId,
+                            'code'               => $board->color_code . $prefix,
+                            'name'               => $boardType ? $boardType->name : '',
+                            'thickness'          => $priceVal['thickness'],
+                            'price_board'        => $priceVal['price_board'],
+                            'price_m2'           => $priceVal['price_m2'],
+                        ]);
+                    }
+
+                    $count++;
+                }
+            });
+
+            return back()->with('success', 'Nhập bảng giá gỗ Acrylic thành công!');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Đã xảy ra lỗi khi nhập file: ' . $e->getMessage());
+        }
+    }
+
+    private function cleanPrice($val)
+    {
+        if (is_null($val) || $val === '') {
+            return 0;
+        }
+        if (is_numeric($val)) {
+            return floatval($val);
+        }
+        $cleaned = preg_replace('/[^0-9]/', '', $val);
+        return floatval($cleaned);
     }
 }
