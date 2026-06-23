@@ -75,7 +75,7 @@
                                         </td>
                                         <td>
                                             <span class="text-base text-secondary-light">
-                                                {{ $order->deadline ? $order->deadline->format('d/m/Y') : '—' }}
+                                                {{ $order->deadline ? $order->deadline->format('H:i d/m/Y') : '—' }}
                                             </span>
                                         </td>
                                         <td>
