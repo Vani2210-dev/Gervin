@@ -1516,12 +1516,9 @@ function handleExcelFile(file) {
             const groups = {};    // supply_code → {supply_code, supply_name, items[]}
             const groupOrder = [];
             let prevSupplyCode = null;
-            let firstNameForGroup = {};
-
             for (const row of rawRows) {
                 const stt        = clean(row[0]);
                 const supplyCode = clean(row[1]);
-                const nameRaw    = clean(row[2]);
                 const height     = num(row[3]);
                 const width      = num(row[4]);
                 const qty        = parseInt(clean(row[5])) || 1;
@@ -1533,8 +1530,6 @@ function handleExcelFile(file) {
 
                 // Skip header rows (col A = La-mã I, II…) and summary/footer rows
                 if (isHeader(stt)) {
-                    // Section header: col C may hold supply name, col B blank
-                    // We'll treat next supply code group's name from here if needed
                     continue;
                 }
 
@@ -1544,20 +1539,12 @@ function handleExcelFile(file) {
                 // Must have at least height or width to be a real item row
                 if (height === '' && width === '') continue;
 
-                // Determine product_name: use col C if non-empty, else re-use first name of group
-                let productName = nameRaw;
-                if (!productName) {
-                    productName = firstNameForGroup[supplyCode] || '';
-                }
-                if (productName && !firstNameForGroup[supplyCode]) {
-                    firstNameForGroup[supplyCode] = productName;
-                }
-
                 // Detect "Công giả dày" / "Tấm giả dày" via notes col M
                 const isLaborNote = /gi[aả]\s*d[aày]y/i.test(notes) || /c[oô]ng/i.test(notes);
+                const productName = isLaborNote ? 'Công giả dày' : '';
 
                 const item = {
-                    product_name : productName || supplyCode,
+                    product_name : productName,
                     thickness    : '',
                     height,
                     width,
