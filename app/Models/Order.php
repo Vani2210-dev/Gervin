@@ -26,7 +26,9 @@ class Order extends Model
     ];
 
     protected $casts = [
-        'deadline' => 'date',
+        'deadline' => 'datetime',
+        'order_date' => 'datetime',
+        'delivery_days' => 'float',
         'total_amount' => 'float',
     ];
 

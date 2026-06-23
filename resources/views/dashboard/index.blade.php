@@ -353,7 +353,7 @@
                                         <span class="text-sm text-neutral-700">{{ $order->customer_name }}</span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="text-sm text-neutral-500">{{ $order->deadline ? $order->deadline->format('d/m/Y') : '—' }}</span>
+                                        <span class="text-sm text-neutral-500">{{ $order->deadline ? $order->deadline->format('H:i d/m/Y') : '—' }}</span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <span class="text-sm font-semibold text-neutral-800">{{ number_format(round($order->total_amount, -3), 0, ',', '.') }}đ</span>

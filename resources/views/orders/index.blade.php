@@ -190,7 +190,7 @@
                                     <span class="text-base text-secondary-light">{{ $order->phone ?? '—' }}</span>
                                 </td>
                                 <td>
-                                    <span class="text-base text-secondary-light">{{ $order->deadline ? $order->deadline->format('d/m/Y') : '—' }}</span>
+                                    <span class="text-base text-secondary-light">{{ $order->deadline ? $order->deadline->format('H:i d/m/Y') : '—' }}</span>
                                 </td>
                                 <td>
                                     <span class="text-base font-medium text-secondary-light">{{ number_format(round($order->total_amount, -3), 0, ',', '.') }}</span>

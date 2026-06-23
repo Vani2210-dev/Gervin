@@ -119,7 +119,7 @@
                             <span class="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Hạn giao hàng
                                 (Deadline)</span>
                             <span class="font-medium text-danger-600">
-                                {{ $acrylicOrder->deadline ? \Carbon\Carbon::parse($acrylicOrder->deadline)->format('d/m/Y') : '—' }}
+                                {{ $acrylicOrder->deadline ? \Carbon\Carbon::parse($acrylicOrder->deadline)->format('H:i d/m/Y') : '—' }}
                                 @if($acrylicOrder->delivery_days)
                                     <span class="text-xs text-neutral-400 font-normal">({{ $acrylicOrder->delivery_days }} ngày
                                         phải giao)</span>
@@ -698,7 +698,7 @@
             'customer_name' => $acrylicOrder->customer_name,
             'phone' => $acrylicOrder->phone,
             'order_date' => $acrylicOrder->order_date ? \Carbon\Carbon::parse($acrylicOrder->order_date)->format('Y-m-d H:i:s') : null,
-            'deadline' => $acrylicOrder->deadline ? \Carbon\Carbon::parse($acrylicOrder->deadline)->format('Y-m-d') : null,
+            'deadline' => $acrylicOrder->deadline ? \Carbon\Carbon::parse($acrylicOrder->deadline)->format('Y-m-d H:i:s') : null,
             'address' => $acrylicOrder->address,
             'notes' => $acrylicOrder->notes,
             'customer_policy' => $acrylicOrder->customer_policy,
