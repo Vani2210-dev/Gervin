@@ -435,10 +435,17 @@
                 </div>
                 
                 {{-- Nút thêm sản phẩm mới --}}
-                <button type="button" onclick="addOrderItem(this)" class="w-full mt-4 py-3 border-2 border-dashed border-primary-300 hover:border-primary-500 rounded-xl bg-primary-50/50 hover:bg-primary-50 text-primary-600 font-semibold text-sm flex items-center justify-center gap-1.5 transition-all duration-200">
-                    <iconify-icon icon="lucide:plus" class="text-lg"></iconify-icon>
-                    Thêm sản phẩm mới
-                </button>
+                <div class="flex gap-2 mt-4">
+                    <button type="button" onclick="addOrderItem(this)" class="flex-1 py-3 border-2 border-dashed border-primary-300 hover:border-primary-500 rounded-xl bg-primary-50/50 hover:bg-primary-50 text-primary-600 font-semibold text-sm flex items-center justify-center gap-1.5 transition-all duration-200">
+                        <iconify-icon icon="lucide:plus" class="text-lg"></iconify-icon>
+                        Thêm sản phẩm mới
+                    </button>
+                    <button type="button" onclick="triggerExcelImport(this)" class="py-3 px-5 border-2 border-dashed border-emerald-300 hover:border-emerald-500 rounded-xl bg-emerald-50/50 hover:bg-emerald-50 text-emerald-600 font-semibold text-sm flex items-center justify-center gap-1.5 transition-all duration-200" title="Nhập danh sách từ file Excel (.xlsx)">
+                        <iconify-icon icon="lucide:file-spreadsheet" class="text-lg"></iconify-icon>
+                        Nhập Excel
+                    </button>
+                    <input type="file" class="excel-import-input hidden" accept=".xlsx,.xls,.csv" style="display:none;">
+                </div>
             </div>
             @endforeach
             @php $supplyIndex = $acrylicOrder->supplies->count() @endphp
@@ -1370,5 +1377,265 @@ function onCncTemplateChange(selectEl) {
         const input = td.querySelector('.' + cls);
         if (input) input.value = (val !== null && val !== undefined) ? val : '';
     });
+}
+</script>
+
+{{-- =================== EXCEL IMPORT =================== --}}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+{{-- Modal preview Excel --}}
+<div id="excel-import-backdrop"
+    style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:3000;"
+    onclick="closeExcelImport()"></div>
+<div id="excel-import-modal"
+    style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+           width:min(1100px,96vw);max-height:90vh;background:#fff;border-radius:16px;
+           box-shadow:0 25px 60px rgba(0,0,0,0.3);z-index:3001;overflow:hidden;display:flex;flex-direction:column;">
+
+    {{-- Header --}}
+    <div style="background:linear-gradient(135deg,#059669,#10b981);padding:18px 24px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+        <div style="display:flex;align-items:center;gap:12px;">
+            <div style="background:rgba(255,255,255,0.2);border-radius:10px;padding:10px;display:flex;">
+                <iconify-icon icon="lucide:file-spreadsheet" style="font-size:22px;color:#fff;"></iconify-icon>
+            </div>
+            <div>
+                <div style="font-size:16px;font-weight:700;color:#fff;">Nhập từ Excel</div>
+                <div id="excel-import-filename" style="font-size:12px;color:rgba(255,255,255,0.75);margin-top:2px;">—</div>
+            </div>
+        </div>
+        <button onclick="closeExcelImport()" style="background:rgba(255,255,255,0.15);border:none;border-radius:8px;width:34px;height:34px;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+            <iconify-icon icon="lucide:x" style="font-size:16px;color:#fff;"></iconify-icon>
+        </button>
+    </div>
+
+    {{-- Column mapping guide --}}
+    <div style="padding:14px 24px 0;flex-shrink:0;">
+        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 16px;">
+            <div style="font-size:12px;font-weight:700;color:#065f46;margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+                <iconify-icon icon="lucide:info" style="font-size:14px;"></iconify-icon>
+                Định dạng cột Excel — hàng đầu là tiêu đề, từ hàng 2 là dữ liệu
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;font-size:11px;">
+                @foreach(['Tên SP','Độ dày','Cao','Rộng','SL','Vát','Chiều vân','Cánh m2','Phào m','Đơn giá','Ghi chú'] as $col)
+                <span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:999px;font-weight:600;">{{ $col }}</span>
+                @endforeach
+            </div>
+            <div style="font-size:11px;color:#6b7280;margin-top:6px;">
+                Cột tiêu đề không cần đúng tên — hệ thống nhận diện theo <strong>vị trí</strong> (cột A, B, C...). Thứ tự như trên.
+            </div>
+        </div>
+    </div>
+
+    {{-- Preview table --}}
+    <div style="flex:1;overflow-y:auto;padding:14px 24px;">
+        <div id="excel-preview-container" style="overflow-x:auto;">
+            <table id="excel-preview-table" style="width:100%;border-collapse:collapse;font-size:12px;min-width:800px;">
+                <thead id="excel-preview-thead" style="background:#f8fafc;position:sticky;top:0;z-index:2;"></thead>
+                <tbody id="excel-preview-tbody"></tbody>
+            </table>
+            <div id="excel-preview-empty" style="display:none;text-align:center;padding:40px;color:#94a3b8;">
+                <iconify-icon icon="lucide:file-x-2" style="font-size:36px;"></iconify-icon>
+                <div style="margin-top:8px;">Không tìm thấy dữ liệu trong file</div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Footer --}}
+    <div style="padding:14px 24px;border-top:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:#f8fafc;">
+        <div id="excel-import-count" style="font-size:13px;color:#64748b;"></div>
+        <div style="display:flex;gap:10px;">
+            <button type="button" onclick="closeExcelImport()"
+                style="padding:9px 20px;border:1.5px solid #d1d5db;border-radius:8px;background:#fff;color:#374151;font-size:13px;font-weight:600;cursor:pointer;">
+                Hủy
+            </button>
+            <button type="button" id="excel-import-confirm-btn" onclick="confirmExcelImport()"
+                style="padding:9px 20px;border:none;border-radius:8px;background:linear-gradient(135deg,#059669,#10b981);color:#fff;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;">
+                <iconify-icon icon="lucide:check" style="font-size:15px;"></iconify-icon>
+                Nhập vào bảng
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ======== EXCEL IMPORT LOGIC ========
+let _excelImportTargetBtn = null;   // the supply-section "Nhập Excel" button
+let _excelParsedRows = [];          // [{name, thickness, height, width, quantity, bevel, grain, wing, molding, unit_price, notes}]
+
+/**
+ * Called when user clicks "Nhập Excel" button inside a supply row.
+ * btn = the button element (inside .order-supply-row)
+ */
+function triggerExcelImport(btn) {
+    _excelImportTargetBtn = btn;
+    const supplyRow = btn.closest('.order-supply-row');
+    const fileInput = supplyRow.querySelector('.excel-import-input');
+    if (!fileInput) return;
+    fileInput.value = ''; // reset so same file can be re-selected
+    fileInput.onchange = function(e) { handleExcelFile(e.target.files[0]); };
+    fileInput.click();
+}
+
+function handleExcelFile(file) {
+    if (!file) return;
+    document.getElementById('excel-import-filename').textContent = file.name;
+    _excelParsedRows = [];
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const wb = XLSX.read(e.target.result, { type: 'array' });
+            const ws = wb.Sheets[wb.SheetNames[0]];
+            // Get raw rows as array-of-arrays (no header parsing)
+            const rawRows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+
+            if (!rawRows || rawRows.length < 2) {
+                showExcelModal([]);
+                return;
+            }
+
+            // Row 0 = headers (display only), rows 1+ = data
+            const headers = rawRows[0];
+            const dataRows = rawRows.slice(1).filter(r => r.some(c => c !== '' && c !== null && c !== undefined));
+
+            // Map each row: col positions:
+            // 0:Tên SP, 1:Độ dày, 2:Cao, 3:Rộng, 4:SL, 5:Vát, 6:Chiều vân, 7:Cánh m2, 8:Phào m, 9:Đơn giá, 10:Ghi chú
+            _excelParsedRows = dataRows.map(r => ({
+                product_name : String(r[0] ?? '').trim(),
+                thickness    : String(r[1] ?? '').trim(),
+                height       : parseFloat(r[2]) || '',
+                width        : parseFloat(r[3]) || '',
+                quantity     : parseInt(r[4]) || 1,
+                bevel        : String(r[5] ?? '').trim(),
+                grain        : String(r[6] ?? '').trim(),          // '0' or '2'
+                wing_area    : parseFloat(r[7]) || '',
+                molding      : parseFloat(r[8]) || '',
+                unit_price   : parseFloat(r[9]) || 0,
+                notes        : String(r[10] ?? '').trim(),
+            })).filter(r => r.product_name !== '');
+
+            showExcelModal(_excelParsedRows, headers);
+        } catch(err) {
+            alert('Không thể đọc file Excel: ' + err.message);
+        }
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+function showExcelModal(rows, headers) {
+    const colHeaders = ['Tên SP', 'Độ dày', 'Cao', 'Rộng', 'SL', 'Vát', 'Chiều vân', 'Cánh m2', 'Phào m', 'Đơn giá', 'Ghi chú'];
+
+    // Build thead
+    const thead = document.getElementById('excel-preview-thead');
+    thead.innerHTML = '<tr>' + colHeaders.map(h =>
+        `<th style="padding:8px 10px;text-align:left;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;white-space:nowrap;">${h}</th>`
+    ).join('') + '</tr>';
+
+    // Build tbody
+    const tbody = document.getElementById('excel-preview-tbody');
+    const empty = document.getElementById('excel-preview-empty');
+    if (!rows || rows.length === 0) {
+        tbody.innerHTML = '';
+        empty.style.display = 'block';
+        document.getElementById('excel-import-count').textContent = 'Không có dữ liệu';
+        document.getElementById('excel-import-confirm-btn').style.opacity = '0.5';
+        document.getElementById('excel-import-confirm-btn').style.pointerEvents = 'none';
+    } else {
+        empty.style.display = 'none';
+        document.getElementById('excel-import-confirm-btn').style.opacity = '1';
+        document.getElementById('excel-import-confirm-btn').style.pointerEvents = 'auto';
+        tbody.innerHTML = rows.map((r, i) => `
+            <tr style="border-bottom:1px solid #f1f5f9;${i % 2 === 1 ? 'background:#fafafa;' : ''}">
+                <td style="padding:7px 10px;font-weight:500;color:#0f172a;">${escHtml(r.product_name)}</td>
+                <td style="padding:7px 10px;color:#374151;">${escHtml(r.thickness)}</td>
+                <td style="padding:7px 10px;color:#374151;">${r.height !== '' ? r.height : '—'}</td>
+                <td style="padding:7px 10px;color:#374151;">${r.width !== '' ? r.width : '—'}</td>
+                <td style="padding:7px 10px;font-weight:600;color:#1d4ed8;">${r.quantity}</td>
+                <td style="padding:7px 10px;color:#374151;">${escHtml(r.bevel)}</td>
+                <td style="padding:7px 10px;text-align:center;">${r.grain || '0'}</td>
+                <td style="padding:7px 10px;color:#374151;">${r.wing_area !== '' ? r.wing_area : '—'}</td>
+                <td style="padding:7px 10px;color:#374151;">${r.molding !== '' ? r.molding : '—'}</td>
+                <td style="padding:7px 10px;font-weight:600;color:#15803d;">${r.unit_price ? Number(r.unit_price).toLocaleString('vi-VN') : '—'}</td>
+                <td style="padding:7px 10px;color:#6b7280;font-style:italic;">${escHtml(r.notes)}</td>
+            </tr>
+        `).join('');
+        document.getElementById('excel-import-count').textContent = `${rows.length} sản phẩm sẽ được nhập`;
+    }
+
+    // Show modal
+    document.getElementById('excel-import-backdrop').style.display = 'block';
+    document.getElementById('excel-import-modal').style.display = 'flex';
+}
+
+function closeExcelImport() {
+    document.getElementById('excel-import-backdrop').style.display = 'none';
+    document.getElementById('excel-import-modal').style.display = 'none';
+    _excelParsedRows = [];
+    _excelImportTargetBtn = null;
+}
+
+function confirmExcelImport() {
+    if (!_excelParsedRows || _excelParsedRows.length === 0 || !_excelImportTargetBtn) return;
+
+    const supplyRow = _excelImportTargetBtn.closest('.order-supply-row');
+    const container = supplyRow.querySelector('.supply-items-container');
+    if (!container) return;
+
+    _excelParsedRows.forEach(row => {
+        // Use existing addOrderItem to create a blank row, then fill it
+        const addBtn = supplyRow.querySelector('[onclick*="addOrderItem"]');
+        if (addBtn) addOrderItem(addBtn, true);  // isInitial=true so no scroll
+
+        const newRow = container.lastElementChild;
+        if (!newRow) return;
+
+        const setVal = (selector, val) => {
+            const el = newRow.querySelector(selector);
+            if (el && val !== '' && val !== null && val !== undefined) el.value = val;
+        };
+
+        setVal('input[name*="[product_name]"]', row.product_name);
+        setVal('input[name*="[thickness]"]',    row.thickness);
+        setVal('input[name*="[height]"]',        row.height);
+        setVal('input[name*="[width]"]',         row.width);
+        setVal('input[name*="[quantity]"]',      row.quantity);
+        setVal('input[name*="[wing_area]"]',     row.wing_area);
+        setVal('input[name*="[molding_length]"]',row.molding);
+        setVal('input[name*="[unit_price]"]',    row.unit_price);
+        setVal('input[name*="[notes]"]',         row.notes);
+
+        // Bevel
+        if (row.bevel) {
+            setVal('input[name*="[bevel]"]', row.bevel);
+        }
+
+        // Grain direction select
+        const grainSel = newRow.querySelector('select[name*="[grain_direction]"]');
+        if (grainSel && (row.grain === '2' || row.grain === 2)) {
+            grainSel.value = '2';
+        }
+
+        // Trigger recalculate
+        bindAcrylicRowEvents(newRow);
+        calculateTotalPrice(newRow);
+        updateEdgeBevel(newRow);
+    });
+
+    updateAcrylicRowIndexes();
+    updateOrderSummary();
+    closeExcelImport();
+
+    // Flash success
+    const btn = _excelImportTargetBtn || document.querySelector('[onclick*="triggerExcelImport"]');
+    if (supplyRow) {
+        supplyRow.style.transition = 'box-shadow 0.3s';
+        supplyRow.style.boxShadow = '0 0 0 3px #10b981';
+        setTimeout(() => { supplyRow.style.boxShadow = ''; }, 1200);
+    }
+}
+
+function escHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 </script>
