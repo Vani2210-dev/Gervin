@@ -1390,7 +1390,7 @@ function onCncTemplateChange(selectEl) {
 <div id="excel-import-modal"
     style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
            width:min(1100px,96vw);max-height:90vh;background:#fff;border-radius:16px;
-           box-shadow:0 25px 60px rgba(0,0,0,0.3);z-index:3001;overflow:hidden;display:flex;flex-direction:column;">
+           box-shadow:0 25px 60px rgba(0,0,0,0.3);z-index:3001;overflow:hidden;flex-direction:column;">
 
     {{-- Header --}}
     <div style="background:linear-gradient(135deg,#059669,#10b981);padding:18px 24px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
