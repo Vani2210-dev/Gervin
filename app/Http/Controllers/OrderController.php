@@ -113,6 +113,14 @@ class OrderController extends Controller
 
     public function store(Request $request)
     {
+        if ($request->filled('supplies_json')) {
+            $supplies = json_decode($request->input('supplies_json'), true);
+            if (is_array($supplies)) {
+                $supplies = $this->cleanEmptyStrings($supplies);
+                $request->merge(['supplies' => $supplies]);
+            }
+        }
+
         $request->validate([
             'draft_order_id' => 'required|integer',
             'type' => 'required|in:acrylic,glass,min_late',
@@ -137,6 +145,15 @@ class OrderController extends Controller
         if ($order->status === 'in_production') {
             return redirect()->route('orders.index')->with('error', 'Đơn hàng đang trong quá trình sản xuất, không thể chỉnh sửa.');
         }
+
+        if ($request->filled('supplies_json')) {
+            $supplies = json_decode($request->input('supplies_json'), true);
+            if (is_array($supplies)) {
+                $supplies = $this->cleanEmptyStrings($supplies);
+                $request->merge(['supplies' => $supplies]);
+            }
+        }
+
         if ($request->type === 'min_late') {
             $request->validate($this->minLateOrderService->getUpdateRules());
             $this->minLateOrderService->update($request, $order);
@@ -265,6 +282,22 @@ class OrderController extends Controller
             'min_late' => $this->minLateOrderService,
             'glass' => $this->glassOrderService,
             default => $this->acrylicOrderService,
+            'acrylic' => $this->acrylicOrderService,
         };
+    }
+
+    /**
+     * Recursively convert empty string elements to null in request arrays.
+     */
+    private function cleanEmptyStrings(array $array): array
+    {
+        foreach ($array as $key => $value) {
+            if (is_array($value)) {
+                $array[$key] = $this->cleanEmptyStrings($value);
+            } elseif ($value === '') {
+                $array[$key] = null;
+            }
+        }
+        return $array;
     }
 }

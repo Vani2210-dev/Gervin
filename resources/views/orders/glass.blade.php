@@ -187,8 +187,48 @@
     </div>
     <div class="order-supplies-body">
         <div id="glass-supplies-container" class="space-y-6">
-        @if(isset($acrylicOrder) && $acrylicOrder->type == 'glass' && $acrylicOrder->supplies->count() > 0)
-            @foreach($acrylicOrder->supplies as $supplyIndex => $supply)
+        @php
+            $supplies = collect();
+            if (old('supplies')) {
+                foreach (old('supplies') as $sIndex => $sData) {
+                    $supply = new \stdClass();
+                    $supply->id = $sData['id'] ?? null;
+                    $supply->order_supply_code = $sData['order_supply_code'] ?? null;
+                    $supply->supply_name = $sData['supply_name'] ?? '';
+                    $supply->quantity = $sData['quantity'] ?? 0;
+                    
+                    $items = collect();
+                    if (isset($sData['items']) && is_array($sData['items'])) {
+                        foreach ($sData['items'] as $iIndex => $iData) {
+                            $item = new \stdClass();
+                            $item->id = $iData['id'] ?? null;
+                            $item->product_code = $iData['product_code'] ?? null;
+                            $item->product_name = $iData['product_name'] ?? '';
+                            $item->thickness = $iData['thickness'] ?? '';
+                            $item->wing_opening_direction = $iData['wing_opening_direction'] ?? '';
+                            $item->aluminum_color = $iData['aluminum_color'] ?? '';
+                            $item->glass_color = $iData['glass_color'] ?? '';
+                            $item->height = $iData['height'] ?? '';
+                            $item->width = $iData['width'] ?? '';
+                            $item->unit = $iData['unit'] ?? 'Bộ';
+                            $item->wing_quantity = $iData['wing_quantity'] ?? 1;
+                            $item->area_m2 = $iData['area_m2'] ?? '';
+                            $item->unit_price = $iData['unit_price'] ?? 0;
+                            $item->total_price = $iData['total_price'] ?? 0;
+                            $item->notes = $iData['notes'] ?? '';
+                            
+                            $items->push($item);
+                        }
+                    }
+                    $supply->glassItems = $items;
+                    $supplies->push($supply);
+                }
+            } elseif (isset($acrylicOrder) && $acrylicOrder->type == 'glass' && $acrylicOrder->supplies->count() > 0) {
+                $supplies = $acrylicOrder->supplies;
+            }
+        @endphp
+        @if($supplies->count() > 0)
+            @foreach($supplies as $supplyIndex => $supply)
             <div class="order-supply-row bg-neutral-50/50 border border-primary-600 rounded-xl p-5 mb-2 relative shadow-sm" data-supply-id="{{ $supply->id }}">
                 
                 {{-- Items inside this supply --}}

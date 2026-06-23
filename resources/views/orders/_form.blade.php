@@ -20,7 +20,21 @@
         @if($isDraftCreate && isset($acrylicOrder))
             <input type="hidden" name="draft_order_id" value="{{ $acrylicOrder->id }}">
         @endif
+        <input type="hidden" name="supplies_json" id="supplies-json-input">
         <div class="p-4">
+            @if ($errors->any())
+                <div class="mb-4 p-4 rounded-xl border border-danger-200 bg-danger-50 text-danger-600 shadow-sm">
+                    <div class="flex items-center gap-2 mb-2 font-bold text-danger-800">
+                        <iconify-icon icon="solar:danger-triangle-bold" class="text-xl"></iconify-icon>
+                        <span>Lỗi nhập liệu! Vui lòng kiểm tra và sửa lại các trường sau:</span>
+                    </div>
+                    <ul class="list-disc pl-5 space-y-1 text-xs font-semibold">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 {{-- Main Form - col-lg-8 --}}
                 <div class="lg:col-span-8 space-y-6">
@@ -1987,6 +2001,123 @@ document.addEventListener('DOMContentLoaded', function() {
 document.addEventListener('wheel', function(event) {
     if (document.activeElement.type === 'number') {
         document.activeElement.blur();
+    }
+});
+
+// JSON Serializer for bypassing PHP max_input_vars limit
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('order-form');
+    if (!form) return;
+
+    form.addEventListener('submit', function(e) {
+        if (e.defaultPrevented) return;
+
+        // Serialize supplies & items into JSON
+        const supplies = serializeSupplies();
+        if (supplies) {
+            document.getElementById('supplies-json-input').value = JSON.stringify(supplies);
+            
+            // Disable native inputs to bypass PHP max_input_vars limit
+            const container = document.getElementById('order-supplies-container') 
+                           || document.getElementById('glass-supplies-container')
+                           || document.getElementById('min-late-supplies-container');
+            if (container) {
+                container.querySelectorAll('input[name^="supplies["], select[name^="supplies["], textarea[name^="supplies["]').forEach(input => {
+                    input.disabled = true;
+                });
+            }
+        }
+    });
+
+    function serializeSupplies() {
+        const container = document.getElementById('order-supplies-container') 
+                       || document.getElementById('glass-supplies-container')
+                       || document.getElementById('min-late-supplies-container');
+        if (!container) return null;
+
+        const supplies = [];
+        const supplyRows = container.querySelectorAll('.order-supply-row');
+        
+        supplyRows.forEach((supplyRow) => {
+            // Check if this supply section is disabled (e.g. from hidden tabs)
+            const firstInput = supplyRow.querySelector('input:not([type="hidden"]), select');
+            if (firstInput && firstInput.disabled) return;
+
+            const supply = {
+                id: supplyRow.getAttribute('data-supply-id') || null,
+                order_supply_code: supplyRow.querySelector('[name*="[order_supply_code]"]')?.value || '',
+                supply_name: supplyRow.querySelector('[name*="[supply_name]"]')?.value || '',
+                quantity: parseFloat(supplyRow.querySelector('[name*="[quantity]"]:not([name*="items"])')?.value) || 0,
+                items: []
+            };
+
+            // If we are using TomSelect, get value from it or fallback to DOM value
+            const codeSelect = supplyRow.querySelector('.order-supply-code-select');
+            if (codeSelect && codeSelect.tomselect) {
+                supply.order_supply_code = codeSelect.tomselect.getValue();
+            }
+
+            const itemRows = supplyRow.querySelectorAll('.order-item-row');
+            itemRows.forEach((itemRow) => {
+                const item = {
+                    id: itemRow.getAttribute('data-item-id') || null
+                };
+
+                // Gather all inputs inside the item row
+                itemRow.querySelectorAll('input, select, textarea').forEach(input => {
+                    const name = input.getAttribute('name');
+                    if (!name) return;
+
+                    // Extract the field key, e.g. "product_name" from "supplies[0][items][1][product_name]"
+                    const match = name.match(/\[items\]\[\d+\]\[([^\]]+)\]/);
+                    if (match) {
+                        const key = match[1];
+                        let val = input.value;
+                        
+                        // Parse values based on input type
+                        if (input.type === 'number') {
+                            val = val === '' ? '' : parseFloat(val);
+                        } else if (input.type === 'hidden' && (key === 'is_labor' || key.startsWith('offset_') || key.startsWith('mill_'))) {
+                            val = val === '' ? null : parseInt(val);
+                        }
+                        item[key] = val;
+                    }
+                });
+                
+                // Add default is_labor if not present
+                if (itemRow.dataset.isLabor === '1') {
+                    item.is_labor = 1;
+                }
+                
+                // For min_late edge gluing, it is nested: edge_gluing[height_1], etc.
+                // We need to group them into a nested object if name contains "edge_gluing"
+                const gluingInputs = itemRow.querySelectorAll('[name*="[edge_gluing]"]');
+                if (gluingInputs.length > 0) {
+                    item.edge_gluing = {};
+                    gluingInputs.forEach(input => {
+                        const name = input.getAttribute('name');
+                        const keyMatch = name.match(/\[edge_gluing\]\[([^\]]+)\]/);
+                        if (keyMatch) {
+                            item.edge_gluing[keyMatch[1]] = input.value || '';
+                        }
+                    });
+                }
+
+                // For min_late size, it is height and width
+                if (item.height !== undefined && item.width !== undefined) {
+                    item.size = {
+                        height: item.height,
+                        width: item.width
+                    };
+                }
+
+                supply.items.push(item);
+            });
+
+            supplies.push(supply);
+        });
+
+        return supplies;
     }
 });
 </script>

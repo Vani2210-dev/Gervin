@@ -202,8 +202,60 @@
     </div>
     <div class="order-supplies-body">
         <div id="min-late-supplies-container" class="space-y-6">
-        @if(isset($acrylicOrder) && $acrylicOrder->type == 'min_late' && $acrylicOrder->supplies->count() > 0)
-            @foreach($acrylicOrder->supplies as $supplyIndex => $supply)
+        @php
+            $supplies = collect();
+            if (old('supplies')) {
+                foreach (old('supplies') as $sIndex => $sData) {
+                    $supply = new \stdClass();
+                    $supply->id = $sData['id'] ?? null;
+                    $supply->order_supply_code = $sData['order_supply_code'] ?? null;
+                    $supply->supply_name = $sData['supply_name'] ?? '';
+                    $supply->quantity = $sData['quantity'] ?? 0;
+                    
+                    $items = collect();
+                    if (isset($sData['items']) && is_array($sData['items'])) {
+                        foreach ($sData['items'] as $iIndex => $iData) {
+                            $item = new \stdClass();
+                            $item->id = $iData['id'] ?? null;
+                            $item->product_code = $iData['product_code'] ?? null;
+                            $item->product_name = $iData['product_name'] ?? '';
+                            $item->thickness = $iData['thickness'] ?? '';
+                            $item->quantity = $iData['quantity'] ?? 1;
+                            $item->straight_paste_length = $iData['straight_paste_length'] ?? 0;
+                            $item->beveled_length = $iData['beveled_length'] ?? 0;
+                            $item->vat_moi_length = $iData['vat_moi_length'] ?? 0;
+                            $item->ban_rong_40_59 = $iData['ban_rong_40_59'] ?? 0;
+                            $item->ban_rong_17_39 = $iData['ban_rong_17_39'] ?? 0;
+                            $item->ban_rong_25_35 = $iData['ban_rong_25_35'] ?? 0;
+                            $item->beveled_handle = $iData['beveled_handle'] ?? 0;
+                            $item->cnc = $iData['cnc'] ?? 0;
+                            $item->direction = $iData['direction'] ?? '';
+                            $item->notes = $iData['notes'] ?? '';
+                            
+                            $item->size = [
+                                'height' => $iData['height'] ?? '',
+                                'width' => $iData['width'] ?? ''
+                            ];
+                            
+                            $item->edge_gluing = [
+                                'height_1' => $iData['edge_gluing']['height_1'] ?? '',
+                                'height_2' => $iData['edge_gluing']['height_2'] ?? '',
+                                'width_1' => $iData['edge_gluing']['width_1'] ?? '',
+                                'width_2' => $iData['edge_gluing']['width_2'] ?? ''
+                            ];
+                            
+                            $items->push($item);
+                        }
+                    }
+                    $supply->minLateItems = $items;
+                    $supplies->push($supply);
+                }
+            } elseif (isset($acrylicOrder) && $acrylicOrder->type == 'min_late' && $acrylicOrder->supplies->count() > 0) {
+                $supplies = $acrylicOrder->supplies;
+            }
+        @endphp
+        @if($supplies->count() > 0)
+            @foreach($supplies as $supplyIndex => $supply)
             <div class="order-supply-row bg-neutral-50/50 border border-primary-600 rounded-xl p-5 mb-2 relative shadow-sm" data-supply-id="{{ $supply->id }}">
                 
                 {{-- Items inside this supply --}}
