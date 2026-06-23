@@ -467,6 +467,19 @@ function addGlassOrderItem(button, isInitial = false) {
     container.appendChild(newItem);
     
     const newRow = container.lastElementChild;
+    
+    // Force table reflow to fix Chrome sticky cell border-collapse rendering bug
+    const table = newRow.closest('table');
+    if (table && !table.dataset.borderFixPending) {
+        table.dataset.borderFixPending = '1';
+        requestAnimationFrame(() => {
+            table.style.setProperty('border-collapse', 'separate', 'important');
+            table.offsetHeight; // force repaint without looping entire table
+            table.style.removeProperty('border-collapse');
+            delete table.dataset.borderFixPending;
+        });
+    }
+    
     bindGlassRowEvents(newRow);
     updateOrderSummary();
     updateGlassRowIndexes();
@@ -591,6 +604,18 @@ function duplicateGlassRow(button) {
 
     // Insert after current row
     row.parentNode.insertBefore(newRow, row.nextSibling);
+
+    // Force table reflow to fix Chrome sticky cell border-collapse rendering bug
+    const table = newRow.closest('table');
+    if (table && !table.dataset.borderFixPending) {
+        table.dataset.borderFixPending = '1';
+        requestAnimationFrame(() => {
+            table.style.setProperty('border-collapse', 'separate', 'important');
+            table.offsetHeight; // force repaint without looping entire table
+            table.style.removeProperty('border-collapse');
+            delete table.dataset.borderFixPending;
+        });
+    }
 
     bindGlassRowEvents(newRow);
     updateGlassRowIndexes();

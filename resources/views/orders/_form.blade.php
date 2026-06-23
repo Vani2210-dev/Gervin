@@ -37,22 +37,12 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label font-semibold text-xs text-neutral-500 uppercase tracking-wider mb-2 block">Khách hàng</label>
-                                <div class="flex gap-2 items-stretch">
-                                    <div class="flex-1 min-w-0">
-                                        <select name="customer_id" id="customer-select" class="" onchange="fillCustomerInfo(this.value)">
-                                            <option value="">-- Chọn khách hàng --</option>
-                                            @foreach(\App\Models\Customer::orderBy('name')->get() as $customer)
-                                            <option value="{{ $customer->id }}" {{ isset($acrylicOrder) && $acrylicOrder?->customer_id == $customer->id ? 'selected' : '' }}>{{ $customer->customer_code }} - {{ $customer->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <button type="button" onclick="openQuickAddCustomer()"
-                                        title="Thêm khách hàng mới"
-                                        class="flex-shrink-0 flex items-center gap-1 px-3 py-2 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold transition-colors" style="height:42px;">
-                                        <iconify-icon icon="lucide:plus" style="font-size:16px;"></iconify-icon>
-                                        Thêm mới
-                                    </button>
-                                </div>
+                                <select name="customer_id" id="customer-select" class="" onchange="fillCustomerInfo(this.value)">
+                                    <option value="">-- Chọn khách hàng --</option>
+                                    @foreach(\App\Models\Customer::orderBy('name')->get() as $customer)
+                                    <option value="{{ $customer->id }}" {{ isset($acrylicOrder) && $acrylicOrder?->customer_id == $customer->id ? 'selected' : '' }}>{{ $customer->customer_code }} - {{ $customer->name }}</option>
+                                    @endforeach
+                                </select>
                             </div>
                             <div class="form-group md:col-span-2">
                                 <label class="form-label font-semibold text-xs text-neutral-500 uppercase tracking-wider mb-2 block">Tên khách hàng <span class="text-danger-500">*</span></label>
@@ -277,6 +267,10 @@ function fillCustomerInfo(customerId) {
         document.querySelector('input[name="customer_name"]').value = customer.name;
         document.querySelector('input[name="phone"]').value = customer.phone || '';
         document.querySelector('textarea[name="address"]').value = customer.address || '';
+    } else if (customerId && !/^\d+$/.test(customerId)) {
+        document.querySelector('input[name="customer_name"]').value = customerId;
+        document.querySelector('input[name="phone"]').value = '';
+        document.querySelector('textarea[name="address"]').value = '';
     }
     @endif
 }
@@ -1585,82 +1579,29 @@ document.addEventListener('DOMContentLoaded', function() {
             const customerTomSelect = new TomSelect(customerSelect, {
                 allowEmptyOption: true,
                 placeholder: '-- Chọn khách hàng --',
-                maxOptions: null
+                maxOptions: null,
+                create: true,
+                createFilter: function(input) {
+                    return input.length > 0;
+                }
             });
             customerTomSelect.on('change', function(value) {
                 fillCustomerInfo(value);
             });
         }
 
-        // === QUICK ADD CUSTOMER MODAL ===
-        const qacCsrf = document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}';
-
-        window.openQuickAddCustomer = function() {
-            document.getElementById('qac-backdrop').style.display = 'block';
-            document.getElementById('qac-modal').style.display    = 'block';
-            document.getElementById('qac-name').focus();
-        };
-        window.closeQuickAddCustomer = function() {
-            document.getElementById('qac-backdrop').style.display = 'none';
-            document.getElementById('qac-modal').style.display    = 'none';
-            document.getElementById('qac-form').reset();
-            document.getElementById('qac-error').textContent = '';
-        };
-        document.getElementById('qac-submit').addEventListener('click', function() {
-            const btn      = this;
-            const name     = document.getElementById('qac-name').value.trim();
-            const code     = document.getElementById('qac-code').value.trim();
-            const phone    = document.getElementById('qac-phone').value.trim();
-            const address  = document.getElementById('qac-address').value.trim();
-            const errEl    = document.getElementById('qac-error');
-
-            if (!name) { errEl.textContent = 'Vui lòng nhập tên khách hàng.'; return; }
-            errEl.textContent = '';
-            btn.disabled = true;
-            btn.textContent = 'Đang lưu...';
-
-            fetch('/customers/quick-create', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': qacCsrf,
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify({ name, customer_code: code, phone, address }),
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) {
-                    // Add new option to TomSelect and select it
-                    const ts = customerSelect.tomselect;
-                    if (ts) {
-                        ts.addOption({ value: String(data.customer.id), text: data.label });
-                        ts.setValue(String(data.customer.id));
-                    }
-                    // Also fill the customer fields
-                    const nameInput = document.querySelector('input[name="customer_name"]');
-                    const phoneInput = document.querySelector('input[name="phone"]');
-                    const addrInput = document.querySelector('textarea[name="address"]');
-                    if (nameInput) nameInput.value = data.customer.name;
-                    if (phoneInput) phoneInput.value = data.customer.phone || '';
-                    if (addrInput)  addrInput.value  = data.customer.address || '';
-                    closeQuickAddCustomer();
-                } else {
-                    errEl.textContent = data.message || 'Có lỗi xảy ra.';
+        // Intercept form submission to clear customer_id if it is not numeric
+        const orderForm = document.getElementById('order-form');
+        if (orderForm) {
+            orderForm.addEventListener('submit', function(e) {
+                const custSelect = document.getElementById('customer-select');
+                if (custSelect && custSelect.value && !/^\d+$/.test(custSelect.value)) {
+                    // It's a typed string, remove the name attribute so it doesn't submit
+                    // but the backend uses customer_name which is already filled by fillCustomerInfo
+                    custSelect.name = ''; 
                 }
-            })
-            .catch(async (err) => {
-                try {
-                    const body = await err.response?.json?.();
-                    errEl.textContent = body?.message || 'Có lỗi xảy ra.';
-                } catch { errEl.textContent = 'Có lỗi xảy ra.'; }
-            })
-            .finally(() => {
-                btn.disabled = false;
-                btn.textContent = 'Lưu khách hàng';
             });
-        });
+        }
 
         document.querySelectorAll('.tom-select-product').forEach(function(element) {
             if (element.tomselect) return;
@@ -2050,72 +1991,4 @@ document.addEventListener('wheel', function(event) {
 });
 </script>
 
-{{-- ===== QUICK ADD CUSTOMER MODAL ===== --}}
-<div id="qac-backdrop"
-    style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:2000;"
-    onclick="closeQuickAddCustomer()"></div>
-<div id="qac-modal"
-    style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
-           width:min(480px,95vw); background:#fff; border-radius:16px;
-           box-shadow:0 20px 60px rgba(0,0,0,0.3); z-index:2001; overflow:hidden;">
-    {{-- Header --}}
-    <div style="background:linear-gradient(135deg,#6366f1,#8b5cf6); padding:20px 24px; display:flex; align-items:center; justify-content:space-between;">
-        <div style="display:flex; align-items:center; gap:10px;">
-            <div style="background:rgba(255,255,255,0.2); border-radius:8px; padding:8px; display:flex;">
-                <iconify-icon icon="lucide:user-plus" style="font-size:20px; color:#fff;"></iconify-icon>
-            </div>
-            <div>
-                <div style="font-size:16px; font-weight:700; color:#fff;">Thêm khách hàng mới</div>
-                <div style="font-size:11px; color:rgba(255,255,255,0.75);">Khách hàng sẽ được tạo và chọn tự động</div>
-            </div>
-        </div>
-        <button onclick="closeQuickAddCustomer()" style="background:rgba(255,255,255,0.15); border:none; border-radius:8px; width:32px; height:32px; cursor:pointer; display:flex; align-items:center; justify-content:center;">
-            <iconify-icon icon="lucide:x" style="font-size:16px; color:#fff;"></iconify-icon>
-        </button>
-    </div>
-    {{-- Body --}}
-    <form id="qac-form" onsubmit="return false;" style="padding:20px 24px; display:flex; flex-direction:column; gap:14px;">
-        <div>
-            <label style="font-size:12px; font-weight:600; color:#374151; display:block; margin-bottom:5px;">
-                Tên khách hàng <span style="color:#ef4444;">*</span>
-            </label>
-            <input id="qac-name" type="text" placeholder="Nhập tên khách hàng"
-                style="width:100%; padding:9px 12px; border:1.5px solid #d1d5db; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;"
-                onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#d1d5db'">
-        </div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-            <div>
-                <label style="font-size:12px; font-weight:600; color:#374151; display:block; margin-bottom:5px;">
-                    Mã khách hàng <span style="font-size:11px; font-weight:400; color:#9ca3af;">(để trống tự tạo)</span>
-                </label>
-                <input id="qac-code" type="text" placeholder="VD: KH00001"
-                    style="width:100%; padding:9px 12px; border:1.5px solid #d1d5db; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;"
-                    onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#d1d5db'">
-            </div>
-            <div>
-                <label style="font-size:12px; font-weight:600; color:#374151; display:block; margin-bottom:5px;">Số điện thoại</label>
-                <input id="qac-phone" type="text" placeholder="0901..."
-                    style="width:100%; padding:9px 12px; border:1.5px solid #d1d5db; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;"
-                    onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#d1d5db'">
-            </div>
-        </div>
-        <div>
-            <label style="font-size:12px; font-weight:600; color:#374151; display:block; margin-bottom:5px;">Địa chỉ</label>
-            <input id="qac-address" type="text" placeholder="Nhập địa chỉ"
-                style="width:100%; padding:9px 12px; border:1.5px solid #d1d5db; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;"
-                onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#d1d5db'">
-        </div>
-        <div id="qac-error" style="color:#ef4444; font-size:12px; min-height:16px;"></div>
-    </form>
-    {{-- Footer --}}
-    <div style="padding:16px 24px; border-top:1px solid #f1f5f9; display:flex; gap:10px; justify-content:flex-end;">
-        <button type="button" onclick="closeQuickAddCustomer()"
-            style="padding:9px 18px; border:1.5px solid #d1d5db; border-radius:8px; background:#fff; color:#374151; font-size:13px; font-weight:600; cursor:pointer;">
-            Hủy
-        </button>
-        <button id="qac-submit" type="button"
-            style="padding:9px 20px; border:none; border-radius:8px; background:linear-gradient(135deg,#6366f1,#8b5cf6); color:#fff; font-size:13px; font-weight:600; cursor:pointer;">
-            Lưu khách hàng
-        </button>
-    </div>
-</div>
+
