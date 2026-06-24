@@ -279,7 +279,8 @@ async function exportToExcel() {
                     itemRow.getCell(6).value = parseInt(item.quantity) || 1;
                     itemRow.getCell(6).alignment = { horizontal: 'center', vertical: 'middle' };
 
-                    itemRow.getCell(7).value = item.edge_bevel || 'Vát 0';
+                    let edgeBevel = item.edge_bevel || 'Vát 0';
+                    itemRow.getCell(7).value = (edgeBevel === 'Vát 0' || edgeBevel === '0') ? '—' : edgeBevel;
                     itemRow.getCell(7).alignment = { horizontal: 'center', vertical: 'middle' };
 
                     itemRow.getCell(8).value = item.grain_direction !== null ? String(item.grain_direction) : '—';
@@ -456,7 +457,8 @@ async function exportToExcel() {
                     row.getCell(17).value = 0.00001;                          // Dày nẹp L2
                     row.getCell(18).value = 0.00001;                          // Dày nẹp W1
                     row.getCell(19).value = 0.00001;                          // Dày nẹp W2
-                    row.getCell(20).value = item.edge_bevel || 'Vát 0';      // Ghi chú
+                    let bazisBevel = item.edge_bevel || 'Vát 0';
+                    row.getCell(20).value = (bazisBevel === 'Vát 0' || bazisBevel === '0') ? '—' : bazisBevel;      // Ghi chú
 
                     // Columns U-AD (Bao trong / Xoi): empty by default
                     for (let c = 21; c <= 30; c++) {
@@ -823,7 +825,7 @@ async function exportToExcel() {
                     itemRow.getCell(5).value = parseFloat((parseFloat(item.width) || 0).toFixed(2));
                     itemRow.getCell(6).value = parseInt(item.quantity) || 1;
 
-                    itemRow.getCell(7).value = item.beveled_handle ? 'Vát ' + item.beveled_handle : 'Vát 0';
+                    itemRow.getCell(7).value = (item.beveled_handle && item.beveled_handle !== '0') ? 'Vát ' + item.beveled_handle : '—';
 
                     const gluing = item.edge_gluing || {};
                     itemRow.getCell(8).value = gluing.height_1 || '';

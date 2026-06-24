@@ -118,7 +118,7 @@
         <div class="col-span-12 md:col-span-4">
             <div class="text-white rounded-2xl p-6 shadow-md flex flex-col h-full min-h-[380px]" style="background-color: #d1135c;">
                 <div>
-                    <h5 class="text-lg font-bold mb-4 flex items-center gap-2">
+                    <h5 class="text-lg font-bold mb-4 flex items-center gap-2 text-white">
                         <iconify-icon icon="lucide:help-circle"></iconify-icon>
                         Tiêu chuẩn làm đẹp
                     </h5>

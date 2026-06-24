@@ -9,8 +9,11 @@
 @endphp
 <link rel="stylesheet" href="{{ asset('assets/css/order-form.css') }}?v={{ time() }}">
 <div class="card p-0 rounded-xl border-0">
-    <div class="card-header border-b border-neutral-200 bg-white py-4 px-6">
-        <h5 class="font-semibold text-base">{{ $title ?? 'Tạo đơn hàng' }}</h5>
+    <div class="card-header border-b border-neutral-200 bg-white py-4 px-6 flex justify-between items-center">
+        <h5 class="font-semibold text-base m-0">{{ $title ?? 'Tạo đơn hàng' }}</h5>
+        <button type="button" onclick="openModal('modal-shortcuts')" class="btn bg-primary-50 text-primary-600 hover:bg-primary-100 border border-primary-200 px-3 py-1.5 rounded-lg text-sm font-semibold flex items-center gap-1.5 transition-colors">
+            <iconify-icon icon="lucide:lightbulb" class="text-base"></iconify-icon> Hướng dẫn & Mẹo
+        </button>
     </div>
     <form action="{{ $action }}" method="POST" id="order-form" enctype="multipart/form-data">
         @if(isset($acrylicOrder) && !$isDraftCreate)
@@ -35,7 +38,7 @@
                     </ul>
                 </div>
             @endif
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-3">
                 {{-- Main Form - col-lg-8 --}}
                 <div class="lg:col-span-8 space-y-6">
                     {{-- Customer Info Section Card --}}
@@ -1967,6 +1970,20 @@ document.addEventListener('focusin', function(e) {
 });
 </script>
 
+<script>
+// Global helper to fix Chromium border-collapse bug on sticky cells
+window.fixChromeTableBorders = function(table) {
+    // if (!table || table.dataset.borderFixPending) return;
+    // table.dataset.borderFixPending = '1';
+    // requestAnimationFrame(() => {
+    //     table.style.setProperty('border-collapse', 'separate', 'important');
+    //     table.offsetHeight; // force repaint without looping entire table
+    //     table.style.removeProperty('border-collapse');
+    //     delete table.dataset.borderFixPending;
+    // });
+};
+</script>
+
 @if($isDraftCreate && isset($acrylicOrder))
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -2125,4 +2142,88 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+<x-modal name="modal-shortcuts" maxWidth="2xl" :hasBackdrop="true" :transparent="false">
+    <div class="p-6 flex flex-col" style="max-height: 85vh;">
+        <div class="flex items-center justify-between border-b border-neutral-100 pb-4 shrink-0">
+            <h5 class="font-bold text-lg text-neutral-800 flex items-center gap-2 m-0">
+                <iconify-icon icon="lucide:lightbulb" class="text-primary-500"></iconify-icon>
+                Hướng dẫn & Mẹo sử dụng
+            </h5>
+            <button type="button" onclick="closeModal('modal-shortcuts')" class="w-8 h-8 rounded-lg hover:bg-neutral-100 flex items-center justify-center text-neutral-400 hover:text-danger-500 transition-colors">
+                <iconify-icon icon="lucide:x" class="text-lg"></iconify-icon>
+            </button>
+        </div>
+        
+        <div class="space-y-4 overflow-y-auto pr-2 flex-1 mt-4">
+            <div class="flex items-start gap-3 p-3 rounded-lg bg-neutral-50 border border-neutral-100">
+                <div class="px-2.5 py-1.5 bg-white border border-neutral-200 rounded text-xs font-mono font-bold text-neutral-700 shadow-sm flex items-center gap-1 shrink-0">Ctrl + <iconify-icon icon="lucide:mouse"></iconify-icon> Lăn chuột</div>
+                <div>
+                    <p class="font-semibold text-sm text-neutral-800 m-0">(Khi trỏ vào bảng vật tư)</p>
+                    <p class="text-sm text-neutral-500 m-0">Thu nhỏ / Phóng to bảng vật tư để nhìn được nhiều cột hơn hoặc nhìn rõ chữ hơn.</p>
+                </div>
+            </div>
 
+            <div class="flex items-start gap-3 p-3 rounded-lg bg-neutral-50 border border-neutral-100">
+                <div class="px-2.5 py-1.5 bg-white border border-neutral-200 rounded text-xs font-mono font-bold text-neutral-700 shadow-sm flex items-center gap-1 shrink-0">Ctrl + <iconify-icon icon="lucide:mouse"></iconify-icon> Lăn chuột</div>
+                <div>
+                    <p class="font-semibold text-sm text-neutral-800 m-0">(Khi mở popup xem ảnh to)</p>
+                    <p class="text-sm text-neutral-500 m-0">Thay đổi kích thước thực của ảnh đang xem để soi rõ chi tiết.</p>
+                </div>
+            </div>
+
+            <div class="flex items-start gap-3 p-3 rounded-lg bg-neutral-50 border border-neutral-100">
+                <div class="px-2.5 py-1.5 bg-white border border-neutral-200 rounded text-xs font-mono font-bold text-neutral-700 shadow-sm shrink-0">Ctrl + Alt</div>
+                <div>
+                    <p class="font-semibold text-sm text-neutral-800 m-0">Ẩn / Hiện tạm thời các popup ảnh</p>
+                    <p class="text-sm text-neutral-500 m-0">Nhấn giữ để tạm thời ẩn tất cả các ảnh đang mở (để nhìn bảng dữ liệu phía sau). Buông phím ra ảnh sẽ hiện lại.</p>
+                </div>
+            </div>
+
+            <div class="flex items-start gap-3 p-3 rounded-lg bg-neutral-50 border border-neutral-100">
+                <div class="px-2.5 py-1.5 bg-white border border-neutral-200 rounded text-xs font-mono font-bold text-neutral-700 shadow-sm shrink-0">Ctrl + V</div>
+                <div>
+                    <p class="font-semibold text-sm text-neutral-800 m-0">Dán ảnh trực tiếp</p>
+                    <p class="text-sm text-neutral-500 m-0">Copy ảnh từ Zalo hoặc phần mềm khác, bấm vào ô khu vực tải ảnh và ấn Ctrl+V để dán ảnh vào đơn hàng thật nhanh.</p>
+                </div>
+            </div>
+
+            <div class="flex items-start gap-3 p-3 rounded-lg bg-neutral-50 border border-neutral-100">
+                <div class="px-2.5 py-1.5 bg-white border border-neutral-200 rounded text-xs font-mono font-bold text-neutral-700 shadow-sm flex items-center gap-1 shrink-0"><iconify-icon icon="lucide:columns"></iconify-icon> Kéo dãn cột</div>
+                <div>
+                    <p class="font-semibold text-sm text-neutral-800 m-0">Tự động lưu độ rộng cột</p>
+                    <p class="text-sm text-neutral-500 m-0">Bạn có thể dùng chuột rê vào vách ngăn giữa các tiêu đề cột để kéo dãn độ rộng cho vừa mắt. Hệ thống sẽ tự động lưu lại cấu hình này cho các lần nhập sau.</p>
+                </div>
+            </div>
+            
+            <div class="flex items-start gap-3 p-3 rounded-lg bg-neutral-50 border border-neutral-100">
+                <div class="px-2.5 py-1.5 bg-white border border-neutral-200 rounded text-xs font-mono font-bold text-neutral-700 shadow-sm flex items-center gap-1 shrink-0"><iconify-icon icon="lucide:move"></iconify-icon> Kéo thả chuột</div>
+                <div>
+                    <p class="font-semibold text-sm text-neutral-800 m-0">Kéo thả ảnh đang xem</p>
+                    <p class="text-sm text-neutral-500 m-0">Khi mở popup xem ảnh to, bạn có thể click giữ chuột để kéo bức ảnh sang vị trí khác trên màn hình.</p>
+                </div>
+            </div>
+
+            <div class="flex items-start gap-3 p-3 rounded-lg bg-neutral-50 border border-neutral-100">
+                <div class="px-2.5 py-1.5 bg-white border border-neutral-200 rounded text-xs font-mono font-bold text-neutral-700 shadow-sm flex items-center gap-1 shrink-0"><iconify-icon icon="lucide:mouse-pointer-click"></iconify-icon> Click đúp (vào ảnh)</div>
+                <div>
+                    <p class="font-semibold text-sm text-neutral-800 m-0">Mở ảnh to</p>
+                    <p class="text-sm text-neutral-500 m-0">Click đúp (nhấp chuột 2 lần) vào hình ảnh thu nhỏ ở khung bên phải để mở cửa sổ xem ảnh phóng to.</p>
+                </div>
+            </div>
+
+            <div class="flex items-start gap-3 p-3 rounded-lg bg-neutral-50 border border-neutral-100">
+                <div class="px-2.5 py-1.5 bg-white border border-neutral-200 rounded text-xs font-mono font-bold text-neutral-700 shadow-sm flex items-center gap-1 shrink-0"><iconify-icon icon="lucide:list-ordered"></iconify-icon> Hiển thị dòng</div>
+                <div>
+                    <p class="font-semibold text-sm text-neutral-800 m-0">Tùy chỉnh số lượng dòng (5, 10, 25...)</p>
+                    <p class="text-sm text-neutral-500 m-0">Chọn hiển thị 5, 10, 25... dòng để phân trang bảng dữ liệu. Việc này giúp giao diện gọn gàng hơn, hỗ trợ bạn dễ dàng theo dõi, kiểm tra và quản lý khi đơn hàng có số lượng sản phẩm lớn.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4 pt-4 border-t border-neutral-100 flex justify-end shrink-0">
+            <button type="button" onclick="closeModal('modal-shortcuts')" class="btn btn-primary px-5 py-2 rounded-lg text-sm font-semibold transition-all">
+                Đã hiểu
+            </button>
+        </div>
+    </div>
+</x-modal>

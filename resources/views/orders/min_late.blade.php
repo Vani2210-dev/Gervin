@@ -738,15 +738,7 @@ function addMinLateOrderItem(button, isInitial = false) {
     
     // Force table reflow to fix Chrome sticky cell border-collapse rendering bug
     const table = newRow.closest('table');
-    if (table && !table.dataset.borderFixPending) {
-        table.dataset.borderFixPending = '1';
-        requestAnimationFrame(() => {
-            table.style.setProperty('border-collapse', 'separate', 'important');
-            table.offsetHeight; // force repaint without looping entire table
-            table.style.removeProperty('border-collapse');
-            delete table.dataset.borderFixPending;
-        });
-    }
+
     
     bindMinLateRowEvents(newRow);
     calculateMinLateRowStats(newRow);
@@ -768,9 +760,11 @@ function addMinLateOrderItem(button, isInitial = false) {
 
 function removeMinLateOrderItem(button) {
     const row = button.closest('.order-item-row');
+    const table = row.closest('table');
     row.remove();
     updateOrderSummary();
     updateMinLateRowIndexes();
+
 }
 
 function updateMinLateRowIndexes() {
@@ -856,15 +850,7 @@ function duplicateMinLateRow(button) {
 
     // Force table reflow to fix Chrome sticky cell border-collapse rendering bug
     const table = newRow.closest('table');
-    if (table && !table.dataset.borderFixPending) {
-        table.dataset.borderFixPending = '1';
-        requestAnimationFrame(() => {
-            table.style.setProperty('border-collapse', 'separate', 'important');
-            table.offsetHeight; // force repaint without looping entire table
-            table.style.removeProperty('border-collapse');
-            delete table.dataset.borderFixPending;
-        });
-    }
+
     
     bindMinLateRowEvents(newRow);
     calculateMinLateRowStats(newRow);

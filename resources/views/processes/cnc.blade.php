@@ -121,7 +121,7 @@
         <div class="lg:col-span-4">
             <div class="text-white rounded-2xl p-6 shadow-md flex flex-col justify-between h-full min-h-[380px]" style="background-color: rgb(99, 39, 238);">
                 <div>
-                    <h5 class="text-lg font-bold mb-4 flex items-center gap-2">
+                    <h5 class="text-lg font-bold mb-4 flex items-center gap-2 text-white">
                         <iconify-icon icon="lucide:help-circle"></iconify-icon>
                         Hướng dẫn thao tác
                     </h5>

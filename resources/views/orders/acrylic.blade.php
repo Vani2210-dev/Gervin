@@ -380,7 +380,7 @@
                                 </td>
                                 <td style="width: 160px; min-width: 160px; " class="border border-neutral-200">
                                     @if($isLaborRow)
-                                        <div class="h-8 flex items-center justify-center text-xs text-amber-600 font-semibold bg-amber-50 rounded-lg border border-amber-200 px-1">
+                                        <div class="h-8 flex items-center justify-center text-xs text-amber-600 font-semibold bg-amber-50 px-1">
                                             <iconify-icon icon="lucide:hammer" style="margin-right:4px;"></iconify-icon> Công
                                         </div>
                                         <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][product_code]" value="">
@@ -783,15 +783,7 @@ function addOrderItem(button, isInitial = false) {
     
     // Force table reflow to fix Chrome sticky cell border-collapse rendering bug
     const table = newRow.closest('table');
-    if (table && !table.dataset.borderFixPending) {
-        table.dataset.borderFixPending = '1';
-        requestAnimationFrame(() => {
-            table.style.setProperty('border-collapse', 'separate', 'important');
-            table.offsetHeight; // force repaint without looping entire table
-            table.style.removeProperty('border-collapse');
-            delete table.dataset.borderFixPending;
-        });
-    }
+
     
     bindAcrylicRowEvents(newRow);
     initBevelField(newRow);
@@ -814,9 +806,11 @@ function addOrderItem(button, isInitial = false) {
 function removeOrderItem(button) {
     const row = button.closest('.order-item-row');
     const tbody = row.closest('.supply-items-container');
+    const table = row.closest('table');
     row.remove();
     updateOrderSummary();
     updateAcrylicRowIndexes(tbody);
+
 }
 
 function updateAcrylicRowIndexes() {
@@ -999,15 +993,7 @@ function duplicateAcrylicRow(button) {
 
     // Force table reflow to fix Chrome sticky cell border-collapse rendering bug
     const table = newRow.closest('table');
-    if (table && !table.dataset.borderFixPending) {
-        table.dataset.borderFixPending = '1';
-        requestAnimationFrame(() => {
-            table.style.setProperty('border-collapse', 'separate', 'important');
-            table.offsetHeight; // force repaint without looping entire table
-            table.style.removeProperty('border-collapse');
-            delete table.dataset.borderFixPending;
-        });
-    }
+
 
     bindAcrylicRowEvents(newRow);
     initBevelField(newRow);
@@ -1115,7 +1101,7 @@ function addFakeThicknessRow(button) {
         pcInput.style.display = 'none';
         if (!td.querySelector('.labor-badge')) {
             const badge = document.createElement('div');
-            badge.className = 'labor-badge h-8 flex items-center justify-center text-xs text-amber-600 font-semibold bg-amber-50 rounded-lg border border-amber-200 px-1';
+            badge.className = 'labor-badge h-8 flex items-center justify-center text-xs text-amber-600 font-semibold bg-amber-50 px-1';
             badge.innerHTML = '<iconify-icon icon="lucide:hammer" style="margin-right:4px;"></iconify-icon> Công';
             td.insertBefore(badge, pcInput);
         }
@@ -1134,15 +1120,7 @@ function addFakeThicknessRow(button) {
 
     // Force table reflow to fix Chrome sticky cell border-collapse rendering bug
     const table = newRow.closest('table');
-    if (table && !table.dataset.borderFixPending) {
-        table.dataset.borderFixPending = '1';
-        requestAnimationFrame(() => {
-            table.style.setProperty('border-collapse', 'separate', 'important');
-            table.offsetHeight; // force repaint without looping entire table
-            table.style.removeProperty('border-collapse');
-            delete table.dataset.borderFixPending;
-        });
-    }
+
 
     bindAcrylicRowEvents(newRow);
     initBevelField(newRow);
@@ -1489,22 +1467,22 @@ function onCncTemplateChange(selectEl) {
     onclick="closeExcelImport()"></div>
 <div id="excel-import-modal"
     style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
-           width:min(1100px,96vw);max-height:90vh;background:#fff;border-radius:16px;
+           width:min(1100px,96vw);height:90vh;background:#fff;border-radius:16px;
            box-shadow:0 25px 60px rgba(0,0,0,0.3);z-index:3001;overflow:hidden;flex-direction:column;">
 
     {{-- Header --}}
-    <div style="background:linear-gradient(135deg,#059669,#10b981);padding:18px 24px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+    <div style="background:#fff;border-bottom:1px solid #e5e7eb;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
         <div style="display:flex;align-items:center;gap:12px;">
-            <div style="background:rgba(255,255,255,0.2);border-radius:10px;padding:10px;display:flex;">
-                <iconify-icon icon="lucide:file-spreadsheet" style="font-size:22px;color:#fff;"></iconify-icon>
+            <div style="background:#ecfdf5;border-radius:10px;padding:10px;display:flex;">
+                <iconify-icon icon="lucide:file-spreadsheet" style="font-size:22px;color:#10b981;"></iconify-icon>
             </div>
             <div>
-                <div style="font-size:16px;font-weight:700;color:#fff;">Nhập từ Excel</div>
-                <div id="excel-import-filename" style="font-size:12px;color:rgba(255,255,255,0.75);margin-top:2px;">—</div>
+                <div style="font-size:16px;font-weight:700;color:#1f2937;">Nhập từ Excel</div>
+                <div id="excel-import-filename" style="font-size:12px;color:#6b7280;margin-top:2px;">—</div>
             </div>
         </div>
-        <button onclick="closeExcelImport()" style="background:rgba(255,255,255,0.15);border:none;border-radius:8px;width:34px;height:34px;cursor:pointer;display:flex;align-items:center;justify-content:center;">
-            <iconify-icon icon="lucide:x" style="font-size:16px;color:#fff;"></iconify-icon>
+        <button type="button" onclick="closeExcelImport()" class="w-8 h-8 rounded-lg hover:bg-neutral-100 flex items-center justify-center text-neutral-400 hover:text-danger-500 transition-colors" style="border:none;background:transparent;">
+            <iconify-icon icon="lucide:x" style="font-size:18px;"></iconify-icon>
         </button>
     </div>
 
@@ -1558,6 +1536,14 @@ function onCncTemplateChange(selectEl) {
 </div>
 
 <script>
+// Di chuyển modal ra ngoài body để tránh bị ảnh hưởng bởi relative/transform của các thẻ cha (gây hở viền trên/dưới)
+document.addEventListener('DOMContentLoaded', function() {
+    const backdrop = document.getElementById('excel-import-backdrop');
+    const modal = document.getElementById('excel-import-modal');
+    if (backdrop) document.body.appendChild(backdrop);
+    if (modal) document.body.appendChild(modal);
+});
+
 // ======== EXCEL IMPORT LOGIC (v2 — grouped by supply code in col B) ========
 // _excelSupplyGroups = [{supply_code, supply_name, items:[{...}]}]
 let _excelSupplyGroups = [];
@@ -1711,6 +1697,7 @@ function showExcelModal(groups) {
         confirmBtn.style.pointerEvents = 'none';
         document.getElementById('excel-import-backdrop').style.display = 'block';
         document.getElementById('excel-import-modal').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
         return;
     }
 
@@ -1754,11 +1741,13 @@ function showExcelModal(groups) {
 
     document.getElementById('excel-import-backdrop').style.display = 'block';
     document.getElementById('excel-import-modal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
 }
 
 function closeExcelImport() {
     document.getElementById('excel-import-backdrop').style.display = 'none';
     document.getElementById('excel-import-modal').style.display = 'none';
+    document.body.style.overflow = '';
     _excelSupplyGroups = [];
 }
 
@@ -1850,7 +1839,7 @@ function confirmExcelImport() {
                     pcInput.style.display = 'none';
                     if (!td.querySelector('.labor-badge')) {
                         const badge = document.createElement('div');
-                        badge.className = 'labor-badge h-8 flex items-center justify-center text-xs text-amber-600 font-semibold bg-amber-50 rounded-lg border border-amber-200 px-1';
+                        badge.className = 'labor-badge h-8 flex items-center justify-center text-xs text-amber-600 font-semibold bg-amber-50 px-1';
                         badge.innerHTML = '<iconify-icon icon="lucide:hammer" style="margin-right:4px;"></iconify-icon> Công';
                         td.insertBefore(badge, pcInput);
                     }
@@ -1872,6 +1861,8 @@ function confirmExcelImport() {
         suppliesContainer.style.boxShadow = '0 0 0 3px #10b981';
         setTimeout(() => { suppliesContainer.style.boxShadow = ''; }, 1500);
     }
+
+
 
     closeExcelImport();
 }
