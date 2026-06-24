@@ -24,7 +24,7 @@ class MinLateOrderService
             'address'        => 'nullable|string',
             'type'           => 'required|in:min_late',
             'order_date'     => 'nullable|date',
-            'delivery_days'  => 'nullable|integer|min:0',
+            'delivery_days'  => 'nullable|numeric|min:0',
             'deadline'       => 'nullable|date',
             'notes'          => 'nullable|string',
             'customer_policy'=> 'nullable|string',
@@ -83,8 +83,8 @@ class MinLateOrderService
         $deadline = $request->deadline;
         if ($request->filled('order_date') && $request->filled('delivery_days')) {
             $orderDate = \Carbon\Carbon::parse($request->order_date);
-            $deliveryDays = (int) $request->delivery_days;
-            $deadline = $orderDate->addDays($deliveryDays)->format('Y-m-d');
+            $deliveryDays = (float) $request->delivery_days;
+            $deadline = $orderDate->addHours($deliveryDays * 24)->format('Y-m-d H:i:s');
         }
 
         // Handle file uploads

@@ -411,7 +411,7 @@
                                                class="product-bevel-input form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center pr-6 pl-1 py-1 h-8 text-xs w-full" 
                                                placeholder="Vát" 
                                                value="{{ $item->bevel }}"
-                                               data-auto-sync="{{ (!$item->bevel || $item->bevel == $item->width) ? 'width' : (($item->bevel == $item->height) ? 'height' : 'none') }}">
+                                               data-auto-sync="{{ ($item->bevel === '' || $item->bevel === null) ? 'none' : (($item->bevel == $item->width) ? 'width' : (($item->bevel == $item->height) ? 'height' : 'none')) }}">
                                         <div class="pointer-events-auto cursor-pointer" style="position: absolute; right: 4px; top: 0; bottom: 0; width: 24px; display: flex; align-items: center; justify-content: center; z-index: 4;" title="Chọn kiểu vát">
                                             <iconify-icon icon="lucide:chevron-down" class="text-neutral-500 text-base pointer-events-none"></iconify-icon>
                                             <select class="product-bevel-select absolute inset-0 opacity-0 cursor-pointer w-full h-full">
@@ -1342,13 +1342,19 @@ function initBevelField(row) {
     const height = heightInput.value.trim();
     const width = widthInput.value.trim();
     let val = bevelInput.value.trim();
+    
+    const currentSync = bevelInput.getAttribute('data-auto-sync') || 'width';
 
     if (val === '') {
-        // Default to width sync
-        bevelInput.setAttribute('data-auto-sync', 'width');
-        if (width !== '') {
-            bevelInput.value = width;
-            val = width;
+        if (currentSync === 'none') {
+            bevelInput.setAttribute('data-auto-sync', 'none');
+        } else {
+            // Default to width sync
+            bevelInput.setAttribute('data-auto-sync', 'width');
+            if (width !== '') {
+                bevelInput.value = width;
+                val = width;
+            }
         }
     } else {
         // Check if value matches width or height
@@ -1818,7 +1824,12 @@ function confirmExcelImport() {
             setVal('input[name*="[molding_length]"]',item.molding);
             setVal('input[name*="[unit_price]"]',    item.unit_price);
             setVal('input[name*="[notes]"]',         item.notes);
-            setVal('input[name*="[bevel]"]',         item.bevel);
+            if (item.bevel === '' || item.bevel === null || item.bevel === undefined) {
+                const bevelIn = newRow.querySelector('input[name*="[bevel]"]');
+                if (bevelIn) bevelIn.setAttribute('data-auto-sync', 'none');
+            } else {
+                setVal('input[name*="[bevel]"]', item.bevel);
+            }
             setVal('input[name*="[edge_bevel]"]',    item.edge_bevel);
 
             const grainSel = newRow.querySelector('select[name*="[grain_direction]"]');
