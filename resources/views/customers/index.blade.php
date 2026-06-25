@@ -340,7 +340,8 @@ function openEditModal(id, customerCode, name, phone, address) {
 const ovStatusColors = {
     draft:         { bg:'#f1f5f9', text:'#64748b' },
     pending:       { bg:'#fef9c3', text:'#854d0e' },
-    processing:    { bg:'#dbeafe', text:'#1d4ed8' },
+    transferred:   { bg:'#dbeafe', text:'#1d4ed8' },
+
     in_production: { bg:'#ede9fe', text:'#6d28d9' },
     completed:     { bg:'#dcfce7', text:'#15803d' },
     cancelled:     { bg:'#fee2e2', text:'#b91c1c' },
@@ -386,7 +387,7 @@ function closeCustomerOverview() {
 
 function renderCustomerOverview(data) {
     const statusLabels = {
-        draft:'Nháp', pending:'Chờ xử lý', processing:'Đang xử lý',
+        draft:'Nháp', pending:'Chờ xử lý', transferred:'Chuyển sản xuất',
         in_production:'Đang sản xuất', completed:'Hoàn thành', cancelled:'Đã hủy'
     };
 

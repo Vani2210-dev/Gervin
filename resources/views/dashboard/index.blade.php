@@ -41,13 +41,13 @@
                 </div>
                 <div class="mt-3 flex items-center justify-between text-xs text-neutral-500 border-t border-neutral-100 pt-2 flex-wrap gap-2">
                     <span>Chờ xử lý: <strong class="text-warning-600 font-semibold">{{ $stats['pending_orders'] }}</strong></span>
-                    <span>Đang chạy: <strong class="text-info-600 font-semibold">{{ $stats['processing_orders'] }}</strong></span>
+                    <span>Chuyển SX: <strong class="text-info-600 font-semibold">{{ $stats['transferred_orders'] }}</strong></span>
                     <span>Xong: <strong class="text-success-600 font-semibold">{{ $stats['completed_orders'] }}</strong></span>
                 </div>
             </div>
         </div>
         @endcan
-
+        
         {{-- Acrylic Orders --}}
         @can('view order')
         <div class="card shadow-none border border-neutral-200 rounded-xl h-full bg-gradient-to-r from-indigo-600/10 to-white">
@@ -363,14 +363,16 @@
                                             $statusColors = [
                                                 'draft' => 'bg-neutral-100 text-neutral-600',
                                                 'pending' => 'bg-warning-100 text-warning-600',
-                                                'processing' => 'bg-info-100 text-info-600',
+                                                'transferred' => 'bg-info-100 text-info-600',
+
                                                 'completed' => 'bg-success-100 text-success-600',
                                                 'cancelled' => 'bg-danger-100 text-danger-600',
                                             ];
                                             $statusLabels = [
                                                 'draft' => 'Nháp',
                                                 'pending' => 'Chờ xử lý',
-                                                'processing' => 'Đang xử lý',
+                                                'transferred' => 'Chuyển sản xuất',
+
                                                 'completed' => 'Hoàn thành',
                                                 'cancelled' => 'Đã hủy',
                                             ];
@@ -387,9 +389,15 @@
                                             </a>
                                             @endcan
                                             @can('edit order')
+                                            @if(!in_array($order->status, ['in_production', 'cancelled']))
                                             <a href="{{ route('orders.edit', $order) }}" class="bg-success-100 hover:bg-success-200 text-success-600 font-medium w-8 h-8 flex justify-center items-center rounded-full" title="Chỉnh sửa">
                                                 <iconify-icon icon="lucide:edit" class="text-base"></iconify-icon>
                                             </a>
+                                            @else
+                                            <span class="bg-neutral-100 text-neutral-400 cursor-not-allowed font-medium w-8 h-8 flex justify-center items-center rounded-full" title="{{ $order->status === 'in_production' ? 'Đơn hàng đang sản xuất, không thể chỉnh sửa' : 'Đơn hàng đã bị hủy, không thể chỉnh sửa' }}">
+                                                <iconify-icon icon="lucide:edit" class="text-base"></iconify-icon>
+                                            </span>
+                                            @endif
                                             @endcan
                                         </div>
                                     </td>

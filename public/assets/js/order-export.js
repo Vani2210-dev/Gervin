@@ -59,9 +59,49 @@ async function exportToExcel() {
         const setCell = (row, col, value, bold = false, align = 'center', size = 11, italic = false) => {
             const cell = worksheet.getCell(row, col);
             cell.value = value;
-            cell.font = { name: 'Times New Roman', size: size, bold: bold, italic: italic, color: { argb: 'FF000000' } };
+            cell.font = { name: 'Times New Roman', size: size, bold: bold, italic: italic };
             cell.alignment = { horizontal: align, vertical: 'middle', wrapText: true };
             return cell;
+        };
+
+        const appendDebtSummary = (startRow, maxCol, labelCol, valCol, labelColEnd) => {
+            if (!orderData.customer_debt_info) return startRow;
+            let r = startRow;
+            const debt = orderData.customer_debt_info;
+            const rowsData = [
+                { text: "Công nợ:", val: debt.old_debt, color: null },
+                { text: "Đã TT:", val: debt.this_order_paid, color: 'FF16A34A' },
+                { text: "Tổng:", val: debt.total_combined_debt, color: 'FFDC2626' }
+            ];
+            rowsData.forEach((item, index) => {
+                const row = worksheet.getRow(r);
+                row.height = 22;
+                if (labelColEnd) {
+                    worksheet.mergeCells(r, labelCol, r, labelColEnd);
+                }
+                const labelCell = row.getCell(labelCol);
+                labelCell.value = item.text;
+                labelCell.font = { name: 'Times New Roman', size: 11, bold: true };
+                labelCell.alignment = { horizontal: 'center', vertical: 'middle' };
+
+                const valCell = row.getCell(valCol);
+                valCell.value = Math.round(parseFloat(item.val) / 1000) * 1000;
+                valCell.font = { name: 'Times New Roman', size: 11, bold: true };
+                if (item.color) valCell.font.color = { argb: item.color };
+                valCell.numFmt = '#,##0';
+                valCell.alignment = { horizontal: 'center', vertical: 'middle' };
+
+                for (let c = 1; c <= maxCol; c++) {
+                    const cell = row.getCell(c);
+                    const isLast = (index === rowsData.length - 1);
+                    cell.border = {
+                        top: { style: 'thin', color: { argb: 'FF9CA3AF' } },
+                        bottom: isLast ? { style: 'double', color: { argb: 'FF1F2937' } } : { style: 'thin', color: { argb: 'FF9CA3AF' } }
+                    };
+                }
+                r++;
+            });
+            return r;
         };
 
         // ─── Always render Logo + Company header (rows 1-4) for ALL order types ───
@@ -333,9 +373,12 @@ async function exportToExcel() {
             for (let c = 1; c <= 15; c++) {
                 totalRow.getCell(c).border = {
                     top: { style: 'thin', color: { argb: 'FF9CA3AF' } },
-                    bottom: { style: 'double', color: { argb: 'FF1F2937' } }
+                    bottom: orderData.customer_debt_info ? { style: 'thin', color: { argb: 'FF9CA3AF' } } : { style: 'double', color: { argb: 'FF1F2937' } }
                 };
             }
+            currentRow++;
+            
+            currentRow = appendDebtSummary(currentRow, 15, 11, 12, null);
 
             // ─── Sheet 2: BAZIS-PM (only for acrylic orders) ───
             const ws2 = workbook.addWorksheet('BAZIS-PM');
@@ -681,9 +724,12 @@ async function exportToExcel() {
             for (let c = 1; c <= 14; c++) {
                 totalRow.getCell(c).border = {
                     top: { style: 'thin', color: { argb: 'FF9CA3AF' } },
-                    bottom: { style: 'double', color: { argb: 'FF1F2937' } }
+                    bottom: orderData.customer_debt_info ? { style: 'thin', color: { argb: 'FF9CA3AF' } } : { style: 'double', color: { argb: 'FF1F2937' } }
                 };
             }
+            currentRow++;
+            
+            currentRow = appendDebtSummary(currentRow, 14, 11, 13, 12);
 
         } else if (orderData.type === 'min_late') {
             // Column dimensions
@@ -949,7 +995,7 @@ async function exportToExcel() {
                 for (let c = 1; c <= maxCol; c++) {
                     sumRow.getCell(c).border = {
                         top: { style: 'thin', color: { argb: 'FF9CA3AF' } },
-                        bottom: { style: 'double', color: { argb: 'FF1F2937' } }
+                        bottom: orderData.customer_debt_info ? { style: 'thin', color: { argb: 'FF9CA3AF' } } : { style: 'double', color: { argb: 'FF1F2937' } }
                     };
                 }
                 currentRow++;
@@ -973,10 +1019,13 @@ async function exportToExcel() {
                 for (let c = 1; c <= maxCol; c++) {
                     remainRow.getCell(c).border = {
                         top: { style: 'thin', color: { argb: 'FF9CA3AF' } },
-                        bottom: { style: 'double', color: { argb: 'FF1F2937' } }
+                        bottom: orderData.customer_debt_info ? { style: 'thin', color: { argb: 'FF9CA3AF' } } : { style: 'double', color: { argb: 'FF1F2937' } }
                     };
                 }
+                currentRow++;
             }
+            
+            currentRow = appendDebtSummary(currentRow, 17, 16, 17, null);
         }
 
         // Auto fit row heights by clearing custom heights, and ensure wrap text is enabled on all cells

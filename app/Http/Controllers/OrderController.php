@@ -104,6 +104,9 @@ class OrderController extends Controller
         if ($order->status === 'in_production') {
             return redirect()->route('orders.index')->with('error', 'Đơn hàng đang trong quá trình sản xuất, không thể chỉnh sửa.');
         }
+        if ($order->status === 'cancelled') {
+            return redirect()->route('orders.index')->with('error', 'Đơn hàng đã bị hủy, không thể chỉnh sửa.');
+        }
         $order->load(['supplies.items', 'supplies.minLateItems', 'supplies.glassItems', 'paymentDetails']);
         $acrylicOrder = $order;
         $woodBoardPrices = \App\Models\WoodBoardPrice::orderBy('code', 'asc')->get();
@@ -144,6 +147,9 @@ class OrderController extends Controller
     {
         if ($order->status === 'in_production') {
             return redirect()->route('orders.index')->with('error', 'Đơn hàng đang trong quá trình sản xuất, không thể chỉnh sửa.');
+        }
+        if ($order->status === 'cancelled') {
+            return redirect()->route('orders.index')->with('error', 'Đơn hàng đã bị hủy, không thể chỉnh sửa.');
         }
 
         if ($request->filled('supplies_json')) {

@@ -75,13 +75,15 @@
                             ];
                             $statusColors = [
                                 'pending' => 'bg-warning-100 text-warning-600 border border-warning-200',
-                                'processing' => 'bg-info-100 text-info-600 border border-info-200',
+                                'transferred' => 'bg-info-100 text-info-600 border border-info-200',
+
                                 'completed' => 'bg-success-100 text-success-600 border border-success-200',
                                 'cancelled' => 'bg-danger-100 text-danger-600 border border-danger-200',
                             ];
                             $statusLabels = [
                                 'pending' => 'Chờ xử lý',
-                                'processing' => 'Đang xử lý',
+                                'transferred' => 'Chuyển sản xuất',
+
                                 'completed' => 'Hoàn thành',
                                 'cancelled' => 'Đã hủy',
                             ];
@@ -101,7 +103,9 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-sm">
                         <div class="flex flex-col gap-1">
                             <span class="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Khách hàng</span>
-                            <span class="font-medium text-neutral-800">{{ $acrylicOrder->customer_name }}</span>
+                            <span class="font-medium text-neutral-800">
+                                {{ $acrylicOrder->customer_name }}
+                            </span>
                         </div>
                         <div class="flex flex-col gap-1">
                             <span class="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Số điện
@@ -480,6 +484,7 @@
             </div>
 
             {{-- ===== THANH TOÁN ===== --}}
+            @if(!in_array($acrylicOrder->status, ['draft', 'pending', 'cancelled']))
             @php
                 $payments = $acrylicOrder->orderPayments ?? collect();
                 $totalPaid = $payments->sum('amount');
@@ -639,6 +644,43 @@
                     </div>
                 </div>
             </div>
+            @endif
+
+            @if($acrylicOrder->customer && $acrylicOrder->customer->total_debt > 0)
+                {{-- Customer Debt Card --}}
+                <div class="bg-white border border-danger-200 rounded-xl p-6 shadow-sm mb-2 mt-6">
+                    <div class="flex items-center gap-2 border-b border-danger-100 pb-4 mb-4">
+                        <iconify-icon icon="lucide:alert-circle" class="text-xl text-danger-500"></iconify-icon>
+                        <h6 class="font-bold text-base text-neutral-800 m-0">Công nợ khách hàng</h6>
+                    </div>
+                    @php 
+                        $thisOrderTotal = round($acrylicOrder->total_amount ?? 0, -3);
+                        $thisOrderPaid = $acrylicOrder->orderPayments ? $acrylicOrder->orderPayments->sum('amount') : 0;
+                        $old_debt = $acrylicOrder->customer->total_debt;
+                        if (!in_array($acrylicOrder->status, ['draft', 'cancelled', 'pending'])) {
+                            $thisOrderRemaining = max(0, $thisOrderTotal - $thisOrderPaid);
+                            $old_debt = max(0, $old_debt - $thisOrderRemaining);
+                        }
+                        $total_combined_debt = $old_debt + max(0, $thisOrderTotal - $thisOrderPaid);
+                        $allOrdersPaid = $acrylicOrder->customer->debt_summary['total_paid'] ?? 0;
+                    @endphp
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="text-neutral-500 font-medium">Công nợ:</span>
+                            <span class="font-semibold text-neutral-800">{{ number_format($old_debt, 0, ',', '.') }} đ</span>
+                        </div>
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="text-neutral-500 font-medium">Đã thanh toán:</span>
+                            <span class="font-semibold text-success-600">{{ number_format($allOrdersPaid, 0, ',', '.') }} đ</span>
+                        </div>
+                        <hr class="border-danger-100">
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="text-neutral-800 font-bold">Tổng:</span>
+                            <span class="text-lg font-extrabold text-danger-600">{{ number_format($total_combined_debt, 0, ',', '.') }} đ</span>
+                        </div>
+                    </div>
+                </div>
+            @endif
 
             {{-- Order Attachments --}}
             @if($acrylicOrder->attachments)
@@ -671,10 +713,18 @@
                     <iconify-icon icon="lucide:arrow-left" class="text-base"></iconify-icon> Quay lại danh sách
                 </a>
                 @can('edit order')
-                    <a href="{{ route('orders.edit', $acrylicOrder) }}"
-                        class="w-full justify-center flex items-center gap-2 py-3 rounded-xl font-semibold bg-neutral-900 hover:bg-black text-white shadow-sm text-sm transition-colors cursor-pointer">
-                        <iconify-icon icon="lucide:edit-3" class="text-base"></iconify-icon> Chỉnh sửa đơn hàng
-                    </a>
+                    @if(!in_array($acrylicOrder->status, ['in_production', 'cancelled']))
+                        <a href="{{ route('orders.edit', $acrylicOrder) }}"
+                            class="w-full justify-center flex items-center gap-2 py-3 rounded-xl font-semibold bg-neutral-900 hover:bg-black text-white shadow-sm text-sm transition-colors cursor-pointer">
+                            <iconify-icon icon="lucide:edit-3" class="text-base"></iconify-icon> Chỉnh sửa đơn hàng
+                        </a>
+                    @else
+                        <button type="button" disabled
+                            class="w-full justify-center flex items-center gap-2 py-3 rounded-xl font-semibold bg-neutral-300 text-neutral-500 shadow-sm text-sm cursor-not-allowed"
+                            title="{{ $acrylicOrder->status === 'in_production' ? 'Đơn hàng đang sản xuất, không thể chỉnh sửa' : 'Đơn hàng đã bị hủy, không thể chỉnh sửa' }}">
+                            <iconify-icon icon="lucide:edit-3" class="text-base"></iconify-icon> Chỉnh sửa đơn hàng
+                        </button>
+                    @endif
                 @endcan
                 <button type="button" onclick="exportToExcel()"
                     class="w-full justify-center flex items-center gap-2 py-3 rounded-xl font-semibold border border-neutral-200 text-neutral-700 hover:bg-neutral-50 transition-colors shadow-sm text-sm bg-white cursor-pointer">
@@ -704,6 +754,28 @@
             'customer_policy' => $acrylicOrder->customer_policy,
             'total_amount' => round($acrylicOrder->total_amount, -3),
             'delivery_days' => $acrylicOrder->delivery_days ?? ($acrylicOrder->type === 'glass' ? 5 : 2),
+            'customer_debt_info' => call_user_func(function() use ($acrylicOrder) {
+                if (!$acrylicOrder->customer) return null;
+                $thisOrderTotal = round($acrylicOrder->total_amount, -3);
+                $thisOrderPaid = $acrylicOrder->orderPayments->sum('amount');
+                $thisOrderUnpaid = 0;
+                if (!in_array($acrylicOrder->status, ['draft', 'cancelled', 'pending'])) {
+                    $thisOrderUnpaid = max(0, $thisOrderTotal - $thisOrderPaid);
+                }
+                $currentTotalDebt = $acrylicOrder->customer->total_debt;
+                $oldDebt = max(0, $currentTotalDebt - $thisOrderUnpaid);
+                $totalCombinedDebt = $oldDebt + $thisOrderTotal - $thisOrderPaid;
+                
+                $allOrdersPaid = $acrylicOrder->customer->debt_summary['total_paid'] ?? 0;
+                
+                if ($oldDebt == 0 && $allOrdersPaid == 0 && $totalCombinedDebt == 0) return null;
+                
+                return [
+                    'old_debt' => $oldDebt,
+                    'this_order_paid' => $allOrdersPaid, // still named this_order_paid in JS, but sends allOrdersPaid
+                    'total_combined_debt' => max(0, $totalCombinedDebt),
+                ];
+            }),
             'supplies' => $acrylicOrder->supplies->map(function ($supply) use ($acrylicOrder) {
                 $items = [];
                 if ($acrylicOrder->type === 'min_late') {

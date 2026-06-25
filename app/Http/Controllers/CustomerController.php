@@ -130,23 +130,37 @@ class CustomerController extends Controller
         ]);
     }
 
-    public function overview(Customer $customer)
+    public function overview(Request $request, Customer $customer)
     {
-        $orders = \App\Models\Order::where('customer_id', $customer->id)
-            ->with('orderPayments')
+        $excludeOrderId = $request->query('exclude_order_id');
+
+        $query = \App\Models\Order::where('customer_id', $customer->id);
+        
+        if ($excludeOrderId) {
+            $query->where('id', '!=', $excludeOrderId);
+        }
+
+        $orders = $query->with('orderPayments')
             ->orderBy('order_date', 'desc')
             ->get();
 
-        $totalOrders = $orders->count();
-        $totalAmount = $orders->sum('total_amount');
+        $validOrders = $orders->filter(function($o) {
+            return !in_array($o->status, ['draft', 'cancelled']);
+        });
+
+        $totalOrders = $validOrders->count();
+        $totalAmount = $validOrders->sum(function($o) {
+            return round($o->total_amount, -3);
+        });
 
         // Tổng đã thu = tổng các đợt thanh toán thực tế (order_payments)
-        $totalPaid = $orders->flatMap->orderPayments->sum('amount');
+        $totalPaid = $validOrders->flatMap->orderPayments->sum('amount');
 
         $statusLabels = [
             'draft'         => 'Nháp',
             'pending'       => 'Chờ xử lý',
-            'processing'    => 'Đang xử lý',
+            'transferred'   => 'Chuyển sản xuất',
+
             'in_production' => 'Đang sản xuất',
             'completed'     => 'Hoàn thành',
             'cancelled'     => 'Đã hủy',
@@ -162,9 +176,9 @@ class CustomerController extends Controller
                 'order_date'   => $o->order_date,
                 'status'       => $o->status,
                 'status_label' => $statusLabels[$o->status] ?? $o->status,
-                'total_amount' => $o->total_amount,
+                'total_amount' => round($o->total_amount, -3),
                 'paid'         => $paid,
-                'debt'         => max(0, ($o->total_amount ?? 0) - $paid),
+                'debt'         => in_array($o->status, ['draft', 'cancelled', 'pending']) ? 0 : max(0, round($o->total_amount ?? 0, -3) - $paid),
                 'payments_count' => $o->orderPayments->count(),
             ];
         });
@@ -174,7 +188,8 @@ class CustomerController extends Controller
             'total_orders'  => $totalOrders,
             'total_amount'  => $totalAmount,
             'total_paid'    => $totalPaid,
-            'total_debt'    => max(0, $totalAmount - $totalPaid),
+            'total_debt'    => $customer->total_debt,
+            'unpaid_debt_summary' => $customer->getDebtSummaryExcluding($excludeOrderId),
             'status_counts' => $statusCounts,
             'recent_orders' => $recentOrders,
         ]);

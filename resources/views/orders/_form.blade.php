@@ -6,12 +6,20 @@
         'glass' => 'Glass',
         'min_late' => 'Min Late',
     ];
+    $isEdit = isset($acrylicOrder) && !$isDraftCreate;
+    $thisOrderId = $isEdit ? $acrylicOrder->id : null;
+    $thisOrderPaid = $isEdit && $acrylicOrder->orderPayments ? $acrylicOrder->orderPayments->sum('amount') : 0;
 @endphp
+<script>
+    window.currentOrderId = @json($thisOrderId);
+    window.thisOrderPaid = @json($thisOrderPaid);
+    window.customerOldDebt = 0;
+</script>
 <link rel="stylesheet" href="{{ asset('assets/css/order-form.css') }}?v={{ time() }}">
 <div class="card p-0 rounded-xl border-0">
     <div class="card-header border-b border-neutral-200 bg-white py-4 px-6 flex justify-between items-center">
         <h5 class="font-semibold text-base m-0">{{ $title ?? 'Tạo đơn hàng' }}</h5>
-        <button type="button" onclick="openModal('modal-shortcuts')" class="btn bg-primary-50 text-primary-600 hover:bg-primary-100 border border-primary-200 px-3 py-1.5 rounded-lg text-sm font-semibold flex items-center gap-1.5 transition-colors">
+        <button type="button" onclick="openModal('modal-shortcuts')" class="btn bg-primary-50 text-primary-600 hover:bg-primary-100 border border-primary-200 px-3 py-1.5 rounded-lg text-sm font-semibold flex items-center gap-1.5 transition-colors hide-on-mobile">
             <iconify-icon icon="lucide:lightbulb" class="text-base"></iconify-icon> Hướng dẫn & Mẹo
         </button>
     </div>
@@ -94,22 +102,35 @@
                                 <label class="form-label font-semibold text-xs text-neutral-500 uppercase tracking-wider mb-2 block">Chính sách KH</label>
                                 <textarea name="customer_policy" class="form-control rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Nhập chính sách khách hàng" rows="2">{{ old('customer_policy', $acrylicOrder?->customer_policy ?? '') }}</textarea>
                             </div>
-                            @if(isset($acrylicOrder) && !$isDraftCreate)
-                            <div class="form-group md:col-span-2">
-                                <label class="form-label font-semibold text-xs text-neutral-500 uppercase tracking-wider mb-2 block">Trạng thái</label>
-                                <select name="status" class="form-select rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500">
-                                    <option value="pending" {{ $acrylicOrder->status === 'pending' ? 'selected' : '' }}>Chờ xử lý</option>
-                                    <option value="processing" {{ $acrylicOrder->status === 'processing' ? 'selected' : '' }}>Đang xử lý</option>
-                                    <option value="completed" {{ $acrylicOrder->status === 'completed' ? 'selected' : '' }}>Hoàn thành</option>
-                                    <option value="cancelled" {{ $acrylicOrder->status === 'cancelled' ? 'selected' : '' }}>Đã hủy</option>
-                                </select>
-                            </div>
-                            @endif
+
                         </div>
                     </div>
                 </div>
 
                 <div class="lg:col-span-4 space-y-6">
+                    {{-- Customer Debt Card --}}
+                    <div id="customer-debt-card" hidden class="bg-white border border-danger-200 rounded-xl p-6 shadow-sm mb-2 hidden">
+                        <div class="flex items-center gap-2 border-b border-danger-100 pb-4 mb-4">
+                            <iconify-icon icon="lucide:alert-circle" class="text-xl text-danger-500"></iconify-icon>
+                            <h6 class="font-bold text-base text-neutral-800 m-0">Công nợ khách hàng</h6>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center text-sm">
+                                <span class="text-neutral-500 font-medium">Công nợ:</span>
+                                <span class="font-semibold text-neutral-800" id="customer-total-amount">0 đ</span>
+                            </div>
+                            <div class="flex justify-between items-center text-sm">
+                                <span class="text-neutral-500 font-medium">Đã thanh toán:</span>
+                                <span class="font-semibold text-success-600" id="customer-total-paid">0 đ</span>
+                            </div>
+                            <hr class="border-danger-100">
+                            <div class="flex justify-between items-center text-sm">
+                                <span class="text-neutral-800 font-bold">Tổng:</span>
+                                <span class="text-lg font-extrabold text-danger-600" id="customer-debt-amount">0 đ</span>
+                            </div>
+                        </div>
+                    </div>
+
                     {{-- Summary Card --}}
                         <div class="bg-white border border-neutral-200 rounded-xl p-6 shadow-sm mb-2">
                             <div class="flex items-center gap-2 border-b border-neutral-100 pb-4 mb-4">
@@ -224,6 +245,14 @@
             <button type="button" onclick="previewOrder()" class="btn bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center gap-1.5">
                 <iconify-icon icon="lucide:eye" class="text-base"></iconify-icon> Xem trước
             </button>
+            @if(isset($acrylicOrder) && !$isDraftCreate)
+                @if($acrylicOrder->status !== 'cancelled')
+                <button type="submit" name="status" value="cancelled" class="btn bg-danger-50 text-danger-600 hover:bg-danger-100 border border-danger-200 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all" onclick="return confirm('Bạn có chắc chắn muốn hủy đơn hàng này?')">Hủy đơn</button>
+                @endif
+                @if($acrylicOrder->status === 'pending')
+                <button type="submit" name="status" value="transferred" class="btn bg-violet-50 text-violet-600 hover:bg-violet-100 border border-violet-200 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all" onclick="return confirm('Xác nhận chuyển đơn hàng sang sản xuất?')">Chuyển Sản xuất</button>
+                @endif
+            @endif
             <button type="submit" class="btn btn-primary px-6 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all">{{ isset($acrylicOrder) && !$isDraftCreate ? 'Cập nhật đơn hàng' : 'Lưu đơn hàng' }}</button>
         </div>
     </form>
@@ -276,6 +305,42 @@ function switchOrderType(type) {
     }
 }
 
+function fetchCustomerDebt(customerId) {
+    if (!customerId || !/^\d+$/.test(customerId)) {
+        const debtCard = document.getElementById('customer-debt-card');
+        if (debtCard) {
+            debtCard.hidden = true;
+            debtCard.classList.add('hidden');
+        }
+        return;
+    }
+    const excludeParam = window.currentOrderId ? `?exclude_order_id=${window.currentOrderId}` : '';
+    fetch(`/customers/${customerId}/overview${excludeParam}`)
+        .then(r => r.json())
+        .then(data => {
+            const debtCard = document.getElementById('customer-debt-card');
+            if (data.unpaid_debt_summary) {
+                window.customerOldDebt = data.unpaid_debt_summary.total_debt || 0;
+                window.customerOldPaid = data.unpaid_debt_summary.total_paid || 0;
+                
+                if (typeof updateOrderSummary === 'function') {
+                    updateOrderSummary();
+                }
+
+                if (debtCard) {
+                    debtCard.hidden = false;
+                    debtCard.classList.remove('hidden');
+                }
+            } else {
+                if (debtCard) {
+                    debtCard.hidden = true;
+                    debtCard.classList.add('hidden');
+                }
+            }
+        })
+        .catch(e => console.error(e));
+}
+
 function fillCustomerInfo(customerId) {
     @if(auth()->check())
     const customers = @json(\App\Models\Customer::all());
@@ -288,7 +353,15 @@ function fillCustomerInfo(customerId) {
         document.querySelector('input[name="customer_name"]').value = customerId;
         document.querySelector('input[name="phone"]').value = '';
         document.querySelector('textarea[name="address"]').value = '';
+    } else {
+        // Clear fields if select is cleared
+        document.querySelector('input[name="customer_name"]').value = '';
+        document.querySelector('input[name="phone"]').value = '';
+        document.querySelector('textarea[name="address"]').value = '';
     }
+    
+    // Luôn gọi hàm này để cập nhật hoặc ẩn thẻ công nợ tùy theo customerId
+    fetchCustomerDebt(customerId);
     @endif
 }
 
@@ -326,7 +399,17 @@ function previewOrder() {
     const notes = form.querySelector('[name="notes"]')?.value || '';
     const customerPolicy = form.querySelector('[name="customer_policy"]')?.value || '';
     const statusEl = form.querySelector('[name="status"]');
-    const statusText = statusEl ? statusEl.options[statusEl.selectedIndex]?.text : '';
+    let statusText = '';
+    if (statusEl) {
+        if (statusEl.tagName === 'SELECT') {
+            statusText = statusEl.options[statusEl.selectedIndex]?.text || '';
+        } else {
+            statusText = '{{ isset($acrylicOrder) ? ($acrylicOrder->status === "pending" ? "Chờ xử lý" : ($acrylicOrder->status === "transferred" ? "Chuyển sản xuất" : ($acrylicOrder->status === "cancelled" ? "Đã hủy" : ($acrylicOrder->status === "in_production" ? "Đang sản xuất" : ($acrylicOrder->status === "completed" ? "Hoàn thành" : $acrylicOrder->status))))) : "Chờ xử lý" }}';
+        }
+    } else {
+        // Fallback for when there's no status input (e.g. edit mode with buttons)
+        statusText = '{{ isset($acrylicOrder) ? ($acrylicOrder->status === "pending" ? "Chờ xử lý" : ($acrylicOrder->status === "transferred" ? "Chuyển sản xuất" : ($acrylicOrder->status === "cancelled" ? "Đã hủy" : ($acrylicOrder->status === "in_production" ? "Đang sản xuất" : ($acrylicOrder->status === "completed" ? "Hoàn thành" : $acrylicOrder->status))))) : "Chờ xử lý" }}';
+    }
 
     // Định dạng ngày giờ
     const formatDate = (val) => {
@@ -656,6 +739,25 @@ function updateOrderSummary() {
     const roundedTotalAmount = Math.round(totalAmount / 1000) * 1000;
     if (totalAmountEl) totalAmountEl.textContent = roundedTotalAmount.toLocaleString('vi-VN') + ' VNĐ';
     if (grandTotalEl) grandTotalEl.textContent = roundedTotalAmount.toLocaleString('vi-VN') + ' VNĐ';
+
+    if (window.customerOldDebt !== undefined) {
+        const oldDebt = window.customerOldDebt || 0;
+        const thisOrderPaid = window.thisOrderPaid || 0;
+        const thisOrderTotal = roundedTotalAmount;
+        const oldPaid = window.customerOldPaid || 0;
+        
+        const thisOrderRemaining = Math.max(0, thisOrderTotal - thisOrderPaid);
+        const totalCombinedDebt = oldDebt + thisOrderRemaining;
+        const allOrdersPaid = oldPaid + thisOrderPaid;
+
+        const customerTotalAmountEl = document.getElementById('customer-total-amount');
+        const customerTotalPaidEl = document.getElementById('customer-total-paid');
+        const customerDebtAmountEl = document.getElementById('customer-debt-amount');
+
+        if (customerTotalAmountEl) customerTotalAmountEl.textContent = new Intl.NumberFormat('vi-VN').format(oldDebt) + ' đ';
+        if (customerTotalPaidEl) customerTotalPaidEl.textContent = new Intl.NumberFormat('vi-VN').format(allOrdersPaid) + ' đ';
+        if (customerDebtAmountEl) customerDebtAmountEl.textContent = new Intl.NumberFormat('vi-VN').format(totalCombinedDebt) + ' đ';
+    }
 }
 
 function getOrderSuppliesPanel(element) {
@@ -1605,6 +1707,11 @@ document.addEventListener('DOMContentLoaded', function() {
             customerTomSelect.on('change', function(value) {
                 fillCustomerInfo(value);
             });
+            
+            // Check debt on page load for existing selected customer
+            if (customerSelect.value) {
+                fetchCustomerDebt(customerSelect.value);
+            }
         }
 
         // Intercept form submission to clear customer_id if it is not numeric
@@ -2005,6 +2112,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const formData = new FormData();
         formData.append('draft_order_id', '{{ $acrylicOrder->id }}');
+        formData.append('_token', '{{ csrf_token() }}');
         
         navigator.sendBeacon('{{ route('orders.discard-draft') }}', formData);
     }
@@ -2206,8 +2314,8 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="flex items-start gap-3 p-3 rounded-lg bg-neutral-50 border border-neutral-100">
                 <div class="px-2.5 py-1.5 bg-white border border-neutral-200 rounded text-xs font-mono font-bold text-neutral-700 shadow-sm flex items-center gap-1 shrink-0"><iconify-icon icon="lucide:mouse-pointer-click"></iconify-icon> Click đúp (vào ảnh)</div>
                 <div>
-                    <p class="font-semibold text-sm text-neutral-800 m-0">Mở ảnh to</p>
-                    <p class="text-sm text-neutral-500 m-0">Click đúp (nhấp chuột 2 lần) vào hình ảnh thu nhỏ ở khung bên phải để mở cửa sổ xem ảnh phóng to.</p>
+                    <p class="font-semibold text-sm text-neutral-800 m-0">Thu / Phóng kích thước ảnh</p>
+                    <p class="text-sm text-neutral-500 m-0">Click đúp (nhấp chuột 2 lần) vào ảnh để ảnh tự động quay trở về kích thước ban đầu.</p>
                 </div>
             </div>
 

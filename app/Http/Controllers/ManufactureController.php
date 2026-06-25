@@ -55,7 +55,7 @@ class ManufactureController extends Controller
         // Get unlinked active orders (not cancelled)
         $orders = Order::whereNotIn('id', function($q) {
             $q->select('order_id')->from('manufacture_order_order');
-        })->where('status', '!=', 'cancelled')->get();
+        })->where('status', 'transferred')->get();
 
         return view('manufactures.create', compact('nextCode', 'orders'));
     }
@@ -128,10 +128,12 @@ class ManufactureController extends Controller
 
         // Get unlinked active orders OR orders already linked to this manufacture order
         $orders = Order::where(function($query) use ($linkedOrderIds) {
-            $query->whereNotIn('id', function($q) {
-                $q->select('order_id')->from('manufacture_order_order');
+            $query->where(function($q) {
+                $q->whereNotIn('id', function($subQ) {
+                    $subQ->select('order_id')->from('manufacture_order_order');
+                })->where('status', 'transferred');
             })->orWhereIn('id', $linkedOrderIds);
-        })->where('status', '!=', 'cancelled')->get();
+        })->get();
 
         return view('manufactures.edit', compact('manufacture', 'orders', 'linkedOrderIds'));
     }

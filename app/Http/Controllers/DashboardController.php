@@ -12,7 +12,8 @@ class DashboardController extends Controller
         $stats = [
             'total_orders' => \App\Models\Order::where('status', '!=', 'draft')->count(),
             'pending_orders' => \App\Models\Order::where('status', 'pending')->count(),
-            'processing_orders' => \App\Models\Order::where('status', 'processing')->count(),
+            'transferred_orders' => \App\Models\Order::where('status', 'transferred')->count(),
+
             'completed_orders' => \App\Models\Order::where('status', 'completed')->count(),
             'cancelled_orders' => \App\Models\Order::where('status', 'cancelled')->count(),
             

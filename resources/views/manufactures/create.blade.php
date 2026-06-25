@@ -82,8 +82,9 @@
                                         <td>
                                             @if($order->status === 'pending')
                                                 <span class="badge bg-blue-100 text-blue-700 text-xs px-2.5 py-1 rounded-full font-semibold">Chờ xử lý</span>
-                                            @elseif($order->status === 'processing')
-                                                <span class="badge bg-warning-100 text-warning-700 text-xs px-2.5 py-1 rounded-full font-semibold">Đang xử lý</span>
+
+                                            @elseif($order->status === 'transferred')
+                                                <span class="badge bg-info-100 text-info-700 text-xs px-2.5 py-1 rounded-full font-semibold">Chuyển SX</span>
                                             @elseif($order->status === 'completed')
                                                 <span class="badge bg-success-100 text-success-700 text-xs px-2.5 py-1 rounded-full font-semibold">Hoàn thành</span>
                                             @else

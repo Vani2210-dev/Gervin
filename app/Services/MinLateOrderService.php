@@ -69,7 +69,7 @@ class MinLateOrderService
     public function getUpdateRules(): array
     {
         $rules = $this->getStoreRules();
-        $rules['status'] = 'nullable|in:draft,pending,processing,completed,cancelled';
+        $rules['status'] = 'nullable|in:draft,pending,transferred,in_production,completed,cancelled';
         $rules['delete_attachments'] = 'nullable|string';
         return $rules;
     }

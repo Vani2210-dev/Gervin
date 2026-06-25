@@ -11,6 +11,9 @@ class OrderPaymentController extends Controller
 {
     public function store(Request $request, Order $order)
     {
+        if (in_array($order->status, ['draft', 'pending', 'cancelled'])) {
+            return redirect()->back()->with('error', 'Không thể thao tác thanh toán với đơn hàng ở trạng thái này.');
+        }
         $request->validate([
             'payment_date'   => 'required|date',
             'amount'         => 'required|numeric|min:1',
@@ -32,6 +35,9 @@ class OrderPaymentController extends Controller
 
     public function update(Request $request, Order $order, OrderPayment $payment)
     {
+        if (in_array($order->status, ['draft', 'pending', 'cancelled'])) {
+            return redirect()->back()->with('error', 'Không thể thao tác thanh toán với đơn hàng ở trạng thái này.');
+        }
         abort_if($payment->order_id !== $order->id, 403);
 
         $request->validate([
@@ -54,6 +60,9 @@ class OrderPaymentController extends Controller
 
     public function destroy(Order $order, OrderPayment $payment)
     {
+        if (in_array($order->status, ['draft', 'pending', 'cancelled'])) {
+            return redirect()->back()->with('error', 'Không thể thao tác thanh toán với đơn hàng ở trạng thái này.');
+        }
         abort_if($payment->order_id !== $order->id, 403);
 
         $payment->delete();

@@ -432,6 +432,10 @@ body.order-supplies-popup-open {
 /* === RESPONSIVE LAYOUT FOR MOBILE DEVICES (<= 768px) === */
 @media (max-width: 768px) {
 
+    .hide-on-mobile {
+        display: none !important;
+    }
+
     /* Ẩn cụm điều khiển zoom trên thiết bị di động giống file mẫu */
     .zoom-panel {
         display: none !important;
@@ -451,7 +455,7 @@ body.order-supplies-popup-open {
     .order-supplies-header>.flex:last-child {
         width: 100% !important;
         flex-wrap: wrap !important;
-        justify-content: flex-start !important;
+        justify-content: flex-end !important;
         gap: 8px !important;
     }
 
@@ -776,11 +780,14 @@ body.order-supplies-popup-open {
 
     /* Căn chỉnh lại padding của nút chỉ còn chứa icon để thành hình vuông nhỏ gọn */
     [data-order-supplies-popup-button],
-    .order-supplies-header .btn-primary {
+    .order-supplies-header .btn-primary,
+    .order-supplies-header .bg-emerald-50 {
         padding-left: 8px !important;
         padding-right: 8px !important;
         gap: 0 !important;
         height: 32px !important;
         min-height: 32px !important;
+        width: 32px !important;
+        justify-content: center !important;
     }
 }
