@@ -95,8 +95,9 @@ class OrderController extends Controller
         $isDraftCreate = true;
         $woodBoardPrices = \App\Models\WoodBoardPrice::orderBy('code', 'asc')->get();
         $cncTemplates = \App\Models\CncTemplate::orderBy('id', 'asc')->get();
+        $glassPrices = \App\Models\GlassPrice::orderBy('code', 'asc')->get();
 
-        return view('orders.create', compact('orderType', 'acrylicOrder', 'isDraftCreate', 'woodBoardPrices', 'cncTemplates'));
+        return view('orders.create', compact('orderType', 'acrylicOrder', 'isDraftCreate', 'woodBoardPrices', 'cncTemplates', 'glassPrices'));
     }
 
     public function edit(Order $order)
@@ -111,7 +112,8 @@ class OrderController extends Controller
         $acrylicOrder = $order;
         $woodBoardPrices = \App\Models\WoodBoardPrice::orderBy('code', 'asc')->get();
         $cncTemplates = \App\Models\CncTemplate::orderBy('id', 'asc')->get();
-        return view('orders.edit', compact('acrylicOrder', 'woodBoardPrices', 'cncTemplates'));
+        $glassPrices = \App\Models\GlassPrice::orderBy('code', 'asc')->get();
+        return view('orders.edit', compact('acrylicOrder', 'woodBoardPrices', 'cncTemplates', 'glassPrices'));
     }
 
     public function store(Request $request)

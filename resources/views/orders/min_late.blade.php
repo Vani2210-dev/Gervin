@@ -611,6 +611,9 @@ function addMinLateOrderSupply() {
     }
 
     minLateSupplyIndex++;
+    if (typeof window.initOrderSuppliesHeightResize === 'function') {
+        window.initOrderSuppliesHeightResize();
+    }
 }
 
 function addMinLateOrderItem(button, isInitial = false) {

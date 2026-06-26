@@ -28,6 +28,7 @@ use App\Http\Controllers\DeliveryPackageController;
 use App\Http\Controllers\PackingPackageController;
 use App\Http\Controllers\QrScanController;
 use App\Http\Controllers\OrderPaymentController;
+use App\Http\Controllers\GlassPriceController;
 
 Route::middleware(['auth'])->group(function () {
     Route::controller(DashboardController::class)->group(function () {
@@ -221,6 +222,10 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('wood-board-types/{type}', [WoodBoardController::class, 'destroyType'])->name('wood_board_types.destroy');
     Route::post('wood-board-price-groups/batch', [WoodBoardController::class, 'batchUpdatePriceGroups'])->name('wood_board_price_groups.batch_update');
     Route::resource('cnc-templates', CncTemplateController::class)->names('cnc_templates');
+
+    // Glass Prices
+    Route::post('glass-prices/import', [GlassPriceController::class, 'import'])->name('glass_prices.import');
+    Route::resource('glass-prices', GlassPriceController::class)->names('glass_prices');
 });
 
 // QR Code

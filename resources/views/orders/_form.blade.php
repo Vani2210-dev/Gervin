@@ -1163,6 +1163,13 @@ function initOrderSuppliesVisibleRows() {
 
         if (select) {
             select.addEventListener('change', () => {
+                const scope = getOrderSuppliesStorageScope(panel);
+                if (scope) {
+                    writeOrderSuppliesStorageItem(`order_supplies_height:${scope}`, '');
+                }
+                panel.querySelectorAll('[data-order-supplies-table-scroll]').forEach(w => {
+                    w.style.height = '';
+                });
                 syncOrderSuppliesVisibleRows(select);
             });
         }
@@ -1198,10 +1205,110 @@ function initOrderSuppliesFullscreen() {
     // document.querySelectorAll('[data-order-supplies-zoom-panel]').forEach((panel) => { ... });
 }
 
+function applyRowStyleHeight(row, height) {
+    const heightStr = `${height}px`;
+    row.style.setProperty('height', heightStr, 'important');
+    row.style.setProperty('min-height', heightStr, 'important');
+    row.style.setProperty('max-height', heightStr, 'important');
+
+    Array.from(row.cells).forEach(cell => {
+        cell.style.setProperty('height', heightStr, 'important');
+        cell.style.setProperty('min-height', heightStr, 'important');
+        cell.style.setProperty('max-height', heightStr, 'important');
+        
+        const controls = cell.querySelectorAll('.form-control, .form-select, .row-index, .detail-index, td > .flex');
+        controls.forEach(ctrl => {
+            ctrl.style.setProperty('height', heightStr, 'important');
+            ctrl.style.setProperty('min-height', heightStr, 'important');
+            if (!ctrl.matches('textarea')) {
+                ctrl.style.setProperty('max-height', heightStr, 'important');
+            }
+        });
+    });
+}
+
+function initOrderSuppliesRowResize(root = document) {
+    const tables = root.querySelectorAll([
+        '#order-supplies-container .order-supply-row table',
+        '#glass-supplies-container .order-supply-row table',
+        '#min-late-supplies-container .order-supply-row table',
+        'table[data-order-resize-group="min_late_payment"]'
+    ].join(', '));
+
+    tables.forEach((table) => {
+        const panel = getOrderSuppliesPanel(table);
+        if (!panel) return;
+        const scope = getOrderSuppliesStorageScope(panel);
+        
+        const rows = table.querySelectorAll('tbody tr.order-item-row, tbody tr.payment-detail-row');
+        rows.forEach((row, rowIndex) => {
+            const firstCell = row.cells[0];
+            if (!firstCell) return;
+
+            if (window.getComputedStyle(firstCell).position === 'static') {
+                firstCell.style.position = 'relative';
+            }
+
+            if (firstCell.querySelector('.order-row-height-resize-handle')) {
+                const storedHeight = readOrderSuppliesStorageItem(`order_row_height:${scope}_row_${rowIndex}`);
+                if (storedHeight) {
+                    applyRowStyleHeight(row, storedHeight);
+                }
+                return;
+            }
+
+            const handle = document.createElement('div');
+            handle.className = 'order-row-height-resize-handle';
+            handle.setAttribute('title', 'Kéo cạnh dưới để thay đổi chiều cao hàng');
+
+            firstCell.appendChild(handle);
+
+            const storedHeight = readOrderSuppliesStorageItem(`order_row_height:${scope}_row_${rowIndex}`);
+            if (storedHeight) {
+                applyRowStyleHeight(row, storedHeight);
+            }
+
+            handle.addEventListener('pointerdown', function(e) {
+                if (e.button !== undefined && e.button !== 0) return;
+                e.preventDefault();
+                e.stopPropagation();
+
+                const startY = e.clientY;
+                const startHeight = row.offsetHeight;
+
+                document.body.classList.add('order-row-resizing');
+                document.body.style.cursor = 'row-resize';
+
+                const onPointerMove = (moveEvent) => {
+                    const deltaY = moveEvent.clientY - startY;
+                    const nextHeight = Math.max(30, startHeight + deltaY);
+                    applyRowStyleHeight(row, nextHeight);
+                };
+
+                const stopResize = () => {
+                    document.body.classList.remove('order-row-resizing');
+                    document.body.style.cursor = '';
+                    document.removeEventListener('pointermove', onPointerMove);
+                    document.removeEventListener('pointerup', stopResize);
+                    document.removeEventListener('pointercancel', stopResize);
+
+                    writeOrderSuppliesStorageItem(`order_row_height:${scope}_row_${rowIndex}`, String(row.offsetHeight));
+                };
+
+                document.addEventListener('pointermove', onPointerMove);
+                document.addEventListener('pointerup', stopResize);
+                document.addEventListener('pointercancel', stopResize);
+            });
+        });
+    });
+}
+window.initOrderSuppliesRowResize = initOrderSuppliesRowResize;
+
 document.addEventListener('DOMContentLoaded', () => {
     initOrderSuppliesZoom();
     initOrderSuppliesVisibleRows();
     initOrderSuppliesFullscreen();
+    initOrderSuppliesRowResize();
 
     // Tự động đóng chế độ toàn màn hình khi lưu/cập nhật đơn hàng
     const form = document.getElementById('order-form');
@@ -1634,9 +1741,10 @@ function observeOrderColumnResizeTables() {
         const hasNewNodes = mutations.some((mutation) => mutation.addedNodes.length > 0);
         if (!hasNewNodes) return;
 
-        // Dòng/vật tư mới sinh bằng JS cũng cần được gắn lại chỉ số cột.
+        // Dòng/vật tư mới sinh bằng JS cũng cần được gắn lại chỉ số cột và hàng.
         window.requestAnimationFrame(() => {
             initOrderColumnResize(document);
+            initOrderSuppliesRowResize(document);
         });
     });
 
@@ -1651,6 +1759,7 @@ function observeOrderColumnResizeTables() {
 document.addEventListener('DOMContentLoaded', () => {
     loadOrderColumnResizeWidthsFromStorage();
     initOrderColumnResize(document);
+    initOrderSuppliesRowResize(document);
     observeOrderColumnResizeTables();
 });
 
@@ -2140,20 +2249,32 @@ document.addEventListener('DOMContentLoaded', function() {
     form.addEventListener('submit', function(e) {
         if (e.defaultPrevented) return;
 
-        // Serialize supplies & items into JSON
-        const supplies = serializeSupplies();
-        if (supplies) {
-            document.getElementById('supplies-json-input').value = JSON.stringify(supplies);
-            
-            // Disable native inputs to bypass PHP max_input_vars limit
-            const container = document.getElementById('order-supplies-container') 
-                           || document.getElementById('glass-supplies-container')
-                           || document.getElementById('min-late-supplies-container');
-            if (container) {
-                container.querySelectorAll('input[name^="supplies["], select[name^="supplies["], textarea[name^="supplies["]').forEach(input => {
-                    input.disabled = true;
-                });
+        try {
+            // Serialize supplies & items into JSON
+            const supplies = serializeSupplies();
+            if (supplies) {
+                document.getElementById('supplies-json-input').value = JSON.stringify(supplies);
+                
+                // Disable native inputs to bypass PHP max_input_vars limit
+                const container = document.getElementById('order-supplies-container') 
+                               || document.getElementById('glass-supplies-container')
+                               || document.getElementById('min-late-supplies-container');
+                if (container) {
+                    const inputs = container.querySelectorAll('input[name^="supplies["], select[name^="supplies["], textarea[name^="supplies["]');
+                    inputs.forEach(input => {
+                        input.disabled = true;
+                    });
+                    
+                    // Re-enable in the next cycle in case submission is aborted (e.g. invalid HTML5 validation or other handlers)
+                    setTimeout(() => {
+                        inputs.forEach(input => {
+                            input.disabled = false;
+                        });
+                    }, 500);
+                }
             }
+        } catch (err) {
+            console.error('Lỗi mã hóa dữ liệu vật tư:', err);
         }
     });
 

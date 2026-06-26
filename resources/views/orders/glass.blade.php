@@ -5,13 +5,20 @@
         font-size: 75% !important;
     }
     #glass-supplies-container .order-supply-row table input,
-    #glass-supplies-container .order-supply-row table select,
-    #glass-supplies-container .order-supply-row table textarea {
+    #glass-supplies-container .order-supply-row table select {
         font-size: 75% !important;
         height: 24px !important;
         min-height: 24px !important;
         padding-top: 2px !important;
         padding-bottom: 2px !important;
+        line-height: 1.2 !important;
+    }
+    #glass-supplies-container .order-supply-row table textarea {
+        font-size: 75% !important;
+        height: auto !important;
+        min-height: 60px !important;
+        padding-top: 4px !important;
+        padding-bottom: 4px !important;
         line-height: 1.2 !important;
     }
     #glass-supplies-container .order-supply-row table th {
@@ -78,6 +85,87 @@
     .table .ts-wrapper.focus .ts-control {
         border-color: #3b82f6 !important;
         box-shadow: 0 0 0 1px #3b82f6 !important;
+    }
+    
+    /* TomSelect for table row accessories */
+    .table .ts-wrapper.tom-select-accessory-product {
+        width: 100% !important;
+        min-width: 150px !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        display: block !important;
+    }
+    .table .ts-wrapper.tom-select-accessory-product .ts-control {
+        min-height: 32px !important;
+        height: 32px !important;
+        padding: 2px 8px !important;
+        font-size: 12px !important;
+        border-radius: 8px !important;
+        border: 1px solid #cbd5e1 !important;
+        background-color: #ffffff !important;
+        display: flex !important;
+        align-items: center !important;
+        box-sizing: border-box !important;
+    }
+    .table .ts-wrapper.tom-select-accessory-product .ts-control input {
+        font-size: 12px !important;
+        height: auto !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        min-width: 0 !important;
+    }
+    .table .ts-wrapper.tom-select-accessory-product .ts-control .item {
+        font-size: 12px !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+    }
+    
+    /* Force high z-index for body-appended tom-select dropdowns */
+    body > .ts-dropdown {
+        z-index: 99999 !important;
+    }
+    
+    .order-supply-row .ts-wrapper.tom-select-supply-code {
+        width: 190px !important;
+        display: block;
+        flex-shrink: 0;
+    }
+    .order-supply-row .ts-wrapper.tom-select-supply-code.single .ts-control:after {
+        display: none !important;
+    }
+    .order-supply-row .ts-wrapper.tom-select-supply-code .ts-control {
+        padding: 0 12px !important;
+        font-size: 13px !important;
+        border-radius: 8px !important;
+        min-height: 45px !important;
+        height: 45px !important;
+        line-height: 1.4 !important;
+        box-sizing: border-box !important;
+        background-color: #ffffff !important;
+        border: 1px solid #d1d5db !important;
+        box-shadow: none !important;
+        display: flex !important;
+        align-items: center !important;
+        flex-wrap: nowrap !important;
+        overflow: hidden !important;
+    }
+    .order-supply-row .ts-wrapper.tom-select-supply-code .ts-control input {
+        font-size: 13px !important;
+        height: auto !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        min-width: 0 !important;
+        flex: 1 !important;
+    }
+    .order-supply-row .ts-wrapper.tom-select-supply-code .ts-control .item {
+        font-size: 13px !important;
+        line-height: 22px !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        white-space: nowrap !important;
     }
     
     html body div#order-supplies-container .order-supply-row table,
@@ -180,8 +268,11 @@
                 <iconify-icon icon="lucide:maximize-2" class="text-lg" data-order-supplies-popup-icon></iconify-icon>
                 <span data-order-supplies-popup-label>Phóng to</span>
             </button>
-            <button type="button" onclick="addGlassOrderSupply()" class="btn btn-sm btn-primary rounded-lg flex items-center gap-1">
+            <button type="button" onclick="addGlassOrderSupply(false)" class="btn btn-sm btn-primary rounded-lg flex items-center gap-1">
                 <iconify-icon icon="lucide:plus" class="text-lg"></iconify-icon> <span class="mobile-hide-text">Thêm vật tư</span>
+            </button>
+            <button type="button" onclick="addGlassOrderSupply(true)" class="btn btn-sm bg-neutral-100 text-neutral-700 hover:bg-neutral-200 border border-neutral-300 rounded-lg flex items-center gap-1">
+                <iconify-icon icon="lucide:plus" class="text-lg"></iconify-icon> <span class="mobile-hide-text">Thêm phụ kiện</span>
             </button>
         </div>
     </div>
@@ -229,7 +320,10 @@
         @endphp
         @if($supplies->count() > 0)
             @foreach($supplies as $supplyIndex => $supply)
-            <div class="order-supply-row bg-neutral-50/50 border border-primary-600 rounded-xl p-5 mb-2 relative shadow-sm" data-supply-id="{{ $supply->id }}">
+            @php
+                $isAccessory = ($supply->supply_name === 'Phụ kiện');
+            @endphp
+            <div class="order-supply-row bg-neutral-50/50 border border-primary-600 rounded-xl p-5 mb-2 relative shadow-sm" data-supply-id="{{ $supply->id }}" data-is-accessory="{{ $isAccessory ? '1' : '0' }}">
                 
                 {{-- Items inside this supply --}}
                 <div class="flex items-center justify-between gap-4 border-b border-neutral-200 pb-3 mb-4">
@@ -237,8 +331,23 @@
                         <div class="p-1.5 bg-primary-50 rounded-lg text-primary-500 flex items-center justify-center">
                             <iconify-icon icon="lucide:clipboard-list" class="text-base"></iconify-icon>
                         </div>
-                        <input type="text" name="supplies[{{ $supplyIndex }}][order_supply_code]" class="order-supply-code-input form-control form-control-sm rounded-lg w-40 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Mã vật tư" value="{{ $supply->order_supply_code ?? '' }}">
-                        <input type="text" name="supplies[{{ $supplyIndex }}][supply_name]" class="form-control form-control-sm rounded-lg w-64 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Tên vật tư (ví dụ: Acrylic, Melamine...)" value="{{ $supply->supply_name }}">
+                        @if($isAccessory)
+                            <span class="badge bg-neutral-200 text-neutral-800 font-bold px-3 py-1.5 rounded-lg text-xs uppercase tracking-wider">Phụ kiện</span>
+                            <input type="hidden" name="supplies[{{ $supplyIndex }}][order_supply_code]" value="">
+                        @else
+                            <select name="supplies[{{ $supplyIndex }}][order_supply_code]" class="order-supply-code-select tom-select-supply-code w-48">
+                                <option value="">-- Mã vật tư --</option>
+                                @foreach($glassPrices as $price)
+                                    @if($price->code)
+                                        <option value="{{ $price->code }}" {{ (isset($supply->order_supply_code) && $supply->order_supply_code == $price->code) ? 'selected' : '' }}>{{ $price->code }}</option>
+                                    @endif
+                                @endforeach
+                                @if(isset($supply->order_supply_code) && $supply->order_supply_code !== '' && !$glassPrices->contains('code', $supply->order_supply_code))
+                                    <option value="{{ $supply->order_supply_code }}" selected>{{ $supply->order_supply_code }}</option>
+                                @endif
+                            </select>
+                        @endif
+                        <input type="text" name="supplies[{{ $supplyIndex }}][supply_name]" class="form-control form-control-sm rounded-lg w-64 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Tên vật tư (ví dụ: Acrylic, Melamine...)" value="{{ $supply->supply_name }}" {{ $isAccessory ? 'readonly' : '' }}>
                         <input type="number" name="supplies[{{ $supplyIndex }}][quantity]" class="form-control form-control-sm rounded-lg w-24 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="SL" min="0" step="any" value="{{ $supply->quantity ?? 0 }}">
                     </div>
                     <div class="flex items-center gap-2">
@@ -279,10 +388,24 @@
                                     </td>
                                     <td style="width: 160px; min-width: 160px; " class="border border-neutral-200">
                                         <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][id]" value="{{ $item->id }}">
-                                        <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][product_code]" class="product-code-input form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs font-semibold text-neutral-600" value="{{ $item->product_code }}" readonly>
+                                        @if($isAccessory)
+                                            <select name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][product_code]" class="accessory-product-code-select tom-select-accessory-product w-full text-xs font-semibold">
+                                                <option value="">-- Mã SP --</option>
+                                                @foreach($glassPrices as $price)
+                                                    @if($price->category_name === 'PHỤ KIỆN & PHỤ PHÍ')
+                                                        <option value="{{ $price->code }}" {{ $item->product_code == $price->code ? 'selected' : '' }} data-name="{{ $price->product_name }}" data-price="{{ $price->price }}" data-unit="{{ $price->unit ?? 'Cái' }}">{{ $price->code }} - {{ $price->product_name }}</option>
+                                                    @endif
+                                                @endforeach
+                                                @if($item->product_code !== '' && !$glassPrices->contains('code', $item->product_code))
+                                                    <option value="{{ $item->product_code }}" selected>{{ $item->product_code }}</option>
+                                                @endif
+                                            </select>
+                                        @else
+                                            <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][product_code]" class="product-code-input form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs font-semibold text-neutral-600" value="{{ $item->product_code }}" readonly>
+                                        @endif
                                     </td>
                                     <td style="min-width: 220px;" class="border border-neutral-200">
-                                        <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][product_name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Tên sản phẩm" value="{{ $item->product_name }}">
+                                        <textarea name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][product_name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-xs w-full" rows="3" placeholder="Tên sản phẩm">{{ $item->product_name }}</textarea>
                                     </td>
                                     <td style="width: 100px; min-width: 100px;" class="border border-neutral-200">
                                         <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][thickness]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs text-center px-1" placeholder="Độ dày" value="{{ $item->thickness }}">
@@ -352,21 +475,43 @@
 </div>
 
 <script>
+window.glassPricesData = @json($glassPrices ?? []);
 let glassSupplyIndex = {{ $glassSupplyIndex ?? 0 }};
 
-function addGlassOrderSupply() {
+function addGlassOrderSupply(isAccessory = false) {
     const container = document.getElementById('glass-supplies-container');
     const newSupply = document.createElement('div');
     newSupply.className = 'order-supply-row bg-neutral-50/50 border border-primary-600 rounded-xl p-5 mb-2 relative shadow-sm';
+    if (isAccessory) {
+        newSupply.dataset.isAccessory = '1';
+    }
+
+    let headerHtml = '';
+    if (isAccessory) {
+        headerHtml = `
+            <span class="badge bg-neutral-200 text-neutral-800 font-bold px-3 py-1.5 rounded-lg text-xs uppercase tracking-wider">Phụ kiện</span>
+            <input type="hidden" name="supplies[${glassSupplyIndex}][order_supply_code]" value="">
+            <input type="text" name="supplies[${glassSupplyIndex}][supply_name]" class="form-control form-control-sm rounded-lg w-64 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Tên vật tư" value="Phụ kiện" readonly>
+            <input type="number" name="supplies[${glassSupplyIndex}][quantity]" class="form-control form-control-sm rounded-lg w-24 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="SL" min="0" step="0.01" value="0">
+        `;
+    } else {
+        headerHtml = `
+            <select name="supplies[${glassSupplyIndex}][order_supply_code]" class="order-supply-code-select tom-select-supply-code w-48">
+                <option value="">-- Mã vật tư --</option>
+                ${(window.glassPricesData || []).filter(p => p.code).map(p => `<option value="${p.code}">${p.code}</option>`).join('')}
+            </select>
+            <input type="text" name="supplies[${glassSupplyIndex}][supply_name]" class="form-control form-control-sm rounded-lg w-64 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Tên vật tư (ví dụ: Acrylic, Melamine...)">
+            <input type="number" name="supplies[${glassSupplyIndex}][quantity]" class="form-control form-control-sm rounded-lg w-24 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="SL" min="0" step="0.01" value="0">
+        `;
+    }
+
     newSupply.innerHTML = `
         <div class="flex items-center justify-between gap-4 border-b border-neutral-200 pb-3 mb-4">
             <div class="flex items-center gap-3">
                 <div class="p-1.5 bg-primary-50 rounded-lg text-primary-500 flex items-center justify-center">
                     <iconify-icon icon="lucide:clipboard-list" class="text-base"></iconify-icon>
                 </div>
-                <input type="text" name="supplies[${glassSupplyIndex}][order_supply_code]" class="order-supply-code-input form-control form-control-sm rounded-lg w-40 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Mã vật tư">
-                <input type="text" name="supplies[${glassSupplyIndex}][supply_name]" class="form-control form-control-sm rounded-lg w-64 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Tên vật tư (ví dụ: Acrylic, Melamine...)">
-                <input type="number" name="supplies[${glassSupplyIndex}][quantity]" class="form-control form-control-sm rounded-lg w-24 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="SL" min="0" step="0.01" value="0">
+                ${headerHtml}
             </div>
             <div class="flex items-center gap-2">
                 <button type="button" onclick="this.closest('.order-supply-row').remove(); updateOrderSummary();" class="order-table-form-action text-neutral-400 hover:text-danger-500 transition-colors p-1 flex items-center justify-center" title="Xóa vật tư này">
@@ -407,9 +552,20 @@ function addGlassOrderSupply() {
             Thêm sản phẩm mới
         </button>
     `;
-    newSupply.querySelector('.order-supply-code-input').addEventListener('input', function() {
-        updateGlassRowIndexes(newSupply.querySelector('.supply-items-container'));
-    });
+
+    const selectEl = newSupply.querySelector('.tom-select-supply-code');
+    if (selectEl && typeof TomSelect !== 'undefined' && !selectEl.tomselect) {
+        const ts = new TomSelect(selectEl, {
+            create: true,
+            placeholder: '-- Mã vật tư --',
+            allowEmptyOption: true,
+            maxOptions: null
+        });
+        ts.on('change', function(value) {
+            handleGlassSupplyCodeChange(selectEl, value);
+            updateGlassRowIndexes();
+        });
+    }
     container.appendChild(newSupply);
 
     // Add one product row by default
@@ -424,6 +580,9 @@ function addGlassOrderSupply() {
     }
 
     glassSupplyIndex++;
+    if (typeof window.initOrderSuppliesHeightResize === 'function') {
+        window.initOrderSuppliesHeightResize();
+    }
 }
 
 function addGlassOrderItem(button, isInitial = false) {
@@ -431,20 +590,59 @@ function addGlassOrderItem(button, isInitial = false) {
     const supplyIndex = supplyRow.querySelector('.supply-items-container').dataset.supplyIndex;
     const container = supplyRow.querySelector('.supply-items-container');
     const itemIndex = container.querySelectorAll('.order-item-row').length;
+    const isAccessory = supplyRow.dataset.isAccessory === '1' || 
+                        (supplyRow.querySelector('input[name*="[supply_name]"]')?.value === 'Phụ kiện');
     
-    // Không sao chép từ sản phẩm cuối
+    // Sao chép thông tin từ mã vật tư được chọn nếu có
     let lastData = null;
-    
+    const supplyCodeSelect = supplyRow.querySelector('.tom-select-supply-code');
+    const selectedCode = supplyCodeSelect ? supplyCodeSelect.value : '';
+    if (selectedCode && window.glassPricesData) {
+        const price = window.glassPricesData.find(p => p.code === selectedCode);
+        if (price) {
+            let thickness = '';
+            if (price.product_name) {
+                const match = price.product_name.match(/(\d+\s*mm)/i);
+                if (match) {
+                    thickness = match[1];
+                }
+            }
+            lastData = {
+                product_name: price.product_name || '',
+                thickness: thickness,
+                glass_color: price.glass_color || '',
+                unit: price.unit || 'Bộ',
+                unit_price: price.price || 0
+            };
+        }
+    }
+
     // Sao chép đơn giá từ dòng cuối nếu có
     const lastRow = container.querySelector('.order-item-row:last-of-type');
-    let copiedUnitPrice = '';
-    if (lastRow) {
+    let copiedUnitPrice = lastData ? lastData.unit_price : '';
+    if (!copiedUnitPrice && lastRow) {
         const lastUnitPriceInput = lastRow.querySelector('input[name*="[unit_price]"]');
         if (lastUnitPriceInput && lastUnitPriceInput.value !== '') {
             copiedUnitPrice = lastUnitPriceInput.value;
         }
     }
-    
+
+    let productCodeCellHtml = '';
+    if (isAccessory) {
+        productCodeCellHtml = `
+            <select name="supplies[${supplyIndex}][items][${itemIndex}][product_code]" class="accessory-product-code-select tom-select-accessory-product w-full text-xs font-semibold">
+                <option value="">-- Mã SP --</option>
+                ${(window.glassPricesData || []).filter(p => p.category_name === 'PHỤ KIỆN & PHỤ PHÍ').map(p => `
+                    <option value="${p.code}" data-name="${p.product_name || ''}" data-price="${p.price || 0}" data-unit="${p.unit || 'Cái'}">${p.code} - ${p.product_name}</option>
+                `).join('')}
+            </select>
+        `;
+    } else {
+        productCodeCellHtml = `
+            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][product_code]" class="product-code-input form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs font-semibold text-neutral-600" readonly>
+        `;
+    }
+
     const newItem = document.createElement('tr');
     newItem.className = 'order-item-row';
     newItem.innerHTML = `
@@ -452,10 +650,11 @@ function addGlassOrderItem(button, isInitial = false) {
             <span class="row-index font-semibold text-neutral-500">${itemIndex + 1}</span>
         </td>
         <td style="width: 160px; min-width: 160px; " class="border border-neutral-200">
-            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][product_code]" class="product-code-input form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs font-semibold text-neutral-600" readonly>
+            <input type="hidden" name="supplies[${supplyIndex}][items][${itemIndex}][id]" value="">
+            ${productCodeCellHtml}
         </td>
         <td style="min-width: 220px;" class="border border-neutral-200">
-            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][product_name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Tên sản phẩm" value="${lastData ? lastData.product_name : ''}">
+            <textarea name="supplies[${supplyIndex}][items][${itemIndex}][product_name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-xs w-full" rows="3" placeholder="Tên sản phẩm">${lastData ? lastData.product_name : ''}</textarea>
         </td>
         <td style="width: 100px; min-width: 100px;" class="border border-neutral-200">
             <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][thickness]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs text-center px-1" placeholder="Độ dày" value="${lastData ? lastData.thickness : ''}">
@@ -476,13 +675,13 @@ function addGlassOrderItem(button, isInitial = false) {
             <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][width]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Rộng cánh (mm)" step="any" value="${lastData ? lastData.width : ''}">
         </td>
         <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
-            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][unit]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs px-1" placeholder="Đơn vị" value="${lastData ? lastData.unit : 'Bộ'}">
+            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][unit]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs px-1" placeholder="Đơn vị" value="${lastData ? lastData.unit : (isAccessory ? 'Cái' : 'Bộ')}">
         </td>
         <td style="width: 70px; min-width: 70px; " class="border border-neutral-200">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][wing_quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Số lượng cánh" min="1" required value="${lastData ? lastData.wing_quantity : '1'}">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][wing_quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="${isAccessory ? 'Số lượng' : 'Số lượng cánh'}" min="1" required value="${lastData ? lastData.wing_quantity : '1'}">
         </td>
         <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][area_m2]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Khối lượng (m2)" step="any" value="${lastData ? lastData.area_m2 : ''}">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][area_m2]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Khối lượng (m2)" step="any" value="${lastData ? lastData.area_m2 : ''}" ${isAccessory ? 'readonly disabled bg-neutral-100' : ''}>
         </td>
         <td style="width: 110px; min-width: 110px; " class="border border-neutral-200">
             <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][unit_price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Đơn giá" min="0" step="any" required value="${copiedUnitPrice}">
@@ -505,7 +704,24 @@ function addGlassOrderItem(button, isInitial = false) {
         </td>
     `;
     container.appendChild(newItem);
-    
+
+    // Khởi tạo TomSelect cho Mã SP phụ kiện nếu là dòng phụ kiện
+    if (isAccessory) {
+        const selectEl = newItem.querySelector('.tom-select-accessory-product');
+        if (selectEl && typeof TomSelect !== 'undefined' && !selectEl.tomselect) {
+            const ts = new TomSelect(selectEl, {
+                create: false,
+                placeholder: '-- Mã SP --',
+                allowEmptyOption: true,
+                maxOptions: null,
+                dropdownParent: 'body'
+            });
+            ts.on('change', function(value) {
+                handleAccessoryProductCodeChange(selectEl, value);
+            });
+        }
+    }
+
     const newRow = container.lastElementChild;
     
     // Force table reflow to fix Chrome sticky cell border-collapse rendering bug
@@ -544,9 +760,12 @@ function updateGlassRowIndexes() {
     let globalItemIndex = 1;
 
     document.querySelectorAll('#glass-supplies-container .order-supply-row').forEach((supplyRow, supplyIndex) => {
-        const supplyCode = supplyRow.querySelector('.order-supply-code-input')?.value || '';
+        const supplyCode = (supplyRow.querySelector('.order-supply-code-select')?.value || supplyRow.querySelector('.order-supply-code-input')?.value || '');
         const tbody = supplyRow.querySelector('.supply-items-container');
         if (!tbody) return;
+
+        const isAccessory = supplyRow.dataset.isAccessory === '1' || 
+                            (supplyRow.querySelector('input[name*="[supply_name]"]')?.value === 'Phụ kiện');
 
         tbody.querySelectorAll('.order-item-row').forEach((row, itemIndex) => {
             // Update row STT
@@ -557,17 +776,26 @@ function updateGlassRowIndexes() {
             const quantityInput = row.querySelector('input[name*="[wing_quantity]"]');
             const qty = parseInt(quantityInput?.value) || 1;
 
-            // Base code for the item (first piece index)
-            const baseCode = `${orderCode}.${supplyCode}.${globalPieceIndex}`;
-            const productCodeInput = row.querySelector('.product-code-input');
-            if (productCodeInput) {
-                productCodeInput.value = baseCode;
-            }
+            if (!isAccessory) {
+                // Base code for the item (first piece index)
+                const baseCode = `${orderCode}.${supplyCode}.${globalPieceIndex}`;
+                const productCodeInput = row.querySelector('.product-code-input');
+                if (productCodeInput) {
+                    productCodeInput.value = baseCode;
+                }
 
-            // Remove product_ids container if it exists
-            const idsContainer = row.querySelector('.product-ids-container');
-            if (idsContainer) {
-                idsContainer.remove();
+                // Remove product_ids container if it exists
+                const idsContainer = row.querySelector('.product-ids-container');
+                if (idsContainer) {
+                    idsContainer.remove();
+                }
+
+                globalPieceIndex += qty;
+            } else {
+                const idsContainer = row.querySelector('.product-ids-container');
+                if (idsContainer) {
+                    idsContainer.remove();
+                }
             }
 
             // Update inputs name indexes
@@ -581,14 +809,13 @@ function updateGlassRowIndexes() {
             });
 
             // Update mobile data-labels based on thead headers
-            const headers = Array.from(supplyRow.querySelectorAll('thead th')).map(th => th.textContent.trim().replace(/\s*\*$/, ''));
+            const headers = Array.from(supplyRow.querySelectorAll('thead th')).map(th => th.textContent.trim().replace(/\s\*$/, ''));
             row.querySelectorAll('td').forEach((td, colIndex) => {
                 if (headers[colIndex] && headers[colIndex] !== 'STT' && headers[colIndex] !== 'Hành động' && headers[colIndex] !== 'Xóa') {
                     td.setAttribute('data-label', headers[colIndex]);
                 }
             });
 
-            globalPieceIndex += qty;
             globalItemIndex++;
         });
     });
@@ -613,9 +840,141 @@ function bindGlassRowEvents(row) {
     if (unitPriceInput) unitPriceInput.addEventListener('input', () => calculateGlassTotalPrice(row, 'unit_price'));
 }
 
+function handleGlassSupplyCodeChange(selectEl, value) {
+    if (!value) return;
+    
+    const glassPrice = (window.glassPricesData || []).find(p => p.code === value);
+    if (!glassPrice) return;
+    
+    const supplyRow = selectEl.closest('.order-supply-row');
+    if (!supplyRow) return;
+    
+    // 1. Tên vật tư (supply_name)
+    const supplyNameInput = supplyRow.querySelector('input[name*="[supply_name]"]');
+    if (supplyNameInput && glassPrice.category_name) {
+        supplyNameInput.value = glassPrice.category_name;
+        applyFlashEffect(supplyNameInput);
+    }
+    
+    // 2. Cập nhật tất cả các dòng sản phẩm hiện có dưới card vật tư này
+    const itemRows = supplyRow.querySelectorAll('.order-item-row');
+    itemRows.forEach(itemRow => {
+        // Tên sản phẩm
+        const productNameInput = itemRow.querySelector('[name*="[product_name]"]');
+        if (productNameInput) {
+            productNameInput.value = glassPrice.product_name || '';
+            applyFlashEffect(productNameInput);
+        }
+        
+        // Độ dày (thickness) - Trích xuất từ product_name dùng regex (\d+\s*mm)
+        const thicknessInput = itemRow.querySelector('input[name*="[thickness]"]');
+        if (thicknessInput) {
+            let thickness = '';
+            if (glassPrice.product_name) {
+                const match = glassPrice.product_name.match(/(\d+\s*mm)/i);
+                if (match) {
+                    thickness = match[1];
+                }
+            }
+            thicknessInput.value = thickness;
+            applyFlashEffect(thicknessInput);
+        }
+        
+        // Màu kính (glass_color)
+        const glassColorInput = itemRow.querySelector('input[name*="[glass_color]"]');
+        if (glassColorInput) {
+            glassColorInput.value = glassPrice.glass_color || '';
+            applyFlashEffect(glassColorInput);
+        }
+        
+        // Đơn vị (unit)
+        const unitInput = itemRow.querySelector('input[name*="[unit]"]');
+        if (unitInput) {
+            unitInput.value = glassPrice.unit || 'Bộ';
+            applyFlashEffect(unitInput);
+        }
+        
+        // Đơn giá (unit_price)
+        const unitPriceInput = itemRow.querySelector('input[name*="[unit_price]"]');
+        if (unitPriceInput) {
+            unitPriceInput.value = glassPrice.price || 0;
+            applyFlashEffect(unitPriceInput);
+        }
+        
+        // Tính lại thành tiền
+        calculateGlassTotalPrice(itemRow);
+    });
+}
+
+function handleAccessoryProductCodeChange(selectEl, value) {
+    if (!value) return;
+    
+    const glassPrice = (window.glassPricesData || []).find(p => p.code === value);
+    if (!glassPrice) return;
+    
+    const row = selectEl.closest('.order-item-row');
+    if (!row) return;
+    
+    // 1. Tên sản phẩm (product_name)
+    const productNameInput = row.querySelector('[name*="[product_name]"]');
+    if (productNameInput) {
+        productNameInput.value = glassPrice.product_name || '';
+        applyFlashEffect(productNameInput);
+    }
+    
+    // 2. Độ dày (thickness)
+    const thicknessInput = row.querySelector('input[name*="[thickness]"]');
+    if (thicknessInput) {
+        let thickness = '';
+        if (glassPrice.product_name) {
+            const match = glassPrice.product_name.match(/(\d+\s*mm)/i);
+            if (match) {
+                thickness = match[1];
+            }
+        }
+        thicknessInput.value = thickness;
+        applyFlashEffect(thicknessInput);
+    }
+    
+    // 3. Màu kính (glass_color)
+    const glassColorInput = row.querySelector('input[name*="[glass_color]"]');
+    if (glassColorInput) {
+        glassColorInput.value = glassPrice.glass_color || '';
+        applyFlashEffect(glassColorInput);
+    }
+    
+    // 4. Đơn vị (unit)
+    const unitInput = row.querySelector('input[name*="[unit]"]');
+    if (unitInput) {
+        unitInput.value = glassPrice.unit || 'Cái';
+        applyFlashEffect(unitInput);
+    }
+    
+    // 5. Đơn giá (unit_price)
+    const unitPriceInput = row.querySelector('input[name*="[unit_price]"]');
+    if (unitPriceInput) {
+        unitPriceInput.value = glassPrice.price || 0;
+        applyFlashEffect(unitPriceInput);
+    }
+    
+    // Tính lại thành tiền
+    calculateGlassTotalPrice(row);
+}
+
+function applyFlashEffect(el) {
+    if (!el) return;
+    el.style.transition = 'background-color 0.4s ease';
+    el.style.backgroundColor = '#ecfdf5';
+    setTimeout(() => {
+        el.style.backgroundColor = '';
+    }, 850);
+}
+
 function duplicateGlassRow(button) {
     const row = button.closest('.order-item-row');
     const tbody = row.closest('.supply-items-container');
+    const supplyRow = row.closest('.order-supply-row');
+    const isAccessory = supplyRow && (supplyRow.dataset.isAccessory === '1' || supplyRow.querySelector('input[name*="[supply_name]"]')?.value === 'Phụ kiện');
 
     // Collect all input/select/textarea values BEFORE cloning
     const valuesToCopy = [];
@@ -628,6 +987,16 @@ function duplicateGlassRow(button) {
     // Remove database ID so it creates a new entry
     const idInput = newRow.querySelector('input[name*="[id]"]');
     if (idInput) idInput.remove();
+
+    // Clean up cloned TomSelect wrapper if any
+    const tsWrappers = newRow.querySelectorAll('.ts-wrapper');
+    tsWrappers.forEach(w => w.remove());
+    // Show the select element again
+    newRow.querySelectorAll('.tom-select-accessory-product').forEach(sel => {
+        sel.style.display = '';
+        sel.tomselect = null;
+        sel.className = 'accessory-product-code-select tom-select-accessory-product w-full text-xs font-semibold';
+    });
 
     // Restore field values by name
     valuesToCopy.forEach(({ name, value }) => {
@@ -642,6 +1011,26 @@ function duplicateGlassRow(button) {
     // Force table reflow to fix Chrome sticky cell border-collapse rendering bug
     const table = newRow.closest('table');
 
+    // Re-initialize TomSelect for any .tom-select-accessory-product in newRow
+    newRow.querySelectorAll('.tom-select-accessory-product').forEach(selectEl => {
+        if (typeof TomSelect !== 'undefined') {
+            const ts = new TomSelect(selectEl, {
+                create: false,
+                placeholder: '-- Mã SP --',
+                allowEmptyOption: true,
+                maxOptions: null,
+                dropdownParent: 'body'
+            });
+            ts.on('change', function(value) {
+                handleAccessoryProductCodeChange(selectEl, value);
+            });
+            // Restore value
+            const matchingVal = valuesToCopy.find(v => v.name === selectEl.name);
+            if (matchingVal) {
+                ts.setValue(matchingVal.value, true);
+            }
+        }
+    });
 
     bindGlassRowEvents(newRow);
     updateGlassRowIndexes();
@@ -649,20 +1038,37 @@ function duplicateGlassRow(button) {
 }
 
 function calculateGlassTotalPrice(row, sourceEvent) {
+    const supplyRow = row.closest('.order-supply-row');
+    const isAccessory = supplyRow && (supplyRow.dataset.isAccessory === '1' || supplyRow.querySelector('input[name*="[supply_name]"]')?.value === 'Phụ kiện');
+
     const heightInput = row.querySelector('input[name*="[height]"]');
     const widthInput = row.querySelector('input[name*="[width]"]');
     const wingQtyInput = row.querySelector('input[name*="[wing_quantity]"]');
     const areaInput = row.querySelector('input[name*="[area_m2]"]');
     const unitPriceInput = row.querySelector('input[name*="[unit_price]"]');
     
-    if (!heightInput || !widthInput || !wingQtyInput || !areaInput) return;
+    if (!wingQtyInput || !unitPriceInput) return;
+
+    const wingQty = parseFloat(wingQtyInput.value) || 0;
+    const unitPrice = parseFloat(unitPriceInput.value) || 0;
     
-    if (!heightInput || !widthInput || !wingQtyInput || !areaInput || !unitPriceInput) return;
+    if (isAccessory) {
+        if (areaInput) {
+            areaInput.value = '';
+        }
+        const totalPrice = wingQty * unitPrice;
+        const totalPriceInput = row.querySelector('input[name*="[total_price]"]');
+        if (totalPriceInput) {
+            totalPriceInput.value = Math.round(totalPrice);
+        }
+        updateOrderSummary();
+        return;
+    }
+
+    if (!heightInput || !widthInput || !areaInput) return;
 
     const height = parseFloat(heightInput.value) || 0;
     const width = parseFloat(widthInput.value) || 0;
-    const wingQty = parseFloat(wingQtyInput.value) || 0;
-    const unitPrice = parseFloat(unitPriceInput.value) || 0;
     
     if (sourceEvent !== 'area') {
         let area = 0;
@@ -699,6 +1105,37 @@ document.addEventListener('DOMContentLoaded', function() {
     // Recalculate codes on load
     updateGlassRowIndexes();
 
+    if (typeof TomSelect !== 'undefined') {
+        document.querySelectorAll('.tom-select-supply-code').forEach(function(element) {
+            if (element.tomselect) return;
+            const ts = new TomSelect(element, {
+                create: true,
+                placeholder: '-- Mã vật tư --',
+                allowEmptyOption: true,
+                maxOptions: null
+            });
+            ts.on('change', function(value) {
+                handleGlassSupplyCodeChange(element, value);
+                updateGlassRowIndexes();
+            });
+        });
+
+        // Khởi tạo TomSelect cho Mã SP của các dòng phụ kiện hiện có
+        document.querySelectorAll('.tom-select-accessory-product').forEach(function(element) {
+            if (element.tomselect) return;
+            const ts = new TomSelect(element, {
+                create: false,
+                placeholder: '-- Mã SP --',
+                allowEmptyOption: true,
+                maxOptions: null,
+                dropdownParent: 'body'
+            });
+            ts.on('change', function(value) {
+                handleAccessoryProductCodeChange(element, value);
+            });
+        });
+    }
+
     const orderCodeInput = document.getElementById('order-code-input');
     if (orderCodeInput) {
         orderCodeInput.addEventListener('input', () => updateGlassRowIndexes());
@@ -707,7 +1144,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Live listener for supply code input changes
 document.addEventListener('input', function(e) {
-    if (e.target.classList.contains('order-supply-code-input')) {
+    if (e.target.classList.contains('order-supply-code-select')) {
         updateGlassRowIndexes();
     }
 });

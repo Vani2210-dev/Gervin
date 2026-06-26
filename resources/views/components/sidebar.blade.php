@@ -173,6 +173,9 @@
                     <li>
                         <a href="{{ route('wood_boards.index') }}"><i class="ri-circle-fill circle-icon text-info-600 w-auto"></i> Bảng giá tấm</a>
                     </li>
+                    <li>
+                        <a href="{{ route('glass_prices.index') }}"><i class="ri-circle-fill circle-icon text-emerald-500 w-auto"></i> Bảng giá kính</a>
+                    </li>
                     @endcan
                     @can('view supply')
                     <li>
