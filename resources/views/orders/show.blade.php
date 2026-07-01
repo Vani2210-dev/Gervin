@@ -474,6 +474,38 @@
     })->sum(fn($i) => $i->quantity ?? $i->wing_quantity ?? 0) }}
                         </span>
                     </div>
+                    
+                    @php
+                        $discountAmt = $acrylicOrder->discount_amount ?? 0;
+                        $vatAmt = $acrylicOrder->vat_amount ?? 0;
+                        $subTotal = $acrylicOrder->total_amount + $discountAmt - $vatAmt;
+                    @endphp
+                    
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-neutral-500">Tổng tiền hàng:</span>
+                        <span class="font-semibold text-neutral-800">
+                            {{ number_format(round($subTotal, -3), 0, ',', '.') }} VNĐ
+                        </span>
+                    </div>
+
+                    @if($acrylicOrder->discount_percent > 0)
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-neutral-500">Chiết khấu ({{ (float)$acrylicOrder->discount_percent }}%):</span>
+                        <span class="font-semibold text-danger-600">
+                            -{{ number_format(round($discountAmt, -3), 0, ',', '.') }} VNĐ
+                        </span>
+                    </div>
+                    @endif
+
+                    @if($acrylicOrder->vat_percent > 0)
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-neutral-500">VAT ({{ (float)$acrylicOrder->vat_percent }}%):</span>
+                        <span class="font-semibold text-neutral-800">
+                            +{{ number_format(round($vatAmt, -3), 0, ',', '.') }} VNĐ
+                        </span>
+                    </div>
+                    @endif
+
                     <div class="border-t border-neutral-100 pt-3 flex justify-between items-center">
                         <span class="text-base font-bold text-neutral-800">Tổng thanh toán:</span>
                         <span class="text-lg font-black text-primary-600" id="summary-total-amount">
@@ -752,6 +784,10 @@
             'address' => $acrylicOrder->address,
             'notes' => $acrylicOrder->notes,
             'customer_policy' => $acrylicOrder->customer_policy,
+            'discount_percent' => $acrylicOrder->discount_percent ?? 0,
+            'discount_amount' => $acrylicOrder->discount_amount ?? 0,
+            'vat_percent' => $acrylicOrder->vat_percent ?? 0,
+            'vat_amount' => $acrylicOrder->vat_amount ?? 0,
             'total_amount' => round($acrylicOrder->total_amount, -3),
             'delivery_days' => $acrylicOrder->delivery_days ?? ($acrylicOrder->type === 'glass' ? 5 : 2),
             'customer_debt_info' => call_user_func(function() use ($acrylicOrder) {

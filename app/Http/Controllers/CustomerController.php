@@ -48,6 +48,7 @@ class CustomerController extends Controller
             'name'   => 'required|string|max:255',
             'phone'  => 'nullable|string|max:20',
             'address'=> 'nullable|string',
+            'initial_debt' => 'nullable|numeric|min:0',
         ]);
 
         // Use provided code or auto-generate KH00001, KH00002, etc.
@@ -64,6 +65,7 @@ class CustomerController extends Controller
             'name'          => $request->name,
             'phone'         => $request->phone,
             'address'       => $request->address,
+            'initial_debt'  => $request->initial_debt ?? 0,
         ]);
 
         return redirect()->route('customers.index')->with('success', 'Thêm khách hàng thành công.');
@@ -76,6 +78,7 @@ class CustomerController extends Controller
             'name'   => 'required|string|max:255',
             'phone'  => 'nullable|string|max:20',
             'address'=> 'nullable|string',
+            'initial_debt' => 'nullable|numeric|min:0',
         ]);
 
         $updateData = [
@@ -83,6 +86,10 @@ class CustomerController extends Controller
             'phone'   => $request->phone,
             'address' => $request->address,
         ];
+        
+        if ($request->has('initial_debt')) {
+            $updateData['initial_debt'] = $request->initial_debt ?? 0;
+        }
 
         if ($request->filled('customer_code')) {
             $updateData['customer_code'] = trim($request->customer_code);

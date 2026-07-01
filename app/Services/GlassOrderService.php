@@ -93,7 +93,13 @@ class GlassOrderService
         }
 
         $allAttachments = array_merge($existingAttachments, $attachmentPaths);
-        $totalAmount = $this->calculateTotalAmount($request->supplies ?? []);
+        $subTotal = $this->calculateTotalAmount($request->supplies ?? []);
+        $discountPercent = (float) $request->input('discount_percent', 0);
+        $vatPercent = (float) $request->input('vat_percent', 0);
+        
+        $discountAmount = $subTotal * ($discountPercent / 100);
+        $vatAmount = ($subTotal - $discountAmount) * ($vatPercent / 100);
+        $totalAmount = $subTotal - $discountAmount + $vatAmount;
 
         // Auto-create or link customer if customer_name filled but no customer_id
         $customerId = $request->customer_id ?: null;
@@ -126,8 +132,12 @@ class GlassOrderService
             'deadline'      => $deadline,
             'notes'         => $request->notes,
             'customer_policy' => $request->customer_policy,
-            'total_amount'  => $totalAmount,
-            'status'        => $order->status === 'draft' ? 'pending' : ($request->status ?? $order->status),
+            'discount_percent'=> $discountPercent,
+            'discount_amount' => $discountAmount,
+            'vat_percent'     => $vatPercent,
+            'vat_amount'      => $vatAmount,
+            'total_amount'    => $totalAmount,
+            'status'          => $order->status === 'draft' ? 'pending' : ($request->status ?? $order->status),
             'attachments'   => !empty($allAttachments) ? json_encode($allAttachments) : null,
         ]);
 

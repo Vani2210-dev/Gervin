@@ -11,6 +11,7 @@ class Customer extends Model
         'name',
         'phone',
         'address',
+        'initial_debt',
     ];
 
     public function orders()
@@ -49,11 +50,12 @@ class Customer extends Model
         });
         
         $totalPaid = $unpaidOrders->sum('order_payments_sum_amount');
+        $initialDebt = $this->initial_debt ?? 0;
 
         return [
             'total_amount' => $totalAmount,
             'total_paid' => $totalPaid,
-            'total_debt' => max(0, $totalAmount - $totalPaid)
+            'total_debt' => max(0, $initialDebt + $totalAmount - $totalPaid)
         ];
     }
 }

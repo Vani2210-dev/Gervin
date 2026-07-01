@@ -154,6 +154,22 @@
                                     <span class="text-neutral-500 font-medium">Tổng tiền hàng:</span>
                                     <span class="font-semibold text-neutral-800" id="total-amount">0 VNĐ</span>
                                 </div>
+                                <div class="flex justify-between items-center text-sm mt-2">
+                                    <span class="text-neutral-500 font-medium flex items-center">Chiết khấu (%):</span>
+                                    <input type="number" name="discount_percent" id="discount_percent" value="{{ old('discount_percent', $acrylicOrder->discount_percent ?? 0) }}" class="form-control text-right w-20 h-7 text-sm px-2 py-1" min="0" max="100" step="0.01" oninput="if(typeof updateOrderSummary === 'function') updateOrderSummary();">
+                                </div>
+                                <div class="flex justify-between items-center text-sm">
+                                    <span class="text-neutral-500 font-medium">Tiền chiết khấu:</span>
+                                    <span class="font-semibold text-danger-600" id="discount-amount">-0 VNĐ</span>
+                                </div>
+                                <div class="flex justify-between items-center text-sm mt-2">
+                                    <span class="text-neutral-500 font-medium flex items-center">VAT (%):</span>
+                                    <input type="number" name="vat_percent" id="vat_percent" value="{{ old('vat_percent', $acrylicOrder->vat_percent ?? 0) }}" class="form-control text-right w-20 h-7 text-sm px-2 py-1" min="0" max="100" step="0.01" oninput="if(typeof updateOrderSummary === 'function') updateOrderSummary();">
+                                </div>
+                                <div class="flex justify-between items-center text-sm">
+                                    <span class="text-neutral-500 font-medium">Tiền VAT:</span>
+                                    <span class="font-semibold text-neutral-800" id="vat-amount">+0 VNĐ</span>
+                                </div>
                                 <hr class="border-neutral-100">
                                 <div class="flex justify-between items-center">
                                     <span class="text-sm font-bold text-neutral-800">Tổng thanh toán:</span>
@@ -738,12 +754,28 @@ function updateOrderSummary() {
     if (totalAreaEl) totalAreaEl.textContent = totalArea.toFixed(3) + ' m²';
     const roundedTotalAmount = Math.round(totalAmount / 1000) * 1000;
     if (totalAmountEl) totalAmountEl.textContent = roundedTotalAmount.toLocaleString('vi-VN') + ' VNĐ';
-    if (grandTotalEl) grandTotalEl.textContent = roundedTotalAmount.toLocaleString('vi-VN') + ' VNĐ';
+    
+    const discountPercentEl = document.getElementById('discount_percent');
+    const vatPercentEl = document.getElementById('vat_percent');
+    const discountAmountEl = document.getElementById('discount-amount');
+    const vatAmountEl = document.getElementById('vat-amount');
+
+    const discountPercent = discountPercentEl ? (parseFloat(discountPercentEl.value) || 0) : 0;
+    const vatPercent = vatPercentEl ? (parseFloat(vatPercentEl.value) || 0) : 0;
+
+    const discountAmount = Math.round(roundedTotalAmount * (discountPercent / 100));
+    const vatAmount = Math.round((roundedTotalAmount - discountAmount) * (vatPercent / 100));
+    const finalTotalAmount = roundedTotalAmount - discountAmount + vatAmount;
+
+    if (discountAmountEl) discountAmountEl.textContent = '-' + discountAmount.toLocaleString('vi-VN') + ' VNĐ';
+    if (vatAmountEl) vatAmountEl.textContent = '+' + vatAmount.toLocaleString('vi-VN') + ' VNĐ';
+
+    if (grandTotalEl) grandTotalEl.textContent = finalTotalAmount.toLocaleString('vi-VN') + ' VNĐ';
 
     if (window.customerOldDebt !== undefined) {
         const oldDebt = window.customerOldDebt || 0;
         const thisOrderPaid = window.thisOrderPaid || 0;
-        const thisOrderTotal = roundedTotalAmount;
+        const thisOrderTotal = finalTotalAmount;
         const oldPaid = window.customerOldPaid || 0;
         
         const thisOrderRemaining = Math.max(0, thisOrderTotal - thisOrderPaid);

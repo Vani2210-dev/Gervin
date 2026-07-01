@@ -76,6 +76,7 @@
                                 <th scope="col">Tên khách hàng</th>
                                 <th scope="col">Số điện thoại</th>
                                 <th scope="col">Địa chỉ</th>
+                                <th scope="col" class="text-right">Công nợ</th>
                                 <th scope="col" class="text-center">Hành động</th>
                             </tr>
                         </thead>
@@ -96,6 +97,11 @@
                                 <td>
                                     <span class="text-base text-secondary-light">{{ $c->address ?? '—' }}</span>
                                 </td>
+                                <td class="text-right">
+                                    <span class="text-base font-bold {{ $c->total_debt > 0 ? 'text-danger-600' : 'text-success-600' }}">
+                                        {{ number_format($c->total_debt, 0, ',', '.') }} đ
+                                    </span>
+                                </td>
                                 <td class="text-center">
                                     <div class="flex items-center gap-3 justify-center">
                                         {{-- Nút xem tổng quan --}}
@@ -107,7 +113,7 @@
                                         </button>
                                         @can('edit customer')
                                         <button type="button"
-                                            onclick="openEditModal({{ $c->id }}, '{{ addslashes($c->customer_code) }}', '{{ addslashes($c->name) }}', '{{ addslashes($c->phone) }}', '{{ addslashes($c->address) }}')"
+                                            onclick="openEditModal({{ $c->id }}, '{{ addslashes($c->customer_code) }}', '{{ addslashes($c->name) }}', '{{ addslashes($c->phone) }}', '{{ addslashes($c->address) }}', {{ $c->initial_debt ?? 0 }})"
                                             class="bg-success-100 hover:bg-success-200 text-success-600 font-medium w-10 h-10 flex justify-center items-center rounded-full">
                                             <iconify-icon icon="lucide:edit" class="menu-icon"></iconify-icon>
                                         </button>
@@ -127,7 +133,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="6" class="text-center py-8">
+                                <td colspan="7" class="text-center py-8">
                                     <p class="text-neutral-500">Chưa có khách hàng nào</p>
                                 </td>
                             </tr>
@@ -173,6 +179,10 @@
                 <label class="form-label font-semibold text-sm text-neutral-600">Số điện thoại</label>
                 <input type="text" name="phone" class="form-control rounded-lg" placeholder="Nhập số điện thoại" value="{{ old('phone') }}">
             </div>
+            <div class="form-group">
+                <label class="form-label font-semibold text-sm text-neutral-600">Nợ đầu kỳ</label>
+                <input type="number" name="initial_debt" class="form-control rounded-lg" placeholder="Ví dụ: 10000000" min="0" value="{{ old('initial_debt') }}">
+            </div>
             <div class="form-group md:col-span-2">
                 <label class="form-label font-semibold text-sm text-neutral-600">Địa chỉ</label>
                 <textarea name="address" class="form-control rounded-lg" placeholder="Nhập địa chỉ" rows="3">{{ old('address') }}</textarea>
@@ -208,6 +218,10 @@
                 <label class="form-label font-semibold text-sm text-neutral-600">Số điện thoại</label>
                 <input type="text" id="edit_phone" name="phone" class="form-control rounded-lg" placeholder="Nhập số điện thoại">
             </div>
+            <div class="form-group">
+                <label class="form-label font-semibold text-sm text-neutral-600">Nợ đầu kỳ</label>
+                <input type="number" id="edit_initial_debt" name="initial_debt" class="form-control rounded-lg" placeholder="Ví dụ: 10000000" min="0">
+            </div>
             <div class="form-group md:col-span-2">
                 <label class="form-label font-semibold text-sm text-neutral-600">Địa chỉ</label>
                 <textarea id="edit_address" name="address" class="form-control rounded-lg" placeholder="Nhập địa chỉ" rows="3"></textarea>
@@ -221,12 +235,13 @@
 </x-modal>
 
 <script>
-function openEditModal(id, customerCode, name, phone, address) {
+function openEditModal(id, customerCode, name, phone, address, initialDebt) {
     document.getElementById('edit-customer-form').action = '/customers/' + id;
     document.getElementById('edit_customer_code').value = customerCode;
     document.getElementById('edit_name').value = name;
     document.getElementById('edit_phone').value = phone;
     document.getElementById('edit_address').value = address;
+    document.getElementById('edit_initial_debt').value = initialDebt || 0;
     openModal('edit-customer-modal');
 }
 </script>
