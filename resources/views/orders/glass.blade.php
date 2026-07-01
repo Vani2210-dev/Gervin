@@ -1,5 +1,11 @@
 {{-- Order Supplies & Items Section Card (Glass) --}}
 <style>
+    /* Wing Direction Label styling */
+    .wing-direction-label {
+        margin-left: 8px !important; /* Lề trái 8px để không sát viền */
+        flex-shrink: 0 !important;
+    }
+
     /* === COMPACT TABLE: 75% font scale === */
     #glass-supplies-container .order-supply-row table {
         font-size: 75% !important;
@@ -365,7 +371,7 @@
                                 <th scope="col" style="width: 110px; min-width: 110px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Mã SP</th>
                                 <th scope="col" style="width: 150px; min-width: 150px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên sản phẩm <span class="text-danger-500">*</span></th>
                                 <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Độ dày</th>
-                                <th scope="col" style="width: 80px; min-width: 80px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Chiều mở cánh</th>
+                                <th scope="col" style="width: 150px; min-width: 150px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Chiều mở cánh</th>
                                 <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Màu nhôm</th>
                                 <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Màu kính</th>
                                 <th scope="col" style="width: 130px; min-width: 130px; white-space: nowrap;" class="align-middle border border-neutral-200 bg-yellow-100/70 font-bold text-xs text-neutral-600 uppercase text-center">Dài cánh (mm)</th>
@@ -410,8 +416,18 @@
                                     <td style="width: 100px; min-width: 100px;" class="border border-neutral-200">
                                         <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][thickness]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs text-center px-1" placeholder="Độ dày" value="{{ $item->thickness }}">
                                     </td>
-                                    <td style="width: 110px; min-width: 110px; " class="border border-neutral-200">
-                                        <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][wing_opening_direction]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs text-center px-1" placeholder="Chiều mở cánh" value="{{ $item->wing_opening_direction }}">
+                                    <td style="width: 150px; min-width: 150px; " class="border border-neutral-200 p-1">
+                                        <div class="wing-direction-container flex items-center gap-1 w-full">
+                                            <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][wing_opening_direction]" class="actual-wing-direction" value="{{ $item->wing_opening_direction }}">
+                                            <div class="flex items-center gap-1 w-1/2" title="Số lượng cánh mở Trái">
+                                                <span class="text-[11px] text-neutral-500 font-semibold wing-direction-label">Trái:</span>
+                                                <input type="number" class="qty-left form-control form-control-sm rounded-md border-neutral-300 focus:border-primary-500 text-xs px-1 w-full h-7 text-center" placeholder="SL" min="0" oninput="updateWingDirection(this)">
+                                            </div>
+                                            <div class="flex items-center gap-1 w-1/2" title="Số lượng cánh mở Phải">
+                                                <span class="text-[11px] text-neutral-500 font-semibold wing-direction-label">Phải:</span>
+                                                <input type="number" class="qty-right form-control form-control-sm rounded-md border-neutral-300 focus:border-primary-500 text-xs px-1 w-full h-7 text-center" placeholder="SL" min="0" oninput="updateWingDirection(this)">
+                                            </div>
+                                        </div>
                                     </td>
                                     <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
                                         <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][aluminum_color]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs text-center px-1" placeholder="Màu nhôm" value="{{ $item->aluminum_color }}">
@@ -445,6 +461,9 @@
                                     </td>
                                     <td style="width: 80px; min-width: 80px; " class="text-center align-middle border border-neutral-200">
                                         <div class="flex items-center gap-1 justify-center">
+                                            <button type="button" onclick="insertGlassRow(this)" class="text-neutral-400 hover:text-success-500 transition-colors p-1" title="Chèn dòng mới ở dưới">
+                                                <iconify-icon icon="lucide:list-plus" class="text-base"></iconify-icon>
+                                            </button>
                                             <button type="button" onclick="duplicateGlassRow(this)" class="text-neutral-400 hover:text-primary-500 transition-colors p-1" title="Nhân bản sản phẩm">
                                                 <iconify-icon icon="lucide:copy" class="text-base"></iconify-icon>
                                             </button>
@@ -585,7 +604,7 @@ function addGlassOrderSupply(isAccessory = false) {
     }
 }
 
-function addGlassOrderItem(button, isInitial = false) {
+function addGlassOrderItem(button, isInitial = false, insertAfterRow = null) {
     const supplyRow = button.closest('.order-supply-row');
     const supplyIndex = supplyRow.querySelector('.supply-items-container').dataset.supplyIndex;
     const container = supplyRow.querySelector('.supply-items-container');
@@ -659,8 +678,18 @@ function addGlassOrderItem(button, isInitial = false) {
         <td style="width: 100px; min-width: 100px;" class="border border-neutral-200">
             <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][thickness]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs text-center px-1" placeholder="Độ dày" value="${lastData ? lastData.thickness : ''}">
         </td>
-        <td style="width: 110px; min-width: 110px; " class="border border-neutral-200">
-            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][wing_opening_direction]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs text-center px-1" placeholder="Chiều mở cánh" value="${lastData ? lastData.wing_opening_direction : ''}">
+        <td style="width: 150px; min-width: 150px; " class="border border-neutral-200 p-1">
+            <div class="wing-direction-container flex items-center gap-1 w-full">
+                <input type="hidden" name="supplies[${supplyIndex}][items][${itemIndex}][wing_opening_direction]" class="actual-wing-direction" value="${lastData ? lastData.wing_opening_direction : ''}">
+                <div class="flex items-center gap-1 w-1/2" title="Số lượng cánh mở Trái">
+                    <span class="text-[11px] text-neutral-500 font-semibold wing-direction-label">Trái:</span>
+                    <input type="number" class="qty-left form-control form-control-sm rounded-md border-neutral-300 focus:border-primary-500 text-xs px-1 w-full h-7 text-center" placeholder="SL" min="0" oninput="updateWingDirection(this)">
+                </div>
+                <div class="flex items-center gap-1 w-1/2" title="Số lượng cánh mở Phải">
+                    <span class="text-[11px] text-neutral-500 font-semibold wing-direction-label">Phải:</span>
+                    <input type="number" class="qty-right form-control form-control-sm rounded-md border-neutral-300 focus:border-primary-500 text-xs px-1 w-full h-7 text-center" placeholder="SL" min="0" oninput="updateWingDirection(this)">
+                </div>
+            </div>
         </td>
         <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
             <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][aluminum_color]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs text-center px-1" placeholder="Màu nhôm" value="${lastData ? lastData.aluminum_color : ''}">
@@ -694,6 +723,9 @@ function addGlassOrderItem(button, isInitial = false) {
         </td>
         <td style="width: 80px; min-width: 80px; " class="text-center align-middle border border-neutral-200">
             <div class="flex items-center gap-1 justify-center">
+                <button type="button" onclick="insertGlassRow(this)" class="text-neutral-400 hover:text-success-500 transition-colors p-1" title="Chèn dòng mới ở dưới">
+                    <iconify-icon icon="lucide:list-plus" class="text-base"></iconify-icon>
+                </button>
                 <button type="button" onclick="duplicateGlassRow(this)" class="text-neutral-400 hover:text-primary-500 transition-colors p-1" title="Nhân bản sản phẩm">
                     <iconify-icon icon="lucide:copy" class="text-base"></iconify-icon>
                 </button>
@@ -703,7 +735,12 @@ function addGlassOrderItem(button, isInitial = false) {
             </div>
         </td>
     `;
-    container.appendChild(newItem);
+    
+    if (insertAfterRow) {
+        insertAfterRow.parentNode.insertBefore(newItem, insertAfterRow.nextSibling);
+    } else {
+        container.appendChild(newItem);
+    }
 
     // Khởi tạo TomSelect cho Mã SP phụ kiện nếu là dòng phụ kiện
     if (isAccessory) {
@@ -722,13 +759,18 @@ function addGlassOrderItem(button, isInitial = false) {
         }
     }
 
-    const newRow = container.lastElementChild;
+    const newRow = insertAfterRow ? insertAfterRow.nextElementSibling : container.lastElementChild;
     
     // Force table reflow to fix Chrome sticky cell border-collapse rendering bug
     const table = newRow.closest('table');
 
     
     bindGlassRowEvents(newRow);
+    
+    // Initialize the wing direction inputs
+    const wingContainer = newRow.querySelector('.wing-direction-container');
+    if (wingContainer) initWingDirection(wingContainer);
+
     updateOrderSummary();
     updateGlassRowIndexes();
 
@@ -970,6 +1012,11 @@ function applyFlashEffect(el) {
     }, 850);
 }
 
+function insertGlassRow(button) {
+    const currentRow = button.closest('.order-item-row');
+    addGlassOrderItem(button, false, currentRow);
+}
+
 function duplicateGlassRow(button) {
     const row = button.closest('.order-item-row');
     const tbody = row.closest('.supply-items-container');
@@ -1100,6 +1147,10 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('#glass-supplies-container .order-item-row').forEach(row => {
         bindGlassRowEvents(row);
         calculateGlassTotalPrice(row);
+        
+        // Initialize wing direction for existing rows
+        const wingContainer = row.querySelector('.wing-direction-container');
+        if (wingContainer) initWingDirection(wingContainer);
     });
 
     // Recalculate codes on load
@@ -1148,4 +1199,51 @@ document.addEventListener('input', function(e) {
         updateGlassRowIndexes();
     }
 });
+
+// Wing Direction Logic
+function updateWingDirection(el) {
+    const container = el.closest('.wing-direction-container');
+    const hiddenInput = container.querySelector('.actual-wing-direction');
+    const leftQty = container.querySelector('.qty-left').value;
+    const rightQty = container.querySelector('.qty-right').value;
+    
+    let parts = [];
+    if (leftQty && leftQty > 0) {
+        parts.push(`${leftQty} mở trái`);
+    }
+    if (rightQty && rightQty > 0) {
+        parts.push(`${rightQty} mở phải`);
+    }
+    
+    hiddenInput.value = parts.join(', ');
+}
+
+function initWingDirection(container) {
+    const hiddenInput = container.querySelector('.actual-wing-direction');
+    const leftInput = container.querySelector('.qty-left');
+    const rightInput = container.querySelector('.qty-right');
+    
+    let val = (hiddenInput.value || '').trim().toLowerCase();
+    
+    leftInput.value = '';
+    rightInput.value = '';
+    
+    if (val) {
+        // Look for explicit quantities
+        const leftMatch = val.match(/(\d+)\s*(?:mở\s*)?trái/i);
+        const rightMatch = val.match(/(\d+)\s*(?:mở\s*)?phải/i);
+        
+        if (leftMatch) {
+            leftInput.value = leftMatch[1];
+        } else if (val === 'trái' || val === 'mở trái') {
+            leftInput.value = 1; // Default back to 1 if just "Trái"
+        }
+        
+        if (rightMatch) {
+            rightInput.value = rightMatch[1];
+        } else if (val === 'phải' || val === 'mở phải') {
+            rightInput.value = 1; // Default back to 1 if just "Phải"
+        }
+    }
+}
 </script>

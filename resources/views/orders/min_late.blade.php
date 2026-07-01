@@ -415,6 +415,9 @@
                                 </td>
                                 <td style="width: 80px; min-width: 80px; position: sticky; right: 0; z-index: 1; background-color: #fff; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="text-center align-middle border border-neutral-200">
                                     <div class="flex items-center gap-1 justify-center">
+                                        <button type="button" onclick="insertMinLateRow(this)" class="text-neutral-400 hover:text-success-500 transition-colors p-1" title="Chèn dòng mới ở dưới">
+                                            <iconify-icon icon="lucide:list-plus" class="text-base"></iconify-icon>
+                                        </button>
                                         <button type="button" onclick="duplicateMinLateRow(this)" class="text-neutral-400 hover:text-primary-500 transition-colors p-1" title="Nhân bản sản phẩm">
                                             <iconify-icon icon="lucide:copy" class="text-base"></iconify-icon>
                                         </button>
@@ -616,7 +619,7 @@ function addMinLateOrderSupply() {
     }
 }
 
-function addMinLateOrderItem(button, isInitial = false) {
+function addMinLateOrderItem(button, isInitial = false, insertAfterRow = null) {
     const supplyRow = button.closest('.order-supply-row');
     const supplyIndex = supplyRow.querySelector('.supply-items-container').dataset.supplyIndex;
     const container = supplyRow.querySelector('.supply-items-container');
@@ -726,6 +729,9 @@ function addMinLateOrderItem(button, isInitial = false) {
         </td>
         <td style="width: 80px; min-width: 80px; position: sticky; right: 0; z-index: 1; background-color: #fff; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="text-center align-middle border border-neutral-200">
             <div class="flex items-center gap-1 justify-center">
+                <button type="button" onclick="insertMinLateRow(this)" class="text-neutral-400 hover:text-success-500 transition-colors p-1" title="Chèn dòng mới ở dưới">
+                    <iconify-icon icon="lucide:list-plus" class="text-base"></iconify-icon>
+                </button>
                 <button type="button" onclick="duplicateMinLateRow(this)" class="text-neutral-400 hover:text-primary-500 transition-colors p-1" title="Nhân bản sản phẩm">
                     <iconify-icon icon="lucide:copy" class="text-base"></iconify-icon>
                 </button>
@@ -735,9 +741,14 @@ function addMinLateOrderItem(button, isInitial = false) {
             </div>
         </td>
     `;
-    container.appendChild(newItem);
     
-    const newRow = container.lastElementChild;
+    if (insertAfterRow) {
+        insertAfterRow.parentNode.insertBefore(newItem, insertAfterRow.nextSibling);
+    } else {
+        container.appendChild(newItem);
+    }
+    
+    const newRow = insertAfterRow ? insertAfterRow.nextElementSibling : container.lastElementChild;
     
     // Force table reflow to fix Chrome sticky cell border-collapse rendering bug
     const table = newRow.closest('table');
@@ -824,6 +835,11 @@ function updateMinLateRowIndexes() {
             globalItemIndex++;
         });
     });
+}
+
+function insertMinLateRow(button) {
+    const currentRow = button.closest('.order-item-row');
+    addMinLateOrderItem(button, false, currentRow);
 }
 
 function duplicateMinLateRow(button) {

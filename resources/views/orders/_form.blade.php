@@ -2401,6 +2401,110 @@ document.addEventListener('DOMContentLoaded', function() {
         return supplies;
     }
 });
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('focusin', function(e) {
+        if (e.target && e.target.tagName === 'INPUT' && e.target.type === 'number' && e.target.closest('.order-item-row, .payment-detail-row')) {
+            e.target.type = 'text';
+            e.target.inputMode = 'numeric';
+            e.target.dataset.wasNumber = 'true';
+        }
+    });
+
+    // Table arrow key navigation and Enter handling
+    document.addEventListener('keydown', function(e) {
+        const key = e.key;
+        const currentEl = e.target;
+        
+        // Handle Enter key on product-bevel-input to open the select options
+        if (key === 'Enter' && currentEl.classList.contains('product-bevel-input')) {
+            e.preventDefault();
+            const td = currentEl.closest('td');
+            if (td) {
+                const selectEl = td.querySelector('.product-bevel-select');
+                if (selectEl && typeof selectEl.showPicker === 'function') {
+                    try {
+                        selectEl.showPicker();
+                    } catch (err) {
+                        console.error("Browser doesn't support showPicker on this element", err);
+                    }
+                }
+            }
+            return;
+        }
+
+        if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(key)) return;
+
+        if (!currentEl.matches('.order-item-row input:not([type="hidden"]), .order-item-row select, .order-item-row textarea, .payment-detail-row input:not([type="hidden"]), .payment-detail-row select, .payment-detail-row textarea')) return;
+
+        // Allow default Left/Right behavior inside text inputs and textareas unless at boundaries
+        if ((key === 'ArrowLeft' || key === 'ArrowRight') && (currentEl.tagName === 'INPUT' || currentEl.tagName === 'TEXTAREA')) {
+            if (currentEl.tagName === 'TEXTAREA' || currentEl.type === 'text') {
+                if (key === 'ArrowLeft' && currentEl.selectionStart > 0) return;
+                if (key === 'ArrowRight' && currentEl.selectionEnd < currentEl.value.length) return;
+            }
+        }
+
+        // Allow default Up/Down behavior inside textareas unless at boundaries (first/last line)
+        if ((key === 'ArrowUp' || key === 'ArrowDown') && currentEl.tagName === 'TEXTAREA') {
+            const text = currentEl.value;
+            const cursor = currentEl.selectionStart;
+            if (key === 'ArrowUp') {
+                const isOnFirstLine = text.lastIndexOf('\n', cursor - 1) === -1;
+                if (!isOnFirstLine) return;
+            } else if (key === 'ArrowDown') {
+                const isOnLastLine = text.indexOf('\n', cursor) === -1;
+                if (!isOnLastLine) return;
+            }
+        }
+
+        const td = currentEl.closest('td');
+        const tr = currentEl.closest('tr.order-item-row, tr.payment-detail-row');
+        if (!td || !tr) return;
+
+        const tbody = tr.closest('tbody');
+        if (!tbody) return;
+        
+        const allTrs = Array.from(tbody.querySelectorAll('tr.order-item-row, tr.payment-detail-row'));
+        const trIndex = allTrs.indexOf(tr);
+        
+        const allTds = Array.from(tr.children);
+        const tdIndex = allTds.indexOf(td);
+
+        let targetEl = null;
+
+        if (key === 'ArrowUp' || key === 'ArrowDown') {
+            e.preventDefault(); // prevent scrolling or number incrementing
+            let targetTrIndex = key === 'ArrowUp' ? trIndex - 1 : trIndex + 1;
+            
+            while (targetTrIndex >= 0 && targetTrIndex < allTrs.length) {
+                const targetTr = allTrs[targetTrIndex];
+                const targetTd = targetTr.children[tdIndex];
+                if (targetTd) {
+                    targetEl = targetTd.querySelector('input:not([type="hidden"]):not([disabled]):not([readonly]), select:not([disabled]), textarea:not([disabled]):not([readonly])');
+                    if (targetEl) break;
+                }
+                targetTrIndex = key === 'ArrowUp' ? targetTrIndex - 1 : targetTrIndex + 1;
+            }
+        } else if (key === 'ArrowLeft' || key === 'ArrowRight') {
+            let nextTdIndex = key === 'ArrowLeft' ? tdIndex - 1 : tdIndex + 1;
+            while(nextTdIndex >= 0 && nextTdIndex < allTds.length) {
+                const targetTd = allTds[nextTdIndex];
+                targetEl = targetTd.querySelector('input:not([type="hidden"]):not([disabled]):not([readonly]), select:not([disabled]), textarea:not([disabled]):not([readonly])');
+                if (targetEl) break;
+                nextTdIndex = key === 'ArrowLeft' ? nextTdIndex - 1 : nextTdIndex + 1;
+            }
+        }
+
+        if (targetEl) {
+            e.preventDefault();
+            targetEl.focus();
+            if (targetEl.tagName === 'INPUT' || targetEl.tagName === 'TEXTAREA') {
+                targetEl.select();
+            }
+        }
+    });
+});
 </script>
 
 <x-modal name="modal-shortcuts" maxWidth="2xl" :hasBackdrop="true" :transparent="false">

@@ -480,6 +480,9 @@
                                         <button type="button" onclick="addFakeThicknessRow(this)" class="text-neutral-400 hover:text-warning-500 transition-colors p-1" title="Tạo công giả dày">
                                             <iconify-icon icon="lucide:layers" class="text-base"></iconify-icon>
                                         </button>
+                                        <button type="button" onclick="insertAcrylicRow(this)" class="text-neutral-400 hover:text-success-500 transition-colors p-1" title="Chèn dòng mới ở dưới">
+                                            <iconify-icon icon="lucide:list-plus" class="text-base"></iconify-icon>
+                                        </button>
                                         <button type="button" onclick="duplicateAcrylicRow(this)" class="text-neutral-400 hover:text-primary-500 transition-colors p-1" title="Nhân bản sản phẩm">
                                             <iconify-icon icon="lucide:copy" class="text-base"></iconify-icon>
                                         </button>
@@ -649,7 +652,7 @@ function addOrderSupply() {
     }
 }
 
-function addOrderItem(button, isInitial = false) {
+function addOrderItem(button, isInitial = false, insertAfterRow = null) {
     const supplyRow = button.closest('.order-supply-row');
     const supplyIndex = supplyRow.querySelector('.supply-items-container').dataset.supplyIndex;
     const container = supplyRow.querySelector('.supply-items-container');
@@ -771,6 +774,9 @@ function addOrderItem(button, isInitial = false) {
                 <button type="button" onclick="addFakeThicknessRow(this)" class="text-neutral-400 hover:text-warning-500 transition-colors p-1" title="Tạo công giả dày">
                     <iconify-icon icon="lucide:layers" class="text-base"></iconify-icon>
                 </button>
+                <button type="button" onclick="insertAcrylicRow(this)" class="text-neutral-400 hover:text-success-500 transition-colors p-1" title="Chèn dòng mới ở dưới">
+                    <iconify-icon icon="lucide:list-plus" class="text-base"></iconify-icon>
+                </button>
                 <button type="button" onclick="duplicateAcrylicRow(this)" class="text-neutral-400 hover:text-primary-500 transition-colors p-1" title="Nhân bản sản phẩm">
                     <iconify-icon icon="lucide:copy" class="text-base"></iconify-icon>
                 </button>
@@ -780,9 +786,14 @@ function addOrderItem(button, isInitial = false) {
             </div>
         </td>
     `;
-    container.appendChild(newItem);
     
-    const newRow = container.lastElementChild;
+    if (insertAfterRow) {
+        insertAfterRow.parentNode.insertBefore(newItem, insertAfterRow.nextSibling);
+    } else {
+        container.appendChild(newItem);
+    }
+    
+    const newRow = insertAfterRow ? insertAfterRow.nextElementSibling : container.lastElementChild;
     
     // Force table reflow to fix Chrome sticky cell border-collapse rendering bug
     const table = newRow.closest('table');
@@ -810,10 +821,24 @@ function removeOrderItem(button) {
     const row = button.closest('.order-item-row');
     const tbody = row.closest('.supply-items-container');
     const table = row.closest('table');
+    
+    // Check if we're deleting a labor row, to restore buttons on its parent
+    const isLaborRow = row.dataset.isLabor === '1' || row.querySelector('.labor-badge') != null || (row.querySelector('input[name*="[product_name]"]') && row.querySelector('input[name*="[product_name]"]').value.trim() === 'Công giả dày');
+    if (isLaborRow) {
+        const prevRow = row.previousElementSibling;
+        if (prevRow && prevRow.classList.contains('order-item-row')) {
+            const parentInsertBtn = prevRow.querySelector('button[onclick*="insertAcrylicRow"]');
+            if (parentInsertBtn) parentInsertBtn.style.display = '';
+            const parentFakeThickBtn = prevRow.querySelector('button[onclick*="addFakeThicknessRow"]');
+            if (parentFakeThickBtn) parentFakeThickBtn.style.display = '';
+            const parentDuplicateBtn = prevRow.querySelector('button[onclick*="duplicateAcrylicRow"]');
+            if (parentDuplicateBtn) parentDuplicateBtn.style.display = '';
+        }
+    }
+    
     row.remove();
     updateOrderSummary();
     updateAcrylicRowIndexes(tbody);
-
 }
 
 function updateAcrylicRowIndexes() {
@@ -968,6 +993,11 @@ function bindAcrylicRowEvents(row) {
     }
 }
 
+function insertAcrylicRow(button) {
+    const currentRow = button.closest('.order-item-row');
+    addOrderItem(button, false, currentRow);
+}
+
 function duplicateAcrylicRow(button) {
     const row = button.closest('.order-item-row');
     const tbody = row.closest('.supply-items-container');
@@ -1117,6 +1147,20 @@ function addFakeThicknessRow(button) {
         nameInputNew.classList.remove('border-neutral-300', 'focus:border-primary-500', 'focus:ring-primary-500');
         nameInputNew.classList.add('border-amber-300', 'focus:border-amber-500', 'focus:ring-amber-400');
     }
+
+    // The parent row should not be able to insert, duplicate or add another fake thickness row
+    const parentInsertBtn = row.querySelector('button[onclick*="insertAcrylicRow"]');
+    if (parentInsertBtn) parentInsertBtn.style.display = 'none';
+    const parentFakeThickBtn = row.querySelector('button[onclick*="addFakeThicknessRow"]');
+    if (parentFakeThickBtn) parentFakeThickBtn.style.display = 'none';
+    const parentDuplicateBtn = row.querySelector('button[onclick*="duplicateAcrylicRow"]');
+    if (parentDuplicateBtn) parentDuplicateBtn.style.display = 'none';
+
+    // The fake thickness row should not be able to create another fake thickness row or duplicate itself
+    const fakeThicknessBtn = newRow.querySelector('button[onclick*="addFakeThicknessRow"]');
+    if (fakeThicknessBtn) fakeThicknessBtn.remove();
+    const duplicateBtn = newRow.querySelector('button[onclick*="duplicateAcrylicRow"]');
+    if (duplicateBtn) duplicateBtn.remove();
 
     // Insert after current row
     row.parentNode.insertBefore(newRow, row.nextSibling);
@@ -1385,6 +1429,27 @@ document.addEventListener('DOMContentLoaded', function() {
         calculateTotalPrice(row);
         initBevelField(row);
         updateEdgeBevel(row);
+        
+        // Ensure UI rules for labor rows are applied on page load
+        const productNameInput = row.querySelector('input[name*="[product_name]"]');
+        const isLaborRow = row.dataset.isLabor === '1' || row.querySelector('.labor-badge') != null || (productNameInput && productNameInput.value.trim() === 'Công giả dày');
+        if (isLaborRow) {
+            row.dataset.isLabor = '1';
+            const fakeThicknessBtn = row.querySelector('button[onclick*="addFakeThicknessRow"]');
+            if (fakeThicknessBtn) fakeThicknessBtn.remove();
+            const duplicateBtn = row.querySelector('button[onclick*="duplicateAcrylicRow"]');
+            if (duplicateBtn) duplicateBtn.remove();
+            
+            const prevRow = row.previousElementSibling;
+            if (prevRow && prevRow.classList.contains('order-item-row')) {
+                const parentInsertBtn = prevRow.querySelector('button[onclick*="insertAcrylicRow"]');
+                if (parentInsertBtn) parentInsertBtn.style.display = 'none';
+                const parentFakeThickBtn = prevRow.querySelector('button[onclick*="addFakeThicknessRow"]');
+                if (parentFakeThickBtn) parentFakeThickBtn.style.display = 'none';
+                const parentDuplicateBtn = prevRow.querySelector('button[onclick*="duplicateAcrylicRow"]');
+                if (parentDuplicateBtn) parentDuplicateBtn.style.display = 'none';
+            }
+        }
     });
 
     if (typeof TomSelect !== 'undefined') {
