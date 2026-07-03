@@ -280,14 +280,31 @@ async function exportToExcel() {
 
             // Loop supplies — supply header row shows supply_name only (no roman numeral in col 1)
             orderData.supplies.forEach((supply, supplyIdx) => {
+                let totalWingArea = 0;
+                let totalMoldingLength = 0;
+                let totalAmount = 0;
+                
+                if (supply.items && Array.isArray(supply.items)) {
+                    supply.items.forEach(item => {
+                        totalWingArea += parseFloat(item.wing_area) || 0;
+                        totalMoldingLength += parseFloat(item.molding_length) || 0;
+                        totalAmount += parseFloat(item.total_price) || 0;
+                    });
+                }
+                
                 const supplyRow = worksheet.getRow(currentRow);
                 supplyRow.height = 22;
                 supplyRow.getCell(1).value = '';
                 supplyRow.getCell(3).value = supply.supply_name;
                 supplyRow.getCell(6).value = parseInt(supply.quantity) || 0;
-                supplyRow.getCell(9).value = 0;
-                supplyRow.getCell(10).value = 0;
-                supplyRow.getCell(12).value = 0;
+                supplyRow.getCell(9).value = totalWingArea > 0 ? parseFloat(totalWingArea.toFixed(2)) : 0;
+                supplyRow.getCell(10).value = totalMoldingLength > 0 ? parseFloat(totalMoldingLength.toFixed(2)) : 0;
+                
+                let cell12 = supplyRow.getCell(12);
+                cell12.value = totalAmount > 0 ? totalAmount : 0;
+                if (totalAmount > 0) {
+                    cell12.numFmt = '#,##0';
+                }
 
                 for (let c = 1; c <= 15; c++) {
                     const cell = supplyRow.getCell(c);
@@ -693,13 +710,28 @@ async function exportToExcel() {
 
             // Loop supplies — no roman numeral in col 1
             orderData.supplies.forEach((supply, supplyIdx) => {
+                let totalAreaM2 = 0;
+                let totalAmount = 0;
+                
+                if (supply.items && Array.isArray(supply.items)) {
+                    supply.items.forEach(item => {
+                        totalAreaM2 += parseFloat(item.area_m2) || 0;
+                        totalAmount += parseFloat(item.total_price) || 0;
+                    });
+                }
+                
                 const supplyRow = worksheet.getRow(currentRow);
                 supplyRow.height = 22;
                 supplyRow.getCell(1).value = '';
                 supplyRow.getCell(2).value = supply.supply_name;
                 supplyRow.getCell(10).value = parseInt(supply.quantity) || 0;
-                supplyRow.getCell(11).value = 0;
-                supplyRow.getCell(13).value = 0;
+                supplyRow.getCell(11).value = totalAreaM2 > 0 ? parseFloat(totalAreaM2.toFixed(2)) : 0;
+                
+                let cell13 = supplyRow.getCell(13);
+                cell13.value = totalAmount > 0 ? totalAmount : 0;
+                if (totalAmount > 0) {
+                    cell13.numFmt = '#,##0';
+                }
 
                 for (let c = 1; c <= 14; c++) {
                     const cell = supplyRow.getCell(c);
