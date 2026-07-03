@@ -1003,6 +1003,7 @@ function bindMinLateRowEvents(row) {
             if (input.name.indexOf('[quantity]') !== -1) {
                 updateMinLateRowIndexes();
             }
+            updateOrderSummary();
         });
     });
     
@@ -1010,6 +1011,7 @@ function bindMinLateRowEvents(row) {
     selects.forEach(select => {
         select.addEventListener('change', () => {
             calculateMinLateRowStats(row);
+            updateOrderSummary();
         });
     });
 }

@@ -694,6 +694,34 @@ function previewOrder() {
 }
 
 function updateOrderSummary() {
+    // Auto-calculate total quantity for each supply block
+    document.querySelectorAll('.order-supply-row').forEach(supplyRow => {
+        const supplyQtyInput = supplyRow.querySelector('input[name^="supplies["][name$="][quantity]"]:not([name*="][items]["])');
+        
+        if (supplyQtyInput) {
+            const itemQtyInputs = supplyRow.querySelectorAll('input[name*="][items]["][name$="][quantity]"], input[name*="][items]["][name$="][wing_quantity]"]');
+            
+            if (itemQtyInputs.length > 0) {
+                let total = 0;
+                itemQtyInputs.forEach(input => {
+                    // Ignore rows that might be visually hidden or disabled (e.g. templates)
+                    if (!input.disabled && !input.closest('tr.hidden')) {
+                        const val = parseFloat(input.value);
+                        if (!isNaN(val)) {
+                            total += val;
+                        }
+                    }
+                });
+                
+                // Only update if it's different and a valid number, avoiding infinite loops or overriding empty inputs when total is 0?
+                // Actually, if total is 0, we still want to show 0.
+                if (!isNaN(total) && parseFloat(supplyQtyInput.value) !== total) {
+                    supplyQtyInput.value = total;
+                }
+            }
+        }
+    });
+
     const orderType = @json($currentOrderType);
     
     let totalItems = 0;
@@ -2504,6 +2532,13 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+
+    // Run order summary update once on page load to initialize auto-calculated fields like supply quantities
+    setTimeout(() => {
+        if (typeof updateOrderSummary === 'function') {
+            updateOrderSummary();
+        }
+    }, 100);
 });
 </script>
 
