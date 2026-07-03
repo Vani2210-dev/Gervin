@@ -500,7 +500,7 @@
                                     <input type="text" name="payment_details[{{ $detailIndex }}][unit]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs" placeholder="m, tấm..." value="{{ $detail->unit }}">
                                 </td>
                                 <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
-                                    <input type="number" name="payment_details[{{ $detailIndex }}][quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs" placeholder="1" step="any" value="{{ $detail->quantity }}">
+                                    <input type="number" name="payment_details[{{ $detailIndex }}][quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs payment-quantity-input" placeholder="1" step="any" value="{{ $detail->quantity }}">
                                 </td>
                                 <td style="width: 150px; min-width: 150px; " class="border border-neutral-200">
                                     <input type="number" name="payment_details[{{ $detailIndex }}][price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs" placeholder="0" min="0" step="any" required value="{{ $detail->price }}">
@@ -1114,7 +1114,7 @@ function addPaymentDetail() {
             <input type="text" name="payment_details[${paymentDetailIndex}][unit]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs" placeholder="m, tấm...">
         </td>
         <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
-            <input type="number" name="payment_details[${paymentDetailIndex}][quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs" placeholder="1" step="any" value="1">
+            <input type="number" name="payment_details[${paymentDetailIndex}][quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs payment-quantity-input" placeholder="1" step="any" value="1">
         </td>
         <td style="width: 110px; min-width: 110px; " class="border border-neutral-200">
             <input type="number" name="payment_details[${paymentDetailIndex}][price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs" placeholder="0" min="0" step="any" required value="0">
@@ -1137,6 +1137,12 @@ function addPaymentDetail() {
     const textareaEl = newRow.querySelector('.payment-name-textarea');
     if (textareaEl) {
         initPaymentNameAutocomplete(textareaEl);
+    }
+
+    // Initialize Suggestions for the new row quantity
+    const qtyInputEl = newRow.querySelector('.payment-quantity-input');
+    if (qtyInputEl) {
+        initPaymentQuantitySuggestions(qtyInputEl);
     }
 
     // Bind change/input events for auto-calculating row total
@@ -1341,6 +1347,139 @@ function applyFlashEffect(el) {
     }, 850);
 }
 
+function getMinLateQuantitySuggestions() {
+    let totalStraight = 0;
+    let total40_59 = 0;
+    let total17_39 = 0;
+    let totalBeveled = 0;
+    
+    document.querySelectorAll('.order-supply-row table tbody tr:not(.hidden)').forEach(row => {
+        const straightInput = row.querySelector('input[name*="[straight_paste_length]"]');
+        const r40_59Input = row.querySelector('input[name*="[ban_rong_40_59]"]');
+        const r17_39Input = row.querySelector('input[name*="[ban_rong_17_39]"]');
+        const beveledInput = row.querySelector('input[name*="[beveled_length]"]');
+        
+        if (straightInput && !straightInput.disabled) {
+            totalStraight += parseFloat(straightInput.value) || 0;
+        }
+        if (r40_59Input && !r40_59Input.disabled) {
+            total40_59 += parseFloat(r40_59Input.value) || 0;
+        }
+        if (r17_39Input && !r17_39Input.disabled) {
+            total17_39 += parseFloat(r17_39Input.value) || 0;
+        }
+        if (beveledInput && !beveledInput.disabled) {
+            totalBeveled += parseFloat(beveledInput.value) || 0;
+        }
+    });
+    
+    const opt1 = (totalStraight - total40_59 - total17_39) * 1.05;
+    const opt2 = totalBeveled * 1.05;
+    
+    return {
+        opt1: Math.round(opt1 * 100) / 100,
+        opt2: Math.round(opt2 * 100) / 100
+    };
+}
+
+function initPaymentQuantitySuggestions(input) {
+    let globalQtyDropdown = document.getElementById('payment-qty-suggestions-global-dropdown');
+    if (!globalQtyDropdown) {
+        globalQtyDropdown = document.createElement('div');
+        globalQtyDropdown.id = 'payment-qty-suggestions-global-dropdown';
+        globalQtyDropdown.className = 'dropdown-menu p-0 shadow-lg border border-neutral-200';
+        globalQtyDropdown.style.cssText = 'display: none; position: absolute; z-index: 999999; max-height: 200px; overflow-y: auto; background-color: #ffffff !important; min-width: 220px;';
+        document.body.appendChild(globalQtyDropdown);
+    }
+    
+    let activeInput = null;
+    
+    function renderSuggestions() {
+        globalQtyDropdown.innerHTML = '';
+        const suggestions = getMinLateQuantitySuggestions();
+        
+        const opts = [
+            { label: 'Option 1: (Thẳng - Bản rộng)*1.05', value: suggestions.opt1 },
+            { label: 'Option 2: (Vát * 1.05)', value: suggestions.opt2 }
+        ];
+        
+        opts.forEach(opt => {
+            const item = document.createElement('button');
+            item.type = 'button';
+            item.className = 'dropdown-item text-xs py-2 px-3 text-start w-full border-b border-neutral-100';
+            item.style.whiteSpace = 'normal';
+            item.style.backgroundColor = '#ffffff';
+            item.style.color = '#1f2937';
+            item.innerHTML = `<span class="font-bold text-primary">${opt.value.toLocaleString('vi-VN')}</span> <span class="text-neutral-500 font-normal">(${opt.label})</span>`;
+            
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                input.value = opt.value;
+                
+                // Trigger change event
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+                
+                const row = input.closest('.payment-detail-row');
+                if (row) {
+                    calculatePaymentDetailRowTotal(row);
+                }
+                
+                globalQtyDropdown.style.display = 'none';
+            });
+            
+            item.addEventListener('mouseenter', () => {
+                item.style.backgroundColor = '#f3f4f6';
+            });
+            item.addEventListener('mouseleave', () => {
+                item.style.backgroundColor = '#ffffff';
+            });
+            
+            globalQtyDropdown.appendChild(item);
+        });
+        
+        const rect = input.getBoundingClientRect();
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+        
+        globalQtyDropdown.style.top = (rect.bottom + scrollTop) + 'px';
+        globalQtyDropdown.style.left = (rect.left + scrollLeft) + 'px';
+        globalQtyDropdown.style.display = 'block';
+        activeInput = input;
+    }
+    
+    input.addEventListener('focus', renderSuggestions);
+    input.addEventListener('click', renderSuggestions);
+    
+    document.addEventListener('click', function(e) {
+        if (!input.contains(e.target) && !globalQtyDropdown.contains(e.target)) {
+            globalQtyDropdown.style.display = 'none';
+        }
+    });
+    
+    window.addEventListener('scroll', function() {
+        if (globalQtyDropdown.style.display === 'block' && activeInput === input) {
+            const rect = input.getBoundingClientRect();
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+            globalQtyDropdown.style.top = (rect.bottom + scrollTop) + 'px';
+            globalQtyDropdown.style.left = (rect.left + scrollLeft) + 'px';
+        }
+    }, true);
+    
+    window.addEventListener('resize', function() {
+        if (globalQtyDropdown.style.display === 'block' && activeInput === input) {
+            const rect = input.getBoundingClientRect();
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+            globalQtyDropdown.style.top = (rect.bottom + scrollTop) + 'px';
+            globalQtyDropdown.style.left = (rect.left + scrollLeft) + 'px';
+            globalQtyDropdown.style.width = rect.width + 'px';
+        }
+    });
+}
+
 // Initial setup for Min Late-specific rows and payment details
 document.addEventListener('DOMContentLoaded', function() {
 
@@ -1358,6 +1497,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize Autocomplete for existing payment details
     document.querySelectorAll('.payment-name-textarea').forEach(function(textarea) {
         initPaymentNameAutocomplete(textarea);
+    });
+
+    // Initialize suggestions for existing payment quantity inputs
+    document.querySelectorAll('.payment-quantity-input').forEach(function(input) {
+        initPaymentQuantitySuggestions(input);
     });
 
     // Ensure at least one payment detail row exists on page load if none loaded
