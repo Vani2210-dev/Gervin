@@ -280,14 +280,32 @@ async function exportToExcel() {
 
             // Loop supplies — supply header row shows supply_name only (no roman numeral in col 1)
             orderData.supplies.forEach((supply, supplyIdx) => {
+                let totalWingArea = 0;
+                let totalMoldingLength = 0;
+                let totalAmount = 0;
+                
+                if (supply.items && Array.isArray(supply.items)) {
+                    supply.items.forEach(item => {
+                        totalWingArea += parseFloat(item.wing_area) || 0;
+                        totalMoldingLength += parseFloat(item.molding_length) || 0;
+                        let itemPrice = parseFloat(item.total_price) || 0;
+                        totalAmount += Math.round(itemPrice / 1000) * 1000;
+                    });
+                }
+                
                 const supplyRow = worksheet.getRow(currentRow);
                 supplyRow.height = 22;
                 supplyRow.getCell(1).value = '';
                 supplyRow.getCell(3).value = supply.supply_name;
-                supplyRow.getCell(6).value = 0;
-                supplyRow.getCell(9).value = 0;
-                supplyRow.getCell(10).value = 0;
-                supplyRow.getCell(12).value = 0;
+                supplyRow.getCell(6).value = parseInt(supply.quantity) || 0;
+                supplyRow.getCell(9).value = totalWingArea > 0 ? parseFloat(totalWingArea.toFixed(2)) : 0;
+                supplyRow.getCell(10).value = totalMoldingLength > 0 ? parseFloat(totalMoldingLength.toFixed(2)) : 0;
+                
+                let cell12 = supplyRow.getCell(12);
+                cell12.value = totalAmount > 0 ? totalAmount : 0;
+                if (totalAmount > 0) {
+                    cell12.numFmt = '#,##0';
+                }
 
                 for (let c = 1; c <= 15; c++) {
                     const cell = supplyRow.getCell(c);
@@ -336,7 +354,8 @@ async function exportToExcel() {
                     itemRow.getCell(11).numFmt = '#,##0';
                     itemRow.getCell(11).alignment = { horizontal: 'center', vertical: 'middle' };
 
-                    itemRow.getCell(12).value = parseFloat(item.total_price) || 0;
+                    let itemTotal = parseFloat(item.total_price) || 0;
+                    itemRow.getCell(12).value = Math.round(itemTotal / 1000) * 1000;
                     itemRow.getCell(12).numFmt = '#,##0';
                     itemRow.getCell(12).alignment = { horizontal: 'center', vertical: 'middle' };
 
@@ -380,44 +399,48 @@ async function exportToExcel() {
             currentRow++;
             
             // Discount
-            const discountRow = worksheet.getRow(currentRow);
-            discountRow.height = 22;
-            discountRow.getCell(11).value = `Chiết khấu (${parseFloat(orderData.discount_percent || 0)}%):`;
-            discountRow.getCell(11).font = { name: 'Times New Roman', size: 11, bold: true };
-            discountRow.getCell(11).alignment = { horizontal: 'center', vertical: 'middle' };
-            
-            discountRow.getCell(12).value = -Math.round(parseFloat(orderData.discount_amount || 0) / 1000) * 1000;
-            discountRow.getCell(12).font = { name: 'Times New Roman', size: 11, bold: true, color: { argb: 'FFDC2626' } };
-            discountRow.getCell(12).numFmt = '#,##0';
-            discountRow.getCell(12).alignment = { horizontal: 'center', vertical: 'middle' };
-            
-            for (let c = 1; c <= 15; c++) {
-                discountRow.getCell(c).border = {
-                    top: { style: 'thin', color: { argb: 'FF9CA3AF' } },
-                    bottom: { style: 'thin', color: { argb: 'FF9CA3AF' } }
-                };
+            if (parseFloat(orderData.discount_amount || 0) > 0) {
+                const discountRow = worksheet.getRow(currentRow);
+                discountRow.height = 22;
+                discountRow.getCell(11).value = `Chiết khấu (${parseFloat(orderData.discount_percent || 0)}%):`;
+                discountRow.getCell(11).font = { name: 'Times New Roman', size: 11, bold: true };
+                discountRow.getCell(11).alignment = { horizontal: 'center', vertical: 'middle' };
+                
+                discountRow.getCell(12).value = -Math.round(parseFloat(orderData.discount_amount || 0) / 1000) * 1000;
+                discountRow.getCell(12).font = { name: 'Times New Roman', size: 11, bold: true, color: { argb: 'FFDC2626' } };
+                discountRow.getCell(12).numFmt = '#,##0';
+                discountRow.getCell(12).alignment = { horizontal: 'center', vertical: 'middle' };
+                
+                for (let c = 1; c <= 15; c++) {
+                    discountRow.getCell(c).border = {
+                        top: { style: 'thin', color: { argb: 'FF9CA3AF' } },
+                        bottom: { style: 'thin', color: { argb: 'FF9CA3AF' } }
+                    };
+                }
+                currentRow++;
             }
-            currentRow++;
             
             // VAT
-            const vatRow = worksheet.getRow(currentRow);
-            vatRow.height = 22;
-            vatRow.getCell(11).value = `VAT (${parseFloat(orderData.vat_percent || 0)}%):`;
-            vatRow.getCell(11).font = { name: 'Times New Roman', size: 11, bold: true };
-            vatRow.getCell(11).alignment = { horizontal: 'center', vertical: 'middle' };
-            
-            vatRow.getCell(12).value = Math.round(parseFloat(orderData.vat_amount || 0) / 1000) * 1000;
-            vatRow.getCell(12).font = { name: 'Times New Roman', size: 11, bold: true };
-            vatRow.getCell(12).numFmt = '#,##0';
-            vatRow.getCell(12).alignment = { horizontal: 'center', vertical: 'middle' };
-            
-            for (let c = 1; c <= 15; c++) {
-                vatRow.getCell(c).border = {
-                    top: { style: 'thin', color: { argb: 'FF9CA3AF' } },
-                    bottom: { style: 'thin', color: { argb: 'FF9CA3AF' } }
-                };
+            if (parseFloat(orderData.vat_amount || 0) > 0) {
+                const vatRow = worksheet.getRow(currentRow);
+                vatRow.height = 22;
+                vatRow.getCell(11).value = `VAT (${parseFloat(orderData.vat_percent || 0)}%):`;
+                vatRow.getCell(11).font = { name: 'Times New Roman', size: 11, bold: true };
+                vatRow.getCell(11).alignment = { horizontal: 'center', vertical: 'middle' };
+                
+                vatRow.getCell(12).value = Math.round(parseFloat(orderData.vat_amount || 0) / 1000) * 1000;
+                vatRow.getCell(12).font = { name: 'Times New Roman', size: 11, bold: true };
+                vatRow.getCell(12).numFmt = '#,##0';
+                vatRow.getCell(12).alignment = { horizontal: 'center', vertical: 'middle' };
+                
+                for (let c = 1; c <= 15; c++) {
+                    vatRow.getCell(c).border = {
+                        top: { style: 'thin', color: { argb: 'FF9CA3AF' } },
+                        bottom: { style: 'thin', color: { argb: 'FF9CA3AF' } }
+                    };
+                }
+                currentRow++;
             }
-            currentRow++;
             
             // TỔNG THANH TOÁN
             const finalTotalRow = worksheet.getRow(currentRow);
@@ -693,13 +716,31 @@ async function exportToExcel() {
 
             // Loop supplies — no roman numeral in col 1
             orderData.supplies.forEach((supply, supplyIdx) => {
+                let totalAreaM2 = 0;
+                let totalAmount = 0;
+                let totalWingQuantity = 0;
+                
+                if (supply.items && Array.isArray(supply.items)) {
+                    supply.items.forEach(item => {
+                        totalWingQuantity += parseInt(item.wing_quantity) || 0;
+                        totalAreaM2 += parseFloat(item.area_m2) || 0;
+                        let itemPrice = parseFloat(item.total_price) || 0;
+                        totalAmount += Math.round(itemPrice / 1000) * 1000;
+                    });
+                }
+                
                 const supplyRow = worksheet.getRow(currentRow);
                 supplyRow.height = 22;
                 supplyRow.getCell(1).value = '';
                 supplyRow.getCell(2).value = supply.supply_name;
-                supplyRow.getCell(10).value = 0;
-                supplyRow.getCell(11).value = 0;
-                supplyRow.getCell(13).value = 0;
+                supplyRow.getCell(10).value = totalWingQuantity;
+                supplyRow.getCell(11).value = totalAreaM2 > 0 ? parseFloat(totalAreaM2.toFixed(2)) : 0;
+                
+                let cell13 = supplyRow.getCell(13);
+                cell13.value = totalAmount > 0 ? totalAmount : 0;
+                if (totalAmount > 0) {
+                    cell13.numFmt = '#,##0';
+                }
 
                 for (let c = 1; c <= 14; c++) {
                     const cell = supplyRow.getCell(c);
@@ -753,7 +794,8 @@ async function exportToExcel() {
                     itemRow.getCell(12).numFmt = '#,##0';
                     itemRow.getCell(12).alignment = { horizontal: 'center', vertical: 'middle' };
 
-                    itemRow.getCell(13).value = parseFloat(item.total_price) || 0;
+                    let itemTotal = parseFloat(item.total_price) || 0;
+                    itemRow.getCell(13).value = Math.round(itemTotal / 1000) * 1000;
                     itemRow.getCell(13).numFmt = '#,##0';
                     itemRow.getCell(13).alignment = { horizontal: 'center', vertical: 'middle' };
 
@@ -792,46 +834,50 @@ async function exportToExcel() {
             currentRow++;
             
             // Discount
-            const discountRow = worksheet.getRow(currentRow);
-            discountRow.height = 22;
-            worksheet.mergeCells(`K${currentRow}:L${currentRow}`);
-            discountRow.getCell(11).value = `Chiết khấu (${parseFloat(orderData.discount_percent || 0)}%):`;
-            discountRow.getCell(11).font = { name: 'Times New Roman', size: 11, bold: true };
-            discountRow.getCell(11).alignment = { horizontal: 'center', vertical: 'middle' };
-            
-            discountRow.getCell(13).value = -Math.round(parseFloat(orderData.discount_amount || 0) / 1000) * 1000;
-            discountRow.getCell(13).font = { name: 'Times New Roman', size: 11, bold: true, color: { argb: 'FFDC2626' } };
-            discountRow.getCell(13).numFmt = '#,##0';
-            discountRow.getCell(13).alignment = { horizontal: 'center', vertical: 'middle' };
-            
-            for (let c = 1; c <= 14; c++) {
-                discountRow.getCell(c).border = {
-                    top: { style: 'thin', color: { argb: 'FF9CA3AF' } },
-                    bottom: { style: 'thin', color: { argb: 'FF9CA3AF' } }
-                };
+            if (parseFloat(orderData.discount_amount || 0) > 0) {
+                const discountRow = worksheet.getRow(currentRow);
+                discountRow.height = 22;
+                worksheet.mergeCells(`K${currentRow}:L${currentRow}`);
+                discountRow.getCell(11).value = `Chiết khấu (${parseFloat(orderData.discount_percent || 0)}%):`;
+                discountRow.getCell(11).font = { name: 'Times New Roman', size: 11, bold: true };
+                discountRow.getCell(11).alignment = { horizontal: 'center', vertical: 'middle' };
+                
+                discountRow.getCell(13).value = -Math.round(parseFloat(orderData.discount_amount || 0) / 1000) * 1000;
+                discountRow.getCell(13).font = { name: 'Times New Roman', size: 11, bold: true, color: { argb: 'FFDC2626' } };
+                discountRow.getCell(13).numFmt = '#,##0';
+                discountRow.getCell(13).alignment = { horizontal: 'center', vertical: 'middle' };
+                
+                for (let c = 1; c <= 14; c++) {
+                    discountRow.getCell(c).border = {
+                        top: { style: 'thin', color: { argb: 'FF9CA3AF' } },
+                        bottom: { style: 'thin', color: { argb: 'FF9CA3AF' } }
+                    };
+                }
+                currentRow++;
             }
-            currentRow++;
             
             // VAT
-            const vatRow = worksheet.getRow(currentRow);
-            vatRow.height = 22;
-            worksheet.mergeCells(`K${currentRow}:L${currentRow}`);
-            vatRow.getCell(11).value = `VAT (${parseFloat(orderData.vat_percent || 0)}%):`;
-            vatRow.getCell(11).font = { name: 'Times New Roman', size: 11, bold: true };
-            vatRow.getCell(11).alignment = { horizontal: 'center', vertical: 'middle' };
-            
-            vatRow.getCell(13).value = Math.round(parseFloat(orderData.vat_amount || 0) / 1000) * 1000;
-            vatRow.getCell(13).font = { name: 'Times New Roman', size: 11, bold: true };
-            vatRow.getCell(13).numFmt = '#,##0';
-            vatRow.getCell(13).alignment = { horizontal: 'center', vertical: 'middle' };
-            
-            for (let c = 1; c <= 14; c++) {
-                vatRow.getCell(c).border = {
-                    top: { style: 'thin', color: { argb: 'FF9CA3AF' } },
-                    bottom: { style: 'thin', color: { argb: 'FF9CA3AF' } }
-                };
+            if (parseFloat(orderData.vat_amount || 0) > 0) {
+                const vatRow = worksheet.getRow(currentRow);
+                vatRow.height = 22;
+                worksheet.mergeCells(`K${currentRow}:L${currentRow}`);
+                vatRow.getCell(11).value = `VAT (${parseFloat(orderData.vat_percent || 0)}%):`;
+                vatRow.getCell(11).font = { name: 'Times New Roman', size: 11, bold: true };
+                vatRow.getCell(11).alignment = { horizontal: 'center', vertical: 'middle' };
+                
+                vatRow.getCell(13).value = Math.round(parseFloat(orderData.vat_amount || 0) / 1000) * 1000;
+                vatRow.getCell(13).font = { name: 'Times New Roman', size: 11, bold: true };
+                vatRow.getCell(13).numFmt = '#,##0';
+                vatRow.getCell(13).alignment = { horizontal: 'center', vertical: 'middle' };
+                
+                for (let c = 1; c <= 14; c++) {
+                    vatRow.getCell(c).border = {
+                        top: { style: 'thin', color: { argb: 'FF9CA3AF' } },
+                        bottom: { style: 'thin', color: { argb: 'FF9CA3AF' } }
+                    };
+                }
+                currentRow++;
             }
-            currentRow++;
             
             // Add TỔNG THANH TOÁN
             const finalTotalRow = worksheet.getRow(currentRow);
@@ -984,6 +1030,7 @@ async function exportToExcel() {
                 supplyRow.height = 22;
                 supplyRow.getCell(1).value = '';
                 supplyRow.getCell(3).value = supply.supply_name;
+                supplyRow.getCell(6).value = parseInt(supply.quantity) || 0;
 
                 for (let c = 1; c <= maxCol; c++) {
                     const cell = supplyRow.getCell(c);
@@ -1093,7 +1140,9 @@ async function exportToExcel() {
                     row.getCell(12).numFmt = '#,##0';
                     row.getCell(13).value = parseFloat((parseFloat(detail.price_only) || 0).toFixed(2));
                     row.getCell(13).numFmt = '#,##0';
-                    row.getCell(17).value = parseFloat((parseFloat(detail.total) || 0).toFixed(2));
+                    
+                    let detailTotal = parseFloat(detail.total) || 0;
+                    row.getCell(17).value = Math.round(detailTotal / 1000) * 1000;
                     row.getCell(17).numFmt = '#,##0';
                     row.getCell(17).font = { name: 'Times New Roman', size: 11, bold: true };
 
@@ -1136,44 +1185,48 @@ async function exportToExcel() {
                 currentRow++;
                 
                 // Discount
-                const discountRow = worksheet.getRow(currentRow);
-                discountRow.height = 22;
-                discountRow.getCell(16).value = `Chiết khấu (${parseFloat(orderData.discount_percent || 0)}%):`;
-                discountRow.getCell(16).font = { name: 'Times New Roman', size: 11, bold: true };
-                discountRow.getCell(16).alignment = { horizontal: 'center', vertical: 'middle' };
-                
-                discountRow.getCell(17).value = -Math.round(parseFloat(orderData.discount_amount || 0) / 1000) * 1000;
-                discountRow.getCell(17).font = { name: 'Times New Roman', size: 11, bold: true, color: { argb: 'FFDC2626' } };
-                discountRow.getCell(17).numFmt = '#,##0';
-                discountRow.getCell(17).alignment = { horizontal: 'center', vertical: 'middle' };
-                
-                for (let c = 1; c <= maxCol; c++) {
-                    discountRow.getCell(c).border = {
-                        top: { style: 'thin', color: { argb: 'FF9CA3AF' } },
-                        bottom: { style: 'thin', color: { argb: 'FF9CA3AF' } }
-                    };
+                if (parseFloat(orderData.discount_amount || 0) > 0) {
+                    const discountRow = worksheet.getRow(currentRow);
+                    discountRow.height = 22;
+                    discountRow.getCell(16).value = `Chiết khấu (${parseFloat(orderData.discount_percent || 0)}%):`;
+                    discountRow.getCell(16).font = { name: 'Times New Roman', size: 11, bold: true };
+                    discountRow.getCell(16).alignment = { horizontal: 'center', vertical: 'middle' };
+                    
+                    discountRow.getCell(17).value = -Math.round(parseFloat(orderData.discount_amount || 0) / 1000) * 1000;
+                    discountRow.getCell(17).font = { name: 'Times New Roman', size: 11, bold: true, color: { argb: 'FFDC2626' } };
+                    discountRow.getCell(17).numFmt = '#,##0';
+                    discountRow.getCell(17).alignment = { horizontal: 'center', vertical: 'middle' };
+                    
+                    for (let c = 1; c <= maxCol; c++) {
+                        discountRow.getCell(c).border = {
+                            top: { style: 'thin', color: { argb: 'FF9CA3AF' } },
+                            bottom: { style: 'thin', color: { argb: 'FF9CA3AF' } }
+                        };
+                    }
+                    currentRow++;
                 }
-                currentRow++;
                 
                 // VAT
-                const vatRow = worksheet.getRow(currentRow);
-                vatRow.height = 22;
-                vatRow.getCell(16).value = `VAT (${parseFloat(orderData.vat_percent || 0)}%):`;
-                vatRow.getCell(16).font = { name: 'Times New Roman', size: 11, bold: true };
-                vatRow.getCell(16).alignment = { horizontal: 'center', vertical: 'middle' };
-                
-                vatRow.getCell(17).value = Math.round(parseFloat(orderData.vat_amount || 0) / 1000) * 1000;
-                vatRow.getCell(17).font = { name: 'Times New Roman', size: 11, bold: true };
-                vatRow.getCell(17).numFmt = '#,##0';
-                vatRow.getCell(17).alignment = { horizontal: 'center', vertical: 'middle' };
-                
-                for (let c = 1; c <= maxCol; c++) {
-                    vatRow.getCell(c).border = {
-                        top: { style: 'thin', color: { argb: 'FF9CA3AF' } },
-                        bottom: { style: 'thin', color: { argb: 'FF9CA3AF' } }
-                    };
+                if (parseFloat(orderData.vat_amount || 0) > 0) {
+                    const vatRow = worksheet.getRow(currentRow);
+                    vatRow.height = 22;
+                    vatRow.getCell(16).value = `VAT (${parseFloat(orderData.vat_percent || 0)}%):`;
+                    vatRow.getCell(16).font = { name: 'Times New Roman', size: 11, bold: true };
+                    vatRow.getCell(16).alignment = { horizontal: 'center', vertical: 'middle' };
+                    
+                    vatRow.getCell(17).value = Math.round(parseFloat(orderData.vat_amount || 0) / 1000) * 1000;
+                    vatRow.getCell(17).font = { name: 'Times New Roman', size: 11, bold: true };
+                    vatRow.getCell(17).numFmt = '#,##0';
+                    vatRow.getCell(17).alignment = { horizontal: 'center', vertical: 'middle' };
+                    
+                    for (let c = 1; c <= maxCol; c++) {
+                        vatRow.getCell(c).border = {
+                            top: { style: 'thin', color: { argb: 'FF9CA3AF' } },
+                            bottom: { style: 'thin', color: { argb: 'FF9CA3AF' } }
+                        };
+                    }
+                    currentRow++;
                 }
-                currentRow++;
                 // Payment summary: TỔNG THANH TOÁN
                 const remainRow = worksheet.getRow(currentRow);
                 remainRow.height = 22;
@@ -1216,44 +1269,48 @@ async function exportToExcel() {
                 currentRow++;
                 
                 // Discount
-                const discountRow = worksheet.getRow(currentRow);
-                discountRow.height = 22;
-                discountRow.getCell(16).value = `Chiết khấu (${parseFloat(orderData.discount_percent || 0)}%):`;
-                discountRow.getCell(16).font = { name: 'Times New Roman', size: 11, bold: true };
-                discountRow.getCell(16).alignment = { horizontal: 'center', vertical: 'middle' };
-                
-                discountRow.getCell(17).value = -Math.round(parseFloat(orderData.discount_amount || 0) / 1000) * 1000;
-                discountRow.getCell(17).font = { name: 'Times New Roman', size: 11, bold: true, color: { argb: 'FFDC2626' } };
-                discountRow.getCell(17).numFmt = '#,##0';
-                discountRow.getCell(17).alignment = { horizontal: 'center', vertical: 'middle' };
-                
-                for (let c = 1; c <= maxCol; c++) {
-                    discountRow.getCell(c).border = {
-                        top: { style: 'thin', color: { argb: 'FF9CA3AF' } },
-                        bottom: { style: 'thin', color: { argb: 'FF9CA3AF' } }
-                    };
+                if (parseFloat(orderData.discount_amount || 0) > 0) {
+                    const discountRow = worksheet.getRow(currentRow);
+                    discountRow.height = 22;
+                    discountRow.getCell(16).value = `Chiết khấu (${parseFloat(orderData.discount_percent || 0)}%):`;
+                    discountRow.getCell(16).font = { name: 'Times New Roman', size: 11, bold: true };
+                    discountRow.getCell(16).alignment = { horizontal: 'center', vertical: 'middle' };
+                    
+                    discountRow.getCell(17).value = -Math.round(parseFloat(orderData.discount_amount || 0) / 1000) * 1000;
+                    discountRow.getCell(17).font = { name: 'Times New Roman', size: 11, bold: true, color: { argb: 'FFDC2626' } };
+                    discountRow.getCell(17).numFmt = '#,##0';
+                    discountRow.getCell(17).alignment = { horizontal: 'center', vertical: 'middle' };
+                    
+                    for (let c = 1; c <= maxCol; c++) {
+                        discountRow.getCell(c).border = {
+                            top: { style: 'thin', color: { argb: 'FF9CA3AF' } },
+                            bottom: { style: 'thin', color: { argb: 'FF9CA3AF' } }
+                        };
+                    }
+                    currentRow++;
                 }
-                currentRow++;
                 
                 // VAT
-                const vatRow = worksheet.getRow(currentRow);
-                vatRow.height = 22;
-                vatRow.getCell(16).value = `VAT (${parseFloat(orderData.vat_percent || 0)}%):`;
-                vatRow.getCell(16).font = { name: 'Times New Roman', size: 11, bold: true };
-                vatRow.getCell(16).alignment = { horizontal: 'center', vertical: 'middle' };
-                
-                vatRow.getCell(17).value = Math.round(parseFloat(orderData.vat_amount || 0) / 1000) * 1000;
-                vatRow.getCell(17).font = { name: 'Times New Roman', size: 11, bold: true };
-                vatRow.getCell(17).numFmt = '#,##0';
-                vatRow.getCell(17).alignment = { horizontal: 'center', vertical: 'middle' };
-                
-                for (let c = 1; c <= maxCol; c++) {
-                    vatRow.getCell(c).border = {
-                        top: { style: 'thin', color: { argb: 'FF9CA3AF' } },
-                        bottom: { style: 'thin', color: { argb: 'FF9CA3AF' } }
-                    };
+                if (parseFloat(orderData.vat_amount || 0) > 0) {
+                    const vatRow = worksheet.getRow(currentRow);
+                    vatRow.height = 22;
+                    vatRow.getCell(16).value = `VAT (${parseFloat(orderData.vat_percent || 0)}%):`;
+                    vatRow.getCell(16).font = { name: 'Times New Roman', size: 11, bold: true };
+                    vatRow.getCell(16).alignment = { horizontal: 'center', vertical: 'middle' };
+                    
+                    vatRow.getCell(17).value = Math.round(parseFloat(orderData.vat_amount || 0) / 1000) * 1000;
+                    vatRow.getCell(17).font = { name: 'Times New Roman', size: 11, bold: true };
+                    vatRow.getCell(17).numFmt = '#,##0';
+                    vatRow.getCell(17).alignment = { horizontal: 'center', vertical: 'middle' };
+                    
+                    for (let c = 1; c <= maxCol; c++) {
+                        vatRow.getCell(c).border = {
+                            top: { style: 'thin', color: { argb: 'FF9CA3AF' } },
+                            bottom: { style: 'thin', color: { argb: 'FF9CA3AF' } }
+                        };
+                    }
+                    currentRow++;
                 }
-                currentRow++;
                 
                 // Payment summary: TỔNG THANH TOÁN
                 const remainRow = worksheet.getRow(currentRow);
