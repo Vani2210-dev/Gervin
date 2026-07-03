@@ -288,7 +288,8 @@ async function exportToExcel() {
                     supply.items.forEach(item => {
                         totalWingArea += parseFloat(item.wing_area) || 0;
                         totalMoldingLength += parseFloat(item.molding_length) || 0;
-                        totalAmount += parseFloat(item.total_price) || 0;
+                        let itemPrice = parseFloat(item.total_price) || 0;
+                        totalAmount += Math.round(itemPrice / 1000) * 1000;
                     });
                 }
                 
@@ -353,7 +354,8 @@ async function exportToExcel() {
                     itemRow.getCell(11).numFmt = '#,##0';
                     itemRow.getCell(11).alignment = { horizontal: 'center', vertical: 'middle' };
 
-                    itemRow.getCell(12).value = parseFloat(item.total_price) || 0;
+                    let itemTotal = parseFloat(item.total_price) || 0;
+                    itemRow.getCell(12).value = Math.round(itemTotal / 1000) * 1000;
                     itemRow.getCell(12).numFmt = '#,##0';
                     itemRow.getCell(12).alignment = { horizontal: 'center', vertical: 'middle' };
 
@@ -716,7 +718,8 @@ async function exportToExcel() {
                 if (supply.items && Array.isArray(supply.items)) {
                     supply.items.forEach(item => {
                         totalAreaM2 += parseFloat(item.area_m2) || 0;
-                        totalAmount += parseFloat(item.total_price) || 0;
+                        let itemPrice = parseFloat(item.total_price) || 0;
+                        totalAmount += Math.round(itemPrice / 1000) * 1000;
                     });
                 }
                 
@@ -785,7 +788,8 @@ async function exportToExcel() {
                     itemRow.getCell(12).numFmt = '#,##0';
                     itemRow.getCell(12).alignment = { horizontal: 'center', vertical: 'middle' };
 
-                    itemRow.getCell(13).value = parseFloat(item.total_price) || 0;
+                    let itemTotal = parseFloat(item.total_price) || 0;
+                    itemRow.getCell(13).value = Math.round(itemTotal / 1000) * 1000;
                     itemRow.getCell(13).numFmt = '#,##0';
                     itemRow.getCell(13).alignment = { horizontal: 'center', vertical: 'middle' };
 
@@ -1126,7 +1130,9 @@ async function exportToExcel() {
                     row.getCell(12).numFmt = '#,##0';
                     row.getCell(13).value = parseFloat((parseFloat(detail.price_only) || 0).toFixed(2));
                     row.getCell(13).numFmt = '#,##0';
-                    row.getCell(17).value = parseFloat((parseFloat(detail.total) || 0).toFixed(2));
+                    
+                    let detailTotal = parseFloat(detail.total) || 0;
+                    row.getCell(17).value = Math.round(detailTotal / 1000) * 1000;
                     row.getCell(17).numFmt = '#,##0';
                     row.getCell(17).font = { name: 'Times New Roman', size: 11, bold: true };
 
