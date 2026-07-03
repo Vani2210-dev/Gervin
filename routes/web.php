@@ -29,6 +29,7 @@ use App\Http\Controllers\PackingPackageController;
 use App\Http\Controllers\QrScanController;
 use App\Http\Controllers\OrderPaymentController;
 use App\Http\Controllers\GlassPriceController;
+use App\Http\Controllers\MinLatePriceController;
 
 Route::middleware(['auth'])->group(function () {
     Route::controller(DashboardController::class)->group(function () {
@@ -226,6 +227,10 @@ Route::middleware(['auth'])->group(function () {
     // Glass Prices
     Route::post('glass-prices/import', [GlassPriceController::class, 'import'])->name('glass_prices.import');
     Route::resource('glass-prices', GlassPriceController::class)->names('glass_prices');
+
+    // Min-late Prices
+    Route::post('minlate-prices/import', [MinLatePriceController::class, 'import'])->name('minlate_prices.import');
+    Route::resource('minlate-prices', MinLatePriceController::class)->names('minlate_prices');
 });
 
 // QR Code

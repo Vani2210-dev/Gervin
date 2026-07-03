@@ -176,6 +176,9 @@
                     <li>
                         <a href="{{ route('glass_prices.index') }}"><i class="ri-circle-fill circle-icon text-emerald-500 w-auto"></i> Bảng giá kính</a>
                     </li>
+                    <li>
+                        <a href="{{ route('minlate_prices.index') }}"><i class="ri-circle-fill circle-icon text-orange-400 w-auto"></i> Bảng giá dịch vụ Min-late</a>
+                    </li>
                     @endcan
                     @can('view supply')
                     <li>
