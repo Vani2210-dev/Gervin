@@ -284,7 +284,7 @@ async function exportToExcel() {
                 supplyRow.height = 22;
                 supplyRow.getCell(1).value = '';
                 supplyRow.getCell(3).value = supply.supply_name;
-                supplyRow.getCell(6).value = 0;
+                supplyRow.getCell(6).value = parseInt(supply.quantity) || 0;
                 supplyRow.getCell(9).value = 0;
                 supplyRow.getCell(10).value = 0;
                 supplyRow.getCell(12).value = 0;
@@ -697,7 +697,7 @@ async function exportToExcel() {
                 supplyRow.height = 22;
                 supplyRow.getCell(1).value = '';
                 supplyRow.getCell(2).value = supply.supply_name;
-                supplyRow.getCell(10).value = 0;
+                supplyRow.getCell(10).value = parseInt(supply.quantity) || 0;
                 supplyRow.getCell(11).value = 0;
                 supplyRow.getCell(13).value = 0;
 
@@ -984,6 +984,7 @@ async function exportToExcel() {
                 supplyRow.height = 22;
                 supplyRow.getCell(1).value = '';
                 supplyRow.getCell(3).value = supply.supply_name;
+                supplyRow.getCell(6).value = parseInt(supply.quantity) || 0;
 
                 for (let c = 1; c <= maxCol; c++) {
                     const cell = supplyRow.getCell(c);
