@@ -718,9 +718,11 @@ async function exportToExcel() {
             orderData.supplies.forEach((supply, supplyIdx) => {
                 let totalAreaM2 = 0;
                 let totalAmount = 0;
+                let totalWingQuantity = 0;
                 
                 if (supply.items && Array.isArray(supply.items)) {
                     supply.items.forEach(item => {
+                        totalWingQuantity += parseInt(item.wing_quantity) || 0;
                         totalAreaM2 += parseFloat(item.area_m2) || 0;
                         let itemPrice = parseFloat(item.total_price) || 0;
                         totalAmount += Math.round(itemPrice / 1000) * 1000;
@@ -731,7 +733,7 @@ async function exportToExcel() {
                 supplyRow.height = 22;
                 supplyRow.getCell(1).value = '';
                 supplyRow.getCell(2).value = supply.supply_name;
-                supplyRow.getCell(10).value = parseInt(supply.quantity) || 0;
+                supplyRow.getCell(10).value = totalWingQuantity;
                 supplyRow.getCell(11).value = totalAreaM2 > 0 ? parseFloat(totalAreaM2.toFixed(2)) : 0;
                 
                 let cell13 = supplyRow.getCell(13);
