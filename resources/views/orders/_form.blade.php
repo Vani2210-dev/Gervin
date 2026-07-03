@@ -721,6 +721,41 @@ function updateOrderSummary() {
             }
         }
     });
+    // Auto-calculate column sums for supplies tables
+    document.querySelectorAll('.order-supply-row').forEach(supplyRow => {
+        const table = supplyRow.querySelector('table');
+        if (table) {
+            const summaryRow = table.querySelector('.table-summary-row');
+            if (summaryRow) {
+                summaryRow.querySelectorAll('td[data-summary-field]').forEach(td => {
+                    const field = td.getAttribute('data-summary-field');
+                    let sum = 0;
+                    
+                    // Fields that should display as float (decimals)
+                    const isFloat = field === 'wing_area' || field === 'weight' || field.includes('length') || field.includes('ban_rong');
+                    
+                    table.querySelectorAll(`tbody tr:not(.hidden) input[name*="[${field}]"]`).forEach(input => {
+                        if (!input.disabled && input.type !== 'hidden') {
+                            const val = parseFloat(input.value);
+                            if (!isNaN(val)) {
+                                sum += val;
+                            }
+                        }
+                    });
+                    
+                    // Format sum
+                    if (field === 'total_price') {
+                        const roundedSum = Math.round(sum / 1000) * 1000;
+                        td.textContent = roundedSum.toLocaleString('vi-VN') + 'đ';
+                    } else if (field === 'unit_price' || field === 'price') {
+                        td.textContent = sum.toLocaleString('vi-VN') + 'đ';
+                    } else {
+                        td.textContent = isFloat ? (Math.round(sum * 100) / 100).toFixed(2).replace(/\.00$/, '') : Math.round(sum);
+                    }
+                });
+            }
+        }
+    });
 
     const orderType = @json($currentOrderType);
     

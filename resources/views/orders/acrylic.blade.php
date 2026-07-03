@@ -370,6 +370,24 @@
                                 <th scope="col" style="min-width: 120px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Ghi chú</th>
                                 <th scope="col" style="width: 90px; min-width: 90px; position: sticky; right: 0; z-index: 3; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Hành động</th>
                             </tr>
+                            <tr class="table-summary-row bg-neutral-100 font-bold text-neutral-800 text-center">
+                                <td class="border border-neutral-200 text-center sticky-stt-td" style="font-size: 80% !important; background-color: #f1f5f9;">TỔNG</td>
+                                <td class="border border-neutral-200"></td>
+                                <td class="border border-neutral-200"></td>
+                                <td class="border border-neutral-200"></td>
+                                <td class="border border-neutral-200"></td>
+                                <td class="border border-neutral-200"></td>
+                                <td class="border border-neutral-200 text-center" data-summary-field="quantity" style="font-size: 80% !important;">0</td>
+                                <td class="border border-neutral-200"></td>
+                                <td class="border border-neutral-200"></td>
+                                <td class="border border-neutral-200 text-center" data-summary-field="wing_area" style="font-size: 80% !important;">0</td>
+                                <td class="border border-neutral-200 text-center" data-summary-field="molding_length" style="font-size: 80% !important;">0</td>
+                                <td class="border border-neutral-200"></td>
+                                <td class="border border-neutral-200"></td>
+                                <td class="border border-neutral-200"></td>
+                                <td class="border border-neutral-200 text-center" data-summary-field="total_price" style="font-size: 80% !important;">0</td>
+                                <td class="border border-neutral-200"></td>
+                                <td class="border border-neutral-200" style="position: sticky; right: 0; z-index: 3; background-color: #f1f5f9;"></td>
                         </thead>
                         <tbody class="supply-items-container" data-supply-index="{{ $supplyIndex }}">
                             @foreach($supply->items as $itemIndex => $item)
@@ -608,6 +626,24 @@ function addOrderSupply() {
                         <th scope="col" style="min-width: 120px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Ghi chú</th>
                         <th scope="col" style="width: 60px; min-width: 60px; white-space: nowrap; position: sticky; right: 0; z-index: 3; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Hành động</th>
                     </tr>
+                    <tr class="table-summary-row bg-neutral-100 font-bold text-neutral-800 text-center">
+                        <td class="border border-neutral-200 text-center sticky-stt-td" style="font-size: 80% !important; background-color: #f1f5f9;">TỔNG</td>
+                        <td class="border border-neutral-200"></td>
+                        <td class="border border-neutral-200"></td>
+                        <td class="border border-neutral-200"></td>
+                        <td class="border border-neutral-200"></td>
+                        <td class="border border-neutral-200"></td>
+                        <td class="border border-neutral-200 text-center" data-summary-field="quantity" style="font-size: 80% !important;">0</td>
+                        <td class="border border-neutral-200"></td>
+                        <td class="border border-neutral-200"></td>
+                        <td class="border border-neutral-200 text-center" data-summary-field="wing_area" style="font-size: 80% !important;">0</td>
+                        <td class="border border-neutral-200 text-center" data-summary-field="molding_length" style="font-size: 80% !important;">0</td>
+                        <td class="border border-neutral-200"></td>
+                        <td class="border border-neutral-200"></td>
+                        <td class="border border-neutral-200"></td>
+                        <td class="border border-neutral-200 text-center" data-summary-field="total_price" style="font-size: 80% !important;">0</td>
+                        <td class="border border-neutral-200"></td>
+                        <td class="border border-neutral-200" style="position: sticky; right: 0; z-index: 3; background-color: #f1f5f9;"></td>
                 </thead>
                 <tbody class="supply-items-container" data-supply-index="${supplyIndex}">
                 </tbody>

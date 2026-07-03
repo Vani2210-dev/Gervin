@@ -29,10 +29,12 @@
         padding-bottom: 2px !important;
         line-height: 1.2 !important;
     }
-    #min-late-supplies-container .order-supply-row table th {
+    #min-late-supplies-container .order-supply-row table th,
+    table[data-order-resize-group="min_late_payment"] th {
         padding: 8px 4px !important;
     }
-    #min-late-supplies-container .order-supply-row table td {
+    #min-late-supplies-container .order-supply-row table td,
+    table[data-order-resize-group="min_late_payment"] td {
         padding: 3px 4px !important;
     }
     /* Override td widths to ~65% of original */
@@ -54,45 +56,9 @@
     #min-late-supplies-container .order-supply-row table td[style*="width:80px"] { width: 55px !important; min-width: 55px !important; max-width: 55px !important; }
     #min-late-supplies-container .order-supply-row table td[style*="min-width: 140px"],
     #min-late-supplies-container .order-supply-row table td[style*="min-width:140px"] { min-width: 90px !important; }
-    /* Style TomSelect inside table rows to match compact inputs */
-    .table .ts-wrapper {
-        padding: 0 !important;
-        border: none !important;
-        background: transparent !important;
-        min-height: auto !important;
-        height: 24px !important;
-    }
-    .table .ts-control {
-        padding: 0 5px !important;
-        height: 24px !important;
-        font-size: 9px !important;
-        line-height: 22px !important;
-        border-radius: 6px !important;
-        border: 1px solid #d1d5db !important;
-        background-color: #ffffff !important;
-        display: flex !important;
-        align-items: center !important;
-        box-shadow: none !important;
-    }
-    .table .ts-control input {
-        font-size: 9px !important;
-        height: auto !important;
-        padding: 0 !important;
-        margin: 0 !important;
-    }
-    .table .ts-control .item {
-        font-size: 9px !important;
-        line-height: 22px !important;
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-    .table .ts-wrapper.single .ts-control:after {
-        top: 50% !important;
-        margin-top: -3px !important;
-    }
-    .table .ts-wrapper.focus .ts-control {
-        border-color: #3b82f6 !important;
-        box-shadow: 0 0 0 1px #3b82f6 !important;
+
+    body > .ts-dropdown {
+        z-index: 99999 !important;
     }
     
     html body div#order-supplies-container .order-supply-row table,
@@ -302,6 +268,29 @@
                                 <th scope="col" style="min-width: 140px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Ghi chú</th>
                                 <th scope="col" style="width: 80px; min-width: 80px; white-space: nowrap; position: sticky; right: 0; z-index: 3; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Hành động</th>
                             </tr>
+                            <tr class="table-summary-row bg-neutral-100 font-bold text-neutral-800 text-center">
+                                <td class="border border-neutral-200 text-center sticky-stt-td" style="font-size: 80% !important; background-color: #f1f5f9;">TỔNG</td>
+                                <td class="border border-neutral-200"></td>
+                                <td class="border border-neutral-200"></td>
+                                <td class="border border-neutral-200"></td>
+                                <td class="border border-neutral-200"></td>
+                                <td class="border border-neutral-200"></td>
+                                <td class="border border-neutral-200 text-center" data-summary-field="quantity" style="font-size: 80% !important;">0</td>
+                                <td class="border border-neutral-200"></td>
+                                <td class="border border-neutral-200"></td>
+                                <td class="border border-neutral-200"></td>
+                                <td class="border border-neutral-200"></td>
+                                <td class="border border-neutral-200 text-center" data-summary-field="straight_paste_length" style="font-size: 80% !important;">0</td>
+                                <td class="border border-neutral-200 text-center" data-summary-field="beveled_length" style="font-size: 80% !important;">0</td>
+                                <td class="border border-neutral-200 text-center" data-summary-field="vat_moi_length" style="font-size: 80% !important;">0</td>
+                                <td class="border border-neutral-200 text-center" data-summary-field="ban_rong_40_59" style="font-size: 80% !important;">0</td>
+                                <td class="border border-neutral-200 text-center" data-summary-field="ban_rong_17_39" style="font-size: 80% !important;">0</td>
+                                <td class="border border-neutral-200 text-center" data-summary-field="ban_rong_25_35" style="font-size: 80% !important;">0</td>
+                                <td class="border border-neutral-200 text-center" data-summary-field="beveled_handle" style="font-size: 80% !important;">0</td>
+                                <td class="border border-neutral-200 text-center" data-summary-field="cnc" style="font-size: 80% !important;">0</td>
+                                <td class="border border-neutral-200"></td>
+                                <td class="border border-neutral-200"></td>
+                                <td class="border border-neutral-200" style="position: sticky; right: 0; z-index: 3; background-color: #f1f5f9;"></td>
                         </thead>
                         <tbody class="supply-items-container" data-supply-index="{{ $supplyIndex }}">
                             @foreach($supply->minLateItems as $itemIndex => $item)
@@ -504,8 +493,8 @@
                                 <td style="width: 50px; min-width: 50px; " class="sticky-stt-td text-center align-middle border border-neutral-200">
                                     <span class="detail-index font-semibold text-neutral-500">{{ $detailIndex + 1 }}</span>
                                 </td>
-                                <td class="border border-neutral-200">
-                                    <input type="text" name="payment_details[{{ $detailIndex }}][name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Nhập tên chi phí/dịch vụ" required value="{{ $detail->name }}">
+                                <td class="border border-neutral-200" style="padding: 0 !important; position: relative;">
+                                    <textarea name="payment_details[{{ $detailIndex }}][name]" class="form-control form-control-sm rounded-0 border-0 focus:border-primary-500 focus:ring-primary-500 text-xs w-full payment-name-textarea" rows="2" style="resize: vertical; padding: 4px 8px; font-weight: 600;" placeholder="Chọn dịch vụ / Nhập nội dung..." required>{{ $detail->name }}</textarea>
                                 </td>
                                 <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
                                     <input type="text" name="payment_details[{{ $detailIndex }}][unit]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs" placeholder="m, tấm..." value="{{ $detail->unit }}">
@@ -539,6 +528,7 @@
 </div>
 
 <script>
+window.minLatePricesData = @json($minLatePrices ?? []);
 let minLateSupplyIndex = {{ $minLateSupplyIndex ?? 0 }};
 
 function addMinLateOrderSupply() {
@@ -589,6 +579,29 @@ function addMinLateOrderSupply() {
                         <th scope="col" style="min-width: 140px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Ghi chú</th>
                         <th scope="col" style="width: 80px; min-width: 80px; white-space: nowrap; position: sticky; right: 0; z-index: 3; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Hành động</th>
                     </tr>
+                    <tr class="table-summary-row bg-neutral-100 font-bold text-neutral-800 text-center">
+                        <td class="border border-neutral-200 text-center sticky-stt-td" style="font-size: 80% !important; background-color: #f1f5f9;">TỔNG</td>
+                        <td class="border border-neutral-200"></td>
+                        <td class="border border-neutral-200"></td>
+                        <td class="border border-neutral-200"></td>
+                        <td class="border border-neutral-200"></td>
+                        <td class="border border-neutral-200"></td>
+                        <td class="border border-neutral-200 text-center" data-summary-field="quantity" style="font-size: 80% !important;">0</td>
+                        <td class="border border-neutral-200"></td>
+                        <td class="border border-neutral-200"></td>
+                        <td class="border border-neutral-200"></td>
+                        <td class="border border-neutral-200"></td>
+                        <td class="border border-neutral-200 text-center" data-summary-field="straight_paste_length" style="font-size: 80% !important;">0</td>
+                        <td class="border border-neutral-200 text-center" data-summary-field="beveled_length" style="font-size: 80% !important;">0</td>
+                        <td class="border border-neutral-200 text-center" data-summary-field="vat_moi_length" style="font-size: 80% !important;">0</td>
+                        <td class="border border-neutral-200 text-center" data-summary-field="ban_rong_40_59" style="font-size: 80% !important;">0</td>
+                        <td class="border border-neutral-200 text-center" data-summary-field="ban_rong_17_39" style="font-size: 80% !important;">0</td>
+                        <td class="border border-neutral-200 text-center" data-summary-field="ban_rong_25_35" style="font-size: 80% !important;">0</td>
+                        <td class="border border-neutral-200 text-center" data-summary-field="beveled_handle" style="font-size: 80% !important;">0</td>
+                        <td class="border border-neutral-200 text-center" data-summary-field="cnc" style="font-size: 80% !important;">0</td>
+                        <td class="border border-neutral-200"></td>
+                        <td class="border border-neutral-200"></td>
+                        <td class="border border-neutral-200" style="position: sticky; right: 0; z-index: 3; background-color: #f1f5f9;"></td>
                 </thead>
                 <tbody class="supply-items-container" data-supply-index="${minLateSupplyIndex}">
                 </tbody>
@@ -1074,6 +1087,16 @@ function refreshPaymentDetailsTableLayout() {
     }
 }
 
+function escapeHtml(text) {
+    if (!text) return '';
+    return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
 function addPaymentDetail() {
     const container = document.getElementById('payment-details-container');
     if (!container) return;
@@ -1084,8 +1107,8 @@ function addPaymentDetail() {
         <td style="width: 50px; min-width: 50px; " class="sticky-stt-td text-center align-middle border border-neutral-200">
             <span class="detail-index font-semibold text-neutral-500">${paymentDetailIndex + 1}</span>
         </td>
-        <td class="border border-neutral-200">
-            <input type="text" name="payment_details[${paymentDetailIndex}][name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Nhập tên chi phí/dịch vụ" required>
+        <td class="border border-neutral-200" style="padding: 0 !important; position: relative;">
+            <textarea name="payment_details[${paymentDetailIndex}][name]" class="form-control form-control-sm rounded-0 border-0 focus:border-primary-500 focus:ring-primary-500 text-xs w-full payment-name-textarea" rows="2" style="resize: vertical; padding: 4px 8px; font-weight: 600;" placeholder="Chọn dịch vụ / Nhập nội dung..." required></textarea>
         </td>
         <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
             <input type="text" name="payment_details[${paymentDetailIndex}][unit]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs" placeholder="m, tấm...">
@@ -1110,6 +1133,12 @@ function addPaymentDetail() {
     `;
     container.appendChild(newRow);
     
+    // Initialize Autocomplete for the new row textarea
+    const textareaEl = newRow.querySelector('.payment-name-textarea');
+    if (textareaEl) {
+        initPaymentNameAutocomplete(textareaEl);
+    }
+
     // Bind change/input events for auto-calculating row total
     bindPaymentDetailEvents(newRow);
     
@@ -1170,6 +1199,148 @@ function bindPaymentDetailEvents(row) {
     });
 }
 
+function initPaymentNameAutocomplete(textarea) {
+    let globalDropdown = document.getElementById('payment-name-autocomplete-global-dropdown');
+    if (!globalDropdown) {
+        globalDropdown = document.createElement('div');
+        globalDropdown.id = 'payment-name-autocomplete-global-dropdown';
+        globalDropdown.className = 'dropdown-menu p-0 shadow-lg border border-neutral-200';
+        globalDropdown.style.cssText = 'display: none; position: absolute; z-index: 999999; max-height: 200px; overflow-y: auto; background-color: #ffffff !important;';
+        document.body.appendChild(globalDropdown);
+    }
+
+    let activeTextarea = null;
+
+    function renderDropdown(filterText = '') {
+        globalDropdown.innerHTML = '';
+        const search = filterText.toLowerCase().trim();
+        const prices = window.minLatePricesData || [];
+        
+        // Filter prices based on name or category
+        const filtered = prices.filter(p => {
+            const fullName = `${p.category_name} - ${p.product_name}`.toLowerCase();
+            return fullName.includes(search);
+        });
+        
+        if (filtered.length === 0) {
+            globalDropdown.style.display = 'none';
+            return;
+        }
+        
+        filtered.forEach(p => {
+            const item = document.createElement('button');
+            item.type = 'button';
+            item.className = 'dropdown-item text-xs py-2 px-3 text-start w-full border-b border-neutral-100';
+            item.style.whiteSpace = 'normal';
+            item.style.backgroundColor = '#ffffff'; // Solid white background
+            item.style.color = '#1f2937'; // Dark text color
+            item.innerHTML = `<span class="font-bold text-primary">${escapeHtml(p.category_name)}</span> - ${escapeHtml(p.product_name)}`;
+            
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Set textarea value
+                textarea.value = p.product_name;
+                
+                // Fill unit and price
+                const row = textarea.closest('.payment-detail-row');
+                if (row) {
+                    const unitInput = row.querySelector('input[name*="[unit]"]');
+                    const priceInput = row.querySelector('input[name*="[price]"]');
+                    
+                    if (unitInput) {
+                        unitInput.value = p.unit || '';
+                        applyFlashEffect(unitInput);
+                    }
+                    
+                    if (priceInput) {
+                        priceInput.value = p.price || 0;
+                        applyFlashEffect(priceInput);
+                    }
+                    
+                    calculatePaymentDetailRowTotal(row);
+                }
+                
+                // Trigger input event
+                textarea.dispatchEvent(new Event('input', { bubbles: true }));
+                updateOrderSummary();
+                
+                globalDropdown.style.display = 'none';
+            });
+            
+            // Hover styles in JS to override bootstrap styles
+            item.addEventListener('mouseenter', () => {
+                item.style.backgroundColor = '#f3f4f6';
+            });
+            item.addEventListener('mouseleave', () => {
+                item.style.backgroundColor = '#ffffff';
+            });
+            
+            globalDropdown.appendChild(item);
+        });
+        
+        // Position the dropdown directly under the textarea
+        const rect = textarea.getBoundingClientRect();
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+        
+        globalDropdown.style.top = (rect.bottom + scrollTop) + 'px';
+        globalDropdown.style.left = (rect.left + scrollLeft) + 'px';
+        globalDropdown.style.width = rect.width + 'px';
+        globalDropdown.style.display = 'block';
+        activeTextarea = textarea;
+    }
+    
+    // Show dropdown on focus
+    textarea.addEventListener('focus', function() {
+        renderDropdown(textarea.value);
+    });
+    
+    // Filter on typing
+    textarea.addEventListener('input', function() {
+        renderDropdown(textarea.value);
+    });
+    
+    // Hide dropdown on click outside
+    document.addEventListener('click', function(e) {
+        if (!textarea.contains(e.target) && !globalDropdown.contains(e.target)) {
+            globalDropdown.style.display = 'none';
+        }
+    });
+
+    // Hide or update dropdown position on scroll to avoid floating issues
+    window.addEventListener('scroll', function() {
+        if (globalDropdown.style.display === 'block' && activeTextarea === textarea) {
+            const rect = textarea.getBoundingClientRect();
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+            globalDropdown.style.top = (rect.bottom + scrollTop) + 'px';
+            globalDropdown.style.left = (rect.left + scrollLeft) + 'px';
+        }
+    }, true);
+    
+    window.addEventListener('resize', function() {
+        if (globalDropdown.style.display === 'block' && activeTextarea === textarea) {
+            const rect = textarea.getBoundingClientRect();
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+            globalDropdown.style.top = (rect.bottom + scrollTop) + 'px';
+            globalDropdown.style.left = (rect.left + scrollLeft) + 'px';
+            globalDropdown.style.width = rect.width + 'px';
+        }
+    });
+}
+
+function applyFlashEffect(el) {
+    if (!el) return;
+    el.style.transition = 'background-color 0.4s ease';
+    el.style.backgroundColor = '#ecfdf5';
+    setTimeout(() => {
+        el.style.backgroundColor = '';
+    }, 850);
+}
+
 // Initial setup for Min Late-specific rows and payment details
 document.addEventListener('DOMContentLoaded', function() {
 
@@ -1182,6 +1353,11 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.payment-detail-row').forEach(row => {
         bindPaymentDetailEvents(row);
         calculatePaymentDetailRowTotal(row);
+    });
+
+    // Initialize Autocomplete for existing payment details
+    document.querySelectorAll('.payment-name-textarea').forEach(function(textarea) {
+        initPaymentNameAutocomplete(textarea);
     });
 
     // Ensure at least one payment detail row exists on page load if none loaded

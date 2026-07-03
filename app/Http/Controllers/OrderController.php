@@ -96,8 +96,9 @@ class OrderController extends Controller
         $woodBoardPrices = \App\Models\WoodBoardPrice::orderBy('code', 'asc')->get();
         $cncTemplates = \App\Models\CncTemplate::orderBy('id', 'asc')->get();
         $glassPrices = \App\Models\GlassPrice::orderBy('code', 'asc')->get();
+        $minLatePrices = \App\Models\MinLatePrice::orderBy('category_name', 'asc')->orderBy('stt', 'asc')->get();
 
-        return view('orders.create', compact('orderType', 'acrylicOrder', 'isDraftCreate', 'woodBoardPrices', 'cncTemplates', 'glassPrices'));
+        return view('orders.create', compact('orderType', 'acrylicOrder', 'isDraftCreate', 'woodBoardPrices', 'cncTemplates', 'glassPrices', 'minLatePrices'));
     }
 
     public function edit(Order $order)
@@ -113,7 +114,8 @@ class OrderController extends Controller
         $woodBoardPrices = \App\Models\WoodBoardPrice::orderBy('code', 'asc')->get();
         $cncTemplates = \App\Models\CncTemplate::orderBy('id', 'asc')->get();
         $glassPrices = \App\Models\GlassPrice::orderBy('code', 'asc')->get();
-        return view('orders.edit', compact('acrylicOrder', 'woodBoardPrices', 'cncTemplates', 'glassPrices'));
+        $minLatePrices = \App\Models\MinLatePrice::orderBy('category_name', 'asc')->orderBy('stt', 'asc')->get();
+        return view('orders.edit', compact('acrylicOrder', 'woodBoardPrices', 'cncTemplates', 'glassPrices', 'minLatePrices'));
     }
 
     public function store(Request $request)
