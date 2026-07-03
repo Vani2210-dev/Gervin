@@ -56,12 +56,15 @@ async function exportToExcel() {
         };
 
         // Helper to set cell value, font, alignment
-        const setCell = (row, col, value, bold = false, align = 'center', size = 11, italic = false) => {
-            const cell = worksheet.getCell(row, col);
+        const setCellOnSheet = (sheet, row, col, value, bold = false, align = 'center', size = 11, italic = false) => {
+            const cell = sheet.getCell(row, col);
             cell.value = value;
             cell.font = { name: 'Times New Roman', size: size, bold: bold, italic: italic };
             cell.alignment = { horizontal: align, vertical: 'middle', wrapText: true };
             return cell;
+        };
+        const setCell = (row, col, value, bold = false, align = 'center', size = 11, italic = false) => {
+            return setCellOnSheet(worksheet, row, col, value, bold, align, size, italic);
         };
 
         const appendDebtSummary = (startRow, maxCol, labelCol, valCol, labelColEnd) => {
@@ -121,9 +124,10 @@ async function exportToExcel() {
         setCell(4, 3, 'WWW.GERVINWOOD.COM', true, 'left', 10);
 
         // Embed square logo in A1:B4 (ext ensures 1:1 ratio, no stretching)
+        let logoId = null;
         const logoBase64 = await getLogoBase64('/logo.png');
         if (logoBase64) {
-            const logoId = workbook.addImage({
+            logoId = workbook.addImage({
                 base64: logoBase64,
                 extension: 'png',
             });
@@ -865,6 +869,243 @@ async function exportToExcel() {
             
             currentRow = appendDebtSummary(currentRow, 14, 11, 13, 12);
 
+            // ─── GENERATE SECOND SHEET "ĐẶT KÍNH" ───
+            const worksheet2 = workbook.addWorksheet('Đặt kính', {
+                views: [{ showGridLines: true }]
+            });
+
+            // Column dimensions
+            const colWidths2 = [
+                { col: 'A', width: 6.5 },
+                { col: 'B', width: 18.33 },
+                { col: 'C', width: 46.66 },
+                { col: 'D', width: 12.33 },
+                { col: 'E', width: 8.83 },
+                { col: 'F', width: 13.0 },
+                { col: 'G', width: 13.0 },
+                { col: 'H', width: 10.16 },
+                { col: 'I', width: 11.33 },
+                { col: 'J', width: 35 }
+            ];
+            colWidths2.forEach(w => { worksheet2.getColumn(w.col).width = w.width; });
+
+            // Note in J5 (after logo/header block rows 1-4)
+            setCellOnSheet(worksheet2, 5, 10, 'KT m2/cánh nhỏ hơn 0.35m2 thì tính = 0.35m2', false, 'right', 10, true);
+
+            // Metadata rows
+            worksheet2.getRow(1).height = 20;
+            worksheet2.getRow(2).height = 20;
+            worksheet2.getRow(3).height = 20;
+            worksheet2.getRow(4).height = 20;
+
+            worksheet2.mergeCells('C1:J1');
+            worksheet2.mergeCells('C2:J2');
+            worksheet2.mergeCells('C3:J3');
+            worksheet2.mergeCells('C4:J4');
+
+            setCellOnSheet(worksheet2, 1, 3, 'CÔNG TY TNHH GỖ GERVIN', true, 'left', 14);
+            setCellOnSheet(worksheet2, 2, 3, 'Địa chỉ: Xóm 3, Hưng Thịnh, Hưng Nguyên, Nghệ An', false, 'left', 10);
+            setCellOnSheet(worksheet2, 3, 3, 'Điện thoại: 0967.181.786 - Email: contact@gervinwood.com', false, 'left', 10);
+            setCellOnSheet(worksheet2, 4, 3, 'WWW.GERVINWOOD.COM', true, 'left', 10);
+
+            if (logoBase64 && logoId !== null) {
+                worksheet2.addImage(logoId, {
+                    tl: { col: 0.1, row: 0.1 },
+                    ext: { width: 80, height: 80 },
+                    editAs: 'oneCell'
+                });
+            }
+
+            worksheet2.getRow(6).height = 25;
+            worksheet2.mergeCells('C6:H6');
+            setCellOnSheet(worksheet2, 6, 3, 'ĐƠN ĐẶT KÍNH', true, 'center', 16);
+
+            worksheet2.getRow(7).height = 18;
+            worksheet2.mergeCells('C7:H7');
+            setCellOnSheet(worksheet2, 7, 3, dateStr, false, 'center', 11, true);
+            setCellOnSheet(worksheet2, 7, 9, 'Ngày giờ chốt đơn:', true, 'right', 10);
+            worksheet2.getCell('J7').value = chotDonStr;
+            worksheet2.getCell('J7').font = { name: 'Times New Roman', size: 10 };
+
+            worksheet2.getRow(8).height = 18;
+            worksheet2.mergeCells('C8:H8');
+            setCellOnSheet(worksheet2, 8, 3, `Số phiếu: ${orderData.order_code}`, true, 'center', 11);
+            setCellOnSheet(worksheet2, 8, 9, 'Số ngày phải giao từ lúc chốt đơn:', true, 'right', 10);
+            worksheet2.getCell('J8').value = parseInt(orderData.delivery_days);
+            worksheet2.getCell('J8').font = { name: 'Times New Roman', size: 10 };
+
+            worksheet2.getRow(9).height = 18;
+            worksheet2.mergeCells('B9:H9');
+            setCellOnSheet(worksheet2, 9, 2, `Khách hàng: ${orderData.customer_name || ''}`, true, 'left', 11);
+            setCellOnSheet(worksheet2, 9, 9, 'Ngày giờ phải giao hàng:', true, 'right', 10);
+            worksheet2.getCell('J9').value = deadlineStr;
+            worksheet2.getCell('J9').font = { name: 'Times New Roman', size: 10 };
+
+            worksheet2.getRow(10).height = 18;
+            worksheet2.mergeCells('B10:H10');
+            setCellOnSheet(worksheet2, 10, 2, `Địa chỉ: ${orderData.address || ''}`, false, 'left', 10);
+
+            // Double Row Headers (Row 12 & 13)
+            worksheet2.getRow(12).height = 24;
+            worksheet2.getRow(13).height = 24;
+
+            const headersDef2 = [
+                { range: 'A12:A13', val: 'TT' },
+                { range: 'B12:B13', val: '' },
+                { range: 'C12:C13', val: 'TÊN SẢN PHẨM' },
+                { range: 'D12:D13', val: 'MÀU KÍNH' },
+                { range: 'E12:E13', val: 'ĐƠN VỊ' },
+                { range: 'F12:G12', val: 'KÍCH THƯỚC KÍNH' },
+                { range: 'H12:H13', val: 'SỐ LƯỢNG' },
+                { range: 'I12:I13', val: 'KHỐI LƯỢNG (m2)' },
+                { range: 'J12:J13', val: 'Ghi chú' }
+            ];
+
+            headersDef2.forEach(h => {
+                if (h.range.includes(':')) worksheet2.mergeCells(h.range);
+                const cell = worksheet2.getCell(h.range.split(':')[0]);
+                cell.value = h.val;
+            });
+
+            worksheet2.getCell('F13').value = 'Dài';
+            worksheet2.getCell('G13').value = 'RỘNG';
+
+            // Yellow fill for headers
+            const yellowHeaderFill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FFFFFF00' }
+            };
+
+            for (let r = 12; r <= 13; r++) {
+                for (let c = 1; c <= 10; c++) {
+                    const cell = worksheet2.getCell(r, c);
+                    cell.font = { name: 'Times New Roman', size: 11, bold: true };
+                    cell.fill = yellowHeaderFill;
+                    cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+                    cell.border = thinBorder;
+                }
+            }
+
+            let currentRow2 = 14;
+
+            // Loop supplies
+            orderData.supplies.forEach((supply, supplyIdx) => {
+                const isAccessory = supply.supply_name === 'Phụ kiện';
+                if (isAccessory) return; // Skip accessories sheet since it is glass order sheet
+
+                const supplyRow = worksheet2.getRow(currentRow2);
+                supplyRow.height = 22;
+                supplyRow.getCell(1).value = '';
+                supplyRow.getCell(3).value = supply.supply_name;
+
+                for (let c = 1; c <= 10; c++) {
+                    const cell = supplyRow.getCell(c);
+                    cell.font = { name: 'Times New Roman', size: 11, bold: true };
+                    cell.border = thinBorder;
+                }
+                currentRow2++;
+
+                // Loop items
+                supply.items.forEach((item, itemIdx) => {
+                    const itemRow = worksheet2.getRow(currentRow2);
+                    itemRow.height = 20;
+
+                    itemRow.getCell(1).value = itemIdx + 1;
+                    itemRow.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
+
+                    itemRow.getCell(2).value = item.product_code || '';
+                    itemRow.getCell(2).alignment = { horizontal: 'center', vertical: 'middle' };
+
+                    itemRow.getCell(3).value = item.product_name || '';
+                    itemRow.getCell(3).alignment = { horizontal: 'center', vertical: 'middle' };
+
+                    itemRow.getCell(4).value = item.glass_color || '—';
+                    itemRow.getCell(4).alignment = { horizontal: 'center', vertical: 'middle' };
+
+                    itemRow.getCell(5).value = item.unit || 'cánh';
+                    itemRow.getCell(5).alignment = { horizontal: 'center', vertical: 'middle' };
+
+                    // Height - 4, Width - 4
+                    let originalHeight = parseFloat(item.height) || 0;
+                    let originalWidth = parseFloat(item.width) || 0;
+                    let glassHeight = originalHeight > 0 ? Math.max(0, originalHeight - 4) : 0;
+                    let glassWidth = originalWidth > 0 ? Math.max(0, originalWidth - 4) : 0;
+
+                    itemRow.getCell(6).value = parseFloat(glassHeight.toFixed(2));
+                    itemRow.getCell(6).alignment = { horizontal: 'center', vertical: 'middle' };
+
+                    itemRow.getCell(7).value = parseFloat(glassWidth.toFixed(2));
+                    itemRow.getCell(7).alignment = { horizontal: 'center', vertical: 'middle' };
+
+                    let wingQty = parseInt(item.wing_quantity) || 0;
+                    itemRow.getCell(8).value = wingQty;
+                    itemRow.getCell(8).alignment = { horizontal: 'center', vertical: 'middle' };
+
+                    // Area recalculated based on new glass size
+                    let newArea = 0;
+                    if (glassHeight > 0 && glassWidth > 0 && wingQty > 0) {
+                        newArea = (glassHeight * glassWidth * wingQty) / 1000000;
+                    }
+                    itemRow.getCell(9).value = parseFloat(newArea.toFixed(2));
+                    itemRow.getCell(9).alignment = { horizontal: 'center', vertical: 'middle' };
+
+                    itemRow.getCell(10).value = item.notes || '';
+                    itemRow.getCell(10).alignment = { horizontal: 'center', vertical: 'middle' };
+
+                    for (let c = 1; c <= 10; c++) {
+                        const cell = itemRow.getCell(c);
+                        cell.font = { name: 'Times New Roman', size: 11 };
+                        cell.border = thinBorder;
+                    }
+                    currentRow2++;
+                });
+            });
+
+            // Grand total row for sheet 2
+            const totalRow2 = worksheet2.getRow(currentRow2);
+            totalRow2.height = 22;
+            worksheet2.mergeCells(`A${currentRow2}:G${currentRow2}`);
+            totalRow2.getCell(1).value = "TỔNG CỘNG:";
+            totalRow2.getCell(1).font = { name: 'Times New Roman', size: 11, bold: true };
+            totalRow2.getCell(1).alignment = { horizontal: 'right', vertical: 'middle' };
+
+            let sumQty2 = 0;
+            let sumArea2 = 0;
+            orderData.supplies.forEach(supply => {
+                if (supply.supply_name === 'Phụ kiện') return;
+                supply.items.forEach(item => {
+                    sumQty2 += parseInt(item.wing_quantity) || 0;
+                    
+                    let originalHeight = parseFloat(item.height) || 0;
+                    let originalWidth = parseFloat(item.width) || 0;
+                    let glassHeight = originalHeight > 0 ? Math.max(0, originalHeight - 4) : 0;
+                    let glassWidth = originalWidth > 0 ? Math.max(0, originalWidth - 4) : 0;
+                    let wingQty = parseInt(item.wing_quantity) || 0;
+                    let newArea = 0;
+                    if (glassHeight > 0 && glassWidth > 0 && wingQty > 0) {
+                        newArea = (glassHeight * glassWidth * wingQty) / 1000000;
+                    }
+                    sumArea2 += newArea;
+                });
+            });
+
+            totalRow2.getCell(8).value = sumQty2;
+            totalRow2.getCell(8).font = { name: 'Times New Roman', size: 11, bold: true };
+            totalRow2.getCell(8).alignment = { horizontal: 'center', vertical: 'middle' };
+
+            totalRow2.getCell(9).value = parseFloat(sumArea2.toFixed(2));
+            totalRow2.getCell(9).font = { name: 'Times New Roman', size: 11, bold: true };
+            totalRow2.getCell(9).alignment = { horizontal: 'center', vertical: 'middle' };
+
+            for (let c = 1; c <= 10; c++) {
+                totalRow2.getCell(c).border = {
+                    top: { style: 'thin', color: { argb: 'FF9CA3AF' } },
+                    bottom: { style: 'double', color: { argb: 'FF1F2937' } }
+                };
+            }
+            currentRow2++;
+
         } else if (orderData.type === 'min_late') {
             // Column dimensions
             const colWidths = [
@@ -1308,6 +1549,12 @@ async function exportToExcel() {
 
         const addressRowHeight = estimateRowHeight(addressText, addressMergedWidth);
         worksheet.getRow(addressRowNumber).height = addressRowHeight;
+        if (orderData.type === 'glass') {
+            const worksheet2 = workbook.getWorksheet('Đặt kính');
+            if (worksheet2) {
+                worksheet2.getRow(10).height = addressRowHeight;
+            }
+        }
 
         const buffer = await workbook.xlsx.writeBuffer();
         const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
