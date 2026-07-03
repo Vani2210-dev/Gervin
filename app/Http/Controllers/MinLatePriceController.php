@@ -198,12 +198,24 @@ class MinLatePriceController extends Controller
         if (is_null($val) || $val === '') {
             return 0.0;
         }
-        if (is_numeric($val)) {
-            return floatval($val);
-        }
-        
+
+        // Convert to string and clean spaces/currency
         $valStr = trim((string)$val);
-        if ($valStr === 'Miễn phí') {
+        
+        // Remove trailing "đ", "VND", " đồng"
+        $valStr = preg_replace('/(đ|vnd|đồng)\s*$/i', '', $valStr);
+        $valStr = trim($valStr);
+
+        if (is_numeric($valStr)) {
+            $num = floatval($valStr);
+            // If the price is entered as a small number (like 35 or 120) meaning thousands
+            if ($num < 1000 && $num > 0) {
+                return $num * 1000;
+            }
+            return $num;
+        }
+
+        if ($valStr === 'Miễn phí' || $valStr === 'Free') {
             if ($notes !== null && $notes !== '') {
                 $notes = trim($notes . ' (Miễn phí)');
             } else {
@@ -211,27 +223,46 @@ class MinLatePriceController extends Controller
             }
             return 0.0;
         }
-        
-        if (preg_match('/^(\d+)\s*ngàn/u', $valStr, $matches)) {
-            if ($notes !== null && $notes !== '') {
-                $notes = trim($notes . ' (' . $valStr . ')');
-            } else {
-                $notes = $valStr;
-            }
+
+        // Check for format like "35 ngàn" or "35k"
+        if (preg_match('/^(\d+)\s*(ngàn|k)/iu', $valStr, $matches)) {
             return floatval($matches[1]) * 1000;
         }
-        
+
+        // Check if it is a number with thousands separators (can be dots or commas)
+        // For example: "35,000" or "35.000"
+        // Let's remove all dots, commas, spaces and see if it's numeric
+        $cleanedNumStr = str_replace([',', '.', ' '], '', $valStr);
+        if (is_numeric($cleanedNumStr)) {
+            $num = floatval($cleanedNumStr);
+            return $num;
+        }
+
+        // If it's still not a pure number, it might be a text description with a number inside
+        // For example: "35,000 (bao gồm vận chuyển)"
+        // Let's try to extract the number
+        if (preg_match('/^([\d\.,\s]+)/', $valStr, $matches)) {
+            $numPart = trim($matches[1]);
+            $cleanedPart = str_replace([',', '.', ' '], '', $numPart);
+            if (is_numeric($cleanedPart)) {
+                // If there's extra text, append the original text to notes
+                if (strlen($valStr) > strlen($numPart)) {
+                    if ($notes !== null && $notes !== '') {
+                        $notes = trim($notes . ' (' . $valStr . ')');
+                    } else {
+                        $notes = $valStr;
+                    }
+                }
+                return floatval($cleanedPart);
+            }
+        }
+
+        // Otherwise, it is a textual note (e.g. "Thỏa thuận")
         if ($notes !== null && $notes !== '') {
             $notes = trim($notes . ' (' . $valStr . ')');
         } else {
             $notes = $valStr;
         }
-        
-        if (preg_match('/^([\d\.]+)/', $valStr, $matches)) {
-            $num = str_replace('.', '', $matches[1]);
-            return floatval($num);
-        }
-        
         return 0.0;
     }
 }
