@@ -49,6 +49,7 @@ class CustomerController extends Controller
             'phone'  => 'nullable|string|max:20',
             'address'=> 'nullable|string',
             'initial_debt' => 'nullable|numeric|min:0',
+            'policy' => 'nullable|string',
         ]);
 
         // Use provided code or auto-generate KH00001, KH00002, etc.
@@ -66,6 +67,7 @@ class CustomerController extends Controller
             'phone'         => $request->phone,
             'address'       => $request->address,
             'debt'          => $request->initial_debt ?? 0,
+            'policy'        => $request->policy,
         ]);
 
         return redirect()->route('customers.index')->with('success', 'Thêm khách hàng thành công.');
@@ -79,12 +81,14 @@ class CustomerController extends Controller
             'phone'  => 'nullable|string|max:20',
             'address'=> 'nullable|string',
             'initial_debt' => 'nullable|numeric|min:0',
+            'policy' => 'nullable|string',
         ]);
 
         $updateData = [
             'name'    => $request->name,
             'phone'   => $request->phone,
             'address' => $request->address,
+            'policy'  => $request->policy,
         ];
         
         if ($request->has('initial_debt')) {

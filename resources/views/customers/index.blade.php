@@ -76,6 +76,7 @@
                                 <th scope="col">Tên khách hàng</th>
                                 <th scope="col">Số điện thoại</th>
                                 <th scope="col">Địa chỉ</th>
+                                <th scope="col">Chính sách KH</th>
                                 <th scope="col" class="text-right">Công nợ</th>
                                 <th scope="col" class="text-center">Hành động</th>
                             </tr>
@@ -97,6 +98,9 @@
                                 <td>
                                     <span class="text-base text-secondary-light">{{ $c->address ?? '—' }}</span>
                                 </td>
+                                <td>
+                                    <span class="text-base text-secondary-light">{{ $c->policy ?? '—' }}</span>
+                                </td>
                                 <td class="text-right">
                                     <span class="text-base font-bold {{ $c->total_debt > 0 ? 'text-danger-600' : 'text-success-600' }}">
                                         {{ number_format($c->total_debt, 0, ',', '.') }} đ
@@ -113,7 +117,7 @@
                                         </button>
                                         @can('edit customer')
                                         <button type="button"
-                                            onclick="openEditModal({{ $c->id }}, '{{ addslashes($c->customer_code) }}', '{{ addslashes($c->name) }}', '{{ addslashes($c->phone) }}', '{{ addslashes($c->address) }}', {{ $c->debt ?? 0 }})"
+                                            onclick="openEditModal({{ $c->id }}, '{{ addslashes($c->customer_code) }}', '{{ addslashes($c->name) }}', '{{ addslashes($c->phone) }}', '{{ addslashes($c->address) }}', {{ $c->debt ?? 0 }}, '{{ addslashes($c->policy ?? '') }}')"
                                             class="bg-success-100 hover:bg-success-200 text-success-600 font-medium w-10 h-10 flex justify-center items-center rounded-full">
                                             <iconify-icon icon="lucide:edit" class="menu-icon"></iconify-icon>
                                         </button>
@@ -187,6 +191,10 @@
                 <label class="form-label font-semibold text-sm text-neutral-600">Địa chỉ</label>
                 <textarea name="address" class="form-control rounded-lg" placeholder="Nhập địa chỉ" rows="3">{{ old('address') }}</textarea>
             </div>
+            <div class="form-group md:col-span-2">
+                <label class="form-label font-semibold text-sm text-neutral-600">Chính sách KH</label>
+                <textarea name="policy" class="form-control rounded-lg" placeholder="Nhập chính sách khách hàng" rows="3">{{ old('policy') }}</textarea>
+            </div>
         </div>
         <div class="px-6 py-4 border-t border-neutral-200 flex gap-3">
             <button type="submit" class="btn btn-primary px-5 py-2.5 rounded-lg">Lưu</button>
@@ -226,6 +234,10 @@
                 <label class="form-label font-semibold text-sm text-neutral-600">Địa chỉ</label>
                 <textarea id="edit_address" name="address" class="form-control rounded-lg" placeholder="Nhập địa chỉ" rows="3"></textarea>
             </div>
+            <div class="form-group md:col-span-2">
+                <label class="form-label font-semibold text-sm text-neutral-600">Chính sách KH</label>
+                <textarea id="edit_policy" name="policy" class="form-control rounded-lg" placeholder="Nhập chính sách khách hàng" rows="3"></textarea>
+            </div>
         </div>
         <div class="px-6 py-4 border-t border-neutral-200 flex gap-3">
             <button type="submit" class="btn btn-primary px-5 py-2.5 rounded-lg">Cập nhật</button>
@@ -235,13 +247,14 @@
 </x-modal>
 
 <script>
-function openEditModal(id, customerCode, name, phone, address, initialDebt) {
+function openEditModal(id, customerCode, name, phone, address, initialDebt, policy) {
     document.getElementById('edit-customer-form').action = '/customers/' + id;
     document.getElementById('edit_customer_code').value = customerCode;
     document.getElementById('edit_name').value = name;
     document.getElementById('edit_phone').value = phone;
     document.getElementById('edit_address').value = address;
     document.getElementById('edit_initial_debt').value = initialDebt || 0;
+    document.getElementById('edit_policy').value = policy || '';
     openModal('edit-customer-modal');
 }
 </script>

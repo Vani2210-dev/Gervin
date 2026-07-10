@@ -84,7 +84,7 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label font-semibold text-xs text-neutral-500 uppercase tracking-wider mb-2 block">Ngày giờ chốt đơn</label>
-                                <input type="datetime-local" id="order_date" name="order_date" class="form-control rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500" value="{{ old('order_date', (isset($acrylicOrder) && $acrylicOrder->order_date) ? ($acrylicOrder->order_date instanceof \Carbon\Carbon ? $acrylicOrder->order_date->format('Y-m-d\TH:i') : date('Y-m-d\TH:i', strtotime($acrylicOrder->order_date))) : '') }}">
+                                <input type="datetime-local" id="order_date" name="order_date" class="form-control rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500" value="{{ old('order_date', (isset($acrylicOrder) && $acrylicOrder->order_date) ? ($acrylicOrder->order_date instanceof \Carbon\Carbon ? $acrylicOrder->order_date->format('Y-m-d\TH:i') : date('Y-m-d\TH:i', strtotime($acrylicOrder->order_date))) : date('Y-m-d\TH:i')) }}">
                             </div>
                             <div class="form-group">
                                 <label class="form-label font-semibold text-xs text-neutral-500 uppercase tracking-wider mb-2 block">Số ngày phải giao</label>
@@ -374,15 +374,27 @@ function fillCustomerInfo(customerId) {
         document.querySelector('input[name="customer_name"]').value = customer.name;
         document.querySelector('input[name="phone"]').value = customer.phone || '';
         document.querySelector('textarea[name="address"]').value = customer.address || '';
+        const policyEl = document.querySelector('textarea[name="customer_policy"]');
+        if (policyEl) {
+            policyEl.value = customer.policy || '';
+        }
     } else if (customerId && !/^\d+$/.test(customerId)) {
         document.querySelector('input[name="customer_name"]').value = customerId;
         document.querySelector('input[name="phone"]').value = '';
         document.querySelector('textarea[name="address"]').value = '';
+        const policyEl = document.querySelector('textarea[name="customer_policy"]');
+        if (policyEl) {
+            policyEl.value = '';
+        }
     } else {
         // Clear fields if select is cleared
         document.querySelector('input[name="customer_name"]').value = '';
         document.querySelector('input[name="phone"]').value = '';
         document.querySelector('textarea[name="address"]').value = '';
+        const policyEl = document.querySelector('textarea[name="customer_policy"]');
+        if (policyEl) {
+            policyEl.value = '';
+        }
     }
     
     // Luôn gọi hàm này để cập nhật hoặc ẩn thẻ công nợ tùy theo customerId
