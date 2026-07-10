@@ -342,7 +342,7 @@
                         <input type="number" name="supplies[{{ $supplyIndex }}][quantity]" class="form-control form-control-sm rounded-lg w-24 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="SL" min="0" step="any" value="{{ $supply->quantity ?? 0 }}">
                     </div>
                     <div class="flex items-center gap-2">
-                        <button type="button" onclick="this.closest('.order-supply-row').remove(); updateOrderSummary();" class="text-neutral-400 hover:text-danger-500 transition-colors p-1 flex items-center justify-center" title="Xóa vật tư này">
+                        <button type="button" onclick="this.closest('.order-supply-row').remove(); updateOrderSummary(); if(typeof updateAcrylicRowIndexes === 'function') updateAcrylicRowIndexes();" class="text-neutral-400 hover:text-danger-500 transition-colors p-1 flex items-center justify-center" title="Xóa vật tư này">
                             <iconify-icon icon="lucide:trash-2" class="text-lg"></iconify-icon>
                         </button>
                     </div>
@@ -488,7 +488,7 @@
                                     <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][unit_price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Đơn giá" min="0" step="any" required value="{{ $item->unit_price }}">
                                 </td>
                                 <td style="width: 120px; min-width: 120px; " class="border border-neutral-200">
-                                    <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][total_price]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center px-1 py-1 h-8 text-xs" placeholder="Thành tiền" step="any" value="{{ $item->total_price }}" readonly>
+                                    <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][total_price]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center px-1 py-1 h-8 text-xs" placeholder="Thành tiền" value="{{ number_format($item->total_price, 0, ',', '.') }}" readonly>
                                 </td>
                                 <td style="min-width: 160px;" class="border border-neutral-200">
                                     <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Ghi chú" value="{{ $item->notes }}">
@@ -598,7 +598,7 @@ function addOrderSupply() {
                 <input type="number" name="supplies[${supplyIndex}][quantity]" class="form-control form-control-sm rounded-lg w-24 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="SL" min="0" step="0.01" value="0">
             </div>
             <div class="flex items-center gap-2">
-                <button type="button" onclick="this.closest('.order-supply-row').remove(); updateOrderSummary();" class="text-neutral-400 hover:text-danger-500 transition-colors p-1 flex items-center justify-center" title="Xóa vật tư này">
+                <button type="button" onclick="this.closest('.order-supply-row').remove(); updateOrderSummary(); if(typeof updateAcrylicRowIndexes === 'function') updateAcrylicRowIndexes();" class="text-neutral-400 hover:text-danger-500 transition-colors p-1 flex items-center justify-center" title="Xóa vật tư này">
                     <iconify-icon icon="lucide:trash-2" class="text-lg"></iconify-icon>
                 </button>
             </div>
@@ -800,7 +800,7 @@ function addOrderItem(button, isInitial = false, insertAfterRow = null) {
             <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][unit_price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Đơn giá" min="0" step="any" required value="${unitPriceToUse}">
         </td>
         <td style="width: 120px; min-width: 120px; " class="border border-neutral-200">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][total_price]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center px-1 py-1 h-8 text-xs" placeholder="Thành tiền" step="any" readonly value="">
+            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][total_price]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center px-1 py-1 h-8 text-xs" placeholder="Thành tiền" readonly value="">
         </td>
         <td style="min-width: 160px;" class="border border-neutral-200">
             <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Ghi chú" value="">
@@ -1255,7 +1255,7 @@ function calculateTotalPrice(row, sourceEvent) {
     const totalPrice = Math.round((currentWingArea + moldingLength) * unitPrice);
     const totalPriceInput = row.querySelector('input[name*="[total_price]"]');
     if (totalPriceInput) {
-        totalPriceInput.value = totalPrice > 0 ? totalPrice : 0;
+        totalPriceInput.value = totalPrice > 0 ? totalPrice.toLocaleString('vi-VN') : 0;
     }
     updateOrderSummary();
 }

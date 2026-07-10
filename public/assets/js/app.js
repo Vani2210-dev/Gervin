@@ -9,7 +9,8 @@ document.querySelectorAll(".sidebar-menu .dropdown").forEach(function (dropdown)
     // Close all sibling dropdowns
     item.parentNode.querySelectorAll(".dropdown").forEach(function (sibling) {
       if (sibling !== item) {
-        sibling.querySelector(".sidebar-submenu").style.display = 'none';
+        var sibSubmenu = sibling.querySelector(".sidebar-submenu");
+        if (sibSubmenu) sibSubmenu.style.display = 'none';
         sibling.classList.remove("dropdown-open");
         sibling.classList.remove("open");
       }
@@ -17,7 +18,9 @@ document.querySelectorAll(".sidebar-menu .dropdown").forEach(function (dropdown)
 
     // Toggle the current dropdown
     var submenu = item.querySelector(".sidebar-submenu");
-    submenu.style.display = (submenu.style.display === 'block') ? 'none' : 'block';
+    if (submenu) {
+      submenu.style.display = (submenu.style.display === 'block') ? 'none' : 'block';
+    }
 
     item.classList.toggle("dropdown-open");
   });

@@ -235,7 +235,7 @@
                         <input type="number" name="supplies[{{ $supplyIndex }}][quantity]" class="form-control form-control-sm rounded-lg w-24 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="SL" min="0" step="any" value="{{ $supply->quantity ?? 0 }}">
                     </div>
                     <div class="flex items-center gap-2">
-                        <button type="button" onclick="this.closest('.order-supply-row').remove(); updateOrderSummary();" class="order-table-form-action text-neutral-400 hover:text-danger-500 transition-colors p-1 flex items-center justify-center" title="Xóa vật tư này">
+                        <button type="button" onclick="this.closest('.order-supply-row').remove(); updateOrderSummary(); if(typeof updateMinLateRowIndexes === 'function') updateMinLateRowIndexes();" class="order-table-form-action text-neutral-400 hover:text-danger-500 transition-colors p-1 flex items-center justify-center" title="Xóa vật tư này">
                             <iconify-icon icon="lucide:trash-2" class="text-lg"></iconify-icon>
                         </button>
                     </div>
@@ -509,7 +509,7 @@
                                     <input type="number" name="payment_details[{{ $detailIndex }}][price_only]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs" placeholder="0" min="0" step="any" value="{{ $detail->price_only }}">
                                 </td>
                                 <td style="width: 160px; min-width: 160px; " class="border border-neutral-200">
-                                    <input type="number" name="payment_details[{{ $detailIndex }}][total]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center h-8 text-xs" placeholder="0" step="any" readonly value="{{ $detail->total }}">
+                                    <input type="text" name="payment_details[{{ $detailIndex }}][total]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center h-8 text-xs" placeholder="0" readonly value="{{ number_format($detail->total, 0, ',', '.') }}">
                                 </td>
                                 <td style="width: 50px; min-width: 50px; position: sticky; right: 0; z-index: 1; background-color: #fff; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="text-center align-middle border border-neutral-200">
                                     <button type="button" onclick="removePaymentDetail(this)" class="text-neutral-400 hover:text-danger-500 transition-colors p-1" title="Xóa nội dung này">
@@ -546,7 +546,7 @@ function addMinLateOrderSupply() {
                 <input type="number" name="supplies[${minLateSupplyIndex}][quantity]" class="form-control form-control-sm rounded-lg w-24 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="SL" min="0" step="any" value="0">
             </div>
             <div class="flex items-center gap-2">
-                <button type="button" onclick="this.closest('.order-supply-row').remove(); updateOrderSummary();" class="order-table-form-action text-neutral-400 hover:text-danger-500 transition-colors p-1 flex items-center justify-center" title="Xóa vật tư này">
+                <button type="button" onclick="this.closest('.order-supply-row').remove(); updateOrderSummary(); if(typeof updateMinLateRowIndexes === 'function') updateMinLateRowIndexes();" class="order-table-form-action text-neutral-400 hover:text-danger-500 transition-colors p-1 flex items-center justify-center" title="Xóa vật tư này">
                     <iconify-icon icon="lucide:trash-2" class="text-lg"></iconify-icon>
                 </button>
             </div>
@@ -1123,7 +1123,7 @@ function addPaymentDetail() {
             <input type="number" name="payment_details[${paymentDetailIndex}][price_only]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs" placeholder="0" min="0" step="any" value="0">
         </td>
         <td style="width: 120px; min-width: 120px; " class="border border-neutral-200">
-            <input type="number" name="payment_details[${paymentDetailIndex}][total]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center h-8 text-xs" placeholder="0" step="any" readonly value="0">
+            <input type="text" name="payment_details[${paymentDetailIndex}][total]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center h-8 text-xs" placeholder="0" readonly value="0">
         </td>
         <td style="width: 50px; min-width: 50px; position: sticky; right: 0; z-index: 1; background-color: #fff; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="text-center align-middle border border-neutral-200">
             <button type="button" onclick="removePaymentDetail(this)" class="text-neutral-400 hover:text-danger-500 transition-colors p-1" title="Xóa nội dung này">
@@ -1173,7 +1173,7 @@ function calculatePaymentDetailRowTotal(row) {
     const price = parseFloat(priceInput.value) || 0;
     const total = quantity * price;
     
-    totalInput.value = Math.round(total);
+    totalInput.value = total > 0 ? Math.round(total).toLocaleString('vi-VN') : 0;
     updateOrderSummary();
 }
 

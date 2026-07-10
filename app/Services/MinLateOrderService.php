@@ -109,8 +109,12 @@ class MinLateOrderService
         $discountPercent = (float) $request->input('discount_percent', 0);
         $vatPercent = (float) $request->input('vat_percent', 0);
         
-        $discountAmount = $subTotal * ($discountPercent / 100);
-        $vatAmount = ($subTotal - $discountAmount) * ($vatPercent / 100);
+        $rawDiscountAmount = $subTotal * ($discountPercent / 100);
+        $discountAmount = round($rawDiscountAmount, -3);
+
+        $rawVatAmount = ($subTotal - $discountAmount) * ($vatPercent / 100);
+        $vatAmount = round($rawVatAmount, -3);
+
         $totalAmount = $subTotal - $discountAmount + $vatAmount;
 
         // Auto-create or link customer if customer_name filled but no customer_id
@@ -119,6 +123,9 @@ class MinLateOrderService
             $existing = \App\Models\Customer::where('name', trim($request->customer_name))->first();
             if ($existing) {
                 $customerId = $existing->id;
+                if ($request->has('customer_initial_debt')) {
+                    $existing->update(['initial_debt' => $request->input('customer_initial_debt', 0)]);
+                }
             } else {
                 $lastCustomer = \App\Models\Customer::orderBy('id', 'desc')->first();
                 $nextNumber   = $lastCustomer ? intval(substr($lastCustomer->customer_code, 2)) + 1 : 1;
@@ -128,9 +135,12 @@ class MinLateOrderService
                     'name'          => trim($request->customer_name),
                     'phone'         => $request->phone,
                     'address'       => $request->address,
+                    'initial_debt'  => $request->input('customer_initial_debt', 0),
                 ]);
                 $customerId = $newCustomer->id;
             }
+        } elseif ($customerId && $request->has('customer_initial_debt')) {
+            \App\Models\Customer::where('id', $customerId)->update(['initial_debt' => $request->input('customer_initial_debt', 0)]);
         }
 
         $order->update([
@@ -201,7 +211,8 @@ class MinLateOrderService
     {
         $totalAmount = 0;
         foreach ($paymentDetails as $detail) {
-            $totalAmount += round($detail['total'] ?? 0);
+            $rawTotal = str_replace('.', '', $detail['total'] ?? 0);
+            $totalAmount += round($rawTotal);
         }
         return round($totalAmount, -3);
     }
@@ -221,7 +232,7 @@ class MinLateOrderService
                 'quantity'   => $detail['quantity'] ?? 0,
                 'price'      => round($detail['price'] ?? 0),
                 'price_only' => round($detail['price_only'] ?? 0),
-                'total'      => round($detail['total'] ?? 0),
+                'total'      => round(str_replace('.', '', $detail['total'] ?? 0)),
             ]);
         }
     }

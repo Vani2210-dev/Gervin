@@ -6760,7 +6760,7 @@ h6, .h6 {
 }
 
 .sidebar.active:hover .sidebar-menu li.dropdown.dropdown-open .sidebar-submenu, .sidebar.active:hover .sidebar-menu li.dropdown.open .sidebar-submenu{
-  display: block;
+  display: block !important;
 }
 
 .sidebar.active:hover .sidebar-menu li.sidebar-menu-group-title{
@@ -6792,7 +6792,7 @@ h6, .h6 {
 }
 
 .sidebar.active .sidebar-menu li.dropdown.dropdown-open .sidebar-submenu, .sidebar.active .sidebar-menu li.dropdown.open .sidebar-submenu{
-  display: none;
+  display: none !important;
 }
 
 .sidebar.active .sidebar-menu li.dropdown a::after{

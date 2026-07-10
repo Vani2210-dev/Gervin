@@ -115,8 +115,12 @@
                             <h6 class="font-bold text-base text-neutral-800 m-0">Công nợ khách hàng</h6>
                         </div>
                         <div class="space-y-3">
+                            <div class="flex justify-between items-center text-sm mb-2">
+                                <span class="text-neutral-500 font-medium">Nợ đầu kỳ:</span>
+                                <input type="number" name="customer_initial_debt" id="customer_initial_debt" class="form-control form-control-sm w-48 text-right rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500" value="0" oninput="updateOrderSummary()">
+                            </div>
                             <div class="flex justify-between items-center text-sm">
-                                <span class="text-neutral-500 font-medium">Công nợ:</span>
+                                <span class="text-neutral-500 font-medium">Công nợ đơn trước:</span>
                                 <span class="font-semibold text-neutral-800" id="customer-total-amount">0 đ</span>
                             </div>
                             <div class="flex justify-between items-center text-sm">
@@ -325,8 +329,17 @@ function fetchCustomerDebt(customerId) {
     if (!customerId || !/^\d+$/.test(customerId)) {
         const debtCard = document.getElementById('customer-debt-card');
         if (debtCard) {
-            debtCard.hidden = true;
-            debtCard.classList.add('hidden');
+            debtCard.hidden = false;
+            debtCard.classList.remove('hidden');
+        }
+        window.customerOldDebt = 0;
+        window.customerOldPaid = 0;
+        window.customerOldAmount = 0;
+        const initDebtInput = document.getElementById('customer_initial_debt');
+        if (initDebtInput) initDebtInput.value = 0;
+        
+        if (typeof updateOrderSummary === 'function') {
+            updateOrderSummary();
         }
         return;
     }
@@ -338,6 +351,11 @@ function fetchCustomerDebt(customerId) {
             if (data.unpaid_debt_summary) {
                 window.customerOldDebt = data.unpaid_debt_summary.total_debt || 0;
                 window.customerOldPaid = data.unpaid_debt_summary.total_paid || 0;
+                window.customerOldAmount = data.unpaid_debt_summary.total_amount || 0;
+                const initDebtInput = document.getElementById('customer_initial_debt');
+                if (initDebtInput && data.customer) {
+                    initDebtInput.value = data.customer.initial_debt || 0;
+                }
                 
                 if (typeof updateOrderSummary === 'function') {
                     updateOrderSummary();
@@ -736,7 +754,11 @@ function updateOrderSummary() {
                     
                     table.querySelectorAll(`tbody tr:not(.hidden) input[name*="[${field}]"]`).forEach(input => {
                         if (!input.disabled && input.type !== 'hidden') {
-                            const val = parseFloat(input.value);
+                            let valStr = input.value;
+                            if (typeof valStr === 'string') {
+                                valStr = valStr.replace(/\./g, '');
+                            }
+                            const val = parseFloat(valStr);
                             if (!isNaN(val)) {
                                 sum += val;
                             }
@@ -781,7 +803,8 @@ function updateOrderSummary() {
         detailRows.forEach(row => {
             const totalInput = row.querySelector('input[name*="total"]');
             if (totalInput && !totalInput.disabled) {
-                totalAmount += parseFloat(totalInput.value) || 0;
+                const rawTotal = totalInput.value ? totalInput.value.replace(/\./g, '') : 0;
+                totalAmount += parseFloat(rawTotal) || 0;
             }
         });
     } else {
@@ -793,7 +816,8 @@ function updateOrderSummary() {
             const widthInput = row.querySelector('input[name*="[width]"]');
             if (qtyInput && !qtyInput.disabled) {
                 const quantity = parseFloat(qtyInput.value) || 0;
-                const totalPrice = parseFloat(priceInput ? priceInput.value : 0) || 0;
+                const rawPrice = priceInput ? priceInput.value.replace(/\./g, '') : 0;
+                const totalPrice = parseFloat(rawPrice) || 0;
                 const height = parseFloat(heightInput ? heightInput.value : 0) || 0;
                 const width = parseFloat(widthInput ? widthInput.value : 0) || 0;
                 totalItems++;
@@ -826,8 +850,12 @@ function updateOrderSummary() {
     const discountPercent = discountPercentEl ? (parseFloat(discountPercentEl.value) || 0) : 0;
     const vatPercent = vatPercentEl ? (parseFloat(vatPercentEl.value) || 0) : 0;
 
-    const discountAmount = Math.round(roundedTotalAmount * (discountPercent / 100));
-    const vatAmount = Math.round((roundedTotalAmount - discountAmount) * (vatPercent / 100));
+    const rawDiscountAmount = roundedTotalAmount * (discountPercent / 100);
+    const discountAmount = Math.round(rawDiscountAmount / 1000) * 1000;
+    
+    const rawVatAmount = (roundedTotalAmount - discountAmount) * (vatPercent / 100);
+    const vatAmount = Math.round(rawVatAmount / 1000) * 1000;
+    
     const finalTotalAmount = roundedTotalAmount - discountAmount + vatAmount;
 
     if (discountAmountEl) discountAmountEl.textContent = '-' + discountAmount.toLocaleString('vi-VN') + ' VNĐ';
@@ -836,10 +864,14 @@ function updateOrderSummary() {
     if (grandTotalEl) grandTotalEl.textContent = finalTotalAmount.toLocaleString('vi-VN') + ' VNĐ';
 
     if (window.customerOldDebt !== undefined) {
-        const oldDebt = window.customerOldDebt || 0;
         const thisOrderPaid = window.thisOrderPaid || 0;
         const thisOrderTotal = finalTotalAmount;
         const oldPaid = window.customerOldPaid || 0;
+        const oldAmount = window.customerOldAmount || 0;
+        const initDebtInput = document.getElementById('customer_initial_debt');
+        const customInitialDebt = initDebtInput ? (parseFloat(initDebtInput.value) || 0) : 0;
+        
+        const oldDebt = Math.max(0, customInitialDebt + oldAmount - oldPaid);
         
         const thisOrderRemaining = Math.max(0, thisOrderTotal - thisOrderPaid);
         const totalCombinedDebt = oldDebt + thisOrderRemaining;
@@ -850,7 +882,7 @@ function updateOrderSummary() {
         const customerDebtAmountEl = document.getElementById('customer-debt-amount');
 
         if (customerTotalAmountEl) customerTotalAmountEl.textContent = new Intl.NumberFormat('vi-VN').format(oldDebt) + ' đ';
-        if (customerTotalPaidEl) customerTotalPaidEl.textContent = new Intl.NumberFormat('vi-VN').format(allOrdersPaid) + ' đ';
+        if (customerTotalPaidEl) customerTotalPaidEl.textContent = new Intl.NumberFormat('vi-VN').format(oldPaid) + ' đ';
         if (customerDebtAmountEl) customerDebtAmountEl.textContent = new Intl.NumberFormat('vi-VN').format(totalCombinedDebt) + ' đ';
     }
 }

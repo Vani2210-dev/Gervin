@@ -97,8 +97,12 @@ class GlassOrderService
         $discountPercent = (float) $request->input('discount_percent', 0);
         $vatPercent = (float) $request->input('vat_percent', 0);
         
-        $discountAmount = $subTotal * ($discountPercent / 100);
-        $vatAmount = ($subTotal - $discountAmount) * ($vatPercent / 100);
+        $rawDiscountAmount = $subTotal * ($discountPercent / 100);
+        $discountAmount = round($rawDiscountAmount, -3);
+
+        $rawVatAmount = ($subTotal - $discountAmount) * ($vatPercent / 100);
+        $vatAmount = round($rawVatAmount, -3);
+
         $totalAmount = $subTotal - $discountAmount + $vatAmount;
 
         // Auto-create or link customer if customer_name filled but no customer_id
@@ -107,6 +111,9 @@ class GlassOrderService
             $existing = \App\Models\Customer::where('name', trim($request->customer_name))->first();
             if ($existing) {
                 $customerId = $existing->id;
+                if ($request->has('customer_initial_debt')) {
+                    $existing->update(['initial_debt' => $request->input('customer_initial_debt', 0)]);
+                }
             } else {
                 $lastCustomer = \App\Models\Customer::orderBy('id', 'desc')->first();
                 $nextNumber   = $lastCustomer ? intval(substr($lastCustomer->customer_code, 2)) + 1 : 1;
@@ -116,9 +123,12 @@ class GlassOrderService
                     'name'          => trim($request->customer_name),
                     'phone'         => $request->phone,
                     'address'       => $request->address,
+                    'initial_debt'  => $request->input('customer_initial_debt', 0),
                 ]);
                 $customerId = $newCustomer->id;
             }
+        } elseif ($customerId && $request->has('customer_initial_debt')) {
+            \App\Models\Customer::where('id', $customerId)->update(['initial_debt' => $request->input('customer_initial_debt', 0)]);
         }
 
         $order->update([
@@ -187,7 +197,7 @@ class GlassOrderService
         foreach ($supplies as $supply) {
             if (!isset($supply['items']) || !is_array($supply['items'])) continue;
             foreach ($supply['items'] as $item) {
-                $itemTotal = isset($item['total_price']) ? floatval($item['total_price']) : ($item['unit_price'] * ($item['area_m2'] ?: $item['wing_quantity']));
+                $itemTotal = isset($item['total_price']) ? floatval(str_replace('.', '', $item['total_price'])) : ($item['unit_price'] * ($item['area_m2'] ?: $item['wing_quantity']));
                 $totalAmount += $itemTotal;
             }
         }
@@ -215,7 +225,7 @@ class GlassOrderService
                 $wingQuantity = $item['wing_quantity'] ?? 1;
                 $areaM2 = $item['area_m2'] ?? (($height * $width * $wingQuantity) / 1000000);
                 
-                $totalPrice = isset($item['total_price']) ? floatval($item['total_price']) : ($areaM2 > 0 ? ($areaM2 * $item['unit_price']) : ($wingQuantity * $item['unit_price']));
+                $totalPrice = isset($item['total_price']) ? floatval(str_replace('.', '', $item['total_price'])) : ($areaM2 > 0 ? ($areaM2 * $item['unit_price']) : ($wingQuantity * $item['unit_price']));
                 $totalPrice = round($totalPrice);
 
                 $orderItem = GlassOrderItem::create([
