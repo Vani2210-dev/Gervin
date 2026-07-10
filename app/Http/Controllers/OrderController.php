@@ -49,11 +49,9 @@ class OrderController extends Controller
                         ->orWhere('phone', 'like', "%$search%");
                 });
             })
-            ->when($request->filled('filter_order_code'), function ($q) use ($request) {
-                $q->where('order_code', 'like', "%{$request->filter_order_code}%");
-            })
-            ->when($request->filled('filter_customer_name'), function ($q) use ($request) {
-                $q->where('customer_name', 'like', "%{$request->filter_customer_name}%");
+
+            ->when($request->filled('filter_customer_id'), function ($q) use ($request) {
+                $q->where('customer_id', $request->filter_customer_id);
             })
             ->when($request->filled('filter_status'), function ($q) use ($request) {
                 $q->where('status', $request->filter_status);
@@ -61,16 +59,11 @@ class OrderController extends Controller
             ->when($request->filled('filter_type'), function ($q) use ($request) {
                 $q->where('type', $request->filter_type);
             })
-            ->when($request->filled('filter_date'), function ($q) use ($request) {
-                $q->whereDate('order_date', $request->filter_date);
+            ->when($request->filled('filter_start_date'), function ($q) use ($request) {
+                $q->whereDate('order_date', '>=', $request->filter_start_date);
             })
-            ->when($request->filled('filter_month'), function ($q) use ($request) {
-                $month = date('m', strtotime($request->filter_month));
-                $year = date('Y', strtotime($request->filter_month));
-                $q->whereMonth('order_date', $month)->whereYear('order_date', $year);
-            })
-            ->when($request->filled('filter_year'), function ($q) use ($request) {
-                $q->whereYear('order_date', $request->filter_year);
+            ->when($request->filled('filter_end_date'), function ($q) use ($request) {
+                $q->whereDate('order_date', '<=', $request->filter_end_date);
             });
 
         // Compute totals before pagination
@@ -88,6 +81,8 @@ class OrderController extends Controller
             ->paginate($perPage)
             ->withQueryString();
 
+        $customers = \App\Models\Customer::orderBy('name')->get();
+
         return view('orders.index', compact(
             'orders', 
             'perPage', 
@@ -95,7 +90,8 @@ class OrderController extends Controller
             'totalOrdersCount',
             'totalAmountSum',
             'totalPaidSum',
-            'totalDebtSum'
+            'totalDebtSum',
+            'customers'
         ));
     }
 
@@ -210,6 +206,35 @@ class OrderController extends Controller
         }
 
         return redirect()->route('orders.index')->with('success', 'Cập nhật đơn hàng thành công.');
+    }
+
+    public function updateStatus(Request $request, Order $order)
+    {
+        $request->validate([
+            'status' => 'required|string|in:transferred,cancelled',
+        ]);
+
+        $status = $request->status;
+
+        if ($status === 'transferred') {
+            if ($order->status !== 'pending') {
+                return redirect()->back()->with('error', 'Trạng thái đơn hàng không hợp lệ để chuyển sản xuất.');
+            }
+            $order->status = 'transferred';
+            $order->save();
+            return redirect()->back()->with('success', 'Chuyển sản xuất thành công đơn hàng ' . $order->order_code);
+        }
+
+        if ($status === 'cancelled') {
+            if ($order->status === 'cancelled') {
+                return redirect()->back()->with('error', 'Đơn hàng đã bị hủy trước đó.');
+            }
+            $order->status = 'cancelled';
+            $order->save();
+            return redirect()->back()->with('success', 'Hủy thành công đơn hàng ' . $order->order_code);
+        }
+
+        return redirect()->back()->with('error', 'Thao tác không hợp lệ.');
     }
 
     public function destroy(Request $request, Order $order)

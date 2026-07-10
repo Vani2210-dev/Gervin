@@ -288,10 +288,29 @@ async function exportToExcel() {
                 supplyRow.height = 22;
                 supplyRow.getCell(1).value = '';
                 supplyRow.getCell(3).value = supply.supply_name;
-                supplyRow.getCell(6).value = 0;
-                supplyRow.getCell(9).value = 0;
-                supplyRow.getCell(10).value = 0;
-                supplyRow.getCell(12).value = 0;
+                let sumQty = 0;
+                let sumArea = 0;
+                let sumMolding = 0;
+                let sumPrice = 0;
+                supply.items.forEach(item => {
+                    sumQty += parseInt(item.quantity) || 0;
+                    sumArea += parseFloat(item.wing_area) || 0;
+                    sumMolding += parseFloat(item.molding_length) || 0;
+                    sumPrice += parseFloat(item.total_price) || 0;
+                });
+
+                supplyRow.getCell(6).value = sumQty;
+                supplyRow.getCell(6).alignment = { horizontal: 'center', vertical: 'middle' };
+                
+                supplyRow.getCell(9).value = parseFloat(sumArea.toFixed(2));
+                supplyRow.getCell(9).alignment = { horizontal: 'center', vertical: 'middle' };
+                
+                supplyRow.getCell(10).value = parseFloat(sumMolding.toFixed(2));
+                supplyRow.getCell(10).alignment = { horizontal: 'center', vertical: 'middle' };
+                
+                supplyRow.getCell(12).value = Math.round(sumPrice / 1000) * 1000;
+                supplyRow.getCell(12).numFmt = '#,##0';
+                supplyRow.getCell(12).alignment = { horizontal: 'center', vertical: 'middle' };
 
                 for (let c = 1; c <= 15; c++) {
                     const cell = supplyRow.getCell(c);
@@ -362,9 +381,37 @@ async function exportToExcel() {
                 });
             });
 
+            // Calculate acrylic totals
+            let totalQtyAcrylic = 0;
+            let totalAreaAcrylic = 0;
+            let totalMoldingAcrylic = 0;
+            orderData.supplies.forEach(supply => {
+                supply.items.forEach(item => {
+                    totalQtyAcrylic += parseInt(item.quantity) || 0;
+                    totalAreaAcrylic += parseFloat(item.wing_area) || 0;
+                    totalMoldingAcrylic += parseFloat(item.molding_length) || 0;
+                });
+            });
+
             // Grand total row
             const totalRow = worksheet.getRow(currentRow);
             totalRow.height = 22;
+            
+            // Total quantity
+            totalRow.getCell(6).value = totalQtyAcrylic;
+            totalRow.getCell(6).font = { name: 'Times New Roman', size: 11, bold: true };
+            totalRow.getCell(6).alignment = { horizontal: 'center', vertical: 'middle' };
+
+            // Total wing area
+            totalRow.getCell(9).value = parseFloat(totalAreaAcrylic.toFixed(2));
+            totalRow.getCell(9).font = { name: 'Times New Roman', size: 11, bold: true };
+            totalRow.getCell(9).alignment = { horizontal: 'center', vertical: 'middle' };
+
+            // Total molding length
+            totalRow.getCell(10).value = parseFloat(totalMoldingAcrylic.toFixed(2));
+            totalRow.getCell(10).font = { name: 'Times New Roman', size: 11, bold: true };
+            totalRow.getCell(10).alignment = { horizontal: 'center', vertical: 'middle' };
+
             totalRow.getCell(11).value = "TỔNG TIỀN HÀNG:";
             totalRow.getCell(11).font = { name: 'Times New Roman', size: 11, bold: true };
             totalRow.getCell(11).alignment = { horizontal: 'center', vertical: 'middle' };
@@ -701,9 +748,24 @@ async function exportToExcel() {
                 supplyRow.height = 22;
                 supplyRow.getCell(1).value = '';
                 supplyRow.getCell(2).value = supply.supply_name;
-                supplyRow.getCell(10).value = 0;
-                supplyRow.getCell(11).value = 0;
-                supplyRow.getCell(13).value = 0;
+                let sumQty = 0;
+                let sumArea = 0;
+                let sumPrice = 0;
+                supply.items.forEach(item => {
+                    sumQty += parseInt(item.wing_quantity) || 0;
+                    sumArea += parseFloat(item.area_m2) || 0;
+                    sumPrice += parseFloat(item.total_price) || 0;
+                });
+
+                supplyRow.getCell(10).value = sumQty;
+                supplyRow.getCell(10).alignment = { horizontal: 'center', vertical: 'middle' };
+                
+                supplyRow.getCell(11).value = parseFloat(sumArea.toFixed(2));
+                supplyRow.getCell(11).alignment = { horizontal: 'center', vertical: 'middle' };
+                
+                supplyRow.getCell(13).value = Math.round(sumPrice / 1000) * 1000;
+                supplyRow.getCell(13).numFmt = '#,##0';
+                supplyRow.getCell(13).alignment = { horizontal: 'center', vertical: 'middle' };
 
                 for (let c = 1; c <= 14; c++) {
                     const cell = supplyRow.getCell(c);
@@ -773,13 +835,33 @@ async function exportToExcel() {
                 });
             });
 
+            // Calculate glass totals
+            let totalQtyGlass = 0;
+            let totalAreaGlass = 0;
+            orderData.supplies.forEach(supply => {
+                supply.items.forEach(item => {
+                    totalQtyGlass += parseInt(item.wing_quantity) || 0;
+                    totalAreaGlass += parseFloat(item.area_m2) || 0;
+                });
+            });
+
             // Grand total row
             const totalRow = worksheet.getRow(currentRow);
             totalRow.height = 22;
-            worksheet.mergeCells(`K${currentRow}:L${currentRow}`);
-            totalRow.getCell(11).value = "TỔNG TIỀN HÀNG:";
+            
+            // Total wings quantity
+            totalRow.getCell(10).value = totalQtyGlass;
+            totalRow.getCell(10).font = { name: 'Times New Roman', size: 11, bold: true };
+            totalRow.getCell(10).alignment = { horizontal: 'center', vertical: 'middle' };
+
+            // Total wings area
+            totalRow.getCell(11).value = parseFloat(totalAreaGlass.toFixed(2));
             totalRow.getCell(11).font = { name: 'Times New Roman', size: 11, bold: true };
             totalRow.getCell(11).alignment = { horizontal: 'center', vertical: 'middle' };
+
+            totalRow.getCell(12).value = "TỔNG TIỀN HÀNG:";
+            totalRow.getCell(12).font = { name: 'Times New Roman', size: 11, bold: true };
+            totalRow.getCell(12).alignment = { horizontal: 'center', vertical: 'middle' };
 
             const subTotal1 = parseFloat(orderData.total_amount) + parseFloat(orderData.discount_amount) - parseFloat(orderData.vat_amount);
             totalRow.getCell(13).value = Math.round(subTotal1 / 1000) * 1000;
@@ -998,6 +1080,28 @@ async function exportToExcel() {
                 supplyRow.height = 22;
                 supplyRow.getCell(1).value = '';
                 supplyRow.getCell(3).value = supply.supply_name;
+                let sumQty2 = 0;
+                let sumArea2 = 0;
+                supply.items.forEach(item => {
+                    sumQty2 += parseInt(item.wing_quantity) || 0;
+                    
+                    let originalHeight = parseFloat(item.height) || 0;
+                    let originalWidth = parseFloat(item.width) || 0;
+                    let glassHeight = originalHeight > 0 ? Math.max(0, originalHeight - 4) : 0;
+                    let glassWidth = originalWidth > 0 ? Math.max(0, originalWidth - 4) : 0;
+                    let wingQty = parseInt(item.wing_quantity) || 0;
+                    let newArea = 0;
+                    if (glassHeight > 0 && glassWidth > 0 && wingQty > 0) {
+                        newArea = (glassHeight * glassWidth * wingQty) / 1000000;
+                    }
+                    sumArea2 += newArea;
+                });
+
+                supplyRow.getCell(8).value = sumQty2;
+                supplyRow.getCell(8).alignment = { horizontal: 'center', vertical: 'middle' };
+                
+                supplyRow.getCell(9).value = parseFloat(sumArea2.toFixed(2));
+                supplyRow.getCell(9).alignment = { horizontal: 'center', vertical: 'middle' };
 
                 for (let c = 1; c <= 10; c++) {
                     const cell = supplyRow.getCell(c);
@@ -1226,6 +1330,55 @@ async function exportToExcel() {
                 supplyRow.getCell(1).value = '';
                 supplyRow.getCell(3).value = supply.supply_name;
 
+                let sumQty = 0;
+                let sumStraightPaste = 0;
+                let sumBeveledPaste = 0;
+                let sumRong2535 = 0;
+                let sumRong4059 = 0;
+                let sumRong1739 = 0;
+                let sumVatMoi = 0;
+                let sumBeveledHandle = 0;
+                let sumCNC = 0;
+
+                supply.items.forEach(item => {
+                    sumQty += parseInt(item.quantity) || 0;
+                    sumStraightPaste += parseFloat(item.straight_paste_length) || 0;
+                    sumBeveledPaste += parseFloat(item.beveled_length) || 0;
+                    sumRong2535 += parseFloat(item.ban_rong_25_35) || 0;
+                    sumRong4059 += parseFloat(item.ban_rong_40_59) || 0;
+                    sumRong1739 += parseFloat(item.ban_rong_17_39) || 0;
+                    sumVatMoi += parseFloat(item.vat_moi_length) || 0;
+                    sumBeveledHandle += parseFloat(item.beveled_handle) || 0;
+                    sumCNC += parseInt(item.cnc) || 0;
+                });
+
+                supplyRow.getCell(6).value = sumQty;
+                supplyRow.getCell(6).alignment = { horizontal: 'center', vertical: 'middle' };
+
+                supplyRow.getCell(12).value = parseFloat(sumStraightPaste.toFixed(2));
+                supplyRow.getCell(12).alignment = { horizontal: 'center', vertical: 'middle' };
+
+                supplyRow.getCell(13).value = parseFloat(sumBeveledPaste.toFixed(2));
+                supplyRow.getCell(13).alignment = { horizontal: 'center', vertical: 'middle' };
+
+                supplyRow.getCell(14).value = parseFloat(sumRong2535.toFixed(2));
+                supplyRow.getCell(14).alignment = { horizontal: 'center', vertical: 'middle' };
+
+                supplyRow.getCell(15).value = parseFloat(sumRong4059.toFixed(2));
+                supplyRow.getCell(15).alignment = { horizontal: 'center', vertical: 'middle' };
+
+                supplyRow.getCell(16).value = parseFloat(sumRong1739.toFixed(2));
+                supplyRow.getCell(16).alignment = { horizontal: 'center', vertical: 'middle' };
+
+                supplyRow.getCell(19).value = parseFloat(sumVatMoi.toFixed(2));
+                supplyRow.getCell(19).alignment = { horizontal: 'center', vertical: 'middle' };
+
+                supplyRow.getCell(20).value = parseFloat(sumBeveledHandle.toFixed(2));
+                supplyRow.getCell(20).alignment = { horizontal: 'center', vertical: 'middle' };
+
+                supplyRow.getCell(21).value = sumCNC;
+                supplyRow.getCell(21).alignment = { horizontal: 'center', vertical: 'middle' };
+
                 for (let c = 1; c <= maxCol; c++) {
                     const cell = supplyRow.getCell(c);
                     cell.font = { name: 'Times New Roman', size: 11, bold: true };
@@ -1278,6 +1431,92 @@ async function exportToExcel() {
                     currentRow++;
                 });
             });
+
+            // Calculate min_late items totals
+            let sumQtyMinLate = 0;
+            let sumStraightPasteMinLate = 0;
+            let sumBeveledPasteMinLate = 0;
+            let sumRong2535MinLate = 0;
+            let sumRong4059MinLate = 0;
+            let sumRong1739MinLate = 0;
+            let sumVatMoiMinLate = 0;
+            let sumBeveledHandleMinLate = 0;
+            let sumCNCMinLate = 0;
+
+            orderData.supplies.forEach(supply => {
+                supply.items.forEach(item => {
+                    sumQtyMinLate += parseInt(item.quantity) || 0;
+                    sumStraightPasteMinLate += parseFloat(item.straight_paste_length) || 0;
+                    sumBeveledPasteMinLate += parseFloat(item.beveled_length) || 0;
+                    sumRong2535MinLate += parseFloat(item.ban_rong_25_35) || 0;
+                    sumRong4059MinLate += parseFloat(item.ban_rong_40_59) || 0;
+                    sumRong1739MinLate += parseFloat(item.ban_rong_17_39) || 0;
+                    sumVatMoiMinLate += parseFloat(item.vat_moi_length) || 0;
+                    sumBeveledHandleMinLate += parseFloat(item.beveled_handle) || 0;
+                    sumCNCMinLate += parseInt(item.cnc) || 0;
+                });
+            });
+
+            const minLateTotalRow = worksheet.getRow(currentRow);
+            minLateTotalRow.height = 22;
+            
+            minLateTotalRow.getCell(3).value = "TỔNG CỘNG:";
+            minLateTotalRow.getCell(3).font = { name: 'Times New Roman', size: 11, bold: true };
+            minLateTotalRow.getCell(3).alignment = { horizontal: 'center', vertical: 'middle' };
+
+            // Quantity (col F / 6)
+            minLateTotalRow.getCell(6).value = sumQtyMinLate;
+            minLateTotalRow.getCell(6).font = { name: 'Times New Roman', size: 11, bold: true };
+            minLateTotalRow.getCell(6).alignment = { horizontal: 'center', vertical: 'middle' };
+
+            // Straight paste (col L / 12)
+            minLateTotalRow.getCell(12).value = parseFloat(sumStraightPasteMinLate.toFixed(2));
+            minLateTotalRow.getCell(12).font = { name: 'Times New Roman', size: 11, bold: true };
+            minLateTotalRow.getCell(12).alignment = { horizontal: 'center', vertical: 'middle' };
+
+            // Beveled paste (col M / 13)
+            minLateTotalRow.getCell(13).value = parseFloat(sumBeveledPasteMinLate.toFixed(2));
+            minLateTotalRow.getCell(13).font = { name: 'Times New Roman', size: 11, bold: true };
+            minLateTotalRow.getCell(13).alignment = { horizontal: 'center', vertical: 'middle' };
+
+            // Rong 25-35 (col N / 14)
+            minLateTotalRow.getCell(14).value = parseFloat(sumRong2535MinLate.toFixed(2));
+            minLateTotalRow.getCell(14).font = { name: 'Times New Roman', size: 11, bold: true };
+            minLateTotalRow.getCell(14).alignment = { horizontal: 'center', vertical: 'middle' };
+
+            // Rong 40-59 (col O / 15)
+            minLateTotalRow.getCell(15).value = parseFloat(sumRong4059MinLate.toFixed(2));
+            minLateTotalRow.getCell(15).font = { name: 'Times New Roman', size: 11, bold: true };
+            minLateTotalRow.getCell(15).alignment = { horizontal: 'center', vertical: 'middle' };
+
+            // Rong 17-39 (col P / 16)
+            minLateTotalRow.getCell(16).value = parseFloat(sumRong1739MinLate.toFixed(2));
+            minLateTotalRow.getCell(16).font = { name: 'Times New Roman', size: 11, bold: true };
+            minLateTotalRow.getCell(16).alignment = { horizontal: 'center', vertical: 'middle' };
+
+            // Vat moi (col S / 19)
+            minLateTotalRow.getCell(19).value = parseFloat(sumVatMoiMinLate.toFixed(2));
+            minLateTotalRow.getCell(19).font = { name: 'Times New Roman', size: 11, bold: true };
+            minLateTotalRow.getCell(19).alignment = { horizontal: 'center', vertical: 'middle' };
+
+            // Beveled handle (col T / 20)
+            minLateTotalRow.getCell(20).value = parseFloat(sumBeveledHandleMinLate.toFixed(2));
+            minLateTotalRow.getCell(20).font = { name: 'Times New Roman', size: 11, bold: true };
+            minLateTotalRow.getCell(20).alignment = { horizontal: 'center', vertical: 'middle' };
+
+            // CNC (col U / 21)
+            minLateTotalRow.getCell(21).value = sumCNCMinLate;
+            minLateTotalRow.getCell(21).font = { name: 'Times New Roman', size: 11, bold: true };
+            minLateTotalRow.getCell(21).alignment = { horizontal: 'center', vertical: 'middle' };
+
+            // Set borders for entire minLateTotalRow
+            for (let c = 1; c <= maxCol; c++) {
+                minLateTotalRow.getCell(c).border = {
+                    top: { style: 'thin', color: { argb: 'FF9CA3AF' } },
+                    bottom: { style: 'double', color: { argb: 'FF1F2937' } }
+                };
+            }
+            currentRow++;
 
             // Separator
             worksheet.getRow(currentRow).height = 12;

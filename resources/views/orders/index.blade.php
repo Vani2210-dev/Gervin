@@ -22,7 +22,7 @@
 <div class="grid grid-cols-12 gap-y-6">
     <div class="col-span-12">
         {{-- Statistics Grid --}}
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <!-- Card 1 -->
             <div class="bg-white border border-neutral-200 rounded-2xl p-5 shadow-sm flex items-center gap-4">
                 <div class="w-12 h-12 rounded-xl bg-primary-50 flex items-center justify-center text-primary-600 text-2xl flex-shrink-0">
@@ -41,26 +41,6 @@
                 <div>
                     <div class="text-xs text-neutral-500 font-medium mb-1">Tổng tiền hàng</div>
                     <div class="text-xl font-bold text-neutral-800">{{ number_format($totalAmountSum, 0, ',', '.') }}₫</div>
-                </div>
-            </div>
-            <!-- Card 3 -->
-            <div class="bg-white border border-neutral-200 rounded-2xl p-5 shadow-sm flex items-center gap-4">
-                <div class="w-12 h-12 rounded-xl bg-success-50 flex items-center justify-center text-success-600 text-2xl flex-shrink-0">
-                    <iconify-icon icon="lucide:check-circle"></iconify-icon>
-                </div>
-                <div>
-                    <div class="text-xs text-neutral-500 font-medium mb-1">Tổng đã thu</div>
-                    <div class="text-xl font-bold text-success-700">{{ number_format($totalPaidSum, 0, ',', '.') }}₫</div>
-                </div>
-            </div>
-            <!-- Card 4 -->
-            <div class="bg-white border border-neutral-200 rounded-2xl p-5 shadow-sm flex items-center gap-4">
-                <div class="w-12 h-12 rounded-xl bg-danger-50 flex items-center justify-center text-danger-600 text-2xl flex-shrink-0">
-                    <iconify-icon icon="lucide:alert-circle"></iconify-icon>
-                </div>
-                <div>
-                    <div class="text-xs text-neutral-500 font-medium mb-1">Tổng còn nợ</div>
-                    <div class="text-xl font-bold text-danger-700">{{ number_format($totalDebtSum, 0, ',', '.') }}₫</div>
                 </div>
             </div>
         </div>
@@ -96,7 +76,7 @@
                         <iconify-icon icon="solar:filter-outline" class="icon text-xl line-height-1"></iconify-icon>
                         Lọc
                     </button>
-                    @if(request()->filled('filter_order_code') || request()->filled('filter_customer_name') || request()->filled('filter_status') || request()->filled('filter_type') || request()->filled('filter_date') || request()->filled('filter_month') || request()->filled('filter_year'))
+                    @if(request()->filled('filter_customer_id') || request()->filled('filter_status') || request()->filled('filter_type') || request()->filled('filter_start_date') || request()->filled('filter_end_date'))
                     <a href="{{ route('orders.index') }}" class="btn text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2">
                         <iconify-icon icon="solar:close-circle-outline" class="icon text-xl line-height-1"></iconify-icon>
                         Xóa lọc
@@ -140,13 +120,12 @@
                 @csrf
                 <input type="hidden" name="search" value="{{ $search }}">
                 <input type="hidden" name="per_page" value="{{ $perPage }}">
-                <input type="hidden" name="filter_order_code" value="{{ request('filter_order_code') }}">
-                <input type="hidden" name="filter_customer_name" value="{{ request('filter_customer_name') }}">
+
+                <input type="hidden" name="filter_customer_id" value="{{ request('filter_customer_id') }}">
                 <input type="hidden" name="filter_status" value="{{ request('filter_status') }}">
                 <input type="hidden" name="filter_type" value="{{ request('filter_type') }}">
-                <input type="hidden" name="filter_date" value="{{ request('filter_date') }}">
-                <input type="hidden" name="filter_month" value="{{ request('filter_month') }}">
-                <input type="hidden" name="filter_year" value="{{ request('filter_year') }}">
+                <input type="hidden" name="filter_start_date" value="{{ request('filter_start_date') }}">
+                <input type="hidden" name="filter_end_date" value="{{ request('filter_end_date') }}">
             </form>
             <div id="bulkOrderActionBar" class="hidden mx-4 mt-4 mb-0 bg-primary-50 border border-primary-200 rounded-xl px-4 py-3 flex flex-wrap items-center justify-between gap-3">
                 <div class="flex items-center gap-3">
@@ -189,6 +168,7 @@
                                 <th scope="col">Loại đơn</th>
                                 <th scope="col">Khách hàng</th>
                                 <th scope="col">Số điện thoại</th>
+                                <th scope="col">Ngày tạo đơn</th>
                                 <th scope="col">Hạn đơn</th>
                                 <th scope="col">Tổng tiền</th>
                                 <th scope="col">Trạng thái</th>
@@ -240,6 +220,9 @@
                                     <span class="text-base text-secondary-light">{{ $order->phone ?? '—' }}</span>
                                 </td>
                                 <td>
+                                    <span class="text-base text-secondary-light">{{ $order->order_date ? $order->order_date->format('H:i d/m/Y') : '—' }}</span>
+                                </td>
+                                <td>
                                     <span class="text-base text-secondary-light">{{ $order->deadline ? $order->deadline->format('H:i d/m/Y') : '—' }}</span>
                                 </td>
                                 <td>
@@ -249,26 +232,34 @@
                                     @php
                                         $statusColors = [
                                             'draft' => 'bg-neutral-100 text-neutral-600',
-                                            'pending' => 'bg-warning-100 text-warning-600',
+                                            'pending' => 'bg-warning-100 text-warning-600 hover:bg-warning-200 cursor-pointer',
                                             'transferred' => 'bg-info-100 text-info-600',
-
                                             'in_production' => 'bg-indigo-100 text-indigo-600 border border-indigo-200',
                                             'completed' => 'bg-success-100 text-success-600',
                                             'cancelled' => 'bg-danger-100 text-danger-600',
                                         ];
                                         $statusLabels = [
                                             'draft' => 'Nháp',
-                                            'pending' => 'Chờ xử lý',
+                                            'pending' => 'Chờ xử lý (Click chuyển SX)',
                                             'transferred' => 'Chuyển sản xuất',
-
                                             'in_production' => 'Đang sản xuất',
                                             'completed' => 'Hoàn thành',
                                             'cancelled' => 'Đã hủy',
                                         ];
                                     @endphp
-                                    <span class="px-3 py-1 rounded font-medium text-xs {{ $statusColors[$order->status] ?? 'bg-neutral-100 text-neutral-600' }}">
-                                        {{ $statusLabels[$order->status] ?? $order->status }}
-                                    </span>
+                                    @if($order->status === 'pending' && auth()->user()?->can('edit order'))
+                                        <form method="POST" action="{{ route('orders.update-status', $order) }}" style="display:inline;" onsubmit="return confirm('Xác nhận chuyển đơn hàng sang sản xuất?')">
+                                            @csrf
+                                            <input type="hidden" name="status" value="transferred">
+                                            <button type="submit" class="px-3 py-1 rounded font-medium text-xs {{ $statusColors[$order->status] }} border-0 align-baseline" title="Bấm để chuyển sản xuất">
+                                                {{ $statusLabels[$order->status] }}
+                                            </button>
+                                        </form>
+                                    @else
+                                        <span class="px-3 py-1 rounded font-medium text-xs {{ $statusColors[$order->status] ?? 'bg-neutral-100 text-neutral-600' }}">
+                                            {{ $statusLabels[$order->status] ?? $order->status }}
+                                        </span>
+                                    @endif
                                 </td>
                                 <td class="text-center whitespace-nowrap">
                                     <div class="flex items-center gap-2 justify-center">
@@ -290,6 +281,19 @@
                                                 <span class="bg-neutral-100 text-neutral-400 cursor-not-allowed font-medium w-8 h-8 flex justify-center items-center rounded-full" title="{{ $order->status === 'in_production' ? 'Đơn hàng đang sản xuất, không thể chỉnh sửa' : 'Đơn hàng đã bị hủy, không thể chỉnh sửa' }}">
                                                     <iconify-icon icon="lucide:edit" class="menu-icon"></iconify-icon>
                                                 </span>
+                                            @endif
+
+
+
+                                            {{-- Nút nhanh hủy đơn --}}
+                                            @if($order->status !== 'cancelled')
+                                            <form method="POST" action="{{ route('orders.update-status', $order) }}" style="display:inline;" onsubmit="return confirm('Bạn có chắc chắn muốn hủy đơn hàng này?')">
+                                                @csrf
+                                                <input type="hidden" name="status" value="cancelled">
+                                                <button type="submit" class="bg-danger-100 hover:bg-danger-200 text-danger-600 font-medium w-8 h-8 flex justify-center items-center rounded-full inline-flex" title="Hủy đơn hàng">
+                                                    <iconify-icon icon="lucide:ban" class="menu-icon"></iconify-icon>
+                                                </button>
+                                            </form>
                                             @endif
                                         @endcan
                                         @can('delete order')
@@ -344,13 +348,17 @@
         <input type="hidden" name="per_page" value="{{ $perPage }}">
         <input type="hidden" name="search" value="{{ $search }}">
         <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="form-group">
-                <label class="form-label font-semibold text-sm text-neutral-600">Mã đơn</label>
-                <input type="text" name="filter_order_code" class="form-control rounded-lg" placeholder="Nhập mã đơn..." value="{{ request('filter_order_code') }}">
-            </div>
-            <div class="form-group">
-                <label class="form-label font-semibold text-sm text-neutral-600">Tên khách hàng</label>
-                <input type="text" name="filter_customer_name" class="form-control rounded-lg" placeholder="Nhập tên khách..." value="{{ request('filter_customer_name') }}">
+
+            <div class="form-group md:col-span-2">
+                <label class="form-label font-semibold text-sm text-neutral-600">Khách hàng</label>
+                <select name="filter_customer_id" id="filter_customer_id" class="rounded-lg w-full">
+                    <option value="">Tất cả</option>
+                    @foreach($customers as $c)
+                        <option value="{{ $c->id }}" {{ request('filter_customer_id') == $c->id ? 'selected' : '' }}>
+                            {{ $c->customer_code }} - {{ $c->name }}
+                        </option>
+                    @endforeach
+                </select>
             </div>
             <div class="form-group">
                 <label class="form-label font-semibold text-sm text-neutral-600">Trạng thái</label>
@@ -374,22 +382,12 @@
                 </select>
             </div>
             <div class="form-group">
-                <label class="form-label font-semibold text-sm text-neutral-600">Lọc theo ngày</label>
-                <input type="date" name="filter_date" class="form-control rounded-lg" value="{{ request('filter_date') }}">
+                <label class="form-label font-semibold text-sm text-neutral-600">Từ ngày</label>
+                <input type="date" name="filter_start_date" class="form-control rounded-lg" value="{{ request('filter_start_date') }}">
             </div>
             <div class="form-group">
-                <label class="form-label font-semibold text-sm text-neutral-600">Lọc theo tháng</label>
-                <input type="month" name="filter_month" class="form-control rounded-lg" value="{{ request('filter_month') }}">
-            </div>
-            <div class="form-group">
-                <label class="form-label font-semibold text-sm text-neutral-600">Lọc theo năm</label>
-                <select name="filter_year" class="form-select rounded-lg">
-                    <option value="">Tất cả</option>
-                    @php $currentYear = date('Y'); @endphp
-                    @for($y = $currentYear; $y >= $currentYear - 5; $y--)
-                    <option value="{{ $y }}" {{ request('filter_year') == $y ? 'selected' : '' }}>Năm {{ $y }}</option>
-                    @endfor
-                </select>
+                <label class="form-label font-semibold text-sm text-neutral-600">Đến ngày</label>
+                <input type="date" name="filter_end_date" class="form-control rounded-lg" value="{{ request('filter_end_date') }}">
             </div>
         </div>
         <div class="px-6 py-4 border-t border-neutral-200 flex gap-3">
@@ -538,4 +536,14 @@
 </script>
 @endif
 
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof TomSelect !== 'undefined' && document.getElementById('filter_customer_id')) {
+            new TomSelect('#filter_customer_id', {
+                allowEmptyOption: true,
+                placeholder: '-- Chọn khách hàng --',
+            });
+        }
+    });
+</script>
 @endsection

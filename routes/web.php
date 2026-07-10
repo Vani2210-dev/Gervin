@@ -265,6 +265,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('orders/bulk-destroy', [OrderController::class, 'bulkDestroy'])->name('orders.bulk-destroy');
     Route::get('orders/create/{type}', [OrderController::class, 'createByType'])->name('orders.create.type');
     Route::post('orders/discard-draft', [OrderController::class, 'discardDraft'])->name('orders.discard-draft');
+    Route::post('orders/{order}/update-status', [OrderController::class, 'updateStatus'])->name('orders.update-status');
     Route::get('orders/image/{filename}', [OrderController::class, 'serveImage'])->name('orders.image');
 
     // Customer Payments

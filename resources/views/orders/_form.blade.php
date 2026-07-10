@@ -753,12 +753,12 @@ function updateOrderSummary() {
                     let sum = 0;
                     
                     // Fields that should display as float (decimals)
-                    const isFloat = field === 'wing_area' || field === 'weight' || field.includes('length') || field.includes('ban_rong');
+                    const isFloat = field === 'wing_area' || field === 'weight' || field.includes('length') || field.includes('ban_rong') || field === 'area_m2';
                     
                     table.querySelectorAll(`tbody tr:not(.hidden) input[name*="[${field}]"]`).forEach(input => {
                         if (!input.disabled && input.type !== 'hidden') {
                             let valStr = input.value;
-                            if (typeof valStr === 'string') {
+                            if (typeof valStr === 'string' && !isFloat) {
                                 valStr = valStr.replace(/\./g, '');
                             }
                             const val = parseFloat(valStr);
