@@ -65,7 +65,7 @@ class CustomerController extends Controller
             'name'          => $request->name,
             'phone'         => $request->phone,
             'address'       => $request->address,
-            'initial_debt'  => $request->initial_debt ?? 0,
+            'debt'          => $request->initial_debt ?? 0,
         ]);
 
         return redirect()->route('customers.index')->with('success', 'Thêm khách hàng thành công.');
@@ -88,7 +88,7 @@ class CustomerController extends Controller
         ];
         
         if ($request->has('initial_debt')) {
-            $updateData['initial_debt'] = $request->initial_debt ?? 0;
+            $updateData['debt'] = $request->initial_debt ?? 0;
         }
 
         if ($request->filled('customer_code')) {
@@ -152,7 +152,7 @@ class CustomerController extends Controller
             ->get();
 
         $validOrders = $orders->filter(function($o) {
-            return !in_array($o->status, ['draft', 'cancelled']);
+            return !in_array($o->status, ['draft', 'cancelled', 'pending']);
         });
 
         $totalOrders = $validOrders->count();
@@ -160,14 +160,13 @@ class CustomerController extends Controller
             return round($o->total_amount, -3);
         });
 
-        // Tổng đã thu = tổng các đợt thanh toán thực tế (order_payments)
-        $totalPaid = $validOrders->flatMap->orderPayments->sum('amount');
+        // Tổng đã thu = tổng các đợt thanh toán thực tế của khách hàng (customer_payments)
+        $totalPaid = $customer->customerPayments()->sum('amount');
 
         $statusLabels = [
             'draft'         => 'Nháp',
             'pending'       => 'Chờ xử lý',
             'transferred'   => 'Chuyển sản xuất',
-
             'in_production' => 'Đang sản xuất',
             'completed'     => 'Hoàn thành',
             'cancelled'     => 'Đã hủy',
@@ -190,6 +189,30 @@ class CustomerController extends Controller
             ];
         });
 
+        $payments = $customer->customerPayments()->with('creator', 'order')->get()->map(function($pmt) {
+            return [
+                'id' => $pmt->id,
+                'payment_date' => $pmt->payment_date ? $pmt->payment_date->format('Y-m-d') : null,
+                'payment_date_formatted' => $pmt->payment_date ? $pmt->payment_date->format('d/m/Y') : '—',
+                'amount' => $pmt->amount,
+                'payment_method' => $pmt->payment_method,
+                'payment_method_label' => \App\Models\CustomerPayment::methodLabel($pmt->payment_method),
+                'note' => $pmt->note,
+                'order_id' => $pmt->order_id,
+                'order_code' => $pmt->order ? $pmt->order->order_code : null,
+                'creator_name' => $pmt->creator ? $pmt->creator->name : 'Hệ thống',
+            ];
+        });
+
+        // Get customer's orders for the select dropdown in the add payment form
+        $customerOrders = $customer->orders()->whereNotIn('status', ['draft', 'cancelled'])->orderBy('order_date', 'desc')->get()->map(function($o) {
+            return [
+                'id' => $o->id,
+                'order_code' => $o->order_code,
+                'total_amount' => round($o->total_amount, -3),
+            ];
+        });
+
         return response()->json([
             'customer'      => $customer,
             'total_orders'  => $totalOrders,
@@ -199,6 +222,8 @@ class CustomerController extends Controller
             'unpaid_debt_summary' => $customer->getDebtSummaryExcluding($excludeOrderId),
             'status_counts' => $statusCounts,
             'recent_orders' => $recentOrders,
+            'payments'      => $payments,
+            'customer_orders' => $customerOrders,
         ]);
     }
 }

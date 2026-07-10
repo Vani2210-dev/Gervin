@@ -8,6 +8,84 @@ class Order extends Model
 {
     protected $table = 'orders';
 
+    protected static function booted()
+    {
+        static::created(function ($order) {
+            $order->adjustCustomerDebtOnCreate();
+        });
+
+        static::updated(function ($order) {
+            $order->adjustCustomerDebtOnUpdate();
+        });
+
+        static::deleted(function ($order) {
+            $order->adjustCustomerDebtOnDelete();
+        });
+    }
+
+    public function adjustCustomerDebtOnCreate()
+    {
+        if ($this->customer && !in_array($this->status, ['draft', 'pending', 'cancelled'])) {
+            $amount = round($this->total_amount, -3);
+            $this->customer->increment('debt', $amount);
+        }
+    }
+
+    public function adjustCustomerDebtOnUpdate()
+    {
+        $oldStatus = $this->getOriginal('status');
+        $newStatus = $this->status;
+        $oldAmount = round($this->getOriginal('total_amount') ?? 0, -3);
+        $newAmount = round($this->total_amount, -3);
+        $oldCustomerId = $this->getOriginal('customer_id');
+        $newCustomerId = $this->customer_id;
+
+        $wasValid = !in_array($oldStatus, ['draft', 'pending', 'cancelled']);
+        $isValid = !in_array($newStatus, ['draft', 'pending', 'cancelled']);
+
+        // Case 1: Customer changed
+        if ($oldCustomerId != $newCustomerId) {
+            if ($wasValid && $oldCustomerId) {
+                $oldCustomer = Customer::find($oldCustomerId);
+                if ($oldCustomer) {
+                    $oldCustomer->decrement('debt', $oldAmount);
+                }
+            }
+            if ($isValid && $newCustomerId) {
+                $newCustomer = Customer::find($newCustomerId);
+                if ($newCustomer) {
+                    $newCustomer->increment('debt', $newAmount);
+                }
+            }
+            return;
+        }
+
+        // Case 2: Same customer
+        if ($this->customer) {
+            if ($wasValid && $isValid) {
+                // Both valid, adjust difference
+                $diff = $newAmount - $oldAmount;
+                if ($diff != 0) {
+                    $this->customer->increment('debt', $diff);
+                }
+            } elseif ($wasValid && !$isValid) {
+                // Became invalid, subtract old amount
+                $this->customer->decrement('debt', $oldAmount);
+            } elseif (!$wasValid && $isValid) {
+                // Became valid, add new amount
+                $this->customer->increment('debt', $newAmount);
+            }
+        }
+    }
+
+    public function adjustCustomerDebtOnDelete()
+    {
+        if ($this->customer && !in_array($this->status, ['draft', 'pending', 'cancelled'])) {
+            $amount = round($this->total_amount, -3);
+            $this->customer->decrement('debt', $amount);
+        }
+    }
+
     protected $fillable = [
         'order_code',
         'type',
@@ -68,7 +146,7 @@ class Order extends Model
 
     public function orderPayments()
     {
-        return $this->hasMany(OrderPayment::class, 'order_id')->orderBy('payment_date');
+        return $this->hasMany(CustomerPayment::class, 'order_id')->orderBy('payment_date');
     }
 }
 

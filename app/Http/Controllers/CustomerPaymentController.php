@@ -2,49 +2,46 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Order;
-use App\Models\OrderPayment;
+use App\Models\Customer;
+use App\Models\CustomerPayment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class OrderPaymentController extends Controller
+class CustomerPaymentController extends Controller
 {
-    public function store(Request $request, Order $order)
+    public function store(Request $request, Customer $customer)
     {
-        if (in_array($order->status, ['draft', 'pending', 'cancelled'])) {
-            return redirect()->back()->with('error', 'Không thể thao tác thanh toán với đơn hàng ở trạng thái này.');
-        }
         $request->validate([
             'payment_date'   => 'required|date',
             'amount'         => 'required|numeric|min:1',
             'payment_method' => 'required|in:cash,transfer,other',
             'note'           => 'nullable|string|max:500',
+            'order_id'       => 'nullable|exists:orders,id',
         ]);
 
-        $order->orderPayments()->create([
+        $customer->customerPayments()->create([
             'payment_date'   => $request->payment_date,
             'amount'         => $request->amount,
             'payment_method' => $request->payment_method,
             'note'           => $request->note,
+            'order_id'       => $request->order_id,
             'created_by'     => Auth::id(),
         ]);
 
-        return redirect()->route('orders.show', $order)
-            ->with('success', 'Đã ghi nhận đợt thanh toán.');
+        return redirect()->route('customers.index', ['overview_id' => $customer->id])
+            ->with('success', 'Đã ghi nhận đợt thanh toán cho khách hàng.');
     }
 
-    public function update(Request $request, Order $order, OrderPayment $payment)
+    public function update(Request $request, Customer $customer, CustomerPayment $payment)
     {
-        if (in_array($order->status, ['draft', 'pending', 'cancelled'])) {
-            return redirect()->back()->with('error', 'Không thể thao tác thanh toán với đơn hàng ở trạng thái này.');
-        }
-        abort_if($payment->order_id !== $order->id, 403);
+        abort_if($payment->customer_id !== $customer->id, 403);
 
         $request->validate([
             'payment_date'   => 'required|date',
             'amount'         => 'required|numeric|min:1',
             'payment_method' => 'required|in:cash,transfer,other',
             'note'           => 'nullable|string|max:500',
+            'order_id'       => 'nullable|exists:orders,id',
         ]);
 
         $payment->update([
@@ -52,22 +49,20 @@ class OrderPaymentController extends Controller
             'amount'         => $request->amount,
             'payment_method' => $request->payment_method,
             'note'           => $request->note,
+            'order_id'       => $request->order_id,
         ]);
 
-        return redirect()->route('orders.show', $order)
+        return redirect()->route('customers.index', ['overview_id' => $customer->id])
             ->with('success', 'Đã cập nhật đợt thanh toán.');
     }
 
-    public function destroy(Order $order, OrderPayment $payment)
+    public function destroy(Customer $customer, CustomerPayment $payment)
     {
-        if (in_array($order->status, ['draft', 'pending', 'cancelled'])) {
-            return redirect()->back()->with('error', 'Không thể thao tác thanh toán với đơn hàng ở trạng thái này.');
-        }
-        abort_if($payment->order_id !== $order->id, 403);
+        abort_if($payment->customer_id !== $customer->id, 403);
 
         $payment->delete();
 
-        return redirect()->route('orders.show', $order)
+        return redirect()->route('customers.index', ['overview_id' => $customer->id])
             ->with('success', 'Đã xóa đợt thanh toán.');
     }
 }

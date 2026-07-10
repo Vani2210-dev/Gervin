@@ -130,7 +130,7 @@ class AcrylicOrderService
             if ($existing) {
                 $customerId = $existing->id;
                 if ($request->has('customer_initial_debt')) {
-                    $existing->update(['initial_debt' => $request->input('customer_initial_debt', 0)]);
+                    $existing->update(['debt' => $request->input('customer_initial_debt', 0)]);
                 }
             } else {
                 $lastCustomer = \App\Models\Customer::orderBy('id', 'desc')->first();
@@ -141,12 +141,12 @@ class AcrylicOrderService
                     'name'          => trim($request->customer_name),
                     'phone'         => $request->phone,
                     'address'       => $request->address,
-                    'initial_debt'  => $request->input('customer_initial_debt', 0),
+                    'debt'          => $request->input('customer_initial_debt', 0),
                 ]);
                 $customerId = $newCustomer->id;
             }
         } elseif ($customerId && $request->has('customer_initial_debt')) {
-            \App\Models\Customer::where('id', $customerId)->update(['initial_debt' => $request->input('customer_initial_debt', 0)]);
+            \App\Models\Customer::where('id', $customerId)->update(['debt' => $request->input('customer_initial_debt', 0)]);
         }
 
         $order->update([

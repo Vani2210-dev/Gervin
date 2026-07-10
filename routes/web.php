@@ -27,7 +27,7 @@ use App\Http\Controllers\DispatchPackageController;
 use App\Http\Controllers\DeliveryPackageController;
 use App\Http\Controllers\PackingPackageController;
 use App\Http\Controllers\QrScanController;
-use App\Http\Controllers\OrderPaymentController;
+use App\Http\Controllers\CustomerPaymentController;
 use App\Http\Controllers\GlassPriceController;
 use App\Http\Controllers\MinLatePriceController;
 
@@ -267,10 +267,10 @@ Route::middleware(['auth'])->group(function () {
     Route::post('orders/discard-draft', [OrderController::class, 'discardDraft'])->name('orders.discard-draft');
     Route::get('orders/image/{filename}', [OrderController::class, 'serveImage'])->name('orders.image');
 
-    // Order Payments
-    Route::post('orders/{order}/payments', [OrderPaymentController::class, 'store'])->name('orders.payments.store');
-    Route::put('orders/{order}/payments/{payment}', [OrderPaymentController::class, 'update'])->name('orders.payments.update');
-    Route::delete('orders/{order}/payments/{payment}', [OrderPaymentController::class, 'destroy'])->name('orders.payments.destroy');
+    // Customer Payments
+    Route::post('customers/{customer}/payments', [CustomerPaymentController::class, 'store'])->name('customers.payments.store');
+    Route::put('customers/{customer}/payments/{payment}', [CustomerPaymentController::class, 'update'])->name('customers.payments.update');
+    Route::delete('customers/{customer}/payments/{payment}', [CustomerPaymentController::class, 'destroy'])->name('customers.payments.destroy');
 });
 
 // Manufacture Orders

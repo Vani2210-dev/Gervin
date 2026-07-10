@@ -113,7 +113,7 @@
                                         </button>
                                         @can('edit customer')
                                         <button type="button"
-                                            onclick="openEditModal({{ $c->id }}, '{{ addslashes($c->customer_code) }}', '{{ addslashes($c->name) }}', '{{ addslashes($c->phone) }}', '{{ addslashes($c->address) }}', {{ $c->initial_debt ?? 0 }})"
+                                            onclick="openEditModal({{ $c->id }}, '{{ addslashes($c->customer_code) }}', '{{ addslashes($c->name) }}', '{{ addslashes($c->phone) }}', '{{ addslashes($c->address) }}', {{ $c->debt ?? 0 }})"
                                             class="bg-success-100 hover:bg-success-200 text-success-600 font-medium w-10 h-10 flex justify-center items-center rounded-full">
                                             <iconify-icon icon="lucide:edit" class="menu-icon"></iconify-icon>
                                         </button>
@@ -180,7 +180,7 @@
                 <input type="text" name="phone" class="form-control rounded-lg" placeholder="Nhập số điện thoại" value="{{ old('phone') }}">
             </div>
             <div class="form-group">
-                <label class="form-label font-semibold text-sm text-neutral-600">Nợ đầu kỳ</label>
+                <label class="form-label font-semibold text-sm text-neutral-600">Công nợ</label>
                 <input type="number" name="initial_debt" class="form-control rounded-lg" placeholder="Ví dụ: 10000000" min="0" value="{{ old('initial_debt') }}">
             </div>
             <div class="form-group md:col-span-2">
@@ -219,7 +219,7 @@
                 <input type="text" id="edit_phone" name="phone" class="form-control rounded-lg" placeholder="Nhập số điện thoại">
             </div>
             <div class="form-group">
-                <label class="form-label font-semibold text-sm text-neutral-600">Nợ đầu kỳ</label>
+                <label class="form-label font-semibold text-sm text-neutral-600">Công nợ</label>
                 <input type="number" id="edit_initial_debt" name="initial_debt" class="form-control rounded-lg" placeholder="Ví dụ: 10000000" min="0">
             </div>
             <div class="form-group md:col-span-2">
@@ -283,7 +283,7 @@ function openEditModal(id, customerCode, name, phone, address, initialDebt) {
     onclick="closeCustomerOverview()">
 </div>
 <div id="customer-overview-modal"
-    style="display:none;" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(800px,95vw)] max-h-[90vh] overflow-y-auto bg-white rounded-2xl shadow-xl z-[1051]">
+    style="display:none;" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(1200px,95vw)] max-h-[90vh] overflow-y-auto bg-white rounded-2xl shadow-xl z-[1051]">
 
     {{-- Header --}}
     <div class="px-6 py-4 border-b border-neutral-200 flex items-center justify-between sticky top-0 bg-white z-10">
@@ -314,34 +314,160 @@ function openEditModal(id, customerCode, name, phone, address, initialDebt) {
             <div id="ov-status-grid" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
         </div>
 
-        {{-- Recent orders --}}
-        <div>
-            <div style="font-size:13px; font-weight:600; color:#374151; margin-bottom:10px; display:flex; align-items:center; gap:6px;">
-                <iconify-icon icon="lucide:list" style="color:#8b5cf6;"></iconify-icon>
-                10 đơn hàng gần nhất
+        {{-- Side-by-side grid --}}
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            {{-- Left: Orders --}}
+            <div class="lg:col-span-7">
+                <div style="font-size:13px; font-weight:600; color:#374151; margin-bottom:10px; display:flex; align-items:center; gap:6px;">
+                    <iconify-icon icon="lucide:list" style="color:#8b5cf6;"></iconify-icon>
+                    10 đơn hàng gần nhất
+                </div>
+                <div style="overflow-x:auto; background:#f8fafc; border-radius:12px; padding:12px; border:1px solid #f1f5f9;">
+                    <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                        <thead>
+                            <tr style="background:#edf2f7;">
+                                <th style="padding:8px 10px; text-align:left; color:#4a5568; font-weight:600; border-bottom:1px solid #cbd5e0;">Mã đơn</th>
+                                <th style="padding:8px 10px; text-align:left; color:#4a5568; font-weight:600; border-bottom:1px solid #cbd5e0;">Ngày</th>
+                                <th style="padding:8px 10px; text-align:right; color:#4a5568; font-weight:600; border-bottom:1px solid #cbd5e0;">Giá trị</th>
+                                <th style="padding:8px 10px; text-align:center; color:#4a5568; font-weight:600; border-bottom:1px solid #cbd5e0;">Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ov-orders-tbody"></tbody>
+                    </table>
+                    <div id="ov-no-orders" style="display:none; text-align:center; padding:30px; color:#94a3b8; font-size:13px;">
+                        <iconify-icon icon="lucide:package-open" style="font-size:28px;"></iconify-icon>
+                        <div style="margin-top:8px;">Chưa có đơn hàng nào</div>
+                    </div>
+                </div>
             </div>
-            <div style="overflow-x:auto;">
-                <table style="width:100%; border-collapse:collapse; font-size:12px;">
-                    <thead>
-                        <tr style="background:#f8fafc;">
-                            <th style="padding:8px 10px; text-align:left; color:#64748b; font-weight:600; border-bottom:1px solid #e2e8f0;">Mã đơn</th>
-                            <th style="padding:8px 10px; text-align:left; color:#64748b; font-weight:600; border-bottom:1px solid #e2e8f0;">Ngày</th>
-                            <th style="padding:8px 10px; text-align:right; color:#64748b; font-weight:600; border-bottom:1px solid #e2e8f0;">Giá trị</th>
-                            <th style="padding:8px 10px; text-align:right; color:#64748b; font-weight:600; border-bottom:1px solid #e2e8f0;">Đã thu</th>
-                            <th style="padding:8px 10px; text-align:right; color:#64748b; font-weight:600; border-bottom:1px solid #e2e8f0;">Còn nợ</th>
-                            <th style="padding:8px 10px; text-align:center; color:#64748b; font-weight:600; border-bottom:1px solid #e2e8f0;">Đợt TT</th>
-                            <th style="padding:8px 10px; text-align:center; color:#64748b; font-weight:600; border-bottom:1px solid #e2e8f0;">Trạng thái</th>
-                        </tr>
-                    </thead>
-                    <tbody id="ov-orders-tbody"></tbody>
-                </table>
-                <div id="ov-no-orders" style="display:none; text-align:center; padding:30px; color:#94a3b8; font-size:13px;">
-                    <iconify-icon icon="lucide:package-open" style="font-size:28px;"></iconify-icon>
-                    <div style="margin-top:8px;">Chưa có đơn hàng nào</div>
+
+            {{-- Right: Payments --}}
+            <div class="lg:col-span-5 flex flex-col gap-4">
+                <div class="flex items-center justify-between">
+                    <div style="font-size:13px; font-weight:600; color:#374151; display:flex; align-items:center; gap:6px;">
+                        <iconify-icon icon="lucide:wallet" style="color:#8b5cf6;"></iconify-icon>
+                        Lịch sử thanh toán
+                    </div>
+                    <button type="button" id="ov-toggle-add-payment"
+                        onclick="document.getElementById('ov-add-payment-block').classList.toggle('hidden'); this.classList.toggle('hidden')"
+                        style="background:#f3f4f6; color:#4f46e5; border:1px dashed #c7d2fe; padding:4px 10px; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.2s;">
+                        <iconify-icon icon="lucide:plus" style="font-size:12px;"></iconify-icon>
+                        Thêm thanh toán
+                    </button>
+                </div>
+
+                {{-- Add payment form block inside modal --}}
+                <div id="ov-add-payment-block" class="hidden" style="background:#f5f3ff; border:1px solid #ddd6fe; border-radius:12px; padding:12px;">
+                    <form id="ov-add-payment-form" method="POST" style="display:flex; flex-direction:column; gap:10px;">
+                        @csrf
+                        <div style="display:grid; grid-template-columns:1fr 1.2fr; gap:8px;">
+                            <div>
+                                <label style="font-size:11px; font-weight:600; color:#4b5563; display:block; margin-bottom:3px;">Ngày</label>
+                                <input type="date" name="payment_date" value="{{ date('Y-m-d') }}" required
+                                    style="width:100%; padding:6px 10px; border:1px solid #cbd5e0; border-radius:6px; font-size:12px; box-sizing:border-box;">
+                            </div>
+                            <div>
+                                <label style="font-size:11px; font-weight:600; color:#4b5563; display:block; margin-bottom:3px;">Số tiền (₫)</label>
+                                <input type="number" name="amount" min="1" required placeholder="Nhập số tiền"
+                                    style="width:100%; padding:6px 10px; border:1px solid #cbd5e0; border-radius:6px; font-size:12px; box-sizing:border-box;">
+                            </div>
+                        </div>
+                        <div>
+                            <label style="font-size:11px; font-weight:600; color:#4b5563; display:block; margin-bottom:3px;">Hình thức</label>
+                            <select name="payment_method" style="width:100%; padding:6px 10px; border:1px solid #cbd5e0; border-radius:6px; font-size:12px; background:white;">
+                                <option value="cash">Tiền mặt</option>
+                                <option value="transfer">Chuyển khoản</option>
+                                <option value="other">Khác</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size:11px; font-weight:600; color:#4b5563; display:block; margin-bottom:3px;">Ghi chú</label>
+                            <input type="text" name="note" placeholder="Ghi chú (nếu có)"
+                                style="width:100%; padding:6px 10px; border:1px solid #cbd5e0; border-radius:6px; font-size:12px; box-sizing:border-box;">
+                        </div>
+                        <div style="display:flex; gap:6px; margin-top:4px;">
+                            <button type="submit" style="flex:1; padding:6px; border:none; border-radius:6px; background:#7c3aed; color:#fff; font-size:11px; font-weight:600; cursor:pointer;">
+                                Lưu thanh toán
+                            </button>
+                            <button type="button" onclick="document.getElementById('ov-add-payment-block').classList.add('hidden'); document.getElementById('ov-toggle-add-payment').classList.remove('hidden')"
+                                style="padding:6px 12px; border:1px solid #d1d5db; border-radius:6px; background:#fff; color:#4b5563; font-size:11px; font-weight:600; cursor:pointer;">
+                                Hủy
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                {{-- Payments list --}}
+                <div style="background:#f8fafc; border-radius:12px; padding:12px; border:1px solid #f1f5f9; display:flex; flex-direction:column; gap:10px; max-h-[300px]; overflow-y:auto;" id="ov-payments-list"></div>
+                <div id="ov-no-payments" style="display:none; text-align:center; padding:30px; color:#94a3b8; font-size:12px; background:#f8fafc; border-radius:12px; border:1px solid #f1f5f9;">
+                    <iconify-icon icon="lucide:coins" style="font-size:24px;"></iconify-icon>
+                    <div style="margin-top:6px;">Khách hàng chưa có đợt thanh toán nào</div>
                 </div>
             </div>
         </div>
     </div>
+</div>
+
+{{-- ===== EDIT CUSTOMER PAYMENT MODAL ===== --}}
+<div id="edit-cust-payment-backdrop" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:2000;"
+    onclick="closeEditCustPayment()"></div>
+<div id="edit-cust-payment-modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+           width:min(420px,95vw); background:#fff; border-radius:16px;
+           box-shadow:0 20px 60px rgba(0,0,0,0.3); z-index:2001; overflow:hidden;">
+    <div style="background:linear-gradient(135deg,#7c3aed,#6d28d9); padding:18px 24px; display:flex; align-items:center; justify-content:space-between;">
+        <div style="display:flex; align-items:center; gap:10px;">
+            <div style="background:rgba(255,255,255,0.2); border-radius:8px; padding:8px; display:flex;">
+                <iconify-icon icon="lucide:edit-3" style="font-size:18px; color:#fff;"></iconify-icon>
+            </div>
+            <div style="font-size:15px; font-weight:700; color:#fff;">Sửa đợt thanh toán</div>
+        </div>
+        <button onclick="closeEditCustPayment()"
+            style="background:rgba(255,255,255,0.15); border:none; border-radius:8px; width:30px; height:30px; cursor:pointer; display:flex; align-items:center; justify-content:center;">
+            <iconify-icon icon="lucide:x" style="font-size:15px; color:#fff;"></iconify-icon>
+        </button>
+    </div>
+    <form id="edit-cust-payment-form" method="POST"
+        style="padding:20px 24px; display:flex; flex-direction:column; gap:14px;">
+        @csrf
+        @method('PUT')
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <div>
+                <label style="font-size:12px; font-weight:600; color:#374151; display:block; margin-bottom:5px;">Ngày <span style="color:#ef4444;">*</span></label>
+                <input id="ecp-date" type="date" name="payment_date" required
+                    style="width:100%; padding:9px 12px; border:1.5px solid #d1d5db; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;">
+            </div>
+            <div>
+                <label style="font-size:12px; font-weight:600; color:#374151; display:block; margin-bottom:5px;">Số tiền (₫) <span style="color:#ef4444;">*</span></label>
+                <input id="ecp-amount" type="number" name="amount" min="1" required
+                    style="width:100%; padding:9px 12px; border:1.5px solid #d1d5db; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;">
+            </div>
+        </div>
+        <div>
+            <label style="font-size:12px; font-weight:600; color:#374151; display:block; margin-bottom:5px;">Hình thức</label>
+            <select id="ecp-method" name="payment_method"
+                style="width:100%; padding:9px 12px; border:1.5px solid #d1d5db; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box; background:white;">
+                <option value="cash">💵 Tiền mặt</option>
+                <option value="transfer">🏦 Chuyển khoản</option>
+                <option value="other">📋 Khác</option>
+            </select>
+        </div>
+
+        <div>
+            <label style="font-size:12px; font-weight:600; color:#374151; display:block; margin-bottom:5px;">Ghi chú</label>
+            <input id="ecp-note" type="text" name="note" placeholder="Ghi chú (nếu có)"
+                style="width:100%; padding:9px 12px; border:1.5px solid #d1d5db; border-radius:8px; font-size:13px; outline:none; box-sizing:border-box;">
+        </div>
+        <div style="display:flex; gap:10px; padding-top:4px;">
+            <button type="submit"
+                style="flex:1; padding:10px; border:none; border-radius:8px; background:linear-gradient(135deg,#7c3aed,#6d28d9); color:#fff; font-size:13px; font-weight:600; cursor:pointer;">
+                Lưu thay đổi
+            </button>
+            <button type="button" onclick="closeEditCustPayment()"
+                style="padding:10px 18px; border:1.5px solid #d1d5db; border-radius:8px; background:#fff; color:#374151; font-size:13px; font-weight:600; cursor:pointer;">
+                Hủy
+            </button>
+        </div>
+    </form>
 </div>
 
 <style>
@@ -356,7 +482,6 @@ const ovStatusColors = {
     draft:         { bg:'#f1f5f9', text:'#64748b' },
     pending:       { bg:'#fef9c3', text:'#854d0e' },
     transferred:   { bg:'#dbeafe', text:'#1d4ed8' },
-
     in_production: { bg:'#ede9fe', text:'#6d28d9' },
     completed:     { bg:'#dcfce7', text:'#15803d' },
     cancelled:     { bg:'#fee2e2', text:'#b91c1c' },
@@ -381,6 +506,10 @@ function openCustomerOverview(id, code, name) {
     loading.style.display  = 'block';
     content.style.display  = 'none';
 
+    // Hide add payment block on opening
+    document.getElementById('ov-add-payment-block').classList.add('hidden');
+    document.getElementById('ov-toggle-add-payment').classList.remove('hidden');
+
     fetch(`/customers/${id}/overview`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
         .then(r => r.json())
         .then(data => {
@@ -400,17 +529,39 @@ function closeCustomerOverview() {
     document.getElementById('customer-overview-modal').style.display    = 'none';
 }
 
+function openEditCustPayment(customerId, pmt) {
+    const actionUrl = `/customers/${customerId}/payments/${pmt.id}`;
+    document.getElementById('edit-cust-payment-form').action = actionUrl;
+    document.getElementById('ecp-date').value = pmt.payment_date;
+    document.getElementById('ecp-amount').value = pmt.amount;
+    document.getElementById('ecp-method').value = pmt.payment_method;
+    document.getElementById('ecp-note').value = pmt.note || '';
+
+
+
+    document.getElementById('edit-cust-payment-backdrop').style.display = 'block';
+    document.getElementById('edit-cust-payment-modal').style.display = 'block';
+}
+
+function closeEditCustPayment() {
+    document.getElementById('edit-cust-payment-backdrop').style.display = 'none';
+    document.getElementById('edit-cust-payment-modal').style.display = 'none';
+}
+
 function renderCustomerOverview(data) {
     const statusLabels = {
         draft:'Nháp', pending:'Chờ xử lý', transferred:'Chuyển sản xuất',
         in_production:'Đang sản xuất', completed:'Hoàn thành', cancelled:'Đã hủy'
     };
 
+    // Store customer orders in window scope for edit payment modal
+    window.lastCustomerOrders = data.customer_orders || [];
+
     // Stat cards
     const cards = [
         { label:'Tổng đơn hàng', value: data.total_orders,                  icon:'lucide:shopping-bag',      bg:'#ede9fe', iconColor:'#7c3aed' },
         { label:'Tổng giá trị',  value: ovFmt(data.total_amount) + '₫',     icon:'lucide:circle-dollar-sign', bg:'#dbeafe', iconColor:'#1d4ed8' },
-        { label:'Đã thu',        value: ovFmt(data.total_paid) + '₫',        icon:'lucide:check-circle',       bg:'#dcfce7', iconColor:'#15803d' },
+        { label:'Đã thanh toán', value: ovFmt(data.total_paid) + '₫',        icon:'lucide:check-circle',       bg:'#dcfce7', iconColor:'#15803d' },
         { label:'Còn nợ',        value: ovFmt(data.total_debt) + '₫',        icon:'lucide:alert-circle',
           bg: data.total_debt > 0 ? '#fee2e2' : '#f0fdf4',
           iconColor: data.total_debt > 0 ? '#b91c1c' : '#15803d' },
@@ -442,26 +593,86 @@ function renderCustomerOverview(data) {
         noOv.style.display = 'none';
         tbody.innerHTML = data.recent_orders.map(o => {
             const c = ovStatusColors[o.status] || { bg:'#f1f5f9', text:'#64748b' };
-            const debtStyle = o.debt > 0 ? 'color:#b91c1c;font-weight:600;' : 'color:#15803d;';
-            const pmtBadge = o.payments_count > 0
-                ? `<span style="background:#ede9fe;color:#6d28d9;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:600;">${o.payments_count} đợt</span>`
-                : `<span style="color:#94a3b8;font-size:11px;">—</span>`;
             return `<tr style="border-bottom:1px solid #f1f5f9;">
                 <td style="padding:9px 10px;">
                     <a href="/orders/${o.id}" target="_blank" style="color:#6366f1;font-weight:600;text-decoration:none;">${o.order_code||'—'}</a>
                 </td>
                 <td style="padding:9px 10px; color:#374151;">${o.order_date ? String(o.order_date).substr(0,10) : '—'}</td>
                 <td style="padding:9px 10px; text-align:right; color:#0f172a;">${ovFmt(o.total_amount)}₫</td>
-                <td style="padding:9px 10px; text-align:right; color:#15803d;">${ovFmt(o.paid)}₫</td>
-                <td style="padding:9px 10px; text-align:right; ${debtStyle}">${ovFmt(o.debt)}₫</td>
-                <td style="padding:9px 10px; text-align:center;">${pmtBadge}</td>
                 <td style="padding:9px 10px; text-align:center;">
                     <span style="background:${c.bg}; color:${c.text}; padding:3px 10px; border-radius:999px; font-size:10px; font-weight:600; white-space:nowrap;">${o.status_label}</span>
                 </td>
             </tr>`;
         }).join('');
     }
+
+    // Set Action URL for Add Payment Form
+    document.getElementById('ov-add-payment-form').action = '/customers/' + data.customer.id + '/payments';
+
+
+
+    // Populate Payments list
+    const pList = document.getElementById('ov-payments-list');
+    const noPayments = document.getElementById('ov-no-payments');
+    if (!data.payments || data.payments.length === 0) {
+        pList.innerHTML = '';
+        noPayments.style.display = 'block';
+    } else {
+        noPayments.style.display = 'none';
+        pList.innerHTML = data.payments.map(p => {
+            const methodColor = p.payment_method === 'cash' 
+                ? 'background:#fef3c7;color:#d97706;' 
+                : (p.payment_method === 'transfer' ? 'background:#dbeafe;color:#2563eb;' : 'background:#f3f4f6;color:#4b5563;');
+            
+            const orderLink = p.order_code 
+                ? `<div style="font-size:10px;color:#4f46e5;margin-top:2px;">Liên kết: <strong>${p.order_code}</strong></div>` 
+                : '';
+                
+            const noteStr = p.note ? `<div style="font-size:10px;color:#6b7280;margin-top:2px;">${p.note}</div>` : '';
+            
+            const pDataJson = JSON.stringify(p).replace(/"/g, '&quot;');
+            
+            return `
+                <div style="background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:10px; display:flex; align-items:start; justify-content:space-between; gap:10px;">
+                    <div style="flex:1; min-w-0;">
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <span style="font-size:11px; font-weight:600; color:#374151;">${p.payment_date_formatted}</span>
+                            <span style="font-size:9px; padding:1px 5px; border-radius:4px; font-weight:600; ${methodColor}">${p.payment_method_label}</span>
+                        </div>
+                        <div style="font-size:13px; font-weight:700; color:#059669; margin-top:2px;">+${ovFmt(p.amount)}₫</div>
+                        ${orderLink}
+                        ${noteStr}
+                        <div style="font-size:9px; color:#9ca3af; margin-top:2px;">Người tạo: ${p.creator_name}</div>
+                    </div>
+                    <div style="display:flex; gap:4px;">
+                        <button type="button" onclick="openEditCustPayment(${data.customer.id}, ${pDataJson})" style="border:none; background:none; color:#9ca3af; cursor:pointer; padding:2px; font-size:14px;" class="hover:text-primary-600">
+                            <iconify-icon icon="lucide:edit-2"></iconify-icon>
+                        </button>
+                        <form method="POST" action="/customers/${data.customer.id}/payments/${p.id}" onsubmit="return confirm('Xóa đợt thanh toán này?')">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" style="border:none; background:none; color:#9ca3af; cursor:pointer; padding:2px; font-size:14px;" class="hover:text-danger-600">
+                                <iconify-icon icon="lucide:trash-2"></iconify-icon>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
 }
+
+// Auto open modal on redirect with overview_id param
+document.addEventListener('DOMContentLoaded', function () {
+    const urlParams = new URLSearchParams(window.location.search);
+    const overviewId = urlParams.get('overview_id');
+    if (overviewId) {
+        const btn = document.querySelector(`button[onclick*="openCustomerOverview(${overviewId},"]`);
+        if (btn) {
+            btn.click();
+        }
+    }
+});
 </script>
 
 @endsection

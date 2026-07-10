@@ -11,7 +11,7 @@ class Customer extends Model
         'name',
         'phone',
         'address',
-        'initial_debt',
+        'debt',
     ];
 
     public function orders()
@@ -19,9 +19,14 @@ class Customer extends Model
         return $this->hasMany(Order::class);
     }
 
+    public function customerPayments()
+    {
+        return $this->hasMany(CustomerPayment::class, 'customer_id')->orderBy('payment_date');
+    }
+
     public function getTotalDebtAttribute()
     {
-        return $this->debt_summary['total_debt'];
+        return $this->debt;
     }
 
     public function getDebtSummaryAttribute()
@@ -38,24 +43,26 @@ class Customer extends Model
             $query->where('id', '!=', $excludeOrderId);
         }
 
-        $orders = $query->withSum('orderPayments', 'amount')->get();
+        $orders = $query->get();
 
-        $unpaidOrders = $orders->filter(function($order) {
-            $paid = $order->order_payments_sum_amount ?? 0;
-            return round($order->total_amount, -3) > $paid;
-        });
-
-        $totalAmount = $unpaidOrders->sum(function($order) {
+        $totalAmount = $orders->sum(function($order) {
             return round($order->total_amount, -3);
         });
         
-        $totalPaid = $unpaidOrders->sum('order_payments_sum_amount');
-        $initialDebt = $this->initial_debt ?? 0;
+        $totalPaid = $this->customerPayments()->sum('amount');
+
+        $totalDebt = $this->debt;
+        if ($excludeOrderId) {
+            $excludedOrder = Order::find($excludeOrderId);
+            if ($excludedOrder && !in_array($excludedOrder->status, ['draft', 'cancelled', 'pending'])) {
+                $totalDebt -= round($excludedOrder->total_amount, -3);
+            }
+        }
 
         return [
             'total_amount' => $totalAmount,
             'total_paid' => $totalPaid,
-            'total_debt' => max(0, $initialDebt + $totalAmount - $totalPaid)
+            'total_debt' => max(0, $totalDebt)
         ];
     }
 }
