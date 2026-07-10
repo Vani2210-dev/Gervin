@@ -144,6 +144,7 @@ class CustomerController extends Controller
     public function overview(Request $request, Customer $customer)
     {
         $excludeOrderId = $request->query('exclude_order_id');
+        $paymentDate = $request->query('payment_date');
 
         $query = \App\Models\Order::where('customer_id', $customer->id);
         
@@ -193,7 +194,18 @@ class CustomerController extends Controller
             ];
         });
 
-        $payments = $customer->customerPayments()->with('creator', 'order')->get()->map(function($pmt) {
+        // Query payments with date filter and pagination (5 per page, newest first)
+        $paymentsQuery = $customer->customerPayments()->with('creator', 'order');
+
+        if ($paymentDate) {
+            $paymentsQuery->whereDate('payment_date', $paymentDate);
+        }
+
+        $paymentsPaginator = $paymentsQuery->orderBy('payment_date', 'desc')
+            ->orderBy('id', 'desc')
+            ->paginate(5, ['*'], 'payment_page');
+
+        $payments = collect($paymentsPaginator->items())->map(function($pmt) {
             return [
                 'id' => $pmt->id,
                 'payment_date' => $pmt->payment_date ? $pmt->payment_date->format('Y-m-d') : null,
@@ -227,6 +239,12 @@ class CustomerController extends Controller
             'status_counts' => $statusCounts,
             'recent_orders' => $recentOrders,
             'payments'      => $payments,
+            'payments_pagination' => [
+                'current_page' => $paymentsPaginator->currentPage(),
+                'last_page' => $paymentsPaginator->lastPage(),
+                'total' => $paymentsPaginator->total(),
+                'per_page' => $paymentsPaginator->perPage(),
+            ],
             'customer_orders' => $customerOrders,
         ]);
     }

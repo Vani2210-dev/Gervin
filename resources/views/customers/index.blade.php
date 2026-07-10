@@ -410,11 +410,20 @@ function openEditModal(id, customerCode, name, phone, address, initialDebt, poli
                     </form>
                 </div>
 
+                {{-- Filter payments --}}
+                <div style="display:flex; gap:6px; align-items:center; margin-bottom:8px; margin-top:8px;">
+                    <div style="font-size:11px; font-weight:600; color:#4b5563;">Lọc ngày:</div>
+                    <input type="date" id="ov-payment-filter-date" style="flex:1; padding:5px 8px; border:1px solid #cbd5e0; border-radius:6px; font-size:11px; outline:none; height:28px; box-sizing:border-box;">
+                    <button type="button" onclick="filterOvPayments()" style="background:#4f46e5; color:#fff; border:none; padding:5px 12px; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; height:28px; display:flex; align-items:center; justify-content:center;">Lọc</button>
+                    <button type="button" onclick="clearOvPaymentsFilter()" style="background:#f3f4f6; color:#4b5563; border:1px solid #cbd5e0; padding:5px 12px; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; height:28px; display:flex; align-items:center; justify-content:center;">Xóa</button>
+                </div>
+
                 {{-- Payments list --}}
                 <div style="background:#f8fafc; border-radius:12px; padding:12px; border:1px solid #f1f5f9; display:flex; flex-direction:column; gap:10px; max-h-[300px]; overflow-y:auto;" id="ov-payments-list"></div>
+                <div id="ov-payments-pagination" style="display:flex; justify-content:center; gap:4px; margin-top:8px;"></div>
                 <div id="ov-no-payments" style="display:none; text-align:center; padding:30px; color:#94a3b8; font-size:12px; background:#f8fafc; border-radius:12px; border:1px solid #f1f5f9;">
                     <iconify-icon icon="lucide:coins" style="font-size:24px;"></iconify-icon>
-                    <div style="margin-top:6px;">Khách hàng chưa có đợt thanh toán nào</div>
+                    <div style="margin-top:6px;">Khách hàng chưa có đợt thanh toán nào hoặc không khớp bộ lọc</div>
                 </div>
             </div>
         </div>
@@ -505,14 +514,49 @@ function ovFmt(n) {
     return Number(n).toLocaleString('vi-VN');
 }
 
+let currentOverviewId = null;
+let currentOverviewCode = null;
+let currentOverviewName = null;
+let currentOverviewPage = 1;
+let currentOverviewFilterDate = '';
+
 function openCustomerOverview(id, code, name) {
+    currentOverviewId = id;
+    currentOverviewCode = code;
+    currentOverviewName = name;
+    currentOverviewPage = 1;
+    currentOverviewFilterDate = '';
+    
+    // Reset date input value if it exists
+    const dateInput = document.getElementById('ov-payment-filter-date');
+    if (dateInput) dateInput.value = '';
+
+    loadCustomerOverviewData(id, 1, '');
+}
+
+function filterOvPayments() {
+    const dateVal = document.getElementById('ov-payment-filter-date').value;
+    currentOverviewFilterDate = dateVal;
+    currentOverviewPage = 1;
+    loadCustomerOverviewData(currentOverviewId, 1, dateVal);
+}
+
+function clearOvPaymentsFilter() {
+    const dateInput = document.getElementById('ov-payment-filter-date');
+    if (dateInput) dateInput.value = '';
+    currentOverviewFilterDate = '';
+    currentOverviewPage = 1;
+    loadCustomerOverviewData(currentOverviewId, 1, '');
+}
+
+function loadCustomerOverviewData(id, page, filterDate) {
     const backdrop = document.getElementById('customer-overview-backdrop');
     const modal    = document.getElementById('customer-overview-modal');
     const loading  = document.getElementById('ov-loading');
     const content  = document.getElementById('ov-content');
 
-    document.getElementById('ov-name').textContent = name;
-    document.getElementById('ov-code').textContent = code;
+    document.getElementById('ov-name').textContent = currentOverviewName;
+    document.getElementById('ov-code').textContent = currentOverviewCode;
 
     backdrop.style.display = 'block';
     modal.style.display    = 'block';
@@ -523,18 +567,47 @@ function openCustomerOverview(id, code, name) {
     document.getElementById('ov-add-payment-block').classList.add('hidden');
     document.getElementById('ov-toggle-add-payment').classList.remove('hidden');
 
-    fetch(`/customers/${id}/overview`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+    let url = `/customers/${id}/overview?payment_page=${page}`;
+    if (filterDate) {
+        url += `&payment_date=${filterDate}`;
+    }
+
+    fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
         .then(r => r.json())
         .then(data => {
             loading.style.display = 'none';
             content.style.display = 'block';
             renderCustomerOverview(data);
+            renderPaymentsPagination(data.payments_pagination);
         })
         .catch(() => {
             loading.style.display = 'none';
             content.style.display = 'block';
             content.innerHTML = '<div style="text-align:center;color:#ef4444;padding:40px;">Không thể tải dữ liệu.</div>';
         });
+}
+
+function renderPaymentsPagination(pagination) {
+    const container = document.getElementById('ov-payments-pagination');
+    if (!pagination || pagination.last_page <= 1) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    let html = '';
+    for (let i = 1; i <= pagination.last_page; i++) {
+        const activeStyle = i === pagination.current_page 
+            ? 'background:#4f46e5;color:#fff;font-weight:bold;' 
+            : 'background:#fff;color:#4b5563;border:1px solid #cbd5e0;';
+            
+        html += `<button type="button" onclick="changeOverviewPage(${i})" style="width:24px;height:24px;border-radius:4px;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;${activeStyle}">${i}</button>`;
+    }
+    container.innerHTML = html;
+}
+
+function changeOverviewPage(page) {
+    currentOverviewPage = page;
+    loadCustomerOverviewData(currentOverviewId, page, currentOverviewFilterDate);
 }
 
 function closeCustomerOverview() {

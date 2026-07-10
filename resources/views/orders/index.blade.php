@@ -19,7 +19,53 @@
     }
 </style>
 
-<div class="grid grid-cols-12">
+<div class="grid grid-cols-12 gap-y-6">
+    <div class="col-span-12">
+        {{-- Statistics Grid --}}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Card 1 -->
+            <div class="bg-white border border-neutral-200 rounded-2xl p-5 shadow-sm flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-primary-50 flex items-center justify-center text-primary-600 text-2xl flex-shrink-0">
+                    <iconify-icon icon="lucide:shopping-bag"></iconify-icon>
+                </div>
+                <div>
+                    <div class="text-xs text-neutral-500 font-medium mb-1">Tổng đơn hàng</div>
+                    <div class="text-xl font-bold text-neutral-800">{{ $totalOrdersCount }} đơn</div>
+                </div>
+            </div>
+            <!-- Card 2 -->
+            <div class="bg-white border border-neutral-200 rounded-2xl p-5 shadow-sm flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 text-2xl flex-shrink-0">
+                    <iconify-icon icon="lucide:circle-dollar-sign"></iconify-icon>
+                </div>
+                <div>
+                    <div class="text-xs text-neutral-500 font-medium mb-1">Tổng tiền hàng</div>
+                    <div class="text-xl font-bold text-neutral-800">{{ number_format($totalAmountSum, 0, ',', '.') }}₫</div>
+                </div>
+            </div>
+            <!-- Card 3 -->
+            <div class="bg-white border border-neutral-200 rounded-2xl p-5 shadow-sm flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-success-50 flex items-center justify-center text-success-600 text-2xl flex-shrink-0">
+                    <iconify-icon icon="lucide:check-circle"></iconify-icon>
+                </div>
+                <div>
+                    <div class="text-xs text-neutral-500 font-medium mb-1">Tổng đã thu</div>
+                    <div class="text-xl font-bold text-success-700">{{ number_format($totalPaidSum, 0, ',', '.') }}₫</div>
+                </div>
+            </div>
+            <!-- Card 4 -->
+            <div class="bg-white border border-neutral-200 rounded-2xl p-5 shadow-sm flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-danger-50 flex items-center justify-center text-danger-600 text-2xl flex-shrink-0">
+                    <iconify-icon icon="lucide:alert-circle"></iconify-icon>
+                </div>
+                <div>
+                    <div class="text-xs text-neutral-500 font-medium mb-1">Tổng còn nợ</div>
+                    <div class="text-xl font-bold text-danger-700">{{ number_format($totalDebtSum, 0, ',', '.') }}₫</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="col-span-12">
         <div id="orders-list-card" class="card h-full p-0 rounded-xl border-0 overflow-hidden">
             {{-- Header --}}
@@ -50,7 +96,7 @@
                         <iconify-icon icon="solar:filter-outline" class="icon text-xl line-height-1"></iconify-icon>
                         Lọc
                     </button>
-                    @if(request()->filled('filter_order_code') || request()->filled('filter_customer_name') || request()->filled('filter_status'))
+                    @if(request()->filled('filter_order_code') || request()->filled('filter_customer_name') || request()->filled('filter_status') || request()->filled('filter_type') || request()->filled('filter_date') || request()->filled('filter_month') || request()->filled('filter_year'))
                     <a href="{{ route('orders.index') }}" class="btn text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2">
                         <iconify-icon icon="solar:close-circle-outline" class="icon text-xl line-height-1"></iconify-icon>
                         Xóa lọc
@@ -97,6 +143,10 @@
                 <input type="hidden" name="filter_order_code" value="{{ request('filter_order_code') }}">
                 <input type="hidden" name="filter_customer_name" value="{{ request('filter_customer_name') }}">
                 <input type="hidden" name="filter_status" value="{{ request('filter_status') }}">
+                <input type="hidden" name="filter_type" value="{{ request('filter_type') }}">
+                <input type="hidden" name="filter_date" value="{{ request('filter_date') }}">
+                <input type="hidden" name="filter_month" value="{{ request('filter_month') }}">
+                <input type="hidden" name="filter_year" value="{{ request('filter_year') }}">
             </form>
             <div id="bulkOrderActionBar" class="hidden mx-4 mt-4 mb-0 bg-primary-50 border border-primary-200 rounded-xl px-4 py-3 flex flex-wrap items-center justify-between gap-3">
                 <div class="flex items-center gap-3">
@@ -309,10 +359,36 @@
                     <option value="draft" {{ request('filter_status') === 'draft' ? 'selected' : '' }}>Nháp</option>
                     <option value="pending" {{ request('filter_status') === 'pending' ? 'selected' : '' }}>Chờ xử lý</option>
                     <option value="transferred" {{ request('filter_status') === 'transferred' ? 'selected' : '' }}>Chuyển sản xuất</option>
-
                     <option value="in_production" {{ request('filter_status') === 'in_production' ? 'selected' : '' }}>Đang sản xuất</option>
                     <option value="completed" {{ request('filter_status') === 'completed' ? 'selected' : '' }}>Hoàn thành</option>
                     <option value="cancelled" {{ request('filter_status') === 'cancelled' ? 'selected' : '' }}>Đã hủy</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label font-semibold text-sm text-neutral-600">Loại đơn</label>
+                <select name="filter_type" class="form-select rounded-lg">
+                    <option value="">Tất cả</option>
+                    <option value="acrylic" {{ request('filter_type') === 'acrylic' ? 'selected' : '' }}>Acrylic</option>
+                    <option value="glass" {{ request('filter_type') === 'glass' ? 'selected' : '' }}>Kính</option>
+                    <option value="min_late" {{ request('filter_type') === 'min_late' ? 'selected' : '' }}>Min Late</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label font-semibold text-sm text-neutral-600">Lọc theo ngày</label>
+                <input type="date" name="filter_date" class="form-control rounded-lg" value="{{ request('filter_date') }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label font-semibold text-sm text-neutral-600">Lọc theo tháng</label>
+                <input type="month" name="filter_month" class="form-control rounded-lg" value="{{ request('filter_month') }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label font-semibold text-sm text-neutral-600">Lọc theo năm</label>
+                <select name="filter_year" class="form-select rounded-lg">
+                    <option value="">Tất cả</option>
+                    @php $currentYear = date('Y'); @endphp
+                    @for($y = $currentYear; $y >= $currentYear - 5; $y--)
+                    <option value="{{ $y }}" {{ request('filter_year') == $y ? 'selected' : '' }}>Năm {{ $y }}</option>
+                    @endfor
                 </select>
             </div>
         </div>

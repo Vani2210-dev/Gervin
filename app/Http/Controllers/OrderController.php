@@ -38,7 +38,7 @@ class OrderController extends Controller
         $perPage = $request->input('per_page', 10);
         $search  = $request->input('search', '');
 
-        $orders = Order::with('customer')
+        $query = Order::with('customer')
             ->when($request->input('filter_status') !== 'draft', function ($q) {
                 $q->where('status', '!=', 'draft');
             })
@@ -58,11 +58,45 @@ class OrderController extends Controller
             ->when($request->filled('filter_status'), function ($q) use ($request) {
                 $q->where('status', $request->filter_status);
             })
-            ->orderBy('id', 'desc')
+            ->when($request->filled('filter_type'), function ($q) use ($request) {
+                $q->where('type', $request->filter_type);
+            })
+            ->when($request->filled('filter_date'), function ($q) use ($request) {
+                $q->whereDate('order_date', $request->filter_date);
+            })
+            ->when($request->filled('filter_month'), function ($q) use ($request) {
+                $month = date('m', strtotime($request->filter_month));
+                $year = date('Y', strtotime($request->filter_month));
+                $q->whereMonth('order_date', $month)->whereYear('order_date', $year);
+            })
+            ->when($request->filled('filter_year'), function ($q) use ($request) {
+                $q->whereYear('order_date', $request->filter_year);
+            });
+
+        // Compute totals before pagination
+        $totalsQuery = clone $query;
+        $totalOrdersCount = $totalsQuery->count();
+        $totalAmountSum = $totalsQuery->sum('total_amount');
+        
+        $matchingOrderIds = $totalsQuery->pluck('id');
+        $totalPaidSum = DB::table('customer_payments')
+            ->whereIn('order_id', $matchingOrderIds)
+            ->sum('amount');
+        $totalDebtSum = max(0, $totalAmountSum - $totalPaidSum);
+
+        $orders = $query->orderBy('id', 'desc')
             ->paginate($perPage)
             ->withQueryString();
 
-        return view('orders.index', compact('orders', 'perPage', 'search'));
+        return view('orders.index', compact(
+            'orders', 
+            'perPage', 
+            'search',
+            'totalOrdersCount',
+            'totalAmountSum',
+            'totalPaidSum',
+            'totalDebtSum'
+        ));
     }
 
     public function show(Order $order)
