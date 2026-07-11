@@ -195,7 +195,7 @@ class CustomerController extends Controller
         });
 
         // Query payments with date filter and pagination (5 per page, newest first)
-        $paymentsQuery = $customer->customerPayments()->with('creator', 'order');
+        $paymentsQuery = $customer->customerPayments()->reorder()->with('creator', 'order');
 
         if ($paymentDate) {
             $paymentsQuery->whereDate('payment_date', $paymentDate);
