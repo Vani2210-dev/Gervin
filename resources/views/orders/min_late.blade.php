@@ -1216,9 +1216,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if (container && container.querySelectorAll('.order-supply-row').length === 0) {
         addMinLateOrderSupply();
     }
-
-    ensureAllMinLateFormLayouts();
-
     document.querySelectorAll('.order-item-row').forEach(row => {
         bindMinLateRowEvents(row);
         calculateMinLateRowStats(row);
@@ -1691,6 +1688,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 let _minLateExcelSupplyGroups = [];
+let _minLateExcelServices = [];
 
 function triggerMinLateExcelUpload() {
     const fileInput = document.getElementById('minLateExcelFileInput');
@@ -1704,6 +1702,7 @@ function handleMinLateExcelFile(file) {
     if (!file) return;
     document.getElementById('min-late-excel-import-filename').textContent = file.name;
     _minLateExcelSupplyGroups = [];
+    _minLateExcelServices = [];
 
     const reader = new FileReader();
     reader.onload = function(e) {
@@ -1715,7 +1714,7 @@ function handleMinLateExcelFile(file) {
             const rawRows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: false });
 
             if (!rawRows || rawRows.length === 0) {
-                showMinLateExcelModal([]);
+                showMinLateExcelModal([], []);
                 return;
             }
 
@@ -1725,8 +1724,60 @@ function handleMinLateExcelFile(file) {
 
             let groups = [];
             let currentGroup = null;
+            let services = [];
+            let parsingServices = false;
+            let sNameIdx = -1, sUnitIdx = -1, sQtyIdx = -1, sPriceIdx = -1, sPriceOnlyIdx = -1;
 
             rawRows.forEach((row, idx) => {
+                if (!parsingServices) {
+                    const rowStr = row.map(c => clean(c).toLowerCase().replace(/\s+/g, ' ')).join(' ');
+                    if (rowStr.includes('tính giá bán sản phẩm, dịch vụ')) {
+                        parsingServices = true;
+                        row.forEach((cell, i) => {
+                            const txt = clean(cell).toLowerCase().replace(/\s+/g, ' ');
+                            if (txt.includes('tính giá bán') || txt.includes('sản phẩm') || txt.includes('dịch vụ') || txt.includes('nội dung')) sNameIdx = i;
+                            else if (txt === 'đơn vị') sUnitIdx = i;
+                            else if (txt === 'số lượng') sQtyIdx = i;
+                            else if (txt === 'đơn giá') sPriceIdx = i;
+                            else if (txt === 'đơn giá chỉ') sPriceOnlyIdx = i;
+                        });
+                        if (sNameIdx === -1) sNameIdx = 2; // Default fallback to column C
+                        return;
+                    }
+                }
+
+                if (parsingServices) {
+                    const rowStr = row.map(c => clean(c).toLowerCase()).join(' ');
+                    
+                    // End of services table
+                    if (rowStr.includes('tổng tiền') || rowStr.includes('tổng cộng') || rowStr.includes('công nợ') || rowStr.includes('đã ck') || rowStr.includes('còn lại')) {
+                        parsingServices = false;
+                        return;
+                    }
+
+                    const name = sNameIdx !== -1 ? clean(row[sNameIdx]) : clean(row[2]);
+
+                    if (name && name.length > 2) {
+                        const unit = sUnitIdx !== -1 ? clean(row[sUnitIdx]) : '';
+                        const qtyStr = sQtyIdx !== -1 ? clean(row[sQtyIdx]) : '';
+                        const priceStr = sPriceIdx !== -1 ? clean(row[sPriceIdx]) : '';
+                        
+                        const stt = clean(row[1]);
+                        const isSttNum = /^\d+$/.test(stt);
+                        
+                        if (isSttNum || num(qtyStr) > 0) {
+                            services.push({ 
+                                name: name, 
+                                unit: unit, 
+                                qty: num(qtyStr) || 1, 
+                                price: num(priceStr) || 0, 
+                                priceOnly: sPriceOnlyIdx !== -1 ? num(row[sPriceOnlyIdx]) : 0 
+                            });
+                        }
+                    }
+                    return;
+                }
+
                 const col0 = clean(row[0]);
                 const stt = clean(row[1]);
                 if (col0 !== 'CT' && col0 !== '0' && col0 !== '1') return;
@@ -1787,7 +1838,8 @@ function handleMinLateExcelFile(file) {
             });
 
             _minLateExcelSupplyGroups = groups.filter(g => g.items.length > 0);
-            showMinLateExcelModal(_minLateExcelSupplyGroups);
+            _minLateExcelServices = services;
+            showMinLateExcelModal(_minLateExcelSupplyGroups, _minLateExcelServices);
         } catch(err) {
             console.error(err);
             alert("Lỗi khi đọc file Excel. Vui lòng kiểm tra lại định dạng.");
@@ -1796,7 +1848,7 @@ function handleMinLateExcelFile(file) {
     reader.readAsArrayBuffer(file);
 }
 
-function showMinLateExcelModal(groups) {
+function showMinLateExcelModal(groups, services = []) {
     const thead = document.getElementById('min-late-excel-preview-thead');
     const tbody = document.getElementById('min-late-excel-preview-tbody');
     const empty = document.getElementById('min-late-excel-preview-empty');
@@ -1821,7 +1873,7 @@ function showMinLateExcelModal(groups) {
         <th style="padding:8px 10px;text-align:left;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;white-space:nowrap;">Ghi chú</th>
     </tr>`;
 
-    if (!groups || groups.length === 0) {
+    if ((!groups || groups.length === 0) && (!services || services.length === 0)) {
         tbody.innerHTML = '';
         empty.style.display = 'block';
         confirmBtn.style.opacity = '0.5';
@@ -1846,18 +1898,11 @@ function showMinLateExcelModal(groups) {
 
     groups.forEach(group => {
         totalItems += group.items.length;
+        let itemsHtml = '';
         
-        html += `<tr style="background:#ede9fe;">
-            <td colspan="15" style="padding:7px 12px;font-weight:700;color:#6d28d9;font-size:12px;">
-                <iconify-icon icon="lucide:package" style="margin-right:6px;font-size:13px;"></iconify-icon>
-                Vật tư: <span style="background:#fff;border:1px solid #c4b5fd;border-radius:6px;padding:1px 8px;margin-left:4px;">${escHtml(group.supply_name)}</span>
-            </td>
-        </tr>`;
-
         group.items.forEach((item, i) => {
             const bgClass = i % 2 === 0 ? '' : 'background:#fafafa;';
-            const danCanhStr = `${item.edge_h1}${item.edge_h2}${item.edge_w1}${item.edge_w2}`;
-            html += `
+            itemsHtml += `
                 <tr style="border-bottom:1px solid #f1f5f9;${bgClass}">
                     <td style="padding:6px 12px;color:#0f172a;padding-left:24px;font-style:italic;font-size:11px;color:#9ca3af;"></td>
                     <td style="padding:6px 10px;text-align:center;color:#374151;">${item.height !== '' ? item.height : '-'}</td>
@@ -1877,10 +1922,51 @@ function showMinLateExcelModal(groups) {
                 </tr>
             `;
         });
+        
+        html += `
+            <tbody style="border-bottom:2px solid #e2e8f0;">
+                <!-- Group Header -->
+                <tr style="background:#ede9fe;">
+                    <td colspan="15" style="padding:7px 12px;font-weight:700;color:#6d28d9;font-size:12px;border:1px solid #e2e8f0;border-bottom:none;">
+                        <iconify-icon icon="lucide:package" style="margin-right:6px;font-size:13px;vertical-align:middle;"></iconify-icon>
+                        Vật tư: <span style="background:#fff;border:1px solid #c4b5fd;border-radius:6px;padding:1px 8px;margin-left:4px;vertical-align:middle;">${escHtml(group.supply_name || 'Vật tư')}</span>
+                        <span style="color:#94a3b8;font-weight:400;margin-left:8px;vertical-align:middle;">(${group.items.length} sản phẩm)</span>
+                    </td>
+                </tr>
+                <!-- Items -->
+                ${itemsHtml}
+            </tbody>
+        `;
     });
+
     tbody.innerHTML = html;
 
-    countEl.innerHTML = `<b style="color:#6d28d9;">${groups.length} nhóm</b>&nbsp;·&nbsp;<b style="color:#1d4ed8;">${totalItems} sản phẩm</b> sẽ được nhập`;
+    const srvContainer = document.getElementById('min-late-excel-services-container');
+    const srvTbody = document.getElementById('min-late-excel-services-tbody');
+    
+    if (services && services.length > 0) {
+        if(srvContainer) srvContainer.style.display = 'block';
+        let srvHtml = '';
+        services.forEach(srv => {
+            const priceFmt = new Intl.NumberFormat('vi-VN').format(srv.price);
+            const priceOnlyFmt = srv.priceOnly > 0 ? new Intl.NumberFormat('vi-VN').format(srv.priceOnly) : '';
+            srvHtml += `
+                <tr>
+                    <td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;font-weight:500;color:#1e293b;white-space:pre-wrap;">${escHtml(srv.name)}</td>
+                    <td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;text-align:center;">${escHtml(srv.unit)}</td>
+                    <td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;text-align:center;font-weight:600;color:#0369a1;">${srv.qty}</td>
+                    <td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;text-align:right;color:#ef4444;font-weight:600;">${priceFmt}</td>
+                    <td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;text-align:right;color:#f97316;font-weight:600;">${priceOnlyFmt}</td>
+                </tr>
+            `;
+        });
+        if(srvTbody) srvTbody.innerHTML = srvHtml;
+    } else {
+        if(srvContainer) srvContainer.style.display = 'none';
+        if(srvTbody) srvTbody.innerHTML = '';
+    }
+
+    countEl.innerHTML = `<b style="color:#6d28d9;">${groups.length} nhóm</b>&nbsp;·&nbsp;<b style="color:#1d4ed8;">${totalItems} sản phẩm</b>${services && services.length > 0 ? `&nbsp;·&nbsp;<b style="color:#059669;">${services.length} dịch vụ</b>` : ''} sẽ được nhập`;
 
     document.getElementById('min-late-excel-import-backdrop').style.display = 'block';
     document.getElementById('min-late-excel-import-modal').style.display = 'flex';
@@ -1960,6 +2046,48 @@ function confirmMinLateExcelImport() {
     if (typeof updateMinLateRowIndexes === 'function') updateMinLateRowIndexes();
     if (typeof updateOrderSummary === 'function') updateOrderSummary();
 
+    // Import Services
+    if (typeof _minLateExcelServices !== 'undefined' && _minLateExcelServices.length > 0) {
+        _minLateExcelServices.forEach(srv => {
+            if(typeof addPaymentDetail === 'function') {
+                addPaymentDetail();
+                const paymentContainer = document.getElementById('payment-details-container');
+                if(paymentContainer) {
+                    const newRow = paymentContainer.querySelector('.payment-detail-row:last-child');
+                    if(newRow) {
+                        const idxMatch = newRow.innerHTML.match(/payment_details\[(\d+)\]/);
+                        if(idxMatch) {
+                            const idx = idxMatch[1];
+                            const setVal = (name, val) => {
+                                const el = newRow.querySelector(`[name="payment_details[${idx}][${name}]"]`);
+                                if(el) el.value = val;
+                            };
+                            setVal('name', srv.name);
+                            setVal('unit', srv.unit);
+                            setVal('quantity', srv.qty);
+                            setVal('price', srv.price);
+                            setVal('price_only', srv.priceOnly);
+                            
+                            // trigger calculation
+                            if (typeof bindPaymentDetailEvents === 'function') {
+                                const qtyInput = newRow.querySelector('.payment-quantity-input');
+                                if(qtyInput) qtyInput.dispatchEvent(new Event('input', {bubbles: true}));
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Highlight payment details container to show they were added
+        const paymentContainer = document.getElementById('payment-details-container');
+        if (paymentContainer) {
+            paymentContainer.style.transition = 'box-shadow 0.3s';
+            paymentContainer.style.boxShadow = '0 0 0 3px #3b82f6';
+            setTimeout(() => { paymentContainer.style.boxShadow = ''; }, 1500);
+        }
+    }
+
     if (suppliesContainer) {
         suppliesContainer.style.transition = 'box-shadow 0.3s';
         suppliesContainer.style.boxShadow = '0 0 0 3px #10b981';
@@ -2028,6 +2156,28 @@ function confirmMinLateExcelImport() {
                     <div id="min-late-excel-preview-empty" style="display:none;text-align:center;padding:40px;color:#94a3b8;">
                         <iconify-icon icon="lucide:file-x-2" style="font-size:36px;"></iconify-icon>
                         <div style="margin-top:8px;">Không tìm thấy dữ liệu hợp lệ</div>
+                    </div>
+                </div>
+                
+                <div id="min-late-excel-services-container" style="display:none;margin-top:24px;border-top:1px dashed #cbd5e1;padding-top:16px;">
+                    <div style="font-size:14px;font-weight:700;color:#1e293b;margin-bottom:12px;display:flex;align-items:center;gap:6px;">
+                        <iconify-icon icon="lucide:receipt" style="color:#3b82f6;font-size:16px;"></iconify-icon>
+                        Dịch vụ / Phụ phí đính kèm
+                    </div>
+                    <div style="overflow-x:auto;">
+                        <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:600px;text-align:left;">
+                            <thead style="background:#f8fafc;">
+                                <tr>
+                                    <th style="padding:8px 10px;text-align:left;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;">Nội dung</th>
+                                    <th style="padding:8px 10px;text-align:center;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;width:80px;">Đơn vị</th>
+                                    <th style="padding:8px 10px;text-align:center;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;width:80px;">Số lượng</th>
+                                    <th style="padding:8px 10px;text-align:right;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;width:110px;">Đơn giá</th>
+                                    <th style="padding:8px 10px;text-align:right;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;width:110px;">Đơn giá chỉ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="min-late-excel-services-tbody">
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
