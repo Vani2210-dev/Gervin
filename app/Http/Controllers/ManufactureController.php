@@ -8,6 +8,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Auth;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 class ManufactureController extends Controller
 {
@@ -39,6 +44,277 @@ class ManufactureController extends Controller
             ->withQueryString();
 
         return view('manufactures.index', compact('manufactures', 'perPage', 'search', 'status'));
+    }
+
+    public function exportExcel(Request $request)
+    {
+        $date = $request->input('date', date('Y-m-d'));
+
+        // Query 1: Find all orders linked to ManufactureOrders created on this date
+        $manufactureOrders = ManufactureOrder::whereDate('created_at', $date)
+            ->with(['orders.supplies.items.codes', 'orders.supplies.minLateItems.codes', 'orders.supplies.glassItems.codes'])
+            ->get();
+
+        $orders = collect();
+        foreach ($manufactureOrders as $mo) {
+            foreach ($mo->orders as $order) {
+                $orders->push($order);
+            }
+        }
+
+        // Query 2: Fallback to orders with order_date = $date
+        if ($orders->isEmpty()) {
+            $orders = Order::whereDate('order_date', $date)
+                ->whereNotIn('status', ['draft', 'cancelled'])
+                ->with(['supplies.items.codes', 'supplies.minLateItems.codes', 'supplies.glassItems.codes'])
+                ->get();
+        }
+
+        // Query 3: Fallback to active orders (for testing/demo)
+        if ($orders->isEmpty()) {
+            $orders = Order::whereIn('status', ['transferred', 'in_production'])
+                ->with(['supplies.items.codes', 'supplies.minLateItems.codes', 'supplies.glassItems.codes'])
+                ->get();
+        }
+
+        // Extract and group supplies
+        $suppliesList = collect();
+        foreach ($orders as $order) {
+            foreach ($order->supplies as $supply) {
+                $suppliesList->push([
+                    'order' => $order,
+                    'supply' => $supply
+                ]);
+            }
+        }
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Đơn hàng Lic');
+
+        // Style templates
+        $headerStyle = [
+            'font' => ['bold' => true, 'name' => 'Arial', 'size' => 10],
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
+                'wrapText' => true
+            ],
+            'borders' => [
+                'allBorders' => ['borderStyle' => Border::BORDER_THIN]
+            ],
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['argb' => 'FFE2E8F0']
+            ]
+        ];
+
+        $dataStyle = [
+            'font' => ['name' => 'Arial', 'size' => 10],
+            'borders' => [
+                'allBorders' => ['borderStyle' => Border::BORDER_THIN]
+            ]
+        ];
+
+        $titleStyle = [
+            'font' => ['bold' => true, 'name' => 'Arial', 'size' => 14],
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER
+            ]
+        ];
+
+        // Row 1: Headers
+        $headers = [
+            'A' => 'STT',
+            'B' => 'Đơn hàng',
+            'C' => 'Số phiếu',
+            'D' => 'Mã màu',
+            'E' => 'Tổng tấm',
+            'F' => 'Kính/ CNC',
+            'G' => 'Số tấm đã xong ngày 1',
+            'H' => 'Số tấm đang sản xuất', // Will merge H1:L1
+            'I' => '',
+            'J' => '',
+            'K' => '',
+            'L' => '',
+            'M' => 'Số tấm đã xong ngày 2',
+            'N' => 'Còn lại phải làm',
+            'O' => 'Địa chỉ',
+            'P' => 'Thời gian chốt đơn',
+            'Q' => 'Số ngày hẹn',
+            'R' => 'Thời gian phải hoàn thiện xong'
+        ];
+
+        foreach ($headers as $col => $text) {
+            $sheet->setCellValue($col . '1', $text);
+        }
+        $sheet->mergeCells('H1:L1');
+        
+        // Apply header styles to A1:R1
+        foreach (range('A', 'R') as $col) {
+            $sheet->getStyle($col . '1')->applyFromArray($headerStyle);
+        }
+
+        // Row 2: Title
+        $formattedDate = date('d/m/Y', strtotime($date));
+        $sheet->setCellValue('A2', "DANH SÁCH LÀM ĐẸP NGÀY {$formattedDate}");
+        $sheet->mergeCells('A2:R2');
+        $sheet->getStyle('A2')->applyFromArray($titleStyle);
+        $sheet->getRowDimension('2')->setRowHeight(35);
+        $sheet->getStyle('A2:R2')->getBorders()->getOutline()->setBorderStyle(Border::BORDER_THIN);
+
+        // Row 3+: Data
+        $row = 3;
+        $stt = 1;
+        $day1Date = date('Y-m-d', strtotime($date));
+        $day2Date = date('Y-m-d', strtotime($date . ' +1 day'));
+
+        foreach ($suppliesList as $itemData) {
+            $order = $itemData['order'];
+            $supply = $itemData['supply'];
+
+            $day1Count = 0;
+            $day2Count = 0;
+            $inProductionCount = 0;
+            $totalCount = 0;
+            $cncCount = 0;
+
+            if ($order->type === 'glass') {
+                $items = $supply->glassItems;
+                $totalCount = $items->sum('quantity');
+                $cncCount = $totalCount; // count of glass plates
+            } elseif ($order->type === 'min_late') {
+                $items = $supply->minLateItems;
+                $totalCount = $items->sum('quantity');
+                $cncCount = $items->where('cnc', 1)->sum('quantity');
+            } else {
+                $items = $supply->items;
+                $totalCount = $items->sum('quantity');
+                $cncCount = $items->filter(fn($i) => !empty($i->vertical_grain_cnc))->sum('quantity');
+            }
+
+            foreach ($items as $item) {
+                foreach ($item->codes as $code) {
+                    $statusLogs = $code->status ?? [];
+                    if (is_string($statusLogs)) {
+                        $statusLogs = json_decode($statusLogs, true) ?? [];
+                    }
+
+                    $completedTime = null;
+                    $hasStarted = false;
+                    foreach ($statusLogs as $log) {
+                        $action = strtolower($log['action'] ?? '');
+                        if (in_array($action, ['hoàn thành làm đẹp', 'hoàn thành qc'])) {
+                            $completedTime = $log['time'] ?? null;
+                        }
+                        if (in_array($action, ['đã nhận tem', 'hoàn thành cnc', 'ép ván', 'hoàn thành ép', 'hoàn thành dán cạnh'])) {
+                            $hasStarted = true;
+                        }
+                    }
+
+                    if ($completedTime) {
+                        $completedDate = date('Y-m-d', strtotime($completedTime));
+                        if ($completedDate === $day1Date) {
+                            $day1Count++;
+                        } elseif ($completedDate === $day2Date) {
+                            $day2Count++;
+                        }
+                    } elseif ($hasStarted) {
+                        $inProductionCount++;
+                    }
+                }
+            }
+
+            $remainingCount = max(0, $totalCount - $day1Count - $day2Count);
+
+            $sheet->setCellValue('A' . $row, $stt++);
+            $sheet->setCellValue('B' . $row, $order->customer_name);
+            $sheet->setCellValue('C' . $row, $order->order_code);
+            $sheet->setCellValue('D' . $row, $supply->supply_name);
+            $sheet->setCellValue('E' . $row, $totalCount);
+            $sheet->setCellValue('F' . $row, $cncCount ?: null);
+            $sheet->setCellValue('G' . $row, $day1Count);
+            
+            // Set value in H and merge H:L
+            $sheet->setCellValue('H' . $row, $inProductionCount);
+            $sheet->mergeCells("H{$row}:L{$row}");
+
+            $sheet->setCellValue('M' . $row, $day2Count);
+            $sheet->setCellValue('N' . $row, $remainingCount);
+            $sheet->setCellValue('O' . $row, $order->address);
+            $sheet->setCellValue('P' . $row, $order->order_date ? $order->order_date->format('Y-m-d H:i:s') : '—');
+            $sheet->setCellValue('Q' . $row, $order->delivery_days ?? '—');
+            $sheet->setCellValue('R' . $row, $order->deadline ? $order->deadline->format('Y-m-d H:i:s') : '—');
+
+            // Apply data row styling and alignments
+            foreach (range('A', 'R') as $col) {
+                $cellStyle = $sheet->getStyle($col . $row);
+                $cellStyle->applyFromArray($dataStyle);
+                
+                // Alignments
+                if (in_array($col, ['A', 'C', 'D', 'E', 'F', 'G', 'H', 'M', 'N', 'P', 'Q', 'R'])) {
+                    $cellStyle->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                } else {
+                    $cellStyle->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+                }
+                $cellStyle->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
+            }
+
+            $row++;
+        }
+
+        // Summary row
+        if ($row > 3) {
+            $sheet->setCellValue('A' . $row, 'Tổng cộng');
+            $sheet->mergeCells("A{$row}:D{$row}");
+            $sheet->setCellValue('E' . $row, "=SUM(E3:E" . ($row - 1) . ")");
+            $sheet->setCellValue('F' . $row, "=SUM(F3:F" . ($row - 1) . ")");
+            $sheet->setCellValue('G' . $row, "=SUM(G3:G" . ($row - 1) . ")");
+            
+            // Sum H and merge H:L
+            $sheet->setCellValue('H' . $row, "=SUM(H3:H" . ($row - 1) . ")");
+            $sheet->mergeCells("H{$row}:L{$row}");
+
+            $sheet->setCellValue('M' . $row, "=SUM(M3:M" . ($row - 1) . ")");
+            $sheet->setCellValue('N' . $row, "=SUM(N3:N" . ($row - 1) . ")");
+
+            // Styling for summary row
+            $totalRowStyle = [
+                'font' => ['bold' => true, 'name' => 'Arial', 'size' => 10],
+                'borders' => [
+                    'allBorders' => ['borderStyle' => Border::BORDER_THIN]
+                ],
+                'fill' => [
+                    'fillType' => Fill::FILL_SOLID,
+                    'startColor' => ['argb' => 'FFF1F5F9'] // light gray background
+                ]
+            ];
+
+            foreach (range('A', 'R') as $col) {
+                $cellStyle = $sheet->getStyle($col . $row);
+                $cellStyle->applyFromArray($totalRowStyle);
+                if (in_array($col, ['E', 'F', 'G', 'H', 'M', 'N'])) {
+                    $cellStyle->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                } else {
+                    $cellStyle->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+                }
+                $cellStyle->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
+            }
+        }
+
+        // Auto-sizing columns
+        foreach (range('A', 'R') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $writer = new Xlsx($spreadsheet);
+        $fileName = 'Danh_sach_sap_xep_don_hang_ngay_' . str_replace('-', '_', $date) . '.xlsx';
+
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment; filename="' . $fileName . '"');
+        $writer->save('php://output');
+        exit;
     }
 
     public function create()

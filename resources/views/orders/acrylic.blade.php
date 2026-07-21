@@ -62,46 +62,6 @@
     #order-supplies-container .order-supply-row table td[style*="width:160px"] { min-width: 120px !important; }
     #order-supplies-container .order-supply-row table td[style*="width: 80px"],
     #order-supplies-container .order-supply-row table td[style*="width:80px"] { width: 60px !important; min-width: 60px !important; max-width: 60px !important; }
-    /* Style TomSelect inside table rows to match compact inputs */
-    .table .ts-wrapper {
-        padding: 0 !important;
-        border: none !important;
-        background: transparent !important;
-        min-height: auto !important;
-        height: 24px !important;
-    }
-    .table .ts-control {
-        padding: 0 5px !important;
-        height: 24px !important;
-        font-size: 9px !important;
-        line-height: 22px !important;
-        border-radius: 6px !important;
-        border: 1px solid #d1d5db !important;
-        background-color: #ffffff !important;
-        display: flex !important;
-        align-items: center !important;
-        box-shadow: none !important;
-    }
-    .table .ts-control input {
-        font-size: 9px !important;
-        height: auto !important;
-        padding: 0 !important;
-        margin: 0 !important;
-    }
-    .table .ts-control .item {
-        font-size: 9px !important;
-        line-height: 22px !important;
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-    .table .ts-wrapper.single .ts-control:after {
-        top: 50% !important;
-        margin-top: -3px !important;
-    }
-    .table .ts-wrapper.focus .ts-control {
-        border-color: #3b82f6 !important;
-        box-shadow: 0 0 0 1px #3b82f6 !important;
-    }
 
     /* Style TomSelect for Mã vật tư dropdown in the header row */
     .order-supply-row .ts-wrapper.tom-select-supply-code {
@@ -442,10 +402,7 @@
                                     </div>
                                 </td>
                                 <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
-                                    <select name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][grain_direction]" class="form-select form-select-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 px-1 py-1 h-8 text-xs">
-                                        <option value="0" {{ $item->grain_direction == 0 ? 'selected' : '' }}>0</option>
-                                        <option value="2" {{ $item->grain_direction == 2 ? 'selected' : '' }}>2</option>
-                                    </select>
+                                    <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][grain_direction]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Chiều vân" value="{{ $item->grain_direction }}">
                                 </td>
                                 <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
                                     <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][wing_area]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Cánh (m2)" step="any" value="{{ $item->wing_area }}">
@@ -534,8 +491,94 @@
     </div>
 </div>
 
+{{-- Bảng chi tiết hóa đơn dịch vụ --}}
+<div class="order-supplies-popup bg-white border border-neutral-200 rounded-xl p-6 shadow-sm mt-6 relative pt-8" data-order-supplies-zoom-panel data-order-supplies-storage-key="min_late_payment" data-order-supplies-zoom="100" data-order-supplies-visible-rows-disabled="1">
+    <div class="order-supplies-header flex items-center justify-between border-b border-neutral-100 pb-4 mb-5">
+        <div class="absolute -top-3.5 left-6 bg-white px-3 flex items-center gap-2 z-10">
+            <iconify-icon icon="lucide:receipt" class="text-xl text-primary-500"></iconify-icon>
+            <h6 class="font-bold text-base text-neutral-800 m-0">Chi tiết hóa đơn dịch vụ</h6>
+        </div>
+        <div class="flex flex-wrap items-center gap-2 ml-auto">
+            <button type="button" onclick="addPaymentDetail()" class="btn btn-sm btn-primary rounded-lg flex items-center gap-1">
+                <iconify-icon icon="lucide:plus" class="text-lg"></iconify-icon> <span class="mobile-hide-text">Thêm nội dung</span>
+            </button>
+        </div>
+    </div>
+    <div class="order-supplies-body">
+        <div class="overflow-x-auto pb-3" data-order-supplies-table-scroll>
+            <div class="order-supplies-table-zoom-wrap" data-order-supplies-table-zoom-wrap>
+                <table class="table bordered-table sm-table mb-0 min-w-[900px] border border-neutral-200" data-order-resize-group="min_late_payment">
+                    <thead>
+                        <tr class="bg-neutral-50 text-center">
+                            <th scope="col" style="width: 50px; min-width: 50px; white-space: nowrap;" class="sticky-stt-th text-center border border-neutral-200 font-bold text-xs text-neutral-600 uppercase"><span class="order-stt-header-label">STT</span></th>
+                            <th scope="col" style="white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên nội dung <span class="text-danger-500">*</span></th>
+                            <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn vị</th>
+                            <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số lượng</th>
+                            <th scope="col" style="width: 150px; min-width: 150px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá <span class="text-danger-500">*</span></th>
+                            <th scope="col" style="width: 160px; min-width: 160px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Thành tiền</th>
+                            <th scope="col" style="width: 50px; min-width: 50px; white-space: nowrap; position: sticky; right: 0; z-index: 2; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Xóa</th>
+                        </tr>
+                    </thead>
+                    <tbody id="payment-details-container">
+                        @if(isset($acrylicOrder) && isset($acrylicOrder->paymentDetails) && $acrylicOrder->paymentDetails->count() > 0)
+                            @foreach($acrylicOrder->paymentDetails as $detailIndex => $detail)
+                            <tr class="payment-detail-row">
+                                <td style="width: 50px; min-width: 50px; " class="sticky-stt-td text-center align-middle border border-neutral-200">
+                                    <span class="detail-index font-semibold text-neutral-500">{{ $detailIndex + 1 }}</span>
+                                </td>
+                                <td class="border border-neutral-200" style="padding: 4px !important; position: relative;">
+                                    @php
+                                        $selectedCode = '';
+                                        foreach($woodBoardPrices as $p) {
+                                            if ($p->code && str_starts_with($detail->name, $p->code . ' - ')) {
+                                                $selectedCode = $p->code;
+                                                break;
+                                            }
+                                        }
+                                    @endphp
+                                    <div class="flex items-center gap-2">
+                                        <select class="order-payment-code-select tom-select-payment-code w-32">
+                                            <option value="">-- Mã --</option>
+                                            @foreach($woodBoardPrices as $price)
+                                                @if($price->code)
+                                                    <option value="{{ $price->code }}" {{ $selectedCode == $price->code ? 'selected' : '' }}>{{ $price->code }}</option>
+                                                @endif
+                                            @endforeach
+                                        </select>
+                                        <input type="text" name="payment_details[{{ $detailIndex }}][name]" class="form-control form-control-sm rounded-lg flex-1 border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-xs h-8 font-semibold" placeholder="Tên nội dung..." required value="{{ $detail->name }}">
+                                    </div>
+                                </td>
+                                <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
+                                    <input type="text" name="payment_details[{{ $detailIndex }}][unit]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs" placeholder="m, tấm..." value="{{ $detail->unit }}">
+                                </td>
+                                <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
+                                    <input type="number" name="payment_details[{{ $detailIndex }}][quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs payment-quantity-input" placeholder="1" step="any" value="{{ $detail->quantity }}">
+                                </td>
+                                <td style="width: 150px; min-width: 150px; " class="border border-neutral-200">
+                                    <input type="number" name="payment_details[{{ $detailIndex }}][price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs" placeholder="0" min="0" step="any" required value="{{ $detail->price }}">
+                                </td>
+                                <td style="width: 160px; min-width: 160px; " class="border border-neutral-200">
+                                    <input type="text" name="payment_details[{{ $detailIndex }}][total]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center h-8 text-xs" placeholder="0" readonly value="{{ number_format($detail->total, 0, ',', '.') }}">
+                                </td>
+                                <td style="width: 50px; min-width: 50px; position: sticky; right: 0; z-index: 1; background-color: #fff; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="text-center align-middle border border-neutral-200">
+                                    <button type="button" onclick="removePaymentDetail(this)" class="text-neutral-400 hover:text-danger-500 transition-colors p-1" title="Xóa nội dung này">
+                                        <iconify-icon icon="lucide:trash-2" class="text-base"></iconify-icon>
+                                    </button>
+                                    <input type="hidden" name="payment_details[{{ $detailIndex }}][id]" value="{{ $detail->id }}">
+                                </td>
+                            </tr>
+                            @endforeach
+                        @endif
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 const woodBoardPricesData = @json($woodBoardPrices);
+const minLatePricesData = @json($minLatePrices ?? []);
 
 function handleSupplyCodeChange(selectEl, value) {
     if (!value) return;
@@ -760,10 +803,7 @@ function addOrderItem(button, isInitial = false, insertAfterRow = null) {
             </div>
         </td>
         <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
-            <select name="supplies[${supplyIndex}][items][${itemIndex}][grain_direction]" class="form-select form-select-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 px-1 py-1 h-8 text-xs">
-                <option value="0">0</option>
-                <option value="2">2</option>
-            </select>
+            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][grain_direction]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Chiều vân" value="0">
         </td>
         <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
             <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][wing_area]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Cánh (m2)" step="any" value="">
@@ -1511,6 +1551,16 @@ document.addEventListener('DOMContentLoaded', function() {
     if (orderCodeInput) {
         orderCodeInput.addEventListener('input', () => updateAcrylicRowIndexes());
     }
+
+    // Initialize payment details rows on page load
+    document.querySelectorAll('.payment-detail-row').forEach(row => {
+        bindPaymentDetailEvents(row);
+        calculatePaymentDetailRowTotal(row);
+        const selectEl = row.querySelector('.tom-select-payment-code');
+        if (selectEl) {
+            initPaymentCodeTomSelect(selectEl);
+        }
+    });
 });
 
 // Live listener for supply code input changes
@@ -1743,7 +1793,7 @@ function handleExcelFile(file) {
                     width,
                     quantity     : qty,
                     edge_bevel   : edgeBevel,
-                    grain        : grain === '2' ? '2' : '0',
+                    grain        : grain || '0',
                     wing_area    : wingArea,
                     molding,
                     unit_price   : unitPrice,
@@ -1928,8 +1978,8 @@ function confirmExcelImport() {
             }
             setVal('input[name*="[edge_bevel]"]',    item.edge_bevel);
 
-            const grainSel = newRow.querySelector('select[name*="[grain_direction]"]');
-            if (grainSel) grainSel.value = item.grain || '0';
+            const grainInput = newRow.querySelector('input[name*="[grain_direction]"], select[name*="[grain_direction]"]');
+            if (grainInput) grainInput.value = item.grain !== undefined && item.grain !== null ? item.grain : '0';
 
             // Handle labor rows
             if (item.is_labor) {
@@ -1977,5 +2027,187 @@ function confirmExcelImport() {
 function escHtml(str) {
     if (!str) return '';
     return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+let paymentDetailIndex = {{ (isset($acrylicOrder) && isset($acrylicOrder->paymentDetails)) ? $acrylicOrder->paymentDetails->count() : 0 }};
+
+function refreshPaymentDetailsTableLayout() {
+    const panel = document.querySelector('[data-order-supplies-storage-key="min_late_payment"]');
+    if (panel && typeof applyOrderSuppliesVisibleRows === 'function') {
+        applyOrderSuppliesVisibleRows(panel, panel.dataset.orderSuppliesVisibleRows || '5');
+    }
+
+    if (typeof initOrderColumnResize === 'function') {
+        initOrderColumnResize(document);
+    }
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function addPaymentDetail() {
+    const container = document.getElementById('payment-details-container');
+    if (!container) return;
+    
+    let optionsHtml = '<option value="">-- Mã --</option>';
+    const boardPrices = woodBoardPricesData || [];
+    boardPrices.forEach(p => {
+        if (p.code) {
+            optionsHtml += `<option value="${escapeHtml(p.code)}">${escapeHtml(p.code)}</option>`;
+        }
+    });
+
+    const newRow = document.createElement('tr');
+    newRow.className = 'payment-detail-row';
+    newRow.innerHTML = `
+        <td style="width: 50px; min-width: 50px; " class="sticky-stt-td text-center align-middle border border-neutral-200">
+            <span class="detail-index font-semibold text-neutral-500">${paymentDetailIndex + 1}</span>
+        </td>
+        <td class="border border-neutral-200" style="padding: 4px !important; position: relative;">
+            <div class="flex items-center gap-2">
+                <select class="order-payment-code-select tom-select-payment-code w-32">
+                    ${optionsHtml}
+                </select>
+                <input type="text" name="payment_details[${paymentDetailIndex}][name]" class="form-control form-control-sm rounded-lg flex-1 border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-xs h-8 font-semibold" placeholder="Tên nội dung..." required>
+            </div>
+        </td>
+        <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
+            <input type="text" name="payment_details[${paymentDetailIndex}][unit]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs" placeholder="m, tấm...">
+        </td>
+        <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
+            <input type="number" name="payment_details[${paymentDetailIndex}][quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs payment-quantity-input" placeholder="1" step="any" value="1">
+        </td>
+        <td style="width: 150px; min-width: 150px; " class="border border-neutral-200">
+            <input type="number" name="payment_details[${paymentDetailIndex}][price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs" placeholder="0" min="0" step="any" required value="0">
+        </td>
+        <td style="width: 160px; min-width: 160px; " class="border border-neutral-200">
+            <input type="text" name="payment_details[${paymentDetailIndex}][total]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center h-8 text-xs" placeholder="0" readonly value="0">
+        </td>
+        <td style="width: 50px; min-width: 50px; position: sticky; right: 0; z-index: 1; background-color: #fff; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="text-center align-middle border border-neutral-200">
+            <button type="button" onclick="removePaymentDetail(this)" class="text-neutral-400 hover:text-danger-500 transition-colors p-1" title="Xóa nội dung này">
+                <iconify-icon icon="lucide:trash-2" class="text-base"></iconify-icon>
+            </button>
+        </td>
+    `;
+    container.appendChild(newRow);
+    
+    // Initialize TomSelect for the new row select
+    const selectEl = newRow.querySelector('.tom-select-payment-code');
+    if (selectEl && typeof TomSelect !== 'undefined') {
+        initPaymentCodeTomSelect(selectEl);
+    }
+
+    // Bind change/input events for auto-calculating row total
+    bindPaymentDetailEvents(newRow);
+    
+    paymentDetailIndex++;
+    updatePaymentDetailIndexes();
+    updateOrderSummary();
+    refreshPaymentDetailsTableLayout();
+}
+
+function removePaymentDetail(button) {
+    const row = button.closest('.payment-detail-row');
+    row.remove();
+    updatePaymentDetailIndexes();
+    updateOrderSummary();
+    refreshPaymentDetailsTableLayout();
+}
+
+function calculatePaymentDetailRowTotal(row) {
+    const qtyInput = row.querySelector('input[name*="[quantity]"]');
+    const priceInput = row.querySelector('input[name*="[price]"]');
+    const totalInput = row.querySelector('input[name*="[total]"]');
+    
+    if (!qtyInput || !priceInput || !totalInput) return;
+    
+    const quantity = parseFloat(qtyInput.value) || 0;
+    const price = parseFloat(priceInput.value) || 0;
+    const total = quantity * price;
+    
+    totalInput.value = total > 0 ? Math.round(total).toLocaleString('vi-VN') : 0;
+    updateOrderSummary();
+}
+
+function updatePaymentDetailIndexes() {
+    const table = document.querySelector('table[data-order-resize-group="min_late_payment"]');
+    const headers = table ? Array.from(table.querySelectorAll('thead th')).map(th => th.textContent.trim().replace(/\s*\*$/, '')) : [];
+
+    const rows = document.querySelectorAll('.payment-detail-row');
+    rows.forEach((row, index) => {
+        const indexSpan = row.querySelector('.detail-index');
+        if (indexSpan) {
+            indexSpan.textContent = index + 1;
+        }
+
+        row.querySelectorAll('td').forEach((td, colIndex) => {
+            if (headers[colIndex] && headers[colIndex] !== 'STT' && headers[colIndex] !== 'Xóa') {
+                td.setAttribute('data-label', headers[colIndex]);
+            }
+        });
+    });
+}
+
+function bindPaymentDetailEvents(row) {
+    const inputs = row.querySelectorAll('input[name*="[quantity]"], input[name*="[price]"]');
+    inputs.forEach(input => {
+        input.addEventListener('input', () => {
+            calculatePaymentDetailRowTotal(row);
+        });
+    });
+}
+
+function initPaymentCodeTomSelect(selectEl) {
+    if (selectEl.tomselect) return;
+    const ts = new TomSelect(selectEl, {
+        create: true,
+        placeholder: '-- Mã --',
+        allowEmptyOption: true,
+        maxOptions: null,
+        dropdownParent: 'body'
+    });
+    ts.on('change', function(value) {
+        const row = selectEl.closest('.payment-detail-row');
+        if (row) {
+            const price = woodBoardPricesData.find(p => p.code === value);
+            
+            const nameInput = row.querySelector('input[name*="[name]"]');
+            const unitInput = row.querySelector('input[name*="[unit]"]');
+            const priceInput = row.querySelector('input[name*="[price]"]');
+            
+            if (price) {
+                if (nameInput) {
+                    nameInput.value = (price.code ? price.code + ' - ' : '') + (price.name || '');
+                    applyFlashEffect(nameInput);
+                }
+                if (unitInput) {
+                    unitInput.value = 'tấm';
+                    applyFlashEffect(unitInput);
+                }
+                if (priceInput) {
+                    priceInput.value = price.price_board || 0;
+                    applyFlashEffect(priceInput);
+                }
+            }
+            calculatePaymentDetailRowTotal(row);
+        }
+        updateOrderSummary();
+    });
+}
+
+function applyFlashEffect(el) {
+    if (!el) return;
+    el.style.transition = 'background-color 0.4s ease';
+    el.style.backgroundColor = '#ecfdf5';
+    setTimeout(() => {
+        el.style.backgroundColor = '';
+    }, 850);
 }
 </script>

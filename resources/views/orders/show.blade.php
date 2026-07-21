@@ -407,14 +407,14 @@
                 </div>
             @endforeach
 
-            @if($acrylicOrder->type === 'min_late' && isset($acrylicOrder->paymentDetails) && $acrylicOrder->paymentDetails->count() > 0)
-                <div class="card p-0 rounded-xl border-0 overflow-hidden shadow-sm bg-white border-l-4 border-l-primary-500">
+            @if(in_array($acrylicOrder->type, ['min_late', 'acrylic']) && isset($acrylicOrder->paymentDetails) && $acrylicOrder->paymentDetails->count() > 0)
+                <div class="card p-0 rounded-xl border-0 overflow-hidden shadow-sm bg-white border-l-4 border-l-primary-500 mt-6">
                     <div class="card-header border-b border-neutral-200 bg-white py-4 px-6 flex items-center justify-between">
                         <div class="flex items-center gap-3">
                             <div class="p-1.5 bg-primary-50 rounded-lg text-primary-500 flex items-center justify-center">
                                 <iconify-icon icon="lucide:receipt" class="text-base"></iconify-icon>
                             </div>
-                            <h6 class="font-bold text-base text-neutral-800 m-0">Chi tiết hóa đơn (Min Late)</h6>
+                            <h6 class="font-bold text-base text-neutral-800 m-0">Chi tiết hóa đơn dịch vụ</h6>
                         </div>
                     </div>
 
@@ -428,7 +428,9 @@
                                         <th scope="col" class="w-28 text-center">Đơn vị</th>
                                         <th scope="col" class="w-24 text-center">Số lượng</th>
                                         <th scope="col" class="w-32 text-end">Đơn giá</th>
-                                        <th scope="col" class="w-32 text-end">Đơn giá chỉ gỗ</th>
+                                        @if($acrylicOrder->type === 'min_late')
+                                            <th scope="col" class="w-32 text-end">Đơn giá chỉ</th>
+                                        @endif
                                         <th scope="col" class="w-32 text-end">Thành tiền</th>
                                     </tr>
                                 </thead>
@@ -438,12 +440,13 @@
                                             <td class="text-center font-semibold text-neutral-500">{{ $detailIndex + 1 }}</td>
                                             <td><span class="font-semibold text-neutral-800">{{ $detail->name }}</span></td>
                                             <td class="text-center">{{ $detail->unit ?? '—' }}</td>
-                                            <td class="text-center font-medium">{{ number_format($detail->quantity, 2, ',', '.') }}
-                                            </td>
+                                            <td class="text-center font-medium">{{ number_format($detail->quantity, 2, ',', '.') }}</td>
                                             <td class="text-end font-medium text-neutral-600">
                                                 {{ number_format($detail->price, 0, ',', '.') }}</td>
-                                            <td class="text-end font-medium text-neutral-600">
-                                                {{ number_format($detail->price_only, 0, ',', '.') }}</td>
+                                            @if($acrylicOrder->type === 'min_late')
+                                                <td class="text-end font-medium text-neutral-600">
+                                                    {{ number_format($detail->price_only, 0, ',', '.') }}</td>
+                                            @endif
                                             <td class="text-end font-bold text-primary-600">
                                                 {{ number_format($detail->total, 0, ',', '.') }}</td>
                                         </tr>
@@ -763,7 +766,7 @@
                     'items' => $items
                 ];
             }),
-            'payment_details' => ($acrylicOrder->type === 'min_late' && isset($acrylicOrder->paymentDetails)) ? $acrylicOrder->paymentDetails->map(function ($detail) {
+            'payment_details' => isset($acrylicOrder->paymentDetails) ? $acrylicOrder->paymentDetails->map(function ($detail) {
                 return [
                     'name' => $detail->name,
                     'unit' => $detail->unit,

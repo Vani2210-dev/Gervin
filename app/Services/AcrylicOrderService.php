@@ -40,7 +40,7 @@ class AcrylicOrderService
             'supplies.*.items.*.thickness'           => 'nullable|string|max:100',
             'supplies.*.items.*.height'              => 'nullable|numeric|min:0',
             'supplies.*.items.*.width'               => 'nullable|numeric|min:0',
-            'supplies.*.items.*.grain_direction'     => 'nullable|in:0,2',
+            'supplies.*.items.*.grain_direction'     => 'nullable|string|max:100',
             'supplies.*.items.*.edge_bevel'          => 'nullable|string|max:100',
             'supplies.*.items.*.wing_area'           => 'nullable|numeric|min:0',
             'supplies.*.items.*.molding_length'      => 'nullable|numeric|min:0',
@@ -66,6 +66,12 @@ class AcrylicOrderService
             'supplies.*.items.*.mill_width_2'         => 'nullable|integer',
             'supplies.*.items.*.mill_depth_2'         => 'nullable|integer',
             'supplies.*.items.*.is_labor'              => 'nullable|in:0,1',
+            'payment_details'                          => 'nullable|array',
+            'payment_details.*.name'                   => 'required|string|max:255',
+            'payment_details.*.unit'                   => 'nullable|string|max:100',
+            'payment_details.*.quantity'               => 'nullable|numeric|min:0',
+            'payment_details.*.price'                  => 'required|numeric|min:0',
+            'payment_details.*.total'                  => 'required|string',
         ];
     }
 
@@ -111,7 +117,7 @@ class AcrylicOrderService
         }
 
         $allAttachments = array_merge($existingAttachments, $attachmentPaths);
-        $subTotal = $this->calculateTotalAmount($request->supplies ?? []);
+        $subTotal = $this->calculateTotalAmount($request->supplies ?? [], $request->payment_details ?? []);
         $discountPercent = (float) $request->input('discount_percent', 0);
         $vatPercent = (float) $request->input('vat_percent', 0);
         
@@ -183,6 +189,10 @@ class AcrylicOrderService
         // Recreate supplies and items
         $this->saveSuppliesAndItems($order, $request->supplies ?? []);
 
+        // Recreate payment details
+        $order->paymentDetails()->delete();
+        $this->savePaymentDetails($order, $request->payment_details ?? []);
+
         return $order;
     }
 
@@ -209,7 +219,7 @@ class AcrylicOrderService
     /**
      * Calculate total amount helper.
      */
-    protected function calculateTotalAmount(array $supplies): float
+    protected function calculateTotalAmount(array $supplies, array $paymentDetails): float
     {
         $totalAmount = 0;
         foreach ($supplies as $supply) {
@@ -218,6 +228,11 @@ class AcrylicOrderService
                 $itemTotal = isset($item['total_price']) ? floatval(str_replace('.', '', $item['total_price'])) : ($item['unit_price'] * $item['quantity']);
                 $totalAmount += $itemTotal;
             }
+        }
+        foreach ($paymentDetails as $detail) {
+            if (empty($detail['name'])) continue;
+            $detailTotal = isset($detail['total']) ? floatval(str_replace('.', '', $detail['total'])) : (($detail['price'] ?? 0) * ($detail['quantity'] ?? 0));
+            $totalAmount += $detailTotal;
         }
         return round($totalAmount, -3);
     }
@@ -247,7 +262,7 @@ class AcrylicOrderService
                     'thickness'           => $item['thickness'] ?? null,
                     'height'              => $item['height'] ?? null,
                     'width'               => $item['width'] ?? null,
-                    'grain_direction'     => $item['grain_direction'] ?? 0,
+                    'grain_direction'     => isset($item['grain_direction']) ? (string)$item['grain_direction'] : '0',
                     'edge_bevel'          => $item['edge_bevel'] ?? null,
                     'wing_area'           => $item['wing_area'] ?? null,
                     'molding_length'      => $item['molding_length'] ?? null,
@@ -297,6 +312,26 @@ class AcrylicOrderService
                 }
                 // else: labor row — no codes, globalPieceIndex unchanged
             }
+        }
+    }
+
+    /**
+     * Save payment details helper.
+     */
+    protected function savePaymentDetails(Order $order, array $paymentDetailsData): void
+    {
+        foreach ($paymentDetailsData as $detail) {
+            if (empty($detail['name'])) continue;
+            
+            \App\Models\PaymentDetail::create([
+                'order_id'   => $order->id,
+                'name'       => $detail['name'],
+                'unit'       => $detail['unit'] ?? null,
+                'quantity'   => $detail['quantity'] ?? 0,
+                'price'      => round($detail['price'] ?? 0),
+                'price_only' => 0,
+                'total'      => round(str_replace('.', '', $detail['total'] ?? 0)),
+            ]);
         }
     }
 }

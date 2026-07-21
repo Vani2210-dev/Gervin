@@ -6,7 +6,98 @@
 
 @section('content')
 
-<div class="grid grid-cols-12">
+<style>
+    .stats-custom-grid {
+        display: grid;
+        grid-template-columns: repeat(1, minmax(0, 1fr));
+        gap: 16px;
+    }
+    @media (min-width: 768px) {
+        .stats-custom-grid {
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+        }
+    }
+</style>
+
+<div class="grid grid-cols-12 gap-y-6">
+    <div class="col-span-12">
+        {{-- Statistics Grid --}}
+        <div class="stats-custom-grid">
+            <!-- Card 1: Tổng khách hàng -->
+            <div class="bg-white border border-neutral-200 rounded-2xl p-4 shadow-sm flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-primary-50 flex items-center justify-center text-primary-600 text-xl flex-shrink-0">
+                    <iconify-icon icon="lucide:users"></iconify-icon>
+                </div>
+                <div>
+                    <div class="text-xs text-neutral-500 font-medium mb-0.5">Tổng khách hàng</div>
+                    <div class="text-lg font-bold text-neutral-800">{{ $totalCustomersCount }} KH</div>
+                </div>
+            </div>
+            <!-- Card 2: Khách hàng mới -->
+            <div class="bg-white border border-neutral-200 rounded-2xl p-4 shadow-sm flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 text-xl flex-shrink-0">
+                    <iconify-icon icon="lucide:user-plus"></iconify-icon>
+                </div>
+                <div>
+                    <div class="text-xs text-neutral-500 font-medium mb-0.5">
+                        Khách hàng mới
+                        @if($startDate || $endDate)
+                            <span style="font-size: 9px;" class="font-normal text-neutral-400 capitalize">
+                                @if($startDate && $endDate)
+                                    ({{ \Carbon\Carbon::parse($startDate)->format('d/m') }})
+                                @endif
+                            </span>
+                        @else
+                            <span style="font-size: 9px;" class="font-normal text-neutral-400 capitalize">(Tháng này)</span>
+                        @endif
+                    </div>
+                    <div class="text-lg font-bold text-neutral-800">{{ $newCustomersCount }} KH</div>
+                </div>
+            </div>
+            <!-- Card 3: Khách mất đi -->
+            <div class="bg-white border border-neutral-200 rounded-2xl p-4 shadow-sm flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-orange-600 text-xl flex-shrink-0">
+                    <iconify-icon icon="lucide:user-minus"></iconify-icon>
+                </div>
+                <div>
+                    <div class="text-xs text-neutral-500 font-medium mb-0.5" title="Khách hàng không phát sinh đơn hàng trong 2 tháng gần nhất">Khách mất đi <iconify-icon icon="lucide:info" style="font-size:10px; vertical-align: middle;"></iconify-icon></div>
+                    <div class="text-lg font-bold text-neutral-800">{{ $lostCustomersCount }} KH</div>
+                </div>
+            </div>
+            <!-- Card 4: Tổng đã thanh toán -->
+            <div class="bg-white border border-neutral-200 rounded-2xl p-4 shadow-sm flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-success-50 flex items-center justify-center text-success-600 text-xl flex-shrink-0">
+                    <iconify-icon icon="lucide:check-circle"></iconify-icon>
+                </div>
+                <div class="min-w-0">
+                    <div class="text-xs text-neutral-500 font-medium mb-0.5 truncate">
+                        Đã thanh toán
+                        @if($startDate || $endDate)
+                            <span style="font-size: 9px;" class="font-normal text-neutral-400 capitalize">
+                                @if($startDate && $endDate)
+                                    ({{ \Carbon\Carbon::parse($startDate)->format('d/m') }})
+                                @endif
+                            </span>
+                        @else
+                            <span style="font-size: 9px;" class="font-normal text-neutral-400 capitalize">(Tháng)</span>
+                        @endif
+                    </div>
+                    <div class="text-lg font-bold text-neutral-800 truncate">{{ number_format($totalPeriodPaidSum, 0, ',', '.') }}₫</div>
+                </div>
+            </div>
+            <!-- Card 5: Tổng công nợ -->
+            <div class="bg-white border border-neutral-200 rounded-2xl p-4 shadow-sm flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-danger-50 flex items-center justify-center text-danger-600 text-xl flex-shrink-0">
+                    <iconify-icon icon="lucide:alert-circle"></iconify-icon>
+                </div>
+                <div class="min-w-0">
+                    <div class="text-xs text-neutral-500 font-medium mb-0.5">Tổng công nợ</div>
+                    <div class="text-lg font-bold text-neutral-800 truncate">{{ number_format($totalDebtSum, 0, ',', '.') }}₫</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="col-span-12">
         <div class="card h-full p-0 rounded-xl border-0 overflow-hidden">
             {{-- Header --}}
@@ -37,7 +128,7 @@
                         <iconify-icon icon="solar:filter-outline" class="icon text-xl line-height-1"></iconify-icon>
                         Lọc
                     </button>
-                    @if(request()->filled('filter_customer_code') || request()->filled('filter_name') || request()->filled('filter_phone'))
+                    @if(request()->filled('filter_customer_code') || request()->filled('filter_name') || request()->filled('filter_phone') || request()->filled('filter_start_date') || request()->filled('filter_end_date') || request()->filled('filter_customer_id') || request()->filled('filter_debt_level'))
                     <a href="{{ route('customers.index') }}" class="btn text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2">
                         <iconify-icon icon="solar:close-circle-outline" class="icon text-xl line-height-1"></iconify-icon>
                         Xóa lọc
@@ -77,6 +168,25 @@
                                 <th scope="col">Số điện thoại</th>
                                 <th scope="col">Địa chỉ</th>
                                 <th scope="col">Chính sách KH</th>
+                                @if(auth()->user()->hasRole('Admin'))
+                                <th scope="col">Nhân viên</th>
+                                @endif
+                                <th scope="col" class="text-right">
+                                    Đã thanh toán
+                                    @if($startDate || $endDate)
+                                        <div style="font-size: 10px;" class="font-normal text-neutral-400 capitalize">
+                                            @if($startDate && $endDate)
+                                                ({{ \Carbon\Carbon::parse($startDate)->format('d/m') }} - {{ \Carbon\Carbon::parse($endDate)->format('d/m') }})
+                                            @elseif($startDate)
+                                                (Từ {{ \Carbon\Carbon::parse($startDate)->format('d/m') }})
+                                            @else
+                                                (Đến {{ \Carbon\Carbon::parse($endDate)->format('d/m') }})
+                                            @endif
+                                        </div>
+                                    @else
+                                        <div style="font-size: 10px;" class="font-normal text-neutral-400 capitalize">(Tháng này)</div>
+                                    @endif
+                                </th>
                                 <th scope="col" class="text-right">Công nợ</th>
                                 <th scope="col" class="text-center">Hành động</th>
                             </tr>
@@ -101,6 +211,24 @@
                                 <td>
                                     <span class="text-base text-secondary-light">{{ $c->policy ?? '—' }}</span>
                                 </td>
+                                @if(auth()->user()->hasRole('Admin'))
+                                <td>
+                                    @if($c->users->isEmpty())
+                                        <span class="text-xs text-neutral-400 font-normal bg-neutral-100 px-2 py-0.5 rounded-md">Chưa phân</span>
+                                    @else
+                                        <div class="flex flex-wrap gap-1">
+                                            @foreach($c->users as $u)
+                                                <span class="text-xs text-primary-600 bg-primary-50 px-2 py-0.5 rounded-md font-medium">{{ $u->name }}</span>
+                                            @endforeach
+                                        </div>
+                                    @endif
+                                </td>
+                                @endif
+                                <td class="text-right">
+                                    <span class="text-base font-bold text-success-600">
+                                        {{ number_format($c->period_paid, 0, ',', '.') }} đ
+                                    </span>
+                                </td>
                                 <td class="text-right">
                                     <span class="text-base font-bold {{ $c->total_debt > 0 ? 'text-danger-600' : 'text-success-600' }}">
                                         {{ number_format($c->total_debt, 0, ',', '.') }} đ
@@ -117,7 +245,7 @@
                                         </button>
                                         @can('edit customer')
                                         <button type="button"
-                                            onclick="openEditModal({{ $c->id }}, '{{ addslashes($c->customer_code) }}', '{{ addslashes($c->name) }}', '{{ addslashes($c->phone) }}', '{{ addslashes($c->address) }}', {{ $c->debt ?? 0 }}, '{{ addslashes($c->policy ?? '') }}')"
+                                            onclick="openEditModal({{ $c->id }}, '{{ addslashes($c->customer_code) }}', '{{ addslashes($c->name) }}', '{{ addslashes($c->phone) }}', '{{ addslashes($c->address) }}', {{ $c->debt ?? 0 }}, '{{ addslashes($c->policy ?? '') }}', {{ json_encode($c->users->pluck('id')->toArray()) }})"
                                             class="bg-success-100 hover:bg-success-200 text-success-600 font-medium w-10 h-10 flex justify-center items-center rounded-full">
                                             <iconify-icon icon="lucide:edit" class="menu-icon"></iconify-icon>
                                         </button>
@@ -137,7 +265,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="7" class="text-center py-8">
+                                <td @if(auth()->user()->hasRole('Admin')) colspan="9" @else colspan="8" @endif class="text-center py-8">
                                     <p class="text-neutral-500">Chưa có khách hàng nào</p>
                                 </td>
                             </tr>
@@ -195,6 +323,19 @@
                 <label class="form-label font-semibold text-sm text-neutral-600">Chính sách KH</label>
                 <textarea name="policy" class="form-control rounded-lg" placeholder="Nhập chính sách khách hàng" rows="3">{{ old('policy') }}</textarea>
             </div>
+            @if(auth()->user()->hasRole('Admin') && !empty($users))
+            <div class="form-group md:col-span-2">
+                <label class="form-label font-semibold text-sm text-neutral-600">Nhân viên chăm sóc</label>
+                <div class="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto border border-neutral-200 rounded-lg p-3">
+                    @foreach($users as $u)
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" name="user_ids[]" value="{{ $u->id }}" id="create_user_{{ $u->id }}" class="form-checkbox rounded text-primary-600">
+                        <label for="create_user_{{ $u->id }}" class="text-sm text-neutral-700 font-medium">{{ $u->name }}</label>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+            @endif
         </div>
         <div class="px-6 py-4 border-t border-neutral-200 flex gap-3">
             <button type="submit" class="btn btn-primary px-5 py-2.5 rounded-lg">Lưu</button>
@@ -238,6 +379,19 @@
                 <label class="form-label font-semibold text-sm text-neutral-600">Chính sách KH</label>
                 <textarea id="edit_policy" name="policy" class="form-control rounded-lg" placeholder="Nhập chính sách khách hàng" rows="3"></textarea>
             </div>
+            @if(auth()->user()->hasRole('Admin') && !empty($users))
+            <div class="form-group md:col-span-2">
+                <label class="form-label font-semibold text-sm text-neutral-600">Nhân viên chăm sóc</label>
+                <div class="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto border border-neutral-200 rounded-lg p-3">
+                    @foreach($users as $u)
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" name="user_ids[]" value="{{ $u->id }}" id="edit_user_{{ $u->id }}" class="edit-user-checkbox form-checkbox rounded text-primary-600">
+                        <label for="edit_user_{{ $u->id }}" class="text-sm text-neutral-700 font-medium">{{ $u->name }}</label>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+            @endif
         </div>
         <div class="px-6 py-4 border-t border-neutral-200 flex gap-3">
             <button type="submit" class="btn btn-primary px-5 py-2.5 rounded-lg">Cập nhật</button>
@@ -247,7 +401,7 @@
 </x-modal>
 
 <script>
-function openEditModal(id, customerCode, name, phone, address, initialDebt, policy) {
+function openEditModal(id, customerCode, name, phone, address, initialDebt, policy, userIds) {
     document.getElementById('edit-customer-form').action = '/customers/' + id;
     document.getElementById('edit_customer_code').value = customerCode;
     document.getElementById('edit_name').value = name;
@@ -255,6 +409,17 @@ function openEditModal(id, customerCode, name, phone, address, initialDebt, poli
     document.getElementById('edit_address').value = address;
     document.getElementById('edit_initial_debt').value = initialDebt || 0;
     document.getElementById('edit_policy').value = policy || '';
+    
+    // Reset all edit checkboxes
+    document.querySelectorAll('.edit-user-checkbox').forEach(cb => cb.checked = false);
+    // Check assigned ones
+    if (userIds && Array.isArray(userIds)) {
+        userIds.forEach(uid => {
+            const cb = document.getElementById('edit_user_' + uid);
+            if (cb) cb.checked = true;
+        });
+    }
+    
     openModal('edit-customer-modal');
 }
 </script>
@@ -270,17 +435,51 @@ function openEditModal(id, customerCode, name, phone, address, initialDebt, poli
         <input type="hidden" name="per_page" value="{{ $perPage }}">
         <input type="hidden" name="search" value="{{ $search }}">
         <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="form-group">
-                <label class="form-label font-semibold text-sm text-neutral-600">Mã khách hàng</label>
-                <input type="text" name="filter_customer_code" class="form-control rounded-lg" placeholder="Nhập mã khách hàng..." value="{{ request('filter_customer_code') }}">
-            </div>
             <div class="form-group md:col-span-2">
+                <label class="form-label font-semibold text-sm text-neutral-600">Chọn nhanh khách hàng</label>
+                <select name="filter_customer_id" id="filter_customer_id" class="rounded-lg w-full">
+                    <option value="">Tất cả</option>
+                    @foreach($filterCustomers as $fc)
+                        <option value="{{ $fc->id }}" {{ request('filter_customer_id') == $fc->id ? 'selected' : '' }}>
+                            {{ $fc->customer_code }} - {{ $fc->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            
+            <div class="form-group">
                 <label class="form-label font-semibold text-sm text-neutral-600">Tên khách hàng</label>
                 <input type="text" name="filter_name" class="form-control rounded-lg" placeholder="Nhập tên khách hàng..." value="{{ request('filter_name') }}">
             </div>
             <div class="form-group">
+                <label class="form-label font-semibold text-sm text-neutral-600">Mã khách hàng</label>
+                <input type="text" name="filter_customer_code" class="form-control rounded-lg" placeholder="Nhập mã khách hàng..." value="{{ request('filter_customer_code') }}">
+            </div>
+            
+            <div class="form-group">
                 <label class="form-label font-semibold text-sm text-neutral-600">Số điện thoại</label>
                 <input type="text" name="filter_phone" class="form-control rounded-lg" placeholder="Nhập số điện thoại..." value="{{ request('filter_phone') }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label font-semibold text-sm text-neutral-600">Mức công nợ</label>
+                <select name="filter_debt_level" class="form-select rounded-lg">
+                    <option value="">Tất cả mức công nợ</option>
+                    <option value="0-10" {{ request('filter_debt_level') === '0-10' ? 'selected' : '' }}>0 - 10 triệu</option>
+                    <option value="10-30" {{ request('filter_debt_level') === '10-30' ? 'selected' : '' }}>10 - 30 triệu</option>
+                    <option value="30-50" {{ request('filter_debt_level') === '30-50' ? 'selected' : '' }}>30 - 50 triệu</option>
+                    <option value="50-100" {{ request('filter_debt_level') === '50-100' ? 'selected' : '' }}>50 - 100 triệu</option>
+                    <option value="100-150" {{ request('filter_debt_level') === '100-150' ? 'selected' : '' }}>100 - 150 triệu</option>
+                    <option value="150+" {{ request('filter_debt_level') === '150+' ? 'selected' : '' }}>Trên 150 triệu</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label font-semibold text-sm text-neutral-600">Từ ngày</label>
+                <input type="date" name="filter_start_date" class="form-control rounded-lg" value="{{ $startDate }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label font-semibold text-sm text-neutral-600">Đến ngày</label>
+                <input type="date" name="filter_end_date" class="form-control rounded-lg" value="{{ $endDate }}">
             </div>
         </div>
         <div class="px-6 py-4 border-t border-neutral-200 flex gap-3">
@@ -757,6 +956,13 @@ document.addEventListener('DOMContentLoaded', function () {
         if (btn) {
             btn.click();
         }
+    }
+
+    if (typeof TomSelect !== 'undefined' && document.getElementById('filter_customer_id')) {
+        new TomSelect('#filter_customer_id', {
+            allowEmptyOption: true,
+            placeholder: '-- Chọn khách hàng --',
+        });
     }
 });
 </script>

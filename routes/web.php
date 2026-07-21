@@ -276,6 +276,7 @@ Route::middleware(['auth'])->group(function () {
 
 // Manufacture Orders
 Route::middleware(['auth'])->group(function () {
+    Route::get('manufactures/export/excel', [ManufactureController::class, 'exportExcel'])->name('manufactures.export-excel');
     Route::resource('manufactures', ManufactureController::class)->names('manufactures');
     Route::post('manufactures/{manufacture}/approve/{step}', [ManufactureController::class, 'approveStep'])->name('manufactures.approve');
     Route::get('manufactures/{manufacture}/print-stamps', [ManufactureController::class, 'printStamps'])->name('manufactures.print-stamps');

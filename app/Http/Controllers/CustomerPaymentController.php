@@ -11,6 +11,8 @@ class CustomerPaymentController extends Controller
 {
     public function store(Request $request, Customer $customer)
     {
+        abort_unless($customer->isAccessibleBy(auth()->user()), 403, 'Bạn không có quyền thực hiện giao dịch này.');
+
         $request->validate([
             'payment_date'   => 'required|date',
             'amount'         => 'required|numeric|min:1',
@@ -34,6 +36,8 @@ class CustomerPaymentController extends Controller
 
     public function update(Request $request, Customer $customer, CustomerPayment $payment)
     {
+        abort_unless($customer->isAccessibleBy(auth()->user()), 403, 'Bạn không có quyền thực hiện giao dịch này.');
+
         abort_if($payment->customer_id !== $customer->id, 403);
 
         $request->validate([
@@ -58,6 +62,8 @@ class CustomerPaymentController extends Controller
 
     public function destroy(Customer $customer, CustomerPayment $payment)
     {
+        abort_unless($customer->isAccessibleBy(auth()->user()), 403, 'Bạn không có quyền thực hiện giao dịch này.');
+
         abort_if($payment->customer_id !== $customer->id, 403);
 
         $payment->delete();
