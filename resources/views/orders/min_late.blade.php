@@ -481,7 +481,7 @@
                             <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn vị</th>
                             <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số lượng</th>
                             <th scope="col" style="width: 150px; min-width: 150px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá <span class="text-danger-500">*</span></th>
-                            <th scope="col" style="width: 150px; min-width: 150px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá chỉ gỗ</th>
+                            <th scope="col" style="width: 150px; min-width: 150px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá chỉ</th>
                             <th scope="col" style="width: 160px; min-width: 160px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Thành tiền</th>
                             <th scope="col" style="width: 50px; min-width: 50px; white-space: nowrap; position: sticky; right: 0; z-index: 2; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Xóa</th>
                         </tr>
@@ -1165,13 +1165,15 @@ function removePaymentDetail(button) {
 function calculatePaymentDetailRowTotal(row) {
     const qtyInput = row.querySelector('input[name*="[quantity]"]');
     const priceInput = row.querySelector('input[name*="[price]"]');
+    const priceOnlyInput = row.querySelector('input[name*="[price_only]"]');
     const totalInput = row.querySelector('input[name*="[total]"]');
     
     if (!qtyInput || !priceInput || !totalInput) return;
     
     const quantity = parseFloat(qtyInput.value) || 0;
     const price = parseFloat(priceInput.value) || 0;
-    const total = quantity * price;
+    const priceOnly = priceOnlyInput ? (parseFloat(priceOnlyInput.value) || 0) : 0;
+    const total = quantity * (price + priceOnly);
     
     totalInput.value = total > 0 ? Math.round(total).toLocaleString('vi-VN') : 0;
     updateOrderSummary();
@@ -1197,7 +1199,7 @@ function updatePaymentDetailIndexes() {
 }
 
 function bindPaymentDetailEvents(row) {
-    const inputs = row.querySelectorAll('input[name*="[quantity]"], input[name*="[price]"]');
+    const inputs = row.querySelectorAll('input[name*="[quantity]"], input[name*="[price]"], input[name*="[price_only]"]');
     inputs.forEach(input => {
         input.addEventListener('input', () => {
             calculatePaymentDetailRowTotal(row);

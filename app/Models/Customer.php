@@ -20,6 +20,22 @@ class Customer extends Model
         return $this->hasMany(Order::class);
     }
 
+    public function users()
+    {
+        return $this->belongsToMany(User::class);
+    }
+
+    public function isAccessibleBy($user)
+    {
+        if (!$user) {
+            return false;
+        }
+        if ($user->hasRole('Admin')) {
+            return true;
+        }
+        return $this->users()->where('users.id', $user->id)->exists();
+    }
+
     public function customerPayments()
     {
         return $this->hasMany(CustomerPayment::class, 'customer_id')->orderBy('payment_date');

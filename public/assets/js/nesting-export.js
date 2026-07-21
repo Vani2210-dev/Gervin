@@ -196,9 +196,18 @@ async function generateNestingWorkbook(orderData, suppliesData, filename) {
                     supply.supply_name || '',                                 // F Vật liệu
                     h,                                                        // G Dài
                     w,                                                        // H Rộng
-                    (!isNaN(parseFloat(item.thickness)) ? parseFloat(parseFloat(item.thickness).toFixed(2)) : 19), // I Dày
-                    (item.grain_direction !== null && item.grain_direction !== undefined
-                        ? parseInt(item.grain_direction) : 0),               // J Chiều vân
+                    (function() {
+                        const thick = parseFloat(item.thickness);
+                        if (!isNaN(thick)) {
+                            return parseFloat((thick + 2).toFixed(2));
+                        }
+                        return 21;
+                    })(), // I Dày (+2 mm)
+                    (function() {
+                        const gd = String(item.grain_direction || '').trim();
+                        if (gd === '0' || gd === '') return 0;
+                        return 2;
+                    })(), // J Chiều vân (0 or empty -> 0, other -> 2)
                     1,                                                        // K Số lượng (always 1 per expanded sheet row)
                     edgeL1, edgeL2, edgeW1, edgeW2,                         // L M N O Nẹp
                     0.00001, 0.00001, 0.00001, 0.00001,                     // P Q R S Dày nẹp

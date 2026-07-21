@@ -38,7 +38,13 @@ class OrderController extends Controller
         $perPage = $request->input('per_page', 10);
         $search  = $request->input('search', '');
 
+        $user = auth()->user();
         $query = Order::with('customer')
+            ->when($user && !$user->hasRole('Admin'), function ($q) use ($user) {
+                $q->whereHas('customer.users', function ($uq) use ($user) {
+                    $uq->where('users.id', $user->id);
+                });
+            })
             ->when($request->input('filter_status') !== 'draft', function ($q) {
                 $q->where('status', '!=', 'draft');
             })
@@ -81,7 +87,13 @@ class OrderController extends Controller
             ->paginate($perPage)
             ->withQueryString();
 
-        $customers = \App\Models\Customer::orderBy('name')->get();
+        if ($user && !$user->hasRole('Admin')) {
+            $customers = \App\Models\Customer::whereHas('users', function ($q) use ($user) {
+                $q->where('users.id', $user->id);
+            })->orderBy('name')->get();
+        } else {
+            $customers = \App\Models\Customer::orderBy('name')->get();
+        }
 
         return view('orders.index', compact(
             'orders', 
@@ -97,6 +109,13 @@ class OrderController extends Controller
 
     public function show(Order $order)
     {
+        $user = auth()->user();
+        if ($user && !$user->hasRole('Admin')) {
+            if (!$order->customer || !$order->customer->isAccessibleBy($user)) {
+                abort(403, 'Bạn không có quyền truy cập đơn hàng này.');
+            }
+        }
+
         $order->load(['supplies.items.codes', 'supplies.minLateItems', 'supplies.glassItems', 'paymentDetails', 'orderPayments.creator']);
         $acrylicOrder = $order;
         return view('orders.show', compact('acrylicOrder'));
@@ -133,6 +152,13 @@ class OrderController extends Controller
 
     public function edit(Order $order)
     {
+        $user = auth()->user();
+        if ($user && !$user->hasRole('Admin')) {
+            if (!$order->customer || !$order->customer->isAccessibleBy($user)) {
+                abort(403, 'Bạn không có quyền truy cập đơn hàng này.');
+            }
+        }
+
         if ($order->status === 'in_production') {
             return redirect()->route('orders.index')->with('error', 'Đơn hàng đang trong quá trình sản xuất, không thể chỉnh sửa.');
         }
@@ -179,6 +205,13 @@ class OrderController extends Controller
 
     public function update(Request $request, Order $order)
     {
+        $user = auth()->user();
+        if ($user && !$user->hasRole('Admin')) {
+            if (!$order->customer || !$order->customer->isAccessibleBy($user)) {
+                abort(403, 'Bạn không có quyền truy cập đơn hàng này.');
+            }
+        }
+
         if ($order->status === 'in_production') {
             return redirect()->route('orders.index')->with('error', 'Đơn hàng đang trong quá trình sản xuất, không thể chỉnh sửa.');
         }
@@ -239,6 +272,13 @@ class OrderController extends Controller
 
     public function destroy(Request $request, Order $order)
     {
+        $user = auth()->user();
+        if ($user && !$user->hasRole('Admin')) {
+            if (!$order->customer || !$order->customer->isAccessibleBy($user)) {
+                abort(403, 'Bạn không có quyền truy cập đơn hàng này.');
+            }
+        }
+
         $order->delete();
         return redirect()
             ->route('orders.index', $request->only([

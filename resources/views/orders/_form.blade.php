@@ -831,6 +831,16 @@ function updateOrderSummary() {
                 totalAmount += totalPrice;
             }
         });
+
+        // Also add total amount from payment details (for acrylic orders)
+        const detailRows = document.querySelectorAll('.payment-detail-row');
+        detailRows.forEach(row => {
+            const totalInput = row.querySelector('input[name*="total"]');
+            if (totalInput && !totalInput.disabled) {
+                const rawTotal = totalInput.value ? totalInput.value.replace(/\./g, '') : 0;
+                totalAmount += parseFloat(rawTotal) || 0;
+            }
+        });
     }
     
     const totalItemsEl = document.getElementById('total-items');

@@ -19,8 +19,67 @@ class CustomerController extends Controller
     {
         $perPage = $request->input('per_page', 10);
         $search  = $request->input('search', '');
+        
+        $startDate = $request->input('filter_start_date');
+        $endDate   = $request->input('filter_end_date');
 
-        $customers = Customer::when($search, function ($q) use ($search) {
+        // Default to current month's start/end if not explicitly provided or cleared
+        $isInitialLoad = !$request->has('filter_start_date') && !$request->has('filter_end_date');
+        if ($isInitialLoad) {
+            $startDate = now()->startOfMonth()->toDateString();
+            $endDate   = now()->endOfMonth()->toDateString();
+        }
+
+        $user = auth()->user();
+        $query = Customer::query();
+
+        if ($user && !$user->hasRole('Admin')) {
+            $query->whereHas('users', function ($q) use ($user) {
+                $q->where('users.id', $user->id);
+            });
+        }
+
+        if ($startDate || $endDate) {
+            $query->where(function ($q) use ($startDate, $endDate) {
+                $q->whereHas('orders', function ($o) use ($startDate, $endDate) {
+                    if ($startDate) $o->where('order_date', '>=', $startDate . ' 00:00:00');
+                    if ($endDate) $o->where('order_date', '<=', $endDate . ' 23:59:59');
+                })->orWhereHas('customerPayments', function ($p) use ($startDate, $endDate) {
+                    if ($startDate) $p->where('payment_date', '>=', $startDate);
+                    if ($endDate) $p->where('payment_date', '<=', $endDate);
+                });
+            });
+        }
+
+        if ($request->filled('filter_customer_id')) {
+            $query->where('id', $request->filter_customer_id);
+        }
+
+        $debtLevel = $request->input('filter_debt_level');
+        if ($debtLevel) {
+            switch ($debtLevel) {
+                case '0-10':
+                    $query->whereBetween('debt', [0, 10000000]);
+                    break;
+                case '10-30':
+                    $query->whereBetween('debt', [10000000, 30000000]);
+                    break;
+                case '30-50':
+                    $query->whereBetween('debt', [30000000, 50000000]);
+                    break;
+                case '50-100':
+                    $query->whereBetween('debt', [50000000, 100000000]);
+                    break;
+                case '100-150':
+                    $query->whereBetween('debt', [100000000, 150000000]);
+                    break;
+                case '150+':
+                    $query->where('debt', '>', 150000000);
+                    break;
+            }
+        }
+
+        $customersQuery = $query->when($search, function ($q) use ($search) {
                 $q->where('name', 'like', "%$search%")
                   ->orWhere('customer_code', 'like', "%$search%")
                   ->orWhere('phone', 'like', "%$search%");
@@ -33,12 +92,69 @@ class CustomerController extends Controller
             })
             ->when($request->filled('filter_phone'), function ($q) use ($request) {
                 $q->where('phone', 'like', "%{$request->filter_phone}%");
-            })
-            ->orderBy('id')
+            });
+
+        $matchingQuery = clone $customersQuery;
+        $matchingCustomerIds = $matchingQuery->pluck('id');
+        $totalCustomersCount = $matchingCustomerIds->count();
+        $totalDebtSum = $matchingQuery->sum('debt');
+
+        $customers = $customersQuery->orderBy('id')
             ->paginate($perPage)
             ->withQueryString();
 
-        return view('customers.index', compact('customers', 'perPage', 'search'));
+        $paidStartDate = $startDate ?: now()->startOfMonth()->toDateString();
+        $paidEndDate   = $endDate ?: now()->endOfMonth()->toDateString();
+
+        foreach ($customers as $c) {
+            $c->period_paid = $c->customerPayments()
+                ->where('payment_date', '>=', $paidStartDate)
+                ->where('payment_date', '<=', $paidEndDate)
+                ->sum('amount');
+        }
+
+        $totalPeriodPaidSum = \App\Models\CustomerPayment::whereIn('customer_id', $matchingCustomerIds)
+            ->where('payment_date', '>=', $paidStartDate)
+            ->where('payment_date', '<=', $paidEndDate)
+            ->sum('amount');
+
+        $baseScopedQuery = Customer::query();
+        if ($user && !$user->hasRole('Admin')) {
+            $baseScopedQuery->whereHas('users', function ($q) use ($user) {
+                $q->where('users.id', $user->id);
+            });
+        }
+
+        $lostCustomersCount = (clone $baseScopedQuery)->whereHas('orders')
+            ->whereDoesntHave('orders', function ($q) {
+                $q->where('order_date', '>=', now()->subMonths(2)->toDateString());
+            })->count();
+
+        $newCustomersCount = (clone $baseScopedQuery)
+            ->where('created_at', '>=', $paidStartDate . ' 00:00:00')
+            ->where('created_at', '<=', $paidEndDate . ' 23:59:59')
+            ->count();
+
+        $users = [];
+        if ($user && $user->hasRole('Admin')) {
+            $users = \App\Models\User::all();
+        }
+
+        // Get allowed customers for select dropdown filter
+        $filterQuery = Customer::query();
+        if ($user && !$user->hasRole('Admin')) {
+            $filterQuery->whereHas('users', function ($q) use ($user) {
+                $q->where('users.id', $user->id);
+            });
+        }
+        $filterCustomers = $filterQuery->orderBy('name')->get();
+
+        return view('customers.index', compact(
+            'customers', 'perPage', 'search', 'users', 'filterCustomers',
+            'startDate', 'endDate', 'paidStartDate', 'paidEndDate',
+            'totalCustomersCount', 'totalDebtSum', 'totalPeriodPaidSum',
+            'lostCustomersCount', 'newCustomersCount'
+        ));
     }
 
     public function store(Request $request)
@@ -61,7 +177,7 @@ class CustomerController extends Controller
             $customerCode = 'KH' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
         }
 
-        Customer::create([
+        $customer = Customer::create([
             'customer_code' => $customerCode,
             'name'          => $request->name,
             'phone'         => $request->phone,
@@ -70,11 +186,24 @@ class CustomerController extends Controller
             'policy'        => $request->policy,
         ]);
 
+        $user = auth()->user();
+        if ($user) {
+            if ($user->hasRole('Admin')) {
+                if ($request->has('user_ids')) {
+                    $customer->users()->sync($request->user_ids);
+                }
+            } else {
+                $customer->users()->sync([$user->id]);
+            }
+        }
+
         return redirect()->route('customers.index')->with('success', 'Thêm khách hàng thành công.');
     }
 
     public function update(Request $request, Customer $customer)
     {
+        abort_unless($customer->isAccessibleBy(auth()->user()), 403, 'Bạn không có quyền cập nhật khách hàng này.');
+
         $request->validate([
             'customer_code' => 'nullable|string|max:100|unique:customers,customer_code,' . $customer->id,
             'name'   => 'required|string|max:255',
@@ -101,11 +230,18 @@ class CustomerController extends Controller
 
         $customer->update($updateData);
 
+        $user = auth()->user();
+        if ($user && $user->hasRole('Admin')) {
+            $customer->users()->sync($request->input('user_ids', []));
+        }
+
         return redirect()->route('customers.index')->with('success', 'Cập nhật khách hàng thành công.');
     }
 
     public function destroy(Customer $customer)
     {
+        abort_unless($customer->isAccessibleBy(auth()->user()), 403, 'Bạn không có quyền xóa khách hàng này.');
+
         $customer->delete();
         return redirect()->route('customers.index')->with('success', 'Xóa khách hàng thành công.');
     }
@@ -134,6 +270,13 @@ class CustomerController extends Controller
             'address'       => $request->address,
         ]);
 
+        $user = auth()->user();
+        if ($user) {
+            if (!$user->hasRole('Admin')) {
+                $customer->users()->sync([$user->id]);
+            }
+        }
+
         return response()->json([
             'success'  => true,
             'customer' => $customer,
@@ -143,6 +286,8 @@ class CustomerController extends Controller
 
     public function overview(Request $request, Customer $customer)
     {
+        abort_unless($customer->isAccessibleBy(auth()->user()), 403, 'Bạn không có quyền xem thông tin khách hàng này.');
+
         $excludeOrderId = $request->query('exclude_order_id');
         $paymentDate = $request->query('payment_date');
 
