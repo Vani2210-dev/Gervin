@@ -274,6 +274,11 @@
                 <iconify-icon icon="lucide:maximize-2" class="text-lg" data-order-supplies-popup-icon></iconify-icon>
                 <span data-order-supplies-popup-label>Phóng to</span>
             </button>
+            <button type="button" onclick="triggerGlassExcelImport()" class="btn btn-sm bg-neutral-100 text-neutral-700 hover:bg-neutral-200 border border-neutral-300 rounded-lg flex items-center gap-1" style="border-color: #10b981; color: #10b981; background: #ecfdf5;">
+                <iconify-icon icon="lucide:file-spreadsheet" class="text-lg"></iconify-icon>
+                <span class="mobile-hide-text">Nhập Excel</span>
+            </button>
+            <input type="file" id="glass-excel-file-input" accept=".xlsx,.xls,.csv" style="display:none;">
             <button type="button" onclick="addGlassOrderSupply(false)" class="btn btn-sm btn-primary rounded-lg flex items-center gap-1">
                 <iconify-icon icon="lucide:plus" class="text-lg"></iconify-icon> <span class="mobile-hide-text">Thêm vật tư</span>
             </button>
@@ -464,8 +469,15 @@
                                     <td style="width: 70px; min-width: 70px; " class="border border-neutral-200">
                                         <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][wing_quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Số lượng cánh" min="1" required value="{{ $item->wing_quantity ?? 1 }}">
                                     </td>
-                                    <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
-                                        <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][area_m2]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Khối lượng (m2)" step="any" value="{{ $item->area_m2 }}">
+                                    <td style="width: 100px; min-width: 100px; " class="border border-neutral-200 relative">
+                                        <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][area_m2]" class="real-area-input" value="{{ $item->area_m2 }}">
+                                        <input type="text" class="display-area-input form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" 
+                                            placeholder="Khối lượng (m2)" 
+                                            value="{{ $item->area_m2 ? number_format($item->area_m2, 2, '.', '') : '' }}"
+                                            {{ $isLaborRow ? 'readonly disabled bg-neutral-100' : '' }}
+                                            onfocus="if(!this.hasAttribute('readonly')){ this.value = this.previousElementSibling.value; }"
+                                            onblur="if(!this.hasAttribute('readonly')){ if(this.value && !isNaN(this.value)){ this.previousElementSibling.value = this.value; this.value = Number(this.value).toFixed(2); } else { this.previousElementSibling.value = ''; this.value = ''; } }"
+                                            oninput="if(!this.hasAttribute('readonly')){ this.previousElementSibling.value = this.value; calculateGlassTotalPrice(this.closest('.order-item-row'), 'area'); }">
                                     </td>
                                     <td style="width: 110px; min-width: 110px; " class="border border-neutral-200">
                                         <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][unit_price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Đơn giá" min="0" step="any" required value="{{ $item->unit_price }}">
@@ -662,10 +674,18 @@ function addGlassOrderItem(button, isInitial = false, insertAfterRow = null) {
             }
             lastData = {
                 product_name: price.product_name || '',
-                thickness: thickness,
+                thickness: thickness || '',
                 glass_color: price.glass_color || '',
                 unit: price.unit || 'Bộ',
-                unit_price: price.price || 0
+                unit_price: price.price || 0,
+                wing_opening_direction: '',
+                aluminum_color: '',
+                height: '',
+                width: '',
+                wing_quantity: '1',
+                area_m2: '',
+                total_price: '',
+                notes: price.notes || ''
             };
         }
     }
@@ -743,8 +763,15 @@ function addGlassOrderItem(button, isInitial = false, insertAfterRow = null) {
         <td style="width: 70px; min-width: 70px; " class="border border-neutral-200">
             <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][wing_quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="${isAccessory ? 'Số lượng' : 'Số lượng cánh'}" min="1" required value="${lastData ? lastData.wing_quantity : '1'}">
         </td>
-        <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][area_m2]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Khối lượng (m2)" step="any" value="${lastData ? lastData.area_m2 : ''}" ${isAccessory ? 'readonly disabled bg-neutral-100' : ''}>
+        <td style="width: 100px; min-width: 100px; " class="border border-neutral-200 relative">
+            <input type="hidden" name="supplies[${supplyIndex}][items][${itemIndex}][area_m2]" class="real-area-input" value="${lastData?.area_m2 || ''}">
+            <input type="text" class="display-area-input form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" 
+                placeholder="Khối lượng (m2)" 
+                value="${lastData?.area_m2 ? Number(lastData.area_m2).toFixed(2) : ''}" 
+                ${isAccessory ? 'readonly disabled bg-neutral-100' : ''}
+                onfocus="if(!this.hasAttribute('readonly')){ this.value = this.previousElementSibling.value; }"
+                onblur="if(!this.hasAttribute('readonly')){ if(this.value && !isNaN(this.value)){ this.previousElementSibling.value = this.value; this.value = Number(this.value).toFixed(2); } else { this.previousElementSibling.value = ''; this.value = ''; } }"
+                oninput="if(!this.hasAttribute('readonly')){ this.previousElementSibling.value = this.value; calculateGlassTotalPrice(this.closest('.order-item-row'), 'area'); }">
         </td>
         <td style="width: 110px; min-width: 110px; " class="border border-neutral-200">
             <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][unit_price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Đơn giá" min="0" step="any" required value="${copiedUnitPrice}">
@@ -1137,6 +1164,8 @@ function calculateGlassTotalPrice(row, sourceEvent) {
         if (areaInput) {
             areaInput.value = '';
         }
+        const displayAreaInput = row.querySelector('.display-area-input');
+        if (displayAreaInput) displayAreaInput.value = '';
         const totalPrice = wingQty * unitPrice;
         const totalPriceInput = row.querySelector('input[name*="[total_price]"]');
         if (totalPriceInput) {
@@ -1157,6 +1186,10 @@ function calculateGlassTotalPrice(row, sourceEvent) {
             area = (height * width * wingQty) / 1000000;
         }
         areaInput.value = area > 0 ? area : '';
+        const displayAreaInput = row.querySelector('.display-area-input');
+        if (displayAreaInput) {
+            displayAreaInput.value = area > 0 ? area.toFixed(2) : '';
+        }
     }
     
     const currentArea = parseFloat(areaInput.value) || 0;
@@ -1279,5 +1312,409 @@ function initWingDirection(container) {
             rightInput.value = 1; // Default back to 1 if just "Phải"
         }
     }
+}
+</script>
+
+{{-- Excel Import Modal --}}
+<div id="glass-excel-import-backdrop" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:99998;backdrop-filter:blur(2px);"></div>
+<div id="glass-excel-import-modal" style="display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;padding:20px;">
+    <div style="width:min(1100px,96vw);height:90vh;background:#fff;border-radius:16px;box-shadow:0 20px 25px -5px rgba(0,0,0,0.1);display:flex;flex-direction:column;overflow:hidden;animation:excelModalIn 0.3s cubic-bezier(0.16,1,0.3,1);">
+        {{-- Header --}}
+        <div style="padding:16px 24px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;background:#f8fafc;flex-shrink:0;">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <div style="width:40px;height:40px;background:#d1fae5;border-radius:10px;display:flex;align-items:center;justify-content:center;">
+                    <iconify-icon icon="lucide:file-spreadsheet" style="font-size:22px;color:#10b981;"></iconify-icon>
+                </div>
+                <div>
+                    <div style="font-size:16px;font-weight:700;color:#1f2937;">Nhập từ Excel</div>
+                    <div id="glass-excel-import-filename" style="font-size:12px;color:#6b7280;margin-top:2px;">-</div>
+                </div>
+            </div>
+            <button type="button" onclick="closeGlassExcelImport()" class="w-8 h-8 rounded-lg hover:bg-neutral-100 flex items-center justify-center text-neutral-400 hover:text-danger-500 transition-colors" style="border:none;background:transparent;">
+                <iconify-icon icon="lucide:x" style="font-size:18px;"></iconify-icon>
+            </button>
+        </div>
+
+        {{-- Body --}}
+        <div style="flex:1;overflow:hidden;display:flex;flex-direction:column;background:#fff;">
+            <div style="padding:14px 24px 0;flex-shrink:0;">
+                <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 16px;">
+                    <div style="font-size:12px;font-weight:700;color:#065f46;margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+                        <iconify-icon icon="lucide:info" style="font-size:14px;"></iconify-icon>
+                        Định dạng cột Excel (file báo giá) — hàng đầu là tiêu đề, từ hàng 2 là dữ liệu
+                    </div>
+                    <div style="display:flex;flex-wrap:wrap;gap:6px;font-size:11px;">
+                        @foreach(['Tên sản phẩm', 'Mã SP', 'Chiều mở cánh', 'Màu nhôm', 'Màu kính', 'Dài', 'Rộng', 'Đơn vị', 'SL', 'KL m2', 'Đơn giá', 'Thành tiền', 'Ghi chú'] as $col)
+                        <span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:999px;font-weight:600;">{{ $col }}</span>
+                        @endforeach
+                    </div>
+                    <div style="font-size:11px;color:#6b7280;margin-top:6px;">
+                        Các nhóm vật tư được ngăn cách bằng số La Mã (I., II., v.v...) ở cột đầu tiên (Cột A). Cột tiêu đề không cần đúng tên — hệ thống nhận diện theo <strong>vị trí</strong>.
+                    </div>
+                </div>
+            </div>
+
+            <div style="flex:1;overflow:auto;padding:14px 24px;" class="custom-scrollbar">
+                <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:800px;text-align:left;">
+                    <thead style="position:sticky;top:0;background:#f1f5f9;z-index:10;" id="glass-excel-preview-thead">
+                        {{-- Injected via JS --}}
+                    </thead>
+                    <tbody id="glass-excel-preview-tbody">
+                        {{-- Injected via JS --}}
+                    </tbody>
+                </table>
+                <div id="glass-excel-preview-empty" style="display:none;padding:40px 20px;text-align:center;color:#64748b;">
+                    <iconify-icon icon="lucide:inbox" style="font-size:40px;opacity:0.5;margin-bottom:12px;"></iconify-icon>
+                    <div style="font-size:14px;font-weight:500;">Không tìm thấy dữ liệu hợp lệ</div>
+                    <div style="font-size:13px;margin-top:4px;">Vui lòng kiểm tra lại file Excel (đảm bảo đúng cấu trúc).</div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Footer --}}
+        <div style="padding:14px 24px;border-top:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:#f8fafc;">
+            <div id="glass-excel-import-count" style="font-size:13px;color:#64748b;"></div>
+            <div style="display:flex;gap:10px;">
+                <button type="button" onclick="closeGlassExcelImport()"
+                    style="padding:9px 20px;border:1.5px solid #d1d5db;border-radius:8px;background:#fff;color:#374151;font-size:13px;font-weight:600;cursor:pointer;">
+                    Hủy
+                </button>
+                <button type="button" id="glass-excel-import-confirm-btn" onclick="confirmGlassExcelImport()"
+                    style="padding:9px 20px;border:none;border-radius:8px;background:linear-gradient(135deg,#059669,#10b981);color:#fff;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;">
+                    <iconify-icon icon="lucide:check" style="font-size:15px;"></iconify-icon>
+                    Tiến hành Nhập
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes excelModalIn {
+    from { opacity:0; transform:scale(0.95) translateY(10px); }
+    to { opacity:1; transform:scale(1) translateY(0); }
+}
+</style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const backdrop = document.getElementById('glass-excel-import-backdrop');
+    const modal = document.getElementById('glass-excel-import-modal');
+    if (backdrop) document.body.appendChild(backdrop);
+    if (modal) document.body.appendChild(modal);
+});
+
+let _glassExcelSupplyGroups = [];
+
+function triggerGlassExcelImport() {
+    const fileInput = document.getElementById('glass-excel-file-input');
+    if (!fileInput) return;
+    fileInput.value = '';
+    fileInput.onchange = function(e) { handleGlassExcelFile(e.target.files[0]); };
+    fileInput.click();
+}
+
+function handleGlassExcelFile(file) {
+    if (!file) return;
+    document.getElementById('glass-excel-import-filename').textContent = file.name;
+    _glassExcelSupplyGroups = [];
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const wb = XLSX.read(e.target.result, { type: 'array' });
+            const ws = wb.Sheets[wb.SheetNames[0]];
+            const rawRows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: false });
+
+            if (!rawRows || rawRows.length === 0) {
+                showGlassExcelModal([]);
+                return;
+            }
+
+            const clean = v => (v === null || v === undefined) ? '' : String(v).trim();
+            const num   = v => { const n = parseFloat(String(v).replace(/[^0-9.\-]/g,'')); return isNaN(n) ? '' : n; };
+            const escHtml = str => {
+                if (!str) return '';
+                return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+            };
+            window._glassEscHtml = escHtml;
+
+            const isGroupHeader = stt => /^[IVX]+\.$/.test(clean(stt));
+
+            const groups = [];
+            let currentGroup = null;
+            let accessoriesGroup = {
+                supply_name: 'Phụ kiện',
+                supply_code: 'Phụ kiện',
+                is_accessory: true,
+                items: []
+            };
+
+            for (const row of rawRows) {
+                const stt = clean(row[0]);
+                const tenSp = clean(row[1]);
+                
+                if (isGroupHeader(stt)) {
+                    currentGroup = {
+                        supply_name: tenSp,
+                        items: []
+                    };
+                    groups.push(currentGroup);
+                    continue;
+                }
+
+                if (!currentGroup) continue;
+                
+                // Skip footer rows like KHÁCH HÀNG or signature lines
+                const upperTenSp = tenSp.toUpperCase();
+                if (upperTenSp.includes('KHÁCH HÀNG') || upperTenSp.includes('KÝ, GHI RÕ') || upperTenSp.includes('KẾ TOÁN') || upperTenSp.includes('TỔNG CỘNG')) {
+                    continue;
+                }
+                
+                const maSp = clean(row[2]);
+                const openDir = clean(row[3]);
+                const aluColor = clean(row[4]);
+                const glassColor = clean(row[5]);
+                const height = num(row[6]);
+                const width = num(row[7]);
+                const unit = clean(row[8]);
+                const qty = parseInt(clean(row[9])) || 1;
+                const area = num(row[10]);
+                const price = num(row[11]);
+                const notes = clean(row[13]);
+
+                if (!tenSp) continue;
+                
+                let thickness = '';
+                
+                let itemData = {
+                    product_name: tenSp,
+                    product_code: maSp,
+                    thickness: thickness,
+                    wing_opening_direction: openDir,
+                    aluminum_color: aluColor,
+                    glass_color: glassColor,
+                    height: height,
+                    width: width,
+                    unit: unit,
+                    quantity: qty,
+                    area_m2: area,
+                    unit_price: price,
+                    notes: notes
+                };
+
+                if (!maSp) {
+                    accessoriesGroup.items.push(itemData);
+                } else {
+                    currentGroup.items.push(itemData);
+                }
+            }
+
+            if (accessoriesGroup.items.length > 0) {
+                groups.push(accessoriesGroup);
+            }
+
+            _glassExcelSupplyGroups = groups.filter(g => g.items.length > 0);
+
+            // Assign supply_code from the first item's product_code (e.g., 'GK06')
+            _glassExcelSupplyGroups.forEach(g => {
+                if (!g.is_accessory) {
+                    g.supply_code = g.items[0]?.product_code || g.supply_name;
+                }
+            });
+
+            showGlassExcelModal(_glassExcelSupplyGroups);
+        } catch(err) {
+            console.error(err);
+            alert("Lỗi khi đọc file Excel. Vui lòng kiểm tra lại định dạng.");
+        }
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+function showGlassExcelModal(groups) {
+    const thead = document.getElementById('glass-excel-preview-thead');
+    const tbody = document.getElementById('glass-excel-preview-tbody');
+    const empty = document.getElementById('glass-excel-preview-empty');
+    const countEl = document.getElementById('glass-excel-import-count');
+    const confirmBtn = document.getElementById('glass-excel-import-confirm-btn');
+
+    thead.innerHTML = `<tr>
+        <th style="padding:8px 10px;text-align:left;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;white-space:nowrap;">Vật tư / Tên SP</th>
+        <th style="padding:8px 10px;text-align:center;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;white-space:nowrap;">Mở cánh</th>
+        <th style="padding:8px 10px;text-align:center;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;white-space:nowrap;">Màu nhôm</th>
+        <th style="padding:8px 10px;text-align:center;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;white-space:nowrap;">Màu kính</th>
+        <th style="padding:8px 10px;text-align:center;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;white-space:nowrap;">Dài</th>
+        <th style="padding:8px 10px;text-align:center;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;white-space:nowrap;">Rộng</th>
+        <th style="padding:8px 10px;text-align:center;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;white-space:nowrap;">SL</th>
+        <th style="padding:8px 10px;text-align:center;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;white-space:nowrap;">KL (m2)</th>
+        <th style="padding:8px 10px;text-align:right;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;white-space:nowrap;">Đơn giá</th>
+        <th style="padding:8px 10px;text-align:left;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;white-space:nowrap;">Ghi chú</th>
+    </tr>`;
+
+    tbody.innerHTML = '';
+    let totalItems = 0;
+
+    if (!groups || groups.length === 0) {
+        empty.style.display = 'block';
+        confirmBtn.style.opacity = '0.5';
+        confirmBtn.style.pointerEvents = 'none';
+        document.getElementById('glass-excel-import-backdrop').style.display = 'block';
+        document.getElementById('glass-excel-import-modal').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+        return;
+    }
+
+    empty.style.display = 'none';
+    confirmBtn.style.opacity = '1';
+    confirmBtn.style.pointerEvents = 'auto';
+
+    let html = '';
+    groups.forEach(group => {
+        let pillHtml = group.is_accessory ? 
+            `<span style="background:#fef9c3;color:#854d0e;border:1px solid #fef08a;border-radius:6px;padding:1px 8px;margin-left:4px;">Phụ kiện đi kèm</span>` :
+            `Vật tư: <span style="background:#fff;border:1px solid #c4b5fd;border-radius:6px;padding:1px 8px;margin-left:4px;">${window._glassEscHtml(group.supply_code)}</span>`;
+
+        html += `<tr style="background:#ede9fe;">
+            <td colspan="10" style="padding:7px 12px;font-weight:700;color:#6d28d9;font-size:12px;">
+                <iconify-icon icon="lucide:package" style="margin-right:6px;font-size:13px;"></iconify-icon>
+                ${pillHtml}
+                <span style="color:#94a3b8;font-weight:400;margin-left:8px;">(${group.items.length} SP)</span>
+            </td>
+        </tr>`;
+
+        group.items.forEach((item, i) => {
+            totalItems++;
+            const bgClass = i % 2 === 0 ? '' : 'background:#fafafa;';
+            html += `
+                <tr style="border-bottom:1px solid #f1f5f9;${bgClass}">
+                    <td style="padding:6px 12px;color:#0f172a;padding-left:24px;white-space:pre-wrap;line-height:1.5;max-width:250px;word-wrap:break-word;">${window._glassEscHtml(item.product_name)}</td>
+                    <td style="padding:6px 10px;text-align:center;color:#374151;">${item.wing_opening_direction !== '' ? window._glassEscHtml(item.wing_opening_direction) : '—'}</td>
+                    <td style="padding:6px 10px;text-align:center;color:#374151;">${item.aluminum_color !== '' ? window._glassEscHtml(item.aluminum_color) : '—'}</td>
+                    <td style="padding:6px 10px;text-align:center;color:#374151;">${item.glass_color !== '' ? window._glassEscHtml(item.glass_color) : '—'}</td>
+                    <td style="padding:6px 10px;text-align:center;color:#374151;">${item.height !== '' ? item.height : '—'}</td>
+                    <td style="padding:6px 10px;text-align:center;color:#374151;">${item.width !== '' ? item.width : '—'}</td>
+                    <td style="padding:6px 10px;text-align:center;font-weight:600;color:#1d4ed8;">${item.quantity}</td>
+                    <td style="padding:6px 10px;text-align:center;color:#374151;">${item.area_m2 !== '' ? Number(item.area_m2).toFixed(2) : '—'}</td>
+                    <td style="padding:6px 10px;text-align:right;font-weight:600;color:#15803d;">${item.unit_price !== '' ? Number(item.unit_price).toLocaleString('vi-VN') : '—'}</td>
+                    <td style="padding:6px 10px;color:#6b7280;font-style:italic;max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${window._glassEscHtml(item.notes)}">${window._glassEscHtml(item.notes)}</td>
+                </tr>
+            `;
+        });
+    });
+    tbody.innerHTML = html;
+
+    countEl.innerHTML = `<b style="color:#6d28d9;">${groups.length} nhóm</b>&nbsp;·&nbsp;<b style="color:#1d4ed8;">${totalItems} sản phẩm</b> sẽ được nhập`;
+
+    document.getElementById('glass-excel-import-backdrop').style.display = 'block';
+    document.getElementById('glass-excel-import-modal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeGlassExcelImport() {
+    document.getElementById('glass-excel-import-backdrop').style.display = 'none';
+    document.getElementById('glass-excel-import-modal').style.display = 'none';
+    document.body.style.overflow = '';
+    _glassExcelSupplyGroups = [];
+}
+
+function confirmGlassExcelImport() {
+    if (!_glassExcelSupplyGroups || _glassExcelSupplyGroups.length === 0) return;
+
+    const suppliesContainer = document.getElementById('glass-supplies-container');
+    if (!suppliesContainer) return;
+
+    _glassExcelSupplyGroups.forEach(group => {
+        addGlassOrderSupply(group.is_accessory ? true : false);
+        const newSupplyRow = suppliesContainer.querySelector('.order-supply-row:last-child');
+        if (!newSupplyRow) return;
+
+        if (!group.is_accessory) {
+            // Try mapping supply group name to the text input
+            const supplyNameInput = newSupplyRow.querySelector('input[name*="[supply_name]"]');
+            if (supplyNameInput && group.supply_name) {
+                supplyNameInput.value = group.supply_name;
+            }
+
+            const tomSelectEl = newSupplyRow.querySelector('.tom-select-supply-code');
+            if (tomSelectEl && tomSelectEl.tomselect && group.supply_code) {
+                if (!tomSelectEl.tomselect.options[group.supply_code]) {
+                    tomSelectEl.tomselect.addOption({value: group.supply_code, text: group.supply_code});
+                }
+                tomSelectEl.tomselect.setValue(group.supply_code);
+            }
+        }
+
+        const itemsContainer = newSupplyRow.querySelector('.supply-items-container');
+        const addItemBtn = newSupplyRow.querySelector('[onclick*="addGlassOrderItem"]');
+        if (!itemsContainer || !addItemBtn) return;
+
+        itemsContainer.innerHTML = '';
+
+        group.items.forEach(item => {
+            addGlassOrderItem(addItemBtn, true);
+            const newRow = itemsContainer.lastElementChild;
+            if (!newRow) return;
+
+            const setVal = (sel, val) => {
+                if (val === '' || val === null || val === undefined) return;
+                const el = newRow.querySelector(sel);
+                if (el) {
+                    if (el.tagName.toLowerCase() === 'select' && el.tomselect) {
+                        el.tomselect.setValue(val);
+                    } else {
+                        el.value = val;
+                    }
+                }
+            };
+
+            setVal('input[name*="[product_code]"], select[name*="[product_code]"]', item.product_code);
+            setVal('[name*="[product_name]"]', item.product_name);
+            setVal('input[name*="[thickness]"]', item.thickness);
+            
+            // wing_opening_direction is an input + hidden input + display in glass.blade.php
+            // We need to set the value correctly
+            const actualWingInput = newRow.querySelector('.actual-wing-direction');
+            if (actualWingInput) {
+                actualWingInput.value = item.wing_opening_direction || '';
+                initWingDirection(actualWingInput.closest('.wing-direction-container') || newRow);
+            } else {
+                setVal('input[name*="[wing_opening_direction]"]', item.wing_opening_direction);
+            }
+            
+            setVal('input[name*="[aluminum_color]"]', item.aluminum_color);
+            setVal('input[name*="[glass_color]"]', item.glass_color);
+            setVal('input[name*="[height]"]', item.height);
+            setVal('input[name*="[width]"]', item.width);
+            setVal('input[name*="[unit]"]', item.unit);
+            setVal('input[name*="[wing_quantity]"], input[name*="[quantity]"]', item.quantity);
+            setVal('input[name*="[area_m2]"]', item.area_m2);
+            const displayArea = newRow.querySelector('.display-area-input');
+            if (displayArea) {
+                displayArea.value = item.area_m2 ? Number(item.area_m2).toFixed(2) : '';
+            }
+            setVal('input[name*="[unit_price]"]', item.unit_price);
+            setVal('input[name*="[notes]"]', item.notes);
+
+            bindGlassRowEvents(newRow);
+            calculateGlassTotalPrice(newRow);
+        });
+    });
+
+    if (typeof updateGlassRowIndexes === 'function') {
+        updateGlassRowIndexes();
+    }
+    if (typeof updateOrderSummary === 'function') {
+        updateOrderSummary();
+    }
+
+    if (suppliesContainer) {
+        suppliesContainer.style.transition = 'box-shadow 0.3s';
+        suppliesContainer.style.boxShadow = '0 0 0 3px #10b981';
+        setTimeout(() => { suppliesContainer.style.boxShadow = ''; }, 1500);
+    }
+
+    closeGlassExcelImport();
 }
 </script>

@@ -182,9 +182,10 @@
                                             <th scope="col" class="w-32">Mã SP</th>
                                             <th scope="col" class="w-64">Tên SP</th>
                                             <th scope="col" class="w-20">Độ dày</th>
-                                            <th scope="col" class="w-20">SL</th>
                                             <th scope="col" class="w-20">Cao</th>
                                             <th scope="col" class="w-20">Rộng</th>
+                                            <th scope="col" class="w-20">SL</th>
+                                            <th scope="col" class="w-24">Vát</th>
                                             <th scope="col" class="w-28">Dán cạnh</th>
                                             <th scope="col" class="w-24">Dán thẳng</th>
                                             <th scope="col" class="w-24">Dán vát</th>
@@ -194,7 +195,6 @@
                                             <th scope="col" class="w-28">Bản rộng 25-35</th>
                                             <th scope="col" class="w-28">Tay nắm vát</th>
                                             <th scope="col" class="w-20 text-center">CNC</th>
-                                            <th scope="col" class="w-24">Vát</th>
                                             <th scope="col" class="w-24">Chiều vân</th>
                                         </tr>
                                     </thead>
@@ -215,9 +215,10 @@
                                                 <td><span class="text-neutral-500 text-xs">{{ $item->product_code ?? '—' }}</span></td>
                                                 <td><span class="font-medium text-neutral-800">{{ $item->name }}</span></td>
                                                 <td>{{ $item->thickness ?? '—' }}</td>
-                                                <td>{{ $item->quantity }}</td>
                                                 <td>{{ $sizes['height'] ?? '—' }}</td>
                                                 <td>{{ $sizes['width'] ?? '—' }}</td>
+                                                <td>{{ $item->quantity }}</td>
+                                                <td>{{ $item->bevel ?? '—' }}</td>
                                                 <td>
                                                     @if(!empty($edgeGluing))
                                                         <span
@@ -241,7 +242,6 @@
                                                         —
                                                     @endif
                                                 </td>
-                                                <td>{{ $item->bevel ?? '—' }}</td>
                                                 <td>{{ $item->direction ?? '—' }}</td>
                                             </tr>
                                         @empty
@@ -690,6 +690,7 @@
                             'height' => $sizes['height'] ?? null,
                             'width' => $sizes['width'] ?? null,
                             'edge_gluing' => $edgeGluing,
+                            'bevel' => $item->bevel,
                             'straight_paste_length' => $item->straight_paste_length,
                             'beveled_length' => $item->beveled_length,
                             'vat_moi_length' => $item->vat_moi_length,

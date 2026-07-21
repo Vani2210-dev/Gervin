@@ -161,6 +161,10 @@
                 <iconify-icon icon="lucide:maximize-2" class="text-lg" data-order-supplies-popup-icon></iconify-icon>
                 <span data-order-supplies-popup-label>Phóng to</span>
             </button>
+            <button type="button" onclick="triggerMinLateExcelUpload()" class="btn btn-sm bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200 rounded-lg flex items-center gap-1">
+                <iconify-icon icon="lucide:file-spreadsheet" class="text-lg"></iconify-icon> <span class="mobile-hide-text">Nhập từ Excel</span>
+            </button>
+            <input type="file" id="minLateExcelFileInput" accept=".xlsx, .xls" style="display: none;">
             <button type="button" onclick="addMinLateOrderSupply()" class="btn btn-sm btn-primary rounded-lg flex items-center gap-1">
                 <iconify-icon icon="lucide:plus" class="text-lg"></iconify-icon> <span class="mobile-hide-text">Thêm vật tư</span>
             </button>
@@ -247,7 +251,7 @@
                             <tr class="bg-neutral-50 text-center">
                                 <th scope="col" style="width: 45px; min-width: 45px; white-space: nowrap;" class="sticky-stt-th align-middle text-center border border-neutral-200 font-bold text-xs text-neutral-600 uppercase"><span class="order-stt-header-label">STT</span></th>
                                 <th scope="col" style="width: 160px; min-width: 160px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Mã hàng</th>
-                                <th scope="col" style="min-width: 180px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên hàng hóa, dịch vụ <span class="text-danger-500">*</span></th>
+                                <th scope="col" style="min-width: 180px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên hàng hóa, dịch vụ</th>
                                 <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Độ dày</th>
                                 <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="align-middle border border-neutral-200 bg-yellow-100/70 font-bold text-xs text-neutral-600 uppercase text-center">Cao (vân)</th>
                                 <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase text-center">Rộng</th>
@@ -581,7 +585,7 @@ function addMinLateOrderSupply() {
                     <tr class="bg-neutral-50 text-center">
                         <th scope="col" style="width: 45px; min-width: 45px; white-space: nowrap;" class="sticky-stt-th align-middle text-center border border-neutral-200 font-bold text-xs text-neutral-600 uppercase"><span class="order-stt-header-label">STT</span></th>
                         <th scope="col" style="width: 160px; min-width: 160px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Mã hàng</th>
-                        <th scope="col" style="min-width: 180px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên hàng hóa, dịch vụ <span class="text-danger-500">*</span></th>
+                        <th scope="col" style="min-width: 180px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên hàng hóa, dịch vụ</th>
                         <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Độ dày</th>
                         <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="align-middle border border-neutral-200 bg-yellow-100/70 font-bold text-xs text-neutral-600 uppercase text-center">Cao (vân)</th>
                         <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase text-center">Rộng</th>
@@ -1677,5 +1681,372 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
         updatePaymentDetailIndexes();
     }
+
+    const minLateBackdrop = document.getElementById('min-late-excel-import-backdrop');
+    const minLateModal = document.getElementById('min-late-excel-import-modal');
+    if (minLateBackdrop) document.body.appendChild(minLateBackdrop);
+    if (minLateModal) document.body.appendChild(minLateModal);
 });
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+let _minLateExcelSupplyGroups = [];
+
+function triggerMinLateExcelUpload() {
+    const fileInput = document.getElementById('minLateExcelFileInput');
+    if (!fileInput) return;
+    fileInput.value = '';
+    fileInput.onchange = function(e) { handleMinLateExcelFile(e.target.files[0]); };
+    fileInput.click();
+}
+
+function handleMinLateExcelFile(file) {
+    if (!file) return;
+    document.getElementById('min-late-excel-import-filename').textContent = file.name;
+    _minLateExcelSupplyGroups = [];
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const sheetName = workbook.SheetNames[0];
+            const ws = workbook.Sheets[sheetName];
+            const rawRows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: false });
+
+            if (!rawRows || rawRows.length === 0) {
+                showMinLateExcelModal([]);
+                return;
+            }
+
+            const clean = v => (v === null || v === undefined) ? '' : String(v).trim();
+            const num = v => { let n = parseFloat(clean(v).replace(/,/g, '')); return isNaN(n) ? 0 : n; };
+            const cleanEdge = v => { let s = clean(v).toUpperCase(); return s === 'V' ? 'V' : (s === 'T' ? 'T' : ''); };
+
+            let groups = [];
+            let currentGroup = null;
+
+            rawRows.forEach((row, idx) => {
+                const col0 = clean(row[0]);
+                const stt = clean(row[1]);
+                if (col0 !== 'CT' && col0 !== '0' && col0 !== '1') return;
+
+                // Identify if this is a group header (e.g. STT is A, B, C, I, II)
+                const isGroupHeader = /^[A-ZIVX]+$/.test(stt) && !/^\d+$/.test(stt);
+
+                if (isGroupHeader || (!stt && clean(row[3]) && !clean(row[4]))) {
+                    const groupName = clean(row[3]);
+                    if (groupName && groupName.toUpperCase() !== 'VẬT TƯ') {
+                        currentGroup = {
+                            supply_name: groupName,
+                            items: []
+                        };
+                        groups.push(currentGroup);
+                    }
+                } else if (/^\d+$/.test(stt)) {
+                    if (!currentGroup) {
+                        currentGroup = { supply_name: 'Vật tư', items: [] };
+                        groups.push(currentGroup);
+                    }
+
+                    const height = clean(row[4]);
+                    const width = clean(row[5]);
+                    const qty = parseInt(clean(row[6])) || 1;
+                    const beveled = clean(row[7]);
+                    
+                    const edge_h1 = cleanEdge(row[8]);
+                    const edge_h2 = cleanEdge(row[9]);
+                    const edge_w1 = cleanEdge(row[10]);
+                    const edge_w2 = cleanEdge(row[11]);
+                    
+                    const straight = num(row[12]);
+                    const vat = num(row[13]);
+                    const ban25 = num(row[14]);
+                    const ban40 = num(row[15]);
+                    const ban17 = num(row[16]);
+                    
+                    const notes = clean(row[17]);
+                    
+                    currentGroup.items.push({
+                        height: height,
+                        width: width,
+                        quantity: qty,
+                        beveled: beveled,
+                        edge_h1: edge_h1,
+                        edge_h2: edge_h2,
+                        edge_w1: edge_w1,
+                        edge_w2: edge_w2,
+                        straight: straight,
+                        vat: vat,
+                        ban25: ban25,
+                        ban40: ban40,
+                        ban17: ban17,
+                        notes: notes
+                    });
+                }
+            });
+
+            _minLateExcelSupplyGroups = groups.filter(g => g.items.length > 0);
+            showMinLateExcelModal(_minLateExcelSupplyGroups);
+        } catch(err) {
+            console.error(err);
+            alert("Lỗi khi đọc file Excel. Vui lòng kiểm tra lại định dạng.");
+        }
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+function showMinLateExcelModal(groups) {
+    const thead = document.getElementById('min-late-excel-preview-thead');
+    const tbody = document.getElementById('min-late-excel-preview-tbody');
+    const empty = document.getElementById('min-late-excel-preview-empty');
+    const countEl = document.getElementById('min-late-excel-import-count');
+    const confirmBtn = document.getElementById('min-late-excel-import-confirm-btn');
+
+    thead.innerHTML = `<tr>
+        <th style="padding:8px 10px;text-align:left;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;white-space:nowrap;">Vật tư / Tên SP</th>
+        <th style="padding:8px 10px;text-align:center;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;">Cao</th>
+        <th style="padding:8px 10px;text-align:center;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;">Rộng</th>
+        <th style="padding:8px 10px;text-align:center;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;">SL</th>
+        <th style="padding:8px 10px;text-align:center;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;white-space:nowrap;">Cạnh Vát</th>
+        <th style="padding:8px 10px;text-align:center;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;white-space:nowrap;">Nẹp Cao 1</th>
+        <th style="padding:8px 10px;text-align:center;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;white-space:nowrap;">Nẹp Cao 2</th>
+        <th style="padding:8px 10px;text-align:center;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;white-space:nowrap;">Nẹp Rộng 1</th>
+        <th style="padding:8px 10px;text-align:center;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;white-space:nowrap;">Nẹp Rộng 2</th>
+        <th style="padding:8px 10px;text-align:center;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;min-width:70px;">Số mét dán thẳng</th>
+        <th style="padding:8px 10px;text-align:center;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;min-width:70px;">Số mét dán vát</th>
+        <th style="padding:8px 10px;text-align:center;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;min-width:80px;">Số mét dán bản rộng 25-35mm</th>
+        <th style="padding:8px 10px;text-align:center;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;min-width:80px;">Số mét dán bản rộng 40-59mm</th>
+        <th style="padding:8px 10px;text-align:center;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;min-width:80px;">Số mét dán bản rộng 17-39mm</th>
+        <th style="padding:8px 10px;text-align:left;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;white-space:nowrap;">Ghi chú</th>
+    </tr>`;
+
+    if (!groups || groups.length === 0) {
+        tbody.innerHTML = '';
+        empty.style.display = 'block';
+        confirmBtn.style.opacity = '0.5';
+        confirmBtn.style.pointerEvents = 'none';
+        document.getElementById('min-late-excel-import-backdrop').style.display = 'block';
+        document.getElementById('min-late-excel-import-modal').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+        return;
+    }
+
+    empty.style.display = 'none';
+    confirmBtn.style.opacity = '1';
+    confirmBtn.style.pointerEvents = 'auto';
+
+    let html = '';
+    let totalItems = 0;
+
+    const escHtml = (str) => {
+        if (!str) return '';
+        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    };
+
+    groups.forEach(group => {
+        totalItems += group.items.length;
+        
+        html += `<tr style="background:#ede9fe;">
+            <td colspan="15" style="padding:7px 12px;font-weight:700;color:#6d28d9;font-size:12px;">
+                <iconify-icon icon="lucide:package" style="margin-right:6px;font-size:13px;"></iconify-icon>
+                Vật tư: <span style="background:#fff;border:1px solid #c4b5fd;border-radius:6px;padding:1px 8px;margin-left:4px;">${escHtml(group.supply_name)}</span>
+            </td>
+        </tr>`;
+
+        group.items.forEach((item, i) => {
+            const bgClass = i % 2 === 0 ? '' : 'background:#fafafa;';
+            const danCanhStr = `${item.edge_h1}${item.edge_h2}${item.edge_w1}${item.edge_w2}`;
+            html += `
+                <tr style="border-bottom:1px solid #f1f5f9;${bgClass}">
+                    <td style="padding:6px 12px;color:#0f172a;padding-left:24px;font-style:italic;font-size:11px;color:#9ca3af;"></td>
+                    <td style="padding:6px 10px;text-align:center;color:#374151;">${item.height !== '' ? item.height : '-'}</td>
+                    <td style="padding:6px 10px;text-align:center;color:#374151;">${item.width !== '' ? item.width : '-'}</td>
+                    <td style="padding:6px 10px;text-align:center;font-weight:600;color:#1d4ed8;">${item.quantity}</td>
+                    <td style="padding:6px 10px;text-align:center;color:#374151;">${escHtml(item.beveled) || '-'}</td>
+                    <td style="padding:6px 10px;text-align:center;color:#374151;">${escHtml(item.edge_h1) || '-'}</td>
+                    <td style="padding:6px 10px;text-align:center;color:#374151;">${escHtml(item.edge_h2) || '-'}</td>
+                    <td style="padding:6px 10px;text-align:center;color:#374151;">${escHtml(item.edge_w1) || '-'}</td>
+                    <td style="padding:6px 10px;text-align:center;color:#374151;">${escHtml(item.edge_w2) || '-'}</td>
+                    <td style="padding:6px 10px;text-align:center;color:#374151;">${item.straight > 0 ? item.straight : '-'}</td>
+                    <td style="padding:6px 10px;text-align:center;color:#374151;">${item.vat > 0 ? item.vat : '-'}</td>
+                    <td style="padding:6px 10px;text-align:center;color:#374151;">${item.ban_rong_25_35 > 0 ? item.ban_rong_25_35 : '-'}</td>
+                    <td style="padding:6px 10px;text-align:center;color:#374151;">${item.ban_rong_40_59 > 0 ? item.ban_rong_40_59 : '-'}</td>
+                    <td style="padding:6px 10px;text-align:center;color:#374151;">${item.ban_rong_17_39 > 0 ? item.ban_rong_17_39 : '-'}</td>
+                    <td style="padding:6px 10px;color:#6b7280;font-style:italic;max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${escHtml(item.notes)}">${escHtml(item.notes)}</td>
+                </tr>
+            `;
+        });
+    });
+    tbody.innerHTML = html;
+
+    countEl.innerHTML = `<b style="color:#6d28d9;">${groups.length} nhóm</b>&nbsp;·&nbsp;<b style="color:#1d4ed8;">${totalItems} sản phẩm</b> sẽ được nhập`;
+
+    document.getElementById('min-late-excel-import-backdrop').style.display = 'block';
+    document.getElementById('min-late-excel-import-modal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeMinLateExcelImport() {
+    document.getElementById('min-late-excel-import-backdrop').style.display = 'none';
+    document.getElementById('min-late-excel-import-modal').style.display = 'none';
+    document.body.style.overflow = '';
+    _minLateExcelSupplyGroups = [];
+}
+
+function confirmMinLateExcelImport() {
+    if (!_minLateExcelSupplyGroups || _minLateExcelSupplyGroups.length === 0) return;
+
+    const suppliesContainer = document.getElementById('min-late-supplies-container');
+    if (!suppliesContainer) return;
+
+    _minLateExcelSupplyGroups.forEach(group => {
+        addMinLateOrderSupply();
+        const newSupplyRow = suppliesContainer.querySelector('.order-supply-row:last-child');
+        if (!newSupplyRow) return;
+
+        const supplyNameInput = newSupplyRow.querySelector('input[name*="[supply_name]"]');
+        if (supplyNameInput) {
+            supplyNameInput.value = group.supply_name;
+        }
+
+        const itemsContainer = newSupplyRow.querySelector('.supply-items-container');
+        if (!itemsContainer) return;
+
+        // Clear existing empty default items
+        itemsContainer.innerHTML = '';
+        const addItemBtn = newSupplyRow.querySelector('button[onclick^="addMinLateOrderItem"]');
+
+        group.items.forEach(item => {
+            if (addItemBtn) {
+                addMinLateOrderItem(addItemBtn, true);
+                const newRow = itemsContainer.lastElementChild;
+                if (!newRow) return;
+
+                const setVal = (sel, val) => {
+                    if (val === '' || val === null || val === undefined) return;
+                    const el = newRow.querySelector(sel);
+                    if (el) {
+                        if (el.tagName.toLowerCase() === 'select' && el.tomselect) {
+                            el.tomselect.setValue(val);
+                        } else {
+                            el.value = val;
+                        }
+                    }
+                };
+
+                setVal('input[name*="[height]"]', item.height);
+                setVal('input[name*="[width]"]', item.width);
+                setVal('input[name*="[quantity]"]', item.quantity);
+                setVal('input[name*="[beveled_edges]"]', item.beveled);
+                setVal('select[name*="[edge_gluing][height_1]"]', item.edge_h1);
+                setVal('select[name*="[edge_gluing][height_2]"]', item.edge_h2);
+                setVal('select[name*="[edge_gluing][width_1]"]', item.edge_w1);
+                setVal('select[name*="[edge_gluing][width_2]"]', item.edge_w2);
+                setVal('input[name*="[straight_paste_length]"]', item.straight);
+                setVal('input[name*="[beveled_length]"]', item.vat);
+                setVal('input[name*="[ban_rong_25_35]"]', item.ban25);
+                setVal('input[name*="[ban_rong_40_59]"]', item.ban40);
+                setVal('input[name*="[ban_rong_17_39]"]', item.ban17);
+                setVal('input[name*="[notes]"]', item.notes);
+
+                if(typeof bindMinLateRowEvents === 'function') bindMinLateRowEvents(newRow);
+                if(typeof calculateMinLateRowStats === 'function') calculateMinLateRowStats(newRow);
+                if(typeof initMinLateBevelField === 'function') initMinLateBevelField(newRow);
+            }
+        });
+    });
+
+    if (typeof updateMinLateRowIndexes === 'function') updateMinLateRowIndexes();
+    if (typeof updateOrderSummary === 'function') updateOrderSummary();
+
+    if (suppliesContainer) {
+        suppliesContainer.style.transition = 'box-shadow 0.3s';
+        suppliesContainer.style.boxShadow = '0 0 0 3px #10b981';
+        setTimeout(() => { suppliesContainer.style.boxShadow = ''; }, 1500);
+    }
+
+    closeMinLateExcelImport();
+}
+</script>
+
+<div id="min-late-excel-import-backdrop" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0.4);backdrop-filter:blur(4px);z-index:9998;transition:all 0.3s ease;"></div>
+<div id="min-late-excel-import-modal" style="display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;padding:20px;">
+    <div style="width:min(1450px,98vw);height:90vh;background:#fff;border-radius:16px;box-shadow:0 20px 25px -5px rgba(0,0,0,0.1);display:flex;flex-direction:column;overflow:hidden;animation:excelModalIn 0.3s cubic-bezier(0.16,1,0.3,1);">
+        <!-- Header -->
+        <div style="padding:16px 24px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;background:#f8fafc;flex-shrink:0;">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <div style="width:40px;height:40px;border-radius:10px;background:#d1fae5;display:flex;align-items:center;justify-content:center;">
+                    <iconify-icon icon="lucide:file-spreadsheet" style="font-size:22px;color:#10b981;"></iconify-icon>
+                </div>
+                <div>
+                    <div style="font-size:16px;font-weight:700;color:#1f2937;">Nhập từ Excel</div>
+                    <div id="min-late-excel-import-filename" style="font-size:12px;color:#6b7280;margin-top:2px;">-</div>
+                </div>
+            </div>
+            <button type="button" onclick="closeMinLateExcelImport()" class="w-8 h-8 rounded-lg hover:bg-neutral-100 flex items-center justify-center text-neutral-400 hover:text-danger-500 transition-colors" style="border:none;background:transparent;">
+                <iconify-icon icon="lucide:x" style="font-size:18px;"></iconify-icon>
+            </button>
+        </div>
+        <!-- Body -->
+        <div style="flex:1;overflow:hidden;display:flex;flex-direction:column;background:#fff;">
+            <div style="padding:14px 24px 0;flex-shrink:0;">
+                <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 16px;">
+                    <div style="font-size:12px;font-weight:700;color:#065f46;margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+                        <iconify-icon icon="lucide:info" style="font-size:14px;"></iconify-icon>
+                        Định dạng cột Excel (Gia công Late) — hàng 13 là tiêu đề, từ hàng 14 là dữ liệu
+                    </div>
+                    <div style="display:flex;flex-wrap:wrap;gap:6px;font-size:11px;">
+                        <span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:999px;font-weight:600;">Tên vật tư</span>
+                        <span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:999px;font-weight:600;">Cao</span>
+                        <span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:999px;font-weight:600;">Rộng</span>
+                        <span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:999px;font-weight:600;">Số lượng</span>
+                        <span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:999px;font-weight:600;">Cạnh Vát</span>
+                        <span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:999px;font-weight:600;">Nẹp Cao 1</span>
+                        <span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:999px;font-weight:600;">Nẹp Cao 2</span>
+                        <span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:999px;font-weight:600;">Nẹp Rộng 1</span>
+                        <span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:999px;font-weight:600;">Nẹp Rộng 2</span>
+                        <span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:999px;font-weight:600;">Số mét dán Thẳng/Vát/Bản Rộng</span>
+                        <span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:999px;font-weight:600;">Ghi chú</span>
+                    </div>
+                    <div style="font-size:11px;color:#6b7280;margin-top:6px;">
+                        Các nhóm vật tư được ngăn cách bằng STT chữ cái hoặc số La Mã (A, B, C, I, II...). Hệ thống tự động nhận diện theo vị trí cột.
+                    </div>
+                </div>
+            </div>
+
+            <div style="flex:1;overflow-y:auto;padding:14px 24px;">
+                <div style="overflow-x:auto;">
+                    <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:800px;text-align:left;">
+                        <thead style="background:#f8fafc;position:sticky;top:0;z-index:2;" id="min-late-excel-preview-thead">
+                            {{-- Injected via JS --}}
+                        </thead>
+                        <tbody id="min-late-excel-preview-tbody">
+                            {{-- Injected via JS --}}
+                        </tbody>
+                    </table>
+                    <div id="min-late-excel-preview-empty" style="display:none;text-align:center;padding:40px;color:#94a3b8;">
+                        <iconify-icon icon="lucide:file-x-2" style="font-size:36px;"></iconify-icon>
+                        <div style="margin-top:8px;">Không tìm thấy dữ liệu hợp lệ</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Footer -->
+        <div style="padding:14px 24px;border-top:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:#f8fafc;">
+            <div id="min-late-excel-import-count" style="font-size:13px;color:#64748b;">
+                0 nhóm · 0 sản phẩm
+            </div>
+            <div style="display:flex;gap:10px;">
+                <button type="button" onclick="closeMinLateExcelImport()" style="padding:9px 20px;border:1.5px solid #d1d5db;border-radius:8px;background:#fff;color:#374151;font-size:13px;font-weight:600;cursor:pointer;">
+                    Hủy bỏ
+                </button>
+                <button type="button" id="min-late-excel-import-confirm-btn" onclick="confirmMinLateExcelImport()" style="padding:9px 20px;border:none;border-radius:8px;background:linear-gradient(135deg,#059669,#10b981);color:#fff;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:0 4px 6px -1px rgba(16, 185, 129, 0.2);">
+                    <iconify-icon icon="lucide:check" style="font-size:15px;"></iconify-icon>
+                    Tiến hành nhập
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+

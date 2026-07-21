@@ -1468,7 +1468,8 @@ async function exportToExcel() {
                     itemRow.getCell(5).value = parseFloat((parseFloat(item.width) || 0).toFixed(2));
                     itemRow.getCell(6).value = parseInt(item.quantity) || 1;
 
-                    itemRow.getCell(7).value = (item.beveled_handle && item.beveled_handle !== '0') ? 'Vát ' + item.beveled_handle : '—';
+                    const bevelVal = item.bevel ? item.bevel.toString().trim() : '';
+                    itemRow.getCell(7).value = (bevelVal && bevelVal !== '0') ? (/^vát/i.test(bevelVal) ? bevelVal : 'Vát ' + bevelVal) : '—';
 
                     const gluing = item.edge_gluing || {};
                     itemRow.getCell(8).value = gluing.height_1 || '';
