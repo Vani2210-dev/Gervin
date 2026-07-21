@@ -252,6 +252,7 @@
                                 <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="align-middle border border-neutral-200 bg-yellow-100/70 font-bold text-xs text-neutral-600 uppercase text-center">Cao (vân)</th>
                                 <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase text-center">Rộng</th>
                                 <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số lượng</th>
+                                <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Vát</th>
                                 <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Nẹp Cao 1</th>
                                 <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Nẹp Cao 2</th>
                                 <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Nẹp Rộng 1</th>
@@ -280,6 +281,8 @@
                                 <td class="border border-neutral-200"></td>
                                 <td class="border border-neutral-200"></td>
                                 <td class="border border-neutral-200"></td>
+                                <td class="border border-neutral-200"></td>
+                                <td class="border border-neutral-200"></td>
                                 <td class="border border-neutral-200 text-center" data-summary-field="straight_paste_length" style="font-size: 80% !important;">0</td>
                                 <td class="border border-neutral-200 text-center" data-summary-field="beveled_length" style="font-size: 80% !important;">0</td>
                                 <td class="border border-neutral-200 text-center" data-summary-field="vat_moi_length" style="font-size: 80% !important;">0</td>
@@ -288,6 +291,7 @@
                                 <td class="border border-neutral-200 text-center" data-summary-field="ban_rong_25_35" style="font-size: 80% !important;">0</td>
                                 <td class="border border-neutral-200 text-center" data-summary-field="beveled_handle" style="font-size: 80% !important;">0</td>
                                 <td class="border border-neutral-200 text-center" data-summary-field="cnc" style="font-size: 80% !important;">0</td>
+                                <td class="border border-neutral-200"></td>
                                 <td class="border border-neutral-200"></td>
                                 <td class="border border-neutral-200"></td>
                                 <td class="border border-neutral-200" style="position: sticky; right: 0; z-index: 3; background-color: #f1f5f9;"></td>
@@ -325,6 +329,25 @@
                                 </td>
                                 <td style="width: 70px; min-width: 70px; " class="border border-neutral-200">
                                     <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Số lượng" min="1" required value="{{ $item->quantity }}">
+                                </td>
+                                <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
+                                    <div class="w-full h-full" style="position: relative;">
+                                        <input type="text" 
+                                               name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][bevel]" 
+                                               class="product-bevel-input form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center pr-6 pl-1 py-1 h-8 text-xs w-full" 
+                                               placeholder="Vát" 
+                                               value="{{ $item->bevel }}"
+                                               data-auto-sync="{{ (empty($item->bevel) && $item->bevel !== '0') ? 'width' : (($item->bevel == ($size['width'] ?? '')) ? 'width' : (($item->bevel == ($size['height'] ?? '')) ? 'height' : 'none')) }}">
+                                        <div class="pointer-events-auto cursor-pointer" style="position: absolute; right: 4px; top: 0; bottom: 0; width: 24px; display: flex; align-items: center; justify-content: center; z-index: 4;" title="Chọn kiểu vát">
+                                            <iconify-icon icon="lucide:chevron-down" class="text-neutral-500 text-base pointer-events-none"></iconify-icon>
+                                            <select class="product-bevel-select absolute inset-0 opacity-0 cursor-pointer w-full h-full">
+                                                <option value="">-- Không vát --&nbsp;&nbsp;</option>
+                                                <option value="width">▪ Bám theo Rộng&nbsp;&nbsp;</option>
+                                                <option value="height">▪ Bám theo Dài&nbsp;&nbsp;</option>
+                                                <option value="custom">▪ Tự nhập tay&nbsp;&nbsp;</option>
+                                            </select>
+                                        </div>
+                                    </div>
                                 </td>
                                 {{-- Dán cạnh (4 text inputs) --}}
                                 <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
@@ -563,6 +586,7 @@ function addMinLateOrderSupply() {
                         <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="align-middle border border-neutral-200 bg-yellow-100/70 font-bold text-xs text-neutral-600 uppercase text-center">Cao (vân)</th>
                         <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase text-center">Rộng</th>
                         <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số lượng</th>
+                        <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Vát</th>
                         <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Nẹp Cao 1</th>
                         <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Nẹp Cao 2</th>
                         <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Nẹp Rộng 1</th>
@@ -587,6 +611,7 @@ function addMinLateOrderSupply() {
                         <td class="border border-neutral-200"></td>
                         <td class="border border-neutral-200"></td>
                         <td class="border border-neutral-200 text-center" data-summary-field="quantity" style="font-size: 80% !important;">0</td>
+                        <td class="border border-neutral-200"></td>
                         <td class="border border-neutral-200"></td>
                         <td class="border border-neutral-200"></td>
                         <td class="border border-neutral-200"></td>
@@ -664,6 +689,25 @@ function addMinLateOrderItem(button, isInitial = false, insertAfterRow = null) {
         </td>
         <td style="width: 70px; min-width: 70px; " class="border border-neutral-200">
             <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Số lượng" min="1" required value="${lastData ? lastData.quantity : '1'}">
+        </td>
+        <td style="width: 70px; min-width: 70px; " class="border border-neutral-200">
+            <div class="w-full h-full" style="position: relative;">
+                <input type="text" 
+                       name="supplies[${supplyIndex}][items][${itemIndex}][bevel]" 
+                       class="product-bevel-input form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center pr-6 pl-1 py-1 h-8 text-xs w-full" 
+                       placeholder="Vát" 
+                       value="${lastData ? lastData.bevel : ''}"
+                       data-auto-sync="${(!lastData || (!lastData.bevel && lastData.bevel !== '0')) ? 'width' : ((lastData.bevel == lastData.width) ? 'width' : ((lastData.bevel == lastData.height) ? 'height' : 'none'))}">
+                <div class="pointer-events-auto cursor-pointer" style="position: absolute; right: 4px; top: 0; bottom: 0; width: 24px; display: flex; align-items: center; justify-content: center; z-index: 4;" title="Chọn kiểu vát">
+                    <iconify-icon icon="lucide:chevron-down" class="text-neutral-500 text-base pointer-events-none"></iconify-icon>
+                    <select class="product-bevel-select absolute inset-0 opacity-0 cursor-pointer w-full h-full">
+                        <option value="">-- Không vát --&nbsp;&nbsp;</option>
+                        <option value="width">▪ Bám theo Rộng&nbsp;&nbsp;</option>
+                        <option value="height">▪ Bám theo Dài&nbsp;&nbsp;</option>
+                        <option value="custom">▪ Tự nhập tay&nbsp;&nbsp;</option>
+                    </select>
+                </div>
+            </div>
         </td>
         {{-- Dán cạnh (4 select options) --}}
         <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
@@ -769,7 +813,8 @@ function addMinLateOrderItem(button, isInitial = false, insertAfterRow = null) {
     
     bindMinLateRowEvents(newRow);
     calculateMinLateRowStats(newRow);
-    
+    if (typeof calculateMinLateTotalPrice === 'function') calculateMinLateTotalPrice(newRow);
+    initMinLateBevelField(newRow);
     updateOrderSummary();
     updateMinLateRowIndexes();
 
@@ -1003,6 +1048,17 @@ function calculateMinLateRowStats(row) {
     if (beveledHandleInput) {
         beveledHandleInput.value = hasVatTna ? quantity : 0;
     }
+    
+    // 6. Bevel sync
+    const bevelInput = row.querySelector('.product-bevel-input');
+    if (bevelInput) {
+        const syncMode = bevelInput.getAttribute('data-auto-sync') || 'none';
+        if (syncMode === 'width') {
+            bevelInput.value = widthInput ? widthInput.value.trim() : '';
+        } else if (syncMode === 'height') {
+            bevelInput.value = heightInput ? heightInput.value.trim() : '';
+        }
+    }
 }
 
 function bindMinLateRowEvents(row) {
@@ -1019,6 +1075,8 @@ function bindMinLateRowEvents(row) {
             updateOrderSummary();
         });
     });
+    
+    initMinLateBevelEvents(row);
     
     const selects = row.querySelectorAll('select[name*="[edge_gluing]"]');
     selects.forEach(select => {
@@ -1040,6 +1098,111 @@ function calculateMinLateTotalPrice(row) {
     updateOrderSummary();
 }
 
+function initMinLateBevelEvents(row) {
+    const bevelInput = row.querySelector('.product-bevel-input');
+    const bevelSelect = row.querySelector('.product-bevel-select');
+    const widthInput = row.querySelector('input[name*="[width]"]');
+    const heightInput = row.querySelector('input[name*="[height]"]');
+    
+    if (!bevelInput || !bevelSelect) return;
+
+    bevelInput.addEventListener('input', () => {
+        bevelInput.setAttribute('data-auto-sync', 'none');
+        updateMinLateBevelFieldStyle(row);
+    });
+
+    bevelSelect.addEventListener('change', () => {
+        const mode = bevelSelect.value;
+        if (mode === 'width') {
+            bevelInput.setAttribute('data-auto-sync', 'width');
+            bevelInput.value = widthInput ? widthInput.value.trim() : '';
+        } else if (mode === 'height') {
+            bevelInput.setAttribute('data-auto-sync', 'height');
+            bevelInput.value = heightInput ? heightInput.value.trim() : '';
+        } else if (mode === '') {
+            bevelInput.setAttribute('data-auto-sync', 'none');
+            bevelInput.value = '';
+        } else if (mode === 'custom') {
+            bevelInput.setAttribute('data-auto-sync', 'none');
+            updateMinLateBevelFieldStyle(row);
+            bevelInput.focus();
+            return;
+        }
+        updateMinLateBevelFieldStyle(row);
+        calculateMinLateRowStats(row);
+    });
+}
+
+function updateMinLateBevelFieldStyle(row) {
+    const bevelInput = row.querySelector('.product-bevel-input');
+    const bevelSelect = row.querySelector('.product-bevel-select');
+    if (!bevelInput || !bevelSelect) return;
+
+    const syncMode = bevelInput.getAttribute('data-auto-sync') || 'none';
+    
+    // Reset background and border classes
+    bevelInput.classList.remove(
+        'bg-indigo-50', 'text-indigo-900', 'border-indigo-300', 'font-medium',
+        'bg-yellow-50', 'text-yellow-900', 'border-yellow-300',
+        'bg-white', 'text-neutral-800', 'border-neutral-300',
+        'bg-neutral-50', 'bg-sky-50', 'bg-emerald-50', 'bg-amber-50', 'font-semibold', 'text-sky-700', 'text-emerald-700', 'text-amber-700'
+    );
+
+    if (syncMode === 'width') {
+        bevelInput.classList.add('bg-indigo-50', 'text-indigo-900', 'border-indigo-300', 'font-medium');
+        bevelSelect.value = 'width';
+    } else if (syncMode === 'height') {
+        bevelInput.classList.add('bg-yellow-50', 'text-yellow-900', 'border-yellow-300', 'font-medium');
+        bevelSelect.value = 'height';
+    } else {
+        bevelInput.classList.add('bg-white', 'text-neutral-800', 'border-neutral-300');
+        if (bevelInput.value.trim() === '') {
+            bevelSelect.value = '';
+        } else {
+            bevelSelect.value = 'custom';
+        }
+    }
+}
+
+function initMinLateBevelField(row) {
+    const heightInput = row.querySelector('input[name*="[height]"]');
+    const widthInput = row.querySelector('input[name*="[width]"]');
+    const bevelInput = row.querySelector('input[name*="[bevel]"]');
+    const bevelSelect = row.querySelector('.product-bevel-select');
+    
+    if (!heightInput || !widthInput || !bevelInput || !bevelSelect) return;
+    
+    const height = heightInput.value.trim();
+    const width = widthInput.value.trim();
+    let val = bevelInput.value.trim();
+    
+    const currentSync = bevelInput.getAttribute('data-auto-sync') || 'width';
+
+    if (val === '') {
+        if (currentSync === 'none') {
+            bevelInput.setAttribute('data-auto-sync', 'none');
+        } else {
+            // Default to width sync
+            bevelInput.setAttribute('data-auto-sync', 'width');
+            if (width !== '') {
+                bevelInput.value = width;
+                val = width;
+            }
+        }
+    } else {
+        // Check if value matches width or height
+        if (width !== '' && val === width) {
+            bevelInput.setAttribute('data-auto-sync', 'width');
+        } else if (height !== '' && val === height) {
+            bevelInput.setAttribute('data-auto-sync', 'height');
+        } else {
+            bevelInput.setAttribute('data-auto-sync', 'none');
+        }
+    }
+
+    updateMinLateBevelFieldStyle(row);
+}
+
 
 
 
@@ -1055,6 +1218,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.order-item-row').forEach(row => {
         bindMinLateRowEvents(row);
         calculateMinLateRowStats(row);
+        initMinLateBevelField(row);
     });
 
     // Recalculate codes on load

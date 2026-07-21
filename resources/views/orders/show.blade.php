@@ -194,6 +194,7 @@
                                             <th scope="col" class="w-28">Bản rộng 25-35</th>
                                             <th scope="col" class="w-28">Tay nắm vát</th>
                                             <th scope="col" class="w-20 text-center">CNC</th>
+                                            <th scope="col" class="w-24">Vát</th>
                                             <th scope="col" class="w-24">Chiều vân</th>
                                         </tr>
                                     </thead>
@@ -240,11 +241,12 @@
                                                         —
                                                     @endif
                                                 </td>
+                                                <td>{{ $item->bevel ?? '—' }}</td>
                                                 <td>{{ $item->direction ?? '—' }}</td>
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="17" class="text-center text-neutral-400 py-4">Chưa có sản phẩm nào</td>
+                                                <td colspan="18" class="text-center text-neutral-400 py-4">Chưa có sản phẩm nào</td>
                                             </tr>
                                         @endforelse
                                     </tbody>

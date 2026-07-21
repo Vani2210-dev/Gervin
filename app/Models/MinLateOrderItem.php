@@ -16,6 +16,7 @@ class MinLateOrderItem extends Model
         'thickness',
         'size',
         'quantity',
+        'bevel',
         'edge_gluing',
         'straight_paste_length',
         'beveled_length',
