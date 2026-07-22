@@ -1768,6 +1768,7 @@ function handleExcelFile(file) {
                 const wingArea   = num(row[8]);
                 const molding    = num(row[9]);
                 const unitPrice  = num(row[10]);
+                const totalPrice = num(row[11]);
                 const notes      = clean(row[12]);
                 const bevel      = clean(row[13]);
 
@@ -1797,6 +1798,7 @@ function handleExcelFile(file) {
                     wing_area    : wingArea,
                     molding,
                     unit_price   : unitPrice,
+                    total_price  : totalPrice,
                     notes,
                     bevel,
                     is_labor     : isLaborNote ? 1 : 0,
@@ -1840,6 +1842,7 @@ function showExcelModal(groups) {
         <th style="padding:8px 10px;text-align:center;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;white-space:nowrap;">Cánh m²</th>
         <th style="padding:8px 10px;text-align:center;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;white-space:nowrap;">Phào m</th>
         <th style="padding:8px 10px;text-align:right;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;white-space:nowrap;">Đơn giá</th>
+        <th style="padding:8px 10px;text-align:right;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;white-space:nowrap;">Thành tiền</th>
         <th style="padding:8px 10px;text-align:left;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;white-space:nowrap;">Ghi chú</th>
     </tr>`;
 
@@ -1864,7 +1867,7 @@ function showExcelModal(groups) {
     groups.forEach(g => {
         // Supply header row
         html += `<tr style="background:#ede9fe;">
-            <td colspan="11" style="padding:7px 12px;font-weight:700;color:#6d28d9;font-size:12px;">
+            <td colspan="12" style="padding:7px 12px;font-weight:700;color:#6d28d9;font-size:12px;">
                 <iconify-icon icon="lucide:package" style="margin-right:6px;font-size:13px;"></iconify-icon>
                 Vật tư: <span style="background:#fff;border:1px solid #c4b5fd;border-radius:6px;padding:1px 8px;margin-left:4px;">${escHtml(g.supply_code)}</span>
                 <span style="color:#94a3b8;font-weight:400;margin-left:8px;">(${g.items.length} sản phẩm)</span>
@@ -1885,6 +1888,7 @@ function showExcelModal(groups) {
                 <td style="padding:6px 10px;text-align:center;color:#374151;">${item.wing_area !== '' ? item.wing_area : '—'}</td>
                 <td style="padding:6px 10px;text-align:center;color:#374151;">${item.molding !== '' ? item.molding : '—'}</td>
                 <td style="padding:6px 10px;text-align:right;font-weight:600;color:#15803d;">${item.unit_price !== '' ? Number(item.unit_price).toLocaleString('vi-VN') : '—'}</td>
+                <td style="padding:6px 10px;text-align:right;font-weight:600;color:#059669;">${item.total_price !== '' ? Number(item.total_price).toLocaleString('vi-VN') : '—'}</td>
                 <td style="padding:6px 10px;color:#6b7280;font-style:italic;">${escHtml(item.notes)}</td>
             </tr>`;
         });
@@ -2003,8 +2007,16 @@ function confirmExcelImport() {
                 }
             }
 
+            if (item.total_price !== undefined && item.total_price !== '') {
+                const formattedTotal = Number(item.total_price).toLocaleString('vi-VN');
+                const el = newRow.querySelector('input[name*="[total_price]"]');
+                if (el) {
+                    el.value = formattedTotal;
+                    el.setAttribute('data-exact-value', formattedTotal);
+                }
+            }
+
             bindAcrylicRowEvents(newRow);
-            calculateTotalPrice(newRow);
             initBevelField(newRow);
         });
     });

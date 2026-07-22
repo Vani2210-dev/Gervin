@@ -1482,6 +1482,7 @@ function handleGlassExcelFile(file) {
                 const qty = parseInt(clean(row[9])) || 1;
                 const area = num(row[10]);
                 const price = num(row[11]);
+                const totalPrice = num(row[12]);
                 const notes = clean(row[13]);
 
                 if (!tenSp) continue;
@@ -1501,6 +1502,7 @@ function handleGlassExcelFile(file) {
                     quantity: qty,
                     area_m2: area,
                     unit_price: price,
+                    total_price: totalPrice,
                     notes: notes
                 };
 
@@ -1550,6 +1552,7 @@ function showGlassExcelModal(groups) {
         <th style="padding:8px 10px;text-align:center;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;white-space:nowrap;">SL</th>
         <th style="padding:8px 10px;text-align:center;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;white-space:nowrap;">KL (m2)</th>
         <th style="padding:8px 10px;text-align:right;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;white-space:nowrap;">Đơn giá</th>
+        <th style="padding:8px 10px;text-align:right;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;white-space:nowrap;">Thành tiền</th>
         <th style="padding:8px 10px;text-align:left;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;white-space:nowrap;">Ghi chú</th>
     </tr>`;
 
@@ -1577,7 +1580,7 @@ function showGlassExcelModal(groups) {
             `Vật tư: <span style="background:#fff;border:1px solid #c4b5fd;border-radius:6px;padding:1px 8px;margin-left:4px;">${window._glassEscHtml(group.supply_code)}</span>`;
 
         html += `<tr style="background:#ede9fe;">
-            <td colspan="10" style="padding:7px 12px;font-weight:700;color:#6d28d9;font-size:12px;">
+            <td colspan="11" style="padding:7px 12px;font-weight:700;color:#6d28d9;font-size:12px;">
                 <iconify-icon icon="lucide:package" style="margin-right:6px;font-size:13px;"></iconify-icon>
                 ${pillHtml}
                 <span style="color:#94a3b8;font-weight:400;margin-left:8px;">(${group.items.length} SP)</span>
@@ -1598,6 +1601,7 @@ function showGlassExcelModal(groups) {
                     <td style="padding:6px 10px;text-align:center;font-weight:600;color:#1d4ed8;">${item.quantity}</td>
                     <td style="padding:6px 10px;text-align:center;color:#374151;">${item.area_m2 !== '' ? Number(item.area_m2).toFixed(2) : '—'}</td>
                     <td style="padding:6px 10px;text-align:right;font-weight:600;color:#15803d;">${item.unit_price !== '' ? Number(item.unit_price).toLocaleString('vi-VN') : '—'}</td>
+                    <td style="padding:6px 10px;text-align:right;font-weight:600;color:#059669;">${item.total_price !== '' ? Number(item.total_price).toLocaleString('vi-VN') : '—'}</td>
                     <td style="padding:6px 10px;color:#6b7280;font-style:italic;max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${window._glassEscHtml(item.notes)}">${window._glassEscHtml(item.notes)}</td>
                 </tr>
             `;
@@ -1695,10 +1699,17 @@ function confirmGlassExcelImport() {
                 displayArea.value = item.area_m2 ? Number(item.area_m2).toFixed(2) : '';
             }
             setVal('input[name*="[unit_price]"]', item.unit_price);
+            if (item.total_price !== undefined && item.total_price !== '') {
+                const formattedTotal = Number(item.total_price).toLocaleString('vi-VN');
+                const el = newRow.querySelector('input[name*="[total_price]"]');
+                if (el) {
+                    el.value = formattedTotal;
+                    el.setAttribute('data-exact-value', formattedTotal);
+                }
+            }
             setVal('input[name*="[notes]"]', item.notes);
 
             bindGlassRowEvents(newRow);
-            calculateGlassTotalPrice(newRow);
         });
     });
 

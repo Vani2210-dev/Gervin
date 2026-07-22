@@ -968,7 +968,7 @@ function calculateMinLateRowStats(row) {
     if (h2 === 'T') sumT += height;
     if (w1 === 'T') sumT += width;
     if (w2 === 'T') sumT += width;
-    const straightLength = Math.ceil(((sumT * quantity) / 1000) * 100) / 100;
+    const straightLength = (sumT * quantity) / 1000;
     
     // 2. Beveled length ("V")
     let sumV = 0;
@@ -976,7 +976,7 @@ function calculateMinLateRowStats(row) {
     if (h2 === 'V') sumV += height;
     if (w1 === 'V') sumV += width;
     if (w2 === 'V') sumV += width;
-    const beveledLength = Math.ceil(((sumV * quantity) / 1000) * 100) / 100;
+    const beveledLength = (sumV * quantity) / 1000;
     
     // 3. Vát mòi length ("VAT MOI")
     let sumVatMoi = 0;
@@ -984,7 +984,7 @@ function calculateMinLateRowStats(row) {
     if (h2 === 'VAT MOI') sumVatMoi += height;
     if (w1 === 'VAT MOI') sumVatMoi += width;
     if (w2 === 'VAT MOI') sumVatMoi += width;
-    const vatMoiLength = Math.ceil(((sumVatMoi * quantity) / 1000) * 100) / 100;
+    const vatMoiLength = (sumVatMoi * quantity) / 1000;
     
     // 3.5. Dán bản rộng 25-35mm ("DS")
     let sumDS = 0;
@@ -992,27 +992,31 @@ function calculateMinLateRowStats(row) {
     if (h2 === 'DS') sumDS += height;
     if (w1 === 'DS') sumDS += width;
     if (w2 === 'DS') sumDS += width;
-    const banRong2535Length = Math.ceil(((sumDS * quantity) / 1000) * 100) / 100;
+    const banRong2535Length = (sumDS * quantity) / 1000;
     
     // Set outputs
     const straightInput = row.querySelector('input[name*="[straight_paste_length]"]');
     if (straightInput) {
         straightInput.value = straightLength.toFixed(2);
+        straightInput.setAttribute('data-exact-value', straightLength);
     }
     
     const beveledInput = row.querySelector('input[name*="[beveled_length]"]');
     if (beveledInput) {
         beveledInput.value = beveledLength.toFixed(2);
+        beveledInput.setAttribute('data-exact-value', beveledLength);
     }
     
     const vatMoiInput = row.querySelector('input[name*="[vat_moi_length]"]');
     if (vatMoiInput) {
         vatMoiInput.value = vatMoiLength.toFixed(2);
+        vatMoiInput.setAttribute('data-exact-value', vatMoiLength);
     }
     
     const banRong2535Input = row.querySelector('input[name*="[ban_rong_25_35]"]');
     if (banRong2535Input) {
         banRong2535Input.value = banRong2535Length.toFixed(2);
+        banRong2535Input.setAttribute('data-exact-value', banRong2535Length);
     }
     
     // Dán bản rộng 40-59mm and 17-39mm logic based on dimension checks
@@ -1032,11 +1036,13 @@ function calculateMinLateRowStats(row) {
     const banRong40_59Input = row.querySelector('input[name*="[ban_rong_40_59]"]');
     if (banRong40_59Input) {
         banRong40_59Input.value = banRong40_59Length.toFixed(2);
+        banRong40_59Input.setAttribute('data-exact-value', banRong40_59Length);
     }
     
     const banRong17_39Input = row.querySelector('input[name*="[ban_rong_17_39]"]');
     if (banRong17_39Input) {
         banRong17_39Input.value = banRong17_39Length.toFixed(2);
+        banRong17_39Input.setAttribute('data-exact-value', banRong17_39Length);
     }
     
     // 4. CNC count: if any of the 4 contains "BAN VE CT" or "XEM BAN VE CT"
@@ -1527,16 +1533,16 @@ function getMinLateQuantitySuggestions() {
         const beveledInput = row.querySelector('input[name*="[beveled_length]"]');
         
         if (straightInput && !straightInput.disabled) {
-            totalStraight += parseFloat(straightInput.value) || 0;
+            totalStraight += parseFloat(straightInput.getAttribute('data-exact-value') || straightInput.value) || 0;
         }
         if (r40_59Input && !r40_59Input.disabled) {
-            total40_59 += parseFloat(r40_59Input.value) || 0;
+            total40_59 += parseFloat(r40_59Input.getAttribute('data-exact-value') || r40_59Input.value) || 0;
         }
         if (r17_39Input && !r17_39Input.disabled) {
-            total17_39 += parseFloat(r17_39Input.value) || 0;
+            total17_39 += parseFloat(r17_39Input.getAttribute('data-exact-value') || r17_39Input.value) || 0;
         }
         if (beveledInput && !beveledInput.disabled) {
-            totalBeveled += parseFloat(beveledInput.value) || 0;
+            totalBeveled += parseFloat(beveledInput.getAttribute('data-exact-value') || beveledInput.value) || 0;
         }
     });
     
@@ -1719,14 +1725,35 @@ function handleMinLateExcelFile(file) {
             }
 
             const clean = v => (v === null || v === undefined) ? '' : String(v).trim();
-            const num = v => { let n = parseFloat(clean(v).replace(/,/g, '')); return isNaN(n) ? 0 : n; };
+            const num = v => { let c = clean(v); if (c === '') return ''; let n = parseFloat(c.replace(/,/g, '')); return isNaN(n) ? '' : n; };
             const cleanEdge = v => { let s = clean(v).toUpperCase(); return s === 'V' ? 'V' : (s === 'T' ? 'T' : ''); };
+
+            let hIdx = { straight: 12, vat: 13, ban25: 14, ban40: 15, ban17: 16, notes: 17, vatMoi: -1, beveledHandle: -1, cnc: -1 };
+            // Try to find header row to dynamically map columns
+            for(let i = 0; i < 5 && i < rawRows.length; i++) {
+                const rStr = rawRows[i].map(c => clean(c).toLowerCase()).join(' ');
+                if(rStr.includes('thẳng') || rStr.includes('vát')) {
+                    rawRows[i].forEach((c, idx) => {
+                        const cell = clean(c).toLowerCase();
+                        if (cell.includes('thẳng')) hIdx.straight = idx;
+                        else if (cell.includes('vát mòi')) hIdx.vatMoi = idx;
+                        else if (cell.includes('vát')) hIdx.vat = idx;
+                        else if (cell.includes('25-35') || cell.includes('25 - 35')) hIdx.ban25 = idx;
+                        else if (cell.includes('40-59') || cell.includes('40 - 59')) hIdx.ban40 = idx;
+                        else if (cell.includes('17-39') || cell.includes('17 - 39')) hIdx.ban17 = idx;
+                        else if (cell.includes('tay nắm âm')) hIdx.beveledHandle = idx;
+                        else if (cell.includes('cnc')) hIdx.cnc = idx;
+                        else if (cell.includes('ghi chú')) hIdx.notes = idx;
+                    });
+                    break;
+                }
+            }
 
             let groups = [];
             let currentGroup = null;
             let services = [];
             let parsingServices = false;
-            let sNameIdx = -1, sUnitIdx = -1, sQtyIdx = -1, sPriceIdx = -1, sPriceOnlyIdx = -1;
+            let sNameIdx = -1, sUnitIdx = -1, sQtyIdx = -1, sPriceIdx = -1, sPriceOnlyIdx = -1, sTotalPriceIdx = -1;
 
             rawRows.forEach((row, idx) => {
                 if (!parsingServices) {
@@ -1740,6 +1767,7 @@ function handleMinLateExcelFile(file) {
                             else if (txt === 'số lượng') sQtyIdx = i;
                             else if (txt === 'đơn giá') sPriceIdx = i;
                             else if (txt === 'đơn giá chỉ') sPriceOnlyIdx = i;
+                            else if (txt === 'thành tiền' || txt === 'tổng tiền') sTotalPriceIdx = i;
                         });
                         if (sNameIdx === -1) sNameIdx = 2; // Default fallback to column C
                         return;
@@ -1771,7 +1799,8 @@ function handleMinLateExcelFile(file) {
                                 unit: unit, 
                                 qty: num(qtyStr) || 1, 
                                 price: num(priceStr) || 0, 
-                                priceOnly: sPriceOnlyIdx !== -1 ? num(row[sPriceOnlyIdx]) : 0 
+                                priceOnly: sPriceOnlyIdx !== -1 ? num(row[sPriceOnlyIdx]) : 0,
+                                totalPrice: sTotalPriceIdx !== -1 ? num(row[sTotalPriceIdx]) : ''
                             });
                         }
                     }
@@ -1810,13 +1839,17 @@ function handleMinLateExcelFile(file) {
                     const edge_w1 = cleanEdge(row[10]);
                     const edge_w2 = cleanEdge(row[11]);
                     
-                    const straight = num(row[12]);
-                    const vat = num(row[13]);
-                    const ban25 = num(row[14]);
-                    const ban40 = num(row[15]);
-                    const ban17 = num(row[16]);
+                    const straight = num(row[hIdx.straight]);
+                    const vat = num(row[hIdx.vat]);
+                    const ban25 = num(row[hIdx.ban25]);
+                    const ban40 = num(row[hIdx.ban40]);
+                    const ban17 = num(row[hIdx.ban17]);
                     
-                    const notes = clean(row[17]);
+                    const vatMoi = hIdx.vatMoi !== -1 ? num(row[hIdx.vatMoi]) : '';
+                    const beveledHandle = hIdx.beveledHandle !== -1 ? num(row[hIdx.beveledHandle]) : '';
+                    const cnc = hIdx.cnc !== -1 ? num(row[hIdx.cnc]) : '';
+                    
+                    const notes = hIdx.notes !== -1 ? clean(row[hIdx.notes]) : clean(row[17]);
                     
                     currentGroup.items.push({
                         height: height,
@@ -1829,9 +1862,12 @@ function handleMinLateExcelFile(file) {
                         edge_w2: edge_w2,
                         straight: straight,
                         vat: vat,
+                        vatMoi: vatMoi,
                         ban25: ban25,
                         ban40: ban40,
                         ban17: ban17,
+                        beveledHandle: beveledHandle,
+                        cnc: cnc,
                         notes: notes
                     });
                 }
@@ -1950,6 +1986,7 @@ function showMinLateExcelModal(groups, services = []) {
         services.forEach(srv => {
             const priceFmt = new Intl.NumberFormat('vi-VN').format(srv.price);
             const priceOnlyFmt = srv.priceOnly > 0 ? new Intl.NumberFormat('vi-VN').format(srv.priceOnly) : '';
+            const totalPriceFmt = srv.totalPrice !== '' ? new Intl.NumberFormat('vi-VN').format(srv.totalPrice) : '';
             srvHtml += `
                 <tr>
                     <td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;font-weight:500;color:#1e293b;white-space:pre-wrap;">${escHtml(srv.name)}</td>
@@ -1957,6 +1994,7 @@ function showMinLateExcelModal(groups, services = []) {
                     <td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;text-align:center;font-weight:600;color:#0369a1;">${srv.qty}</td>
                     <td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;text-align:right;color:#ef4444;font-weight:600;">${priceFmt}</td>
                     <td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;text-align:right;color:#f97316;font-weight:600;">${priceOnlyFmt}</td>
+                    <td style="padding:8px 10px;border-bottom:1px solid #e2e8f0;text-align:right;color:#059669;font-weight:700;">${totalPriceFmt}</td>
                 </tr>
             `;
         });
@@ -2017,6 +2055,7 @@ function confirmMinLateExcelImport() {
                             el.tomselect.setValue(val);
                         } else {
                             el.value = val;
+                            el.setAttribute('data-exact-value', val);
                         }
                     }
                 };
@@ -2029,15 +2068,19 @@ function confirmMinLateExcelImport() {
                 setVal('select[name*="[edge_gluing][height_2]"]', item.edge_h2);
                 setVal('select[name*="[edge_gluing][width_1]"]', item.edge_w1);
                 setVal('select[name*="[edge_gluing][width_2]"]', item.edge_w2);
+                setVal('input[name*="[notes]"]', item.notes);
+
+                // OVERRIDE auto-calculated values with explicit calculated values from Excel (if provided)
                 setVal('input[name*="[straight_paste_length]"]', item.straight);
                 setVal('input[name*="[beveled_length]"]', item.vat);
+                setVal('input[name*="[vat_moi_length]"]', item.vatMoi);
                 setVal('input[name*="[ban_rong_25_35]"]', item.ban25);
                 setVal('input[name*="[ban_rong_40_59]"]', item.ban40);
                 setVal('input[name*="[ban_rong_17_39]"]', item.ban17);
-                setVal('input[name*="[notes]"]', item.notes);
+                setVal('input[name*="[beveled_handle]"]', item.beveledHandle);
+                setVal('input[name*="[cnc]"]', item.cnc);
 
                 if(typeof bindMinLateRowEvents === 'function') bindMinLateRowEvents(newRow);
-                if(typeof calculateMinLateRowStats === 'function') calculateMinLateRowStats(newRow);
                 if(typeof initMinLateBevelField === 'function') initMinLateBevelField(newRow);
             }
         });
@@ -2072,6 +2115,15 @@ function confirmMinLateExcelImport() {
                             if (typeof bindPaymentDetailEvents === 'function') {
                                 const qtyInput = newRow.querySelector('.payment-quantity-input');
                                 if(qtyInput) qtyInput.dispatchEvent(new Event('input', {bubbles: true}));
+                            }
+
+                            // OVERRIDE total_price if explicitly available from Excel
+                            if (srv.totalPrice !== undefined && srv.totalPrice !== '') {
+                                const totalEl = newRow.querySelector(`[name="payment_details[${idx}][total]"]`);
+                                if (totalEl) {
+                                    totalEl.value = Number(srv.totalPrice).toLocaleString('vi-VN');
+                                    totalEl.setAttribute('data-exact-value', srv.totalPrice);
+                                }
                             }
                         }
                     }
@@ -2173,6 +2225,7 @@ function confirmMinLateExcelImport() {
                                     <th style="padding:8px 10px;text-align:center;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;width:80px;">Số lượng</th>
                                     <th style="padding:8px 10px;text-align:right;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;width:110px;">Đơn giá</th>
                                     <th style="padding:8px 10px;text-align:right;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;width:110px;">Đơn giá chỉ</th>
+                                    <th style="padding:8px 10px;text-align:right;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;width:120px;">Thành tiền</th>
                                 </tr>
                             </thead>
                             <tbody id="min-late-excel-services-tbody">

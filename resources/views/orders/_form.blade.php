@@ -757,7 +757,7 @@ function updateOrderSummary() {
                     
                     table.querySelectorAll(`tbody tr:not(.hidden) input[name*="[${field}]"]`).forEach(input => {
                         if (!input.disabled && input.type !== 'hidden') {
-                            let valStr = input.value;
+                            let valStr = input.hasAttribute('data-exact-value') ? input.getAttribute('data-exact-value') : input.value;
                             if (typeof valStr === 'string' && !isFloat) {
                                 valStr = valStr.replace(/\./g, '');
                             }
