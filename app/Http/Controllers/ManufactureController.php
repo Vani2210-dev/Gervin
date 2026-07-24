@@ -62,19 +62,8 @@ class ManufactureController extends Controller
             }
         }
 
-        // Query 2: Fallback to orders with order_date = $date
         if ($orders->isEmpty()) {
-            $orders = Order::whereDate('order_date', $date)
-                ->whereNotIn('status', ['draft', 'cancelled'])
-                ->with(['supplies.items.codes', 'supplies.minLateItems.codes', 'supplies.glassItems.codes'])
-                ->get();
-        }
-
-        // Query 3: Fallback to active orders (for testing/demo)
-        if ($orders->isEmpty()) {
-            $orders = Order::whereIn('status', ['transferred', 'in_production'])
-                ->with(['supplies.items.codes', 'supplies.minLateItems.codes', 'supplies.glassItems.codes'])
-                ->get();
+            return back()->with('error', 'Không có lệnh sản xuất nào trong ngày này để xuất Excel.');
         }
 
         // Extract and group supplies

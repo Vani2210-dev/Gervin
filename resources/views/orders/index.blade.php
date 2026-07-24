@@ -91,8 +91,8 @@
                     @endcan
                     @can('delete order')
                     <button type="button" onclick="toggleBulkDeleteOrders()"
-                        class="js-toggle-bulk-delete btn bg-danger-600 hover:bg-danger-700 text-white text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2 shadow-sm">
-                        <iconify-icon icon="lucide:trash-2" class="icon text-xl line-height-1 text-white"></iconify-icon>
+                        class="js-toggle-bulk-delete btn bg-neutral-600 hover:bg-neutral-700 text-white text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2 shadow-sm">
+                        <iconify-icon icon="lucide:list-checks" class="icon text-xl line-height-1 text-white"></iconify-icon>
                         <span class="bulk-delete-toggle-label">Chọn nhiều</span>
                     </button>
                     @endcan
@@ -136,13 +136,17 @@
                         <p class="text-sm font-semibold text-neutral-800 mb-0">
                             Đã chọn <span id="bulkSelectedCount" class="text-primary-600">0</span> đơn hàng
                         </p>
-                        <p class="text-xs text-secondary-light mb-0">Chỉ xóa những đơn bạn đã chọn trong danh sách hiện tại.</p>
+                        <p class="text-xs text-secondary-light mb-0">Thực hiện thao tác với các đơn hàng được chọn.</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
                     <button type="button" onclick="clearBulkOrderSelection()" class="btn btn-sm bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-100 rounded-lg px-3 py-2 flex items-center gap-2">
                         <iconify-icon icon="lucide:x" class="text-base"></iconify-icon>
                         Bỏ chọn
+                    </button>
+                    <button type="button" id="btnExportBulk" onclick="exportBulkOrders()" class="btn btn-sm bg-success-600 hover:bg-success-700 text-white rounded-lg px-3 py-2 flex items-center gap-2">
+                        <iconify-icon icon="lucide:file-spreadsheet" class="text-base"></iconify-icon>
+                        Xuất Excel
                     </button>
                     <button type="submit" form="bulkDeleteForm" class="btn btn-sm bg-danger-600 hover:bg-danger-700 text-white rounded-lg px-3 py-2 flex items-center gap-2">
                         <iconify-icon icon="lucide:trash-2" class="text-base"></iconify-icon>
@@ -421,10 +425,10 @@
         }
 
         if (icon) {
-            icon.setAttribute('icon', active ? 'lucide:x' : 'lucide:trash-2');
+            icon.setAttribute('icon', active ? 'lucide:x' : 'lucide:list-checks');
         }
 
-        button.title = active ? 'Thoát chế độ xóa nhiều' : 'Bật chế độ xóa nhiều';
+        button.title = active ? 'Thoát chế độ chọn nhiều' : 'Bật chế độ chọn nhiều';
     }
 
     function setBulkDeleteMode(enabled) {
@@ -494,17 +498,17 @@
 
         const button = document.createElement('button');
         button.type = 'button';
-        button.className = 'js-toggle-bulk-delete btn btn-sm bg-danger-50 hover:bg-danger-100 text-danger-600 rounded-lg px-2.5 py-1.5 flex items-center gap-1.5';
-        button.title = 'Bật chế độ xóa nhiều';
+        button.className = 'js-toggle-bulk-delete btn btn-sm bg-neutral-50 hover:bg-neutral-100 text-neutral-600 rounded-lg px-2.5 py-1.5 flex items-center gap-1.5';
+        button.title = 'Bật chế độ chọn nhiều';
         button.onclick = toggleBulkDeleteOrders;
 
         const icon = document.createElement('iconify-icon');
-        icon.setAttribute('icon', 'lucide:trash-2');
+        icon.setAttribute('icon', 'lucide:list-checks');
         icon.className = 'text-base';
 
         const label = document.createElement('span');
         label.className = 'bulk-delete-toggle-label text-xs font-semibold';
-        label.textContent = 'Xóa nhiều';
+        label.textContent = 'Chọn nhiều';
 
         button.append(icon, label);
         headerInner.append(headerLabel, button);
@@ -535,6 +539,69 @@
     });
 </script>
 @endif
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<script src="{{ asset('assets/js/order-export.js') }}"></script>
+<script>
+    async function exportBulkOrders() {
+        if (!window.showDirectoryPicker) {
+            alert("Trình duyệt của bạn không hỗ trợ chọn thư mục lưu (chỉ hỗ trợ Chrome/Edge mới). Vui lòng cập nhật hoặc dùng trình duyệt khác.");
+            return;
+        }
+
+        const selectedIds = Array.from(document.querySelectorAll('.bulk-order-checkbox:checked')).map(cb => cb.value);
+        if (selectedIds.length === 0) return;
+
+        const btn = document.getElementById('btnExportBulk');
+        const originalHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<iconify-icon icon="lucide:loader" class="animate-spin text-base"></iconify-icon> Đang xử lý...';
+
+        try {
+            // Yêu cầu chọn thư mục
+            const directoryHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+
+            // Lấy dữ liệu từ server
+            const response = await fetch('{{ route("orders.bulk-export-data") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('input[name="_token"]')?.value || ''
+                },
+                body: JSON.stringify({ order_ids: selectedIds })
+            });
+
+            if (!response.ok) throw new Error("Không thể lấy dữ liệu xuất Excel");
+            const dataList = await response.json();
+
+            // Lưu từng file
+            for (let data of dataList) {
+                if (typeof exportToExcel !== 'function') {
+                    throw new Error("Không tìm thấy hàm exportToExcel");
+                }
+                const blob = await exportToExcel(data, true);
+                const fileName = `Bao_Gia_${data.order_code}.xlsx`;
+                
+                const fileHandle = await directoryHandle.getFileHandle(fileName, { create: true });
+                const writable = await fileHandle.createWritable();
+                await writable.write(blob);
+                await writable.close();
+            }
+
+            alert(`Đã xuất thành công ${dataList.length} file Excel!`);
+            clearBulkOrderSelection();
+        } catch (err) {
+            console.error(err);
+            if (err.name !== 'AbortError') {
+                alert("Có lỗi xảy ra: " + err.message);
+            }
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
+        }
+    }
+</script>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {

@@ -166,7 +166,7 @@
                         </div>
                         @if($supply->quantity)
                             <span class="text-sm font-semibold bg-neutral-100 px-3 py-1 rounded-lg text-neutral-700">
-                                SL: {{ $supply->quantity }}
+                                SL: {{ floatval($supply->quantity) == intval($supply->quantity) ? number_format($supply->quantity, 0, ',', '.') : number_format($supply->quantity, 2, ',', '.') }}
                             </span>
                         @endif
                     </div>
@@ -312,6 +312,7 @@
                                             <th scope="col" class="w-20">Độ dày</th>
                                             <th scope="col" class="w-20">Cao</th>
                                             <th scope="col" class="w-20">Rộng</th>
+                                            <th scope="col" class="w-20">SL</th>
                                             <th scope="col" class="w-24">Vát</th>
                                             <th scope="col" class="w-24">Chiều vân</th>
                                             <th scope="col" class="w-24">Cánh (m2)</th>
@@ -360,6 +361,7 @@
                                                         <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->thickness ?? '—' }}</td>
                                                         <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->height ?? '—' }}</td>
                                                         <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->width ?? '—' }}</td>
+                                                        <td rowspan="{{ $rowCount }}" class="align-top pt-3 font-medium">{{ floatval($item->quantity) == intval($item->quantity) ? number_format($item->quantity, 0, ',', '.') : number_format($item->quantity, 2, ',', '.') }}</td>
                                                         <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->bevel ?? '—' }}</td>
                                                         <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->grain_direction ?? '0' }}
                                                         </td>
@@ -440,7 +442,7 @@
                                             <td class="text-center font-semibold text-neutral-500">{{ $detailIndex + 1 }}</td>
                                             <td><span class="font-semibold text-neutral-800">{{ $detail->name }}</span></td>
                                             <td class="text-center">{{ $detail->unit ?? '—' }}</td>
-                                            <td class="text-center font-medium">{{ number_format($detail->quantity, 2, ',', '.') }}</td>
+                                            <td class="text-center font-medium">{{ floatval($detail->quantity) == intval($detail->quantity) ? number_format($detail->quantity, 0, ',', '.') : number_format($detail->quantity, 2, ',', '.') }}</td>
                                             <td class="text-end font-medium text-neutral-600">
                                                 {{ number_format($detail->price, 0, ',', '.') }}</td>
                                             @if($acrylicOrder->type === 'min_late')
@@ -631,153 +633,7 @@
     </div>
 
     @php
-        $exportData = [
-            'order_code' => $acrylicOrder->order_code,
-            'created_at' => $acrylicOrder->created_at->format('d/m/Y H:i'),
-            'type' => $acrylicOrder->type,
-            'customer_name' => $acrylicOrder->customer_name,
-            'phone' => $acrylicOrder->phone,
-            'order_date' => $acrylicOrder->order_date ? \Carbon\Carbon::parse($acrylicOrder->order_date)->format('Y-m-d H:i:s') : null,
-            'deadline' => $acrylicOrder->deadline ? \Carbon\Carbon::parse($acrylicOrder->deadline)->format('Y-m-d H:i:s') : null,
-            'address' => $acrylicOrder->address,
-            'notes' => $acrylicOrder->notes,
-            'customer_policy' => $acrylicOrder->customer_policy,
-            'discount_percent' => $acrylicOrder->discount_percent ?? 0,
-            'discount_amount' => $acrylicOrder->discount_amount ?? 0,
-            'vat_percent' => $acrylicOrder->vat_percent ?? 0,
-            'vat_amount' => $acrylicOrder->vat_amount ?? 0,
-            'total_amount' => round($acrylicOrder->total_amount, -3),
-            'delivery_days' => $acrylicOrder->delivery_days ?? ($acrylicOrder->type === 'glass' ? 5 : 2),
-            'customer_debt_info' => call_user_func(function() use ($acrylicOrder) {
-                if (!$acrylicOrder->customer) return null;
-                $thisOrderTotal = round($acrylicOrder->total_amount, -3);
-                $thisOrderPaid = $acrylicOrder->orderPayments->sum('amount');
-                $thisOrderUnpaid = 0;
-                if (!in_array($acrylicOrder->status, ['draft', 'cancelled', 'pending'])) {
-                    $thisOrderUnpaid = max(0, $thisOrderTotal - $thisOrderPaid);
-                }
-                $currentTotalDebt = $acrylicOrder->customer->total_debt;
-                $oldDebt = max(0, $currentTotalDebt - $thisOrderUnpaid);
-                $totalCombinedDebt = $oldDebt + $thisOrderTotal - $thisOrderPaid;
-                
-                $allOrdersPaid = $acrylicOrder->customer->debt_summary['total_paid'] ?? 0;
-                
-                if ($oldDebt == 0 && $allOrdersPaid == 0 && $totalCombinedDebt == 0) return null;
-                
-                return [
-                    'old_debt' => $oldDebt,
-                    'this_order_paid' => $allOrdersPaid, // still named this_order_paid in JS, but sends allOrdersPaid
-                    'total_combined_debt' => max(0, $totalCombinedDebt),
-                ];
-            }),
-            'supplies' => $acrylicOrder->supplies->map(function ($supply) use ($acrylicOrder) {
-                $items = [];
-                if ($acrylicOrder->type === 'min_late') {
-                    $items = $supply->minLateItems->map(function ($item) {
-                        $sizes = $item->size ?? [];
-                        if (is_string($sizes)) {
-                            $sizes = json_decode($sizes, true) ?? [];
-                        }
-                        $edgeGluing = $item->edge_gluing ?? [];
-                        if (is_string($edgeGluing)) {
-                            $edgeGluing = json_decode($edgeGluing, true) ?? [];
-                        }
-                        return [
-                            'product_code' => $item->product_code,
-                            'name' => $item->product_name ?? $item->name,
-                            'thickness' => $item->thickness,
-                            'quantity' => $item->quantity,
-                            'height' => $sizes['height'] ?? null,
-                            'width' => $sizes['width'] ?? null,
-                            'edge_gluing' => $edgeGluing,
-                            'bevel' => $item->bevel,
-                            'straight_paste_length' => $item->straight_paste_length,
-                            'beveled_length' => $item->beveled_length,
-                            'vat_moi_length' => $item->vat_moi_length,
-                            'ban_rong_40_59' => $item->ban_rong_40_59,
-                            'ban_rong_17_39' => $item->call_rong_17_39 ?? $item->ban_rong_17_39,
-                            'ban_rong_25_35' => $item->ban_rong_25_35,
-                            'beveled_handle' => $item->beveled_handle,
-                            'cnc' => $item->cnc,
-                            'direction' => $item->direction,
-                            'notes' => $item->notes,
-                        ];
-                    });
-                } elseif ($acrylicOrder->type === 'glass') {
-                    $items = $supply->glassItems->map(function ($item) {
-                        return [
-                            'product_code' => $item->product_code,
-                            'product_name' => $item->product_name,
-                            'thickness' => $item->thickness,
-                            'wing_opening_direction' => $item->wing_opening_direction,
-                            'aluminum_color' => $item->aluminum_color,
-                            'glass_color' => $item->glass_color,
-                            'height' => $item->height,
-                            'width' => $item->width,
-                            'unit' => $item->unit ?? 'cánh',
-                            'wing_quantity' => $item->wing_quantity,
-                            'area_m2' => $item->area_m2,
-                            'unit_price' => $item->unit_price,
-                            'total_price' => $item->total_price,
-                            'notes' => $item->notes,
-                        ];
-                    });
-                } else {
-                    $items = $supply->items->map(function ($item) {
-                        return [
-                            'product_code' => $item->product_code,
-                            'product_codes' => $item->codes->pluck('product_id')->toArray(),
-                            'product_name' => $item->product_name,
-                            'thickness' => $item->thickness,
-                            'quantity' => $item->quantity,
-                            'height' => $item->height,
-                            'width' => $item->width,
-                            'edge_bevel' => $item->edge_bevel,
-                            'grain_direction' => $item->grain_direction,
-                            'wing_area' => $item->wing_area,
-                            'molding_length' => $item->molding_length,
-                            'bevel' => $item->bevel,
-                            'vertical_grain_cnc' => $item->vertical_grain_cnc,
-                            'offset_left' => $item->offset_left,
-                            'offset_right' => $item->offset_right,
-                            'offset_top' => $item->offset_top,
-                            'offset_bottom' => $item->offset_bottom,
-                            'mill_left' => $item->mill_left,
-                            'mill_right' => $item->mill_right,
-                            'mill_top' => $item->mill_top,
-                            'mill_bottom' => $item->mill_bottom,
-                            'mill_width' => $item->mill_width,
-                            'mill_depth' => $item->mill_depth,
-                            'mill_left_2' => $item->mill_left_2,
-                            'mill_right_2' => $item->mill_right_2,
-                            'mill_top_2' => $item->mill_top_2,
-                            'mill_bottom_2' => $item->mill_bottom_2,
-                            'mill_width_2' => $item->mill_width_2,
-                            'mill_depth_2' => $item->mill_depth_2,
-                            'unit_price' => $item->unit_price,
-                            'total_price' => $item->total_price,
-                            'notes' => $item->notes,
-                        ];
-                    });
-                }
-                return [
-                    'order_supply_code' => $supply->order_supply_code,
-                    'supply_name' => $supply->supply_name,
-                    'quantity' => $supply->quantity,
-                    'items' => $items
-                ];
-            }),
-            'payment_details' => isset($acrylicOrder->paymentDetails) ? $acrylicOrder->paymentDetails->map(function ($detail) {
-                return [
-                    'name' => $detail->name,
-                    'unit' => $detail->unit,
-                    'quantity' => $detail->quantity,
-                    'price' => $detail->price,
-                    'price_only' => $detail->price_only,
-                    'total' => $detail->total,
-                ];
-            }) : []
-        ];
+        // $exportData is now passed from OrderController
     @endphp
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>

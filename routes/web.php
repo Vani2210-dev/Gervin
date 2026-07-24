@@ -263,6 +263,7 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth'])->group(function () {
     Route::resource('orders', OrderController::class)->names('orders');
     Route::post('orders/bulk-destroy', [OrderController::class, 'bulkDestroy'])->name('orders.bulk-destroy');
+    Route::post('orders/bulk-export-data', [OrderController::class, 'bulkExportData'])->name('orders.bulk-export-data');
     Route::get('orders/create/{type}', [OrderController::class, 'createByType'])->name('orders.create.type');
     Route::post('orders/discard-draft', [OrderController::class, 'discardDraft'])->name('orders.discard-draft');
     Route::post('orders/{order}/update-status', [OrderController::class, 'updateStatus'])->name('orders.update-status');

@@ -50,7 +50,7 @@
                     </form>
 
                     {{-- Export Excel form --}}
-                    <form method="GET" action="{{ route('manufactures.export-excel') }}" class="flex items-center gap-2" target="_blank">
+                    <form method="GET" action="{{ route('manufactures.export-excel') }}" class="flex items-center gap-2">
                         <input type="date" name="date" value="{{ date('Y-m-d') }}" class="form-control form-control-sm border-neutral-200 rounded-lg w-auto py-2">
                         <button type="submit" class="btn btn-success text-sm btn-sm px-3 py-2.5 flex items-center gap-1.5 h-full rounded-lg">
                             <iconify-icon icon="lucide:file-spreadsheet" class="text-lg"></iconify-icon>

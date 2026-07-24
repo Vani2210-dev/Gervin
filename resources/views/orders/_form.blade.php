@@ -561,6 +561,53 @@ function previewOrder() {
         `;
     });
 
+    // Thu thập chi tiết hóa đơn dịch vụ
+    let paymentDetailsHTML = '';
+    const paymentRows = document.querySelectorAll('.payment-detail-row');
+    if (paymentRows.length > 0) {
+        paymentRows.forEach((row, rIdx) => {
+            const getPDVal = (selector) => {
+                const input = row.querySelector(selector);
+                if (!input) return '';
+                if (!input.value) return '';
+                if (input.tagName === 'SELECT') {
+                    if (input.tomselect) return input.tomselect.getItem(input.tomselect.getValue())?.textContent || '';
+                    return input.options[input.selectedIndex]?.text || '';
+                }
+                return input.value || '';
+            };
+            
+            const code = getPDVal('.order-payment-code-select');
+            const name = getPDVal('[name*="[name]"]');
+            const unit = getPDVal('[name*="[unit]"]');
+            let qty = getPDVal('[name*="[quantity]"]');
+            let price = getPDVal('[name*="[price]"]');
+            let total = getPDVal('[name*="[total]"]');
+            
+            const qNum = parseFloat(qty);
+            if (!isNaN(qNum) && qNum > 0) {
+                qty = Number.isInteger(qNum) ? qNum.toLocaleString('vi-VN') : qNum.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+            
+            const pNum = parseFloat(price);
+            if (!isNaN(pNum) && pNum > 0) price = pNum.toLocaleString('vi-VN');
+            const tNum = parseFloat(total);
+            if (!isNaN(tNum) && tNum > 0) total = tNum.toLocaleString('vi-VN');
+            
+            if (!name && !qty && !price && !code) return;
+            
+            paymentDetailsHTML += `<tr class="border-b border-neutral-100 hover:bg-neutral-50/50">
+                <td class="px-3 py-2 text-center text-xs text-neutral-500 border border-neutral-100">${rIdx + 1}</td>
+                <td class="px-3 py-2 text-xs text-neutral-700 border border-neutral-100 text-center font-semibold">${code || '—'}</td>
+                <td class="px-3 py-2 text-xs text-neutral-700 border border-neutral-100">${name || '—'}</td>
+                <td class="px-3 py-2 text-xs text-neutral-700 border border-neutral-100 text-center">${unit || '—'}</td>
+                <td class="px-3 py-2 text-xs text-neutral-700 border border-neutral-100 text-center font-medium">${qty || '—'}</td>
+                <td class="px-3 py-2 text-xs text-neutral-700 border border-neutral-100 text-right font-medium">${price || '—'}</td>
+                <td class="px-3 py-2 text-xs text-emerald-600 border border-neutral-100 text-right font-bold">${total || '—'}</td>
+            </tr>`;
+        });
+    }
+
     // Tạo info row helper
     const infoRow = (label, value, icon) => {
         if (!value || value === '—') return '';
@@ -652,6 +699,31 @@ function previewOrder() {
                             <h6 class="font-bold text-sm text-neutral-800 m-0">Danh sách Vật tư & Sản phẩm</h6>
                         </div>
                         ${suppliesHTML}
+                    </div>` : ''}
+
+                    <!-- Hóa đơn dịch vụ -->
+                    ${paymentDetailsHTML ? `
+                    <div class="bg-white border border-neutral-200 rounded-xl p-5 shadow-sm">
+                        <div class="flex items-center gap-2 mb-4 pb-3 border-b border-neutral-100">
+                            <iconify-icon icon="lucide:receipt" class="text-lg text-primary-500"></iconify-icon>
+                            <h6 class="font-bold text-sm text-neutral-800 m-0">Chi tiết hóa đơn dịch vụ</h6>
+                        </div>
+                        <div class="overflow-x-auto rounded-lg border border-neutral-200">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="bg-primary-50/50">
+                                        <th class="px-3 py-2.5 text-xs font-bold text-neutral-600 uppercase border border-neutral-100 text-center whitespace-nowrap">STT</th>
+                                        <th class="px-3 py-2.5 text-xs font-bold text-neutral-600 uppercase border border-neutral-100 text-center whitespace-nowrap">Mã</th>
+                                        <th class="px-3 py-2.5 text-xs font-bold text-neutral-600 uppercase border border-neutral-100 text-left whitespace-nowrap">Tên nội dung</th>
+                                        <th class="px-3 py-2.5 text-xs font-bold text-neutral-600 uppercase border border-neutral-100 text-center whitespace-nowrap">Đơn vị</th>
+                                        <th class="px-3 py-2.5 text-xs font-bold text-neutral-600 uppercase border border-neutral-100 text-center whitespace-nowrap">Số lượng</th>
+                                        <th class="px-3 py-2.5 text-xs font-bold text-neutral-600 uppercase border border-neutral-100 text-center whitespace-nowrap">Đơn giá</th>
+                                        <th class="px-3 py-2.5 text-xs font-bold text-neutral-600 uppercase border border-neutral-100 text-center whitespace-nowrap">Thành tiền</th>
+                                    </tr>
+                                </thead>
+                                <tbody>${paymentDetailsHTML}</tbody>
+                            </table>
+                        </div>
                     </div>` : ''}
 
                     <!-- Tóm tắt -->

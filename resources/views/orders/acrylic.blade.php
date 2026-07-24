@@ -1499,6 +1499,11 @@ document.addEventListener('DOMContentLoaded', function() {
         addOrderSupply();
     }
 
+    const paymentContainer = document.getElementById('payment-details-container');
+    if (paymentContainer && paymentContainer.querySelectorAll('.payment-detail-row').length === 0) {
+        addPaymentDetail();
+    }
+
     document.querySelectorAll('#order-supplies-container .order-item-row').forEach(row => {
         bindAcrylicRowEvents(row);
         applyNarrowWidthRule(row);

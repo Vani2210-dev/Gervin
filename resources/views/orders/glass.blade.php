@@ -410,6 +410,9 @@
                         <tbody class="supply-items-container" data-supply-index="{{ $supplyIndex }}">
                             @if(isset($supply->glassItems) && $supply->glassItems->count() > 0)
                                 @foreach($supply->glassItems as $itemIndex => $item)
+                                @php
+                                    $isLaborRow = stripos($item->notes ?? '', 'công') !== false || stripos($item->product_name ?? '', 'công') !== false;
+                                @endphp
                                 <tr class="order-item-row" data-item-id="{{ $item->id }}">
                                     <td style="width: 45px; min-width: 45px; " class="sticky-stt-td text-center align-middle border border-neutral-200">
                                         <span class="row-index font-semibold text-neutral-500">{{ $itemIndex + 1 }}</span>
@@ -539,7 +542,7 @@ function addGlassOrderSupply(isAccessory = false) {
         headerHtml = `
             <span class="badge bg-neutral-200 text-neutral-800 font-bold px-3 py-1.5 rounded-lg text-xs uppercase tracking-wider">Phụ kiện</span>
             <input type="hidden" name="supplies[${glassSupplyIndex}][order_supply_code]" value="">
-            <input type="text" name="supplies[${glassSupplyIndex}][supply_name]" class="form-control form-control-sm rounded-lg w-64 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Tên vật tư" value="Phụ kiện" readonly>
+            <input type="hidden" name="supplies[${glassSupplyIndex}][supply_name]" value="Phụ kiện">
             <input type="number" name="supplies[${glassSupplyIndex}][quantity]" class="form-control form-control-sm rounded-lg w-24 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="SL" min="0" step="0.01" value="0">
         `;
     } else {
