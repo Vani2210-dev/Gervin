@@ -87,6 +87,12 @@
                     <span>Lệnh sản xuất</span>
                 </a>
             </li>
+            <li>
+                <a href="{{ route('manufactures.sequence') }}">
+                    <iconify-icon icon="lucide:arrow-up-down" class="menu-icon"></iconify-icon>
+                    <span>Sắp xếp đơn hàng</span>
+                </a>
+            </li>
             @endcan
             @can('view pressing')
             <li>

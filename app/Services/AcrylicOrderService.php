@@ -117,7 +117,8 @@ class AcrylicOrderService
         }
 
         $allAttachments = array_merge($existingAttachments, $attachmentPaths);
-        $subTotal = $this->calculateTotalAmount($request->supplies ?? [], $request->payment_details ?? []);
+        $isRework = $order->relation_type === 'rework';
+        $subTotal = $this->calculateTotalAmount($request->supplies ?? [], $request->payment_details ?? [], $isRework);
         $discountPercent = (float) $request->input('discount_percent', 0);
         $vatPercent = (float) $request->input('vat_percent', 0);
         
@@ -219,14 +220,16 @@ class AcrylicOrderService
     /**
      * Calculate total amount helper.
      */
-    protected function calculateTotalAmount(array $supplies, array $paymentDetails): float
+    protected function calculateTotalAmount(array $supplies, array $paymentDetails, bool $isRework = false): float
     {
         $totalAmount = 0;
-        foreach ($supplies as $supply) {
-            if (!isset($supply['items']) || !is_array($supply['items'])) continue;
-            foreach ($supply['items'] as $item) {
-                $itemTotal = isset($item['total_price']) ? floatval(str_replace('.', '', $item['total_price'])) : ($item['unit_price'] * $item['quantity']);
-                $totalAmount += $itemTotal;
+        if (!$isRework) {
+            foreach ($supplies as $supply) {
+                if (!isset($supply['items']) || !is_array($supply['items'])) continue;
+                foreach ($supply['items'] as $item) {
+                    $itemTotal = isset($item['total_price']) ? floatval(str_replace('.', '', $item['total_price'])) : ($item['unit_price'] * $item['quantity']);
+                    $totalAmount += $itemTotal;
+                }
             }
         }
         foreach ($paymentDetails as $detail) {
@@ -243,6 +246,7 @@ class AcrylicOrderService
     protected function saveSuppliesAndItems(Order $order, array $suppliesData): void
     {
         $globalPieceIndex = 1;
+        $isRework = $order->relation_type === 'rework';
         foreach ($suppliesData as $supplyData) {
             $orderSupply = OrderSupply::create([
                 'order_id'          => $order->id,
@@ -253,7 +257,8 @@ class AcrylicOrderService
 
             if (!isset($supplyData['items']) || !is_array($supplyData['items'])) continue;
             foreach ($supplyData['items'] as $item) {
-                $totalPrice = isset($item['total_price']) ? floatval(str_replace('.', '', $item['total_price'])) : ($item['unit_price'] * $item['quantity']);
+                $unitPrice = round($item['unit_price'] ?? 0);
+                $totalPrice = isset($item['total_price']) ? floatval(str_replace('.', '', $item['total_price'])) : (($item['unit_price'] ?? 0) * ($item['quantity'] ?? 0));
                 $totalPrice = round($totalPrice);
                 
                 $orderItem = AcrylicOrderItem::create([
@@ -267,7 +272,7 @@ class AcrylicOrderService
                     'wing_area'           => $item['wing_area'] ?? null,
                     'molding_length'      => $item['molding_length'] ?? null,
                     'quantity'            => $item['quantity'],
-                    'unit_price'          => round($item['unit_price']),
+                    'unit_price'          => $unitPrice,
                     'total_price'         => $totalPrice,
                     'notes'               => $item['notes'] ?? null,
                     'bevel'               => $item['bevel'] ?? null,
@@ -288,6 +293,7 @@ class AcrylicOrderService
                     'mill_bottom_2'       => isset($item['mill_bottom_2']) && $item['mill_bottom_2'] !== '' ? intval($item['mill_bottom_2']) : null,
                     'mill_width_2'        => isset($item['mill_width_2'])  && $item['mill_width_2']  !== '' ? intval($item['mill_width_2'])  : null,
                     'mill_depth_2'        => isset($item['mill_depth_2'])  && $item['mill_depth_2']  !== '' ? intval($item['mill_depth_2'])  : null,
+                    'old_size'            => $item['old_size'] ?? null,
                 ]);
 
                 // Labor rows (Công giả dày) do NOT get item codes — they are billing-only rows

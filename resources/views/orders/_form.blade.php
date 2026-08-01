@@ -854,6 +854,7 @@ function updateOrderSummary() {
         }
     });
 
+    window.isReworkOrder = @json(isset($acrylicOrder) && $acrylicOrder->relation_type === 'rework');
     const orderType = @json($currentOrderType);
     
     let totalItems = 0;
@@ -900,7 +901,9 @@ function updateOrderSummary() {
                 if (height > 0 && width > 0) {
                     totalArea += (height * width * quantity) / 1000000;
                 }
-                totalAmount += totalPrice;
+                if (!window.isReworkOrder) {
+                    totalAmount += totalPrice;
+                }
             }
         });
 
@@ -2355,7 +2358,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // Auto-scroll focused table input to horizontal center of its scroll container
 document.addEventListener('focusin', function(e) {
     const el = e.target;
-    if (!el.matches('.order-supply-row table input, .order-supply-row table select, .order-supply-row table textarea')) return;
+    if (!el.matches('.order-supply-row table input, .order-supply-row table select, .order-supply-row table textarea, .payment-detail-row input, .payment-detail-row select, .payment-detail-row textarea')) return;
 
     const scrollContainer = el.closest('[data-order-supplies-table-scroll]');
     if (!scrollContainer) return;
@@ -2657,9 +2660,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (targetEl) {
             e.preventDefault();
-            targetEl.focus();
-            if (targetEl.tagName === 'INPUT' || targetEl.tagName === 'TEXTAREA') {
-                targetEl.select();
+            if (targetEl.tomselect) {
+                targetEl.tomselect.focus();
+            } else {
+                targetEl.focus();
+                if (targetEl.tagName === 'INPUT' || targetEl.tagName === 'TEXTAREA') {
+                    targetEl.select();
+                }
             }
         }
     });
@@ -2758,3 +2765,10 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
     </div>
 </x-modal>
+
+<style>
+    .order-row-height-resize-handle:hover {
+        background-color: transparent !important;
+    }
+</style>
+

@@ -48,6 +48,12 @@ class GlassOrderService
             'supplies.*.items.*.area_m2'             => 'nullable|numeric|min:0',
             'supplies.*.items.*.unit_price'          => 'required|numeric|min:0',
             'supplies.*.items.*.notes'               => 'nullable|string',
+            'payment_details'                          => 'nullable|array',
+            'payment_details.*.name'                   => 'required|string|max:255',
+            'payment_details.*.unit'                   => 'nullable|string|max:100',
+            'payment_details.*.quantity'               => 'nullable|numeric|min:0',
+            'payment_details.*.price'                  => 'required|numeric|min:0',
+            'payment_details.*.total'                  => 'required|string',
         ];
     }
 
@@ -93,7 +99,8 @@ class GlassOrderService
         }
 
         $allAttachments = array_merge($existingAttachments, $attachmentPaths);
-        $subTotal = $this->calculateTotalAmount($request->supplies ?? []);
+        $isRework = $order->relation_type === 'rework';
+        $subTotal = $this->calculateTotalAmount($request->supplies ?? [], $request->payment_details ?? [], $isRework);
         $discountPercent = (float) $request->input('discount_percent', 0);
         $vatPercent = (float) $request->input('vat_percent', 0);
         
@@ -165,6 +172,10 @@ class GlassOrderService
         // Recreate supplies and items
         $this->saveSuppliesAndItems($order, $request->supplies ?? []);
 
+        // Recreate payment details
+        $order->paymentDetails()->delete();
+        $this->savePaymentDetails($order, $request->payment_details ?? []);
+
         return $order;
     }
 
@@ -191,17 +202,44 @@ class GlassOrderService
     /**
      * Calculate total amount helper.
      */
-    protected function calculateTotalAmount(array $supplies): float
+    protected function calculateTotalAmount(array $supplies, array $paymentDetails, bool $isRework = false): float
     {
         $totalAmount = 0;
-        foreach ($supplies as $supply) {
-            if (!isset($supply['items']) || !is_array($supply['items'])) continue;
-            foreach ($supply['items'] as $item) {
-                $itemTotal = isset($item['total_price']) ? floatval(str_replace('.', '', $item['total_price'])) : ($item['unit_price'] * ($item['area_m2'] ?: $item['wing_quantity']));
-                $totalAmount += $itemTotal;
+        if (!$isRework) {
+            foreach ($supplies as $supply) {
+                if (!isset($supply['items']) || !is_array($supply['items'])) continue;
+                foreach ($supply['items'] as $item) {
+                    $itemTotal = isset($item['total_price']) ? floatval(str_replace('.', '', $item['total_price'])) : ($item['unit_price'] * ($item['area_m2'] ?: $item['wing_quantity']));
+                    $totalAmount += $itemTotal;
+                }
             }
         }
+        foreach ($paymentDetails as $detail) {
+            if (empty($detail['name'])) continue;
+            $detailTotal = isset($detail['total']) ? floatval(str_replace('.', '', $detail['total'])) : (($detail['price'] ?? 0) * ($detail['quantity'] ?? 0));
+            $totalAmount += $detailTotal;
+        }
         return round($totalAmount, -3);
+    }
+
+    /**
+     * Save payment details helper.
+     */
+    protected function savePaymentDetails(Order $order, array $paymentDetailsData): void
+    {
+        foreach ($paymentDetailsData as $detail) {
+            if (empty($detail['name'])) continue;
+            
+            \App\Models\PaymentDetail::create([
+                'order_id'   => $order->id,
+                'name'       => $detail['name'],
+                'unit'       => $detail['unit'] ?? null,
+                'quantity'   => $detail['quantity'] ?? 0,
+                'price'      => round($detail['price'] ?? 0),
+                'price_only' => 0,
+                'total'      => round(str_replace('.', '', $detail['total'] ?? 0)),
+            ]);
+        }
     }
 
     /**
@@ -243,6 +281,7 @@ class GlassOrderService
                     'unit_price'             => round($item['unit_price']),
                     'total_price'            => $totalPrice,
                     'notes'                  => $item['notes'] ?? null,
+                    'old_size'               => $item['old_size'] ?? null,
                 ]);
 
                 // Always regenerate codes from order_code + supply_code + global sequential index

@@ -100,6 +100,32 @@
                 </div>
 
                 <div class="p-6">
+                    {{-- Liên kết đơn cha - con cho đơn sửa tấm/bổ sung --}}
+                    @if($acrylicOrder->parent)
+                        <div class="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-2 text-sm text-amber-800">
+                            <iconify-icon icon="lucide:link" class="text-base"></iconify-icon>
+                            <span>Đơn hàng {{ $acrylicOrder->relation_type === 'rework' ? 'sửa tấm' : ($acrylicOrder->relation_type === 'additional' ? 'bổ sung' : ($acrylicOrder->relation_type === 'reuse' ? 'tận dụng tấm' : 'liên kết')) }} từ đơn gốc: 
+                                <a href="{{ route('orders.show', $acrylicOrder->parent_id) }}" class="font-bold underline hover:text-amber-950">{{ $acrylicOrder->parent->order_code }}</a>
+                            </span>
+                        </div>
+                    @elseif($acrylicOrder->children->filter(fn($c) => $c->status !== 'draft')->count() > 0)
+                        <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800 space-y-1">
+                            <div class="flex items-center gap-2 font-semibold">
+                                <iconify-icon icon="lucide:link-2" class="text-base"></iconify-icon>
+                                <span>Đơn hàng này có các đơn liên kết:</span>
+                            </div>
+                            <ul class="list-disc pl-5">
+                                @foreach($acrylicOrder->children->filter(fn($c) => $c->status !== 'draft') as $child)
+                                    <li>
+                                        <a href="{{ route('orders.show', $child->id) }}" class="font-bold underline hover:text-blue-950">{{ $child->order_code }}</a> 
+                                        - Phân loại: <strong class="text-primary-700">{{ $child->relation_type === 'rework' ? 'Sửa tấm' : ($child->relation_type === 'additional' ? 'Bổ sung' : ($child->relation_type === 'reuse' ? 'Tận dụng tấm' : 'Khác')) }}</strong> 
+                                        ({{ $child->status === 'pending' ? 'Chờ xử lý' : ($child->status === 'transferred' ? 'Chuyển sản xuất' : $child->status) }})
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-sm">
                         <div class="flex flex-col gap-1">
                             <span class="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Khách hàng</span>
@@ -196,6 +222,7 @@
                                             <th scope="col" class="w-28">Tay nắm vát</th>
                                             <th scope="col" class="w-20 text-center">CNC</th>
                                             <th scope="col" class="w-24">Chiều vân</th>
+                                            <th scope="col" class="w-44">Ghi chú</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -243,10 +270,11 @@
                                                     @endif
                                                 </td>
                                                 <td>{{ $item->direction ?? '—' }}</td>
+                                                <td><span class="text-neutral-500 text-xs">{{ $item->notes ?? '—' }}</span></td>
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="18" class="text-center text-neutral-400 py-4">Chưa có sản phẩm nào</td>
+                                                <td colspan="19" class="text-center text-neutral-400 py-4">Chưa có sản phẩm nào</td>
                                             </tr>
                                         @endforelse
                                     </tbody>
@@ -618,6 +646,31 @@
                         </button>
                     @endif
                 @endcan
+                @can('add order')
+                    @if(empty($acrylicOrder->relation_type))
+                        <div class="flex flex-col gap-2 w-full">
+                            <button type="button" onclick="openReworkModal()"
+                                class="w-full justify-center flex items-center gap-2 py-3 rounded-xl font-semibold bg-amber-500 hover:bg-amber-600 text-white shadow-sm text-sm transition-colors cursor-pointer">
+                                <iconify-icon icon="lucide:rotate-ccw" class="text-base"></iconify-icon> Tạo đơn sửa tấm
+                            </button>
+                            @if($acrylicOrder->type === 'acrylic')
+                                <a href="{{ route('orders.reuse-create', $acrylicOrder->id) }}"
+                                    class="w-full justify-center flex items-center gap-2 py-3 rounded-xl font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-sm text-sm transition-colors cursor-pointer">
+                                    <iconify-icon icon="lucide:layers" class="text-base"></iconify-icon> Tạo đơn tận dụng tấm
+                                </a>
+                            @endif
+                            <a href="{{ route('orders.additional-create', $acrylicOrder->id) }}"
+                                class="w-full justify-center flex items-center gap-2 py-3 rounded-xl font-semibold bg-success-600 hover:bg-success-700 text-white shadow-sm text-sm transition-colors cursor-pointer">
+                                <iconify-icon icon="lucide:plus-circle" class="text-base"></iconify-icon> Tạo đơn bổ sung
+                            </a>
+                        </div>
+                    @elseif($acrylicOrder->relation_type === 'rework')
+                        <a href="{{ route('orders.print-handwritten', $acrylicOrder->id) }}" target="_blank"
+                            class="w-full justify-center flex items-center gap-2 py-3 rounded-xl font-semibold bg-amber-500 hover:bg-amber-600 text-white shadow-sm text-sm transition-colors cursor-pointer">
+                            <iconify-icon icon="lucide:printer" class="text-base"></iconify-icon> In lệnh viết tay
+                        </a>
+                    @endif
+                @endcan
                 <button type="button" onclick="exportToExcel()"
                     class="w-full justify-center flex items-center gap-2 py-3 rounded-xl font-semibold border border-neutral-200 text-neutral-700 hover:bg-neutral-50 transition-colors shadow-sm text-sm bg-white cursor-pointer">
                     <iconify-icon icon="lucide:file-spreadsheet" class="text-base"></iconify-icon> Xuất Excel (.xlsx)
@@ -664,8 +717,348 @@
                 });
             }
         })();
+
+        // Tự động mở modal sửa tấm nếu url có ?open_rework=1
+        (function () {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('open_rework') === '1') {
+                window.addEventListener('load', function () {
+                    setTimeout(function () {
+                        if (typeof openReworkModal === 'function') {
+                            openReworkModal();
+                        }
+                    }, 200);
+                });
+            }
+        })();
     </script>
 
+    {{-- Modal chọn sản phẩm lỗi để tạo đơn sửa tấm --}}
+    <x-modal name="modal-rework-order" maxWidth="3xl" :hasBackdrop="true">
+        <style>
+            #modal-rework-order [data-modal-content] {
+                width: 95% !important;
+                max-width: 95% !important;
+                max-height: 95vh !important;
+            }
+        </style>
+        <div class="p-6">
+            <div class="flex items-center justify-between pb-3 border-b border-neutral-100">
+                <h5 class="font-bold text-lg text-neutral-800 m-0">Tạo đơn sửa tấm</h5>
+                <button type="button" onclick="closeModal('modal-rework-order')" class="text-neutral-400 hover:text-neutral-600 p-1.5 rounded-lg transition-colors">
+                    <iconify-icon icon="lucide:x" class="text-xl"></iconify-icon>
+                </button>
+            </div>
 
+            <form id="rework-order-form" onsubmit="submitReworkOrder(event)" class="mt-4 space-y-4">
+                @csrf
+                <div class="text-sm text-neutral-500">
+                    Tích chọn những tấm bị lỗi từ đơn gốc để sản xuất lại.
+                </div>
 
+                <div class="overflow-y-auto overflow-x-auto border border-neutral-200 rounded-lg" style="max-height: calc(95vh - 220px);">
+                    @if($acrylicOrder->type === 'min_late')
+                        {{-- Bảng cho đơn Melamine/Laminate --}}
+                        <table class="table bordered-table sm-table mb-0 w-full text-xs min-w-[1400px]">
+                            <thead class="bg-neutral-50 sticky top-0 z-10">
+                                <tr>
+                                    <th scope="col" class="w-10 text-center py-2 px-3">
+                                        <input type="checkbox" onchange="toggleSelectAllReworkItems(this)" class="rounded text-primary-600 focus:ring-primary-500">
+                                    </th>
+                                    <th scope="col" class="w-12 text-center py-2 px-3">STT</th>
+                                    <th scope="col" class="w-32 text-left py-2 px-3">Mã tấm</th>
+                                    <th scope="col" class="text-left py-2 px-3">Tên sản phẩm</th>
+                                    <th scope="col" class="w-20 text-center py-2 px-3">Độ dày</th>
+                                    <th scope="col" class="w-20 text-center py-2 px-3">Cao</th>
+                                    <th scope="col" class="w-20 text-center py-2 px-3">Rộng</th>
+                                    <th scope="col" class="w-20 text-center py-2 px-3">SL</th>
+                                    <th scope="col" class="w-20 text-center py-2 px-3">Vát</th>
+                                    <th scope="col" class="w-28 text-center py-2 px-3">Dán cạnh</th>
+                                    <th scope="col" class="w-24 text-center py-2 px-3">Dán thẳng</th>
+                                    <th scope="col" class="w-24 text-center py-2 px-3">Dán vát</th>
+                                    <th scope="col" class="w-24 text-center py-2 px-3">Vát mòi</th>
+                                    <th scope="col" class="w-28 text-center py-2 px-3">Bản rộng 40-59</th>
+                                    <th scope="col" class="w-28 text-center py-2 px-3">Bản rộng 17-39</th>
+                                    <th scope="col" class="w-28 text-center py-2 px-3">Bản rộng 25-35</th>
+                                    <th scope="col" class="w-28 text-center py-2 px-3">Tay nắm vát</th>
+                                    <th scope="col" class="w-20 text-center py-2 px-3">CNC</th>
+                                    <th scope="col" class="w-24 text-center py-2 px-3">Chiều vân</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($acrylicOrder->supplies as $supply)
+                                    @php
+                                        $filteredItems = $supply->minLateItems->filter(function($item) {
+                                            return $item->product_name !== 'Công giả dày';
+                                        });
+                                    @endphp
+                                    @if($filteredItems->count() > 0)
+                                        <tr class="bg-neutral-100 font-semibold border-b border-neutral-200">
+                                            <td colspan="19" class="py-2 px-4 text-neutral-700 bg-neutral-100/80 font-bold text-xs">
+                                                <iconify-icon icon="lucide:package" class="align-middle mr-1 text-primary-500"></iconify-icon>
+                                                Vật tư: {{ $supply->order_supply_code ? '[' . $supply->order_supply_code . '] ' : '' }}{{ $supply->supply_name }}
+                                                @if($supply->quantity)
+                                                    <span class="text-[10px] font-normal text-neutral-500 ml-2">(SL: {{ floatval($supply->quantity) }})</span>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                        @foreach($filteredItems as $itemIndex => $item)
+                                            @php
+                                                $sizes = $item->size ?? [];
+                                                if (is_string($sizes)) {
+                                                    $sizes = json_decode($sizes, true) ?? [];
+                                                }
+                                                $edgeGluing = $item->edge_gluing ?? [];
+                                                if (is_string($edgeGluing)) {
+                                                    $edgeGluing = json_decode($edgeGluing, true) ?? [];
+                                                }
+                                            @endphp
+                                            <tr class="border-b border-neutral-100 hover:bg-neutral-50/50">
+                                                <td class="text-center py-2.5 px-3">
+                                                    <input type="checkbox" data-item-id="{{ $item->id }}" class="rework-item-checkbox rounded text-primary-600 focus:ring-primary-500">
+                                                </td>
+                                                <td class="text-center text-neutral-500 py-2.5 px-3">{{ $itemIndex + 1 }}</td>
+                                                <td class="py-2.5 px-3 font-semibold text-neutral-600 text-left">
+                                                    {{ $item->product_code ?? '—' }}
+                                                </td>
+                                                <td class="py-2.5 px-3 font-medium text-neutral-800 text-left">{{ $item->name }}</td>
+                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->thickness ?? '—' }}</td>
+                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $sizes['height'] ?? '—' }}</td>
+                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $sizes['width'] ?? '—' }}</td>
+                                                <td class="text-center text-neutral-600 py-2.5 px-3 font-medium">{{ $item->quantity }}</td>
+                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->bevel ?? '—' }}</td>
+                                                <td class="text-center text-neutral-600 py-2.5 px-3">
+                                                    @if(!empty($edgeGluing))
+                                                        <span class="text-xs bg-neutral-100 px-2 py-0.5 rounded text-neutral-600">{{ implode(', ', $edgeGluing) }}</span>
+                                                    @else
+                                                        —
+                                                    @endif
+                                                </td>
+                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->straight_paste_length ?? '—' }}</td>
+                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->beveled_length ?? '—' }}</td>
+                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->vat_moi_length ?? '—' }}</td>
+                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->ban_rong_40_59 ?? '—' }}</td>
+                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->ban_rong_17_39 ?? '—' }}</td>
+                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->ban_rong_25_35 ?? '—' }}</td>
+                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->beveled_handle ?? '—' }}</td>
+                                                <td class="text-center text-neutral-600 py-2.5 px-3">
+                                                    @if($item->cnc)
+                                                        <span class="text-success-600 font-bold"><iconify-icon icon="lucide:check"></iconify-icon></span>
+                                                    @else
+                                                        —
+                                                    @endif
+                                                </td>
+                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->direction ?? '—' }}</td>
+                                            </tr>
+                                        @endforeach
+                                    @endif
+                                @endforeach
+                            </tbody>
+                        </table>
+                    @elseif($acrylicOrder->type === 'glass')
+                        {{-- Bảng cho đơn Kính --}}
+                        <table class="table bordered-table sm-table mb-0 w-full text-xs min-w-[1300px]">
+                            <thead class="bg-neutral-50 sticky top-0 z-10">
+                                <tr>
+                                    <th scope="col" class="w-10 text-center py-2 px-3">
+                                        <input type="checkbox" onchange="toggleSelectAllReworkItems(this)" class="rounded text-primary-600 focus:ring-primary-500">
+                                    </th>
+                                    <th scope="col" class="w-12 text-center py-2 px-3">STT</th>
+                                    <th scope="col" class="w-32 text-left py-2 px-3">Mã SP</th>
+                                    <th scope="col" class="text-left py-2 px-3">Tên sản phẩm</th>
+                                    <th scope="col" class="w-20 text-center py-2 px-3">Độ dày</th>
+                                    <th scope="col" class="w-28 text-center py-2 px-3">Chiều mở cánh</th>
+                                    <th scope="col" class="w-28 text-center py-2 px-3">Màu nhôm</th>
+                                    <th scope="col" class="w-28 text-center py-2 px-3">Màu kính</th>
+                                    <th scope="col" class="w-20 text-center py-2 px-3">Dài</th>
+                                    <th scope="col" class="w-20 text-center py-2 px-3">Rộng</th>
+                                    <th scope="col" class="w-20 text-center py-2 px-3">Đơn vị</th>
+                                    <th scope="col" class="w-24 text-center py-2 px-3">SL cánh</th>
+                                    <th scope="col" class="w-28 text-center py-2 px-3">Khối lượng (m2)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($acrylicOrder->supplies as $supply)
+                                    @php
+                                        $filteredItems = $supply->glassItems;
+                                    @endphp
+                                    @if($filteredItems->count() > 0)
+                                        <tr class="bg-neutral-100 font-semibold border-b border-neutral-200">
+                                            <td colspan="13" class="py-2 px-4 text-neutral-700 bg-neutral-100/80 font-bold text-xs">
+                                                <iconify-icon icon="lucide:package" class="align-middle mr-1 text-primary-500"></iconify-icon>
+                                                Vật tư: {{ $supply->order_supply_code ? '[' . $supply->order_supply_code . '] ' : '' }}{{ $supply->supply_name }}
+                                                @if($supply->quantity)
+                                                    <span class="text-[10px] font-normal text-neutral-500 ml-2">(SL: {{ floatval($supply->quantity) }})</span>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                        @foreach($filteredItems as $itemIndex => $item)
+                                            <tr class="border-b border-neutral-100 hover:bg-neutral-50/50">
+                                                <td class="text-center py-2.5 px-3">
+                                                    <input type="checkbox" data-item-id="{{ $item->id }}" class="rework-item-checkbox rounded text-primary-600 focus:ring-primary-500">
+                                                </td>
+                                                <td class="text-center text-neutral-500 py-2.5 px-3">{{ $itemIndex + 1 }}</td>
+                                                <td class="py-2.5 px-3 font-semibold text-neutral-600 text-left">
+                                                    {{ $item->product_code ?? '—' }}
+                                                </td>
+                                                <td class="py-2.5 px-3 font-medium text-neutral-800 text-left">{{ $item->product_name }}</td>
+                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->thickness ?? '—' }}</td>
+                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->wing_opening_direction ?? '—' }}</td>
+                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->aluminum_color ?? '—' }}</td>
+                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->glass_color ?? '—' }}</td>
+                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->height ?? '—' }}</td>
+                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->width ?? '—' }}</td>
+                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->unit ?? 'Bộ' }}</td>
+                                                <td class="text-center text-neutral-600 py-2.5 px-3 font-medium">{{ $item->wing_quantity }}</td>
+                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->area_m2 ?? '—' }}</td>
+                                            </tr>
+                                        @endforeach
+                                    @endif
+                                @endforeach
+                            </tbody>
+                        </table>
+                    @else
+                        {{-- Bảng cho đơn Acrylic (mặc định) --}}
+                        <table class="table bordered-table sm-table mb-0 w-full text-xs min-w-[1300px]">
+                            <thead class="bg-neutral-50 sticky top-0 z-10">
+                                <tr>
+                                    <th scope="col" class="w-10 text-center py-2 px-3">
+                                        <input type="checkbox" onchange="toggleSelectAllReworkItems(this)" class="rounded text-primary-600 focus:ring-primary-500">
+                                    </th>
+                                    <th scope="col" class="w-12 text-center py-2 px-3">STT</th>
+                                    <th scope="col" class="w-32 text-left py-2 px-3">Mã tấm</th>
+                                    <th scope="col" class="text-left py-2 px-3">Tên sản phẩm</th>
+                                    <th scope="col" class="w-20 text-center py-2 px-3">Độ dày</th>
+                                    <th scope="col" class="w-20 text-center py-2 px-3">Cao</th>
+                                    <th scope="col" class="w-20 text-center py-2 px-3">Rộng</th>
+                                    <th scope="col" class="w-20 text-center py-2 px-3">SL</th>
+                                    <th scope="col" class="w-24 text-center py-2 px-3">Vát</th>
+                                    <th scope="col" class="w-24 text-center py-2 px-3">Chiều vân</th>
+                                    <th scope="col" class="w-24 text-center py-2 px-3">Cánh (m2)</th>
+                                    <th scope="col" class="w-24 text-center py-2 px-3">Phào (m)</th>
+                                    <th scope="col" class="w-24 text-center py-2 px-3">Cạnh Vát</th>
+                                    <th scope="col" class="w-28 text-center py-2 px-3">Vân dọc CNC</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($acrylicOrder->supplies as $supply)
+                                    @php
+                                        $filteredItems = $supply->items->filter(function($item) {
+                                            return $item->product_name !== 'Công giả dày';
+                                        });
+                                    @endphp
+                                    @if($filteredItems->count() > 0)
+                                        <tr class="bg-neutral-100 font-semibold border-b border-neutral-200">
+                                            <td colspan="14" class="py-2 px-4 text-neutral-700 bg-neutral-100/80 font-bold text-xs">
+                                                <iconify-icon icon="lucide:package" class="align-middle mr-1 text-primary-500"></iconify-icon>
+                                                Vật tư: {{ $supply->order_supply_code ? '[' . $supply->order_supply_code . '] ' : '' }}{{ $supply->supply_name }}
+                                                @if($supply->quantity)
+                                                    <span class="text-[10px] font-normal text-neutral-500 ml-2">(SL: {{ floatval($supply->quantity) }})</span>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                        @foreach($filteredItems as $itemIndex => $item)
+                                            <tr class="border-b border-neutral-100 hover:bg-neutral-50/50">
+                                                <td class="text-center py-2.5 px-3">
+                                                    <input type="checkbox" data-item-id="{{ $item->id }}" class="rework-item-checkbox rounded text-primary-600 focus:ring-primary-500">
+                                                </td>
+                                                <td class="text-center text-neutral-500 py-2.5 px-3">{{ $itemIndex + 1 }}</td>
+                                                <td class="py-2.5 px-3 font-semibold text-neutral-600 text-left font-mono">
+                                                    @if($item->codes->count() > 0)
+                                                        {{ $item->codes->pluck('product_id')->implode(', ') }}
+                                                    @else
+                                                        {{ $item->product_code ?? '—' }}
+                                                    @endif
+                                                </td>
+                                                <td class="py-2.5 px-3 font-medium text-neutral-800 text-left">{{ $item->product_name }}</td>
+                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->thickness ?? '—' }}</td>
+                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->height ?? '—' }}</td>
+                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->width ?? '—' }}</td>
+                                                <td class="text-center text-neutral-600 py-2.5 px-3 font-medium">{{ floatval($item->quantity) == intval($item->quantity) ? number_format($item->quantity, 0, ',', '.') : number_format($item->quantity, 2, ',', '.') }}</td>
+                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->bevel ?? '—' }}</td>
+                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->grain_direction ?? '—' }}</td>
+                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->wing_area ?? '—' }}</td>
+                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->molding_length ?? '—' }}</td>
+                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->edge_bevel ?? '—' }}</td>
+                                                <td class="text-center text-neutral-600 py-2.5 px-3">
+                                                    @if($item->vertical_grain_cnc)
+                                                        <span class="text-success-600 font-bold"><iconify-icon icon="lucide:check"></iconify-icon></span>
+                                                    @else
+                                                        —
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    @endif
+                                @endforeach
+                            </tbody>
+                        </table>
+                    @endif
+                </div>
+
+                <div class="pt-4 border-t border-neutral-100 flex justify-end gap-3">
+                    <button type="button" onclick="closeModal('modal-rework-order')" class="btn border border-neutral-200 text-neutral-700 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors hover:bg-neutral-50">Hủy</button>
+                    <button type="submit" id="submit-rework-btn" class="btn btn-primary font-semibold px-5 py-2.5 rounded-lg text-sm flex items-center gap-2">
+                        Tạo đơn sửa
+                    </button>
+                </div>
+            </form>
+        </div>
+    </x-modal>
+
+    <script>
+        function toggleSelectAllReworkItems(headerCheckbox) {
+            const checkboxes = document.querySelectorAll('.rework-item-checkbox');
+            checkboxes.forEach(cb => {
+                cb.checked = headerCheckbox.checked;
+            });
+        }
+
+        function openReworkModal() {
+            openModal('modal-rework-order');
+        }
+
+        function submitReworkOrder(e) {
+            e.preventDefault();
+            const checkedBoxes = document.querySelectorAll('.rework-item-checkbox:checked');
+            if (checkedBoxes.length === 0) {
+                alert('Vui lòng chọn ít nhất một tấm cần sửa.');
+                return;
+            }
+
+            const submitBtn = document.getElementById('submit-rework-btn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<iconify-icon icon="lucide:loader" class="animate-spin text-base"></iconify-icon> Đang tạo...';
+
+            const itemIds = [];
+            checkedBoxes.forEach(cb => {
+                itemIds.push(parseInt(cb.dataset.itemId));
+            });
+
+            fetch('{{ route("orders.create-rework", $acrylicOrder->id) }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ item_ids: itemIds })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.ok && data.redirect_url) {
+                    window.location.href = data.redirect_url;
+                } else {
+                    alert(data.error || 'Có lỗi xảy ra khi tạo đơn sửa tấm.');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = 'Tạo đơn sửa';
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Không thể kết nối tới hệ thống. Vui lòng thử lại sau.');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Tạo đơn sửa';
+            });
+        }
+    </script>
 @endsection

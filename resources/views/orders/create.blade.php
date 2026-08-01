@@ -17,8 +17,8 @@
 
     @if(isset($orderType))
         @php
-            $title = $typeLabels[$orderType] ?? 'Tạo đơn hàng';
-            $subTitle = 'Tạo mới: ' . ($typeLabels[$orderType] ?? ucfirst($orderType));
+            $title = ($typeLabels[$orderType] ?? 'Tạo đơn hàng') . (isset($acrylicOrder) && $acrylicOrder->relation_type === 'rework' ? ' (Sửa tấm)' : '');
+            $subTitle = 'Tạo mới: ' . ($typeLabels[$orderType] ?? ucfirst($orderType)) . (isset($acrylicOrder) && $acrylicOrder->relation_type === 'rework' ? ' (Sửa tấm)' : '');
             $action = route('orders.store');
             $acrylicOrder = $acrylicOrder ?? null;
             $isDraftCreate = $isDraftCreate ?? false;

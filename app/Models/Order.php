@@ -87,6 +87,8 @@ class Order extends Model
     }
 
     protected $fillable = [
+        'parent_id',
+        'relation_type',
         'order_code',
         'type',
         'order_date',
@@ -147,6 +149,24 @@ class Order extends Model
     public function orderPayments()
     {
         return $this->hasMany(CustomerPayment::class, 'order_id')->orderBy('payment_date');
+    }
+
+    // Quan hệ với lệnh sản xuất (nhiều-nhiều)
+    public function manufactureOrders()
+    {
+        return $this->belongsToMany(ManufactureOrder::class, 'manufacture_order_order', 'order_id', 'manufacture_order_id');
+    }
+
+    // Liên kết đơn cha (đơn gốc)
+    public function parent()
+    {
+        return $this->belongsTo(Order::class, 'parent_id');
+    }
+
+    // Liên kết các đơn sửa con
+    public function children()
+    {
+        return $this->hasMany(Order::class, 'parent_id');
     }
 }
 

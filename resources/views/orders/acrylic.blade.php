@@ -33,7 +33,8 @@
         padding-bottom: 2px !important;
         line-height: 1.2 !important;
     }
-    #order-supplies-container .order-supply-row table th {
+    #order-supplies-container .order-supply-row table th,
+    table[data-order-resize-group="min_late_payment"] th {
         padding: 8px 4px !important;
     }
     #order-supplies-container .order-supply-row table td {
@@ -171,6 +172,54 @@
     html body div#min-late-supplies-container .order-supply-row table tbody tr td:last-child,
     html body table[data-order-resize-group="min_late_payment"] tbody tr td:last-child {
         z-index: 5 !important;
+    }
+
+    /* Style TomSelect for Mã vật tư dropdown in the payment details table to match other borderless inputs */
+    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td .ts-wrapper.tom-select-payment-code {
+        width: 100% !important;
+        height: 100% !important;
+        min-height: 42px !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        display: block !important;
+    }
+    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td .ts-wrapper.tom-select-payment-code .ts-control,
+    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td .ts-wrapper.tom-select-payment-code .ts-control * {
+        font-size: 12px !important;
+    }
+    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td .ts-wrapper.tom-select-payment-code .ts-control {
+        width: 100% !important;
+        height: 100% !important;
+        min-height: 42px !important;
+        padding: 0 12px !important;
+        margin: 0 !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        background: #ffffff !important;
+        box-shadow: none !important;
+        color: #0f172a !important;
+        display: flex !important;
+        align-items: center !important;
+    }
+    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td .ts-wrapper.tom-select-payment-code .ts-control input {
+        border: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        height: auto !important;
+        min-height: 0 !important;
+    }
+    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td .ts-wrapper.tom-select-payment-code.focus .ts-control {
+        background: #eff6ff !important;
+        outline: 2px solid #3b82f6 !important;
+        outline-offset: -2px !important;
+        box-shadow: inset 0 0 0 1px #3b82f6 !important;
+    }
+    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td .ts-wrapper.tom-select-payment-code .ts-control:after {
+        display: none !important;
     }
 </style>
 <div class="order-supplies-popup bg-white border border-neutral-200 rounded-xl p-6 shadow-sm relative pt-8" data-order-supplies-zoom-panel data-order-supplies-storage-key="acrylic" data-order-supplies-zoom="100" data-order-supplies-visible-rows="5">
@@ -466,6 +515,7 @@
                                         </button>
                                     </div>
                                     <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][id]" value="{{ $item->id }}">
+                                    <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][old_size]" value="{{ $item->old_size }}">
                                 </td>
                             </tr>
                             @endforeach
@@ -511,22 +561,23 @@
                     <thead>
                         <tr class="bg-neutral-50 text-center">
                             <th scope="col" style="width: 50px; min-width: 50px; white-space: nowrap;" class="sticky-stt-th text-center border border-neutral-200 font-bold text-xs text-neutral-600 uppercase"><span class="order-stt-header-label">STT</span></th>
+                            <th scope="col" style="width: 150px; min-width: 150px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Mã</th>
                             <th scope="col" style="white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên nội dung <span class="text-danger-500">*</span></th>
                             <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn vị</th>
                             <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số lượng</th>
                             <th scope="col" style="width: 150px; min-width: 150px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá <span class="text-danger-500">*</span></th>
                             <th scope="col" style="width: 160px; min-width: 160px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Thành tiền</th>
-                            <th scope="col" style="width: 50px; min-width: 50px; white-space: nowrap; position: sticky; right: 0; z-index: 2; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Xóa</th>
+                            <th scope="col" style="width: 80px; min-width: 80px; white-space: nowrap; position: sticky; right: 0; z-index: 2; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Hành động</th>
                         </tr>
                     </thead>
                     <tbody id="payment-details-container">
                         @if(isset($acrylicOrder) && isset($acrylicOrder->paymentDetails) && $acrylicOrder->paymentDetails->count() > 0)
                             @foreach($acrylicOrder->paymentDetails as $detailIndex => $detail)
                             <tr class="payment-detail-row">
-                                <td style="width: 50px; min-width: 50px; " class="sticky-stt-td text-center align-middle border border-neutral-200">
+                                <td style="width: 50px; min-width: 50px; padding: 0 !important;" class="sticky-stt-td text-center align-middle border border-neutral-200">
                                     <span class="detail-index font-semibold text-neutral-500">{{ $detailIndex + 1 }}</span>
                                 </td>
-                                <td class="border border-neutral-200" style="padding: 4px !important; position: relative;">
+                                <td class="border border-neutral-200" style="padding: 0 !important; position: relative; width: 150px; min-width: 150px; height: 42px;">
                                     @php
                                         $selectedCode = '';
                                         foreach($woodBoardPrices as $p) {
@@ -536,31 +587,31 @@
                                             }
                                         }
                                     @endphp
-                                    <div class="flex items-center gap-2">
-                                        <select class="order-payment-code-select tom-select-payment-code w-32">
-                                            <option value="">-- Mã --</option>
-                                            @foreach($woodBoardPrices as $price)
-                                                @if($price->code)
-                                                    <option value="{{ $price->code }}" {{ $selectedCode == $price->code ? 'selected' : '' }}>{{ $price->code }}</option>
-                                                @endif
-                                            @endforeach
-                                        </select>
-                                        <input type="text" name="payment_details[{{ $detailIndex }}][name]" class="form-control form-control-sm rounded-lg flex-1 border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-xs h-8 font-semibold" placeholder="Tên nội dung..." required value="{{ $detail->name }}">
-                                    </div>
+                                    <select class="order-payment-code-select tom-select-payment-code w-full">
+                                        <option value="">-- Mã --</option>
+                                        @foreach($woodBoardPrices as $price)
+                                            @if($price->code)
+                                                <option value="{{ $price->code }}" {{ $selectedCode == $price->code ? 'selected' : '' }}>{{ $price->code }}</option>
+                                            @endif
+                                        @endforeach
+                                    </select>
                                 </td>
-                                <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
-                                    <input type="text" name="payment_details[{{ $detailIndex }}][unit]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs" placeholder="m, tấm..." value="{{ $detail->unit }}">
+                                <td class="border border-neutral-200" style="padding: 0 !important; position: relative;">
+                                    <textarea name="payment_details[{{ $detailIndex }}][name]" class="form-control form-control-sm rounded-lg w-full border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-xs font-semibold" rows="2" style="resize: vertical; padding: 4px 8px;" placeholder="Tên nội dung..." required>{{ $detail->name }}</textarea>
                                 </td>
-                                <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
-                                    <input type="number" name="payment_details[{{ $detailIndex }}][quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs payment-quantity-input" placeholder="1" step="any" value="{{ $detail->quantity }}">
+                                <td style="width: 100px; min-width: 100px; padding: 0 !important;" class="border border-neutral-200">
+                                    <input type="text" name="payment_details[{{ $detailIndex }}][unit]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs w-full" placeholder="m, tấm..." value="{{ $detail->unit }}">
                                 </td>
-                                <td style="width: 150px; min-width: 150px; " class="border border-neutral-200">
-                                    <input type="number" name="payment_details[{{ $detailIndex }}][price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs" placeholder="0" min="0" step="any" required value="{{ $detail->price }}">
+                                <td style="width: 100px; min-width: 100px; padding: 0 !important;" class="border border-neutral-200">
+                                    <input type="number" name="payment_details[{{ $detailIndex }}][quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs payment-quantity-input w-full" placeholder="1" step="any" value="{{ $detail->quantity }}">
                                 </td>
-                                <td style="width: 160px; min-width: 160px; " class="border border-neutral-200">
-                                    <input type="text" name="payment_details[{{ $detailIndex }}][total]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center h-8 text-xs" placeholder="0" readonly value="{{ number_format($detail->total, 0, ',', '.') }}">
+                                <td style="width: 150px; min-width: 150px; padding: 0 !important;" class="border border-neutral-200">
+                                    <input type="number" name="payment_details[{{ $detailIndex }}][price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs w-full" placeholder="0" min="0" step="any" required value="{{ $detail->price }}">
                                 </td>
-                                <td style="width: 50px; min-width: 50px; position: sticky; right: 0; z-index: 1; background-color: #fff; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="text-center align-middle border border-neutral-200">
+                                <td style="width: 160px; min-width: 160px; padding: 0 !important;" class="border border-neutral-200">
+                                    <input type="text" name="payment_details[{{ $detailIndex }}][total]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center h-8 text-xs w-full" placeholder="0" readonly value="{{ number_format($detail->total, 0, ',', '.') }}">
+                                </td>
+                                <td style="width: 80px; min-width: 80px; padding: 0 !important; position: sticky; right: 0; z-index: 1; background-color: #fff; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="text-center align-middle border border-neutral-200">
                                     <button type="button" onclick="removePaymentDetail(this)" class="text-neutral-400 hover:text-danger-500 transition-colors p-1" title="Xóa nội dung này">
                                         <iconify-icon icon="lucide:trash-2" class="text-base"></iconify-icon>
                                     </button>
@@ -577,6 +628,7 @@
 </div>
 
 <script>
+window.isReworkOrder = @json(isset($acrylicOrder) && $acrylicOrder->relation_type === 'rework');
 const woodBoardPricesData = @json($woodBoardPrices);
 const minLatePricesData = @json($minLatePrices ?? []);
 
@@ -1500,7 +1552,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     const paymentContainer = document.getElementById('payment-details-container');
-    if (paymentContainer && paymentContainer.querySelectorAll('.payment-detail-row').length === 0) {
+    // Chỉ tự thêm dòng trống khi tạo mới, không thêm khi edit
+    const isEditMode = {{ isset($isDraftCreate) && $isDraftCreate ? 'false' : 'true' }};
+    if (!isEditMode && paymentContainer && paymentContainer.querySelectorAll('.payment-detail-row').length === 0) {
         addPaymentDetail();
     }
 
@@ -2084,30 +2138,30 @@ function addPaymentDetail() {
     const newRow = document.createElement('tr');
     newRow.className = 'payment-detail-row';
     newRow.innerHTML = `
-        <td style="width: 50px; min-width: 50px; " class="sticky-stt-td text-center align-middle border border-neutral-200">
+        <td style="width: 50px; min-width: 50px; padding: 0 !important;" class="sticky-stt-td text-center align-middle border border-neutral-200">
             <span class="detail-index font-semibold text-neutral-500">${paymentDetailIndex + 1}</span>
         </td>
-        <td class="border border-neutral-200" style="padding: 4px !important; position: relative;">
-            <div class="flex items-center gap-2">
-                <select class="order-payment-code-select tom-select-payment-code w-32">
-                    ${optionsHtml}
-                </select>
-                <input type="text" name="payment_details[${paymentDetailIndex}][name]" class="form-control form-control-sm rounded-lg flex-1 border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-xs h-8 font-semibold" placeholder="Tên nội dung..." required>
-            </div>
+        <td class="border border-neutral-200" style="padding: 0 !important; position: relative; width: 150px; min-width: 150px; height: 42px;">
+            <select class="order-payment-code-select tom-select-payment-code w-full">
+                ${optionsHtml}
+            </select>
         </td>
-        <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
-            <input type="text" name="payment_details[${paymentDetailIndex}][unit]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs" placeholder="m, tấm...">
+        <td class="border border-neutral-200" style="padding: 0 !important; position: relative;">
+            <textarea name="payment_details[${paymentDetailIndex}][name]" class="form-control form-control-sm rounded-lg w-full border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-xs font-semibold" rows="2" style="resize: vertical; padding: 4px 8px;" placeholder="Tên nội dung..." required></textarea>
         </td>
-        <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
-            <input type="number" name="payment_details[${paymentDetailIndex}][quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs payment-quantity-input" placeholder="1" step="any" value="1">
+        <td style="width: 100px; min-width: 100px; padding: 0 !important;" class="border border-neutral-200">
+            <input type="text" name="payment_details[${paymentDetailIndex}][unit]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs w-full" placeholder="m, tấm...">
         </td>
-        <td style="width: 150px; min-width: 150px; " class="border border-neutral-200">
-            <input type="number" name="payment_details[${paymentDetailIndex}][price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs" placeholder="0" min="0" step="any" required value="0">
+        <td style="width: 100px; min-width: 100px; padding: 0 !important;" class="border border-neutral-200">
+            <input type="number" name="payment_details[${paymentDetailIndex}][quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs payment-quantity-input w-full" placeholder="1" step="any" value="1">
         </td>
-        <td style="width: 160px; min-width: 160px; " class="border border-neutral-200">
-            <input type="text" name="payment_details[${paymentDetailIndex}][total]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center h-8 text-xs" placeholder="0" readonly value="0">
+        <td style="width: 150px; min-width: 150px; padding: 0 !important;" class="border border-neutral-200">
+            <input type="number" name="payment_details[${paymentDetailIndex}][price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs w-full" placeholder="0" min="0" step="any" required value="0">
         </td>
-        <td style="width: 50px; min-width: 50px; position: sticky; right: 0; z-index: 1; background-color: #fff; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="text-center align-middle border border-neutral-200">
+        <td style="width: 160px; min-width: 160px; padding: 0 !important;" class="border border-neutral-200">
+            <input type="text" name="payment_details[${paymentDetailIndex}][total]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center h-8 text-xs w-full" placeholder="0" readonly value="0">
+        </td>
+        <td style="width: 80px; min-width: 80px; padding: 0 !important; position: sticky; right: 0; z-index: 1; background-color: #fff; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="text-center align-middle border border-neutral-200">
             <button type="button" onclick="removePaymentDetail(this)" class="text-neutral-400 hover:text-danger-500 transition-colors p-1" title="Xóa nội dung này">
                 <iconify-icon icon="lucide:trash-2" class="text-base"></iconify-icon>
             </button>

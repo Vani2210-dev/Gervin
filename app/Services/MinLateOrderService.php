@@ -274,6 +274,8 @@ class MinLateOrderService
                     'beveled_handle'        => $item['beveled_handle'] ?? 0,
                     'cnc'                   => $item['cnc'] ?? 0,
                     'direction'             => $item['direction'] ?? null,
+                    'notes'                 => $item['notes'] ?? null,
+                    'old_size'              => $item['old_size'] ?? null,
                 ]);
 
                 // Always regenerate codes from order_code + supply_code + global sequential index

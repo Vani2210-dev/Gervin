@@ -25,6 +25,7 @@ class GlassOrderItem extends Model
         'unit_price',
         'total_price',
         'notes',
+        'old_size',
     ];
 
     protected $casts = [

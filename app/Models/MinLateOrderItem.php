@@ -28,6 +28,7 @@ class MinLateOrderItem extends Model
         'cnc',
         'direction',
         'notes',
+        'old_size',
     ];
 
     protected $casts = [

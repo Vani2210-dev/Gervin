@@ -419,6 +419,7 @@
                                     </td>
                                     <td style="width: 160px; min-width: 160px; " class="border border-neutral-200">
                                         <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][id]" value="{{ $item->id }}">
+                                        <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][old_size]" value="{{ $item->old_size }}">
                                         @if($isAccessory)
                                             <select name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][product_code]" class="accessory-product-code-select tom-select-accessory-product w-full text-xs font-semibold">
                                                 <option value="">-- Mã SP --</option>
@@ -524,6 +525,74 @@
         </div>
     </div>
 </div>
+
+@if(isset($acrylicOrder) && $acrylicOrder->relation_type === 'rework')
+{{-- Bảng chi tiết hóa đơn dịch vụ --}}
+<div class="order-supplies-popup bg-white border border-neutral-200 rounded-xl p-6 shadow-sm mt-6 relative pt-8" data-order-supplies-zoom-panel data-order-supplies-storage-key="min_late_payment" data-order-supplies-zoom="100" data-order-supplies-visible-rows-disabled="1">
+    <div class="order-supplies-header flex items-center justify-between border-b border-neutral-100 pb-4 mb-5">
+        <div class="absolute -top-3.5 left-6 bg-white px-3 flex items-center gap-2 z-10">
+            <iconify-icon icon="lucide:receipt" class="text-xl text-primary-500"></iconify-icon>
+            <h6 class="font-bold text-base text-neutral-800 m-0">Chi tiết hóa đơn dịch vụ</h6>
+        </div>
+        <div class="flex flex-wrap items-center gap-2 ml-auto">
+            <button type="button" onclick="addPaymentDetail()" class="btn btn-sm btn-primary rounded-lg flex items-center gap-1">
+                <iconify-icon icon="lucide:plus" class="text-lg"></iconify-icon> <span class="mobile-hide-text">Thêm nội dung</span>
+            </button>
+        </div>
+    </div>
+    <div class="order-supplies-body">
+        <div class="overflow-x-auto pb-3" data-order-supplies-table-scroll>
+            <div class="order-supplies-table-zoom-wrap" data-order-supplies-table-zoom-wrap>
+                <table class="table bordered-table sm-table mb-0 min-w-[900px] border border-neutral-200" data-order-resize-group="min_late_payment">
+                    <thead>
+                        <tr class="bg-neutral-50 text-center">
+                            <th scope="col" style="width: 50px; min-width: 50px; white-space: nowrap;" class="sticky-stt-th text-center border border-neutral-200 font-bold text-xs text-neutral-600 uppercase"><span class="order-stt-header-label">STT</span></th>
+                            <th scope="col" style="white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên nội dung <span class="text-danger-500">*</span></th>
+                            <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn vị</th>
+                            <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số lượng</th>
+                            <th scope="col" style="width: 150px; min-width: 150px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá <span class="text-danger-500">*</span></th>
+                            <th scope="col" style="width: 160px; min-width: 160px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Thành tiền</th>
+                            <th scope="col" style="width: 80px; min-width: 80px; white-space: nowrap; position: sticky; right: 0; z-index: 2; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody id="payment-details-container">
+                        @if(isset($acrylicOrder) && isset($acrylicOrder->paymentDetails) && $acrylicOrder->paymentDetails->count() > 0)
+                            @foreach($acrylicOrder->paymentDetails as $detailIndex => $detail)
+                            <tr class="payment-detail-row">
+                                <td style="width: 50px; min-width: 50px; padding: 0 !important;" class="sticky-stt-td text-center align-middle border border-neutral-200">
+                                    <span class="detail-index font-semibold text-neutral-500">{{ $detailIndex + 1 }}</span>
+                                </td>
+                                <td class="border border-neutral-200" style="padding: 0 !important; position: relative;">
+                                    <textarea name="payment_details[{{ $detailIndex }}][name]" class="form-control form-control-sm rounded-lg w-full border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-xs font-semibold" rows="2" style="resize: vertical; padding: 4px 8px;" placeholder="Tên nội dung..." required>{{ $detail->name }}</textarea>
+                                </td>
+                                <td style="width: 100px; min-width: 100px; padding: 0 !important;" class="border border-neutral-200">
+                                    <input type="text" name="payment_details[{{ $detailIndex }}][unit]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs w-full" placeholder="m, tấm..." value="{{ $detail->unit }}">
+                                </td>
+                                <td style="width: 100px; min-width: 100px; padding: 0 !important;" class="border border-neutral-200">
+                                    <input type="number" name="payment_details[{{ $detailIndex }}][quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs payment-quantity-input w-full" placeholder="1" step="any" value="{{ $detail->quantity }}">
+                                </td>
+                                <td style="width: 150px; min-width: 150px; padding: 0 !important;" class="border border-neutral-200">
+                                    <input type="number" name="payment_details[{{ $detailIndex }}][price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs w-full" placeholder="0" min="0" step="any" required value="{{ $detail->price }}">
+                                </td>
+                                <td style="width: 160px; min-width: 160px; padding: 0 !important;" class="border border-neutral-200">
+                                    <input type="text" name="payment_details[{{ $detailIndex }}][total]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center h-8 text-xs w-full" placeholder="0" readonly value="{{ number_format($detail->total, 0, ',', '.') }}">
+                                </td>
+                                <td style="width: 80px; min-width: 80px; padding: 0 !important; position: sticky; right: 0; z-index: 1; background-color: #fff; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="text-center align-middle border border-neutral-200">
+                                    <button type="button" onclick="removePaymentDetail(this)" class="text-neutral-400 hover:text-danger-500 transition-colors p-1" title="Xóa nội dung này">
+                                        <iconify-icon icon="lucide:trash-2" class="text-base"></iconify-icon>
+                                    </button>
+                                    <input type="hidden" name="payment_details[{{ $detailIndex }}][id]" value="{{ $detail->id }}">
+                                </td>
+                            </tr>
+                            @endforeach
+                        @endif
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
 
 <script>
 window.glassPricesData = @json($glassPrices ?? []);
@@ -727,6 +796,7 @@ function addGlassOrderItem(button, isInitial = false, insertAfterRow = null) {
         </td>
         <td style="width: 160px; min-width: 160px; " class="border border-neutral-200">
             <input type="hidden" name="supplies[${supplyIndex}][items][${itemIndex}][id]" value="">
+            <input type="hidden" name="supplies[${supplyIndex}][items][${itemIndex}][old_size]" value="${lastData ? lastData.old_size || '' : ''}">
             ${productCodeCellHtml}
         </td>
         <td style="min-width: 220px;" class="border border-neutral-200">
@@ -1731,4 +1801,136 @@ function confirmGlassExcelImport() {
 
     closeGlassExcelImport();
 }
+
+let paymentDetailIndex = {{ (isset($acrylicOrder) && isset($acrylicOrder->paymentDetails)) ? $acrylicOrder->paymentDetails->count() : 0 }};
+
+function refreshPaymentDetailsTableLayout() {
+    const panel = document.querySelector('[data-order-supplies-storage-key="min_late_payment"]');
+    if (panel && typeof applyOrderSuppliesVisibleRows === 'function') {
+        applyOrderSuppliesVisibleRows(panel, panel.dataset.orderSuppliesVisibleRows || '5');
+    }
+
+    if (typeof initOrderColumnResize === 'function') {
+        initOrderColumnResize(document);
+    }
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function addPaymentDetail() {
+    const container = document.getElementById('payment-details-container');
+    if (!container) return;
+
+    const newRow = document.createElement('tr');
+    newRow.className = 'payment-detail-row';
+    newRow.innerHTML = `
+        <td style="width: 50px; min-width: 50px; padding: 0 !important;" class="sticky-stt-td text-center align-middle border border-neutral-200">
+            <span class="detail-index font-semibold text-neutral-500">${paymentDetailIndex + 1}</span>
+        </td>
+        <td class="border border-neutral-200" style="padding: 0 !important; position: relative;">
+            <textarea name="payment_details[${paymentDetailIndex}][name]" class="form-control form-control-sm rounded-lg w-full border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-xs font-semibold" rows="2" style="resize: vertical; padding: 4px 8px;" placeholder="Tên nội dung..." required></textarea>
+        </td>
+        <td style="width: 100px; min-width: 100px; padding: 0 !important;" class="border border-neutral-200">
+            <input type="text" name="payment_details[${paymentDetailIndex}][unit]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs w-full" placeholder="m, tấm...">
+        </td>
+        <td style="width: 100px; min-width: 100px; padding: 0 !important;" class="border border-neutral-200">
+            <input type="number" name="payment_details[${paymentDetailIndex}][quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs payment-quantity-input w-full" placeholder="1" step="any" value="1">
+        </td>
+        <td style="width: 150px; min-width: 150px; padding: 0 !important;" class="border border-neutral-200">
+            <input type="number" name="payment_details[${paymentDetailIndex}][price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs w-full" placeholder="0" min="0" step="any" required value="0">
+        </td>
+        <td style="width: 160px; min-width: 160px; padding: 0 !important;" class="border border-neutral-200">
+            <input type="text" name="payment_details[${paymentDetailIndex}][total]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center h-8 text-xs w-full" placeholder="0" readonly value="0">
+        </td>
+        <td style="width: 80px; min-width: 80px; padding: 0 !important; position: sticky; right: 0; z-index: 1; background-color: #fff; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="text-center align-middle border border-neutral-200">
+            <button type="button" onclick="removePaymentDetail(this)" class="text-neutral-400 hover:text-danger-500 transition-colors p-1" title="Xóa nội dung này">
+                <iconify-icon icon="lucide:trash-2" class="text-base"></iconify-icon>
+            </button>
+        </td>
+    `;
+    container.appendChild(newRow);
+
+    // Bind change/input events for auto-calculating row total
+    bindPaymentDetailEvents(newRow);
+    
+    paymentDetailIndex++;
+    updatePaymentDetailIndexes();
+    updateOrderSummary();
+    refreshPaymentDetailsTableLayout();
+}
+
+function removePaymentDetail(button) {
+    const row = button.closest('.payment-detail-row');
+    row.remove();
+    updatePaymentDetailIndexes();
+    updateOrderSummary();
+    refreshPaymentDetailsTableLayout();
+}
+
+function calculatePaymentDetailRowTotal(row) {
+    const qtyInput = row.querySelector('input[name*="[quantity]"]');
+    const priceInput = row.querySelector('input[name*="[price]"]');
+    const totalInput = row.querySelector('input[name*="[total]"]');
+    
+    if (!qtyInput || !priceInput || !totalInput) return;
+    
+    const quantity = parseFloat(qtyInput.value) || 0;
+    const price = parseFloat(priceInput.value) || 0;
+    const total = quantity * price;
+    
+    totalInput.value = total > 0 ? Math.round(total).toLocaleString('vi-VN') : 0;
+    updateOrderSummary();
+}
+
+function updatePaymentDetailIndexes() {
+    const table = document.querySelector('table[data-order-resize-group="min_late_payment"]');
+    const headers = table ? Array.from(table.querySelectorAll('thead th')).map(th => th.textContent.trim().replace(/\s*\*$/, '')) : [];
+
+    const rows = document.querySelectorAll('.payment-detail-row');
+    rows.forEach((row, index) => {
+        const indexSpan = row.querySelector('.detail-index');
+        if (indexSpan) {
+            indexSpan.textContent = index + 1;
+        }
+
+        row.querySelectorAll('td').forEach((td, colIndex) => {
+            if (headers[colIndex] && headers[colIndex] !== 'STT' && headers[colIndex] !== 'Xóa') {
+                td.setAttribute('data-label', headers[colIndex]);
+            }
+        });
+    });
+}
+
+function bindPaymentDetailEvents(row) {
+    const inputs = row.querySelectorAll('input[name*="[quantity]"], input[name*="[price]"]');
+    inputs.forEach(input => {
+        input.addEventListener('input', () => {
+            calculatePaymentDetailRowTotal(row);
+        });
+    });
+}
+
+// Initialize for existing payment detail rows on load
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.payment-detail-row').forEach(row => {
+        bindPaymentDetailEvents(row);
+    });
+    
+    // Add one empty payment row on load if it's a rework order and has 0 rows (only on create page, NOT on edit page)
+    const isEditPage = @json(request()->routeIs('orders.edit'));
+    const container = document.getElementById('payment-details-container');
+    if (!isEditPage && container && container.querySelectorAll('.payment-detail-row').length === 0) {
+        addPaymentDetail();
+    }
+    
+    refreshPaymentDetailsTableLayout();
+});
 </script>

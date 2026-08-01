@@ -442,6 +442,7 @@
                                         </button>
                                     </div>
                                     <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][id]" value="{{ $item->id }}">
+                                    <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][old_size]" value="{{ $item->old_size }}">
                                 </td>
                             </tr>
                             @endforeach
@@ -510,7 +511,7 @@
                             <th scope="col" style="width: 150px; min-width: 150px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá <span class="text-danger-500">*</span></th>
                             <th scope="col" style="width: 150px; min-width: 150px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá chỉ</th>
                             <th scope="col" style="width: 160px; min-width: 160px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Thành tiền</th>
-                            <th scope="col" style="width: 50px; min-width: 50px; white-space: nowrap; position: sticky; right: 0; z-index: 2; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Xóa</th>
+                            <th scope="col" style="width: 80px; min-width: 80px; white-space: nowrap; position: sticky; right: 0; z-index: 2; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Hành động</th>
                         </tr>
                     </thead>
                     <tbody id="payment-details-container">
@@ -538,7 +539,7 @@
                                 <td style="width: 160px; min-width: 160px; " class="border border-neutral-200">
                                     <input type="text" name="payment_details[{{ $detailIndex }}][total]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center h-8 text-xs" placeholder="0" readonly value="{{ number_format($detail->total, 0, ',', '.') }}">
                                 </td>
-                                <td style="width: 50px; min-width: 50px; position: sticky; right: 0; z-index: 1; background-color: #fff; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="text-center align-middle border border-neutral-200">
+                                <td style="width: 80px; min-width: 80px; position: sticky; right: 0; z-index: 1; background-color: #fff; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="text-center align-middle border border-neutral-200">
                                     <button type="button" onclick="removePaymentDetail(this)" class="text-neutral-400 hover:text-danger-500 transition-colors p-1" title="Xóa nội dung này">
                                         <iconify-icon icon="lucide:trash-2" class="text-base"></iconify-icon>
                                     </button>
@@ -1296,7 +1297,7 @@ function addPaymentDetail() {
         <td style="width: 120px; min-width: 120px; " class="border border-neutral-200">
             <input type="text" name="payment_details[${paymentDetailIndex}][total]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center h-8 text-xs" placeholder="0" readonly value="0">
         </td>
-        <td style="width: 50px; min-width: 50px; position: sticky; right: 0; z-index: 1; background-color: #fff; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="text-center align-middle border border-neutral-200">
+        <td style="width: 80px; min-width: 80px; position: sticky; right: 0; z-index: 1; background-color: #fff; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="text-center align-middle border border-neutral-200">
             <button type="button" onclick="removePaymentDetail(this)" class="text-neutral-400 hover:text-danger-500 transition-colors p-1" title="Xóa nội dung này">
                 <iconify-icon icon="lucide:trash-2" class="text-base"></iconify-icon>
             </button>
@@ -1677,9 +1678,10 @@ document.addEventListener('DOMContentLoaded', function() {
         initPaymentQuantitySuggestions(input);
     });
 
-    // Ensure at least one payment detail row exists on page load if none loaded
+    // Ensure at least one payment detail row exists on page load if none loaded (only on create page, NOT on edit page)
+    const isEditPage = @json(request()->routeIs('orders.edit'));
     const container = document.getElementById('payment-details-container');
-    if (container && container.querySelectorAll('.payment-detail-row').length === 0) {
+    if (!isEditPage && container && container.querySelectorAll('.payment-detail-row').length === 0) {
         addPaymentDetail();
     } else {
         updatePaymentDetailIndexes();

@@ -267,7 +267,16 @@ Route::middleware(['auth'])->group(function () {
     Route::get('orders/create/{type}', [OrderController::class, 'createByType'])->name('orders.create.type');
     Route::post('orders/discard-draft', [OrderController::class, 'discardDraft'])->name('orders.discard-draft');
     Route::post('orders/{order}/update-status', [OrderController::class, 'updateStatus'])->name('orders.update-status');
+    Route::get('orders/{order}/production-stats', [OrderController::class, 'productionStats'])->name('orders.production-stats');
     Route::get('orders/image/{filename}', [OrderController::class, 'serveImage'])->name('orders.image');
+    Route::post('orders/{order}/create-rework', [OrderController::class, 'createReworkOrder'])->name('orders.create-rework');
+    Route::get('orders/{order}/rework-create', [OrderController::class, 'reworkCreateForm'])->name('orders.rework-create');
+    Route::get('orders/{order}/reuse-create', [OrderController::class, 'reuseCreateForm'])->name('orders.reuse-create');
+    Route::get('orders/{order}/print-handwritten', [OrderController::class, 'printHandwritten'])->name('orders.print-handwritten');
+    Route::get('orders/{order}/additional-create', [OrderController::class, 'additionalCreateForm'])->name('orders.additional-create');
+    
+    // Lưu cài đặt cảnh báo deadline vào cache
+    Route::post('orders/save-deadline-setting', [OrderController::class, 'saveDeadlineSetting'])->name('orders.save-deadline-setting');
 
     // Customer Payments
     Route::post('customers/{customer}/payments', [CustomerPaymentController::class, 'store'])->name('customers.payments.store');
@@ -277,7 +286,8 @@ Route::middleware(['auth'])->group(function () {
 
 // Manufacture Orders
 Route::middleware(['auth'])->group(function () {
-    Route::get('manufactures/export/excel', [ManufactureController::class, 'exportExcel'])->name('manufactures.export-excel');
+    Route::get('manufactures/sequence', [ManufactureController::class, 'sequenceIndex'])->name('manufactures.sequence');
+    Route::get('manufactures/sequence/export', [ManufactureController::class, 'sequenceExport'])->name('manufactures.sequence.export');
     Route::resource('manufactures', ManufactureController::class)->names('manufactures');
     Route::post('manufactures/{manufacture}/approve/{step}', [ManufactureController::class, 'approveStep'])->name('manufactures.approve');
     Route::get('manufactures/{manufacture}/print-stamps', [ManufactureController::class, 'printStamps'])->name('manufactures.print-stamps');

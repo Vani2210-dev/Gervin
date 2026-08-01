@@ -43,6 +43,7 @@ class AcrylicOrderItem extends Model
         'mill_bottom_2',
         'mill_width_2',
         'mill_depth_2',
+        'old_size',
     ];
 
     protected $casts = [
