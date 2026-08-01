@@ -225,6 +225,8 @@
                                                 <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">Sửa tấm</span>
                                             @elseif($order->relation_type === 'additional')
                                                 <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-success-100 text-success-800 border border-success-200">Bổ sung</span>
+                                            @elseif($order->relation_type === 'reuse')
+                                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200">Tận dụng tấm</span>
                                             @endif
                                         </div>
                                         @if($showWarning)
@@ -882,6 +884,14 @@
                     <span>Tạo đơn sửa tấm</span>
                 </a>
             </li>
+            @if($order->type === 'acrylic')
+            <li>
+                <a href="{{ route('orders.reuse-create', $order) }}" class="flex items-center gap-2 px-4 py-2 hover:bg-neutral-50 text-neutral-700 transition-colors">
+                    <iconify-icon icon="lucide:layers" class="text-blue-500 text-lg"></iconify-icon>
+                    <span>Tạo đơn tận dụng tấm</span>
+                </a>
+            </li>
+            @endif
             <li>
                 <a href="{{ route('orders.additional-create', $order) }}" class="flex items-center gap-2 px-4 py-2 hover:bg-neutral-50 text-neutral-700 transition-colors">
                     <iconify-icon icon="lucide:plus-circle" class="text-success-500 text-lg"></iconify-icon>
