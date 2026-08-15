@@ -318,18 +318,34 @@
 
                         // Determine new size
                         $newSize = '';
+                        $hasSize = false;
                         if ($order->type === 'min_late') {
                             $sizes = $item->size ?? [];
                             if (is_string($sizes)) {
                                 $sizes = json_decode($sizes, true) ?? [];
                             }
-                            $newSize = ($sizes['height'] ?? '—') . ' x ' . ($sizes['width'] ?? '—');
+                            $h = trim($sizes['height'] ?? '');
+                            $w = trim($sizes['width'] ?? '');
+                            if (($h !== '' && $h !== '—' && $h !== '0') || ($w !== '' && $w !== '—' && $w !== '0')) {
+                                $hasSize = true;
+                            }
+                            $newSize = ($h !== '' ? $h : '—') . ' x ' . ($w !== '' ? $w : '—');
                             $qty = $item->quantity;
                         } elseif ($order->type === 'glass') {
-                            $newSize = ($item->height ?? '—') . ' x ' . ($item->width ?? '—');
+                            $h = trim($item->height ?? '');
+                            $w = trim($item->width ?? '');
+                            if (($h !== '' && $h !== '—' && $h !== '0') || ($w !== '' && $w !== '—' && $w !== '0')) {
+                                $hasSize = true;
+                            }
+                            $newSize = ($h !== '' ? $h : '—') . ' x ' . ($w !== '' ? $w : '—');
                             $qty = $item->wing_quantity;
                         } else {
-                            $newSize = ($item->height ?? '—') . ' x ' . ($item->width ?? '—');
+                            $h = trim($item->height ?? '');
+                            $w = trim($item->width ?? '');
+                            if (($h !== '' && $h !== '—' && $h !== '0') || ($w !== '' && $w !== '—' && $w !== '0')) {
+                                $hasSize = true;
+                            }
+                            $newSize = ($h !== '' ? $h : '—') . ' x ' . ($w !== '' ? $w : '—');
                             $qty = $item->quantity;
                         }
 
@@ -352,11 +368,15 @@
                             @endif
                         </div>
                         <div class="item-details">
-                            @if($oldSize)
-                                <div>- Kích thước cũ: <span style="text-decoration: line-through; color: #666;">{{ $oldSize }}</span></div>
-                                <div>- Sửa thành kích thước: <strong>{{ $newSize }}</strong> = <strong>{{ $qty }}</strong> tấm{!! $extraText !!}</div>
+                            @if($hasSize)
+                                @if($oldSize)
+                                    <div>- Kích thước cũ: <span style="text-decoration: line-through; color: #666;">{{ $oldSize }}</span></div>
+                                    <div>- Sửa thành kích thước: <strong>{{ $newSize }}</strong> = <strong>{{ $qty }}</strong> tấm{!! $extraText !!}</div>
+                                @else
+                                    <div>- Sửa thành kích thước: <strong>{{ $newSize }}</strong> = <strong>{{ $qty }}</strong> tấm{!! $extraText !!}</div>
+                                @endif
                             @else
-                                <div>- Sửa thành kích thước: <strong>{{ $newSize }}</strong> = <strong>{{ $qty }}</strong> tấm{!! $extraText !!}</div>
+                                <div>- Số lượng: <strong>{{ $qty }}</strong> tấm{!! $extraText !!}</div>
                             @endif
                         </div>
                     </div>

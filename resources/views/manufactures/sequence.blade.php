@@ -10,6 +10,9 @@
     .bg-gray-light {
         background-color: #f8f9fa !important;
     }
+    .bg-grand-total {
+        background-color: #fffbeb !important;
+    }
 </style>
 
 <div class="grid grid-cols-12">
@@ -17,19 +20,36 @@
         <div class="card h-full p-0 rounded-xl border-0 overflow-hidden shadow-sm">
             {{-- Header --}}
             <div class="card-header border-b border-neutral-200 bg-white py-4 px-6 flex items-center flex-wrap gap-3 justify-between">
+                {{-- Bên trái: Ô tìm kiếm thay thế cho tiêu đề --}}
                 <div class="flex items-center gap-3">
-                    <h5 class="text-lg font-bold text-neutral-800 m-0">Tiến độ lệnh sản xuất</h5>
+                    <form method="GET" action="{{ route('manufactures.sequence') }}" class="navbar-search">
+                        <input type="hidden" name="date" value="{{ $date }}">
+                        <input type="hidden" name="completion_status" value="{{ $completionStatus }}">
+                        <div class="relative">
+                            <iconify-icon icon="lucide:search" class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-base"></iconify-icon>
+                            <input type="text" name="search" class="form-control form-control-sm border-neutral-200 rounded-lg pl-9 pr-3 w-64 md:w-80" 
+                                placeholder="Tìm khách hàng, số phiếu, mã màu..." value="{{ $search }}">
+                        </div>
+                    </form>
                 </div>
 
-                <div class="flex items-center gap-3">
-                    {{-- Filter & Export Form --}}
-                    <form method="GET" action="{{ route('manufactures.sequence') }}" class="flex items-center gap-2" id="filterForm">
-                        <span class="text-sm font-medium text-neutral-500">Ngày:</span>
-                        <input type="date" name="date" value="{{ $date }}" class="form-control form-control-sm border-neutral-200 rounded-lg w-auto py-1.5 px-3" onchange="this.form.submit()">
-                    </form>
+                {{-- Bên phải: Nút Lọc (mở modal), Nút Xóa lọc, Nút Xuất Excel --}}
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="openModal('sequence-filter-modal')"
+                        class="btn bg-light-600 text-sm btn-sm px-3 py-2 rounded-lg flex items-center gap-2 font-medium hover:bg-neutral-100 transition-all">
+                        <iconify-icon icon="solar:filter-outline" class="text-xl leading-none"></iconify-icon>
+                        Lọc
+                    </button>
 
-                    <a href="{{ route('manufactures.sequence.export', ['date' => $date]) }}" 
-                        class="btn btn-success text-sm btn-sm px-4 py-2 flex items-center gap-1.5 rounded-lg shadow-sm font-semibold transition-all">
+                    @if(!empty($completionStatus) || !empty($date))
+                    <a href="{{ route('manufactures.sequence', ['search' => $search]) }}" class="btn text-sm btn-sm px-3 py-2 rounded-lg flex items-center gap-1.5 text-danger-600 hover:bg-danger-50 transition-all font-medium" title="Xóa bộ lọc">
+                        <iconify-icon icon="solar:close-circle-outline" class="text-xl leading-none"></iconify-icon>
+                        Xóa lọc
+                    </a>
+                    @endif
+
+                    <a href="{{ route('manufactures.sequence.export', ['date' => $date, 'search' => $search, 'completion_status' => $completionStatus]) }}" 
+                        class="btn btn-sm bg-success-600 hover:bg-success-700 text-white px-4 py-2 flex items-center gap-1.5 rounded-lg shadow-sm font-semibold transition-all">
                         <iconify-icon icon="lucide:file-spreadsheet" class="text-lg"></iconify-icon>
                         Xuất Excel
                     </a>
@@ -70,6 +90,55 @@
                             </tr>
                         </thead>
                         <tbody>
+                            @php
+                                $grandTotalPlates = 0;
+                                $grandTotalCnc = 0;
+                                $grandTotalDay1 = 0;
+                                $grandTotalInProd = 0;
+                                $grandTotalDay2 = 0;
+                                $grandTotalRemaining = 0;
+
+                                foreach ($groupedSupplies as $dateGroup) {
+                                    foreach ($dateGroup['supplies'] as $item) {
+                                        $grandTotalPlates += $item['totalCount'];
+                                        $grandTotalCnc += $item['cncCount'];
+                                        $grandTotalDay1 += $item['day1Count'];
+                                        $grandTotalInProd += $item['inProductionCount'];
+                                        $grandTotalDay2 += $item['day2Count'];
+                                        $grandTotalRemaining += $item['remainingCount'];
+                                    }
+                                }
+                            @endphp
+
+                            @if(count($groupedSupplies) > 0)
+                            <tr class="bg-grand-total font-bold border-b border-neutral-200 text-neutral-800 text-xs">
+                                <td colspan="4" class="text-left py-2.5 px-3 border border-neutral-200">
+                                    Tổng cộng
+                                </td>
+                                <td class="text-center py-2.5 px-2 border border-neutral-200">
+                                    {{ $grandTotalPlates }}
+                                </td>
+                                <td class="text-center py-2.5 px-2 border border-neutral-200">
+                                    {{ $grandTotalCnc }}
+                                </td>
+                                <td class="text-center py-2.5 px-2 border border-neutral-200 bg-amber-50/40 text-amber-800">
+                                    {{ $grandTotalDay1 }}
+                                </td>
+                                <td class="text-center py-2.5 px-2 border border-neutral-200 bg-blue-50/40 text-blue-800">
+                                    {{ $grandTotalInProd }}
+                                </td>
+                                <td class="text-center py-2.5 px-2 border border-neutral-200 bg-success-50/40 text-success-800">
+                                    {{ $grandTotalDay2 }}
+                                </td>
+                                <td class="text-center py-2.5 px-2 border border-neutral-200 text-neutral-800">
+                                    {{ $grandTotalRemaining }}
+                                </td>
+                                <td class="border border-neutral-200"></td>
+                                <td class="border border-neutral-200"></td>
+                                <td class="border border-neutral-200 bg-grand-total"></td>
+                            </tr>
+                            @endif
+
                             @forelse($groupedSupplies as $dateGroup)
                                 @php
                                     $supplies = $dateGroup['supplies'];
@@ -129,10 +198,8 @@
                                         <td class="text-center py-3 px-2 border border-neutral-200 font-semibold text-success-700 bg-success-50/20">
                                             {{ $item['day2Count'] }}
                                         </td>
-                                        <td class="text-center py-3 px-2 border border-neutral-200 font-semibold text-neutral-700">
-                                            <span class="{{ $item['remainingCount'] > 0 ? 'text-neutral-900' : 'text-neutral-400' }}">
-                                                {{ $item['remainingCount'] }}
-                                            </span>
+                                        <td class="text-center py-3 px-2 border border-neutral-200 font-semibold text-neutral-800">
+                                            {{ $item['remainingCount'] }}
                                         </td>
                                         <td class="text-center py-3 px-2 border border-neutral-200 text-neutral-500">
                                             {{ $order->order_date ? $order->order_date->format('Y-m-d H:i') : '—' }}
@@ -187,5 +254,37 @@
         </div>
     </div>
 </div>
+
+{{-- Modal Bộ Lọc Tiến Độ --}}
+<x-modal name="sequence-filter-modal" maxWidth="md">
+    <div class="px-6 py-4 border-b border-neutral-200 flex items-center justify-between">
+        <h5 class="font-semibold text-base text-neutral-800 m-0">Bộ lọc tiến độ sản xuất</h5>
+        <button type="button" onclick="closeModal('sequence-filter-modal')" class="text-secondary-light hover:text-neutral-700 text-2xl leading-none">&times;</button>
+    </div>
+    <form action="{{ route('manufactures.sequence') }}" method="GET">
+        <input type="hidden" name="search" value="{{ $search }}">
+        <div class="p-6 space-y-4">
+            {{-- Trạng thái hoàn thành --}}
+            <div class="form-group">
+                <label class="form-label font-semibold text-sm text-neutral-700 mb-1.5 block">Trạng thái hoàn thành</label>
+                <select name="completion_status" class="form-select w-full border-neutral-200 rounded-lg py-2 px-3 text-sm focus:border-primary-500 focus:ring-primary-500">
+                    <option value="">Tất cả</option>
+                    <option value="completed" {{ ($completionStatus ?? '') === 'completed' ? 'selected' : '' }}>Đã xong</option>
+                </select>
+            </div>
+
+            {{-- Ngày làm đẹp / chốt đơn --}}
+            <div class="form-group">
+                <label class="form-label font-semibold text-sm text-neutral-700 mb-1.5 block">Ngày làm đẹp / chốt đơn</label>
+                <input type="date" name="date" value="{{ $date }}" class="form-control w-full border-neutral-200 rounded-lg py-2 px-3 text-sm focus:border-primary-500 focus:ring-primary-500">
+                <p class="text-xs text-neutral-400 mt-1">Để trống nếu muốn xem toàn bộ các ngày</p>
+            </div>
+        </div>
+        <div class="px-6 py-4 border-t border-neutral-200 flex gap-3">
+            <button type="submit" class="btn btn-primary px-5 py-2.5 rounded-lg text-sm font-semibold">Áp dụng lọc</button>
+            <button type="button" onclick="closeModal('sequence-filter-modal')" class="btn btn-neutral px-5 py-2.5 rounded-lg text-sm">Hủy</button>
+        </div>
+    </form>
+</x-modal>
 
 @endsection

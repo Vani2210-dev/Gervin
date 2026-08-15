@@ -660,7 +660,7 @@
                         <thead class="bg-neutral-50 text-center">
                             <tr>
                                 <th class="font-bold text-neutral-600">STT</th>
-                                <th class="font-bold text-neutral-600 text-left">Tên vật tư</th>
+                                <th class="font-bold text-neutral-600 text-left">Mã màu</th>
                                 <th class="font-bold text-neutral-600">Tổng tấm</th>
                                 <th class="font-bold text-neutral-600">Kính/CNC</th>
                                 <th class="font-bold text-neutral-600">Xong Ngày 1</th>
@@ -728,7 +728,7 @@
                     html += `
                         <tr class="text-center border-b border-neutral-100">
                             <td>${index + 1}</td>
-                            <td class="text-left font-semibold text-neutral-700">${row.supply_name || ''}</td>
+                            <td class="text-left font-semibold text-neutral-700">${row.order_supply_code || row.supply_name || '—'}</td>
                             <td>${row.total_count}</td>
                             <td>${row.cnc_count}</td>
                             <td>${row.day1_count}</td>
@@ -877,7 +877,6 @@
                 @endif
             </li>
 
-            @if(empty($order->relation_type))
             <li>
                 <a href="{{ route('orders.show', $order) }}?open_rework=1" class="flex items-center gap-2 px-4 py-2 hover:bg-neutral-50 text-neutral-700 transition-colors">
                     <iconify-icon icon="lucide:rotate-ccw" class="text-amber-500 text-lg"></iconify-icon>
@@ -898,7 +897,6 @@
                     <span>Tạo đơn bổ sung</span>
                 </a>
             </li>
-            @endif
             @endcan
 
             @can('edit order')

@@ -74,16 +74,18 @@
                                 'glass' => 'Glass',
                             ];
                             $statusColors = [
+                                'draft' => 'bg-neutral-100 text-neutral-600 border border-neutral-200',
                                 'pending' => 'bg-warning-100 text-warning-600 border border-warning-200',
                                 'transferred' => 'bg-info-100 text-info-600 border border-info-200',
-
+                                'in_production' => 'bg-indigo-100 text-indigo-600 border border-indigo-200',
                                 'completed' => 'bg-success-100 text-success-600 border border-success-200',
                                 'cancelled' => 'bg-danger-100 text-danger-600 border border-danger-200',
                             ];
                             $statusLabels = [
+                                'draft' => 'Nháp',
                                 'pending' => 'Chờ xử lý',
                                 'transferred' => 'Chuyển sản xuất',
-
+                                'in_production' => 'Đang sản xuất',
                                 'completed' => 'Hoàn thành',
                                 'cancelled' => 'Đã hủy',
                             ];
@@ -104,11 +106,13 @@
                     @if($acrylicOrder->parent)
                         <div class="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-2 text-sm text-amber-800">
                             <iconify-icon icon="lucide:link" class="text-base"></iconify-icon>
-                            <span>Đơn hàng {{ $acrylicOrder->relation_type === 'rework' ? 'sửa tấm' : ($acrylicOrder->relation_type === 'additional' ? 'bổ sung' : ($acrylicOrder->relation_type === 'reuse' ? 'tận dụng tấm' : 'liên kết')) }} từ đơn gốc: 
+                            <span>Đơn hàng {{ $acrylicOrder->relation_type === 'rework' ? 'sửa tấm' : ($acrylicOrder->relation_type === 'additional' ? 'bổ sung' : ($acrylicOrder->relation_type === 'reuse' ? 'tận dụng tấm' : 'liên kết')) }} từ đơn: 
                                 <a href="{{ route('orders.show', $acrylicOrder->parent_id) }}" class="font-bold underline hover:text-amber-950">{{ $acrylicOrder->parent->order_code }}</a>
                             </span>
                         </div>
-                    @elseif($acrylicOrder->children->filter(fn($c) => $c->status !== 'draft')->count() > 0)
+                    @endif
+
+                    @if($acrylicOrder->children->filter(fn($c) => $c->status !== 'draft')->count() > 0)
                         <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800 space-y-1">
                             <div class="flex items-center gap-2 font-semibold">
                                 <iconify-icon icon="lucide:link-2" class="text-base"></iconify-icon>
@@ -280,55 +284,94 @@
                                     </tbody>
                                 </table>
                             @elseif($acrylicOrder->type === 'glass')
-                                {{-- Glass items --}}
-                                <table class="table bordered-table sm-table mb-0 min-w-[1800px]">
-                                    <thead>
-                                        <tr>
-                                            <th scope="col" class="w-10 text-center">STT</th>
-                                            <th scope="col" class="w-32">Mã SP</th>
-                                            <th scope="col" class="w-64">Tên SP</th>
-                                            <th scope="col" class="w-20">Độ dày</th>
-                                            <th scope="col" class="w-28">Chiều mở cánh</th>
-                                            <th scope="col" class="w-28">Màu nhôm</th>
-                                            <th scope="col" class="w-28">Màu kính</th>
-                                            <th scope="col" class="w-20">Dài</th>
-                                            <th scope="col" class="w-20">Rộng</th>
-                                            <th scope="col" class="w-20">Đơn vị</th>
-                                            <th scope="col" class="w-24">SL cánh</th>
-                                            <th scope="col" class="w-28">Khối lượng (m2)</th>
-                                            <th scope="col" class="w-28 text-end">Đơn giá</th>
-                                            <th scope="col" class="w-28 text-end">Thành tiền</th>
-                                            <th scope="col" class="w-44">Ghi chú</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @forelse($supply->glassItems as $itemIndex => $item)
+                                @php
+                                    $isAccessory = ($supply->supply_name === 'Phụ kiện');
+                                @endphp
+                                @if($isAccessory)
+                                    {{-- Bảng chi tiết Phụ kiện --}}
+                                    <table class="table bordered-table sm-table mb-0 w-full text-xs">
+                                        <thead>
                                             <tr>
-                                                <td class="text-center">{{ $itemIndex + 1 }}</td>
-                                                <td><span class="text-neutral-500 text-xs">{{ $item->product_code ?? '—' }}</span></td>
-                                                <td><span class="font-medium text-neutral-800">{{ $item->product_name }}</span></td>
-                                                <td>{{ $item->thickness ?? '—' }}</td>
-                                                <td>{{ $item->wing_opening_direction ?? '—' }}</td>
-                                                <td>{{ $item->aluminum_color ?? '—' }}</td>
-                                                <td>{{ $item->glass_color ?? '—' }}</td>
-                                                <td>{{ $item->height ?? '—' }}</td>
-                                                <td>{{ $item->width ?? '—' }}</td>
-                                                <td>{{ $item->unit ?? 'Bộ' }}</td>
-                                                <td>{{ $item->wing_quantity }}</td>
-                                                <td>{{ $item->area_m2 ?? '—' }}</td>
-                                                <td class="text-end font-medium text-neutral-600">
-                                                    {{ number_format($item->unit_price, 0, ',', '.') }}</td>
-                                                <td class="text-end font-semibold text-neutral-800">
-                                                    {{ number_format($item->total_price, 0, ',', '.') }}</td>
-                                                <td><span class="text-neutral-500 text-xs">{{ $item->notes ?? '—' }}</span></td>
+                                                <th scope="col" class="w-12 text-center">STT</th>
+                                                <th scope="col" class="w-32">Mã SP</th>
+                                                <th scope="col" class="w-64">Tên SP</th>
+                                                <th scope="col" class="w-24 text-center">Số lượng</th>
+                                                <th scope="col" class="w-28 text-end">Đơn giá</th>
+                                                <th scope="col" class="w-28 text-end">Thành tiền</th>
+                                                <th scope="col" class="w-44">Ghi chú</th>
                                             </tr>
-                                        @empty
+                                        </thead>
+                                        <tbody>
+                                            @forelse($supply->glassItems as $itemIndex => $item)
+                                                <tr>
+                                                    <td class="text-center">{{ $itemIndex + 1 }}</td>
+                                                    <td><span class="text-neutral-500 text-xs font-semibold">{{ $item->product_code ?? '—' }}</span></td>
+                                                    <td><span class="font-medium text-neutral-800">{{ $item->product_name }}</span></td>
+                                                    <td class="text-center font-medium">{{ floatval($item->wing_quantity) == intval($item->wing_quantity) ? number_format($item->wing_quantity, 0, ',', '.') : number_format($item->wing_quantity, 2, ',', '.') }}</td>
+                                                    <td class="text-end font-medium text-neutral-600">
+                                                        {{ number_format($item->unit_price, 0, ',', '.') }}</td>
+                                                    <td class="text-end font-semibold text-neutral-800">
+                                                        {{ number_format($item->total_price, 0, ',', '.') }}</td>
+                                                    <td><span class="text-neutral-500 text-xs">{{ $item->notes ?? '—' }}</span></td>
+                                                </tr>
+                                            @empty
+                                                <tr>
+                                                    <td colspan="7" class="text-center text-neutral-400 py-4">Chưa có sản phẩm nào</td>
+                                                </tr>
+                                            @endforelse
+                                        </tbody>
+                                    </table>
+                                @else
+                                    {{-- Glass items --}}
+                                    <table class="table bordered-table sm-table mb-0 min-w-[1800px]">
+                                        <thead>
                                             <tr>
-                                                <td colspan="15" class="text-center text-neutral-400 py-4">Chưa có sản phẩm nào</td>
+                                                <th scope="col" class="w-10 text-center">STT</th>
+                                                <th scope="col" class="w-32">Mã SP</th>
+                                                <th scope="col" class="w-64">Tên SP</th>
+                                                <th scope="col" class="w-20">Độ dày</th>
+                                                <th scope="col" class="w-28">Chiều mở cánh</th>
+                                                <th scope="col" class="w-28">Màu nhôm</th>
+                                                <th scope="col" class="w-28">Màu kính</th>
+                                                <th scope="col" class="w-20">Dài</th>
+                                                <th scope="col" class="w-20">Rộng</th>
+                                                <th scope="col" class="w-20">Đơn vị</th>
+                                                <th scope="col" class="w-24">SL cánh</th>
+                                                <th scope="col" class="w-28">Khối lượng (m2)</th>
+                                                <th scope="col" class="w-28 text-end">Đơn giá</th>
+                                                <th scope="col" class="w-28 text-end">Thành tiền</th>
+                                                <th scope="col" class="w-44">Ghi chú</th>
                                             </tr>
-                                        @endforelse
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody>
+                                            @forelse($supply->glassItems as $itemIndex => $item)
+                                                <tr>
+                                                    <td class="text-center">{{ $itemIndex + 1 }}</td>
+                                                    <td><span class="text-neutral-500 text-xs">{{ $item->product_code ?? '—' }}</span></td>
+                                                    <td><span class="font-medium text-neutral-800">{{ $item->product_name }}</span></td>
+                                                    <td>{{ $item->thickness ?? '—' }}</td>
+                                                    <td>{{ $item->wing_opening_direction ?? '—' }}</td>
+                                                    <td>{{ $item->aluminum_color ?? '—' }}</td>
+                                                    <td>{{ $item->glass_color ?? '—' }}</td>
+                                                    <td>{{ $item->height ?? '—' }}</td>
+                                                    <td>{{ $item->width ?? '—' }}</td>
+                                                    <td>{{ $item->unit ?? 'Bộ' }}</td>
+                                                    <td>{{ $item->wing_quantity }}</td>
+                                                    <td>{{ $item->area_m2 ?? '—' }}</td>
+                                                    <td class="text-end font-medium text-neutral-600">
+                                                        {{ number_format($item->unit_price, 0, ',', '.') }}</td>
+                                                    <td class="text-end font-semibold text-neutral-800">
+                                                        {{ number_format($item->total_price, 0, ',', '.') }}</td>
+                                                    <td><span class="text-neutral-500 text-xs">{{ $item->notes ?? '—' }}</span></td>
+                                                </tr>
+                                            @empty
+                                                <tr>
+                                                    <td colspan="15" class="text-center text-neutral-400 py-4">Chưa có sản phẩm nào</td>
+                                                </tr>
+                                            @endforelse
+                                        </tbody>
+                                    </table>
+                                @endif
                             @else
                                 {{-- Acrylic items - expand to individual sheets with status --}}
                                 <table class="table bordered-table sm-table mb-0 min-w-[1700px]">
@@ -647,29 +690,28 @@
                     @endif
                 @endcan
                 @can('add order')
-                    @if(empty($acrylicOrder->relation_type))
-                        <div class="flex flex-col gap-2 w-full">
-                            <button type="button" onclick="openReworkModal()"
-                                class="w-full justify-center flex items-center gap-2 py-3 rounded-xl font-semibold bg-amber-500 hover:bg-amber-600 text-white shadow-sm text-sm transition-colors cursor-pointer">
-                                <iconify-icon icon="lucide:rotate-ccw" class="text-base"></iconify-icon> Tạo đơn sửa tấm
-                            </button>
-                            @if($acrylicOrder->type === 'acrylic')
-                                <a href="{{ route('orders.reuse-create', $acrylicOrder->id) }}"
-                                    class="w-full justify-center flex items-center gap-2 py-3 rounded-xl font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-sm text-sm transition-colors cursor-pointer">
-                                    <iconify-icon icon="lucide:layers" class="text-base"></iconify-icon> Tạo đơn tận dụng tấm
-                                </a>
-                            @endif
-                            <a href="{{ route('orders.additional-create', $acrylicOrder->id) }}"
-                                class="w-full justify-center flex items-center gap-2 py-3 rounded-xl font-semibold bg-success-600 hover:bg-success-700 text-white shadow-sm text-sm transition-colors cursor-pointer">
-                                <iconify-icon icon="lucide:plus-circle" class="text-base"></iconify-icon> Tạo đơn bổ sung
-                            </a>
-                        </div>
-                    @elseif($acrylicOrder->relation_type === 'rework')
-                        <a href="{{ route('orders.print-handwritten', $acrylicOrder->id) }}" target="_blank"
+                    <div class="flex flex-col gap-2 w-full">
+                        <button type="button" onclick="openReworkModal()"
                             class="w-full justify-center flex items-center gap-2 py-3 rounded-xl font-semibold bg-amber-500 hover:bg-amber-600 text-white shadow-sm text-sm transition-colors cursor-pointer">
-                            <iconify-icon icon="lucide:printer" class="text-base"></iconify-icon> In lệnh viết tay
+                            <iconify-icon icon="lucide:rotate-ccw" class="text-base"></iconify-icon> Tạo đơn sửa tấm
+                        </button>
+                        @if($acrylicOrder->type === 'acrylic')
+                            <a href="{{ route('orders.reuse-create', $acrylicOrder->id) }}"
+                                class="w-full justify-center flex items-center gap-2 py-3 rounded-xl font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-sm text-sm transition-colors cursor-pointer">
+                                <iconify-icon icon="lucide:layers" class="text-base"></iconify-icon> Tạo đơn tận dụng tấm
+                            </a>
+                        @endif
+                        <a href="{{ route('orders.additional-create', $acrylicOrder->id) }}"
+                            class="w-full justify-center flex items-center gap-2 py-3 rounded-xl font-semibold bg-success-600 hover:bg-success-700 text-white shadow-sm text-sm transition-colors cursor-pointer">
+                            <iconify-icon icon="lucide:plus-circle" class="text-base"></iconify-icon> Tạo đơn bổ sung
                         </a>
-                    @endif
+                        @if($acrylicOrder->relation_type === 'rework')
+                            <a href="{{ route('orders.print-handwritten', $acrylicOrder->id) }}" target="_blank"
+                                class="w-full justify-center flex items-center gap-2 py-3 rounded-xl font-semibold bg-amber-600 hover:bg-amber-700 text-white shadow-sm text-sm transition-colors cursor-pointer">
+                                <iconify-icon icon="lucide:printer" class="text-base"></iconify-icon> In lệnh viết tay
+                            </a>
+                        @endif
+                    </div>
                 @endcan
                 <button type="button" onclick="exportToExcel()"
                     class="w-full justify-center flex items-center gap-2 py-3 rounded-xl font-semibold border border-neutral-200 text-neutral-700 hover:bg-neutral-50 transition-colors shadow-sm text-sm bg-white cursor-pointer">

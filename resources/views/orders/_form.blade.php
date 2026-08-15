@@ -1620,6 +1620,9 @@ function getOrderColumnResizeGroupKey(table) {
         return table.dataset.orderResizeGroup;
     }
 
+    const supplyRow = table.closest('.order-supply-row');
+    const isAccessory = supplyRow && (supplyRow.dataset.isAccessory === '1' || supplyRow.querySelector('input[name*="[supply_name]"]')?.value === 'Phụ kiện');
+
     // Gom các bảng cùng loại để co giãn đồng bộ giữa bảng số 1, 2, 3...
     const container = table.closest('#order-supplies-container, #glass-supplies-container, #min-late-supplies-container');
     if (!container) return null;
@@ -1627,11 +1630,11 @@ function getOrderColumnResizeGroupKey(table) {
     let groupKey = null;
 
     if (container.id === 'order-supplies-container') {
-        groupKey = 'acrylic';
+        groupKey = isAccessory ? 'acrylic_accessory' : 'acrylic';
     } else if (container.id === 'glass-supplies-container') {
-        groupKey = 'glass';
+        groupKey = isAccessory ? 'glass_accessory' : 'glass';
     } else if (container.id === 'min-late-supplies-container') {
-        groupKey = 'min_late';
+        groupKey = isAccessory ? 'min_late_accessory' : 'min_late';
     }
 
     if (groupKey) {
@@ -1732,8 +1735,12 @@ function mapOrderColumnResizeHeader(table) {
     Array.from(thead.rows).forEach((row, rowIndex) => {
         let columnIndex = 0;
 
-        // Map header có rowspan/colspan về chỉ số cột thật của tbody.
-        Array.from(row.cells).forEach((cell) => {
+        // Chỉ map các cell hiển thị (bỏ qua cell bị ẩn display: none hoặc class hidden)
+        const visibleCells = Array.from(row.cells).filter(cell => {
+            return !cell.classList.contains('hidden') && cell.style.display !== 'none';
+        });
+
+        visibleCells.forEach((cell) => {
             while (occupiedColumns[columnIndex] > rowIndex) {
                 columnIndex += 1;
             }
@@ -1791,7 +1798,11 @@ function tagOrderColumnResizeBody(table) {
         Array.from(tbody.rows).forEach((row) => {
             let columnIndex = 0;
 
-            Array.from(row.cells).forEach((cell) => {
+            const visibleCells = Array.from(row.cells).filter(cell => {
+                return !cell.classList.contains('hidden') && cell.style.display !== 'none';
+            });
+
+            visibleCells.forEach((cell) => {
                 const colspan = Math.max(1, cell.colSpan || 1);
 
                 if (colspan === 1) {

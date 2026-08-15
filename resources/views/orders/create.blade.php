@@ -46,6 +46,7 @@
                             'linkText' => 'text-danger-600',
                             'badge' => 'bg-danger-100 text-danger-600',
                             'button' => 'bg-danger-600 hover:bg-danger-700 text-white',
+                            'reworkOutline' => 'border border-danger-600 text-danger-600 hover:bg-danger-50 bg-transparent',
                         ],
                         'glass' => [
                             'icon' => 'solar:settings-bold',
@@ -54,6 +55,7 @@
                             'linkText' => 'text-primary-600',
                             'badge' => 'bg-primary-100 text-primary-600',
                             'button' => 'bg-primary-600 hover:bg-primary-700 text-white',
+                            'reworkOutline' => 'border border-primary-600 text-primary-600 hover:bg-primary-50 bg-transparent',
                         ],
                         'min_late' => [
                             'icon' => 'solar:document-text-bold',
@@ -62,6 +64,7 @@
                             'linkText' => 'text-success-600',
                             'badge' => 'bg-success-100 text-success-600',
                             'button' => 'bg-success-600 hover:bg-success-700 text-white',
+                            'reworkOutline' => 'border border-success-600 text-success-600 hover:bg-success-50 bg-transparent',
                         ],
                     ][$type];
                 @endphp
@@ -75,15 +78,20 @@
                                     class="h5 mb-0 order-type-card__icon-symbol"></iconify-icon>
                             </div>
                             <h6 class="mb-2 text-neutral-900 fw-bold order-type-card__title">{{ $label }}</h6>
-                            <p class="card-text mb-2 text-secondary-light order-type-card__description">
+                            <p class="card-text mb-2 text-secondary-light order-type-card__description text-xs leading-relaxed">
                                 {{ $typeDescriptions[$type] ?? '' }}
                             </p>
-                            <div class="mt-auto pt-4 order-type-card__button-wrap flex justify-start">
+                            <div class="mt-auto pt-4 order-type-card__button-wrap flex flex-col gap-2.5 w-full">
                                 <a href="{{ route('orders.create.type', $type) }}"
-                                    class="btn {{ $cardMeta['button'] }} rounded-lg px-5 py-[11px] inline-flex items-center justify-center gap-2 order-type-card__button">
+                                    class="btn {{ $cardMeta['button'] }} rounded-lg px-5 py-[11px] inline-flex items-center justify-center gap-2 order-type-card__button w-full font-bold shadow-sm transition-all duration-200 hover:scale-[1.01]">
                                     Chọn loại này
                                     <iconify-icon icon="iconamoon:arrow-right-2"
                                         class="text-xl order-type-card__button-icon"></iconify-icon>
+                                </a>
+                                <a href="{{ route('orders.create.type', $type) }}?relation_type=rework"
+                                    class="btn {{ $cardMeta['reworkOutline'] }} rounded-lg px-5 py-[11px] inline-flex items-center justify-center gap-2 order-type-card__button w-full font-bold shadow-sm transition-all duration-200 hover:scale-[1.01]">
+                                    Tạo đơn sửa tấm
+                                    <iconify-icon icon="lucide:wrench" class="text-xl"></iconify-icon>
                                 </a>
                             </div>
                         </div>
@@ -93,7 +101,7 @@
         </div>
         <style>
             .order-type-card__body {
-                height: 300px;
+                min-height: 330px;
             }
         </style>
     @endif

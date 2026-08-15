@@ -1,3 +1,7 @@
+@php
+    $hasPaymentDetails = isset($acrylicOrder) && isset($acrylicOrder->paymentDetails) && $acrylicOrder->paymentDetails->count() > 0;
+    $isRework = isset($acrylicOrder) && $acrylicOrder->relation_type === 'rework';
+@endphp
 {{-- Order Supplies & Items Section Card (Min Late) --}}
 <style>
     /* Hide dropdown arrow in very narrow select boxes for a clean, centered look */
@@ -165,6 +169,15 @@
                 <iconify-icon icon="lucide:file-spreadsheet" class="text-lg"></iconify-icon> <span class="mobile-hide-text">Nhập từ Excel</span>
             </button>
             <input type="file" id="minLateExcelFileInput" accept=".xlsx, .xls" style="display: none;">
+            @if($hasPaymentDetails)
+                <button type="button" id="toggle-payment-details-btn" onclick="togglePaymentDetailsSection()" class="btn btn-sm bg-danger-50 text-danger-600 hover:bg-danger-100 border border-danger-200 rounded-lg flex items-center gap-1">
+                    <iconify-icon icon="lucide:trash-2" class="text-lg"></iconify-icon> <span>Xóa chi tiết hóa đơn</span>
+                </button>
+            @else
+                <button type="button" id="toggle-payment-details-btn" onclick="togglePaymentDetailsSection()" class="btn btn-sm bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 rounded-lg flex items-center gap-1">
+                    <iconify-icon icon="lucide:receipt" class="text-lg"></iconify-icon> <span>Thêm chi tiết hóa đơn</span>
+                </button>
+            @endif
             <button type="button" onclick="addMinLateOrderSupply()" class="btn btn-sm btn-primary rounded-lg flex items-center gap-1">
                 <iconify-icon icon="lucide:plus" class="text-lg"></iconify-icon> <span class="mobile-hide-text">Thêm vật tư</span>
             </button>
@@ -253,6 +266,10 @@
                                 <th scope="col" style="width: 160px; min-width: 160px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Mã hàng</th>
                                 <th scope="col" style="min-width: 180px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên hàng hóa, dịch vụ</th>
                                 <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Độ dày</th>
+                                @if($isRework)
+                                    <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase text-center bg-yellow-50/50">Cao (cũ)</th>
+                                    <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase text-center bg-yellow-50/50">Rộng (cũ)</th>
+                                @endif
                                 <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="align-middle border border-neutral-200 bg-yellow-100/70 font-bold text-xs text-neutral-600 uppercase text-center">Cao (vân)</th>
                                 <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase text-center">Rộng</th>
                                 <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số lượng</th>
@@ -278,6 +295,10 @@
                                 <td class="border border-neutral-200"></td>
                                 <td class="border border-neutral-200"></td>
                                 <td class="border border-neutral-200"></td>
+                                @if($isRework)
+                                    <td class="border border-neutral-200"></td>
+                                    <td class="border border-neutral-200"></td>
+                                @endif
                                 <td class="border border-neutral-200"></td>
                                 <td class="border border-neutral-200"></td>
                                 <td class="border border-neutral-200 text-center" data-summary-field="quantity" style="font-size: 80% !important;">0</td>
@@ -311,6 +332,9 @@
                                 if (is_string($gluing)) {
                                     $gluing = json_decode($gluing, true) ?? [];
                                 }
+                                $oldSizeParts = explode(' x ', $item->old_size ?? '');
+                                $oldHeight = isset($oldSizeParts[0]) ? trim($oldSizeParts[0]) : '';
+                                $oldWidth = isset($oldSizeParts[1]) ? trim($oldSizeParts[1]) : '';
                             @endphp
                             <tr class="order-item-row" data-item-id="{{ $item->id }}">
                                 <td style="width: 45px; min-width: 45px; " class="sticky-stt-td text-center align-middle border border-neutral-200">
@@ -325,6 +349,14 @@
                                 <td style="width: 100px; min-width: 100px;" class="border border-neutral-200">
                                     <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][thickness]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs text-center px-1" placeholder="Độ dày" value="{{ $item->thickness }}">
                                 </td>
+                                @if($isRework)
+                                    <td style="width: 100px; min-width: 100px;" class="border border-neutral-200">
+                                        <input type="text" class="old-height-input form-control form-control-sm rounded-lg {{ empty($acrylicOrder->parent_id) ? '' : 'bg-neutral-100 border-neutral-200 cursor-not-allowed' }} text-center px-1 py-1 h-8 text-xs font-semibold text-neutral-600" {{ empty($acrylicOrder->parent_id) ? '' : 'readonly' }} value="{{ $oldHeight }}" oninput="updateOldSize(this)">
+                                    </td>
+                                    <td style="width: 100px; min-width: 100px;" class="border border-neutral-200">
+                                        <input type="text" class="old-width-input form-control form-control-sm rounded-lg {{ empty($acrylicOrder->parent_id) ? '' : 'bg-neutral-100 border-neutral-200 cursor-not-allowed' }} text-center px-1 py-1 h-8 text-xs font-semibold text-neutral-600" {{ empty($acrylicOrder->parent_id) ? '' : 'readonly' }} value="{{ $oldWidth }}" oninput="updateOldSize(this)">
+                                    </td>
+                                @endif
                                 <td style="width: 200px; min-width: 200px; " class="border border-neutral-200">
                                     <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][height]" class="form-control form-control-sm rounded-lg border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500 bg-yellow-50/30 text-center px-1 py-1 h-8 text-xs" placeholder="Cao (vân)" step="any" value="{{ $size['height'] ?? '' }}">
                                 </td>
@@ -466,7 +498,7 @@
 </div>
 
 {{-- Bảng chi tiết hóa đơn dùng chung các tính năng hiển thị như bảng vật tư --}}
-<div class="order-supplies-popup bg-white border border-neutral-200 rounded-xl p-6 shadow-sm mt-6 relative pt-8" data-order-supplies-zoom-panel data-order-supplies-storage-key="min_late_payment" data-order-supplies-zoom="100" data-order-supplies-visible-rows-disabled="1">
+<div id="payment-details-section" class="order-supplies-popup bg-white border border-neutral-200 rounded-xl p-6 shadow-sm mt-6 relative pt-8" style="{{ $hasPaymentDetails ? '' : 'display: none;' }}" data-order-supplies-zoom-panel data-order-supplies-storage-key="min_late_payment" data-order-supplies-zoom="100" data-order-supplies-visible-rows-disabled="1">
     <div class="order-supplies-header flex items-center justify-between border-b border-neutral-100 pb-4 mb-5">
         <div class="absolute -top-3.5 left-6 bg-white px-3 flex items-center gap-2 z-10">
             <iconify-icon icon="lucide:receipt" class="text-xl text-primary-500"></iconify-icon>
@@ -556,8 +588,27 @@
 </div>
 
 <script>
+window.isReworkOrder = @json(isset($acrylicOrder) && $acrylicOrder->relation_type === 'rework');
+window.isIndependentRework = @json(isset($acrylicOrder) && $acrylicOrder->relation_type === 'rework' && empty($acrylicOrder->parent_id));
 window.minLatePricesData = @json($minLatePrices ?? []);
 let minLateSupplyIndex = {{ $minLateSupplyIndex ?? 0 }};
+
+function updateOldSize(element) {
+    const row = element.closest('.order-item-row');
+    if (!row) return;
+    const oldHeightInput = row.querySelector('.old-height-input');
+    const oldWidthInput = row.querySelector('.old-width-input');
+    const hiddenOldSize = row.querySelector('input[name*="[old_size]"]');
+    if (oldHeightInput && oldWidthInput && hiddenOldSize) {
+        const height = oldHeightInput.value.trim();
+        const width = oldWidthInput.value.trim();
+        if (height || width) {
+            hiddenOldSize.value = height + ' x ' + width;
+        } else {
+            hiddenOldSize.value = '';
+        }
+    }
+}
 
 function addMinLateOrderSupply() {
     const container = document.getElementById('min-late-supplies-container');
@@ -588,6 +639,10 @@ function addMinLateOrderSupply() {
                         <th scope="col" style="width: 160px; min-width: 160px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Mã hàng</th>
                         <th scope="col" style="min-width: 180px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên hàng hóa, dịch vụ</th>
                         <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Độ dày</th>
+                        ${window.isReworkOrder ? `
+                            <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase text-center bg-yellow-50/50">Cao (cũ)</th>
+                            <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase text-center bg-yellow-50/50">Rộng (cũ)</th>
+                        ` : ''}
                         <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="align-middle border border-neutral-200 bg-yellow-100/70 font-bold text-xs text-neutral-600 uppercase text-center">Cao (vân)</th>
                         <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase text-center">Rộng</th>
                         <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số lượng</th>
@@ -613,6 +668,10 @@ function addMinLateOrderSupply() {
                         <td class="border border-neutral-200"></td>
                         <td class="border border-neutral-200"></td>
                         <td class="border border-neutral-200"></td>
+                        ${window.isReworkOrder ? `
+                            <td class="border border-neutral-200"></td>
+                            <td class="border border-neutral-200"></td>
+                        ` : ''}
                         <td class="border border-neutral-200"></td>
                         <td class="border border-neutral-200"></td>
                         <td class="border border-neutral-200 text-center" data-summary-field="quantity" style="font-size: 80% !important;">0</td>
@@ -686,6 +745,14 @@ function addMinLateOrderItem(button, isInitial = false, insertAfterRow = null) {
         <td style="width: 100px; min-width: 100px;" class="border border-neutral-200">
             <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][thickness]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs text-center px-1" placeholder="Độ dày" value="${lastData ? lastData.thickness : ''}">
         </td>
+        ${window.isReworkOrder ? `
+        <td style="width: 100px; min-width: 100px;" class="border border-neutral-200">
+            <input type="text" class="old-height-input form-control form-control-sm rounded-lg ${window.isIndependentRework ? '' : 'bg-neutral-100 border-neutral-200 cursor-not-allowed'} text-center px-1 py-1 h-8 text-xs font-semibold text-neutral-600" ${window.isIndependentRework ? '' : 'readonly'} value="" oninput="updateOldSize(this)">
+        </td>
+        <td style="width: 100px; min-width: 100px;" class="border border-neutral-200">
+            <input type="text" class="old-width-input form-control form-control-sm rounded-lg ${window.isIndependentRework ? '' : 'bg-neutral-100 border-neutral-200 cursor-not-allowed'} text-center px-1 py-1 h-8 text-xs font-semibold text-neutral-600" ${window.isIndependentRework ? '' : 'readonly'} value="" oninput="updateOldSize(this)">
+        </td>
+        ` : ''}
         <td style="width: 200px; min-width: 200px; " class="border border-neutral-200">
             <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][height]" class="form-control form-control-sm rounded-lg border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500 bg-yellow-50/30 text-center px-1 py-1 h-8 text-xs" placeholder="Cao (vân)" step="any" value="${lastData ? lastData.height : ''}">
         </td>
@@ -801,6 +868,7 @@ function addMinLateOrderItem(button, isInitial = false, insertAfterRow = null) {
                     <iconify-icon icon="lucide:trash-2" class="text-base"></iconify-icon>
                 </button>
             </div>
+            <input type="hidden" name="supplies[${supplyIndex}][items][${itemIndex}][old_size]" value="">
         </td>
     `;
     
@@ -1678,14 +1746,7 @@ document.addEventListener('DOMContentLoaded', function() {
         initPaymentQuantitySuggestions(input);
     });
 
-    // Ensure at least one payment detail row exists on page load if none loaded (only on create page, NOT on edit page)
-    const isEditPage = @json(request()->routeIs('orders.edit'));
-    const container = document.getElementById('payment-details-container');
-    if (!isEditPage && container && container.querySelectorAll('.payment-detail-row').length === 0) {
-        addPaymentDetail();
-    } else {
-        updatePaymentDetailIndexes();
-    }
+    updatePaymentDetailIndexes();
 
     const minLateBackdrop = document.getElementById('min-late-excel-import-backdrop');
     const minLateModal = document.getElementById('min-late-excel-import-modal');
@@ -2093,6 +2154,13 @@ function confirmMinLateExcelImport() {
 
     // Import Services
     if (typeof _minLateExcelServices !== 'undefined' && _minLateExcelServices.length > 0) {
+        const section = document.getElementById('payment-details-section');
+        const btn = document.getElementById('toggle-payment-details-btn');
+        if (section && btn) {
+            section.style.display = 'block';
+            btn.className = 'btn btn-sm bg-danger-50 text-danger-600 hover:bg-danger-100 border border-danger-200 rounded-lg flex items-center gap-1';
+            btn.innerHTML = '<iconify-icon icon="lucide:trash-2" class="text-lg"></iconify-icon> <span>Xóa chi tiết hóa đơn</span>';
+        }
         _minLateExcelServices.forEach(srv => {
             if(typeof addPaymentDetail === 'function') {
                 addPaymentDetail();
@@ -2149,6 +2217,38 @@ function confirmMinLateExcelImport() {
     }
 
     closeMinLateExcelImport();
+}
+
+function togglePaymentDetailsSection() {
+    const section = document.getElementById('payment-details-section');
+    const btn = document.getElementById('toggle-payment-details-btn');
+    const container = document.getElementById('payment-details-container');
+    if (!section || !btn) return;
+
+    if (section.style.display === 'none') {
+        section.style.display = 'block';
+        btn.className = 'btn btn-sm bg-danger-50 text-danger-600 hover:bg-danger-100 border border-danger-200 rounded-lg flex items-center gap-1';
+        btn.innerHTML = '<iconify-icon icon="lucide:trash-2" class="text-lg"></iconify-icon> <span>Xóa chi tiết hóa đơn</span>';
+        
+        if (container && container.querySelectorAll('.payment-detail-row').length === 0) {
+            addPaymentDetail();
+        }
+    } else {
+        const rows = container ? container.querySelectorAll('.payment-detail-row') : [];
+        if (rows.length > 0) {
+            if (!confirm('Bạn có chắc chắn muốn xóa toàn bộ chi tiết hóa đơn?')) {
+                return;
+            }
+        }
+        section.style.display = 'none';
+        btn.className = 'btn btn-sm bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 rounded-lg flex items-center gap-1';
+        btn.innerHTML = '<iconify-icon icon="lucide:receipt" class="text-lg"></iconify-icon> <span>Thêm chi tiết hóa đơn</span>';
+        
+        if (container) {
+            container.innerHTML = '';
+        }
+        updateOrderSummary();
+    }
 }
 </script>
 

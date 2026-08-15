@@ -1,3 +1,7 @@
+@php
+    $hasPaymentDetails = isset($acrylicOrder) && isset($acrylicOrder->paymentDetails) && $acrylicOrder->paymentDetails->count() > 0;
+    $isRework = isset($acrylicOrder) && $acrylicOrder->relation_type === 'rework';
+@endphp
 {{-- Order Supplies & Items Section Card (Glass) --}}
 <style>
     /* Wing Direction Label styling */
@@ -279,6 +283,15 @@
                 <span class="mobile-hide-text">Nhập Excel</span>
             </button>
             <input type="file" id="glass-excel-file-input" accept=".xlsx,.xls,.csv" style="display:none;">
+            @if($hasPaymentDetails)
+                <button type="button" id="toggle-payment-details-btn" onclick="togglePaymentDetailsSection()" class="btn btn-sm bg-danger-50 text-danger-600 hover:bg-danger-100 border border-danger-200 rounded-lg flex items-center gap-1">
+                    <iconify-icon icon="lucide:trash-2" class="text-lg"></iconify-icon> <span>Xóa chi tiết hóa đơn</span>
+                </button>
+            @else
+                <button type="button" id="toggle-payment-details-btn" onclick="togglePaymentDetailsSection()" class="btn btn-sm bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 rounded-lg flex items-center gap-1">
+                    <iconify-icon icon="lucide:receipt" class="text-lg"></iconify-icon> <span>Thêm chi tiết hóa đơn</span>
+                </button>
+            @endif
             <button type="button" onclick="addGlassOrderSupply(false)" class="btn btn-sm btn-primary rounded-lg flex items-center gap-1">
                 <iconify-icon icon="lucide:plus" class="text-lg"></iconify-icon> <span class="mobile-hide-text">Thêm vật tư</span>
             </button>
@@ -373,21 +386,27 @@
                 </div>
                 <div class="overflow-x-auto pb-3" data-order-supplies-table-scroll>
                     <div class="order-supplies-table-zoom-wrap" data-order-supplies-table-zoom-wrap>
-                    <table class="table bordered-table sm-table mb-0 min-w-[1200px] border border-neutral-200">
+                    <table class="table bordered-table sm-table mb-0 border border-neutral-200 {{ $isAccessory ? 'min-w-[800px]' : 'min-w-[1200px]' }}">
                         <thead>
                             <tr class="bg-neutral-50 text-center">
                                 <th scope="col" style="width: 30px; min-width: 30px; white-space: nowrap;" class="sticky-stt-th align-middle text-center border border-neutral-200 font-bold text-xs text-neutral-600 uppercase"><span class="order-stt-header-label">STT</span></th>
                                 <th scope="col" style="width: 110px; min-width: 110px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Mã SP</th>
                                 <th scope="col" style="width: 150px; min-width: 150px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên sản phẩm <span class="text-danger-500">*</span></th>
-                                <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Độ dày</th>
-                                <th scope="col" style="width: 150px; min-width: 150px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Chiều mở cánh</th>
-                                <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Màu nhôm</th>
-                                <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Màu kính</th>
-                                <th scope="col" style="width: 130px; min-width: 130px; white-space: nowrap;" class="align-middle border border-neutral-200 bg-yellow-100/70 font-bold text-xs text-neutral-600 uppercase text-center">Dài cánh (mm)</th>
-                                <th scope="col" style="width: 130px; min-width: 130px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase text-center">Rộng cánh (mm)</th>
-                                <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn vị</th>
-                                <th scope="col" style="width: 50px; min-width: 50px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số lượng cánh <span class="text-danger-500">*</span></th>
-                                <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Khối lượng (m2)</th>
+                                <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase {{ $isAccessory ? 'hidden' : '' }}">Độ dày</th>
+                                <th scope="col" style="width: 150px; min-width: 150px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase {{ $isAccessory ? 'hidden' : '' }}">Chiều mở cánh</th>
+                                <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase {{ $isAccessory ? 'hidden' : '' }}">Màu nhôm</th>
+                                <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase {{ $isAccessory ? 'hidden' : '' }}">Màu kính</th>
+                                @if($isRework)
+                                    <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase text-center bg-yellow-50/50 {{ $isAccessory ? 'hidden' : '' }}">Dài (cũ)</th>
+                                    <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase text-center bg-yellow-50/50 {{ $isAccessory ? 'hidden' : '' }}">Rộng (cũ)</th>
+                                @endif
+                                <th scope="col" style="width: 130px; min-width: 130px; white-space: nowrap;" class="align-middle border border-neutral-200 bg-yellow-100/70 font-bold text-xs text-neutral-600 uppercase text-center {{ $isAccessory ? 'hidden' : '' }}">Dài cánh (mm)</th>
+                                <th scope="col" style="width: 130px; min-width: 130px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase text-center {{ $isAccessory ? 'hidden' : '' }}">Rộng cánh (mm)</th>
+                                <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase {{ $isAccessory ? 'hidden' : '' }}">Đơn vị</th>
+                                <th scope="col" style="width: 50px; min-width: 50px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">
+                                    {{ $isAccessory ? 'Số lượng' : 'Số lượng cánh' }} <span class="text-danger-500">*</span>
+                                </th>
+                                <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase {{ $isAccessory ? 'hidden' : '' }}">Khối lượng (m2)</th>
                                 <th scope="col" style="width: 80px; min-width: 80px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá <span class="text-danger-500">*</span></th>
                                 <th scope="col" style="width: 90px; min-width: 90px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Thành tiền</th>
                                 <th scope="col" style="min-width: 120px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Ghi chú</th>
@@ -397,25 +416,33 @@
                                 <td class="border border-neutral-200 text-center sticky-stt-td" style="font-size: 80% !important; background-color: #f1f5f9;">TỔNG</td>
                                 <td class="border border-neutral-200"></td>
                                 <td class="border border-neutral-200"></td>
-                                <td class="border border-neutral-200"></td>
-                                <td class="border border-neutral-200"></td>
-                                <td class="border border-neutral-200"></td>
-                                <td class="border border-neutral-200"></td>
-                                <td class="border border-neutral-200"></td>
-                                <td class="border border-neutral-200"></td>
-                                <td class="border border-neutral-200"></td>
+                                <td class="border border-neutral-200 {{ $isAccessory ? 'hidden' : '' }}"></td>
+                                <td class="border border-neutral-200 {{ $isAccessory ? 'hidden' : '' }}"></td>
+                                <td class="border border-neutral-200 {{ $isAccessory ? 'hidden' : '' }}"></td>
+                                <td class="border border-neutral-200 {{ $isAccessory ? 'hidden' : '' }}"></td>
+                                @if($isRework)
+                                    <td class="border border-neutral-200 {{ $isAccessory ? 'hidden' : '' }}"></td>
+                                    <td class="border border-neutral-200 {{ $isAccessory ? 'hidden' : '' }}"></td>
+                                @endif
+                                <td class="border border-neutral-200 {{ $isAccessory ? 'hidden' : '' }}"></td>
+                                <td class="border border-neutral-200 {{ $isAccessory ? 'hidden' : '' }}"></td>
+                                <td class="border border-neutral-200 {{ $isAccessory ? 'hidden' : '' }}"></td>
                                 <td class="border border-neutral-200 text-center" data-summary-field="quantity" style="font-size: 80% !important;">0</td>
-                                <td class="border border-neutral-200 text-center" data-summary-field="weight" style="font-size: 80% !important;">0</td>
+                                <td class="border border-neutral-200 text-center {{ $isAccessory ? 'hidden' : '' }}" data-summary-field="weight" style="font-size: 80% !important;">0</td>
                                 <td class="border border-neutral-200"></td>
                                 <td class="border border-neutral-200 text-center" data-summary-field="total_price" style="font-size: 80% !important;">0</td>
                                 <td class="border border-neutral-200"></td>
                                 <td class="border border-neutral-200" style="position: sticky; right: 0; z-index: 3; background-color: #f1f5f9;"></td>
+                            </tr>
                         </thead>
                         <tbody class="supply-items-container" data-supply-index="{{ $supplyIndex }}">
                             @if(isset($supply->glassItems) && $supply->glassItems->count() > 0)
                                 @foreach($supply->glassItems as $itemIndex => $item)
                                 @php
                                     $isLaborRow = stripos($item->notes ?? '', 'công') !== false || stripos($item->product_name ?? '', 'công') !== false;
+                                    $oldSizeParts = explode(' x ', $item->old_size ?? '');
+                                    $oldHeight = isset($oldSizeParts[0]) ? trim($oldSizeParts[0]) : '';
+                                    $oldWidth = isset($oldSizeParts[1]) ? trim($oldSizeParts[1]) : '';
                                 @endphp
                                 <tr class="order-item-row" data-item-id="{{ $item->id }}">
                                     <td style="width: 45px; min-width: 45px; " class="sticky-stt-td text-center align-middle border border-neutral-200">
@@ -443,10 +470,10 @@
                                     <td style="min-width: 220px;" class="border border-neutral-200">
                                         <textarea name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][product_name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-xs w-full" rows="3" placeholder="Tên sản phẩm">{{ $item->product_name }}</textarea>
                                     </td>
-                                    <td style="width: 100px; min-width: 100px;" class="border border-neutral-200">
+                                    <td style="width: 100px; min-width: 100px;" class="border border-neutral-200 {{ $isAccessory ? 'hidden' : '' }}">
                                         <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][thickness]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs text-center px-1" placeholder="Độ dày" value="{{ $item->thickness }}">
                                     </td>
-                                    <td style="width: 150px; min-width: 150px; " class="border border-neutral-200 p-1">
+                                    <td style="width: 150px; min-width: 150px; " class="border border-neutral-200 p-1 {{ $isAccessory ? 'hidden' : '' }}">
                                         <div class="wing-direction-container flex items-center gap-1 w-full">
                                             <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][wing_opening_direction]" class="actual-wing-direction" value="{{ $item->wing_opening_direction }}">
                                             <div class="flex items-center gap-1 w-1/2" title="Số lượng cánh mở Trái">
@@ -459,25 +486,33 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
+                                    <td style="width: 100px; min-width: 100px; " class="border border-neutral-200 {{ $isAccessory ? 'hidden' : '' }}">
                                         <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][aluminum_color]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs text-center px-1" placeholder="Màu nhôm" value="{{ $item->aluminum_color }}">
                                     </td>
-                                    <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
+                                    <td style="width: 100px; min-width: 100px; " class="border border-neutral-200 {{ $isAccessory ? 'hidden' : '' }}">
                                         <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][glass_color]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs text-center px-1" placeholder="Màu kính" value="{{ $item->glass_color }}">
                                     </td>
-                                    <td style="width: 200px; min-width: 200px; " class="border border-neutral-200">
+                                    @if($isRework)
+                                        <td style="width: 100px; min-width: 100px;" class="border border-neutral-200 {{ $isAccessory ? 'hidden' : '' }}">
+                                            <input type="text" class="old-height-input form-control form-control-sm rounded-lg {{ empty($acrylicOrder->parent_id) ? '' : 'bg-neutral-100 border-neutral-200 cursor-not-allowed' }} text-center px-1 py-1 h-8 text-xs font-semibold text-neutral-600" {{ empty($acrylicOrder->parent_id) ? '' : 'readonly' }} value="{{ $oldHeight }}" oninput="updateOldSize(this)">
+                                        </td>
+                                        <td style="width: 100px; min-width: 100px;" class="border border-neutral-200 {{ $isAccessory ? 'hidden' : '' }}">
+                                            <input type="text" class="old-width-input form-control form-control-sm rounded-lg {{ empty($acrylicOrder->parent_id) ? '' : 'bg-neutral-100 border-neutral-200 cursor-not-allowed' }} text-center px-1 py-1 h-8 text-xs font-semibold text-neutral-600" {{ empty($acrylicOrder->parent_id) ? '' : 'readonly' }} value="{{ $oldWidth }}" oninput="updateOldSize(this)">
+                                        </td>
+                                    @endif
+                                    <td style="width: 200px; min-width: 200px; " class="border border-neutral-200 {{ $isAccessory ? 'hidden' : '' }}">
                                         <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][height]" class="form-control form-control-sm rounded-lg border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500 bg-yellow-50/30 text-center px-1 py-1 h-8 text-xs" placeholder="Dài cánh (mm)" step="any" value="{{ $item->height }}">
                                     </td>
-                                    <td style="width: 200px; min-width: 200px; " class="border border-neutral-200">
+                                    <td style="width: 200px; min-width: 200px; " class="border border-neutral-200 {{ $isAccessory ? 'hidden' : '' }}">
                                         <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][width]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Rộng cánh (mm)" step="any" value="{{ $item->width }}">
                                     </td>
-                                    <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
+                                    <td style="width: 100px; min-width: 100px; " class="border border-neutral-200 {{ $isAccessory ? 'hidden' : '' }}">
                                         <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][unit]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs px-1" placeholder="Đơn vị" value="{{ $item->unit ?? 'Bộ' }}">
                                     </td>
                                     <td style="width: 70px; min-width: 70px; " class="border border-neutral-200">
-                                        <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][wing_quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Số lượng cánh" min="1" required value="{{ $item->wing_quantity ?? 1 }}">
+                                        <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][wing_quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Số lượng" min="1" required value="{{ $item->wing_quantity ?? 1 }}">
                                     </td>
-                                    <td style="width: 100px; min-width: 100px; " class="border border-neutral-200 relative">
+                                    <td style="width: 100px; min-width: 100px; " class="border border-neutral-200 relative {{ $isAccessory ? 'hidden' : '' }}">
                                         <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][area_m2]" class="real-area-input" value="{{ $item->area_m2 }}">
                                         <input type="text" class="display-area-input form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" 
                                             placeholder="Khối lượng (m2)" 
@@ -530,9 +565,8 @@
     </div>
 </div>
 
-@if(isset($acrylicOrder) && $acrylicOrder->relation_type === 'rework')
 {{-- Bảng chi tiết hóa đơn dịch vụ --}}
-<div class="order-supplies-popup bg-white border border-neutral-200 rounded-xl p-6 shadow-sm mt-6 relative pt-8" data-order-supplies-zoom-panel data-order-supplies-storage-key="min_late_payment" data-order-supplies-zoom="100" data-order-supplies-visible-rows-disabled="1">
+<div id="payment-details-section" class="order-supplies-popup bg-white border border-neutral-200 rounded-xl p-6 shadow-sm mt-6 relative pt-8" style="{{ $hasPaymentDetails ? '' : 'display: none;' }}" data-order-supplies-zoom-panel data-order-supplies-storage-key="min_late_payment" data-order-supplies-zoom="100" data-order-supplies-visible-rows-disabled="1">
     <div class="order-supplies-header flex items-center justify-between border-b border-neutral-100 pb-4 mb-5">
         <div class="absolute -top-3.5 left-6 bg-white px-3 flex items-center gap-2 z-10">
             <iconify-icon icon="lucide:receipt" class="text-xl text-primary-500"></iconify-icon>
@@ -596,11 +630,29 @@
         </div>
     </div>
 </div>
-@endif
 
 <script>
+window.isReworkOrder = @json(isset($acrylicOrder) && $acrylicOrder->relation_type === 'rework');
+window.isIndependentRework = @json(isset($acrylicOrder) && $acrylicOrder->relation_type === 'rework' && empty($acrylicOrder->parent_id));
 window.glassPricesData = @json($glassPrices ?? []);
 let glassSupplyIndex = {{ $glassSupplyIndex ?? 0 }};
+
+function updateOldSize(element) {
+    const row = element.closest('.order-item-row');
+    if (!row) return;
+    const oldHeightInput = row.querySelector('.old-height-input');
+    const oldWidthInput = row.querySelector('.old-width-input');
+    const hiddenOldSize = row.querySelector('input[name*="[old_size]"]');
+    if (oldHeightInput && oldWidthInput && hiddenOldSize) {
+        const height = oldHeightInput.value.trim();
+        const width = oldWidthInput.value.trim();
+        if (height || width) {
+            hiddenOldSize.value = height + ' x ' + width;
+        } else {
+            hiddenOldSize.value = '';
+        }
+    }
+}
 
 function addGlassOrderSupply(isAccessory = false) {
     const container = document.getElementById('glass-supplies-container');
@@ -645,21 +697,25 @@ function addGlassOrderSupply(isAccessory = false) {
         </div>
         <div class="overflow-x-auto pb-3" data-order-supplies-table-scroll>
             <div class="order-supplies-table-zoom-wrap" data-order-supplies-table-zoom-wrap>
-            <table class="table bordered-table sm-table mb-0 min-w-[1800px] border border-neutral-200">
+            <table class="table bordered-table sm-table mb-0 border border-neutral-200 ${isAccessory ? 'min-w-[800px]' : 'min-w-[1800px]'}">
                 <thead>
                     <tr class="bg-neutral-50 text-center">
                         <th scope="col" style="width: 45px; min-width: 45px; white-space: nowrap;" class="sticky-stt-th align-middle text-center border border-neutral-200 font-bold text-xs text-neutral-600 uppercase"><span class="order-stt-header-label">STT</span></th>
                         <th scope="col" style="width: 160px; min-width: 160px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Mã SP</th>
                         <th scope="col" style="min-width: 220px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên sản phẩm <span class="text-danger-500">*</span></th>
-                        <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Độ dày</th>
-                        <th scope="col" style="width: 110px; min-width: 110px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Chiều mở cánh</th>
-                        <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Màu nhôm</th>
-                        <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Màu kính</th>
-                        <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="align-middle border border-neutral-200 bg-yellow-100/70 font-bold text-xs text-neutral-600 uppercase text-center">Dài cánh (mm)</th>
-                        <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase text-center">Rộng cánh (mm)</th>
-                        <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn vị</th>
-                        <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số lượng cánh <span class="text-danger-500">*</span></th>
-                        <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Khối lượng (m2)</th>
+                        <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase ${isAccessory ? 'hidden' : ''}">Độ dày</th>
+                        <th scope="col" style="width: 110px; min-width: 110px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase ${isAccessory ? 'hidden' : ''}">Chiều mở cánh</th>
+                        <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase ${isAccessory ? 'hidden' : ''}">Màu nhôm</th>
+                        <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase ${isAccessory ? 'hidden' : ''}">Màu kính</th>
+                        ${window.isReworkOrder ? `
+                            <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase text-center bg-yellow-50/50 ${isAccessory ? 'hidden' : ''}">Dài (cũ)</th>
+                            <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase text-center bg-yellow-50/50 ${isAccessory ? 'hidden' : ''}">Rộng (cũ)</th>
+                        ` : ''}
+                        <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="align-middle border border-neutral-200 bg-yellow-100/70 font-bold text-xs text-neutral-600 uppercase text-center ${isAccessory ? 'hidden' : ''}">Dài cánh (mm)</th>
+                        <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase text-center ${isAccessory ? 'hidden' : ''}">Rộng cánh (mm)</th>
+                        <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase ${isAccessory ? 'hidden' : ''}">Đơn vị</th>
+                        <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">${isAccessory ? 'Số lượng' : 'Số lượng cánh'} <span class="text-danger-500">*</span></th>
+                        <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase ${isAccessory ? 'hidden' : ''}">Khối lượng (m2)</th>
                         <th scope="col" style="width: 110px; min-width: 110px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá <span class="text-danger-500">*</span></th>
                         <th scope="col" style="width: 120px; min-width: 120px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Thành tiền</th>
                         <th scope="col" style="min-width: 160px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Ghi chú</th>
@@ -669,19 +725,24 @@ function addGlassOrderSupply(isAccessory = false) {
                         <td class="border border-neutral-200 text-center sticky-stt-td" style="font-size: 80% !important; background-color: #f1f5f9;">TỔNG</td>
                         <td class="border border-neutral-200"></td>
                         <td class="border border-neutral-200"></td>
-                        <td class="border border-neutral-200"></td>
-                        <td class="border border-neutral-200"></td>
-                        <td class="border border-neutral-200"></td>
-                        <td class="border border-neutral-200"></td>
-                        <td class="border border-neutral-200"></td>
-                        <td class="border border-neutral-200"></td>
-                        <td class="border border-neutral-200"></td>
+                        <td class="border border-neutral-200 ${isAccessory ? 'hidden' : ''}"></td>
+                        <td class="border border-neutral-200 ${isAccessory ? 'hidden' : ''}"></td>
+                        <td class="border border-neutral-200 ${isAccessory ? 'hidden' : ''}"></td>
+                        <td class="border border-neutral-200 ${isAccessory ? 'hidden' : ''}"></td>
+                        ${window.isReworkOrder ? `
+                            <td class="border border-neutral-200 ${isAccessory ? 'hidden' : ''}"></td>
+                            <td class="border border-neutral-200 ${isAccessory ? 'hidden' : ''}"></td>
+                        ` : ''}
+                        <td class="border border-neutral-200 ${isAccessory ? 'hidden' : ''}"></td>
+                        <td class="border border-neutral-200 ${isAccessory ? 'hidden' : ''}"></td>
+                        <td class="border border-neutral-200 ${isAccessory ? 'hidden' : ''}"></td>
                         <td class="border border-neutral-200 text-center" data-summary-field="quantity" style="font-size: 80% !important;">0</td>
-                        <td class="border border-neutral-200 text-center" data-summary-field="weight" style="font-size: 80% !important;">0</td>
+                        <td class="border border-neutral-200 text-center ${isAccessory ? 'hidden' : ''}" data-summary-field="weight" style="font-size: 80% !important;">0</td>
                         <td class="border border-neutral-200"></td>
                         <td class="border border-neutral-200 text-center" data-summary-field="total_price" style="font-size: 80% !important;">0</td>
                         <td class="border border-neutral-200"></td>
                         <td class="border border-neutral-200" style="position: sticky; right: 0; z-index: 3; background-color: #f1f5f9;"></td>
+                    </tr>
                 </thead>
                 <tbody class="supply-items-container" data-supply-index="${glassSupplyIndex}">
                 </tbody>
@@ -806,10 +867,10 @@ function addGlassOrderItem(button, isInitial = false, insertAfterRow = null) {
         <td style="min-width: 220px;" class="border border-neutral-200">
             <textarea name="supplies[${supplyIndex}][items][${itemIndex}][product_name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-xs w-full" rows="3" placeholder="Tên sản phẩm">${lastData ? lastData.product_name : ''}</textarea>
         </td>
-        <td style="width: 100px; min-width: 100px;" class="border border-neutral-200">
+        <td style="width: 100px; min-width: 100px;" class="border border-neutral-200 ${isAccessory ? 'hidden' : ''}">
             <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][thickness]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs text-center px-1" placeholder="Độ dày" value="${lastData ? lastData.thickness : ''}">
         </td>
-        <td style="width: 150px; min-width: 150px; " class="border border-neutral-200 p-1">
+        <td style="width: 150px; min-width: 150px; " class="border border-neutral-200 p-1 ${isAccessory ? 'hidden' : ''}">
             <div class="wing-direction-container flex items-center gap-1 w-full">
                 <input type="hidden" name="supplies[${supplyIndex}][items][${itemIndex}][wing_opening_direction]" class="actual-wing-direction" value="${lastData ? lastData.wing_opening_direction : ''}">
                 <div class="flex items-center gap-1 w-1/2" title="Số lượng cánh mở Trái">
@@ -822,25 +883,33 @@ function addGlassOrderItem(button, isInitial = false, insertAfterRow = null) {
                 </div>
             </div>
         </td>
-        <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
+        <td style="width: 100px; min-width: 100px; " class="border border-neutral-200 ${isAccessory ? 'hidden' : ''}">
             <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][aluminum_color]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs text-center px-1" placeholder="Màu nhôm" value="${lastData ? lastData.aluminum_color : ''}">
         </td>
-        <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
+        <td style="width: 100px; min-width: 100px; " class="border border-neutral-200 ${isAccessory ? 'hidden' : ''}">
             <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][glass_color]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs text-center px-1" placeholder="Màu kính" value="${lastData ? lastData.glass_color : ''}">
         </td>
-        <td style="width: 200px; min-width: 200px; " class="border border-neutral-200">
+        ${window.isReworkOrder ? `
+        <td style="width: 100px; min-width: 100px;" class="border border-neutral-200 ${isAccessory ? 'hidden' : ''}">
+            <input type="text" class="old-height-input form-control form-control-sm rounded-lg ${window.isIndependentRework ? '' : 'bg-neutral-100 border-neutral-200 cursor-not-allowed'} text-center px-1 py-1 h-8 text-xs font-semibold text-neutral-600" ${window.isIndependentRework ? '' : 'readonly'} value="" oninput="updateOldSize(this)">
+        </td>
+        <td style="width: 100px; min-width: 100px;" class="border border-neutral-200 ${isAccessory ? 'hidden' : ''}">
+            <input type="text" class="old-width-input form-control form-control-sm rounded-lg ${window.isIndependentRework ? '' : 'bg-neutral-100 border-neutral-200 cursor-not-allowed'} text-center px-1 py-1 h-8 text-xs font-semibold text-neutral-600" ${window.isIndependentRework ? '' : 'readonly'} value="" oninput="updateOldSize(this)">
+        </td>
+        ` : ''}
+        <td style="width: 200px; min-width: 200px; " class="border border-neutral-200 ${isAccessory ? 'hidden' : ''}">
             <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][height]" class="form-control form-control-sm rounded-lg border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500 bg-yellow-50/30 text-center px-1 py-1 h-8 text-xs" placeholder="Dài cánh (mm)" step="any" value="${lastData ? lastData.height : ''}">
         </td>
-        <td style="width: 200px; min-width: 200px; " class="border border-neutral-200">
+        <td style="width: 200px; min-width: 200px; " class="border border-neutral-200 ${isAccessory ? 'hidden' : ''}">
             <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][width]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Rộng cánh (mm)" step="any" value="${lastData ? lastData.width : ''}">
         </td>
-        <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
+        <td style="width: 100px; min-width: 100px; " class="border border-neutral-200 ${isAccessory ? 'hidden' : ''}">
             <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][unit]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs px-1" placeholder="Đơn vị" value="${lastData ? lastData.unit : (isAccessory ? 'Cái' : 'Bộ')}">
         </td>
         <td style="width: 70px; min-width: 70px; " class="border border-neutral-200">
             <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][wing_quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="${isAccessory ? 'Số lượng' : 'Số lượng cánh'}" min="1" required value="${lastData ? lastData.wing_quantity : '1'}">
         </td>
-        <td style="width: 100px; min-width: 100px; " class="border border-neutral-200 relative">
+        <td style="width: 100px; min-width: 100px; " class="border border-neutral-200 relative ${isAccessory ? 'hidden' : ''}">
             <input type="hidden" name="supplies[${supplyIndex}][items][${itemIndex}][area_m2]" class="real-area-input" value="${lastData?.area_m2 || ''}">
             <input type="text" class="display-area-input form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" 
                 placeholder="Khối lượng (m2)" 
@@ -1928,13 +1997,39 @@ document.addEventListener('DOMContentLoaded', () => {
         bindPaymentDetailEvents(row);
     });
     
-    // Add one empty payment row on load if it's a rework order and has 0 rows (only on create page, NOT on edit page)
-    const isEditPage = @json(request()->routeIs('orders.edit'));
-    const container = document.getElementById('payment-details-container');
-    if (!isEditPage && container && container.querySelectorAll('.payment-detail-row').length === 0) {
-        addPaymentDetail();
-    }
     
     refreshPaymentDetailsTableLayout();
 });
+
+function togglePaymentDetailsSection() {
+    const section = document.getElementById('payment-details-section');
+    const btn = document.getElementById('toggle-payment-details-btn');
+    const container = document.getElementById('payment-details-container');
+    if (!section || !btn) return;
+
+    if (section.style.display === 'none') {
+        section.style.display = 'block';
+        btn.className = 'btn btn-sm bg-danger-50 text-danger-600 hover:bg-danger-100 border border-danger-200 rounded-lg flex items-center gap-1';
+        btn.innerHTML = '<iconify-icon icon="lucide:trash-2" class="text-lg"></iconify-icon> <span>Xóa chi tiết hóa đơn</span>';
+        
+        if (container && container.querySelectorAll('.payment-detail-row').length === 0) {
+            addPaymentDetail();
+        }
+    } else {
+        const rows = container ? container.querySelectorAll('.payment-detail-row') : [];
+        if (rows.length > 0) {
+            if (!confirm('Bạn có chắc chắn muốn xóa toàn bộ chi tiết hóa đơn?')) {
+                return;
+            }
+        }
+        section.style.display = 'none';
+        btn.className = 'btn btn-sm bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 rounded-lg flex items-center gap-1';
+        btn.innerHTML = '<iconify-icon icon="lucide:receipt" class="text-lg"></iconify-icon> <span>Thêm chi tiết hóa đơn</span>';
+        
+        if (container) {
+            container.innerHTML = '';
+        }
+        updateOrderSummary();
+    }
+}
 </script>

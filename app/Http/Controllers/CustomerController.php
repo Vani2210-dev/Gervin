@@ -23,13 +23,6 @@ class CustomerController extends Controller
         $startDate = $request->input('filter_start_date');
         $endDate   = $request->input('filter_end_date');
 
-        // Default to current month's start/end if not explicitly provided or cleared
-        $isInitialLoad = !$request->has('filter_start_date') && !$request->has('filter_end_date');
-        if ($isInitialLoad) {
-            $startDate = now()->startOfMonth()->toDateString();
-            $endDate   = now()->endOfMonth()->toDateString();
-        }
-
         $user = auth()->user();
         $query = Customer::query();
 

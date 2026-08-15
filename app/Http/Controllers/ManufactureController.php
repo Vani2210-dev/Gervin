@@ -49,7 +49,7 @@ class ManufactureController extends Controller
     /**
      * Lấy dữ liệu tiến độ cho chức năng Sắp xếp đơn hàng, gom nhóm theo ngày.
      */
-    private function getSequenceData(?string $date = null)
+    private function getSequenceData(?string $date = null, ?string $search = null, ?string $completionStatus = null)
     {
         $query = ManufactureOrder::with(['orders.supplies.items.codes', 'orders.supplies.minLateItems.codes', 'orders.supplies.glassItems.codes']);
         
@@ -70,10 +70,16 @@ class ManufactureController extends Controller
                 ];
             }
 
-            $day1Date = date('Y-m-d', strtotime($dateStr));
-            $day2Date = date('Y-m-d', strtotime($dateStr . ' +1 day'));
+            // Ngày 1 = Hôm qua (ngày liền trước)
+            // Ngày 2 = Hôm nay
+            $day1Date = date('Y-m-d', strtotime($dateStr . ' -1 day'));
+            $day2Date = date('Y-m-d', strtotime($dateStr));
 
             foreach ($mo->orders as $order) {
+                $orderSupplyRows = [];
+                $orderTotalPlates = 0;
+                $orderTotalRemaining = 0;
+
                 foreach ($order->supplies as $supply) {
                     // Tránh trùng lặp nếu đơn hàng liên kết nhiều lệnh trong cùng 1 ngày
                     $exists = $groupedData[$dateStr]['supplies']->contains(function($item) use ($order, $supply) {
@@ -89,10 +95,11 @@ class ManufactureController extends Controller
                     $inProductionCount = 0;
                     $totalCount = 0;
                     $cncCount = 0;
+                    $completedTotalCount = 0;
 
                     if ($order->type === 'glass') {
                         $items = $supply->glassItems;
-                        $totalCount = $items->sum('quantity');
+                        $totalCount = $items->sum('wing_quantity') ?: $items->sum('quantity');
                         $cncCount = $totalCount;
                     } elseif ($order->type === 'min_late') {
                         $items = $supply->minLateItems;
@@ -114,16 +121,24 @@ class ManufactureController extends Controller
                             $completedTime = null;
                             $hasStarted = false;
                             foreach ($statusLogs as $log) {
-                                $action = strtolower($log['action'] ?? '');
-                                if (in_array($action, ['hoàn thành làm đẹp', 'hoàn thành qc'])) {
+                                $action = mb_strtolower($log['action'] ?? '');
+                                if ($action === 'hoàn thành qc' || $action === 'hoàn thành làm đẹp') {
                                     $completedTime = $log['time'] ?? null;
                                 }
-                                if (in_array($action, ['đã nhận tem', 'hoàn thành cnc', 'ép ván', 'hoàn thành ép', 'hoàn thành dán cạnh'])) {
+                                if (
+                                    str_contains($action, 'nhận tem') ||
+                                    str_contains($action, 'ép') ||
+                                    str_contains($action, 'cnc') ||
+                                    str_contains($action, 'dán cạnh') ||
+                                    str_contains($action, 'làm đẹp') ||
+                                    str_contains($action, 'lỗi')
+                                ) {
                                     $hasStarted = true;
                                 }
                             }
 
                             if ($completedTime) {
+                                $completedTotalCount++;
                                 $completedDate = date('Y-m-d', strtotime($completedTime));
                                 if ($completedDate === $day1Date) {
                                     $day1Count++;
@@ -136,9 +151,12 @@ class ManufactureController extends Controller
                         }
                     }
 
-                    $remainingCount = max(0, $totalCount - $day1Count - $day2Count);
+                    $remainingCount = max(0, $totalCount - $completedTotalCount);
 
-                    $groupedData[$dateStr]['supplies']->push([
+                    $orderTotalPlates += $totalCount;
+                    $orderTotalRemaining += $remainingCount;
+
+                    $orderSupplyRows[] = [
                         'order' => $order,
                         'supply' => $supply,
                         'totalCount' => $totalCount,
@@ -147,7 +165,37 @@ class ManufactureController extends Controller
                         'day2Count' => $day2Count,
                         'inProductionCount' => $inProductionCount,
                         'remainingCount' => $remainingCount,
-                    ]);
+                    ];
+                }
+
+                // Lọc theo trạng thái hoàn thành của toàn bộ đơn hàng:
+                // Đơn tính là đã xong khi TẤT CẢ các mã màu/vật tư trong đơn đã xử lý hoàn thành hết (tổng còn lại của cả đơn = 0)
+                if ($completionStatus === 'completed') {
+                    if ($orderTotalRemaining > 0 || $orderTotalPlates === 0) {
+                        continue;
+                    }
+                } elseif ($completionStatus === 'uncompleted') {
+                    if ($orderTotalRemaining === 0 && $orderTotalPlates > 0) {
+                        continue;
+                    }
+                }
+
+                // Lọc theo từ khóa tìm kiếm (nếu có) và đưa vào mảng dữ liệu
+                foreach ($orderSupplyRows as $row) {
+                    if (!empty($search)) {
+                        $searchLower = mb_strtolower(trim($search));
+                        $customerMatch = mb_stripos($order->customer_name ?? '', $searchLower) !== false;
+                        $orderCodeMatch = mb_stripos($order->order_code ?? '', $searchLower) !== false;
+                        $supplyCodeMatch = mb_stripos($row['supply']->order_supply_code ?? '', $searchLower) !== false;
+                        $supplyNameMatch = mb_stripos($row['supply']->supply_name ?? '', $searchLower) !== false;
+                        $moCodeMatch = mb_stripos($mo->code ?? '', $searchLower) !== false;
+
+                        if (!$customerMatch && !$orderCodeMatch && !$supplyCodeMatch && !$supplyNameMatch && !$moCodeMatch) {
+                            continue;
+                        }
+                    }
+
+                    $groupedData[$dateStr]['supplies']->push($row);
                 }
             }
         }
@@ -171,9 +219,11 @@ class ManufactureController extends Controller
     public function sequenceIndex(Request $request)
     {
         $date = $request->input('date', '');
-        $groupedSupplies = $this->getSequenceData($date);
+        $search = $request->input('search', '');
+        $completionStatus = $request->input('completion_status', '');
+        $groupedSupplies = $this->getSequenceData($date, $search, $completionStatus);
 
-        return view('manufactures.sequence', compact('groupedSupplies', 'date'));
+        return view('manufactures.sequence', compact('groupedSupplies', 'date', 'search', 'completionStatus'));
     }
 
     /**
@@ -182,10 +232,12 @@ class ManufactureController extends Controller
     public function sequenceExport(Request $request)
     {
         $date = $request->input('date', '');
-        $groupedSupplies = $this->getSequenceData($date);
+        $search = $request->input('search', '');
+        $completionStatus = $request->input('completion_status', '');
+        $groupedSupplies = $this->getSequenceData($date, $search, $completionStatus);
 
         if ($groupedSupplies->isEmpty()) {
-            return back()->with('error', 'Không có lệnh sản xuất nào trong ngày này để xuất Excel.');
+            return back()->with('error', 'Không có dữ liệu phù hợp với bộ lọc để xuất Excel.');
         }
 
         $spreadsheet = new Spreadsheet();
@@ -255,7 +307,62 @@ class ManufactureController extends Controller
             $sheet->getStyle($col . '1')->applyFromArray($headerStyle);
         }
 
-        $row = 2;
+        // Calculate grand totals across all groups
+        $grandTotalPlates = 0;
+        $grandTotalCnc = 0;
+        $grandTotalDay1 = 0;
+        $grandTotalInProd = 0;
+        $grandTotalDay2 = 0;
+        $grandTotalRemaining = 0;
+
+        foreach ($groupedSupplies as $dateGroup) {
+            foreach ($dateGroup['supplies'] as $item) {
+                $grandTotalPlates += $item['totalCount'];
+                $grandTotalCnc += $item['cncCount'];
+                $grandTotalDay1 += $item['day1Count'];
+                $grandTotalInProd += $item['inProductionCount'];
+                $grandTotalDay2 += $item['day2Count'];
+                $grandTotalRemaining += $item['remainingCount'];
+            }
+        }
+
+        $grandTotalStyle = [
+            'font' => ['bold' => true, 'name' => 'Arial', 'size' => 10],
+            'borders' => [
+                'allBorders' => ['borderStyle' => Border::BORDER_THIN]
+            ],
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['argb' => 'FFFFFBEB'] // Màu nền vàng nhạt giống giao diện web
+            ]
+        ];
+
+        // Dòng Tổng cộng tất cả các nhóm
+        $sheet->setCellValue('A2', 'Tổng cộng');
+        $sheet->mergeCells('A2:D2');
+        $sheet->setCellValue('E2', $grandTotalPlates);
+        $sheet->setCellValue('F2', $grandTotalCnc ?: null);
+        $sheet->setCellValue('G2', $grandTotalDay1);
+        $sheet->setCellValue('H2', $grandTotalInProd);
+        $sheet->mergeCells('H2:L2');
+        $sheet->setCellValue('M2', $grandTotalDay2);
+        $sheet->setCellValue('N2', $grandTotalRemaining);
+        $sheet->setCellValue('O2', '');
+        $sheet->setCellValue('P2', '');
+        $sheet->setCellValue('Q2', '');
+
+        foreach (range('A', 'Q') as $col) {
+            $cellStyle = $sheet->getStyle($col . '2');
+            $cellStyle->applyFromArray($grandTotalStyle);
+            if (in_array($col, ['E', 'F', 'G', 'H', 'M', 'N'])) {
+                $cellStyle->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            } else {
+                $cellStyle->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+            }
+            $cellStyle->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
+        }
+
+        $row = 3;
 
         foreach ($groupedSupplies as $dateGroup) {
             $dateStr = $dateGroup['date'];
@@ -311,7 +418,7 @@ class ManufactureController extends Controller
             // Summary row for this day
             $endDataRow = $row - 1;
             if ($endDataRow >= $startDataRow) {
-                $sheet->setCellValue('A' . $row, 'Tổng cộng');
+                $sheet->setCellValue('A' . $row, "Tổng cộng ngày {$formattedDate}");
                 $sheet->mergeCells("A{$row}:D{$row}");
                 $sheet->setCellValue('E' . $row, "=SUM(E{$startDataRow}:E{$endDataRow})");
                 $sheet->setCellValue('F' . $row, "=SUM(F{$startDataRow}:F{$endDataRow})");

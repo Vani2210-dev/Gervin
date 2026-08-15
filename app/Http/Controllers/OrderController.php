@@ -320,19 +320,24 @@ class OrderController extends Controller
         return view('orders.create');
     }
 
-    public function createByType(string $type)
+    public function createByType(Request $request, string $type)
     {
         abort_unless(in_array($type, self::ORDER_TYPES, true), 404);
 
         $orderType = $type;
+        $relationType = $request->query('relation_type'); // ví dụ: rework
         
         $oldDraftId = old('draft_order_id');
         if ($oldDraftId) {
-            $acrylicOrder = Order::where('status', 'draft')->find($oldDraftId);
+            $acrylicOrder = Order::where('status', 'draft')
+                ->when($relationType, function ($q) use ($relationType) {
+                    $q->where('relation_type', $relationType);
+                })
+                ->find($oldDraftId);
         }
         
         if (!isset($acrylicOrder) || !$acrylicOrder) {
-            $acrylicOrder = $this->createDraftOrder($type);
+            $acrylicOrder = $this->createDraftOrder($type, $relationType);
         }
 
         $isDraftCreate = true;
@@ -523,9 +528,9 @@ class OrderController extends Controller
         $order->load(['supplies.items.codes', 'supplies.minLateItems.codes', 'supplies.glassItems.codes']);
         $stats = [];
 
-        $date = now()->format('Y-m-d'); // Today is day 1
-        $day1Date = $date;
-        $day2Date = date('Y-m-d', strtotime($date . ' +1 day'));
+        $today = now()->format('Y-m-d');
+        $day2Date = $today; // Hôm nay là ngày 2
+        $day1Date = now()->subDay()->format('Y-m-d'); // Hôm qua là ngày 1
 
         foreach ($order->supplies as $supply) {
             $day1Count = 0;
@@ -533,10 +538,11 @@ class OrderController extends Controller
             $inProductionCount = 0;
             $totalCount = 0;
             $cncCount = 0;
+            $completedTotalCount = 0;
 
             if ($order->type === 'glass') {
                 $items = $supply->glassItems;
-                $totalCount = $items->sum('quantity');
+                $totalCount = $items->sum('wing_quantity') ?: $items->sum('quantity');
                 $cncCount = $totalCount;
             } elseif ($order->type === 'min_late') {
                 $items = $supply->minLateItems;
@@ -558,16 +564,24 @@ class OrderController extends Controller
                     $completedTime = null;
                     $hasStarted = false;
                     foreach ($statusLogs as $log) {
-                        $action = strtolower($log['action'] ?? '');
-                        if (in_array($action, ['hoàn thành làm đẹp', 'hoàn thành qc'])) {
+                        $action = mb_strtolower($log['action'] ?? '');
+                        if ($action === 'hoàn thành qc' || $action === 'hoàn thành làm đẹp') {
                             $completedTime = $log['time'] ?? null;
                         }
-                        if (in_array($action, ['đã nhận tem', 'hoàn thành cnc', 'ép ván', 'hoàn thành ép', 'hoàn thành dán cạnh'])) {
+                        if (
+                            str_contains($action, 'nhận tem') ||
+                            str_contains($action, 'ép') ||
+                            str_contains($action, 'cnc') ||
+                            str_contains($action, 'dán cạnh') ||
+                            str_contains($action, 'làm đẹp') ||
+                            str_contains($action, 'lỗi')
+                        ) {
                             $hasStarted = true;
                         }
                     }
 
                     if ($completedTime) {
+                        $completedTotalCount++;
                         $completedDate = date('Y-m-d', strtotime($completedTime));
                         if ($completedDate === $day1Date) {
                             $day1Count++;
@@ -580,9 +594,10 @@ class OrderController extends Controller
                 }
             }
 
-            $remainingCount = max(0, $totalCount - $day1Count - $day2Count);
+            $remainingCount = max(0, $totalCount - $completedTotalCount);
 
             $stats[] = [
+                'order_supply_code' => $supply->order_supply_code,
                 'supply_name' => $supply->supply_name,
                 'total_count' => $totalCount,
                 'cnc_count' => $cncCount,
@@ -636,9 +651,9 @@ class OrderController extends Controller
         return response()->json(['ok' => true]);
     }
 
-    private function createDraftOrder(string $type): Order
+    private function createDraftOrder(string $type, ?string $relationType = null): Order
     {
-        return DB::transaction(function () use ($type) {
+        return DB::transaction(function () use ($type, $relationType) {
             $dateStr = now()->format('ymd');
             $prefix = 'DH' . $dateStr;
 
@@ -659,6 +674,7 @@ class OrderController extends Controller
             return Order::create([
                 'order_code' => $orderCode,
                 'type' => $type,
+                'relation_type' => $relationType,
                 'customer_name' => '',
                 'total_amount' => 0,
                 'status' => 'draft',

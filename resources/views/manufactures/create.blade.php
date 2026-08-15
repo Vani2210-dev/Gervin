@@ -59,7 +59,16 @@
                                             <input type="checkbox" name="order_ids[]" value="{{ $order->id }}" class="form-checkbox h-5 w-5 text-primary-600 border-neutral-300 rounded focus:ring-primary-500" {{ is_array(old('order_ids')) && in_array($order->id, old('order_ids')) ? 'checked' : '' }}>
                                         </td>
                                         <td>
-                                            <span class="font-semibold text-secondary-light">{{ $order->order_code }}</span>
+                                            <div class="flex items-center gap-2">
+                                                <span class="font-semibold text-secondary-light">{{ $order->order_code }}</span>
+                                                @if($order->relation_type === 'rework')
+                                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">Sửa tấm</span>
+                                                @elseif($order->relation_type === 'additional')
+                                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-success-100 text-success-800 border border-success-200">Bổ sung</span>
+                                                @elseif($order->relation_type === 'reuse')
+                                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200">Tận dụng tấm</span>
+                                                @endif
+                                            </div>
                                         </td>
                                         <td>
                                             <span class="badge bg-neutral-200 text-neutral-800 font-medium px-2 py-1 rounded text-xs">

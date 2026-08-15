@@ -364,7 +364,7 @@
                                                 'draft' => 'bg-neutral-100 text-neutral-600',
                                                 'pending' => 'bg-warning-100 text-warning-600',
                                                 'transferred' => 'bg-info-100 text-info-600',
-
+                                                'in_production' => 'bg-indigo-100 text-indigo-600 border border-indigo-200',
                                                 'completed' => 'bg-success-100 text-success-600',
                                                 'cancelled' => 'bg-danger-100 text-danger-600',
                                             ];
@@ -372,7 +372,7 @@
                                                 'draft' => 'Nháp',
                                                 'pending' => 'Chờ xử lý',
                                                 'transferred' => 'Chuyển sản xuất',
-
+                                                'in_production' => 'Đang sản xuất',
                                                 'completed' => 'Hoàn thành',
                                                 'cancelled' => 'Đã hủy',
                                             ];
