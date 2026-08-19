@@ -51,23 +51,28 @@
             {{-- Header --}}
             <div class="card-header border-b border-neutral-200 bg-white py-4 px-6 flex items-center flex-wrap gap-3 justify-between">
                 <div class="flex items-center flex-wrap gap-3">
-                    {{-- Per page --}}
-                    <span class="text-base font-medium text-secondary-light mb-0">Hiển thị</span>
-                    <form method="GET" action="{{ route('orders.index') }}" id="perPageForm">
-                        <input type="hidden" name="search" value="{{ $search }}">
-                        <select name="per_page" class="form-select form-select-sm w-auto border-neutral-200 rounded-lg"
-                            onchange="document.getElementById('perPageForm').submit()">
-                            @foreach([10, 25, 50, 100] as $option)
-                            <option value="{{ $option }}" {{ $perPage == $option ? 'selected' : '' }}>{{ $option }}</option>
-                            @endforeach
-                        </select>
-                    </form>
-
-                    {{-- Search --}}
+                    {{-- Search (Bên trái ngoài cùng) --}}
                     <form method="GET" action="{{ route('orders.index') }}" class="navbar-search">
                         <input type="hidden" name="per_page" value="{{ $perPage }}">
-                        <input type="text" name="search" class="form-control form-control-sm border-neutral-200 rounded-lg" placeholder="Tìm kiếm..." value="{{ $search }}">
+                        <div class="relative">
+                            <iconify-icon icon="solar:magnifer-linear" class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-base"></iconify-icon>
+                            <input type="text" name="search" class="form-control form-control-sm border-neutral-200 rounded-lg pl-9 pr-3 w-64 md:w-80" placeholder="Tìm kiếm..." value="{{ $search }}">
+                        </div>
                     </form>
+
+                    {{-- Per page --}}
+                    <div class="flex items-center gap-2">
+                        <span class="text-base font-medium text-secondary-light mb-0">Hiển thị</span>
+                        <form method="GET" action="{{ route('orders.index') }}" id="perPageForm">
+                            <input type="hidden" name="search" value="{{ $search }}">
+                            <select name="per_page" class="form-select form-select-sm w-auto border-neutral-200 rounded-lg"
+                                onchange="document.getElementById('perPageForm').submit()">
+                                @foreach([10, 25, 50, 100] as $option)
+                                <option value="{{ $option }}" {{ $perPage == $option ? 'selected' : '' }}>{{ $option }}</option>
+                                @endforeach
+                            </select>
+                        </form>
+                    </div>
                 </div>
 
                 <div class="flex items-center gap-2">
@@ -223,8 +228,15 @@
                                             <span class="text-base font-medium {{ $showWarning ? 'text-danger-600' : 'text-secondary-light' }}">{{ $order->order_code }}</span>
                                             @if($order->relation_type === 'rework')
                                                 <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">Sửa tấm</span>
+                                            @elseif($order->relation_type === 'warranty')
+                                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-200">Bảo hành</span>
                                             @elseif($order->relation_type === 'additional')
                                                 <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-success-100 text-success-800 border border-success-200">Bổ sung</span>
+                                                @if($order->board_return_status === 'pending')
+                                                    <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300" title="Khách đang giữ ván chưa trả (Tạm tính công nợ)">Chờ trả ván</span>
+                                                @elseif($order->board_return_status === 'returned')
+                                                    <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-100 text-sky-800 border border-sky-200" title="Đã xác nhận trả ván (Đã cấn trừ công nợ)">Đã trả ván</span>
+                                                @endif
                                             @elseif($order->relation_type === 'reuse')
                                                 <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200">Tận dụng tấm</span>
                                             @endif
@@ -883,6 +895,12 @@
                     <span>Tạo đơn sửa tấm</span>
                 </a>
             </li>
+            <li>
+                <a href="{{ route('orders.show', $order) }}?open_warranty=1" class="flex items-center gap-2 px-4 py-2 hover:bg-neutral-50 text-neutral-700 transition-colors">
+                    <iconify-icon icon="lucide:shield-check" class="text-purple-600 text-lg"></iconify-icon>
+                    <span>Tạo đơn bảo hành</span>
+                </a>
+            </li>
             @if($order->type === 'acrylic')
             <li>
                 <a href="{{ route('orders.reuse-create', $order) }}" class="flex items-center gap-2 px-4 py-2 hover:bg-neutral-50 text-neutral-700 transition-colors">
@@ -892,7 +910,7 @@
             </li>
             @endif
             <li>
-                <a href="{{ route('orders.additional-create', $order) }}" class="flex items-center gap-2 px-4 py-2 hover:bg-neutral-50 text-neutral-700 transition-colors">
+                <a href="{{ route('orders.show', $order) }}?open_additional=1" class="flex items-center gap-2 px-4 py-2 hover:bg-neutral-50 text-neutral-700 transition-colors">
                     <iconify-icon icon="lucide:plus-circle" class="text-success-500 text-lg"></iconify-icon>
                     <span>Tạo đơn bổ sung</span>
                 </a>

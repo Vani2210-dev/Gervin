@@ -67,8 +67,15 @@
                                                 <span class="font-semibold text-secondary-light">{{ $order->order_code }}</span>
                                                 @if($order->relation_type === 'rework')
                                                     <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">Sửa tấm</span>
+                                                @elseif($order->relation_type === 'warranty')
+                                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-200">Bảo hành</span>
                                                 @elseif($order->relation_type === 'additional')
                                                     <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-success-100 text-success-800 border border-success-200">Bổ sung</span>
+                                                    @if($order->board_return_status === 'pending')
+                                                        <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300" title="Khách đang giữ ván chưa trả (Tạm tính công nợ)">Chờ trả ván</span>
+                                                    @elseif($order->board_return_status === 'returned')
+                                                        <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-100 text-sky-800 border border-sky-200" title="Đã xác nhận trả ván (Đã cấn trừ công nợ)">Đã trả ván</span>
+                                                    @endif
                                                 @elseif($order->relation_type === 'reuse')
                                                     <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200">Tận dụng tấm</span>
                                                 @endif

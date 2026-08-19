@@ -36,21 +36,21 @@
                 {{-- Bên phải: Nút Lọc (mở modal), Nút Xóa lọc, Nút Xuất Excel --}}
                 <div class="flex items-center gap-2">
                     <button type="button" onclick="openModal('sequence-filter-modal')"
-                        class="btn bg-light-600 text-sm btn-sm px-3 py-2 rounded-lg flex items-center gap-2 font-medium hover:bg-neutral-100 transition-all">
-                        <iconify-icon icon="solar:filter-outline" class="text-xl leading-none"></iconify-icon>
+                        class="btn bg-light-600 text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2 font-medium hover:bg-neutral-100 transition-all">
+                        <iconify-icon icon="solar:filter-outline" class="icon text-xl line-height-1"></iconify-icon>
                         Lọc
                     </button>
 
                     @if(!empty($completionStatus) || !empty($date))
-                    <a href="{{ route('manufactures.sequence', ['search' => $search]) }}" class="btn text-sm btn-sm px-3 py-2 rounded-lg flex items-center gap-1.5 text-danger-600 hover:bg-danger-50 transition-all font-medium" title="Xóa bộ lọc">
-                        <iconify-icon icon="solar:close-circle-outline" class="text-xl leading-none"></iconify-icon>
+                    <a href="{{ route('manufactures.sequence', ['search' => $search]) }}" class="btn text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2 text-danger-600 hover:bg-danger-50 transition-all font-medium" title="Xóa bộ lọc">
+                        <iconify-icon icon="solar:close-circle-outline" class="icon text-xl line-height-1"></iconify-icon>
                         Xóa lọc
                     </a>
                     @endif
 
                     <a href="{{ route('manufactures.sequence.export', ['date' => $date, 'search' => $search, 'completion_status' => $completionStatus]) }}" 
-                        class="btn btn-sm bg-success-600 hover:bg-success-700 text-white px-4 py-2 flex items-center gap-1.5 rounded-lg shadow-sm font-semibold transition-all">
-                        <iconify-icon icon="lucide:file-spreadsheet" class="text-lg"></iconify-icon>
+                        class="btn bg-success-600 hover:bg-success-700 text-white text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2 font-medium transition-all">
+                        <iconify-icon icon="solar:file-download-outline" class="icon text-xl line-height-1"></iconify-icon>
                         Xuất Excel
                     </a>
                 </div>

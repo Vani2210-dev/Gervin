@@ -12,6 +12,7 @@ class Customer extends Model
         'phone',
         'address',
         'debt',
+        'debt_limit',
         'policy',
     ];
 

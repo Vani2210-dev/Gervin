@@ -25,7 +25,7 @@ class Order extends Model
 
     public function adjustCustomerDebtOnCreate()
     {
-        if ($this->customer && !in_array($this->status, ['draft', 'pending', 'cancelled'])) {
+        if ($this->customer && !in_array($this->status, ['draft', 'pending', 'cancelled']) && $this->board_return_status !== 'returned') {
             $amount = round($this->total_amount, -3);
             $this->customer->increment('debt', $amount);
         }
@@ -39,11 +39,13 @@ class Order extends Model
         $newAmount = round($this->total_amount, -3);
         $oldCustomerId = $this->getOriginal('customer_id');
         $newCustomerId = $this->customer_id;
+        $oldReturnStatus = $this->getOriginal('board_return_status');
+        $newReturnStatus = $this->board_return_status;
 
-        $wasValid = !in_array($oldStatus, ['draft', 'pending', 'cancelled']);
-        $isValid = !in_array($newStatus, ['draft', 'pending', 'cancelled']);
+        $wasValid = !in_array($oldStatus, ['draft', 'pending', 'cancelled']) && $oldReturnStatus !== 'returned';
+        $isValid = !in_array($newStatus, ['draft', 'pending', 'cancelled']) && $newReturnStatus !== 'returned';
 
-        // Case 1: Customer changed
+        // Trường hợp 1: Thay đổi khách hàng
         if ($oldCustomerId != $newCustomerId) {
             if ($wasValid && $oldCustomerId) {
                 $oldCustomer = Customer::find($oldCustomerId);
@@ -60,19 +62,19 @@ class Order extends Model
             return;
         }
 
-        // Case 2: Same customer
+        // Trường hợp 2: Cùng một khách hàng
         if ($this->customer) {
             if ($wasValid && $isValid) {
-                // Both valid, adjust difference
+                // Cả hai trạng thái đều hợp lệ, cập nhật phần chênh lệch
                 $diff = $newAmount - $oldAmount;
                 if ($diff != 0) {
                     $this->customer->increment('debt', $diff);
                 }
             } elseif ($wasValid && !$isValid) {
-                // Became invalid, subtract old amount
+                // Đơn hàng chuyển sang trạng thái không tính nợ (hủy/nháp/đã trả ván...), trừ nợ cũ
                 $this->customer->decrement('debt', $oldAmount);
             } elseif (!$wasValid && $isValid) {
-                // Became valid, add new amount
+                // Đơn hàng chuyển sang trạng thái tính nợ, cộng thêm nợ mới
                 $this->customer->increment('debt', $newAmount);
             }
         }
@@ -80,7 +82,7 @@ class Order extends Model
 
     public function adjustCustomerDebtOnDelete()
     {
-        if ($this->customer && !in_array($this->status, ['draft', 'pending', 'cancelled'])) {
+        if ($this->customer && !in_array($this->status, ['draft', 'pending', 'cancelled']) && $this->board_return_status !== 'returned') {
             $amount = round($this->total_amount, -3);
             $this->customer->decrement('debt', $amount);
         }
@@ -89,6 +91,7 @@ class Order extends Model
     protected $fillable = [
         'parent_id',
         'relation_type',
+        'board_return_status',
         'order_code',
         'type',
         'order_date',

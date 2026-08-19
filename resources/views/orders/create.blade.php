@@ -17,8 +17,20 @@
 
     @if(isset($orderType))
         @php
-            $title = ($typeLabels[$orderType] ?? 'Tạo đơn hàng') . (isset($acrylicOrder) && $acrylicOrder->relation_type === 'rework' ? ' (Sửa tấm)' : '');
-            $subTitle = 'Tạo mới: ' . ($typeLabels[$orderType] ?? ucfirst($orderType)) . (isset($acrylicOrder) && $acrylicOrder->relation_type === 'rework' ? ' (Sửa tấm)' : '');
+            $relationSuffix = '';
+            if (isset($acrylicOrder)) {
+                if ($acrylicOrder->relation_type === 'rework') {
+                    $relationSuffix = ' (Sửa tấm)';
+                } elseif ($acrylicOrder->relation_type === 'warranty') {
+                    $relationSuffix = ' (Bảo hành)';
+                } elseif ($acrylicOrder->relation_type === 'additional') {
+                    $relationSuffix = ' (Bổ sung)';
+                } elseif ($acrylicOrder->relation_type === 'reuse') {
+                    $relationSuffix = ' (Tận dụng tấm)';
+                }
+            }
+            $title = ($typeLabels[$orderType] ?? 'Tạo đơn hàng') . $relationSuffix;
+            $subTitle = 'Tạo mới: ' . ($typeLabels[$orderType] ?? ucfirst($orderType)) . $relationSuffix;
             $action = route('orders.store');
             $acrylicOrder = $acrylicOrder ?? null;
             $isDraftCreate = $isDraftCreate ?? false;

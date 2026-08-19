@@ -96,6 +96,7 @@ class PermissionSeeder extends Seeder
             'add customer',
             'edit customer',
             'delete customer',
+            'assign customer',
 
             // Order permissions
             'view order',
@@ -156,6 +157,12 @@ class PermissionSeeder extends Seeder
             'view qr device',
             'edit qr device',
             'delete qr device',
+
+            // Revenue Report permissions (Báo cáo doanh thu)
+            'view revenue report',
+
+            // Sequence permissions (Sắp xếp đơn hàng)
+            'view sequence',
         ];
 
 

@@ -1,5 +1,6 @@
 @php
-    $hasPaymentDetails = isset($acrylicOrder) && isset($acrylicOrder->paymentDetails) && $acrylicOrder->paymentDetails->count() > 0;
+    $isWarranty = isset($acrylicOrder) && $acrylicOrder->relation_type === 'warranty';
+    $hasPaymentDetails = !$isWarranty && isset($acrylicOrder) && isset($acrylicOrder->paymentDetails) && $acrylicOrder->paymentDetails->count() > 0;
     $isRework = isset($acrylicOrder) && $acrylicOrder->relation_type === 'rework';
 @endphp
 {{-- Order Supplies & Items Section Card (Min Late) --}}
@@ -169,14 +170,16 @@
                 <iconify-icon icon="lucide:file-spreadsheet" class="text-lg"></iconify-icon> <span class="mobile-hide-text">Nhập từ Excel</span>
             </button>
             <input type="file" id="minLateExcelFileInput" accept=".xlsx, .xls" style="display: none;">
-            @if($hasPaymentDetails)
-                <button type="button" id="toggle-payment-details-btn" onclick="togglePaymentDetailsSection()" class="btn btn-sm bg-danger-50 text-danger-600 hover:bg-danger-100 border border-danger-200 rounded-lg flex items-center gap-1">
-                    <iconify-icon icon="lucide:trash-2" class="text-lg"></iconify-icon> <span>Xóa chi tiết hóa đơn</span>
-                </button>
-            @else
-                <button type="button" id="toggle-payment-details-btn" onclick="togglePaymentDetailsSection()" class="btn btn-sm bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 rounded-lg flex items-center gap-1">
-                    <iconify-icon icon="lucide:receipt" class="text-lg"></iconify-icon> <span>Thêm chi tiết hóa đơn</span>
-                </button>
+            @if(!$isWarranty)
+                @if($hasPaymentDetails)
+                    <button type="button" id="toggle-payment-details-btn" onclick="togglePaymentDetailsSection()" class="btn btn-sm bg-danger-50 text-danger-600 hover:bg-danger-100 border border-danger-200 rounded-lg flex items-center gap-1">
+                        <iconify-icon icon="lucide:trash-2" class="text-lg"></iconify-icon> <span>Xóa chi tiết hóa đơn</span>
+                    </button>
+                @else
+                    <button type="button" id="toggle-payment-details-btn" onclick="togglePaymentDetailsSection()" class="btn btn-sm bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 rounded-lg flex items-center gap-1">
+                        <iconify-icon icon="lucide:receipt" class="text-lg"></iconify-icon> <span>Thêm chi tiết hóa đơn</span>
+                    </button>
+                @endif
             @endif
             <button type="button" onclick="addMinLateOrderSupply()" class="btn btn-sm btn-primary rounded-lg flex items-center gap-1">
                 <iconify-icon icon="lucide:plus" class="text-lg"></iconify-icon> <span class="mobile-hide-text">Thêm vật tư</span>
@@ -497,6 +500,7 @@
     </div>
 </div>
 
+@if(!$isWarranty)
 {{-- Bảng chi tiết hóa đơn dùng chung các tính năng hiển thị như bảng vật tư --}}
 <div id="payment-details-section" class="order-supplies-popup bg-white border border-neutral-200 rounded-xl p-6 shadow-sm mt-6 relative pt-8" style="{{ $hasPaymentDetails ? '' : 'display: none;' }}" data-order-supplies-zoom-panel data-order-supplies-storage-key="min_late_payment" data-order-supplies-zoom="100" data-order-supplies-visible-rows-disabled="1">
     <div class="order-supplies-header flex items-center justify-between border-b border-neutral-100 pb-4 mb-5">
@@ -554,7 +558,7 @@
                                     <span class="detail-index font-semibold text-neutral-500">{{ $detailIndex + 1 }}</span>
                                 </td>
                                 <td class="border border-neutral-200" style="padding: 0 !important; position: relative;">
-                                    <textarea name="payment_details[{{ $detailIndex }}][name]" class="form-control form-control-sm rounded-0 border-0 focus:border-primary-500 focus:ring-primary-500 text-xs w-full payment-name-textarea" rows="2" style="resize: vertical; padding: 4px 8px; font-weight: 600;" placeholder="Chọn dịch vụ / Nhập nội dung..." required>{{ $detail->name }}</textarea>
+                                    <textarea name="payment_details[{{ $detailIndex }}][name]" class="form-control form-control-sm rounded-0 border-0 focus:border-primary-500 focus:ring-primary-500 text-xs w-full payment-name-textarea resize-none" rows="2" style="resize: none; padding: 4px 8px; font-weight: 600;" placeholder="Chọn dịch vụ / Nhập nội dung..." required>{{ $detail->name }}</textarea>
                                 </td>
                                 <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
                                     <input type="text" name="payment_details[{{ $detailIndex }}][unit]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs" placeholder="m, tấm..." value="{{ $detail->unit }}">
@@ -586,6 +590,7 @@
         </div>
     </div>
 </div>
+@endif
 
 <script>
 window.isReworkOrder = @json(isset($acrylicOrder) && $acrylicOrder->relation_type === 'rework');
@@ -1348,7 +1353,7 @@ function addPaymentDetail() {
             <span class="detail-index font-semibold text-neutral-500">${paymentDetailIndex + 1}</span>
         </td>
         <td class="border border-neutral-200" style="padding: 0 !important; position: relative;">
-            <textarea name="payment_details[${paymentDetailIndex}][name]" class="form-control form-control-sm rounded-0 border-0 focus:border-primary-500 focus:ring-primary-500 text-xs w-full payment-name-textarea" rows="2" style="resize: vertical; padding: 4px 8px; font-weight: 600;" placeholder="Chọn dịch vụ / Nhập nội dung..." required></textarea>
+            <textarea name="payment_details[${paymentDetailIndex}][name]" class="form-control form-control-sm rounded-0 border-0 focus:border-primary-500 focus:ring-primary-500 text-xs w-full payment-name-textarea resize-none" rows="2" style="resize: none; padding: 4px 8px; font-weight: 600;" placeholder="Chọn dịch vụ / Nhập nội dung..." required></textarea>
         </td>
         <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
             <input type="text" name="payment_details[${paymentDetailIndex}][unit]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs" placeholder="m, tấm...">
@@ -1447,26 +1452,62 @@ function bindPaymentDetailEvents(row) {
     });
 }
 
-function initPaymentNameAutocomplete(textarea) {
-    let globalDropdown = document.getElementById('payment-name-autocomplete-global-dropdown');
-    if (!globalDropdown) {
-        globalDropdown = document.createElement('div');
-        globalDropdown.id = 'payment-name-autocomplete-global-dropdown';
-        globalDropdown.className = 'dropdown-menu p-0 shadow-lg border border-neutral-200';
-        globalDropdown.style.cssText = 'display: none; position: absolute; z-index: 999999; max-height: 200px; overflow-y: auto; background-color: #ffffff !important;';
-        document.body.appendChild(globalDropdown);
-    }
+// ---- Autocomplete Tên dịch vụ & Gợi ý số lượng chi tiết hóa đơn Min Late ----
+let globalPaymentNameDropdown = null;
+let activePaymentNameTextarea = null;
 
-    let activeTextarea = null;
+function getGlobalPaymentNameDropdown() {
+    if (!globalPaymentNameDropdown) {
+        globalPaymentNameDropdown = document.createElement('div');
+        globalPaymentNameDropdown.id = 'payment-name-autocomplete-global-dropdown';
+        globalPaymentNameDropdown.className = 'dropdown-menu p-0 shadow-lg border border-neutral-200';
+        globalPaymentNameDropdown.style.cssText = 'display: none; position: absolute; z-index: 999999; max-height: 220px; overflow-y: auto; background-color: #ffffff !important;';
+        document.body.appendChild(globalPaymentNameDropdown);
+
+        // Click outside listener (chỉ đăng ký 1 lần duy nhất)
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.payment-name-textarea') && !globalPaymentNameDropdown.contains(e.target)) {
+                globalPaymentNameDropdown.style.display = 'none';
+            }
+        });
+
+        // Scroll listener (chỉ đăng ký 1 lần duy nhất)
+        window.addEventListener('scroll', function() {
+            if (globalPaymentNameDropdown.style.display === 'block' && activePaymentNameTextarea) {
+                const rect = activePaymentNameTextarea.getBoundingClientRect();
+                const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+                globalPaymentNameDropdown.style.top = (rect.bottom + scrollTop) + 'px';
+                globalPaymentNameDropdown.style.left = (rect.left + scrollLeft) + 'px';
+            }
+        }, true);
+
+        // Resize listener (chỉ đăng ký 1 lần duy nhất)
+        window.addEventListener('resize', function() {
+            if (globalPaymentNameDropdown.style.display === 'block' && activePaymentNameTextarea) {
+                const rect = activePaymentNameTextarea.getBoundingClientRect();
+                const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+                globalPaymentNameDropdown.style.top = (rect.bottom + scrollTop) + 'px';
+                globalPaymentNameDropdown.style.left = (rect.left + scrollLeft) + 'px';
+                globalPaymentNameDropdown.style.width = rect.width + 'px';
+            }
+        });
+    }
+    return globalPaymentNameDropdown;
+}
+
+function initPaymentNameAutocomplete(textarea) {
+    const globalDropdown = getGlobalPaymentNameDropdown();
 
     function renderDropdown(filterText = '') {
         globalDropdown.innerHTML = '';
-        const search = filterText.toLowerCase().trim();
+        const search = (filterText || '').toLowerCase().trim();
         const prices = window.minLatePricesData || [];
         
         // Filter prices based on name or category
         const filtered = prices.filter(p => {
-            const fullName = `${p.category_name} - ${p.product_name}`.toLowerCase();
+            const fullName = `${p.category_name || ''} - ${p.product_name || ''}`.toLowerCase();
             return fullName.includes(search);
         });
         
@@ -1480,16 +1521,16 @@ function initPaymentNameAutocomplete(textarea) {
             item.type = 'button';
             item.className = 'dropdown-item text-xs py-2 px-3 text-start w-full border-b border-neutral-100';
             item.style.whiteSpace = 'normal';
-            item.style.backgroundColor = '#ffffff'; // Solid white background
-            item.style.color = '#1f2937'; // Dark text color
-            item.innerHTML = `<span class="font-bold text-primary">${escapeHtml(p.category_name)}</span> - ${escapeHtml(p.product_name)}`;
+            item.style.backgroundColor = '#ffffff';
+            item.style.color = '#1f2937';
+            item.innerHTML = `<span class="font-bold text-primary">${escapeHtml(p.category_name || '')}</span> - ${escapeHtml(p.product_name || '')}`;
             
             item.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
                 
                 // Set textarea value
-                textarea.value = p.product_name;
+                textarea.value = p.product_name || '';
                 
                 // Fill unit and price
                 const row = textarea.closest('.payment-detail-row');
@@ -1517,7 +1558,6 @@ function initPaymentNameAutocomplete(textarea) {
                 globalDropdown.style.display = 'none';
             });
             
-            // Hover styles in JS to override bootstrap styles
             item.addEventListener('mouseenter', () => {
                 item.style.backgroundColor = '#f3f4f6';
             });
@@ -1537,46 +1577,20 @@ function initPaymentNameAutocomplete(textarea) {
         globalDropdown.style.left = (rect.left + scrollLeft) + 'px';
         globalDropdown.style.width = rect.width + 'px';
         globalDropdown.style.display = 'block';
-        activeTextarea = textarea;
+        activePaymentNameTextarea = textarea;
     }
     
-    // Show dropdown on focus
+    // Show dropdown on focus / click
     textarea.addEventListener('focus', function() {
+        renderDropdown(textarea.value);
+    });
+    textarea.addEventListener('click', function() {
         renderDropdown(textarea.value);
     });
     
     // Filter on typing
     textarea.addEventListener('input', function() {
         renderDropdown(textarea.value);
-    });
-    
-    // Hide dropdown on click outside
-    document.addEventListener('click', function(e) {
-        if (!textarea.contains(e.target) && !globalDropdown.contains(e.target)) {
-            globalDropdown.style.display = 'none';
-        }
-    });
-
-    // Hide or update dropdown position on scroll to avoid floating issues
-    window.addEventListener('scroll', function() {
-        if (globalDropdown.style.display === 'block' && activeTextarea === textarea) {
-            const rect = textarea.getBoundingClientRect();
-            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-            const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
-            globalDropdown.style.top = (rect.bottom + scrollTop) + 'px';
-            globalDropdown.style.left = (rect.left + scrollLeft) + 'px';
-        }
-    }, true);
-    
-    window.addEventListener('resize', function() {
-        if (globalDropdown.style.display === 'block' && activeTextarea === textarea) {
-            const rect = textarea.getBoundingClientRect();
-            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-            const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
-            globalDropdown.style.top = (rect.bottom + scrollTop) + 'px';
-            globalDropdown.style.left = (rect.left + scrollLeft) + 'px';
-            globalDropdown.style.width = rect.width + 'px';
-        }
     });
 }
 
@@ -1624,17 +1638,52 @@ function getMinLateQuantitySuggestions() {
     };
 }
 
-function initPaymentQuantitySuggestions(input) {
-    let globalQtyDropdown = document.getElementById('payment-qty-suggestions-global-dropdown');
-    if (!globalQtyDropdown) {
-        globalQtyDropdown = document.createElement('div');
-        globalQtyDropdown.id = 'payment-qty-suggestions-global-dropdown';
-        globalQtyDropdown.className = 'dropdown-menu p-0 shadow-lg border border-neutral-200';
-        globalQtyDropdown.style.cssText = 'display: none; position: absolute; z-index: 999999; max-height: 200px; overflow-y: auto; background-color: #ffffff !important; min-width: 220px;';
-        document.body.appendChild(globalQtyDropdown);
+let globalPaymentQtyDropdown = null;
+let activePaymentQtyInput = null;
+
+function getGlobalPaymentQtyDropdown() {
+    if (!globalPaymentQtyDropdown) {
+        globalPaymentQtyDropdown = document.createElement('div');
+        globalPaymentQtyDropdown.id = 'payment-qty-suggestions-global-dropdown';
+        globalPaymentQtyDropdown.className = 'dropdown-menu p-0 shadow-lg border border-neutral-200';
+        globalPaymentQtyDropdown.style.cssText = 'display: none; position: absolute; z-index: 999999; max-height: 200px; overflow-y: auto; background-color: #ffffff !important; min-width: 220px;';
+        document.body.appendChild(globalPaymentQtyDropdown);
+
+        // Click outside listener (chỉ đăng ký 1 lần duy nhất)
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.payment-quantity-input') && !globalPaymentQtyDropdown.contains(e.target)) {
+                globalPaymentQtyDropdown.style.display = 'none';
+            }
+        });
+
+        // Scroll listener (chỉ đăng ký 1 lần duy nhất)
+        window.addEventListener('scroll', function() {
+            if (globalPaymentQtyDropdown.style.display === 'block' && activePaymentQtyInput) {
+                const rect = activePaymentQtyInput.getBoundingClientRect();
+                const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+                globalPaymentQtyDropdown.style.top = (rect.bottom + scrollTop) + 'px';
+                globalPaymentQtyDropdown.style.left = (rect.left + scrollLeft) + 'px';
+            }
+        }, true);
+
+        // Resize listener (chỉ đăng ký 1 lần duy nhất)
+        window.addEventListener('resize', function() {
+            if (globalPaymentQtyDropdown.style.display === 'block' && activePaymentQtyInput) {
+                const rect = activePaymentQtyInput.getBoundingClientRect();
+                const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+                globalPaymentQtyDropdown.style.top = (rect.bottom + scrollTop) + 'px';
+                globalPaymentQtyDropdown.style.left = (rect.left + scrollLeft) + 'px';
+                globalPaymentQtyDropdown.style.width = rect.width + 'px';
+            }
+        });
     }
-    
-    let activeInput = null;
+    return globalPaymentQtyDropdown;
+}
+
+function initPaymentQuantitySuggestions(input) {
+    const globalQtyDropdown = getGlobalPaymentQtyDropdown();
     
     function renderSuggestions() {
         globalQtyDropdown.innerHTML = '';
@@ -1688,38 +1737,11 @@ function initPaymentQuantitySuggestions(input) {
         globalQtyDropdown.style.top = (rect.bottom + scrollTop) + 'px';
         globalQtyDropdown.style.left = (rect.left + scrollLeft) + 'px';
         globalQtyDropdown.style.display = 'block';
-        activeInput = input;
+        activePaymentQtyInput = input;
     }
     
     input.addEventListener('focus', renderSuggestions);
     input.addEventListener('click', renderSuggestions);
-    
-    document.addEventListener('click', function(e) {
-        if (!input.contains(e.target) && !globalQtyDropdown.contains(e.target)) {
-            globalQtyDropdown.style.display = 'none';
-        }
-    });
-    
-    window.addEventListener('scroll', function() {
-        if (globalQtyDropdown.style.display === 'block' && activeInput === input) {
-            const rect = input.getBoundingClientRect();
-            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-            const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
-            globalQtyDropdown.style.top = (rect.bottom + scrollTop) + 'px';
-            globalQtyDropdown.style.left = (rect.left + scrollLeft) + 'px';
-        }
-    }, true);
-    
-    window.addEventListener('resize', function() {
-        if (globalQtyDropdown.style.display === 'block' && activeInput === input) {
-            const rect = input.getBoundingClientRect();
-            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-            const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
-            globalQtyDropdown.style.top = (rect.bottom + scrollTop) + 'px';
-            globalQtyDropdown.style.left = (rect.left + scrollLeft) + 'px';
-            globalQtyDropdown.style.width = rect.width + 'px';
-        }
-    });
 }
 
 // Initial setup for Min Late-specific rows and payment details

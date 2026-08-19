@@ -1,5 +1,6 @@
 @php
-    $hasPaymentDetails = isset($acrylicOrder) && isset($acrylicOrder->paymentDetails) && $acrylicOrder->paymentDetails->count() > 0;
+    $isWarranty = isset($acrylicOrder) && $acrylicOrder->relation_type === 'warranty';
+    $hasPaymentDetails = !$isWarranty && isset($acrylicOrder) && isset($acrylicOrder->paymentDetails) && $acrylicOrder->paymentDetails->count() > 0;
     $isRework = isset($acrylicOrder) && $acrylicOrder->relation_type === 'rework';
 @endphp
 {{-- Order Supplies & Items Section Card --}}
@@ -268,14 +269,16 @@
                 <span class="mobile-hide-text">Nhập Excel</span>
             </button>
             <input type="file" id="excel-global-file-input" accept=".xlsx,.xls,.csv" style="display:none;">
-            @if($hasPaymentDetails)
-                <button type="button" id="toggle-payment-details-btn" onclick="togglePaymentDetailsSection()" class="btn btn-sm bg-danger-50 text-danger-600 hover:bg-danger-100 border border-danger-200 rounded-lg flex items-center gap-1">
-                    <iconify-icon icon="lucide:trash-2" class="text-lg"></iconify-icon> <span>Xóa chi tiết hóa đơn</span>
-                </button>
-            @else
-                <button type="button" id="toggle-payment-details-btn" onclick="togglePaymentDetailsSection()" class="btn btn-sm bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 rounded-lg flex items-center gap-1">
-                    <iconify-icon icon="lucide:receipt" class="text-lg"></iconify-icon> <span>Thêm chi tiết hóa đơn</span>
-                </button>
+            @if(!$isWarranty)
+                @if($hasPaymentDetails)
+                    <button type="button" id="toggle-payment-details-btn" onclick="togglePaymentDetailsSection()" class="btn btn-sm bg-danger-50 text-danger-600 hover:bg-danger-100 border border-danger-200 rounded-lg flex items-center gap-1">
+                        <iconify-icon icon="lucide:trash-2" class="text-lg"></iconify-icon> <span>Xóa chi tiết hóa đơn</span>
+                    </button>
+                @else
+                    <button type="button" id="toggle-payment-details-btn" onclick="togglePaymentDetailsSection()" class="btn btn-sm bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 rounded-lg flex items-center gap-1">
+                        <iconify-icon icon="lucide:receipt" class="text-lg"></iconify-icon> <span>Thêm chi tiết hóa đơn</span>
+                    </button>
+                @endif
             @endif
             <button type="button" onclick="addOrderSupply()" class="btn btn-sm btn-primary rounded-lg flex items-center gap-1">
                 <iconify-icon icon="lucide:plus" class="text-lg"></iconify-icon> <span class="mobile-hide-text">Thêm vật tư</span>
@@ -575,6 +578,7 @@
     </div>
 </div>
 
+@if(!$isWarranty)
 {{-- Bảng chi tiết hóa đơn dịch vụ --}}
 <div id="payment-details-section" class="order-supplies-popup bg-white border border-neutral-200 rounded-xl p-6 shadow-sm mt-6 relative pt-8" style="{{ $hasPaymentDetails ? '' : 'display: none;' }}" data-order-supplies-zoom-panel data-order-supplies-storage-key="min_late_payment" data-order-supplies-zoom="100" data-order-supplies-visible-rows-disabled="1">
     <div class="order-supplies-header flex items-center justify-between border-b border-neutral-100 pb-4 mb-5">
@@ -631,7 +635,7 @@
                                     </select>
                                 </td>
                                 <td class="border border-neutral-200" style="padding: 0 !important; position: relative;">
-                                    <textarea name="payment_details[{{ $detailIndex }}][name]" class="form-control form-control-sm rounded-lg w-full border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-xs font-semibold" rows="2" style="resize: vertical; padding: 4px 8px;" placeholder="Tên nội dung..." required>{{ $detail->name }}</textarea>
+                                    <textarea name="payment_details[{{ $detailIndex }}][name]" class="form-control form-control-sm rounded-lg w-full border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-xs font-semibold resize-none" rows="2" style="resize: none; padding: 4px 8px;" placeholder="Tên nội dung..." required>{{ $detail->name }}</textarea>
                                 </td>
                                 <td style="width: 100px; min-width: 100px; padding: 0 !important;" class="border border-neutral-200">
                                     <input type="text" name="payment_details[{{ $detailIndex }}][unit]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs w-full" placeholder="m, tấm..." value="{{ $detail->unit }}">
@@ -660,6 +664,7 @@
         </div>
     </div>
 </div>
+@endif
 
 <script>
 window.isReworkOrder = @json(isset($acrylicOrder) && $acrylicOrder->relation_type === 'rework');
@@ -2209,7 +2214,7 @@ function addPaymentDetail() {
             </select>
         </td>
         <td class="border border-neutral-200" style="padding: 0 !important; position: relative;">
-            <textarea name="payment_details[${paymentDetailIndex}][name]" class="form-control form-control-sm rounded-lg w-full border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-xs font-semibold" rows="2" style="resize: vertical; padding: 4px 8px;" placeholder="Tên nội dung..." required></textarea>
+            <textarea name="payment_details[${paymentDetailIndex}][name]" class="form-control form-control-sm rounded-lg w-full border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-xs font-semibold resize-none" rows="2" style="resize: none; padding: 4px 8px;" placeholder="Tên nội dung..." required></textarea>
         </td>
         <td style="width: 100px; min-width: 100px; padding: 0 !important;" class="border border-neutral-200">
             <input type="text" name="payment_details[${paymentDetailIndex}][unit]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs w-full" placeholder="m, tấm...">
@@ -2309,23 +2314,24 @@ function initPaymentCodeTomSelect(selectEl) {
     ts.on('change', function(value) {
         const row = selectEl.closest('.payment-detail-row');
         if (row) {
-            const price = woodBoardPricesData.find(p => p.code === value);
+            const price = (typeof woodBoardPricesData !== 'undefined' ? woodBoardPricesData : []).find(p => p.code === value)
+                       || (typeof minLatePricesData !== 'undefined' ? minLatePricesData : []).find(p => (p.code === value || p.product_code === value));
             
-            const nameInput = row.querySelector('input[name*="[name]"]');
-            const unitInput = row.querySelector('input[name*="[unit]"]');
-            const priceInput = row.querySelector('input[name*="[price]"]');
+            const nameInput = row.querySelector('[name*="[name]"]');
+            const unitInput = row.querySelector('[name*="[unit]"]');
+            const priceInput = row.querySelector('[name*="[price]"]');
             
             if (price) {
                 if (nameInput) {
-                    nameInput.value = (price.code ? price.code + ' - ' : '') + (price.name || '');
+                    nameInput.value = price.name || price.product_name || '';
                     applyFlashEffect(nameInput);
                 }
                 if (unitInput) {
-                    unitInput.value = 'tấm';
+                    unitInput.value = price.unit || 'tấm';
                     applyFlashEffect(unitInput);
                 }
                 if (priceInput) {
-                    priceInput.value = price.price_board || 0;
+                    priceInput.value = price.price_board ?? price.price ?? price.unit_price ?? 0;
                     applyFlashEffect(priceInput);
                 }
             }

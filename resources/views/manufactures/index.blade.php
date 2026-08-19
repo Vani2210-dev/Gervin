@@ -6,31 +6,44 @@
 
 @section('content')
 
+<style>
+    .manufacture-status-select {
+        min-width: 200px !important;
+        width: 200px !important;
+        padding-right: 36px !important;
+    }
+</style>
+
 <div class="grid grid-cols-12">
     <div class="col-span-12">
         <div class="card h-full p-0 rounded-xl border-0 overflow-hidden">
             {{-- Header --}}
             <div class="card-header border-b border-neutral-200 bg-white py-4 px-6 flex items-center flex-wrap gap-3 justify-between">
                 <div class="flex items-center flex-wrap gap-3">
-                    {{-- Per page --}}
-                    <span class="text-base font-medium text-secondary-light mb-0">Hiển thị</span>
-                    <form method="GET" action="{{ route('manufactures.index') }}" id="perPageForm">
-                        <input type="hidden" name="search" value="{{ $search }}">
-                        <input type="hidden" name="status" value="{{ $status }}">
-                        <select name="per_page" class="form-select form-select-sm w-auto border-neutral-200 rounded-lg"
-                            onchange="document.getElementById('perPageForm').submit()">
-                            @foreach([10, 25, 50, 100] as $option)
-                            <option value="{{ $option }}" {{ $perPage == $option ? 'selected' : '' }}>{{ $option }}</option>
-                            @endforeach
-                        </select>
-                    </form>
-
-                    {{-- Search --}}
+                    {{-- Search (Bên trái ngoài cùng) --}}
                     <form method="GET" action="{{ route('manufactures.index') }}" class="navbar-search flex items-center gap-2">
                         <input type="hidden" name="per_page" value="{{ $perPage }}">
                         <input type="hidden" name="status" value="{{ $status }}">
-                        <input type="text" name="search" class="form-control form-control-sm border-neutral-200 rounded-lg w-64" placeholder="Tìm theo mã lệnh, ghi chú..." value="{{ $search }}">
+                        <div class="relative">
+                            <iconify-icon icon="solar:magnifer-linear" class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-base"></iconify-icon>
+                            <input type="text" name="search" class="form-control form-control-sm border-neutral-200 rounded-lg pl-9 pr-3 w-64 md:w-80" placeholder="Tìm theo mã lệnh, ghi chú..." value="{{ $search }}">
+                        </div>
                     </form>
+
+                    {{-- Per page --}}
+                    <div class="flex items-center gap-2">
+                        <span class="text-base font-medium text-secondary-light mb-0">Hiển thị</span>
+                        <form method="GET" action="{{ route('manufactures.index') }}" id="perPageForm">
+                            <input type="hidden" name="search" value="{{ $search }}">
+                            <input type="hidden" name="status" value="{{ $status }}">
+                            <select name="per_page" class="form-select form-select-sm w-auto border-neutral-200 rounded-lg"
+                                onchange="document.getElementById('perPageForm').submit()">
+                                @foreach([10, 25, 50, 100] as $option)
+                                <option value="{{ $option }}" {{ $perPage == $option ? 'selected' : '' }}>{{ $option }}</option>
+                                @endforeach
+                            </select>
+                        </form>
+                    </div>
                 </div>
 
                 <div class="flex items-center gap-2">
@@ -38,7 +51,7 @@
                     <form method="GET" action="{{ route('manufactures.index') }}" class="flex items-center gap-2">
                         <input type="hidden" name="per_page" value="{{ $perPage }}">
                         <input type="hidden" name="search" value="{{ $search }}">
-                        <select name="status" class="form-select form-select-sm border-neutral-200 rounded-lg" onchange="this.form.submit()">
+                        <select name="status" class="form-select form-select-sm border-neutral-200 rounded-lg manufacture-status-select text-xs font-medium" onchange="this.form.submit()">
                             <option value="">-- Tất cả trạng thái --</option>
                             <option value="initialized" {{ $status == 'initialized' ? 'selected' : '' }}>Khởi tạo</option>
                             <option value="tech_approved" {{ $status == 'tech_approved' ? 'selected' : '' }}>KT Duyệt</option>

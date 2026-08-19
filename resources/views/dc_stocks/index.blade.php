@@ -60,25 +60,13 @@
             </h5>
 
             <div class="flex items-center flex-wrap gap-2">
-                {{-- Per page --}}
-                <form method="GET" action="{{ route('dc-stocks.index') }}" id="perPageForm">
-                    <input type="hidden" name="search" value="{{ $search }}">
-                    <input type="hidden" name="status" value="{{ $status }}">
-                    <select name="per_page" class="form-select form-select-sm w-auto border border-neutral-200 dark:border-neutral-700 rounded-lg py-1 px-2 text-xs bg-transparent dark:text-neutral-300"
-                        onchange="document.getElementById('perPageForm').submit()">
-                        @foreach([15, 25, 50, 100] as $option)
-                        <option value="{{ $option }}" {{ $perPage == $option ? 'selected' : '' }}>{{ $option }}</option>
-                        @endforeach
-                    </select>
-                </form>
-
-                {{-- Search --}}
+                {{-- Search (Bên trái ngoài cùng) --}}
                 <form method="GET" action="{{ route('dc-stocks.index') }}" class="flex items-center gap-2">
                     <input type="hidden" name="per_page" value="{{ $perPage }}">
                     <input type="hidden" name="status" value="{{ $status }}">
                     <div class="relative w-48">
                         <span class="absolute top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none" style="left: 10px;">
-                            <iconify-icon icon="lucide:search" class="text-base"></iconify-icon>
+                            <iconify-icon icon="solar:magnifer-linear" class="text-base"></iconify-icon>
                         </span>
                         <input type="text" name="search"
                             class="w-full pr-3 py-1.5 border border-neutral-300 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 text-xs focus:outline-none focus:ring-2 focus:ring-orange-500"
@@ -93,6 +81,18 @@
                         <option value="available" {{ $status === 'available' ? 'selected' : '' }}>Còn hàng</option>
                         <option value="reserved"  {{ $status === 'reserved'  ? 'selected' : '' }}>Đã đặt</option>
                         <option value="used"      {{ $status === 'used'      ? 'selected' : '' }}>Đã dùng</option>
+                    </select>
+                </form>
+
+                {{-- Per page --}}
+                <form method="GET" action="{{ route('dc-stocks.index') }}" id="perPageForm">
+                    <input type="hidden" name="search" value="{{ $search }}">
+                    <input type="hidden" name="status" value="{{ $status }}">
+                    <select name="per_page" class="form-select form-select-sm w-auto border border-neutral-200 dark:border-neutral-700 rounded-lg py-1 px-2 text-xs bg-transparent dark:text-neutral-300"
+                        onchange="document.getElementById('perPageForm').submit()">
+                        @foreach([15, 25, 50, 100] as $option)
+                        <option value="{{ $option }}" {{ $perPage == $option ? 'selected' : '' }}>{{ $option }}</option>
+                        @endforeach
                     </select>
                 </form>
 

@@ -21,8 +21,10 @@
         'packing'       => 'Đóng gói',
         'dispatch'      => 'Xuất xưởng',
         'dc stock'      => 'Kho DC (Tấm dư)',
-        'qr device'     => 'Thiết bị quét QR',
-        'ui'            => 'Giao diện UI',
+        'qr device'      => 'Thiết bị quét QR',
+        'revenue report' => 'Báo cáo doanh thu',
+        'sequence'       => 'Sắp xếp đơn hàng',
+        'ui'             => 'Giao diện UI',
     ];
     $actionLabels = [
         'view'     => 'Xem',
@@ -31,6 +33,7 @@
         'delete'   => 'Xóa',
         'approve'  => 'Duyệt',
         'complete' => 'Hoàn thành',
+        'assign'   => 'Phân công',
     ];
 
     $grouped = [];

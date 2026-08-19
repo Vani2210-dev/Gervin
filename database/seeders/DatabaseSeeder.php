@@ -20,11 +20,15 @@ class DatabaseSeeder extends Seeder
 
         // User::factory(10)->create();
 
+        $adminRole = \Spatie\Permission\Models\Role::where('name', 'Admin')->first();
+        $userRole  = \Spatie\Permission\Models\Role::where('name', 'Nhân viên')->first();
+
         User::firstOrCreate(
             ['email' => 'admin@kbtech.com'],
             [
                 'name' => 'Admin',
                 'password' => bcrypt('password'),
+                'role_id' => $adminRole?->id,
             ]
         )->assignRole('Admin');
 
@@ -33,6 +37,7 @@ class DatabaseSeeder extends Seeder
             [
                 'name' => 'Test User',
                 'password' => bcrypt('password'),
+                'role_id' => $userRole?->id,
             ]
         )->assignRole('Nhân viên');
     }

@@ -13,28 +13,33 @@
             {{-- Card header: toolbar --}}
             <div class="card-header border-b border-neutral-200 bg-white py-4 px-6 flex items-center flex-wrap gap-3 justify-between">
                 <div class="flex items-center flex-wrap gap-3">
-                    {{-- Per page --}}
-                    <span class="text-base font-medium text-secondary-light mb-0">Hiển thị</span>
-                    <form method="GET" action="{{ route('media.index') }}" id="perPageForm">
-                        <input type="hidden" name="folder" value="{{ $currentFolder }}">
-                        <input type="hidden" name="search" value="{{ $search }}">
-                        <input type="hidden" name="type" value="{{ $type }}">
-                        <select name="per_page" class="form-select form-select-sm w-auto border-neutral-200 rounded-lg"
-                            onchange="document.getElementById('perPageForm').submit()">
-                            @foreach([10, 20, 50, 100] as $n)
-                            <option value="{{ $n }}" {{ $perPage == $n ? 'selected' : '' }}>{{ $n }}</option>
-                            @endforeach
-                        </select>
-                    </form>
-
-                    {{-- Tìm kiếm --}}
+                    {{-- Tìm kiếm (Bên trái ngoài cùng) --}}
                     <form method="GET" action="{{ route('media.index') }}" class="navbar-search">
                         <input type="hidden" name="folder" value="{{ $currentFolder }}">
                         <input type="hidden" name="per_page" value="{{ $perPage }}">
-                        <input type="text" class="bg-white h-10 w-auto" name="search"
-                            value="{{ $search }}" placeholder="Tìm kiếm file...">
-                        <iconify-icon icon="ion:search-outline" class="icon"></iconify-icon>
+                        <input type="hidden" name="type" value="{{ $type }}">
+                        <div class="relative">
+                            <iconify-icon icon="solar:magnifer-linear" class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-base"></iconify-icon>
+                            <input type="text" class="form-control form-control-sm border-neutral-200 rounded-lg pl-9 pr-3 w-64 md:w-80" name="search"
+                                value="{{ $search }}" placeholder="Tìm kiếm file...">
+                        </div>
                     </form>
+
+                    {{-- Per page --}}
+                    <div class="flex items-center gap-2">
+                        <span class="text-base font-medium text-secondary-light mb-0">Hiển thị</span>
+                        <form method="GET" action="{{ route('media.index') }}" id="perPageForm">
+                            <input type="hidden" name="folder" value="{{ $currentFolder }}">
+                            <input type="hidden" name="search" value="{{ $search }}">
+                            <input type="hidden" name="type" value="{{ $type }}">
+                            <select name="per_page" class="form-select form-select-sm w-auto border-neutral-200 rounded-lg"
+                                onchange="document.getElementById('perPageForm').submit()">
+                                @foreach([10, 20, 50, 100] as $n)
+                                <option value="{{ $n }}" {{ $perPage == $n ? 'selected' : '' }}>{{ $n }}</option>
+                                @endforeach
+                            </select>
+                        </form>
+                    </div>
 
                     {{-- Breadcrumb thư mục --}}
                     @if($currentFolder !== '/')

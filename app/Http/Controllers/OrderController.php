@@ -40,7 +40,9 @@ class OrderController extends Controller
 
         $user = auth()->user();
         $query = Order::with('customer')
-            ->withCount('manufactureOrders')
+            ->withCount(['manufactureOrders' => function ($q) {
+                $q->whereIn('status', ['stamps_received', 'in_production', 'completed']);
+            }])
             ->when($user && !$user->hasRole('Admin'), function ($q) use ($user) {
                 $q->whereHas('customer.users', function ($uq) use ($user) {
                     $uq->where('users.id', $user->id);
@@ -144,7 +146,7 @@ class OrderController extends Controller
             }
         }
 
-        $order->load(['supplies.items.codes', 'supplies.minLateItems', 'supplies.glassItems', 'paymentDetails', 'orderPayments.creator']);
+        $order->load(['supplies.items.codes', 'supplies.minLateItems.codes', 'supplies.glassItems.codes', 'paymentDetails', 'orderPayments.creator']);
         $acrylicOrder = $order;
         $exportData = $this->getExportData($order);
         return view('orders.show', compact('acrylicOrder', 'exportData'));
@@ -153,7 +155,7 @@ class OrderController extends Controller
     public function bulkExportData(\Illuminate\Http\Request $request)
     {
         $orderIds = $request->input('order_ids', []);
-        $orders = Order::whereIn('id', $orderIds)->with(['supplies.items.codes', 'supplies.minLateItems', 'supplies.glassItems', 'paymentDetails', 'orderPayments.creator', 'customer'])->get();
+        $orders = Order::whereIn('id', $orderIds)->with(['supplies.items.codes', 'supplies.minLateItems.codes', 'supplies.glassItems.codes', 'paymentDetails', 'orderPayments.creator', 'customer'])->get();
         
         $exportDataArray = [];
         foreach ($orders as $order) {
@@ -525,6 +527,19 @@ class OrderController extends Controller
 
     public function productionStats(Order $order)
     {
+        // Chỉ cho phép xem khi đơn đã có Lệnh sản xuất được duyệt hoàn tất quy trình phê duyệt
+        $hasApprovedMO = $order->manufactureOrders()
+            ->whereIn('status', ['stamps_received', 'in_production', 'completed'])
+            ->exists();
+
+        if (!$hasApprovedMO) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Đơn hàng chưa có Lệnh sản xuất được duyệt.',
+                'data' => []
+            ]);
+        }
+
         $order->load(['supplies.items.codes', 'supplies.minLateItems.codes', 'supplies.glassItems.codes']);
         $stats = [];
 
@@ -568,8 +583,8 @@ class OrderController extends Controller
                         if ($action === 'hoàn thành qc' || $action === 'hoàn thành làm đẹp') {
                             $completedTime = $log['time'] ?? null;
                         }
+                        // Chỉ tính là đang sản xuất khi đã thực sự quét vào các công đoạn gia công
                         if (
-                            str_contains($action, 'nhận tem') ||
                             str_contains($action, 'ép') ||
                             str_contains($action, 'cnc') ||
                             str_contains($action, 'dán cạnh') ||
@@ -736,6 +751,24 @@ class OrderController extends Controller
     }
 
     /**
+     * Tạo đơn hàng bảo hành từ đơn hàng gốc (xử lý POST từ modal).
+     */
+    public function createWarrantyOrder(Request $request, Order $order)
+    {
+        $request->validate([
+            'item_ids' => 'required|array|min:1',
+            'item_ids.*' => 'required|integer',
+        ]);
+
+        session(['warranty_item_ids_' . $order->id => $request->input('item_ids')]);
+
+        return response()->json([
+            'ok' => true,
+            'redirect_url' => route('orders.warranty-create', $order->id)
+        ]);
+    }
+
+    /**
      * Hiển thị trang tạo đơn nháp tận dụng tấm (GET).
      */
     public function reuseCreateForm(Order $order)
@@ -872,7 +905,6 @@ class OrderController extends Controller
                 'vat_percent' => $order->vat_percent ?? 0,
                 'vat_amount' => 0,
                 'total_amount' => 0,
-                'customer_policy' => $order->customer_policy,
                 'order_date' => now(),
                 'delivery_days' => null,
                 'deadline' => null,
@@ -963,6 +995,145 @@ class OrderController extends Controller
     }
 
     /**
+     * Hiển thị trang tạo đơn nháp bảo hành (GET).
+     */
+    public function warrantyCreateForm(Order $order)
+    {
+        $itemIds = session('warranty_item_ids_' . $order->id, []);
+        if (empty($itemIds)) {
+            return redirect()->route('orders.show', $order->id)->with('error', 'Chưa chọn tấm gỗ cần bảo hành.');
+        }
+
+        $oldDraftId = old('draft_order_id');
+        if ($oldDraftId) {
+            $acrylicOrder = Order::where('status', 'draft')->where('relation_type', 'warranty')->find($oldDraftId);
+        }
+
+        if (!isset($acrylicOrder) || !$acrylicOrder) {
+            $acrylicOrder = $this->buildWarrantyDraftOrder($order, $itemIds);
+        }
+
+        $orderType = $order->type;
+        $isDraftCreate = true;
+        $woodBoardPrices = \App\Models\WoodBoardPrice::orderBy('code', 'asc')->get();
+        $cncTemplates = \App\Models\CncTemplate::orderBy('id', 'asc')->get();
+        $glassPrices = \App\Models\GlassPrice::orderBy('code', 'asc')->get();
+        $minLatePrices = \App\Models\MinLatePrice::orderBy('category_name', 'asc')->orderBy('stt', 'asc')->get();
+
+        return view('orders.create', compact('orderType', 'acrylicOrder', 'isDraftCreate', 'woodBoardPrices', 'cncTemplates', 'glassPrices', 'minLatePrices'));
+    }
+
+    /**
+     * Tạo bản ghi đơn nháp bảo hành trong DB.
+     */
+    private function buildWarrantyDraftOrder(Order $order, array $selectedItemIds): Order
+    {
+        return DB::transaction(function () use ($order, $selectedItemIds) {
+            $dateStr = now()->format('ymd');
+            $prefix = 'DH' . $dateStr;
+
+            $lastOrder = Order::where('order_code', 'like', $prefix . '%')
+                ->lockForUpdate()
+                ->orderBy('order_code', 'desc')
+                ->first();
+
+            if ($lastOrder) {
+                $lastNumber = intval(substr($lastOrder->order_code, 8));
+                $nextNumber = $lastNumber + 1;
+            } else {
+                $nextNumber = 1;
+            }
+
+            $orderCode = $prefix . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+
+            $warrantyOrder = Order::create([
+                'parent_id' => $order->id,
+                'relation_type' => 'warranty',
+                'order_code' => $orderCode,
+                'type' => $order->type,
+                'customer_id' => $order->customer_id,
+                'customer_name' => $order->customer_name,
+                'phone' => $order->phone,
+                'address' => $order->address,
+                'discount_percent' => 0,
+                'discount_amount' => 0,
+                'vat_percent' => 0,
+                'vat_amount' => 0,
+                'total_amount' => 0,
+                'order_date' => now(),
+                'delivery_days' => null,
+                'deadline' => null,
+                'status' => 'draft',
+                'notes' => '[Bảo hành] Đơn liên kết của ' . $order->order_code,
+            ]);
+
+            $supplyMapping = [];
+
+            foreach ($selectedItemIds as $itemId) {
+                $originalItem = null;
+                $originalSupply = null;
+
+                if ($order->type === 'min_late') {
+                    $originalItem = \App\Models\MinLateOrderItem::find($itemId);
+                } elseif ($order->type === 'glass') {
+                    $originalItem = \App\Models\GlassOrderItem::find($itemId);
+                } else {
+                    $originalItem = \App\Models\AcrylicOrderItem::find($itemId);
+                }
+
+                if (!$originalItem) continue;
+
+                $originalSupply = $originalItem->orderSupply;
+                if (!$originalSupply) continue;
+
+                $parentSupplyId = $originalSupply->id;
+                if (!isset($supplyMapping[$parentSupplyId])) {
+                    $newSupply = \App\Models\OrderSupply::create([
+                        'order_id'          => $warrantyOrder->id,
+                        'order_supply_code' => $originalSupply->order_supply_code,
+                        'supply_name'       => $originalSupply->supply_name ?? 'Vật tư',
+                        'quantity'          => $originalSupply->quantity ?? 1,
+                    ]);
+                    $supplyMapping[$parentSupplyId] = $newSupply->id;
+                }
+                $newSupplyId = $supplyMapping[$parentSupplyId];
+
+                $itemData = $originalItem->toArray();
+                unset($itemData['id']);
+                $itemData['order_supply_id'] = $newSupplyId;
+
+                $origHeight = null;
+                $origWidth = null;
+
+                if ($order->type === 'min_late') {
+                    $size = $originalItem->size ?? [];
+                    if (is_string($size)) {
+                        $size = json_decode($size, true) ?? [];
+                    }
+                    $origHeight = $size['height'] ?? null;
+                    $origWidth = $size['width'] ?? null;
+                } else {
+                    $origHeight = $originalItem->height;
+                    $origWidth = $originalItem->width;
+                }
+
+                $itemData['notes'] = $originalItem->notes ?? '';
+                $itemData['old_size'] = ($origHeight ?? '?') . ' x ' . ($origWidth ?? '?');
+
+                if ($order->type === 'min_late') {
+                    \App\Models\MinLateOrderItem::create($itemData);
+                } elseif ($order->type === 'glass') {
+                    \App\Models\GlassOrderItem::create($itemData);
+                } else {
+                    \App\Models\AcrylicOrderItem::create($itemData);
+                }
+            }
+
+            return $warrantyOrder;
+        });
+    }
+
+    /**
      * In lệnh viết tay cho đơn sửa tấm.
      */
     public function printHandwritten(Order $order)
@@ -973,14 +1144,150 @@ class OrderController extends Controller
     }
 
     /**
+     * Tạo đơn bổ sung từ danh sách tấm được chọn (POST JSON).
+     */
+    public function createAdditionalOrder(Request $request, Order $order)
+    {
+        $selectedItemIds = $request->input('item_ids', []);
+        $boardReturnStatus = $request->input('board_return_status'); // 'pending' hoặc null
+
+        if (empty($selectedItemIds)) {
+            return response()->json(['error' => 'Chưa chọn tấm gỗ cần bổ sung.'], 422);
+        }
+
+        $additionalOrder = $this->buildAdditionalDraftOrderWithItems($order, $selectedItemIds, $boardReturnStatus);
+
+        return response()->json([
+            'ok' => true,
+            'redirect_url' => route('orders.additional-create', $order->id) . '?draft_id=' . $additionalOrder->id
+        ]);
+    }
+
+    /**
+     * Tạo bản ghi đơn nháp bổ sung cùng các tấm được chọn trong DB.
+     */
+    private function buildAdditionalDraftOrderWithItems(Order $order, array $selectedItemIds, ?string $boardReturnStatus = null): Order
+    {
+        return DB::transaction(function () use ($order, $selectedItemIds, $boardReturnStatus) {
+            // Xóa bản nháp bổ sung cũ nếu có
+            $oldDraft = Order::where('status', 'draft')
+                ->where('parent_id', $order->id)
+                ->where('relation_type', 'additional')
+                ->first();
+            if ($oldDraft) {
+                foreach ($oldDraft->supplies as $s) {
+                    $s->items()->delete();
+                    $s->minLateItems()->delete();
+                    $s->glassItems()->delete();
+                    $s->delete();
+                }
+                $oldDraft->delete();
+            }
+
+            $dateStr = now()->format('ymd');
+            $prefix = 'DH' . $dateStr;
+
+            $lastOrder = Order::where('order_code', 'like', $prefix . '%')
+                ->lockForUpdate()
+                ->orderBy('order_code', 'desc')
+                ->first();
+
+            if ($lastOrder) {
+                $lastNumber = intval(substr($lastOrder->order_code, 8));
+                $nextNumber = $lastNumber + 1;
+            } else {
+                $nextNumber = 1;
+            }
+
+            $orderCode = $prefix . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+
+            $additionalOrder = Order::create([
+                'parent_id' => $order->id,
+                'relation_type' => 'additional',
+                'board_return_status' => $boardReturnStatus,
+                'order_code' => $orderCode,
+                'type' => $order->type,
+                'customer_id' => $order->customer_id,
+                'customer_name' => $order->customer_name,
+                'phone' => $order->phone,
+                'address' => $order->address,
+                'discount_percent' => $order->discount_percent ?? 0,
+                'discount_amount' => 0,
+                'vat_percent' => $order->vat_percent ?? 0,
+                'vat_amount' => 0,
+                'total_amount' => 0,
+                'customer_policy' => $order->customer_policy,
+                'order_date' => now(),
+                'delivery_days' => null,
+                'status' => 'draft',
+                'notes' => '[Bổ sung] Đơn liên kết của ' . $order->order_code,
+            ]);
+
+            $supplyMapping = [];
+
+            foreach ($selectedItemIds as $itemId) {
+                $originalItem = null;
+                $originalSupply = null;
+
+                if ($order->type === 'min_late') {
+                    $originalItem = \App\Models\MinLateOrderItem::find($itemId);
+                } elseif ($order->type === 'glass') {
+                    $originalItem = \App\Models\GlassOrderItem::find($itemId);
+                } else {
+                    $originalItem = \App\Models\AcrylicOrderItem::find($itemId);
+                }
+
+                if (!$originalItem) continue;
+
+                $originalSupply = $originalItem->orderSupply;
+                if (!$originalSupply) continue;
+
+                $parentSupplyId = $originalSupply->id;
+                if (!isset($supplyMapping[$parentSupplyId])) {
+                    $newSupply = \App\Models\OrderSupply::create([
+                        'order_id'          => $additionalOrder->id,
+                        'order_supply_code' => $originalSupply->order_supply_code,
+                        'supply_name'       => $originalSupply->supply_name ?? 'Vật tư',
+                        'quantity'          => $originalSupply->quantity ?? 1,
+                    ]);
+                    $supplyMapping[$parentSupplyId] = $newSupply->id;
+                }
+                $newSupplyId = $supplyMapping[$parentSupplyId];
+
+                $itemData = $originalItem->toArray();
+                unset($itemData['id']);
+                $itemData['order_supply_id'] = $newSupplyId;
+
+                if ($order->type === 'min_late') {
+                    \App\Models\MinLateOrderItem::create($itemData);
+                } elseif ($order->type === 'glass') {
+                    \App\Models\GlassOrderItem::create($itemData);
+                } else {
+                    \App\Models\AcrylicOrderItem::create($itemData);
+                }
+            }
+
+            return $additionalOrder;
+        });
+    }
+
+    /**
      * Hiển thị trang tạo đơn nháp bổ sung (GET).
      */
     public function additionalCreateForm(Order $order)
     {
-        $acrylicOrder = Order::where('status', 'draft')
-            ->where('parent_id', $order->id)
-            ->where('relation_type', 'additional')
-            ->first();
+        $draftId = request('draft_id');
+        if ($draftId) {
+            $acrylicOrder = Order::where('status', 'draft')
+                ->where('parent_id', $order->id)
+                ->where('relation_type', 'additional')
+                ->find($draftId);
+        } else {
+            $acrylicOrder = Order::where('status', 'draft')
+                ->where('parent_id', $order->id)
+                ->where('relation_type', 'additional')
+                ->first();
+        }
 
         if (!$acrylicOrder) {
             $acrylicOrder = $this->buildAdditionalDraftOrder($order);
@@ -997,7 +1304,7 @@ class OrderController extends Controller
     }
 
     /**
-     * Tạo bản ghi đơn nháp bổ sung trong DB.
+     * Tạo bản ghi đơn nháp bổ sung trống trong DB.
      */
     private function buildAdditionalDraftOrder(Order $order): Order
     {
@@ -1022,6 +1329,7 @@ class OrderController extends Controller
             return Order::create([
                 'parent_id' => $order->id,
                 'relation_type' => 'additional',
+                'board_return_status' => null,
                 'order_code' => $orderCode,
                 'type' => $order->type,
                 'customer_id' => $order->customer_id,
@@ -1036,10 +1344,25 @@ class OrderController extends Controller
                 'customer_policy' => $order->customer_policy,
                 'order_date' => now(),
                 'delivery_days' => null,
-                'deadline' => null,
                 'status' => 'draft',
                 'notes' => '[Bổ sung] Đơn liên kết của ' . $order->order_code,
             ]);
         });
+    }
+
+    /**
+     * Xác nhận khách đã trả ván cũ cho đơn bổ sung.
+     */
+    public function confirmBoardReturn(Order $order)
+    {
+        if ($order->relation_type !== 'additional') {
+            return redirect()->back()->with('error', 'Chức năng chỉ áp dụng cho đơn bổ sung.');
+        }
+
+        $order->update([
+            'board_return_status' => 'returned',
+        ]);
+
+        return redirect()->route('orders.show', $order)->with('success', 'Đã xác nhận trả ván và cấn trừ công nợ thành công.');
     }
 }

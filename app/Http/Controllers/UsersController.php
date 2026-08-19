@@ -26,6 +26,7 @@ class UsersController extends Controller
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%$search%")
+                  ->orWhere('user_code', 'like', "%$search%")
                   ->orWhere('email', 'like', "%$search%");
             });
         }
@@ -65,6 +66,7 @@ class UsersController extends Controller
     public function store(Request $request)
     {
         $request->validate([
+            'user_code'   => 'nullable|string|max:50|unique:users,user_code',
             'name'        => 'required|string|max:255',
             'email'       => 'required|email|unique:users,email',
             'phone'       => 'nullable|string|max:20',
@@ -79,11 +81,14 @@ class UsersController extends Controller
         }
 
         $user = User::create([
-            'name'     => $request->name,
-            'email'    => $request->email,
-            'password' => bcrypt('password'),
-            'role_id'  => $request->role_id,
-            'avatar'   => $avatarPath,
+            'user_code' => $request->user_code,
+            'name'      => $request->name,
+            'email'     => $request->email,
+            'phone'     => $request->phone,
+            'description' => $request->description,
+            'password'  => bcrypt('password'),
+            'role_id'   => $request->role_id,
+            'avatar'    => $avatarPath,
         ]);
 
         if ($user->role_id) {
@@ -110,6 +115,7 @@ class UsersController extends Controller
     public function update(Request $request, User $user)
     {
         $request->validate([
+            'user_code'   => 'nullable|string|max:50|unique:users,user_code,' . $user->id,
             'name'        => 'required|string|max:255',
             'email'       => 'required|email|unique:users,email,' . $user->id,
             'phone'       => 'nullable|string|max:20',
@@ -121,9 +127,12 @@ class UsersController extends Controller
         $oldRoleId = $user->role_id;
 
         $data = [
-            'name'    => $request->name,
-            'email'   => $request->email,
-            'role_id' => $request->role_id,
+            'user_code'   => $request->user_code,
+            'name'        => $request->name,
+            'email'       => $request->email,
+            'phone'       => $request->phone,
+            'description' => $request->description,
+            'role_id'     => $request->role_id,
         ];
 
         if ($request->hasFile('avatar')) {
@@ -163,6 +172,10 @@ class UsersController extends Controller
 
     public function destroy(User $user)
     {
+        if ($user->id === 1 || $user->email === 'admin@kbtech.com') {
+            return redirect()->route('users.index')->with('error', 'Không thể xóa tài khoản Admin quản trị cao nhất của hệ thống.');
+        }
+
         if ($user->id === auth()->id()) {
             return redirect()->route('users.index')->with('error', 'Không thể xóa chính mình');
         }

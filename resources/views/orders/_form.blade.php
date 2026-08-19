@@ -66,9 +66,23 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label font-semibold text-xs text-neutral-500 uppercase tracking-wider mb-2 block">Khách hàng</label>
+                                @php
+                                    $currentUser = auth()->user();
+                                    if ($currentUser && !$currentUser->hasRole('Admin')) {
+                                        $allowedCustomers = \App\Models\Customer::whereHas('users', function ($q) use ($currentUser) {
+                                            $q->where('users.id', $currentUser->id);
+                                        })->orderBy('name')->get();
+                                    } else {
+                                        $allowedCustomers = \App\Models\Customer::orderBy('name')->get();
+                                    }
+
+                                    if (isset($acrylicOrder) && $acrylicOrder->customer && !$allowedCustomers->contains('id', $acrylicOrder->customer_id)) {
+                                        $allowedCustomers->push($acrylicOrder->customer);
+                                    }
+                                @endphp
                                 <select name="customer_id" id="customer-select" class="" onchange="fillCustomerInfo(this.value)">
                                     <option value="">-- Chọn khách hàng --</option>
-                                    @foreach(\App\Models\Customer::orderBy('name')->get() as $customer)
+                                    @foreach($allowedCustomers as $customer)
                                     <option value="{{ $customer->id }}" {{ isset($acrylicOrder) && $acrylicOrder?->customer_id == $customer->id ? 'selected' : '' }}>{{ $customer->customer_code }} - {{ $customer->name }}</option>
                                     @endforeach
                                 </select>
@@ -106,7 +120,6 @@
                                 <label class="form-label font-semibold text-xs text-neutral-500 uppercase tracking-wider mb-2 block">Chính sách KH</label>
                                 <textarea name="customer_policy" class="form-control rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Nhập chính sách khách hàng" rows="2">{{ old('customer_policy', $acrylicOrder?->customer_policy ?? '') }}</textarea>
                             </div>
-
                         </div>
                     </div>
                 </div>
@@ -368,7 +381,7 @@ function fetchCustomerDebt(customerId) {
 
 function fillCustomerInfo(customerId) {
     @if(auth()->check())
-    const customers = @json(\App\Models\Customer::all());
+    const customers = @json($allowedCustomers ?? \App\Models\Customer::all());
     const customer = customers.find(c => c.id == customerId);
     if (customer) {
         document.querySelector('input[name="customer_name"]').value = customer.name;
@@ -855,6 +868,7 @@ function updateOrderSummary() {
     });
 
     window.isReworkOrder = @json(isset($acrylicOrder) && $acrylicOrder->relation_type === 'rework');
+    window.isWarrantyOrder = @json(isset($acrylicOrder) && $acrylicOrder->relation_type === 'warranty');
     const orderType = @json($currentOrderType);
     
     let totalItems = 0;
@@ -874,15 +888,17 @@ function updateOrderSummary() {
             }
         });
         
-        // Calculate total amount from payment details
-        const detailRows = document.querySelectorAll('.payment-detail-row');
-        detailRows.forEach(row => {
-            const totalInput = row.querySelector('input[name*="total"]');
-            if (totalInput && !totalInput.disabled) {
-                const rawTotal = totalInput.value ? totalInput.value.replace(/\./g, '') : 0;
-                totalAmount += parseFloat(rawTotal) || 0;
-            }
-        });
+        // Calculate total amount from payment details (nếu không phải đơn bảo hành)
+        if (!window.isWarrantyOrder) {
+            const detailRows = document.querySelectorAll('.payment-detail-row');
+            detailRows.forEach(row => {
+                const totalInput = row.querySelector('input[name*="total"]');
+                if (totalInput && !totalInput.disabled) {
+                    const rawTotal = totalInput.value ? totalInput.value.replace(/\./g, '') : 0;
+                    totalAmount += parseFloat(rawTotal) || 0;
+                }
+            });
+        }
     } else {
         const rows = document.querySelectorAll('.order-item-row');
         rows.forEach(row => {
@@ -901,21 +917,27 @@ function updateOrderSummary() {
                 if (height > 0 && width > 0) {
                     totalArea += (height * width * quantity) / 1000000;
                 }
-                if (!window.isReworkOrder) {
+                if (!window.isReworkOrder && !window.isWarrantyOrder) {
                     totalAmount += totalPrice;
                 }
             }
         });
 
-        // Also add total amount from payment details (for acrylic orders)
-        const detailRows = document.querySelectorAll('.payment-detail-row');
-        detailRows.forEach(row => {
-            const totalInput = row.querySelector('input[name*="total"]');
-            if (totalInput && !totalInput.disabled) {
-                const rawTotal = totalInput.value ? totalInput.value.replace(/\./g, '') : 0;
-                totalAmount += parseFloat(rawTotal) || 0;
-            }
-        });
+        // Also add total amount from payment details (for acrylic orders, nếu không phải đơn bảo hành)
+        if (!window.isWarrantyOrder) {
+            const detailRows = document.querySelectorAll('.payment-detail-row');
+            detailRows.forEach(row => {
+                const totalInput = row.querySelector('input[name*="total"]');
+                if (totalInput && !totalInput.disabled) {
+                    const rawTotal = totalInput.value ? totalInput.value.replace(/\./g, '') : 0;
+                    totalAmount += parseFloat(rawTotal) || 0;
+                }
+            });
+        }
+    }
+    
+    if (window.isWarrantyOrder) {
+        totalAmount = 0;
     }
     
     const totalItemsEl = document.getElementById('total-items');

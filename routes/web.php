@@ -270,10 +270,14 @@ Route::middleware(['auth'])->group(function () {
     Route::get('orders/{order}/production-stats', [OrderController::class, 'productionStats'])->name('orders.production-stats');
     Route::get('orders/image/{filename}', [OrderController::class, 'serveImage'])->name('orders.image');
     Route::post('orders/{order}/create-rework', [OrderController::class, 'createReworkOrder'])->name('orders.create-rework');
+    Route::post('orders/{order}/create-warranty', [OrderController::class, 'createWarrantyOrder'])->name('orders.create-warranty');
     Route::get('orders/{order}/rework-create', [OrderController::class, 'reworkCreateForm'])->name('orders.rework-create');
+    Route::get('orders/{order}/warranty-create', [OrderController::class, 'warrantyCreateForm'])->name('orders.warranty-create');
     Route::get('orders/{order}/reuse-create', [OrderController::class, 'reuseCreateForm'])->name('orders.reuse-create');
     Route::get('orders/{order}/print-handwritten', [OrderController::class, 'printHandwritten'])->name('orders.print-handwritten');
+    Route::post('orders/{order}/create-additional', [OrderController::class, 'createAdditionalOrder'])->name('orders.create-additional');
     Route::get('orders/{order}/additional-create', [OrderController::class, 'additionalCreateForm'])->name('orders.additional-create');
+    Route::post('orders/{order}/confirm-board-return', [OrderController::class, 'confirmBoardReturn'])->name('orders.confirm-board-return');
     
     // Lưu cài đặt cảnh báo deadline vào cache
     Route::post('orders/save-deadline-setting', [OrderController::class, 'saveDeadlineSetting'])->name('orders.save-deadline-setting');
@@ -342,6 +346,15 @@ Route::middleware(['auth'])->prefix('dc-stocks')->name('dc-stocks.')->group(func
     Route::put('/{dcStock}', [DcStockController::class, 'update'])->name('update');
     Route::delete('/{dcStock}', [DcStockController::class, 'destroy'])->name('destroy');
     Route::patch('/{dcStock}/status', [DcStockController::class, 'updateStatus'])->name('update-status');
+});
+
+// Báo cáo doanh thu (Revenue Report)
+use App\Http\Controllers\RevenueReportController;
+Route::middleware(['auth'])->prefix('reports')->name('reports.')->group(function () {
+    Route::get('/revenue', [RevenueReportController::class, 'index'])->name('revenue');
+    Route::get('/revenue/export', [RevenueReportController::class, 'export'])->name('revenue.export');
+    Route::post('/revenue/target', [RevenueReportController::class, 'saveTarget'])->name('revenue.target');
+    Route::get('/revenue/get-target', [RevenueReportController::class, 'getTarget'])->name('revenue.get-target');
 });
 
 require __DIR__.'/auth.php';

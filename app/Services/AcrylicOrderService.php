@@ -8,6 +8,7 @@ use App\Models\OrderSupply;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 class AcrylicOrderService
 {
@@ -117,18 +118,29 @@ class AcrylicOrderService
         }
 
         $allAttachments = array_merge($existingAttachments, $attachmentPaths);
+        $isWarranty = $order->relation_type === 'warranty';
         $isRework = $order->relation_type === 'rework';
-        $subTotal = $this->calculateTotalAmount($request->supplies ?? [], $request->payment_details ?? [], $isRework);
-        $discountPercent = (float) $request->input('discount_percent', 0);
-        $vatPercent = (float) $request->input('vat_percent', 0);
-        
-        $rawDiscountAmount = $subTotal * ($discountPercent / 100);
-        $discountAmount = round($rawDiscountAmount, -3);
 
-        $rawVatAmount = ($subTotal - $discountAmount) * ($vatPercent / 100);
-        $vatAmount = round($rawVatAmount, -3);
+        if ($isWarranty) {
+            $subTotal = 0;
+            $discountPercent = 0;
+            $discountAmount = 0;
+            $vatPercent = 0;
+            $vatAmount = 0;
+            $totalAmount = 0;
+        } else {
+            $subTotal = $this->calculateTotalAmount($request->supplies ?? [], $request->payment_details ?? [], $isRework);
+            $discountPercent = (float) $request->input('discount_percent', 0);
+            $vatPercent = (float) $request->input('vat_percent', 0);
+            
+            $rawDiscountAmount = $subTotal * ($discountPercent / 100);
+            $discountAmount = round($rawDiscountAmount, -3);
 
-        $totalAmount = $subTotal - $discountAmount + $vatAmount;
+            $rawVatAmount = ($subTotal - $discountAmount) * ($vatPercent / 100);
+            $vatAmount = round($rawVatAmount, -3);
+
+            $totalAmount = $subTotal - $discountAmount + $vatAmount;
+        }
 
         // Auto-create or link customer if customer_name filled but no customer_id
         $customerId = $request->customer_id ?: null;
@@ -150,15 +162,25 @@ class AcrylicOrderService
                     'address'       => $request->address,
                     'debt'          => $request->input('customer_initial_debt', 0),
                 ]);
+                if ($authUser = auth()->user()) {
+                    $newCustomer->users()->syncWithoutDetaching([$authUser->id]);
+                }
                 $customerId = $newCustomer->id;
             }
-        } elseif ($customerId && $request->has('customer_initial_debt')) {
-            \App\Models\Customer::where('id', $customerId)->update(['debt' => $request->input('customer_initial_debt', 0)]);
         }
 
-        $order->update([
-            'type'          => $request->type ?? 'acrylic',
-            'order_date'    => $request->order_date,
+        $deadline = null;
+        if ($request->filled('order_date') && $request->filled('delivery_days')) {
+            $orderDate = Carbon::parse($request->order_date);
+            $deliveryDays = (float) $request->delivery_days;
+            $fullDays = floor($deliveryDays);
+            $fraction = $deliveryDays - $fullDays;
+            $hours = round($fraction * 24);
+            $deadline = $orderDate->copy()->addDays($fullDays)->addHours($hours);
+        }
+
+        $updateData = [
+            'order_date'    => $request->order_date ? Carbon::parse($request->order_date) : $order->order_date,
             'delivery_days' => $request->delivery_days,
             'customer_id'   => $customerId,
             'customer_name' => $request->customer_name,
@@ -174,7 +196,13 @@ class AcrylicOrderService
             'total_amount'    => $totalAmount,
             'status'          => $order->status === 'draft' ? 'pending' : ($request->status ?? $order->status),
             'attachments'   => !empty($allAttachments) ? json_encode($allAttachments) : null,
-        ]);
+        ];
+
+        if ($order->relation_type === 'additional' && $order->board_return_status !== null) {
+            $updateData['board_return_status'] = $order->board_return_status;
+        }
+
+        $order->update($updateData);
 
         // Clean up old supplies and items (explicitly delete codes first to avoid duplicate key on unique constraint)
         $existingSupplyIds = $order->supplies()->pluck('id')->toArray();
@@ -190,9 +218,11 @@ class AcrylicOrderService
         // Recreate supplies and items
         $this->saveSuppliesAndItems($order, $request->supplies ?? []);
 
-        // Recreate payment details
+        // Recreate payment details (nếu không phải đơn bảo hành)
         $order->paymentDetails()->delete();
-        $this->savePaymentDetails($order, $request->payment_details ?? []);
+        if (!$isWarranty) {
+            $this->savePaymentDetails($order, $request->payment_details ?? []);
+        }
 
         return $order;
     }

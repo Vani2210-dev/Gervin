@@ -80,6 +80,14 @@
                 </a>
             </li>
             @endcan
+            @if(auth()->user()->can('view revenue report') || auth()->user()->hasRole('Admin') || auth()->user()->can('view order'))
+            <li>
+                <a href="{{ route('reports.revenue') }}">
+                    <iconify-icon icon="solar:chart-2-bold-duotone" class="menu-icon"></iconify-icon>
+                    <span>Báo cáo doanh thu</span>
+                </a>
+            </li>
+            @endif
             @can('view manufacture')
             <li>
                 <a href="{{ route('manufactures.index') }}">
@@ -87,6 +95,8 @@
                     <span>Lệnh sản xuất</span>
                 </a>
             </li>
+            @endcan
+            @can('view sequence')
             <li>
                 <a href="{{ route('manufactures.sequence') }}">
                     <iconify-icon icon="lucide:arrow-up-down" class="menu-icon"></iconify-icon>

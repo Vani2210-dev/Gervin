@@ -35,6 +35,14 @@
     </div>
 
     <div class="mb-5">
+        <label for="user_code" class="inline-block font-semibold text-neutral-600 text-sm mb-2">Mã nhân viên</label>
+        <input type="text" class="form-control rounded-lg" id="user_code" name="user_code" value="{{ old('user_code', $user?->user_code) }}" placeholder="Để trống hệ thống sẽ tự sinh (ví dụ: NV0001)">
+        @error('user_code')
+            <div class="text-danger-600 text-sm mt-1">{{ $message }}</div>
+        @enderror
+    </div>
+
+    <div class="mb-5">
         <label for="name" class="inline-block font-semibold text-neutral-600 text-sm mb-2">Họ và tên <span class="text-danger-600">*</span></label>
         <input type="text" class="form-control rounded-lg" id="name" name="name" value="{{ old('name', $user?->name) }}" placeholder="Nhập họ và tên" required>
         @error('name')

@@ -18,6 +18,7 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $fillable = [
+        'user_code',
         'name',
         'email',
         'password',
@@ -26,6 +27,20 @@ class User extends Authenticatable
         'phone',
         'description',
     ];
+
+    /**
+     * Tự động sinh mã nhân viên nếu chưa có khi tạo mới.
+     */
+    protected static function booted()
+    {
+        static::created(function ($user) {
+            if (empty($user->user_code)) {
+                $user->updateQuietly([
+                    'user_code' => 'NV' . str_pad($user->id, 4, '0', STR_PAD_LEFT)
+                ]);
+            }
+        });
+    }
 
     /**
      * The attributes that should be hidden for serialization.

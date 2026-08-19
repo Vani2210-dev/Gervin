@@ -9,26 +9,45 @@ class DashboardController extends Controller
 
     public function index()
     {
+        $user = auth()->user();
+        $isAdmin = $user && $user->hasRole('Admin');
+
+        $orderQuery = \App\Models\Order::where('status', '!=', 'draft');
+        $customerQuery = \App\Models\Customer::query();
+        $manufactureOrderQuery = \App\Models\ManufactureOrder::query();
+
+        if (!$isAdmin && $user) {
+            $orderQuery->whereHas('customer.users', function ($q) use ($user) {
+                $q->where('users.id', $user->id);
+            });
+
+            $customerQuery->whereHas('users', function ($q) use ($user) {
+                $q->where('users.id', $user->id);
+            });
+
+            $manufactureOrderQuery->whereHas('orders.customer.users', function ($q) use ($user) {
+                $q->where('users.id', $user->id);
+            });
+        }
+
         $stats = [
-            'total_orders' => \App\Models\Order::where('status', '!=', 'draft')->count(),
-            'pending_orders' => \App\Models\Order::where('status', 'pending')->count(),
-            'transferred_orders' => \App\Models\Order::where('status', 'transferred')->count(),
-
-            'completed_orders' => \App\Models\Order::where('status', 'completed')->count(),
-            'cancelled_orders' => \App\Models\Order::where('status', 'cancelled')->count(),
+            'total_orders' => (clone $orderQuery)->count(),
+            'pending_orders' => (clone $orderQuery)->where('status', 'pending')->count(),
+            'transferred_orders' => (clone $orderQuery)->where('status', 'transferred')->count(),
+            'completed_orders' => (clone $orderQuery)->where('status', 'completed')->count(),
+            'cancelled_orders' => (clone $orderQuery)->where('status', 'cancelled')->count(),
             
-            'acrylic_orders' => \App\Models\Order::where('status', '!=', 'draft')->where('type', 'acrylic')->count(),
-            'glass_orders' => \App\Models\Order::where('status', '!=', 'draft')->where('type', 'glass')->count(),
-            'min_late_orders' => \App\Models\Order::where('status', '!=', 'draft')->where('type', 'min_late')->count(),
+            'acrylic_orders' => (clone $orderQuery)->where('type', 'acrylic')->count(),
+            'glass_orders' => (clone $orderQuery)->where('type', 'glass')->count(),
+            'min_late_orders' => (clone $orderQuery)->where('type', 'min_late')->count(),
 
-            'total_customers' => \App\Models\Customer::count(),
+            'total_customers' => $customerQuery->count(),
             'total_wood_boards' => \App\Models\WoodBoard::count(),
-            'total_manufacture_orders' => \App\Models\ManufactureOrder::count(),
+            'total_manufacture_orders' => $manufactureOrderQuery->count(),
             'total_users' => \App\Models\User::count(),
         ];
 
-        $recentOrders = \App\Models\Order::with('customer')
-            ->where('status', '!=', 'draft')
+        $recentOrders = (clone $orderQuery)->with('customer')
             ->orderBy('id', 'desc')
             ->limit(5)
             ->get();

@@ -18,7 +18,8 @@ class ManufactureController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:view manufacture',   ['only' => ['index', 'show', 'printStamps', 'sequenceIndex', 'sequenceExport']]);
+        $this->middleware('permission:view manufacture',   ['only' => ['index', 'show', 'printStamps']]);
+        $this->middleware('permission:view sequence',      ['only' => ['sequenceIndex', 'sequenceExport']]);
         $this->middleware('permission:add manufacture',    ['only' => ['create', 'store']]);
         $this->middleware('permission:edit manufacture',   ['only' => ['edit', 'update']]);
         $this->middleware('permission:delete manufacture', ['only' => ['destroy']]);
@@ -51,8 +52,21 @@ class ManufactureController extends Controller
      */
     private function getSequenceData(?string $date = null, ?string $search = null, ?string $completionStatus = null)
     {
-        $query = ManufactureOrder::with(['orders.supplies.items.codes', 'orders.supplies.minLateItems.codes', 'orders.supplies.glassItems.codes']);
+        $user = auth()->user();
+        // Chỉ lấy các Lệnh sản xuất đã được duyệt hoàn tất quy trình phê duyệt (đã nhận tem, đang sản xuất hoặc đã hoàn thành)
+        $query = ManufactureOrder::with([
+            'orders.customer.users',
+            'orders.supplies.items.codes',
+            'orders.supplies.minLateItems.codes',
+            'orders.supplies.glassItems.codes'
+        ])->whereIn('status', ['stamps_received', 'in_production', 'completed']);
         
+        if ($user && !$user->hasRole('Admin')) {
+            $query->whereHas('orders.customer.users', function ($uq) use ($user) {
+                $uq->where('users.id', $user->id);
+            });
+        }
+
         if (!empty($date)) {
             $query->whereDate('created_at', $date);
         }
@@ -76,6 +90,12 @@ class ManufactureController extends Controller
             $day2Date = date('Y-m-d', strtotime($dateStr));
 
             foreach ($mo->orders as $order) {
+                if ($user && !$user->hasRole('Admin')) {
+                    if (!$order->customer || !$order->customer->isAccessibleBy($user)) {
+                        continue;
+                    }
+                }
+
                 $orderSupplyRows = [];
                 $orderTotalPlates = 0;
                 $orderTotalRemaining = 0;
@@ -125,8 +145,8 @@ class ManufactureController extends Controller
                                 if ($action === 'hoàn thành qc' || $action === 'hoàn thành làm đẹp') {
                                     $completedTime = $log['time'] ?? null;
                                 }
+                                // Chỉ tính là đang sản xuất khi đã thực sự quét vào các công đoạn gia công
                                 if (
-                                    str_contains($action, 'nhận tem') ||
                                     str_contains($action, 'ép') ||
                                     str_contains($action, 'cnc') ||
                                     str_contains($action, 'dán cạnh') ||
@@ -137,6 +157,7 @@ class ManufactureController extends Controller
                                 }
                             }
 
+                            // Chỉ tính đã xong khi tấm thực tế có log quét hoàn thành QC / làm đẹp
                             if ($completedTime) {
                                 $completedTotalCount++;
                                 $completedDate = date('Y-m-d', strtotime($completedTime));
@@ -241,12 +262,13 @@ class ManufactureController extends Controller
         }
 
         $spreadsheet = new Spreadsheet();
+        $spreadsheet->getDefaultStyle()->getFont()->setName('Times New Roman');
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Đơn hàng Lic');
 
         // Style templates
         $headerStyle = [
-            'font' => ['bold' => true, 'name' => 'Arial', 'size' => 10],
+            'font' => ['bold' => true, 'name' => 'Times New Roman', 'size' => 10],
             'alignment' => [
                 'horizontal' => Alignment::HORIZONTAL_CENTER,
                 'vertical' => Alignment::VERTICAL_CENTER,
@@ -262,14 +284,14 @@ class ManufactureController extends Controller
         ];
 
         $dataStyle = [
-            'font' => ['name' => 'Arial', 'size' => 10],
+            'font' => ['name' => 'Times New Roman', 'size' => 10],
             'borders' => [
                 'allBorders' => ['borderStyle' => Border::BORDER_THIN]
             ]
         ];
 
         $titleStyle = [
-            'font' => ['bold' => true, 'name' => 'Arial', 'size' => 14],
+            'font' => ['bold' => true, 'name' => 'Times New Roman', 'size' => 14],
             'alignment' => [
                 'horizontal' => Alignment::HORIZONTAL_CENTER,
                 'vertical' => Alignment::VERTICAL_CENTER
@@ -327,7 +349,7 @@ class ManufactureController extends Controller
         }
 
         $grandTotalStyle = [
-            'font' => ['bold' => true, 'name' => 'Arial', 'size' => 10],
+            'font' => ['bold' => true, 'name' => 'Times New Roman', 'size' => 10],
             'borders' => [
                 'allBorders' => ['borderStyle' => Border::BORDER_THIN]
             ],
@@ -431,7 +453,7 @@ class ManufactureController extends Controller
                 $sheet->setCellValue('N' . $row, "=SUM(N{$startDataRow}:N{$endDataRow})");
 
                 $totalRowStyle = [
-                    'font' => ['bold' => true, 'name' => 'Arial', 'size' => 10],
+                    'font' => ['bold' => true, 'name' => 'Times New Roman', 'size' => 10],
                     'borders' => [
                         'allBorders' => ['borderStyle' => Border::BORDER_THIN]
                     ],

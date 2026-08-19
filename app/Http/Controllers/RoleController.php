@@ -81,6 +81,10 @@ class RoleController extends Controller
 
     public function destroy(Role $role)
     {
+        if (strtolower($role->name) === 'admin' || $role->id === 1) {
+            return redirect()->route('roles.index')->with('error', 'Không thể xóa vai trò Admin hệ thống.');
+        }
+
         $role->delete();
         return redirect()->route('roles.index')->with('success', 'Role đã được xóa thành công');
     }

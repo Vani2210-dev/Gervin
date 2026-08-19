@@ -1,5 +1,6 @@
 @php
-    $hasPaymentDetails = isset($acrylicOrder) && isset($acrylicOrder->paymentDetails) && $acrylicOrder->paymentDetails->count() > 0;
+    $isWarranty = isset($acrylicOrder) && $acrylicOrder->relation_type === 'warranty';
+    $hasPaymentDetails = !$isWarranty && isset($acrylicOrder) && isset($acrylicOrder->paymentDetails) && $acrylicOrder->paymentDetails->count() > 0;
     $isRework = isset($acrylicOrder) && $acrylicOrder->relation_type === 'rework';
 @endphp
 {{-- Order Supplies & Items Section Card (Glass) --}}
@@ -240,6 +241,58 @@
     html body table[data-order-resize-group="min_late_payment"] tbody tr td:last-child {
         z-index: 5 !important;
     }
+
+    textarea, textarea.form-control {
+        resize: none !important;
+    }
+
+    /* Style TomSelect for Mã vật tư dropdown in the payment details table to match other borderless inputs */
+    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td .ts-wrapper.tom-select-payment-code {
+        width: 100% !important;
+        height: 100% !important;
+        min-height: 42px !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        display: block !important;
+    }
+    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td .ts-wrapper.tom-select-payment-code .ts-control,
+    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td .ts-wrapper.tom-select-payment-code .ts-control * {
+        font-size: 12px !important;
+    }
+    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td .ts-wrapper.tom-select-payment-code .ts-control {
+        width: 100% !important;
+        height: 100% !important;
+        min-height: 42px !important;
+        padding: 0 12px !important;
+        margin: 0 !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        background: #ffffff !important;
+        box-shadow: none !important;
+        color: #0f172a !important;
+        display: flex !important;
+        align-items: center !important;
+    }
+    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td .ts-wrapper.tom-select-payment-code .ts-control input {
+        border: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        height: auto !important;
+        min-height: 0 !important;
+    }
+    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td .ts-wrapper.tom-select-payment-code.focus .ts-control {
+        background: #eff6ff !important;
+        outline: 2px solid #3b82f6 !important;
+        outline-offset: -2px !important;
+        box-shadow: inset 0 0 0 1px #3b82f6 !important;
+    }
+    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td .ts-wrapper.tom-select-payment-code .ts-control:after {
+        display: none !important;
+    }
 </style>
 <div class="order-supplies-popup bg-white border border-neutral-200 rounded-xl p-6 shadow-sm relative pt-8" data-order-supplies-zoom-panel data-order-supplies-storage-key="glass" data-order-supplies-zoom="100" data-order-supplies-visible-rows="5">
     <div class="order-supplies-header flex items-center justify-between border-b border-neutral-100 pb-4 mb-5">
@@ -283,20 +336,19 @@
                 <span class="mobile-hide-text">Nhập Excel</span>
             </button>
             <input type="file" id="glass-excel-file-input" accept=".xlsx,.xls,.csv" style="display:none;">
-            @if($hasPaymentDetails)
-                <button type="button" id="toggle-payment-details-btn" onclick="togglePaymentDetailsSection()" class="btn btn-sm bg-danger-50 text-danger-600 hover:bg-danger-100 border border-danger-200 rounded-lg flex items-center gap-1">
-                    <iconify-icon icon="lucide:trash-2" class="text-lg"></iconify-icon> <span>Xóa chi tiết hóa đơn</span>
-                </button>
-            @else
-                <button type="button" id="toggle-payment-details-btn" onclick="togglePaymentDetailsSection()" class="btn btn-sm bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 rounded-lg flex items-center gap-1">
-                    <iconify-icon icon="lucide:receipt" class="text-lg"></iconify-icon> <span>Thêm chi tiết hóa đơn</span>
-                </button>
+            @if(!$isWarranty)
+                @if($hasPaymentDetails)
+                    <button type="button" id="toggle-payment-details-btn" onclick="togglePaymentDetailsSection()" class="btn btn-sm bg-danger-50 text-danger-600 hover:bg-danger-100 border border-danger-200 rounded-lg flex items-center gap-1">
+                        <iconify-icon icon="lucide:trash-2" class="text-lg"></iconify-icon> <span>Xóa chi tiết hóa đơn</span>
+                    </button>
+                @else
+                    <button type="button" id="toggle-payment-details-btn" onclick="togglePaymentDetailsSection()" class="btn btn-sm bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 rounded-lg flex items-center gap-1">
+                        <iconify-icon icon="lucide:receipt" class="text-lg"></iconify-icon> <span>Thêm chi tiết hóa đơn</span>
+                    </button>
+                @endif
             @endif
             <button type="button" onclick="addGlassOrderSupply(false)" class="btn btn-sm btn-primary rounded-lg flex items-center gap-1">
                 <iconify-icon icon="lucide:plus" class="text-lg"></iconify-icon> <span class="mobile-hide-text">Thêm vật tư</span>
-            </button>
-            <button type="button" onclick="addGlassOrderSupply(true)" class="btn btn-sm bg-neutral-100 text-neutral-700 hover:bg-neutral-200 border border-neutral-300 rounded-lg flex items-center gap-1">
-                <iconify-icon icon="lucide:plus" class="text-lg"></iconify-icon> <span class="mobile-hide-text">Thêm phụ kiện</span>
             </button>
         </div>
     </div>
@@ -468,7 +520,7 @@
                                         @endif
                                     </td>
                                     <td style="min-width: 220px;" class="border border-neutral-200">
-                                        <textarea name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][product_name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-xs w-full" rows="3" placeholder="Tên sản phẩm">{{ $item->product_name }}</textarea>
+                                        <textarea name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][product_name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-xs w-full resize-none" rows="3" style="resize: none;" placeholder="Tên sản phẩm">{{ $item->product_name }}</textarea>
                                     </td>
                                     <td style="width: 100px; min-width: 100px;" class="border border-neutral-200 {{ $isAccessory ? 'hidden' : '' }}">
                                         <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][thickness]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs text-center px-1" placeholder="Độ dày" value="{{ $item->thickness }}">
@@ -565,6 +617,7 @@
     </div>
 </div>
 
+@if(!$isWarranty)
 {{-- Bảng chi tiết hóa đơn dịch vụ --}}
 <div id="payment-details-section" class="order-supplies-popup bg-white border border-neutral-200 rounded-xl p-6 shadow-sm mt-6 relative pt-8" style="{{ $hasPaymentDetails ? '' : 'display: none;' }}" data-order-supplies-zoom-panel data-order-supplies-storage-key="min_late_payment" data-order-supplies-zoom="100" data-order-supplies-visible-rows-disabled="1">
     <div class="order-supplies-header flex items-center justify-between border-b border-neutral-100 pb-4 mb-5">
@@ -585,6 +638,7 @@
                     <thead>
                         <tr class="bg-neutral-50 text-center">
                             <th scope="col" style="width: 50px; min-width: 50px; white-space: nowrap;" class="sticky-stt-th text-center border border-neutral-200 font-bold text-xs text-neutral-600 uppercase"><span class="order-stt-header-label">STT</span></th>
+                            <th scope="col" style="width: 150px; min-width: 150px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Mã</th>
                             <th scope="col" style="white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên nội dung <span class="text-danger-500">*</span></th>
                             <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn vị</th>
                             <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số lượng</th>
@@ -600,8 +654,27 @@
                                 <td style="width: 50px; min-width: 50px; padding: 0 !important;" class="sticky-stt-td text-center align-middle border border-neutral-200">
                                     <span class="detail-index font-semibold text-neutral-500">{{ $detailIndex + 1 }}</span>
                                 </td>
+                                <td class="border border-neutral-200" style="padding: 0 !important; position: relative; width: 150px; min-width: 150px; height: 42px;">
+                                    @php
+                                        $selectedCode = '';
+                                        foreach($glassPrices as $p) {
+                                            if ($p->code && (str_starts_with($detail->name, $p->code . ' - ') || $detail->name === $p->product_name)) {
+                                                $selectedCode = $p->code;
+                                                break;
+                                            }
+                                        }
+                                    @endphp
+                                    <select class="order-payment-code-select tom-select-payment-code w-full">
+                                        <option value="">-- Mã --</option>
+                                        @foreach($glassPrices as $price)
+                                            @if($price->code)
+                                                <option value="{{ $price->code }}" {{ $selectedCode == $price->code ? 'selected' : '' }}>{{ $price->code }}</option>
+                                            @endif
+                                        @endforeach
+                                    </select>
+                                </td>
                                 <td class="border border-neutral-200" style="padding: 0 !important; position: relative;">
-                                    <textarea name="payment_details[{{ $detailIndex }}][name]" class="form-control form-control-sm rounded-lg w-full border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-xs font-semibold" rows="2" style="resize: vertical; padding: 4px 8px;" placeholder="Tên nội dung..." required>{{ $detail->name }}</textarea>
+                                    <textarea name="payment_details[{{ $detailIndex }}][name]" class="form-control form-control-sm rounded-lg w-full border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-xs font-semibold resize-none" rows="2" style="resize: none; padding: 4px 8px;" placeholder="Tên nội dung..." required>{{ $detail->name }}</textarea>
                                 </td>
                                 <td style="width: 100px; min-width: 100px; padding: 0 !important;" class="border border-neutral-200">
                                     <input type="text" name="payment_details[{{ $detailIndex }}][unit]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs w-full" placeholder="m, tấm..." value="{{ $detail->unit }}">
@@ -630,6 +703,7 @@
         </div>
     </div>
 </div>
+@endif
 
 <script>
 window.isReworkOrder = @json(isset($acrylicOrder) && $acrylicOrder->relation_type === 'rework');
@@ -865,7 +939,7 @@ function addGlassOrderItem(button, isInitial = false, insertAfterRow = null) {
             ${productCodeCellHtml}
         </td>
         <td style="min-width: 220px;" class="border border-neutral-200">
-            <textarea name="supplies[${supplyIndex}][items][${itemIndex}][product_name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-xs w-full" rows="3" placeholder="Tên sản phẩm">${lastData ? lastData.product_name : ''}</textarea>
+            <textarea name="supplies[${supplyIndex}][items][${itemIndex}][product_name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-xs w-full resize-none" rows="3" style="resize: none;" placeholder="Tên sản phẩm">${lastData ? lastData.product_name : ''}</textarea>
         </td>
         <td style="width: 100px; min-width: 100px;" class="border border-neutral-200 ${isAccessory ? 'hidden' : ''}">
             <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][thickness]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs text-center px-1" placeholder="Độ dày" value="${lastData ? lastData.thickness : ''}">
@@ -1514,6 +1588,30 @@ function initWingDirection(container) {
                     <div style="font-size:14px;font-weight:500;">Không tìm thấy dữ liệu hợp lệ</div>
                     <div style="font-size:13px;margin-top:4px;">Vui lòng kiểm tra lại file Excel (đảm bảo đúng cấu trúc).</div>
                 </div>
+
+                {{-- Bảng Phụ kiện & Dịch vụ đính kèm --}}
+                <div id="glass-excel-services-container" style="display:none;margin-top:24px;border-top:1px dashed #cbd5e1;padding-top:16px;">
+                    <div style="font-size:14px;font-weight:700;color:#1e293b;margin-bottom:12px;display:flex;align-items:center;gap:6px;">
+                        <iconify-icon icon="lucide:receipt" style="color:#3b82f6;font-size:16px;"></iconify-icon>
+                        Phụ kiện & Dịch vụ đính kèm
+                    </div>
+                    <div style="overflow-x:auto;">
+                        <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:600px;text-align:left;">
+                            <thead style="background:#f8fafc;">
+                                <tr>
+                                    <th style="padding:8px 10px;text-align:center;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;width:90px;">Mã</th>
+                                    <th style="padding:8px 10px;text-align:left;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;">Tên nội dung</th>
+                                    <th style="padding:8px 10px;text-align:center;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;width:80px;">Đơn vị</th>
+                                    <th style="padding:8px 10px;text-align:center;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;width:80px;">Số lượng</th>
+                                    <th style="padding:8px 10px;text-align:right;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;width:130px;">Đơn giá</th>
+                                    <th style="padding:8px 10px;text-align:right;color:#64748b;font-weight:600;border-bottom:2px solid #e2e8f0;width:140px;">Thành tiền</th>
+                                </tr>
+                            </thead>
+                            <tbody id="glass-excel-services-tbody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -1552,6 +1650,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 let _glassExcelSupplyGroups = [];
+let _glassExcelAccessories = [];
 
 function triggerGlassExcelImport() {
     const fileInput = document.getElementById('glass-excel-file-input');
@@ -1565,6 +1664,7 @@ function handleGlassExcelFile(file) {
     if (!file) return;
     document.getElementById('glass-excel-import-filename').textContent = file.name;
     _glassExcelSupplyGroups = [];
+    _glassExcelAccessories = [];
 
     const reader = new FileReader();
     reader.onload = function(e) {
@@ -1574,7 +1674,7 @@ function handleGlassExcelFile(file) {
             const rawRows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: false });
 
             if (!rawRows || rawRows.length === 0) {
-                showGlassExcelModal([]);
+                showGlassExcelModal([], []);
                 return;
             }
 
@@ -1590,12 +1690,7 @@ function handleGlassExcelFile(file) {
 
             const groups = [];
             let currentGroup = null;
-            let accessoriesGroup = {
-                supply_name: 'Phụ kiện',
-                supply_code: 'Phụ kiện',
-                is_accessory: true,
-                items: []
-            };
+            let accessories = [];
 
             for (const row of rawRows) {
                 const stt = clean(row[0]);
@@ -1652,27 +1747,23 @@ function handleGlassExcelFile(file) {
                     notes: notes
                 };
 
-                if (!maSp) {
-                    accessoriesGroup.items.push(itemData);
+                // Nếu không có mã sản phẩm hoặc là phụ kiện -> Đưa vào danh sách phụ kiện
+                if (!maSp || (!height && !width)) {
+                    accessories.push(itemData);
                 } else {
                     currentGroup.items.push(itemData);
                 }
             }
 
-            if (accessoriesGroup.items.length > 0) {
-                groups.push(accessoriesGroup);
-            }
-
             _glassExcelSupplyGroups = groups.filter(g => g.items.length > 0);
+            _glassExcelAccessories = accessories;
 
             // Assign supply_code from the first item's product_code (e.g., 'GK06')
             _glassExcelSupplyGroups.forEach(g => {
-                if (!g.is_accessory) {
-                    g.supply_code = g.items[0]?.product_code || g.supply_name;
-                }
+                g.supply_code = g.items[0]?.product_code || g.supply_name;
             });
 
-            showGlassExcelModal(_glassExcelSupplyGroups);
+            showGlassExcelModal(_glassExcelSupplyGroups, _glassExcelAccessories);
         } catch(err) {
             console.error(err);
             alert("Lỗi khi đọc file Excel. Vui lòng kiểm tra lại định dạng.");
@@ -1681,7 +1772,7 @@ function handleGlassExcelFile(file) {
     reader.readAsArrayBuffer(file);
 }
 
-function showGlassExcelModal(groups) {
+function showGlassExcelModal(groups, accessories = []) {
     const thead = document.getElementById('glass-excel-preview-thead');
     const tbody = document.getElementById('glass-excel-preview-tbody');
     const empty = document.getElementById('glass-excel-preview-empty');
@@ -1705,7 +1796,7 @@ function showGlassExcelModal(groups) {
     tbody.innerHTML = '';
     let totalItems = 0;
 
-    if (!groups || groups.length === 0) {
+    if ((!groups || groups.length === 0) && (!accessories || accessories.length === 0)) {
         empty.style.display = 'block';
         confirmBtn.style.opacity = '0.5';
         confirmBtn.style.pointerEvents = 'none';
@@ -1721,14 +1812,10 @@ function showGlassExcelModal(groups) {
 
     let html = '';
     groups.forEach(group => {
-        let pillHtml = group.is_accessory ? 
-            `<span style="background:#fef9c3;color:#854d0e;border:1px solid #fef08a;border-radius:6px;padding:1px 8px;margin-left:4px;">Phụ kiện đi kèm</span>` :
-            `Vật tư: <span style="background:#fff;border:1px solid #c4b5fd;border-radius:6px;padding:1px 8px;margin-left:4px;">${window._glassEscHtml(group.supply_code)}</span>`;
-
         html += `<tr style="background:#ede9fe;">
             <td colspan="11" style="padding:7px 12px;font-weight:700;color:#6d28d9;font-size:12px;">
                 <iconify-icon icon="lucide:package" style="margin-right:6px;font-size:13px;"></iconify-icon>
-                ${pillHtml}
+                Vật tư: <span style="background:#fff;border:1px solid #c4b5fd;border-radius:6px;padding:1px 8px;margin-left:4px;">${window._glassEscHtml(group.supply_code)}</span>
                 <span style="color:#94a3b8;font-weight:400;margin-left:8px;">(${group.items.length} SP)</span>
             </td>
         </tr>`;
@@ -1755,7 +1842,33 @@ function showGlassExcelModal(groups) {
     });
     tbody.innerHTML = html;
 
-    countEl.innerHTML = `<b style="color:#6d28d9;">${groups.length} nhóm</b>&nbsp;·&nbsp;<b style="color:#1d4ed8;">${totalItems} sản phẩm</b> sẽ được nhập`;
+    // Render bảng phụ kiện / dịch vụ đính kèm
+    const srvContainer = document.getElementById('glass-excel-services-container');
+    const srvTbody = document.getElementById('glass-excel-services-tbody');
+    if (accessories && accessories.length > 0) {
+        if (srvContainer) srvContainer.style.display = 'block';
+        let srvHtml = '';
+        accessories.forEach(acc => {
+            const priceFmt = acc.unit_price ? Number(acc.unit_price).toLocaleString('vi-VN') : '0';
+            const totalFmt = acc.total_price ? Number(acc.total_price).toLocaleString('vi-VN') : '0';
+            srvHtml += `
+                <tr style="border-bottom:1px solid #f1f5f9;">
+                    <td style="padding:8px 10px;text-align:center;color:#64748b;font-weight:600;">${window._glassEscHtml(acc.product_code || '—')}</td>
+                    <td style="padding:8px 10px;color:#1e293b;font-weight:500;white-space:pre-wrap;">${window._glassEscHtml(acc.product_name)}</td>
+                    <td style="padding:8px 10px;text-align:center;color:#64748b;">${window._glassEscHtml(acc.unit || 'Cái')}</td>
+                    <td style="padding:8px 10px;text-align:center;font-weight:600;color:#0369a1;">${acc.quantity || 1}</td>
+                    <td style="padding:8px 10px;text-align:right;color:#15803d;font-weight:600;">${priceFmt}</td>
+                    <td style="padding:8px 10px;text-align:right;color:#059669;font-weight:700;">${totalFmt}</td>
+                </tr>
+            `;
+        });
+        if (srvTbody) srvTbody.innerHTML = srvHtml;
+    } else {
+        if (srvContainer) srvContainer.style.display = 'none';
+        if (srvTbody) srvTbody.innerHTML = '';
+    }
+
+    countEl.innerHTML = `<b style="color:#6d28d9;">${groups.length} nhóm</b>&nbsp;·&nbsp;<b style="color:#1d4ed8;">${totalItems} sản phẩm</b>${accessories.length > 0 ? `&nbsp;·&nbsp;<b style="color:#059669;">${accessories.length} phụ kiện/dịch vụ</b>` : ''} sẽ được nhập`;
 
     document.getElementById('glass-excel-import-backdrop').style.display = 'block';
     document.getElementById('glass-excel-import-modal').style.display = 'flex';
@@ -1767,33 +1880,33 @@ function closeGlassExcelImport() {
     document.getElementById('glass-excel-import-modal').style.display = 'none';
     document.body.style.overflow = '';
     _glassExcelSupplyGroups = [];
+    _glassExcelAccessories = [];
 }
 
 function confirmGlassExcelImport() {
-    if (!_glassExcelSupplyGroups || _glassExcelSupplyGroups.length === 0) return;
+    if ((!_glassExcelSupplyGroups || _glassExcelSupplyGroups.length === 0) && (!_glassExcelAccessories || _glassExcelAccessories.length === 0)) return;
 
     const suppliesContainer = document.getElementById('glass-supplies-container');
     if (!suppliesContainer) return;
 
+    // 1. Nhập các nhóm vật tư cánh kính
     _glassExcelSupplyGroups.forEach(group => {
-        addGlassOrderSupply(group.is_accessory ? true : false);
+        addGlassOrderSupply(false);
         const newSupplyRow = suppliesContainer.querySelector('.order-supply-row:last-child');
         if (!newSupplyRow) return;
 
-        if (!group.is_accessory) {
-            // Try mapping supply group name to the text input
-            const supplyNameInput = newSupplyRow.querySelector('input[name*="[supply_name]"]');
-            if (supplyNameInput && group.supply_name) {
-                supplyNameInput.value = group.supply_name;
-            }
+        // Try mapping supply group name to the text input
+        const supplyNameInput = newSupplyRow.querySelector('input[name*="[supply_name]"]');
+        if (supplyNameInput && group.supply_name) {
+            supplyNameInput.value = group.supply_name;
+        }
 
-            const tomSelectEl = newSupplyRow.querySelector('.tom-select-supply-code');
-            if (tomSelectEl && tomSelectEl.tomselect && group.supply_code) {
-                if (!tomSelectEl.tomselect.options[group.supply_code]) {
-                    tomSelectEl.tomselect.addOption({value: group.supply_code, text: group.supply_code});
-                }
-                tomSelectEl.tomselect.setValue(group.supply_code);
+        const tomSelectEl = newSupplyRow.querySelector('.tom-select-supply-code');
+        if (tomSelectEl && tomSelectEl.tomselect && group.supply_code) {
+            if (!tomSelectEl.tomselect.options[group.supply_code]) {
+                tomSelectEl.tomselect.addOption({value: group.supply_code, text: group.supply_code});
             }
+            tomSelectEl.tomselect.setValue(group.supply_code);
         }
 
         const itemsContainer = newSupplyRow.querySelector('.supply-items-container');
@@ -1823,8 +1936,6 @@ function confirmGlassExcelImport() {
             setVal('[name*="[product_name]"]', item.product_name);
             setVal('input[name*="[thickness]"]', item.thickness);
             
-            // wing_opening_direction is an input + hidden input + display in glass.blade.php
-            // We need to set the value correctly
             const actualWingInput = newRow.querySelector('.actual-wing-direction');
             if (actualWingInput) {
                 actualWingInput.value = item.wing_opening_direction || '';
@@ -1852,12 +1963,61 @@ function confirmGlassExcelImport() {
                     el.value = formattedTotal;
                     el.setAttribute('data-exact-value', formattedTotal);
                 }
+            } else {
+                calculateGlassTotalPrice(newRow);
             }
             setVal('input[name*="[notes]"]', item.notes);
 
             bindGlassRowEvents(newRow);
         });
     });
+
+    // 2. Nhập phụ kiện & dịch vụ vào bảng Chi tiết hóa đơn
+    if (_glassExcelAccessories && _glassExcelAccessories.length > 0) {
+        const paymentSection = document.getElementById('payment-details-section');
+        if (paymentSection && paymentSection.style.display === 'none') {
+            paymentSection.style.display = 'block';
+            const toggleBtn = document.getElementById('toggle-payment-details-btn');
+            if (toggleBtn) {
+                toggleBtn.className = 'btn btn-sm bg-danger-50 text-danger-600 hover:bg-danger-100 border border-danger-200 rounded-lg flex items-center gap-1';
+                toggleBtn.innerHTML = '<iconify-icon icon="lucide:trash-2" class="text-lg"></iconify-icon> <span>Xóa chi tiết hóa đơn</span>';
+            }
+        }
+
+        _glassExcelAccessories.forEach(item => {
+            addPaymentDetail();
+            const paymentContainer = document.getElementById('payment-details-container');
+            const newPaymentRow = paymentContainer?.lastElementChild;
+            if (!newPaymentRow) return;
+
+            const codeSelect = newPaymentRow.querySelector('.tom-select-payment-code');
+            if (codeSelect && codeSelect.tomselect && item.product_code) {
+                codeSelect.tomselect.setValue(item.product_code);
+            }
+            
+            const nameInput = newPaymentRow.querySelector('[name*="[name]"]');
+            if (nameInput && item.product_name) {
+                nameInput.value = item.product_name;
+            }
+
+            const unitInput = newPaymentRow.querySelector('input[name*="[unit]"]');
+            if (unitInput && item.unit) {
+                unitInput.value = item.unit;
+            }
+
+            const qtyInput = newPaymentRow.querySelector('input[name*="[quantity]"]');
+            if (qtyInput && item.quantity) {
+                qtyInput.value = item.quantity;
+            }
+
+            const priceInput = newPaymentRow.querySelector('input[name*="[price]"]');
+            if (priceInput && item.unit_price) {
+                priceInput.value = item.unit_price;
+            }
+
+            calculatePaymentDetailRowTotal(newPaymentRow);
+        });
+    }
 
     if (typeof updateGlassRowIndexes === 'function') {
         updateGlassRowIndexes();
@@ -1902,14 +2062,26 @@ function addPaymentDetail() {
     const container = document.getElementById('payment-details-container');
     if (!container) return;
 
+    let optionsHtml = '<option value="">-- Mã --</option>';
+    (window.glassPricesData || []).forEach(p => {
+        if (p.code) {
+            optionsHtml += `<option value="${escapeHtml(p.code)}">${escapeHtml(p.code)}</option>`;
+        }
+    });
+
     const newRow = document.createElement('tr');
     newRow.className = 'payment-detail-row';
     newRow.innerHTML = `
         <td style="width: 50px; min-width: 50px; padding: 0 !important;" class="sticky-stt-td text-center align-middle border border-neutral-200">
             <span class="detail-index font-semibold text-neutral-500">${paymentDetailIndex + 1}</span>
         </td>
+        <td class="border border-neutral-200" style="padding: 0 !important; position: relative; width: 150px; min-width: 150px; height: 42px;">
+            <select class="order-payment-code-select tom-select-payment-code w-full">
+                ${optionsHtml}
+            </select>
+        </td>
         <td class="border border-neutral-200" style="padding: 0 !important; position: relative;">
-            <textarea name="payment_details[${paymentDetailIndex}][name]" class="form-control form-control-sm rounded-lg w-full border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-xs font-semibold" rows="2" style="resize: vertical; padding: 4px 8px;" placeholder="Tên nội dung..." required></textarea>
+            <textarea name="payment_details[${paymentDetailIndex}][name]" class="form-control form-control-sm rounded-lg w-full border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-xs font-semibold resize-none" rows="2" style="resize: none; padding: 4px 8px;" placeholder="Tên nội dung..." required></textarea>
         </td>
         <td style="width: 100px; min-width: 100px; padding: 0 !important;" class="border border-neutral-200">
             <input type="text" name="payment_details[${paymentDetailIndex}][unit]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs w-full" placeholder="m, tấm...">
@@ -1931,6 +2103,12 @@ function addPaymentDetail() {
     `;
     container.appendChild(newRow);
 
+    // Initialize TomSelect for the new row select
+    const selectEl = newRow.querySelector('.tom-select-payment-code');
+    if (selectEl && typeof TomSelect !== 'undefined') {
+        initPaymentCodeTomSelect(selectEl);
+    }
+
     // Bind change/input events for auto-calculating row total
     bindPaymentDetailEvents(newRow);
     
@@ -1938,6 +2116,44 @@ function addPaymentDetail() {
     updatePaymentDetailIndexes();
     updateOrderSummary();
     refreshPaymentDetailsTableLayout();
+}
+
+function initPaymentCodeTomSelect(selectEl) {
+    if (selectEl.tomselect) return;
+    const ts = new TomSelect(selectEl, {
+        create: true,
+        placeholder: '-- Mã --',
+        allowEmptyOption: true,
+        maxOptions: null,
+        dropdownParent: 'body'
+    });
+    ts.on('change', function(value) {
+        const row = selectEl.closest('.payment-detail-row');
+        if (row) {
+            const price = (window.glassPricesData || []).find(p => p.code === value);
+            
+            const nameInput = row.querySelector('[name*="[name]"]');
+            const unitInput = row.querySelector('[name*="[unit]"]');
+            const priceInput = row.querySelector('[name*="[price]"]');
+            
+            if (price) {
+                if (nameInput) {
+                    nameInput.value = price.product_name || '';
+                    applyFlashEffect(nameInput);
+                }
+                if (unitInput) {
+                    unitInput.value = price.unit || 'Cái';
+                    applyFlashEffect(unitInput);
+                }
+                if (priceInput) {
+                    priceInput.value = price.price || 0;
+                    applyFlashEffect(priceInput);
+                }
+            }
+            calculatePaymentDetailRowTotal(row);
+        }
+        updateOrderSummary();
+    });
 }
 
 function removePaymentDetail(button) {
@@ -1996,7 +2212,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.payment-detail-row').forEach(row => {
         bindPaymentDetailEvents(row);
     });
-    
+
+    document.querySelectorAll('.tom-select-payment-code').forEach(function(element) {
+        initPaymentCodeTomSelect(element);
+    });
     
     refreshPaymentDetailsTableLayout();
 });

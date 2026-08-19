@@ -11,22 +11,29 @@
             <div class="card h-full p-0 rounded-xl border-0 overflow-hidden">
                 <div class="card-header border-b border-neutral-200 bg-white py-4 px-6 flex items-center flex-wrap gap-3 justify-between">
                     <div class="flex items-center flex-wrap gap-3">
-                        <span class="text-base font-medium text-secondary-light mb-0">Hiển thị</span>
-                        <form method="GET" action="{{ route('roles.index') }}" id="perPageForm">
-                            <input type="hidden" name="search" value="{{ request('search') }}">
-                            <select name="per_page" class="form-select form-select-sm w-auto border-neutral-200 rounded-lg"
-                                onchange="document.getElementById('perPageForm').submit()">
-                                @foreach([10, 25, 50, 100] as $n)
-                                <option value="{{ $n }}" {{ $perPage == $n ? 'selected' : '' }}>{{ $n }}</option>
-                                @endforeach
-                            </select>
-                        </form>
+                        {{-- Search (Bên trái ngoài cùng) --}}
                         <form method="GET" action="{{ route('roles.index') }}" class="navbar-search">
                             <input type="hidden" name="per_page" value="{{ $perPage }}">
-                            <input type="text" class="bg-white h-10 w-auto" name="search"
-                                value="{{ request('search') }}" placeholder="Tìm kiếm">
-                            <iconify-icon icon="ion:search-outline" class="icon"></iconify-icon>
+                            <div class="relative">
+                                <iconify-icon icon="solar:magnifer-linear" class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-base"></iconify-icon>
+                                <input type="text" class="form-control form-control-sm border-neutral-200 rounded-lg pl-9 pr-3 w-64 md:w-80" name="search"
+                                    value="{{ request('search') }}" placeholder="Tìm kiếm vai trò...">
+                            </div>
                         </form>
+
+                        {{-- Per page --}}
+                        <div class="flex items-center gap-2">
+                            <span class="text-base font-medium text-secondary-light mb-0">Hiển thị</span>
+                            <form method="GET" action="{{ route('roles.index') }}" id="perPageForm">
+                                <input type="hidden" name="search" value="{{ request('search') }}">
+                                <select name="per_page" class="form-select form-select-sm w-auto border-neutral-200 rounded-lg"
+                                    onchange="document.getElementById('perPageForm').submit()">
+                                    @foreach([10, 25, 50, 100] as $n)
+                                    <option value="{{ $n }}" {{ $perPage == $n ? 'selected' : '' }}>{{ $n }}</option>
+                                    @endforeach
+                                </select>
+                            </form>
+                        </div>
                     </div>
                     <div class="flex items-center gap-2">
                         <button type="button" onclick="openModal('filter-modal')"
@@ -65,7 +72,17 @@
                                 @php $stt = $roles->firstItem() + $loop->index; @endphp
                                 <tr>
                                     <td>{{ $stt }}</td>
-                                    <td><span class="text-base mb-0 font-normal text-secondary-light">{{ $role->name }}</span></td>
+                                    <td>
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-base mb-0 font-normal text-secondary-light">{{ $role->name }}</span>
+                                            @if(strtolower($role->name) === 'admin' || $role->id === 1)
+                                                <span class="inline-flex items-center gap-1 bg-neutral-100 text-neutral-600 border border-neutral-200 text-xs px-2 py-0.5 rounded-md font-medium" title="Vai trò mặc định của hệ thống - Không thể xóa">
+                                                    <iconify-icon icon="solar:shield-check-outline" class="text-sm text-neutral-500"></iconify-icon>
+                                                    Hệ thống
+                                                </span>
+                                            @endif
+                                        </div>
+                                    </td>
                                     <td>
                                         @php $perms = $role->permissions; $extra = $perms->count() - 3; @endphp
                                         @foreach($perms->take(3) as $permission)
@@ -86,11 +103,11 @@
                                             </a>
                                             @endcan
                                             @can('delete role')
-                                            @if($role->name !== 'admin')
+                                            @if(strtolower($role->name) !== 'admin' && $role->id !== 1)
                                             <form action="{{ route('roles.destroy', $role) }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa vai trò này?')">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="bg-danger-100 hover:bg-danger-200 text-danger-600 font-medium w-10 h-10 flex justify-center items-center rounded-full">
+                                                <button type="submit" class="bg-danger-100 hover:bg-danger-200 text-danger-600 font-medium w-10 h-10 flex justify-center items-center rounded-full" title="Xóa">
                                                     <iconify-icon icon="fluent:delete-24-regular" class="menu-icon"></iconify-icon>
                                                 </button>
                                             </form>

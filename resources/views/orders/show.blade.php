@@ -102,11 +102,11 @@
                 </div>
 
                 <div class="p-6">
-                    {{-- Liên kết đơn cha - con cho đơn sửa tấm/bổ sung --}}
+                    {{-- Liên kết đơn cha - con cho đơn sửa tấm/bổ sung/bảo hành --}}
                     @if($acrylicOrder->parent)
                         <div class="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-2 text-sm text-amber-800">
                             <iconify-icon icon="lucide:link" class="text-base"></iconify-icon>
-                            <span>Đơn hàng {{ $acrylicOrder->relation_type === 'rework' ? 'sửa tấm' : ($acrylicOrder->relation_type === 'additional' ? 'bổ sung' : ($acrylicOrder->relation_type === 'reuse' ? 'tận dụng tấm' : 'liên kết')) }} từ đơn: 
+                            <span>Đơn hàng {{ $acrylicOrder->relation_type === 'rework' ? 'sửa tấm' : ($acrylicOrder->relation_type === 'additional' ? 'bổ sung' : ($acrylicOrder->relation_type === 'reuse' ? 'tận dụng tấm' : ($acrylicOrder->relation_type === 'warranty' ? 'bảo hành' : 'liên kết'))) }} từ đơn: 
                                 <a href="{{ route('orders.show', $acrylicOrder->parent_id) }}" class="font-bold underline hover:text-amber-950">{{ $acrylicOrder->parent->order_code }}</a>
                             </span>
                         </div>
@@ -122,12 +122,39 @@
                                 @foreach($acrylicOrder->children->filter(fn($c) => $c->status !== 'draft') as $child)
                                     <li>
                                         <a href="{{ route('orders.show', $child->id) }}" class="font-bold underline hover:text-blue-950">{{ $child->order_code }}</a> 
-                                        - Phân loại: <strong class="text-primary-700">{{ $child->relation_type === 'rework' ? 'Sửa tấm' : ($child->relation_type === 'additional' ? 'Bổ sung' : ($child->relation_type === 'reuse' ? 'Tận dụng tấm' : 'Khác')) }}</strong> 
+                                        - Phân loại: <strong class="text-primary-700">{{ $child->relation_type === 'rework' ? 'Sửa tấm' : ($child->relation_type === 'additional' ? 'Bổ sung' : ($child->relation_type === 'reuse' ? 'Tận dụng tấm' : ($child->relation_type === 'warranty' ? 'Bảo hành' : 'Khác'))) }}</strong> 
                                         ({{ $child->status === 'pending' ? 'Chờ xử lý' : ($child->status === 'transferred' ? 'Chuyển sản xuất' : $child->status) }})
                                     </li>
                                 @endforeach
                             </ul>
                         </div>
+                    @endif
+
+                    {{-- Trạng thái trả ván cho đơn bổ sung --}}
+                    @if($acrylicOrder->relation_type === 'additional')
+                        @if($acrylicOrder->board_return_status === 'pending')
+                            <div class="mb-4 p-4 bg-amber-50 border border-amber-300 rounded-xl flex items-center justify-between gap-4 text-amber-900">
+                                <div class="flex items-center gap-3 flex-1 min-w-0">
+                                    <iconify-icon icon="lucide:alert-circle" class="text-2xl text-amber-600 shrink-0"></iconify-icon>
+                                    <div>
+                                        <div class="font-bold text-sm">Khách chưa hoàn trả ván cũ</div>
+                                        <div class="text-xs text-amber-700">Đơn bổ sung này đang được tạm tính công nợ ({{ number_format(round($acrylicOrder->total_amount, -3), 0, ',', '.') }} VNĐ). Khi nhận lại ván cũ, vui lòng bấm xác nhận để trừ công nợ.</div>
+                                    </div>
+                                </div>
+                                <form action="{{ route('orders.confirm-board-return', $acrylicOrder) }}" method="POST" class="shrink-0" onsubmit="return confirm('Bạn có chắc chắn khách hàng đã hoàn trả ván cũ? Hệ thống sẽ cấn trừ công nợ của đơn hàng này.');">
+                                    @csrf
+                                    <button type="submit" class="btn btn-sm bg-success-600 hover:bg-success-700 text-white rounded-lg flex items-center gap-1.5 shadow-sm font-semibold text-sm px-3.5 py-2 transition-colors whitespace-nowrap">
+                                        <iconify-icon icon="lucide:check-circle-2" class="text-base"></iconify-icon>
+                                        <span>Xác nhận đã trả ván</span>
+                                    </button>
+                                </form>
+                            </div>
+                        @elseif($acrylicOrder->board_return_status === 'returned')
+                            <div class="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center gap-2 text-sm text-emerald-800">
+                                <iconify-icon icon="lucide:check-circle" class="text-base text-emerald-600"></iconify-icon>
+                                <span><strong>Đã xác nhận trả ván:</strong> Đơn bổ sung này đã được cấn trừ công nợ.</span>
+                            </div>
+                        @endif
                     @endif
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-sm">
@@ -204,12 +231,12 @@
                     <div class="p-6">
                         <div class="overflow-x-auto">
                             @if($acrylicOrder->type === 'min_late')
-                                {{-- Min Late items --}}
-                                <table class="table bordered-table sm-table mb-0 min-w-[1700px]">
+                                {{-- Min Late items - expand to individual sheets with status --}}
+                                <table class="table bordered-table sm-table mb-0 min-w-[1900px]">
                                     <thead>
                                         <tr>
                                             <th scope="col" class="w-10 text-center">STT</th>
-                                            <th scope="col" class="w-32">Mã SP</th>
+                                            <th scope="col" class="w-32">Mã tấm</th>
                                             <th scope="col" class="w-64">Tên SP</th>
                                             <th scope="col" class="w-20">Độ dày</th>
                                             <th scope="col" class="w-20">Cao</th>
@@ -226,11 +253,14 @@
                                             <th scope="col" class="w-28">Tay nắm vát</th>
                                             <th scope="col" class="w-20 text-center">CNC</th>
                                             <th scope="col" class="w-24">Chiều vân</th>
+                                            <th scope="col" class="w-36">Giai đoạn</th>
+                                            <th scope="col" class="w-28">Người thực hiện</th>
                                             <th scope="col" class="w-44">Ghi chú</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @forelse($supply->minLateItems as $itemIndex => $item)
+                                        @php $globalMinLateIndex = 0; @endphp
+                                        @forelse($supply->minLateItems as $item)
                                             @php
                                                 $sizes = $item->size ?? [];
                                                 if (is_string($sizes)) {
@@ -240,45 +270,81 @@
                                                 if (is_string($edgeGluing)) {
                                                     $edgeGluing = json_decode($edgeGluing, true) ?? [];
                                                 }
+                                                $codes = $item->codes;
+                                                $hasAnyCode = $codes->count() > 0;
+                                                $rowCount = $hasAnyCode ? $codes->count() : 1;
                                             @endphp
-                                            <tr>
-                                                <td class="text-center">{{ $itemIndex + 1 }}</td>
-                                                <td><span class="text-neutral-500 text-xs">{{ $item->product_code ?? '—' }}</span></td>
-                                                <td><span class="font-medium text-neutral-800">{{ $item->name }}</span></td>
-                                                <td>{{ $item->thickness ?? '—' }}</td>
-                                                <td>{{ $sizes['height'] ?? '—' }}</td>
-                                                <td>{{ $sizes['width'] ?? '—' }}</td>
-                                                <td>{{ $item->quantity }}</td>
-                                                <td>{{ $item->bevel ?? '—' }}</td>
-                                                <td>
-                                                    @if(!empty($edgeGluing))
-                                                        <span
-                                                            class="text-xs bg-neutral-100 px-2 py-0.5 rounded text-neutral-600">{{ implode(', ', $edgeGluing) }}</span>
-                                                    @else
-                                                        —
+                                            @for($sheetIdx = 0; $sheetIdx < $rowCount; $sheetIdx++)
+                                                @php
+                                                    $globalMinLateIndex++;
+                                                    $code = $hasAnyCode ? $codes[$sheetIdx] : null;
+                                                    $productId = $code ? $code->product_id : ($item->product_code ?? '—');
+                                                    $statusLog = $code ? ($code->status ?? []) : [];
+                                                    $lastEntry = !empty($statusLog) ? end($statusLog) : null;
+                                                    $currentAction = $lastEntry ? ($lastEntry['action'] ?? '—') : '—';
+                                                    $currentOperator = $lastEntry ? ($lastEntry['operator'] ?? '—') : '—';
+                                                    $actionColors = [
+                                                        'chờ xử lý' => 'bg-neutral-100 text-neutral-500',
+                                                        'đang xử lý' => 'bg-info-100 text-info-600',
+                                                        'đã nhận tem' => 'bg-warning-100 text-warning-600',
+                                                        'hoàn thành' => 'bg-success-100 text-success-600',
+                                                        'đã hủy' => 'bg-danger-100 text-danger-600',
+                                                    ];
+                                                    $actionColor = $actionColors[mb_strtolower($currentAction)] ?? 'bg-primary-50 text-primary-600';
+                                                @endphp
+                                                <tr class="{{ $sheetIdx === 0 ? 'border-t-2 border-neutral-200' : '' }}">
+                                                    <td class="text-center font-semibold text-neutral-500">{{ $globalMinLateIndex }}</td>
+                                                    <td><span class="text-neutral-500 text-xs font-mono">{{ $productId }}</span></td>
+                                                    @if($sheetIdx === 0)
+                                                        <td rowspan="{{ $rowCount }}" class="font-medium text-neutral-800 align-top pt-3">{{ $item->name }}</td>
+                                                        <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->thickness ?? '—' }}</td>
+                                                        <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $sizes['height'] ?? '—' }}</td>
+                                                        <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $sizes['width'] ?? '—' }}</td>
+                                                        <td rowspan="{{ $rowCount }}" class="align-top pt-3 font-medium">{{ $item->quantity }}</td>
+                                                        <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->bevel ?? '—' }}</td>
+                                                        <td rowspan="{{ $rowCount }}" class="align-top pt-3">
+                                                            @if(!empty($edgeGluing))
+                                                                <span class="text-xs bg-neutral-100 px-2 py-0.5 rounded text-neutral-600">{{ implode(', ', $edgeGluing) }}</span>
+                                                            @else
+                                                                —
+                                                            @endif
+                                                        </td>
+                                                        <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->straight_paste_length ?? '—' }}</td>
+                                                        <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->beveled_length ?? '—' }}</td>
+                                                        <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->vat_moi_length ?? '—' }}</td>
+                                                        <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->ban_rong_40_59 ?? '—' }}</td>
+                                                        <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->call_rong_17_39 ?? $item->ban_rong_17_39 ?? '—' }}</td>
+                                                        <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->ban_rong_25_35 ?? '—' }}</td>
+                                                        <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->beveled_handle ?? '—' }}</td>
+                                                        <td rowspan="{{ $rowCount }}" class="text-center align-top pt-3">
+                                                            @if($item->cnc)
+                                                                <iconify-icon icon="lucide:check-circle" class="text-success-500 text-lg"></iconify-icon>
+                                                            @else
+                                                                —
+                                                            @endif
+                                                        </td>
+                                                        <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->direction ?? '—' }}</td>
                                                     @endif
-                                                </td>
-                                                <td>{{ $item->straight_paste_length ?? '—' }}</td>
-                                                <td>{{ $item->beveled_length ?? '—' }}</td>
-                                                <td>{{ $item->vat_moi_length ?? '—' }}</td>
-                                                <td>{{ $item->ban_rong_40_59 ?? '—' }}</td>
-                                                <td>{{ $item->call_rong_17_39 ?? $item->ban_rong_17_39 ?? '—' }}</td>
-                                                <td>{{ $item->ban_rong_25_35 ?? '—' }}</td>
-                                                <td>{{ $item->beveled_handle ?? '—' }}</td>
-                                                <td class="text-center">
-                                                    @if($item->cnc)
-                                                        <iconify-icon icon="lucide:check-circle"
-                                                            class="text-success-500 text-lg"></iconify-icon>
-                                                    @else
-                                                        —
+                                                    <td>
+                                                        @if($currentAction !== '—')
+                                                            <span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold {{ $actionColor }}">
+                                                                {{ $currentAction }}
+                                                            </span>
+                                                        @else
+                                                            <span class="text-neutral-400 text-xs">—</span>
+                                                        @endif
+                                                    </td>
+                                                    <td>
+                                                        <span class="text-neutral-600 text-xs">{{ $currentOperator }}</span>
+                                                    </td>
+                                                    @if($sheetIdx === 0)
+                                                        <td rowspan="{{ $rowCount }}" class="align-top pt-3"><span class="text-neutral-500 text-xs">{{ $item->notes ?? '—' }}</span></td>
                                                     @endif
-                                                </td>
-                                                <td>{{ $item->direction ?? '—' }}</td>
-                                                <td><span class="text-neutral-500 text-xs">{{ $item->notes ?? '—' }}</span></td>
-                                            </tr>
+                                                </tr>
+                                            @endfor
                                         @empty
                                             <tr>
-                                                <td colspan="19" class="text-center text-neutral-400 py-4">Chưa có sản phẩm nào</td>
+                                                <td colspan="21" class="text-center text-neutral-400 py-4">Chưa có sản phẩm nào</td>
                                             </tr>
                                         @endforelse
                                     </tbody>
@@ -322,12 +388,12 @@
                                         </tbody>
                                     </table>
                                 @else
-                                    {{-- Glass items --}}
+                                    {{-- Glass items - expand to individual sheets with status --}}
                                     <table class="table bordered-table sm-table mb-0 min-w-[1800px]">
                                         <thead>
                                             <tr>
                                                 <th scope="col" class="w-10 text-center">STT</th>
-                                                <th scope="col" class="w-32">Mã SP</th>
+                                                <th scope="col" class="w-32">Mã cánh</th>
                                                 <th scope="col" class="w-64">Tên SP</th>
                                                 <th scope="col" class="w-20">Độ dày</th>
                                                 <th scope="col" class="w-28">Chiều mở cánh</th>
@@ -340,33 +406,76 @@
                                                 <th scope="col" class="w-28">Khối lượng (m2)</th>
                                                 <th scope="col" class="w-28 text-end">Đơn giá</th>
                                                 <th scope="col" class="w-28 text-end">Thành tiền</th>
+                                                <th scope="col" class="w-36">Giai đoạn</th>
+                                                <th scope="col" class="w-28">Người thực hiện</th>
                                                 <th scope="col" class="w-44">Ghi chú</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            @forelse($supply->glassItems as $itemIndex => $item)
-                                                <tr>
-                                                    <td class="text-center">{{ $itemIndex + 1 }}</td>
-                                                    <td><span class="text-neutral-500 text-xs">{{ $item->product_code ?? '—' }}</span></td>
-                                                    <td><span class="font-medium text-neutral-800">{{ $item->product_name }}</span></td>
-                                                    <td>{{ $item->thickness ?? '—' }}</td>
-                                                    <td>{{ $item->wing_opening_direction ?? '—' }}</td>
-                                                    <td>{{ $item->aluminum_color ?? '—' }}</td>
-                                                    <td>{{ $item->glass_color ?? '—' }}</td>
-                                                    <td>{{ $item->height ?? '—' }}</td>
-                                                    <td>{{ $item->width ?? '—' }}</td>
-                                                    <td>{{ $item->unit ?? 'Bộ' }}</td>
-                                                    <td>{{ $item->wing_quantity }}</td>
-                                                    <td>{{ $item->area_m2 ?? '—' }}</td>
-                                                    <td class="text-end font-medium text-neutral-600">
-                                                        {{ number_format($item->unit_price, 0, ',', '.') }}</td>
-                                                    <td class="text-end font-semibold text-neutral-800">
-                                                        {{ number_format($item->total_price, 0, ',', '.') }}</td>
-                                                    <td><span class="text-neutral-500 text-xs">{{ $item->notes ?? '—' }}</span></td>
-                                                </tr>
+                                            @php $globalGlassIndex = 0; @endphp
+                                            @forelse($supply->glassItems as $item)
+                                                @php
+                                                    $codes = $item->codes;
+                                                    $hasAnyCode = $codes->count() > 0;
+                                                    $rowCount = $hasAnyCode ? $codes->count() : 1;
+                                                @endphp
+                                                @for($sheetIdx = 0; $sheetIdx < $rowCount; $sheetIdx++)
+                                                    @php
+                                                        $globalGlassIndex++;
+                                                        $code = $hasAnyCode ? $codes[$sheetIdx] : null;
+                                                        $productId = $code ? $code->product_id : ($item->product_code ?? '—');
+                                                        $statusLog = $code ? ($code->status ?? []) : [];
+                                                        $lastEntry = !empty($statusLog) ? end($statusLog) : null;
+                                                        $currentAction = $lastEntry ? ($lastEntry['action'] ?? '—') : '—';
+                                                        $currentOperator = $lastEntry ? ($lastEntry['operator'] ?? '—') : '—';
+                                                        $actionColors = [
+                                                            'chờ xử lý' => 'bg-neutral-100 text-neutral-500',
+                                                            'đang xử lý' => 'bg-info-100 text-info-600',
+                                                            'đã nhận tem' => 'bg-warning-100 text-warning-600',
+                                                            'hoàn thành' => 'bg-success-100 text-success-600',
+                                                            'đã hủy' => 'bg-danger-100 text-danger-600',
+                                                        ];
+                                                        $actionColor = $actionColors[mb_strtolower($currentAction)] ?? 'bg-primary-50 text-primary-600';
+                                                    @endphp
+                                                    <tr class="{{ $sheetIdx === 0 ? 'border-t-2 border-neutral-200' : '' }}">
+                                                        <td class="text-center font-semibold text-neutral-500">{{ $globalGlassIndex }}</td>
+                                                        <td><span class="text-neutral-500 text-xs font-mono">{{ $productId }}</span></td>
+                                                        @if($sheetIdx === 0)
+                                                            <td rowspan="{{ $rowCount }}" class="font-medium text-neutral-800 align-top pt-3">{{ $item->product_name }}</td>
+                                                            <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->thickness ?? '—' }}</td>
+                                                            <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->wing_opening_direction ?? '—' }}</td>
+                                                            <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->aluminum_color ?? '—' }}</td>
+                                                            <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->glass_color ?? '—' }}</td>
+                                                            <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->height ?? '—' }}</td>
+                                                            <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->width ?? '—' }}</td>
+                                                            <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->unit ?? 'Bộ' }}</td>
+                                                            <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->wing_quantity }}</td>
+                                                            <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->area_m2 ?? '—' }}</td>
+                                                            <td rowspan="{{ $rowCount }}" class="text-end font-medium text-neutral-600 align-top pt-3">
+                                                                {{ number_format($item->unit_price, 0, ',', '.') }}</td>
+                                                            <td rowspan="{{ $rowCount }}" class="text-end font-semibold text-neutral-800 align-top pt-3">
+                                                                {{ number_format($item->total_price, 0, ',', '.') }}</td>
+                                                        @endif
+                                                        <td>
+                                                            @if($currentAction !== '—')
+                                                                <span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold {{ $actionColor }}">
+                                                                    {{ $currentAction }}
+                                                                </span>
+                                                            @else
+                                                                <span class="text-neutral-400 text-xs">—</span>
+                                                            @endif
+                                                        </td>
+                                                        <td>
+                                                            <span class="text-neutral-600 text-xs">{{ $currentOperator }}</span>
+                                                        </td>
+                                                        @if($sheetIdx === 0)
+                                                            <td rowspan="{{ $rowCount }}" class="align-top pt-3"><span class="text-neutral-500 text-xs">{{ $item->notes ?? '—' }}</span></td>
+                                                        @endif
+                                                    </tr>
+                                                @endfor
                                             @empty
                                                 <tr>
-                                                    <td colspan="15" class="text-center text-neutral-400 py-4">Chưa có sản phẩm nào</td>
+                                                    <td colspan="17" class="text-center text-neutral-400 py-4">Chưa có sản phẩm nào</td>
                                                 </tr>
                                             @endforelse
                                         </tbody>
@@ -480,7 +589,7 @@
                 </div>
             @endforeach
 
-            @if(in_array($acrylicOrder->type, ['min_late', 'acrylic']) && isset($acrylicOrder->paymentDetails) && $acrylicOrder->paymentDetails->count() > 0)
+            @if(in_array($acrylicOrder->type, ['min_late', 'acrylic', 'glass']) && isset($acrylicOrder->paymentDetails) && $acrylicOrder->paymentDetails->count() > 0)
                 <div class="card p-0 rounded-xl border-0 overflow-hidden shadow-sm bg-white border-l-4 border-l-primary-500 mt-6">
                     <div class="card-header border-b border-neutral-200 bg-white py-4 px-6 flex items-center justify-between">
                         <div class="flex items-center gap-3">
@@ -695,16 +804,20 @@
                             class="w-full justify-center flex items-center gap-2 py-3 rounded-xl font-semibold bg-amber-500 hover:bg-amber-600 text-white shadow-sm text-sm transition-colors cursor-pointer">
                             <iconify-icon icon="lucide:rotate-ccw" class="text-base"></iconify-icon> Tạo đơn sửa tấm
                         </button>
+                        <button type="button" onclick="openWarrantyModal()"
+                            class="w-full justify-center flex items-center gap-2 py-3 rounded-xl font-semibold bg-purple-600 hover:bg-purple-700 text-white shadow-sm text-sm transition-colors cursor-pointer">
+                            <iconify-icon icon="lucide:shield-check" class="text-base"></iconify-icon> Tạo đơn bảo hành
+                        </button>
                         @if($acrylicOrder->type === 'acrylic')
                             <a href="{{ route('orders.reuse-create', $acrylicOrder->id) }}"
                                 class="w-full justify-center flex items-center gap-2 py-3 rounded-xl font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-sm text-sm transition-colors cursor-pointer">
                                 <iconify-icon icon="lucide:layers" class="text-base"></iconify-icon> Tạo đơn tận dụng tấm
                             </a>
                         @endif
-                        <a href="{{ route('orders.additional-create', $acrylicOrder->id) }}"
+                        <button type="button" onclick="openChooseAdditionalModal()"
                             class="w-full justify-center flex items-center gap-2 py-3 rounded-xl font-semibold bg-success-600 hover:bg-success-700 text-white shadow-sm text-sm transition-colors cursor-pointer">
                             <iconify-icon icon="lucide:plus-circle" class="text-base"></iconify-icon> Tạo đơn bổ sung
-                        </a>
+                        </button>
                         @if($acrylicOrder->relation_type === 'rework')
                             <a href="{{ route('orders.print-handwritten', $acrylicOrder->id) }}" target="_blank"
                                 class="w-full justify-center flex items-center gap-2 py-3 rounded-xl font-semibold bg-amber-600 hover:bg-amber-700 text-white shadow-sm text-sm transition-colors cursor-pointer">
@@ -760,7 +873,7 @@
             }
         })();
 
-        // Tự động mở modal sửa tấm nếu url có ?open_rework=1
+        // Tự động mở modal sửa tấm / bảo hành / bổ sung nếu url có ?open_rework=1 hoặc ?open_warranty=1 hoặc ?open_additional=1
         (function () {
             const params = new URLSearchParams(window.location.search);
             if (params.get('open_rework') === '1') {
@@ -771,11 +884,94 @@
                         }
                     }, 200);
                 });
+            } else if (params.get('open_warranty') === '1') {
+                window.addEventListener('load', function () {
+                    setTimeout(function () {
+                        if (typeof openWarrantyModal === 'function') {
+                            openWarrantyModal();
+                        }
+                    }, 200);
+                });
+            } else if (params.get('open_additional') === '1') {
+                window.addEventListener('load', function () {
+                    setTimeout(function () {
+                        if (typeof openChooseAdditionalModal === 'function') {
+                            openChooseAdditionalModal();
+                        }
+                    }, 200);
+                });
             }
         })();
     </script>
 
-    {{-- Modal chọn sản phẩm lỗi để tạo đơn sửa tấm --}}
+    {{-- Modal chọn hình thức tạo đơn bổ sung (2 Options) --}}
+    <x-modal name="modal-choose-additional-type" maxWidth="md" :hasBackdrop="true">
+        <style>
+            .choose-additional-options {
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+            }
+            .choose-additional-card {
+                padding: 16px 18px;
+            }
+        </style>
+        <div class="p-6">
+            <div class="flex items-center justify-between pb-3 border-b border-neutral-100 mb-4">
+                <div class="flex items-center gap-2.5">
+                    <div class="p-2 bg-success-50 rounded-lg text-success-600 flex items-center justify-center">
+                        <iconify-icon icon="lucide:plus-circle" class="text-xl"></iconify-icon>
+                    </div>
+                    <h5 class="font-bold text-lg text-neutral-800 m-0">Tạo đơn bổ sung</h5>
+                </div>
+                <button type="button" onclick="closeModal('modal-choose-additional-type')" class="text-neutral-400 hover:text-neutral-600 p-1.5 rounded-lg transition-colors">
+                    <iconify-icon icon="lucide:x" class="text-xl"></iconify-icon>
+                </button>
+            </div>
+
+            <p class="text-xs text-neutral-500 mb-4 font-medium">Vui lòng chọn hình thức tạo đơn bổ sung:</p>
+
+            <div class="choose-additional-options">
+                {{-- Option 1: Đơn bổ sung thông thường (form trống) --}}
+                <a href="{{ route('orders.additional-create', $acrylicOrder->id) }}" class="choose-additional-card flex items-center gap-4 rounded-xl border border-neutral-200 hover:border-success-500 hover:bg-success-50/40 transition-all group cursor-pointer block text-left shadow-sm hover:shadow">
+                    <div class="w-11 h-11 bg-neutral-100 group-hover:bg-success-100 text-neutral-600 group-hover:text-success-700 rounded-xl transition-colors shrink-0 flex items-center justify-center">
+                        <iconify-icon icon="lucide:file-plus" class="text-xl"></iconify-icon>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="font-bold text-sm text-neutral-800 group-hover:text-success-700 transition-colors">
+                            Đơn bổ sung thông thường
+                        </div>
+                        <p class="text-xs text-neutral-500 mt-1 leading-normal mb-0">
+                            Nhập quy cách, kích thước mới phát sinh cho khách hàng (form tạo đơn trống).
+                        </p>
+                    </div>
+                    <div class="shrink-0 text-neutral-300 group-hover:text-success-600 group-hover:translate-x-0.5 transition-all">
+                        <iconify-icon icon="lucide:chevron-right" class="text-lg"></iconify-icon>
+                    </div>
+                </a>
+
+                {{-- Option 2: Đơn bổ sung đổi tấm / Khách giữ ván (chọn từ đơn gốc) --}}
+                <button type="button" onclick="chooseAdditionalFromExisting()" class="choose-additional-card w-full flex items-center gap-4 rounded-xl border border-neutral-200 hover:border-amber-500 hover:bg-amber-50/40 transition-all group cursor-pointer text-left bg-white shadow-sm hover:shadow">
+                    <div class="w-11 h-11 bg-neutral-100 group-hover:bg-amber-100 text-neutral-600 group-hover:text-amber-700 rounded-xl transition-colors shrink-0 flex items-center justify-center">
+                        <iconify-icon icon="lucide:package" class="text-xl"></iconify-icon>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="font-bold text-sm text-neutral-800 group-hover:text-amber-700 transition-colors">
+                            Đổi tấm / Khách đang giữ ván cũ
+                        </div>
+                        <p class="text-xs text-neutral-500 mt-1 leading-normal mb-0">
+                            Chọn tấm từ đơn gốc để sản xuất lại (tạm tính công nợ khi khách chưa mang trả ván cũ).
+                        </p>
+                    </div>
+                    <div class="shrink-0 text-neutral-300 group-hover:text-amber-600 group-hover:translate-x-0.5 transition-all">
+                        <iconify-icon icon="lucide:chevron-right" class="text-lg"></iconify-icon>
+                    </div>
+                </button>
+            </div>
+        </div>
+    </x-modal>
+
+    {{-- Modal chọn sản phẩm để tạo đơn sửa tấm / đơn bảo hành / đơn bổ sung --}}
     <x-modal name="modal-rework-order" maxWidth="3xl" :hasBackdrop="true">
         <style>
             #modal-rework-order [data-modal-content] {
@@ -786,15 +982,15 @@
         </style>
         <div class="p-6">
             <div class="flex items-center justify-between pb-3 border-b border-neutral-100">
-                <h5 class="font-bold text-lg text-neutral-800 m-0">Tạo đơn sửa tấm</h5>
+                <h5 id="modal-select-items-title" class="font-bold text-lg text-neutral-800 m-0">Tạo đơn sửa tấm</h5>
                 <button type="button" onclick="closeModal('modal-rework-order')" class="text-neutral-400 hover:text-neutral-600 p-1.5 rounded-lg transition-colors">
                     <iconify-icon icon="lucide:x" class="text-xl"></iconify-icon>
                 </button>
             </div>
 
-            <form id="rework-order-form" onsubmit="submitReworkOrder(event)" class="mt-4 space-y-4">
+            <form id="rework-order-form" onsubmit="submitItemSelectionOrder(event)" class="mt-4 space-y-4">
                 @csrf
-                <div class="text-sm text-neutral-500">
+                <div id="modal-select-items-desc" class="text-sm text-neutral-500">
                     Tích chọn những tấm bị lỗi từ đơn gốc để sản xuất lại.
                 </div>
 
@@ -860,8 +1056,12 @@
                                                     <input type="checkbox" data-item-id="{{ $item->id }}" class="rework-item-checkbox rounded text-primary-600 focus:ring-primary-500">
                                                 </td>
                                                 <td class="text-center text-neutral-500 py-2.5 px-3">{{ $itemIndex + 1 }}</td>
-                                                <td class="py-2.5 px-3 font-semibold text-neutral-600 text-left">
-                                                    {{ $item->product_code ?? '—' }}
+                                                <td class="py-2.5 px-3 font-semibold text-neutral-600 text-left font-mono">
+                                                    @if($item->codes->count() > 0)
+                                                        {{ $item->codes->pluck('product_id')->implode(', ') }}
+                                                    @else
+                                                        {{ $item->product_code ?? '—' }}
+                                                    @endif
                                                 </td>
                                                 <td class="py-2.5 px-3 font-medium text-neutral-800 text-left">{{ $item->name }}</td>
                                                 <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->thickness ?? '—' }}</td>
@@ -906,7 +1106,7 @@
                                         <input type="checkbox" onchange="toggleSelectAllReworkItems(this)" class="rounded text-primary-600 focus:ring-primary-500">
                                     </th>
                                     <th scope="col" class="w-12 text-center py-2 px-3">STT</th>
-                                    <th scope="col" class="w-32 text-left py-2 px-3">Mã SP</th>
+                                    <th scope="col" class="w-32 text-left py-2 px-3">Mã cánh</th>
                                     <th scope="col" class="text-left py-2 px-3">Tên sản phẩm</th>
                                     <th scope="col" class="w-20 text-center py-2 px-3">Độ dày</th>
                                     <th scope="col" class="w-28 text-center py-2 px-3">Chiều mở cánh</th>
@@ -940,8 +1140,12 @@
                                                     <input type="checkbox" data-item-id="{{ $item->id }}" class="rework-item-checkbox rounded text-primary-600 focus:ring-primary-500">
                                                 </td>
                                                 <td class="text-center text-neutral-500 py-2.5 px-3">{{ $itemIndex + 1 }}</td>
-                                                <td class="py-2.5 px-3 font-semibold text-neutral-600 text-left">
-                                                    {{ $item->product_code ?? '—' }}
+                                                <td class="py-2.5 px-3 font-semibold text-neutral-600 text-left font-mono">
+                                                    @if($item->codes->count() > 0)
+                                                        {{ $item->codes->pluck('product_id')->implode(', ') }}
+                                                    @else
+                                                        {{ $item->product_code ?? '—' }}
+                                                    @endif
                                                 </td>
                                                 <td class="py-2.5 px-3 font-medium text-neutral-800 text-left">{{ $item->product_name }}</td>
                                                 <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->thickness ?? '—' }}</td>
@@ -1038,7 +1242,7 @@
                     @endif
                 </div>
 
-                <div class="pt-4 border-t border-neutral-100 flex justify-end gap-3">
+                <div class="pt-4 border-t border-neutral-100 flex items-center justify-end gap-3">
                     <button type="button" onclick="closeModal('modal-rework-order')" class="btn border border-neutral-200 text-neutral-700 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors hover:bg-neutral-50">Hủy</button>
                     <button type="submit" id="submit-rework-btn" class="btn btn-primary font-semibold px-5 py-2.5 rounded-lg text-sm flex items-center gap-2">
                         Tạo đơn sửa
@@ -1049,6 +1253,8 @@
     </x-modal>
 
     <script>
+        let currentItemSelectionMode = 'rework'; // 'rework', 'warranty', hoặc 'additional'
+
         function toggleSelectAllReworkItems(headerCheckbox) {
             const checkboxes = document.querySelectorAll('.rework-item-checkbox');
             checkboxes.forEach(cb => {
@@ -1056,15 +1262,70 @@
             });
         }
 
+        function openChooseAdditionalModal() {
+            openModal('modal-choose-additional-type');
+        }
+
+        function chooseAdditionalFromExisting() {
+            closeModal('modal-choose-additional-type');
+            setTimeout(function() {
+                openAdditionalModal();
+            }, 150);
+        }
+
         function openReworkModal() {
+            currentItemSelectionMode = 'rework';
+            const titleEl = document.getElementById('modal-select-items-title');
+            const descEl = document.getElementById('modal-select-items-desc');
+            const btnEl = document.getElementById('submit-rework-btn');
+            
+            if (titleEl) titleEl.textContent = 'Tạo đơn sửa tấm';
+            if (descEl) descEl.textContent = 'Tích chọn những tấm bị lỗi từ đơn gốc để sản xuất lại.';
+            if (btnEl) {
+                btnEl.className = 'btn btn-primary font-semibold px-5 py-2.5 rounded-lg text-sm flex items-center gap-2';
+                btnEl.textContent = 'Tạo đơn sửa';
+            }
             openModal('modal-rework-order');
         }
 
-        function submitReworkOrder(e) {
+        function openWarrantyModal() {
+            currentItemSelectionMode = 'warranty';
+            const titleEl = document.getElementById('modal-select-items-title');
+            const descEl = document.getElementById('modal-select-items-desc');
+            const btnEl = document.getElementById('submit-rework-btn');
+            
+            if (titleEl) titleEl.textContent = 'Tạo đơn bảo hành';
+            if (descEl) descEl.textContent = 'Tích chọn những tấm cần bảo hành từ đơn gốc.';
+            if (btnEl) {
+                btnEl.className = 'btn bg-purple-600 hover:bg-purple-700 text-white font-semibold px-5 py-2.5 rounded-lg text-sm flex items-center gap-2 shadow-sm';
+                btnEl.textContent = 'Tạo đơn bảo hành';
+            }
+            openModal('modal-rework-order');
+        }
+
+        function openAdditionalModal() {
+            currentItemSelectionMode = 'additional';
+            const titleEl = document.getElementById('modal-select-items-title');
+            const descEl = document.getElementById('modal-select-items-desc');
+            const btnEl = document.getElementById('submit-rework-btn');
+            
+            if (titleEl) titleEl.textContent = 'Tạo đơn bổ sung (Đổi tấm / Giữ ván)';
+            if (descEl) descEl.textContent = 'Tích chọn những tấm cần sản xuất lại từ đơn gốc để đưa vào đơn bổ sung.';
+            if (btnEl) {
+                btnEl.className = 'btn bg-success-600 hover:bg-success-700 text-white font-semibold px-5 py-2.5 rounded-lg text-sm flex items-center gap-2 shadow-sm';
+                btnEl.textContent = 'Tạo đơn bổ sung';
+            }
+            openModal('modal-rework-order');
+        }
+
+        function submitItemSelectionOrder(e) {
             e.preventDefault();
             const checkedBoxes = document.querySelectorAll('.rework-item-checkbox:checked');
+            const mode = currentItemSelectionMode;
+            const label = mode === 'warranty' ? 'bảo hành' : (mode === 'additional' ? 'bổ sung' : 'sửa');
+
             if (checkedBoxes.length === 0) {
-                alert('Vui lòng chọn ít nhất một tấm cần sửa.');
+                alert(`Vui lòng chọn ít nhất một tấm cần ${label}.`);
                 return;
             }
 
@@ -1077,29 +1338,39 @@
                 itemIds.push(parseInt(cb.dataset.itemId));
             });
 
-            fetch('{{ route("orders.create-rework", $acrylicOrder->id) }}', {
+            let targetUrl = '{{ route("orders.create-rework", $acrylicOrder->id) }}';
+            let payload = { item_ids: itemIds };
+
+            if (mode === 'warranty') {
+                targetUrl = '{{ route("orders.create-warranty", $acrylicOrder->id) }}';
+            } else if (mode === 'additional') {
+                targetUrl = '{{ route("orders.create-additional", $acrylicOrder->id) }}';
+                payload.board_return_status = 'pending';
+            }
+
+            fetch(targetUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
                 },
-                body: JSON.stringify({ item_ids: itemIds })
+                body: JSON.stringify(payload)
             })
             .then(res => res.json())
             .then(data => {
                 if (data.ok && data.redirect_url) {
                     window.location.href = data.redirect_url;
                 } else {
-                    alert(data.error || 'Có lỗi xảy ra khi tạo đơn sửa tấm.');
+                    alert(data.error || `Có lỗi xảy ra khi tạo đơn ${label}.`);
                     submitBtn.disabled = false;
-                    submitBtn.innerHTML = 'Tạo đơn sửa';
+                    submitBtn.innerHTML = mode === 'warranty' ? 'Tạo đơn bảo hành' : (mode === 'additional' ? 'Tạo đơn bổ sung' : 'Tạo đơn sửa');
                 }
             })
             .catch(err => {
                 console.error(err);
                 alert('Không thể kết nối tới hệ thống. Vui lòng thử lại sau.');
                 submitBtn.disabled = false;
-                submitBtn.innerHTML = 'Tạo đơn sửa';
+                submitBtn.innerHTML = mode === 'warranty' ? 'Tạo đơn bảo hành' : (mode === 'additional' ? 'Tạo đơn bổ sung' : 'Tạo đơn sửa');
             });
         }
     </script>

@@ -129,8 +129,18 @@ class CustomerController extends Controller
             ->count();
 
         $users = [];
-        if ($user && $user->hasRole('Admin')) {
-            $users = \App\Models\User::all();
+        if ($user && ($user->can('assign customer') || $user->hasRole('Admin'))) {
+            $users = \App\Models\User::whereDoesntHave('roles', function ($q) {
+                $q->where('name', 'Admin');
+            })->where(function ($q) {
+                $q->whereNull('role_id')
+                  ->orWhereHas('role', function ($rq) {
+                      $rq->where('name', '!=', 'Admin');
+                  });
+            })->where('email', '!=', 'admin@kbtech.com')
+              ->where('id', '!=', 1)
+              ->orderBy('name')
+              ->get();
         }
 
         // Get allowed customers for select dropdown filter
@@ -158,6 +168,7 @@ class CustomerController extends Controller
             'phone'  => 'nullable|string|max:20',
             'address'=> 'nullable|string',
             'initial_debt' => 'nullable|numeric|min:0',
+            'debt_limit'   => 'nullable|numeric|min:0',
             'policy' => 'nullable|string',
         ]);
 
@@ -176,12 +187,13 @@ class CustomerController extends Controller
             'phone'         => $request->phone,
             'address'       => $request->address,
             'debt'          => $request->initial_debt ?? 0,
+            'debt_limit'    => $request->debt_limit ?? 0,
             'policy'        => $request->policy,
         ]);
 
         $user = auth()->user();
         if ($user) {
-            if ($user->hasRole('Admin')) {
+            if ($user->can('assign customer') || $user->hasRole('Admin')) {
                 if ($request->has('user_ids')) {
                     $customer->users()->sync($request->user_ids);
                 }
@@ -203,14 +215,16 @@ class CustomerController extends Controller
             'phone'  => 'nullable|string|max:20',
             'address'=> 'nullable|string',
             'initial_debt' => 'nullable|numeric|min:0',
+            'debt_limit'   => 'nullable|numeric|min:0',
             'policy' => 'nullable|string',
         ]);
 
         $updateData = [
-            'name'    => $request->name,
-            'phone'   => $request->phone,
-            'address' => $request->address,
-            'policy'  => $request->policy,
+            'name'       => $request->name,
+            'phone'      => $request->phone,
+            'address'    => $request->address,
+            'debt_limit' => $request->debt_limit ?? 0,
+            'policy'     => $request->policy,
         ];
         
         if ($request->has('initial_debt')) {
@@ -224,7 +238,7 @@ class CustomerController extends Controller
         $customer->update($updateData);
 
         $user = auth()->user();
-        if ($user && $user->hasRole('Admin')) {
+        if ($user && ($user->can('assign customer') || $user->hasRole('Admin'))) {
             $customer->users()->sync($request->input('user_ids', []));
         }
 

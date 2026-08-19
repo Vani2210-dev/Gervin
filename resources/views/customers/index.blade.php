@@ -103,23 +103,28 @@
             {{-- Header --}}
             <div class="card-header border-b border-neutral-200 bg-white py-4 px-6 flex items-center flex-wrap gap-3 justify-between">
                 <div class="flex items-center flex-wrap gap-3">
-                    {{-- Per page --}}
-                    <span class="text-base font-medium text-secondary-light mb-0">Hiển thị</span>
-                    <form method="GET" action="{{ route('customers.index') }}" id="perPageForm">
-                        <input type="hidden" name="search" value="{{ $search }}">
-                        <select name="per_page" class="form-select form-select-sm w-auto border-neutral-200 rounded-lg"
-                            onchange="document.getElementById('perPageForm').submit()">
-                            @foreach([10, 25, 50, 100] as $option)
-                            <option value="{{ $option }}" {{ $perPage == $option ? 'selected' : '' }}>{{ $option }}</option>
-                            @endforeach
-                        </select>
-                    </form>
-
-                    {{-- Search --}}
+                    {{-- Search (Bên trái ngoài cùng) --}}
                     <form method="GET" action="{{ route('customers.index') }}" class="navbar-search">
                         <input type="hidden" name="per_page" value="{{ $perPage }}">
-                        <input type="text" name="search" class="form-control form-control-sm border-neutral-200 rounded-lg" placeholder="Tìm kiếm..." value="{{ $search }}">
+                        <div class="relative">
+                            <iconify-icon icon="solar:magnifer-linear" class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-base"></iconify-icon>
+                            <input type="text" name="search" class="form-control form-control-sm border-neutral-200 rounded-lg pl-9 pr-3 w-64 md:w-80" placeholder="Tìm kiếm..." value="{{ $search }}">
+                        </div>
                     </form>
+
+                    {{-- Per page --}}
+                    <div class="flex items-center gap-2">
+                        <span class="text-base font-medium text-secondary-light mb-0">Hiển thị</span>
+                        <form method="GET" action="{{ route('customers.index') }}" id="perPageForm">
+                            <input type="hidden" name="search" value="{{ $search }}">
+                            <select name="per_page" class="form-select form-select-sm w-auto border-neutral-200 rounded-lg"
+                                onchange="document.getElementById('perPageForm').submit()">
+                                @foreach([10, 25, 50, 100] as $option)
+                                <option value="{{ $option }}" {{ $perPage == $option ? 'selected' : '' }}>{{ $option }}</option>
+                                @endforeach
+                            </select>
+                        </form>
+                    </div>
                 </div>
 
                 <div class="flex items-center gap-2">
@@ -135,7 +140,7 @@
                     </a>
                     @endif
                     @can('add customer')
-                    <button type="button" onclick="openModal('create-customer-modal')"
+                    <button type="button" onclick="openCreateCustomerModal()"
                         class="btn btn-primary text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2">
                         <iconify-icon icon="ic:baseline-plus" class="icon text-xl line-height-1"></iconify-icon>
                         Thêm khách hàng
@@ -168,7 +173,7 @@
                                 <th scope="col">Số điện thoại</th>
                                 <th scope="col">Địa chỉ</th>
                                 <th scope="col">Chính sách KH</th>
-                                @if(auth()->user()->hasRole('Admin'))
+                                @if(auth()->user()->can('assign customer') || auth()->user()->hasRole('Admin'))
                                 <th scope="col">Nhân viên</th>
                                 @endif
                                 <th scope="col" class="text-right">
@@ -197,29 +202,74 @@
                             <tr>
                                 <td>{{ $stt }}</td>
                                 <td>
-                                    <span class="text-base font-medium text-secondary-light">{{ $c->customer_code }}</span>
+                                    <span class="font-semibold text-neutral-800">{{ $c->customer_code ?? '—' }}</span>
                                 </td>
                                 <td>
-                                    <span class="text-base font-medium text-secondary-light">{{ $c->name }}</span>
+                                    <div class="font-medium text-neutral-800">{{ $c->name }}</div>
+                                </td>
+                                <td>{{ $c->phone ?: '—' }}</td>
+                                <td>
+                                    <div class="max-w-[200px] truncate" title="{{ $c->address }}">{{ $c->address ?: '—' }}</div>
                                 </td>
                                 <td>
-                                    <span class="text-base text-secondary-light">{{ $c->phone ?? '—' }}</span>
+                                    <div class="max-w-[200px] truncate text-neutral-600" title="{{ $c->policy }}">{{ $c->policy ?: '—' }}</div>
                                 </td>
-                                <td>
-                                    <span class="text-base text-secondary-light">{{ $c->address ?? '—' }}</span>
-                                </td>
-                                <td>
-                                    <span class="text-base text-secondary-light">{{ $c->policy ?? '—' }}</span>
-                                </td>
-                                @if(auth()->user()->hasRole('Admin'))
+                                @if(auth()->user()->can('assign customer') || auth()->user()->hasRole('Admin'))
                                 <td>
                                     @if($c->users->isEmpty())
-                                        <span class="text-xs text-neutral-400 font-normal bg-neutral-100 px-2 py-0.5 rounded-md">Chưa phân</span>
+                                        <span class="text-xs text-neutral-400">Chưa gán</span>
                                     @else
-                                        <div class="flex flex-wrap gap-1">
-                                            @foreach($c->users as $u)
-                                                <span class="text-xs text-primary-600 bg-primary-50 px-2 py-0.5 rounded-md font-medium">{{ $u->name }}</span>
-                                            @endforeach
+                                        @php
+                                            $userCount = $c->users->count();
+                                            $firstUser = $c->users->first();
+                                            $secondUser = $userCount > 1 ? $c->users->get(1) : null;
+                                            $moreUsers = $userCount > 2 ? $c->users->slice(2) : collect();
+                                        @endphp
+                                        <div class="flex flex-col items-start gap-1">
+                                            <span class="text-xs text-primary-600 bg-primary-50 px-2 py-0.5 rounded-md font-medium whitespace-nowrap inline-block">
+                                                {{ $firstUser->user_code ? '[' . $firstUser->user_code . '] ' : '' }}{{ $firstUser->name }}
+                                            </span>
+                                            @if($secondUser)
+                                                <div class="flex items-center gap-1.5 flex-wrap">
+                                                    <span class="text-xs text-primary-600 bg-primary-50 px-2 py-0.5 rounded-md font-medium whitespace-nowrap inline-block">
+                                                        {{ $secondUser->user_code ? '[' . $secondUser->user_code . '] ' : '' }}{{ $secondUser->name }}
+                                                    </span>
+                                                    @if($moreUsers->isNotEmpty())
+                                                        <button type="button"
+                                                            id="staff-expand-btn-{{ $c->id }}"
+                                                            onclick="toggleCustomerStaff({{ $c->id }})"
+                                                            class="text-xs font-semibold text-primary-600 hover:text-primary-800 bg-primary-100 hover:bg-primary-200 px-1.5 py-0.5 rounded transition-colors inline-flex items-center gap-0.5 cursor-pointer"
+                                                            title="Xem thêm nhân viên">
+                                                            <span>+{{ $moreUsers->count() }}</span>
+                                                            <iconify-icon icon="lucide:chevron-down" class="text-xs"></iconify-icon>
+                                                        </button>
+                                                    @endif
+                                                </div>
+                                            @endif
+                                            @if($moreUsers->isNotEmpty())
+                                                <div id="customer-staff-more-{{ $c->id }}" class="hidden flex flex-col items-start gap-1">
+                                                    @foreach($moreUsers as $u)
+                                                        @if($loop->last)
+                                                            <div class="flex items-center gap-1.5 flex-wrap">
+                                                                <span class="text-xs text-primary-600 bg-primary-50 px-2 py-0.5 rounded-md font-medium whitespace-nowrap inline-block">
+                                                                    {{ $u->user_code ? '[' . $u->user_code . '] ' : '' }}{{ $u->name }}
+                                                                </span>
+                                                                <button type="button"
+                                                                    onclick="toggleCustomerStaff({{ $c->id }})"
+                                                                    class="text-xs font-semibold text-primary-600 hover:text-primary-800 bg-primary-100 hover:bg-primary-200 px-1.5 py-0.5 rounded transition-colors inline-flex items-center gap-0.5 cursor-pointer"
+                                                                    title="Thu gọn danh sách">
+                                                                    <span>Thu gọn</span>
+                                                                    <iconify-icon icon="lucide:chevron-up" class="text-xs"></iconify-icon>
+                                                                </button>
+                                                            </div>
+                                                        @else
+                                                            <span class="text-xs text-primary-600 bg-primary-50 px-2 py-0.5 rounded-md font-medium whitespace-nowrap inline-block">
+                                                                {{ $u->user_code ? '[' . $u->user_code . '] ' : '' }}{{ $u->name }}
+                                                            </span>
+                                                        @endif
+                                                    @endforeach
+                                                </div>
+                                            @endif
                                         </div>
                                     @endif
                                 </td>
@@ -236,27 +286,28 @@
                                 </td>
                                 <td class="text-center">
                                     <div class="flex items-center gap-3 justify-center">
-                                        {{-- Nút xem tổng quan --}}
                                         <button type="button"
-                                            onclick="openCustomerOverview({{ $c->id }}, '{{ addslashes($c->customer_code) }}', '{{ addslashes($c->name) }}')"
-                                            class="bg-primary-100 hover:bg-primary-200 text-primary-600 font-medium w-10 h-10 flex justify-center items-center rounded-full"
-                                            title="Xem tổng quan">
-                                            <iconify-icon icon="lucide:bar-chart-2" class="menu-icon"></iconify-icon>
+                                            class="bg-info-100 hover:bg-info-200 text-info-600 font-medium w-9 h-9 flex justify-center items-center rounded-full transition-colors"
+                                            title="Xem tổng quan"
+                                            onclick="openCustomerOverview({{ $c->id }}, '{{ addslashes($c->name) }}', '{{ $c->customer_code }}', '{{ $c->phone }}', '{{ addslashes($c->address) }}', '{{ addslashes($c->policy) }}', {{ $c->total_debt }})">
+                                            <iconify-icon icon="majesticons:eye-line" class="text-lg"></iconify-icon>
                                         </button>
                                         @can('edit customer')
                                         <button type="button"
-                                            onclick="openEditModal({{ $c->id }}, '{{ addslashes($c->customer_code) }}', '{{ addslashes($c->name) }}', '{{ addslashes($c->phone) }}', '{{ addslashes($c->address) }}', {{ $c->debt ?? 0 }}, '{{ addslashes($c->policy ?? '') }}', {{ json_encode($c->users->pluck('id')->toArray()) }})"
-                                            class="bg-success-100 hover:bg-success-200 text-success-600 font-medium w-10 h-10 flex justify-center items-center rounded-full">
-                                            <iconify-icon icon="lucide:edit" class="menu-icon"></iconify-icon>
+                                            onclick="openEditModal({{ $c->id }}, '{{ addslashes($c->customer_code) }}', '{{ addslashes($c->name) }}', '{{ addslashes($c->phone) }}', '{{ addslashes($c->address) }}', {{ $c->debt ?? 0 }}, {{ $c->debt_limit ?? 0 }}, '{{ addslashes($c->policy) }}', {{ json_encode($c->users->pluck('id')) }})"
+                                            class="bg-success-100 hover:bg-success-200 text-success-600 font-medium w-9 h-9 flex justify-center items-center rounded-full transition-colors"
+                                            title="Sửa">
+                                            <iconify-icon icon="lucide:edit" class="text-lg"></iconify-icon>
                                         </button>
                                         @endcan
                                         @can('delete customer')
-                                        <form method="POST" action="{{ route('customers.destroy', $c) }}"
-                                            onsubmit="return confirm('Xóa khách hàng này?')">
+                                        <form action="{{ route('customers.destroy', $c->id) }}" method="POST"
+                                            onsubmit="return confirm('Bạn có chắc muốn xóa khách hàng này?')" class="inline">
                                             @csrf @method('DELETE')
                                             <button type="submit"
-                                                class="bg-danger-100 hover:bg-danger-200 text-danger-600 font-medium w-10 h-10 flex justify-center items-center rounded-full">
-                                                <iconify-icon icon="fluent:delete-24-regular" class="menu-icon"></iconify-icon>
+                                                class="bg-danger-100 hover:bg-danger-200 text-danger-600 font-medium w-9 h-9 flex justify-center items-center rounded-full transition-colors"
+                                                title="Xóa">
+                                                <iconify-icon icon="lucide:trash-2" class="text-lg"></iconify-icon>
                                             </button>
                                         </form>
                                         @endcan
@@ -265,8 +316,8 @@
                             </tr>
                             @empty
                             <tr>
-                                <td @if(auth()->user()->hasRole('Admin')) colspan="9" @else colspan="8" @endif class="text-center py-8">
-                                    <p class="text-neutral-500">Chưa có khách hàng nào</p>
+                                <td colspan="{{ (auth()->user()->can('assign customer') || auth()->user()->hasRole('Admin')) ? '10' : '9' }}" class="text-center text-neutral-400 py-8">
+                                    Không tìm thấy khách hàng nào.
                                 </td>
                             </tr>
                             @endforelse
@@ -275,11 +326,7 @@
                 </div>
 
                 {{-- Pagination --}}
-                <div class="flex items-center justify-between flex-wrap gap-2 mt-6">
-                    <span class="text-secondary-light text-sm">
-                        Hiển thị {{ $customers->firstItem() ?? 0 }} đến {{ $customers->lastItem() ?? 0 }}
-                        trong tổng {{ $customers->total() }} khách hàng
-                    </span>
+                <div class="px-6 py-4 border-t border-neutral-200">
                     {{ $customers->links() }}
                 </div>
             </div>
@@ -290,22 +337,20 @@
 {{-- Modal Thêm khách hàng --}}
 @can('add customer')
 <x-modal name="create-customer-modal" maxWidth="lg">
-    <div class="px-6 py-4 border-b border-neutral-200 flex items-center justify-between">
-        <h5 class="font-semibold text-base">Thêm khách hàng mới</h5>
+    <div class="px-6 py-4 border-b border-neutral-200 flex items-center justify-between shrink-0 bg-white">
+        <h5 class="font-semibold text-base">Thêm mới khách hàng</h5>
         <button type="button" onclick="closeModal('create-customer-modal')" class="text-secondary-light hover:text-neutral-700 text-xl leading-none">&times;</button>
     </div>
-    <form action="{{ route('customers.store') }}" method="POST">
+    <form action="{{ route('customers.store') }}" method="POST" class="flex flex-col overflow-hidden max-h-[calc(95vh-65px)]">
         @csrf
-        <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4 overflow-y-auto">
             <div class="form-group md:col-span-2">
-                <label class="form-label font-semibold text-sm text-neutral-600">Mã khách hàng
-                    <span class="text-xs font-normal text-neutral-400 ml-1">(để trống sẽ tự tạo tự động)</span>
-                </label>
-                <input type="text" name="customer_code" class="form-control rounded-lg" placeholder="VD: KH00001 — hoặc để trống" value="{{ old('customer_code') }}">
+                <label class="form-label font-semibold text-sm text-neutral-600">Mã khách hàng</label>
+                <input type="text" name="customer_code" class="form-control rounded-lg" placeholder="Ví dụ: KH00001 (để trống hệ thống tự sinh)" value="{{ old('customer_code') }}">
             </div>
             <div class="form-group md:col-span-2">
                 <label class="form-label font-semibold text-sm text-neutral-600">Tên khách hàng <span class="text-danger-500">*</span></label>
-                <input type="text" name="name" class="form-control rounded-lg" placeholder="Nhập tên khách hàng" required value="{{ old('name') }}">
+                <input type="text" name="name" class="form-control rounded-lg" placeholder="Nhập tên khách hàng" value="{{ old('name') }}" required>
             </div>
             <div class="form-group">
                 <label class="form-label font-semibold text-sm text-neutral-600">Số điện thoại</label>
@@ -316,6 +361,10 @@
                 <input type="number" name="initial_debt" class="form-control rounded-lg" placeholder="Ví dụ: 10000000" min="0" value="{{ old('initial_debt') }}">
             </div>
             <div class="form-group md:col-span-2">
+                <label class="form-label font-semibold text-sm text-neutral-600">Định mức công nợ</label>
+                <input type="number" name="debt_limit" class="form-control rounded-lg" placeholder="Ví dụ: 50000000" min="0" value="{{ old('debt_limit') }}">
+            </div>
+            <div class="form-group md:col-span-2">
                 <label class="form-label font-semibold text-sm text-neutral-600">Địa chỉ</label>
                 <textarea name="address" class="form-control rounded-lg" placeholder="Nhập địa chỉ" rows="3">{{ old('address') }}</textarea>
             </div>
@@ -323,22 +372,21 @@
                 <label class="form-label font-semibold text-sm text-neutral-600">Chính sách KH</label>
                 <textarea name="policy" class="form-control rounded-lg" placeholder="Nhập chính sách khách hàng" rows="3">{{ old('policy') }}</textarea>
             </div>
-            @if(auth()->user()->hasRole('Admin') && !empty($users))
+            @if((auth()->user()->can('assign customer') || auth()->user()->hasRole('Admin')) && !empty($users))
             <div class="form-group md:col-span-2">
                 <label class="form-label font-semibold text-sm text-neutral-600">Nhân viên chăm sóc</label>
-                <div class="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto border border-neutral-200 rounded-lg p-3">
+                <select name="user_ids[]" id="create_user_ids" multiple class="rounded-lg w-full" placeholder="Chọn hoặc tìm kiếm nhân viên...">
                     @foreach($users as $u)
-                    <div class="flex items-center gap-2">
-                        <input type="checkbox" name="user_ids[]" value="{{ $u->id }}" id="create_user_{{ $u->id }}" class="form-checkbox rounded text-primary-600">
-                        <label for="create_user_{{ $u->id }}" class="text-sm text-neutral-700 font-medium">{{ $u->name }}</label>
-                    </div>
+                        <option value="{{ $u->id }}" {{ (is_array(old('user_ids')) && in_array($u->id, old('user_ids'))) ? 'selected' : '' }}>
+                            {{ $u->user_code ? '[' . $u->user_code . '] ' : '' }}{{ $u->name }}
+                        </option>
                     @endforeach
-                </div>
+                </select>
             </div>
             @endif
         </div>
-        <div class="px-6 py-4 border-t border-neutral-200 flex gap-3">
-            <button type="submit" class="btn btn-primary px-5 py-2.5 rounded-lg">Lưu</button>
+        <div class="px-6 py-4 border-t border-neutral-200 flex gap-3 shrink-0 bg-white">
+            <button type="submit" class="btn btn-primary px-5 py-2.5 rounded-lg">Lưu lại</button>
             <button type="button" onclick="closeModal('create-customer-modal')" class="btn btn-neutral px-5 py-2.5 rounded-lg">Hủy</button>
         </div>
     </form>
@@ -348,13 +396,13 @@
 {{-- Modal Sửa khách hàng --}}
 @can('edit customer')
 <x-modal name="edit-customer-modal" maxWidth="lg">
-    <div class="px-6 py-4 border-b border-neutral-200 flex items-center justify-between">
+    <div class="px-6 py-4 border-b border-neutral-200 flex items-center justify-between shrink-0 bg-white">
         <h5 class="font-semibold text-base">Chỉnh sửa khách hàng</h5>
         <button type="button" onclick="closeModal('edit-customer-modal')" class="text-secondary-light hover:text-neutral-700 text-xl leading-none">&times;</button>
     </div>
-    <form id="edit-customer-form" action="" method="POST">
+    <form id="edit-customer-form" action="" method="POST" class="flex flex-col overflow-hidden max-h-[calc(95vh-65px)]">
         @csrf @method('PUT')
-        <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4 overflow-y-auto">
             <div class="form-group md:col-span-2">
                 <label class="form-label font-semibold text-sm text-neutral-600">Mã khách hàng</label>
                 <input type="text" id="edit_customer_code" name="customer_code" class="form-control rounded-lg">
@@ -372,6 +420,10 @@
                 <input type="number" id="edit_initial_debt" name="initial_debt" class="form-control rounded-lg" placeholder="Ví dụ: 10000000" min="0">
             </div>
             <div class="form-group md:col-span-2">
+                <label class="form-label font-semibold text-sm text-neutral-600">Định mức công nợ</label>
+                <input type="number" id="edit_debt_limit" name="debt_limit" class="form-control rounded-lg" placeholder="Ví dụ: 50000000" min="0">
+            </div>
+            <div class="form-group md:col-span-2">
                 <label class="form-label font-semibold text-sm text-neutral-600">Địa chỉ</label>
                 <textarea id="edit_address" name="address" class="form-control rounded-lg" placeholder="Nhập địa chỉ" rows="3"></textarea>
             </div>
@@ -379,21 +431,20 @@
                 <label class="form-label font-semibold text-sm text-neutral-600">Chính sách KH</label>
                 <textarea id="edit_policy" name="policy" class="form-control rounded-lg" placeholder="Nhập chính sách khách hàng" rows="3"></textarea>
             </div>
-            @if(auth()->user()->hasRole('Admin') && !empty($users))
+            @if((auth()->user()->can('assign customer') || auth()->user()->hasRole('Admin')) && !empty($users))
             <div class="form-group md:col-span-2">
                 <label class="form-label font-semibold text-sm text-neutral-600">Nhân viên chăm sóc</label>
-                <div class="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto border border-neutral-200 rounded-lg p-3">
+                <select name="user_ids[]" id="edit_user_ids" multiple class="rounded-lg w-full" placeholder="Chọn hoặc tìm kiếm nhân viên...">
                     @foreach($users as $u)
-                    <div class="flex items-center gap-2">
-                        <input type="checkbox" name="user_ids[]" value="{{ $u->id }}" id="edit_user_{{ $u->id }}" class="edit-user-checkbox form-checkbox rounded text-primary-600">
-                        <label for="edit_user_{{ $u->id }}" class="text-sm text-neutral-700 font-medium">{{ $u->name }}</label>
-                    </div>
+                        <option value="{{ $u->id }}">
+                            {{ $u->user_code ? '[' . $u->user_code . '] ' : '' }}{{ $u->name }}
+                        </option>
                     @endforeach
-                </div>
+                </select>
             </div>
             @endif
         </div>
-        <div class="px-6 py-4 border-t border-neutral-200 flex gap-3">
+        <div class="px-6 py-4 border-t border-neutral-200 flex gap-3 shrink-0 bg-white">
             <button type="submit" class="btn btn-primary px-5 py-2.5 rounded-lg">Cập nhật</button>
             <button type="button" onclick="closeModal('edit-customer-modal')" class="btn btn-neutral px-5 py-2.5 rounded-lg">Hủy</button>
         </div>
@@ -401,23 +452,85 @@
 </x-modal>
 
 <script>
-function openEditModal(id, customerCode, name, phone, address, initialDebt, policy, userIds) {
+let editUserTomSelect = null;
+let createUserTomSelect = null;
+
+function attachTomSelectAutoPosition(ts) {
+    if (!ts) return;
+    ts.on('dropdown_open', function (dropdown) {
+        const control = ts.control;
+        const rect = control.getBoundingClientRect();
+        const dropdownHeight = dropdown.offsetHeight || 180;
+        const spaceBelow = window.innerHeight - rect.bottom;
+        const spaceAbove = rect.top;
+
+        if (spaceBelow < dropdownHeight && spaceAbove > spaceBelow) {
+            dropdown.style.top = 'auto';
+            dropdown.style.bottom = '100%';
+            dropdown.style.marginTop = '0';
+            dropdown.style.marginBottom = '4px';
+            dropdown.style.boxShadow = '0 -4px 12px rgba(0, 0, 0, 0.12)';
+        } else {
+            dropdown.style.top = '100%';
+            dropdown.style.bottom = 'auto';
+            dropdown.style.marginTop = '4px';
+            dropdown.style.marginBottom = '0';
+            dropdown.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.12)';
+        }
+    });
+}
+
+function initUserTomSelects() {
+    if (typeof TomSelect !== 'undefined') {
+        const createEl = document.getElementById('create_user_ids');
+        if (createEl && !createUserTomSelect) {
+            createUserTomSelect = new TomSelect('#create_user_ids', {
+                plugins: ['remove_button'],
+                placeholder: 'Tìm kiếm theo tên hoặc mã nhân viên...',
+                maxItems: null,
+                closeAfterSelect: false,
+                maxOptions: 50,
+            });
+            attachTomSelectAutoPosition(createUserTomSelect);
+        }
+
+        const editEl = document.getElementById('edit_user_ids');
+        if (editEl && !editUserTomSelect) {
+            editUserTomSelect = new TomSelect('#edit_user_ids', {
+                plugins: ['remove_button'],
+                placeholder: 'Tìm kiếm theo tên hoặc mã nhân viên...',
+                maxItems: null,
+                closeAfterSelect: false,
+                maxOptions: 50,
+            });
+            attachTomSelectAutoPosition(editUserTomSelect);
+        }
+    }
+}
+
+function openCreateCustomerModal() {
+    initUserTomSelects();
+    if (createUserTomSelect) {
+        createUserTomSelect.clear();
+    }
+    openModal('create-customer-modal');
+}
+
+function openEditModal(id, customerCode, name, phone, address, initialDebt, debtLimit, policy, userIds) {
     document.getElementById('edit-customer-form').action = '/customers/' + id;
     document.getElementById('edit_customer_code').value = customerCode;
     document.getElementById('edit_name').value = name;
     document.getElementById('edit_phone').value = phone;
     document.getElementById('edit_address').value = address;
     document.getElementById('edit_initial_debt').value = initialDebt || 0;
+    document.getElementById('edit_debt_limit').value = debtLimit || 0;
     document.getElementById('edit_policy').value = policy || '';
-    
-    // Reset all edit checkboxes
-    document.querySelectorAll('.edit-user-checkbox').forEach(cb => cb.checked = false);
-    // Check assigned ones
-    if (userIds && Array.isArray(userIds)) {
-        userIds.forEach(uid => {
-            const cb = document.getElementById('edit_user_' + uid);
-            if (cb) cb.checked = true;
-        });
+    initUserTomSelects();
+    if (editUserTomSelect) {
+        editUserTomSelect.clear();
+        if (userIds && Array.isArray(userIds)) {
+            editUserTomSelect.setValue(userIds.map(String));
+        }
     }
     
     openModal('edit-customer-modal');
@@ -618,7 +731,7 @@ function openEditModal(id, customerCode, name, phone, address, initialDebt, poli
                 </div>
 
                 {{-- Payments list --}}
-                <div style="background:#f8fafc; border-radius:12px; padding:12px; border:1px solid #f1f5f9; display:flex; flex-direction:column; gap:10px; max-h-[300px]; overflow-y:auto;" id="ov-payments-list"></div>
+                <div style="display:none; background:#f8fafc; border-radius:12px; padding:12px; border:1px solid #f1f5f9; flex-direction:column; gap:10px; max-height:300px; overflow-y:auto;" id="ov-payments-list"></div>
                 <div id="ov-payments-pagination" style="display:flex; justify-content:center; gap:4px; margin-top:8px;"></div>
                 <div id="ov-no-payments" style="display:none; text-align:center; padding:30px; color:#94a3b8; font-size:12px; background:#f8fafc; border-radius:12px; border:1px solid #f1f5f9;">
                     <iconify-icon icon="lucide:coins" style="font-size:24px;"></iconify-icon>
@@ -901,9 +1014,11 @@ function renderCustomerOverview(data) {
     const noPayments = document.getElementById('ov-no-payments');
     if (!data.payments || data.payments.length === 0) {
         pList.innerHTML = '';
+        pList.style.display = 'none';
         noPayments.style.display = 'block';
     } else {
         noPayments.style.display = 'none';
+        pList.style.display = 'flex';
         pList.innerHTML = data.payments.map(p => {
             const methodColor = p.payment_method === 'cash' 
                 ? 'background:#fef3c7;color:#d97706;' 
@@ -947,6 +1062,21 @@ function renderCustomerOverview(data) {
     }
 }
 
+function toggleCustomerStaff(customerId) {
+    const moreDiv = document.getElementById('customer-staff-more-' + customerId);
+    const expandBtn = document.getElementById('staff-expand-btn-' + customerId);
+    if (!moreDiv) return;
+    
+    const isHidden = moreDiv.classList.contains('hidden');
+    if (isHidden) {
+        moreDiv.classList.remove('hidden');
+        if (expandBtn) expandBtn.classList.add('hidden');
+    } else {
+        moreDiv.classList.add('hidden');
+        if (expandBtn) expandBtn.classList.remove('hidden');
+    }
+}
+
 // Auto open modal on redirect with overview_id param
 document.addEventListener('DOMContentLoaded', function () {
     const urlParams = new URLSearchParams(window.location.search);
@@ -964,7 +1094,27 @@ document.addEventListener('DOMContentLoaded', function () {
             placeholder: '-- Chọn khách hàng --',
         });
     }
+
+    if (typeof initUserTomSelects === 'function') {
+        initUserTomSelects();
+    }
 });
 </script>
+
+<style>
+.ts-dropdown {
+    z-index: 999999 !important;
+    max-height: 200px !important;
+    overflow-y: auto !important;
+    border-radius: 0.5rem !important;
+}
+#edit-customer-modal [data-modal-content],
+#create-customer-modal [data-modal-content] {
+    max-height: 95vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+}
+</style>
 
 @endsection

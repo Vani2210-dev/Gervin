@@ -18,26 +18,31 @@
             <div class="card h-full p-0 rounded-xl border-0 overflow-hidden">
                 <div class="card-header border-b border-neutral-200 bg-white py-4 px-6 flex items-center flex-wrap gap-3 justify-between">
                     <div class="flex items-center flex-wrap gap-3">
-                        {{-- Per page --}}
-                        <span class="text-base font-medium text-secondary-light mb-0">Hiển thị</span>
-                        <form method="GET" action="{{ route('users.index') }}" id="perPageForm">
-                            <input type="hidden" name="search" value="{{ request('search') }}">
-                            <input type="hidden" name="role_id" value="{{ request('role_id') }}">
-                            <select name="per_page" class="form-select form-select-sm w-auto border-neutral-200 rounded-lg"
-                                onchange="document.getElementById('perPageForm').submit()">
-                                @foreach([10, 25, 50, 100] as $n)
-                                <option value="{{ $n }}" {{ $perPage == $n ? 'selected' : '' }}>{{ $n }}</option>
-                                @endforeach
-                            </select>
-                        </form>
-
-                        {{-- Tìm kiếm --}}
+                        {{-- Tìm kiếm (Bên trái ngoài cùng) --}}
                         <form method="GET" action="{{ route('users.index') }}" class="navbar-search">
                             <input type="hidden" name="per_page" value="{{ $perPage }}">
-                            <input type="text" class="bg-white h-10 w-auto" name="search"
-                                value="{{ request('search') }}" placeholder="Tìm kiếm">
-                            <iconify-icon icon="ion:search-outline" class="icon"></iconify-icon>
+                            <input type="hidden" name="role_id" value="{{ request('role_id') }}">
+                            <div class="relative">
+                                <iconify-icon icon="solar:magnifer-linear" class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-base"></iconify-icon>
+                                <input type="text" class="form-control form-control-sm border-neutral-200 rounded-lg pl-9 pr-3 w-64 md:w-80" name="search"
+                                    value="{{ request('search') }}" placeholder="Tìm kiếm người dùng...">
+                            </div>
                         </form>
+
+                        {{-- Per page --}}
+                        <div class="flex items-center gap-2">
+                            <span class="text-base font-medium text-secondary-light mb-0">Hiển thị</span>
+                            <form method="GET" action="{{ route('users.index') }}" id="perPageForm">
+                                <input type="hidden" name="search" value="{{ request('search') }}">
+                                <input type="hidden" name="role_id" value="{{ request('role_id') }}">
+                                <select name="per_page" class="form-select form-select-sm w-auto border-neutral-200 rounded-lg"
+                                    onchange="document.getElementById('perPageForm').submit()">
+                                    @foreach([10, 25, 50, 100] as $n)
+                                    <option value="{{ $n }}" {{ $perPage == $n ? 'selected' : '' }}>{{ $n }}</option>
+                                    @endforeach
+                                </select>
+                            </form>
+                        </div>
                     </div>
                     <div class="flex items-center gap-2">
                         <button type="button" onclick="openModal('filter-modal')"
@@ -73,6 +78,7 @@
                                             STT
                                         </div>
                                     </th>
+                                    <th scope="col">Mã NV</th>
                                     <th scope="col">Tên</th>
                                     <th scope="col">Email</th>
                                     <th scope="col">Vai trò</th>
@@ -88,10 +94,13 @@
                                         <div class="flex items-center gap-10">
                                             <div class="form-check style-check flex items-center">
                                                 <input class="form-check-input rounded border border-neutral-400" type="checkbox" name="checkbox"
-                                                        id="SL-{{ $index + 1 }}">
+                                                        id="SL-{{ $index + 1 }}" {{ ($user->id === 1 || $user->email === 'admin@kbtech.com') ? 'disabled' : '' }}>
                                             </div>
                                             {{ $stt }}
                                         </div>
+                                    </td>
+                                    <td>
+                                        <span class="font-semibold text-neutral-800 text-sm">{{ $user->user_code ?? '—' }}</span>
                                     </td>
                                     <td>
                                         <div class="flex items-center">
@@ -104,15 +113,22 @@
                                                     {{ strtoupper(substr($user->name, 0, 1)) }}
                                                 </div>
                                             @endif
-                                            <div class="grow">
+                                            <div class="grow flex items-center gap-2">
                                                 <span class="text-base mb-0 font-normal text-secondary-light">{{ $user->name }}</span>
+                                                @if($user->id === 1 || $user->email === 'admin@kbtech.com')
+                                                    <span class="inline-flex items-center gap-1 bg-neutral-100 text-neutral-600 border border-neutral-200 text-xs px-2 py-0.5 rounded-md font-medium" title="Tài khoản quản trị viên gốc của hệ thống - Không thể xóa">
+                                                        <iconify-icon icon="solar:shield-check-outline" class="text-sm text-neutral-500"></iconify-icon>
+                                                        Hệ thống
+                                                    </span>
+                                                @endif
                                             </div>
                                         </div>
                                     </td>
                                     <td><span class="text-base mb-0 font-normal text-secondary-light">{{ $user->email }}</span></td>
                                     <td>
-                                        @if($user->role)
-                                            <span class="bg-primary-100 text-primary-600 border border-primary-600 px-3 py-1 rounded font-medium text-xs">{{ $user->role->name }}</span>
+                                        @php $roleName = $user->role?->name ?? $user->roles->first()?->name; @endphp
+                                        @if($roleName)
+                                            <span class="bg-primary-100 text-primary-600 border border-primary-600 px-3 py-1 rounded font-medium text-xs">{{ $roleName }}</span>
                                         @else
                                             <span class="text-neutral-500 text-sm">-</span>
                                         @endif
@@ -131,11 +147,11 @@
                                             </a>
                                             @endcan
                                             @can('delete user')
-                                            @if($user->id !== auth()->id())
-                                            <form action="{{ route('users.destroy', $user) }}" method="POST" class="remove-item-btn">
+                                            @if($user->id !== 1 && $user->email !== 'admin@kbtech.com' && $user->id !== auth()->id())
+                                            <form action="{{ route('users.destroy', $user) }}" method="POST" class="remove-item-btn" onsubmit="return confirm('Bạn có chắc chắn muốn xóa người dùng này?')">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="bg-danger-100 hover:bg-danger-200 text-danger-600 font-medium w-10 h-10 flex justify-center items-center rounded-full">
+                                                <button type="submit" class="bg-danger-100 hover:bg-danger-200 text-danger-600 font-medium w-10 h-10 flex justify-center items-center rounded-full" title="Xóa">
                                                     <iconify-icon icon="fluent:delete-24-regular" class="menu-icon"></iconify-icon>
                                                 </button>
                                             </form>
