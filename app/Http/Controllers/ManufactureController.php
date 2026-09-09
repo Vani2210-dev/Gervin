@@ -266,27 +266,27 @@ class ManufactureController extends Controller
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Đơn hàng Lic');
 
-        // Style templates
+        // Style templates (Màu header cam pastel bám sát mẫu: #F8B182)
         $headerStyle = [
-            'font' => ['bold' => true, 'name' => 'Times New Roman', 'size' => 10],
+            'font' => ['bold' => true, 'name' => 'Times New Roman', 'size' => 10, 'color' => ['argb' => 'FF000000']],
             'alignment' => [
                 'horizontal' => Alignment::HORIZONTAL_CENTER,
                 'vertical' => Alignment::VERTICAL_CENTER,
                 'wrapText' => true
             ],
             'borders' => [
-                'allBorders' => ['borderStyle' => Border::BORDER_THIN]
+                'allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FF000000']]
             ],
             'fill' => [
                 'fillType' => Fill::FILL_SOLID,
-                'startColor' => ['argb' => 'FFE2E8F0']
+                'startColor' => ['argb' => 'FFF8B182']
             ]
         ];
 
         $dataStyle = [
             'font' => ['name' => 'Times New Roman', 'size' => 10],
             'borders' => [
-                'allBorders' => ['borderStyle' => Border::BORDER_THIN]
+                'allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FF000000']]
             ]
         ];
 
@@ -329,6 +329,9 @@ class ManufactureController extends Controller
             $sheet->getStyle($col . '1')->applyFromArray($headerStyle);
         }
 
+        // Cố định dòng Header (Row 1) khi scroll lên xuống
+        $sheet->freezePane('A2');
+
         // Calculate grand totals across all groups
         $grandTotalPlates = 0;
         $grandTotalCnc = 0;
@@ -351,7 +354,7 @@ class ManufactureController extends Controller
         $grandTotalStyle = [
             'font' => ['bold' => true, 'name' => 'Times New Roman', 'size' => 10],
             'borders' => [
-                'allBorders' => ['borderStyle' => Border::BORDER_THIN]
+                'allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FF000000']]
             ],
             'fill' => [
                 'fillType' => Fill::FILL_SOLID,
@@ -455,7 +458,7 @@ class ManufactureController extends Controller
                 $totalRowStyle = [
                     'font' => ['bold' => true, 'name' => 'Times New Roman', 'size' => 10],
                     'borders' => [
-                        'allBorders' => ['borderStyle' => Border::BORDER_THIN]
+                        'allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FF000000']]
                     ],
                     'fill' => [
                         'fillType' => Fill::FILL_SOLID,
