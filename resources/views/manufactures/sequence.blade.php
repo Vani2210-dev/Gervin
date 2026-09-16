@@ -30,96 +30,78 @@
 
 @section('content')
 
-{{-- KHỐI KPI TỔNG QUAN TIẾN ĐỘ --}}
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+{{-- KHỐI KPI TỔNG QUAN TIẾN ĐỘ (MINI STATS) --}}
+<div class="mb-4" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
     
     {{-- 1. Tổng tấm --}}
-    <div class="card border border-neutral-200 rounded-2xl p-5 bg-white shadow-none hover:shadow-md transition-shadow">
-        <div class="flex items-center justify-between mb-3">
-            <span class="text-xs font-semibold text-neutral-500 uppercase tracking-wider">Tổng tấm theo dõi</span>
-            <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
-                <iconify-icon icon="solar:layers-minimalistic-bold-duotone" class="text-2xl"></iconify-icon>
+    <div class="card border border-neutral-200 rounded-xl px-4 py-3 bg-white shadow-none flex items-center justify-between">
+        <div>
+            <span class="text-xs text-neutral-500 font-medium block">Tổng tấm theo dõi</span>
+            <div class="flex items-baseline gap-1 mt-0.5">
+                <span class="text-xl font-bold text-neutral-900">{{ number_format($grandTotalPlates) }}</span>
+                <span class="text-xs text-neutral-400">tấm</span>
             </div>
         </div>
-        <div class="flex items-baseline gap-2">
-            <h4 class="text-2xl font-bold text-neutral-900 mb-0">{{ number_format($grandTotalPlates) }}</h4>
-            <span class="text-xs text-neutral-500 font-medium">tấm</span>
-        </div>
-        <div class="mt-3 pt-3 border-t border-neutral-100 flex items-center justify-between text-xs text-neutral-500">
-            <span>{{ $totalSuppliesCount }} hạng mục</span>
-            <span class="text-neutral-700 font-semibold">{{ count($groupedSupplies) }} ngày</span>
+        <div class="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+            <iconify-icon icon="solar:layers-minimalistic-bold-duotone" class="text-xl"></iconify-icon>
         </div>
     </div>
 
     {{-- 2. Kính / CNC --}}
-    <div class="card border border-neutral-200 rounded-2xl p-5 bg-white shadow-none hover:shadow-md transition-shadow">
-        <div class="flex items-center justify-between mb-3">
-            <span class="text-xs font-semibold text-neutral-500 uppercase tracking-wider">Gia công Kính / CNC</span>
-            <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-                <iconify-icon icon="solar:scissors-bold-duotone" class="text-2xl"></iconify-icon>
+    <div class="card border border-neutral-200 rounded-xl px-4 py-3 bg-white shadow-none flex items-center justify-between">
+        <div>
+            <span class="text-xs text-neutral-500 font-medium block">Gia công Kính / CNC</span>
+            <div class="flex items-baseline gap-1 mt-0.5">
+                <span class="text-xl font-bold text-amber-600">{{ number_format($grandTotalCnc) }}</span>
+                <span class="text-xs text-neutral-400">tấm</span>
             </div>
         </div>
-        <div class="flex items-baseline gap-2">
-            <h4 class="text-2xl font-bold text-neutral-900 mb-0">{{ number_format($grandTotalCnc) }}</h4>
-            <span class="text-xs text-neutral-500 font-medium">tấm CNC</span>
-        </div>
-        <div class="mt-3 pt-3 border-t border-neutral-100 text-xs text-neutral-500">
-            <span>Chiếm: <strong class="text-amber-600 font-semibold">{{ $grandTotalPlates > 0 ? round(($grandTotalCnc / $grandTotalPlates) * 100, 1) : 0 }}%</strong> tổng tấm</span>
+        <div class="w-9 h-9 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+            <iconify-icon icon="solar:scissors-bold-duotone" class="text-xl"></iconify-icon>
         </div>
     </div>
 
     {{-- 3. Đang sản xuất --}}
-    <div class="card border border-neutral-200 rounded-2xl p-5 bg-white shadow-none hover:shadow-md transition-shadow">
-        <div class="flex items-center justify-between mb-3">
-            <span class="text-xs font-semibold text-neutral-500 uppercase tracking-wider">Đang sản xuất</span>
-            <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-                <iconify-icon icon="solar:hourglass-line-bold-duotone" class="text-2xl"></iconify-icon>
+    <div class="card border border-neutral-200 rounded-xl px-4 py-3 bg-white shadow-none flex items-center justify-between">
+        <div>
+            <span class="text-xs text-neutral-500 font-medium block">Đang sản xuất</span>
+            <div class="flex items-baseline gap-1 mt-0.5">
+                <span class="text-xl font-bold text-blue-600">{{ number_format($grandTotalInProd) }}</span>
+                <span class="text-xs text-neutral-400">tấm</span>
             </div>
         </div>
-        <div class="flex items-baseline gap-2">
-            <h4 class="text-2xl font-bold text-blue-600 mb-0">{{ number_format($grandTotalInProd) }}</h4>
-            <span class="text-xs text-neutral-500 font-medium">tấm trên chuyền</span>
-        </div>
-        <div class="mt-3 pt-3 border-t border-neutral-100 text-xs text-neutral-500">
-            <span>Đang quét các công đoạn</span>
+        <div class="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+            <iconify-icon icon="solar:hourglass-line-bold-duotone" class="text-xl"></iconify-icon>
         </div>
     </div>
 
     {{-- 4. Đã hoàn thành --}}
-    <div class="card border border-neutral-200 rounded-2xl p-5 bg-white shadow-none hover:shadow-md transition-shadow">
-        <div class="flex items-center justify-between mb-3">
-            <span class="text-xs font-semibold text-neutral-500 uppercase tracking-wider">Đã hoàn thành</span>
-            <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                <iconify-icon icon="solar:check-circle-bold-duotone" class="text-2xl"></iconify-icon>
+    <div class="card border border-neutral-200 rounded-xl px-4 py-3 bg-white shadow-none flex items-center justify-between">
+        <div>
+            <span class="text-xs text-neutral-500 font-medium block">Đã hoàn thành</span>
+            <div class="flex items-baseline gap-1.5 mt-0.5">
+                <span class="text-xl font-bold text-emerald-600">{{ number_format($grandTotalCompleted) }}</span>
+                <span class="text-xs text-emerald-600 font-bold">({{ $completionRate }}%)</span>
             </div>
         </div>
-        <div class="flex items-baseline gap-2">
-            <h4 class="text-2xl font-bold text-emerald-600 mb-0">{{ number_format($grandTotalCompleted) }}</h4>
-            <span class="text-xs font-bold text-emerald-600">({{ $completionRate }}%)</span>
-        </div>
-        <div class="mt-3">
-            <div class="w-full bg-neutral-100 h-2 rounded-full overflow-hidden">
-                <div class="bg-gradient-to-r from-emerald-500 to-teal-500 h-full rounded-full transition-all duration-500" style="width: {{ min(100, $completionRate) }}%"></div>
-            </div>
+        <div class="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+            <iconify-icon icon="solar:check-circle-bold-duotone" class="text-xl"></iconify-icon>
         </div>
     </div>
 
     {{-- 5. Còn lại --}}
-    <div class="card border border-neutral-200 rounded-2xl p-5 bg-white shadow-none hover:shadow-md transition-shadow">
-        <div class="flex items-center justify-between mb-3">
-            <span class="text-xs font-semibold text-neutral-500 uppercase tracking-wider">Tấm còn lại</span>
-            <div class="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
-                <iconify-icon icon="solar:danger-triangle-bold-duotone" class="text-2xl"></iconify-icon>
+    <div class="card border border-neutral-200 rounded-xl px-4 py-3 bg-white shadow-none flex items-center justify-between">
+        <div>
+            <span class="text-xs text-neutral-500 font-medium block">Tấm còn lại</span>
+            <div class="flex items-baseline gap-1 mt-0.5">
+                <span class="text-xl font-bold {{ $grandTotalRemaining > 0 ? 'text-rose-600' : 'text-emerald-600' }}">
+                    {{ number_format($grandTotalRemaining) }}
+                </span>
+                <span class="text-xs text-neutral-400">tấm</span>
             </div>
         </div>
-        <div class="flex items-baseline gap-2">
-            <h4 class="text-2xl font-bold {{ $grandTotalRemaining > 0 ? 'text-rose-600' : 'text-emerald-600' }} mb-0">
-                {{ number_format($grandTotalRemaining) }}
-            </h4>
-            <span class="text-xs text-neutral-500 font-medium">chưa xong</span>
-        </div>
-        <div class="mt-3 pt-3 border-t border-neutral-100 text-xs text-neutral-500">
-            <span>{{ $grandTotalRemaining == 0 && $grandTotalPlates > 0 ? 'Đã hoàn tất 100%' : 'Cần đẩy nhanh tiến độ' }}</span>
+        <div class="w-9 h-9 rounded-lg {{ $grandTotalRemaining > 0 ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600' }} flex items-center justify-center shrink-0">
+            <iconify-icon icon="{{ $grandTotalRemaining > 0 ? 'solar:danger-triangle-bold-duotone' : 'solar:check-circle-bold-duotone' }}" class="text-xl"></iconify-icon>
         </div>
     </div>
 
