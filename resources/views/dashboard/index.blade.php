@@ -9,29 +9,29 @@
 @section('content')
 
     {{-- Banner chào mừng & Thao tác nhanh --}}
-    <div class="card border border-neutral-200 rounded-2xl mb-6 bg-gradient-to-r from-primary-600 via-indigo-600 to-primary-800 text-white relative overflow-hidden shadow-sm">
+    <div class="card rounded-2xl mb-6 text-white relative overflow-hidden shadow-sm" style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #4338ca 100%) !important; border: 1px solid rgba(255,255,255,0.15) !important;">
         <div class="absolute -right-16 -top-16 w-56 h-56 rounded-full bg-white/10 blur-2xl pointer-events-none"></div>
         <div class="absolute right-1/4 -bottom-10 w-40 h-40 rounded-full bg-white/10 blur-xl pointer-events-none"></div>
-        <div class="card-body p-6 relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+        <div class="card-body p-6 relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6" style="background: transparent !important;">
             <div>
-                <div class="flex items-center gap-2 mb-1">
-                    <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-white/20 text-white uppercase tracking-wider">Hệ thống điều hành</span>
-                    <span class="text-white/70 text-xs">Gervin Wood ERP</span>
+                <div class="flex items-center gap-2 mb-1.5">
+                    <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider" style="background: rgba(255,255,255,0.2); color: #ffffff;">Hệ thống điều hành</span>
+                    <span class="text-xs" style="color: rgba(255,255,255,0.75);">Gervin Wood ERP</span>
                 </div>
-                <h3 class="text-2xl lg:text-3xl font-bold text-white mb-1.5">Xin chào, {{ auth()->user()->name }}! 👋</h3>
-                <p class="text-white/80 text-sm font-medium max-w-xl mb-0">
+                <h3 class="text-2xl lg:text-3xl font-bold mb-1.5" style="color: #ffffff !important;">Xin chào, {{ auth()->user()->name }}! 👋</h3>
+                <p class="text-sm font-medium max-w-xl mb-0" style="color: rgba(255, 255, 255, 0.88) !important;">
                     Bảng điều khiển tổng hợp dữ liệu sản xuất, đơn hàng, tiến độ phân xưởng và báo cáo doanh thu thời gian thực.
                 </p>
             </div>
             
             <div class="flex flex-wrap items-center gap-3 shrink-0">
-                <div class="bg-white/15 backdrop-blur-md border border-white/20 text-white px-4 py-2.5 rounded-xl shadow-sm text-center">
-                    <span class="block text-[11px] uppercase tracking-wider font-semibold text-white/80">Hôm nay</span>
+                <div class="px-4 py-2.5 rounded-xl shadow-sm text-center" style="background: rgba(255, 255, 255, 0.18); border: 1px solid rgba(255, 255, 255, 0.3); color: #ffffff;">
+                    <span class="block text-[11px] uppercase tracking-wider font-semibold" style="color: rgba(255,255,255,0.85);">Hôm nay</span>
                     <span class="text-base font-bold text-yellow-300">{{ now()->format('d/m/Y') }}</span>
                 </div>
                 @can('add order')
                 <div class="flex items-center gap-2">
-                    <a href="{{ route('orders.create.type', ['type' => 'acrylic']) }}" class="btn bg-white hover:bg-neutral-100 text-primary-700 font-semibold px-3.5 py-2.5 rounded-xl text-xs flex items-center gap-1.5 shadow-sm transition">
+                    <a href="{{ route('orders.create.type', ['type' => 'acrylic']) }}" class="btn font-semibold px-4 py-2.5 rounded-xl text-xs flex items-center gap-1.5 shadow-sm transition" style="background: #ffffff !important; color: #1e40af !important; border: none !important;">
                         <iconify-icon icon="lucide:plus" class="text-base"></iconify-icon>
                         Tạo đơn mới
                     </a>
