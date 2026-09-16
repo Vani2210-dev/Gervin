@@ -26,44 +26,18 @@
     </div>
     <div class="sidebar-menu-area">
         <ul class="sidebar-menu" id="sidebar-menu">
-            <li class="dropdown">
-                <a href="javascript:void(0)">
+            <li>
+                <a href="{{ route('index') }}">
                     <iconify-icon icon="solar:home-smile-angle-outline" class="menu-icon"></iconify-icon>
-                    <span>Trang chủ</span>
+                    <span>Dashboard</span>
                 </a>
-                <ul class="sidebar-submenu">
-                    <li>
-                        <a href="{{ route('index') }}"><i class="ri-circle-fill circle-icon text-primary-600 w-auto"></i> Dashboard</a>
-                    </li>
-                    @can('view ui')
-                    <li>
-                        <a href="{{ route('index2') }}"><i class="ri-circle-fill circle-icon text-warning-600 w-auto"></i> CRM</a>
-                    </li>
-                    <li>
-                        <a href="{{ route('index3') }}"><i class="ri-circle-fill circle-icon text-info-600 w-auto"></i> Thương mại điện tử</a>
-                    </li>
-                    <li>
-                        <a href="{{ route('index4') }}"><i class="ri-circle-fill circle-icon text-danger-600 w-auto"></i> Tiền mã hóa</a>
-                    </li>
-                    <li>
-                        <a href="{{ route('index5') }}"><i class="ri-circle-fill circle-icon text-success-600 w-auto"></i> Đầu tư</a>
-                    </li>
-                    <li>
-                        <a href="{{ route('index6') }}"><i class="ri-circle-fill circle-icon text-purple-600 w-auto"></i> Hệ thống học tập</a>
-                    </li>
-                    <li>
-                        <a href="{{ route('index7') }}"><i class="ri-circle-fill circle-icon text-info-600 w-auto"></i> NFT & Gaming</a>
-                    </li>
-                    <li>
-                        <a href="{{ route('index8') }}"><i class="ri-circle-fill circle-icon text-danger-600 w-auto"></i> Y tế</a>
-                    </li>
-                    <li>
-                        <a href="{{ route('index9') }}"><i class="ri-circle-fill circle-icon text-purple-600 w-auto"></i> Phân tích</a>
-                    </li>
-                    @endcan
-                </ul>
             </li>
-            <li class="sidebar-menu-group-title">Ứng dụng</li>
+
+            {{-- Nhóm Nghiệp vụ & Đơn hàng --}}
+            @if(auth()->user()->can('view customer') || auth()->user()->can('view order') || auth()->user()->can('view revenue report') || auth()->user()->hasRole('Admin'))
+            <li class="sidebar-menu-group-title">Kinh doanh & Đơn hàng</li>
+            @endif
+
             @can('view customer')
             <li>
                 <a href="{{ route('customers.index') }}">
@@ -72,6 +46,7 @@
                 </a>
             </li>
             @endcan
+
             @can('view order')
             <li>
                 <a href="{{ route('orders.index') }}">
@@ -80,6 +55,7 @@
                 </a>
             </li>
             @endcan
+
             @if(auth()->user()->can('view revenue report') || auth()->user()->hasRole('Admin') || auth()->user()->can('view order'))
             <li>
                 <a href="{{ route('reports.revenue') }}">
@@ -88,6 +64,12 @@
                 </a>
             </li>
             @endif
+
+            {{-- Nhóm Sản xuất & Vận hành --}}
+            @if(auth()->user()->can('view manufacture') || auth()->user()->can('view sequence') || auth()->user()->can('view pressing') || auth()->user()->can('view cnc') || auth()->user()->can('view edge banding') || auth()->user()->can('view finishing') || auth()->user()->can('view qc') || auth()->user()->can('view packing') || auth()->user()->can('view dispatch') || auth()->user()->can('view delivery') || auth()->user()->can('view qr device') || auth()->user()->hasRole('Admin'))
+            <li class="sidebar-menu-group-title">Sản xuất & Vận hành</li>
+            @endif
+
             @can('view manufacture')
             <li>
                 <a href="{{ route('manufactures.index') }}">
@@ -96,6 +78,7 @@
                 </a>
             </li>
             @endcan
+
             @can('view sequence')
             <li>
                 <a href="{{ route('manufactures.sequence') }}">
@@ -104,6 +87,7 @@
                 </a>
             </li>
             @endcan
+
             @can('view pressing')
             <li>
                 <a href="{{ route('processes.pressing') }}">
@@ -112,6 +96,7 @@
                 </a>
             </li>
             @endcan
+
             @can('view cnc')
             <li>
                 <a href="{{ route('processes.cnc') }}">
@@ -120,6 +105,7 @@
                 </a>
             </li>
             @endcan
+
             @can('view edge banding')
             <li>
                 <a href="{{ route('processes.edge-banding') }}">
@@ -128,6 +114,7 @@
                 </a>
             </li>
             @endcan
+
             @can('view finishing')
             <li>
                 <a href="{{ route('processes.finishing') }}">
@@ -136,6 +123,7 @@
                 </a>
             </li>
             @endcan
+
             @can('view qc')
             <li>
                 <a href="{{ route('processes.qc') }}">
@@ -143,13 +131,8 @@
                     <span>Kiểm soát (QC)</span>
                 </a>
             </li>
-            <li>
-                <a href="{{ route('processes.qr-scans') }}">
-                    <iconify-icon icon="lucide:qr-code" class="menu-icon"></iconify-icon>
-                    <span>Thiết bị quét QR</span>
-                </a>
-            </li>
             @endcan
+
             @can('view packing')
             <li>
                 <a href="{{ route('processes.packing') }}">
@@ -158,6 +141,7 @@
                 </a>
             </li>
             @endcan
+
             @can('view dispatch')
             <li>
                 <a href="{{ route('processes.dispatch') }}">
@@ -166,6 +150,7 @@
                 </a>
             </li>
             @endcan
+
             @can('view delivery')
             <li>
                 <a href="{{ route('processes.delivery') }}">
@@ -174,10 +159,33 @@
                 </a>
             </li>
             @endcan
+
+            @if(auth()->user()->can('view qr device') || auth()->user()->hasRole('Admin'))
+            <li>
+                <a href="{{ route('processes.qr-scans') }}">
+                    <iconify-icon icon="lucide:qr-code" class="menu-icon"></iconify-icon>
+                    <span>Thiết bị quét QR</span>
+                </a>
+            </li>
+            @endif
+
+            @if(auth()->user()->can('view manufacture') || auth()->user()->can('view order') || auth()->user()->hasRole('Admin'))
+            <li>
+                <a href="{{ route('qrcode.index') }}">
+                    <iconify-icon icon="solar:qr-code-bold-duotone" class="menu-icon"></iconify-icon>
+                    <span>Tạo mã QR</span>
+                </a>
+            </li>
+            @endif
+
+            {{-- Nhóm Kho & Bảng giá --}}
+            @if(auth()->user()->can('view warehouse') || auth()->user()->can('view dc stock') || auth()->user()->can('view supply') || auth()->user()->hasRole('Admin'))
+            <li class="sidebar-menu-group-title">Kho & Bảng giá</li>
+
             <li class="dropdown">
                 <a href="javascript:void(0)">
                     <iconify-icon icon="mingcute:storage-line" class="menu-icon"></iconify-icon>
-                    <span>Quản lý kho</span>
+                    <span>Quản lý kho & Bảng giá</span>
                 </a>
                 <ul class="sidebar-submenu">
                     @can('view warehouse')
@@ -185,6 +193,13 @@
                         <a href="{{ route('warehouses.index') }}"><i class="ri-circle-fill circle-icon text-primary-600 w-auto"></i> Kho vật tư</a>
                     </li>
                     @endcan
+
+                    @can('view dc stock')
+                    <li>
+                        <a href="{{ route('dc-stocks.index') }}"><i class="ri-circle-fill circle-icon text-orange-500 w-auto"></i> Kho DC (Tấm dư)</a>
+                    </li>
+                    @endcan
+
                     @can('view supply')
                     <li>
                         <a href="{{ route('wood_boards.index') }}"><i class="ri-circle-fill circle-icon text-info-600 w-auto"></i> Bảng giá tấm</a>
@@ -195,20 +210,19 @@
                     <li>
                         <a href="{{ route('minlate_prices.index') }}"><i class="ri-circle-fill circle-icon text-orange-400 w-auto"></i> Bảng giá dịch vụ Min-late</a>
                     </li>
-                    @endcan
-                    @can('view supply')
                     <li>
                         <a href="{{ route('cnc_templates.index') }}"><i class="ri-circle-fill circle-icon text-warning-600 w-auto"></i> Cấu hình CNC</a>
                     </li>
                     @endcan
-
-                    @can('view dc stock')
-                    <li>
-                        <a href="{{ route('dc-stocks.index') }}"><i class="ri-circle-fill circle-icon text-orange-500 w-auto"></i> Kho DC (Tấm dư)</a>
-                    </li>
-                    @endcan
                 </ul>
             </li>
+            @endif
+
+            {{-- Nhóm Hệ thống & Quản trị --}}
+            @if(auth()->user()->can('view media') || auth()->user()->can('view user') || auth()->user()->can('view role') || auth()->user()->hasRole('Admin'))
+            <li class="sidebar-menu-group-title">Hệ thống</li>
+            @endif
+
             @can('view media')
             <li>
                 <a href="{{ route('media.index') }}">
@@ -217,6 +231,7 @@
                 </a>
             </li>
             @endcan
+
             @can('view user')
             <li class="dropdown">
                 <a href="javascript:void(0)">
@@ -236,23 +251,19 @@
                 </ul>
             </li>
             @endcan
+
             @can('view role')
-            <li class="dropdown">
-                <a href="javascript:void(0)">
+            <li>
+                <a href="{{ route('roles.index') }}">
                     <iconify-icon icon="heroicons:shield-check" class="menu-icon"></iconify-icon>
                     <span>Phân quyền</span>
                 </a>
-                <ul class="sidebar-submenu">
-                    <li>
-                        <a href="{{ route('roles.index') }}"><i class="ri-circle-fill circle-icon text-primary-600 w-auto"></i> Vai trò</a>
-                    </li>
-                </ul>
             </li>
             @endcan
 
             <!-- View UI -->
             @can('view ui')
-            <li class="sidebar-menu-group-title">Ứng dụng</li>
+            <li class="sidebar-menu-group-title">Giao diện mẫu (Demo)</li>
 
             <li>
                 <a href="{{ route('email') }}">
