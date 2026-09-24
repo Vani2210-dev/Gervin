@@ -557,29 +557,49 @@ function previewOrder() {
                     // STT
                     cellVal = (iIdx + 1).toString();
                 } else if (td) {
-                    // Trích xuất giá trị ô
-                    const input = td.querySelector('input:not([type="hidden"])');
-                    const select = td.querySelector('select');
-                    const textarea = td.querySelector('textarea');
+                    const titleLower = col.title.toLowerCase();
 
-                    if (select) {
-                        if (select.tomselect) {
-                            cellVal = select.tomselect.getItem(select.tomselect.getValue())?.textContent?.trim() || '';
-                        } else if (select.selectedIndex >= 0 && select.options[select.selectedIndex]) {
-                            const optText = select.options[select.selectedIndex].text.trim();
-                            cellVal = (optText.startsWith('--') && optText.endsWith('--')) ? '' : optText;
+                    // 1. Cột Vát: Luôn lấy giá trị SỐ từ input thay vì text "▪ Bám theo Rộng" của select
+                    const bevelInput = td.querySelector('.product-bevel-input') || td.querySelector('input[name*="[bevel]"]:not([name*="[beveled_"])');
+                    if (titleLower === 'vát' || bevelInput) {
+                        if (bevelInput) {
+                            let bVal = bevelInput.value.trim();
+                            // Fallback nếu đang ở chế độ bám theo Rộng / Dài mà ô vát chưa cập nhật số
+                            if (!bVal || bVal === '0') {
+                                const syncMode = bevelInput.getAttribute('data-auto-sync');
+                                if (syncMode === 'width') {
+                                    bVal = row.querySelector('input[name*="[width]"]')?.value?.trim() || '';
+                                } else if (syncMode === 'height') {
+                                    bVal = row.querySelector('input[name*="[height]"]')?.value?.trim() || '';
+                                }
+                            }
+                            const bNum = parseFloat(bVal);
+                            cellVal = (!isNaN(bNum) && bNum > 0) ? bVal : '';
                         }
-                    } else if (input) {
-                        cellVal = input.value.trim();
-                    } else if (textarea) {
-                        cellVal = textarea.value.trim();
-                    } else {
-                        cellVal = td.textContent.trim();
+                    }
+                    // 2. Các ô khác: Trích xuất bình thường
+                    else {
+                        const select = td.querySelector('select:not(.product-bevel-select)');
+                        const input = td.querySelector('input:not([type="hidden"])');
+                        const textarea = td.querySelector('textarea');
+
+                        if (input) {
+                            cellVal = input.value.trim();
+                        } else if (select) {
+                            if (select.tomselect) {
+                                cellVal = select.tomselect.getItem(select.tomselect.getValue())?.textContent?.trim() || '';
+                            } else if (select.selectedIndex >= 0 && select.options[select.selectedIndex]) {
+                                const optText = select.options[select.selectedIndex].text.trim();
+                                cellVal = (optText.startsWith('--') && optText.endsWith('--')) ? '' : optText;
+                            }
+                        } else if (textarea) {
+                            cellVal = textarea.value.trim();
+                        } else {
+                            cellVal = td.textContent.trim();
+                        }
                     }
 
                     // Xử lý các cột đặc thù theo tiêu đề cột
-                    const titleLower = col.title.toLowerCase();
-
                     // Tên sản phẩm
                     if (titleLower.includes('tên')) {
                         align = 'left';
