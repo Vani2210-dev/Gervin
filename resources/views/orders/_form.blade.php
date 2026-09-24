@@ -1008,40 +1008,63 @@ function showPreviewToast(message, type = 'success') {
     if (!container) {
         container = document.createElement('div');
         container.id = 'preview-toast-container';
-        container.style.cssText = 'position:fixed; top:24px; right:24px; z-index:9999999999; display:flex; flex-direction:column; gap:10px; max-width:440px; pointer-events:none;';
+        container.style.cssText = 'position:fixed; top:24px; left:50%; transform:translateX(-50%); z-index:9999999999; display:flex; flex-direction:column; align-items:center; gap:10px; max-width:560px; width:max-content; pointer-events:none;';
         document.body.appendChild(container);
     }
     const toast = document.createElement('div');
-    const isSuccess = type === 'success';
-    const isWarning = type === 'warning';
-    toast.style.cssText = 'pointer-events:auto; transition:all 0.3s cubic-bezier(0.16, 1, 0.3, 1); transform:translateY(-16px); opacity:0;';
     
-    let bgBorder = 'bg-neutral-900/95 text-white border-emerald-500';
+    let bgStyle = 'background: linear-gradient(135deg, #0f172a 0%, #064e3b 100%); border: 1.5px solid #10b981; box-shadow: 0 20px 35px -5px rgba(0, 0, 0, 0.55), 0 0 24px rgba(16, 185, 129, 0.35);';
     let icon = 'lucide:check-circle-2';
-    let iconColor = 'text-emerald-400';
+    let iconColor = '#34d399';
+    let strongColor = '#6ee7b7';
+
     if (type === 'error') {
-        bgBorder = 'bg-rose-900/95 text-white border-rose-500';
+        bgStyle = 'background: linear-gradient(135deg, #0f172a 0%, #7f1d1d 100%); border: 1.5px solid #ef4444; box-shadow: 0 20px 35px -5px rgba(0, 0, 0, 0.55), 0 0 24px rgba(239, 68, 68, 0.35);';
         icon = 'lucide:alert-circle';
-        iconColor = 'text-rose-400';
-    } else if (isWarning) {
-        bgBorder = 'bg-amber-950/95 text-white border-amber-500';
+        iconColor = '#f87171';
+        strongColor = '#fca5a5';
+    } else if (type === 'warning') {
+        bgStyle = 'background: linear-gradient(135deg, #0f172a 0%, #78350f 100%); border: 1.5px solid #f59e0b; box-shadow: 0 20px 35px -5px rgba(0, 0, 0, 0.55), 0 0 24px rgba(245, 158, 11, 0.35);';
         icon = 'lucide:alert-triangle';
-        iconColor = 'text-amber-400';
+        iconColor = '#fbbf24';
+        strongColor = '#fde68a';
     }
 
-    toast.className = `p-4 rounded-xl shadow-2xl border flex items-start gap-3 backdrop-blur-md ${bgBorder}`;
-    toast.innerHTML = `
-        <iconify-icon icon="${icon}" class="text-xl shrink-0 mt-0.5 ${iconColor}"></iconify-icon>
-        <div class="text-sm font-medium leading-relaxed">${message}</div>
+    toast.style.cssText = `
+        pointer-events: auto;
+        ${bgStyle}
+        color: #ffffff;
+        border-radius: 14px;
+        padding: 14px 20px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        font-family: inherit;
+        transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        transform: translateY(-20px) scale(0.96);
+        opacity: 0;
     `;
+
+    toast.innerHTML = `
+        <div style="flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
+            <iconify-icon icon="${icon}" style="font-size: 26px; color: ${iconColor};"></iconify-icon>
+        </div>
+        <div style="font-size: 13.5px; line-height: 1.55; color: #f8fafc; font-weight: 500; word-break: break-word;">
+            ${message.replace(/<strong>/g, `<strong style="color:${strongColor}; font-weight:700;">`)}
+        </div>
+        <button type="button" onclick="this.parentElement.remove()" style="margin-left: 8px; background: rgba(255,255,255,0.1); border: none; width: 26px; height: 26px; border-radius: 50%; cursor: pointer; color: #cbd5e1; display: flex; align-items: center; justify-content: center; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'" title="Đóng thông báo">
+            <iconify-icon icon="lucide:x" style="font-size: 15px;"></iconify-icon>
+        </button>
+    `;
+
     container.appendChild(toast);
     requestAnimationFrame(() => {
-        toast.style.transform = 'translateY(0)';
+        toast.style.transform = 'translateY(0) scale(1)';
         toast.style.opacity = '1';
     });
     setTimeout(() => {
         toast.style.opacity = '0';
-        toast.style.transform = 'translateY(-16px)';
+        toast.style.transform = 'translateY(-20px) scale(0.96)';
         setTimeout(() => toast.remove(), 350);
     }, 4500);
 }
