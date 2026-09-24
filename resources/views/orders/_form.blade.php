@@ -647,13 +647,20 @@ function previewOrder() {
         `;
     };
 
+    // Lưu thông tin đơn hiện tại cho các hàm chụp/copy ảnh
+    window.currentPreviewOrder = {
+        orderCode: orderCode || 'DON_HANG',
+        customerName: customerName || 'Khách hàng',
+        phone: phone || ''
+    };
+
     // Tạo modal HTML
     const modalHTML = `
         <div id="preview-order-modal" style="position:fixed; inset:0; z-index:99999999; display:flex; align-items:center; justify-content:center;">
             <div style="position:absolute; inset:0; background:rgba(0,0,0,0.5);" onclick="closePreviewOrder()"></div>
             <div class="bg-white flex flex-col" style="position:relative; width:100%; height:100%; z-index:1;">
                 <!-- Header -->
-                <div class="flex items-center justify-between px-6 py-4 border-b border-neutral-200 flex-shrink-0">
+                <div class="flex items-center justify-between px-6 py-4 border-b border-neutral-200 flex-shrink-0 flex-wrap gap-3">
                     <div class="flex items-center gap-3">
                         <div class="p-2 bg-emerald-50 rounded-xl">
                             <iconify-icon icon="lucide:eye" class="text-xl text-emerald-500"></iconify-icon>
@@ -663,139 +670,183 @@ function previewOrder() {
                             <p class="text-xs text-neutral-400 m-0 mt-0.5">${orderCode} • ${typeLabel}</p>
                         </div>
                     </div>
-                    <button type="button" onclick="closePreviewOrder()" class="w-8 h-8 rounded-lg hover:bg-neutral-100 flex items-center justify-center text-neutral-400 hover:text-neutral-600 transition-colors">
-                        <iconify-icon icon="lucide:x" class="text-xl"></iconify-icon>
-                    </button>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <button type="button" id="btn-copy-preview-header" onclick="copyPreviewOrderImage()" class="btn text-white px-3.5 py-2 rounded-lg text-xs font-bold shadow-sm transition-all flex items-center gap-1.5 hover:opacity-95" style="background:#0068FF; border:none;" title="Chụp ảnh đơn hàng và lưu vào bộ nhớ tạm (sang Zalo chỉ cần Ctrl + V)">
+                            <iconify-icon icon="lucide:copy" class="text-base"></iconify-icon>
+                            <span>Copy ảnh gửi Zalo</span>
+                        </button>
+                        <button type="button" onclick="downloadPreviewOrderImage()" class="btn bg-white hover:bg-neutral-50 text-neutral-600 px-3 py-2 rounded-lg text-xs font-semibold border border-neutral-300 shadow-xs transition-all flex items-center gap-1.5" title="Tải ảnh PNG đơn hàng về máy">
+                            <iconify-icon icon="lucide:download" class="text-sm"></iconify-icon>
+                            <span>Tải ảnh</span>
+                        </button>
+                        <div class="h-6 w-px bg-neutral-200 mx-1"></div>
+                        <button type="button" onclick="closePreviewOrder()" class="w-8 h-8 rounded-lg hover:bg-neutral-100 flex items-center justify-center text-neutral-400 hover:text-neutral-600 transition-colors">
+                            <iconify-icon icon="lucide:x" class="text-xl"></iconify-icon>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Body (scrollable) -->
-                <div class="flex-1 overflow-y-auto p-6 space-y-5" style="min-height:0;">
-                    <!-- Thông tin khách hàng & đơn hàng -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <div class="bg-white border border-neutral-200 rounded-xl p-5 shadow-sm">
-                            <div class="flex items-center gap-2 mb-3 pb-3 border-b border-neutral-100">
-                                <iconify-icon icon="lucide:user" class="text-lg text-primary-500"></iconify-icon>
-                                <h6 class="font-bold text-sm text-neutral-800 m-0">Thông tin khách hàng</h6>
+                <div class="flex-1 overflow-y-auto p-4 md:p-6 bg-neutral-100/50" style="min-height:0;" id="preview-order-scroll-container">
+                    <div id="preview-order-capture-area" class="bg-white p-6 space-y-5 rounded-2xl border border-neutral-200 shadow-sm max-w-5xl mx-auto">
+                        <!-- Header trên ảnh khi xuất -->
+                        <div class="border-b-2 border-primary-500 pb-4 flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-primary-600 to-primary-700 text-white flex items-center justify-center font-black text-xl shadow-sm">G</div>
+                                <div>
+                                    <h4 class="font-bold text-lg text-neutral-800 m-0 leading-tight">PHIẾU THÔNG TIN ĐƠN HÀNG</h4>
+                                    <p class="text-xs text-neutral-500 m-0 mt-0.5 font-medium">Hệ thống sản xuất & gia công Gervin</p>
+                                </div>
                             </div>
-                            ${infoRow('Tên công trình', customerName, 'lucide:building')}
-                            ${infoRow('Số điện thoại', phone, 'lucide:phone')}
-                            ${infoRow('Địa chỉ', address, 'lucide:map-pin')}
+                            <div class="text-right">
+                                <div class="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Mã đơn hàng</div>
+                                <div class="text-xl font-extrabold text-primary-600 font-mono tracking-tight">${orderCode}</div>
+                                <div class="text-xs text-neutral-500 mt-0.5">${formatDate(orderDate)}</div>
+                            </div>
                         </div>
-                        <div class="bg-white border border-neutral-200 rounded-xl p-5 shadow-sm">
-                            <div class="flex items-center gap-2 mb-3 pb-3 border-b border-neutral-100">
-                                <iconify-icon icon="lucide:file-text" class="text-lg text-primary-500"></iconify-icon>
-                                <h6 class="font-bold text-sm text-neutral-800 m-0">Thông tin đơn hàng</h6>
+
+                        <!-- Thông tin khách hàng & đơn hàng -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div class="bg-white border border-neutral-200 rounded-xl p-5 shadow-sm">
+                                <div class="flex items-center gap-2 mb-3 pb-3 border-b border-neutral-100">
+                                    <iconify-icon icon="lucide:user" class="text-lg text-primary-500"></iconify-icon>
+                                    <h6 class="font-bold text-sm text-neutral-800 m-0">Thông tin khách hàng & công trình</h6>
+                                </div>
+                                ${infoRow('Tên công trình', customerName, 'lucide:building')}
+                                ${infoRow('Số điện thoại', phone, 'lucide:phone')}
+                                ${infoRow('Địa chỉ', address, 'lucide:map-pin')}
                             </div>
-                            ${infoRow('Mã đơn hàng', orderCode, 'lucide:hash')}
-                            ${infoRow('Loại đơn', typeLabel, 'lucide:tag')}
-                            ${infoRow('Ngày chốt đơn', formatDate(orderDate), 'lucide:calendar')}
-                            ${infoRow('Số ngày giao', deliveryDays ? deliveryDays + ' ngày' : '', 'lucide:truck')}
-                            ${infoRow('Hạn đơn', formatDateOnly(deadline), 'lucide:clock')}
-                            ${statusText ? infoRow('Trạng thái', statusText, 'lucide:activity') : ''}
+                            <div class="bg-white border border-neutral-200 rounded-xl p-5 shadow-sm">
+                                <div class="flex items-center gap-2 mb-3 pb-3 border-b border-neutral-100">
+                                    <iconify-icon icon="lucide:file-text" class="text-lg text-primary-500"></iconify-icon>
+                                    <h6 class="font-bold text-sm text-neutral-800 m-0">Thông tin đơn hàng</h6>
+                                </div>
+                                ${infoRow('Mã đơn hàng', orderCode, 'lucide:hash')}
+                                ${infoRow('Loại đơn', typeLabel, 'lucide:tag')}
+                                ${infoRow('Ngày chốt đơn', formatDate(orderDate), 'lucide:calendar')}
+                                ${infoRow('Số ngày giao', deliveryDays ? deliveryDays + ' ngày' : '', 'lucide:truck')}
+                                ${infoRow('Hạn đơn', formatDateOnly(deadline), 'lucide:clock')}
+                                ${statusText ? infoRow('Trạng thái', statusText, 'lucide:activity') : ''}
+                            </div>
+                        </div>
+
+                        <!-- Ghi chú -->
+                        ${(notes || customerPolicy) ? `
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            ${notes ? `
+                            <div class="bg-amber-50/50 border border-amber-200 rounded-xl p-5">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <iconify-icon icon="lucide:sticky-note" class="text-base text-amber-500"></iconify-icon>
+                                    <span class="font-bold text-xs text-amber-700 uppercase">Ghi chú đơn hàng</span>
+                                </div>
+                                <p class="text-sm text-neutral-700 whitespace-pre-wrap m-0">${notes}</p>
+                            </div>` : ''}
+                            ${customerPolicy ? `
+                            <div class="bg-blue-50/50 border border-blue-200 rounded-xl p-5">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <iconify-icon icon="lucide:shield" class="text-base text-blue-500"></iconify-icon>
+                                    <span class="font-bold text-xs text-blue-700 uppercase">Chính sách KH</span>
+                                </div>
+                                <p class="text-sm text-neutral-700 whitespace-pre-wrap m-0">${customerPolicy}</p>
+                            </div>` : ''}
+                        </div>` : ''}
+
+                        <!-- Vật tư & Sản phẩm -->
+                        ${suppliesHTML ? `
+                        <div class="bg-white border border-neutral-200 rounded-xl p-5 shadow-sm">
+                            <div class="flex items-center gap-2 mb-4 pb-3 border-b border-neutral-100">
+                                <iconify-icon icon="lucide:package-open" class="text-lg text-primary-500"></iconify-icon>
+                                <h6 class="font-bold text-sm text-neutral-800 m-0">Danh sách Vật tư & Sản phẩm</h6>
+                            </div>
+                            ${suppliesHTML}
+                        </div>` : ''}
+
+                        <!-- Hóa đơn dịch vụ -->
+                        ${paymentDetailsHTML ? `
+                        <div class="bg-white border border-neutral-200 rounded-xl p-5 shadow-sm">
+                            <div class="flex items-center gap-2 mb-4 pb-3 border-b border-neutral-100">
+                                <iconify-icon icon="lucide:receipt" class="text-lg text-primary-500"></iconify-icon>
+                                <h6 class="font-bold text-sm text-neutral-800 m-0">Chi tiết hóa đơn dịch vụ</h6>
+                            </div>
+                            <div class="overflow-x-auto rounded-lg border border-neutral-200">
+                                <table class="w-full">
+                                    <thead>
+                                        <tr class="bg-primary-50/50">
+                                            <th class="px-3 py-2.5 text-xs font-bold text-neutral-600 uppercase border border-neutral-100 text-center whitespace-nowrap">STT</th>
+                                            <th class="px-3 py-2.5 text-xs font-bold text-neutral-600 uppercase border border-neutral-100 text-center whitespace-nowrap">Mã</th>
+                                            <th class="px-3 py-2.5 text-xs font-bold text-neutral-600 uppercase border border-neutral-100 text-left whitespace-nowrap">Tên nội dung</th>
+                                            <th class="px-3 py-2.5 text-xs font-bold text-neutral-600 uppercase border border-neutral-100 text-center whitespace-nowrap">Đơn vị</th>
+                                            <th class="px-3 py-2.5 text-xs font-bold text-neutral-600 uppercase border border-neutral-100 text-center whitespace-nowrap">Số lượng</th>
+                                            <th class="px-3 py-2.5 text-xs font-bold text-neutral-600 uppercase border border-neutral-100 text-center whitespace-nowrap">Đơn giá</th>
+                                            <th class="px-3 py-2.5 text-xs font-bold text-neutral-600 uppercase border border-neutral-100 text-center whitespace-nowrap">Thành tiền</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>${paymentDetailsHTML}</tbody>
+                                </table>
+                            </div>
+                        </div>` : ''}
+
+                        <!-- Tóm tắt -->
+                        <div class="bg-gradient-to-r from-primary-50 to-emerald-50 border border-primary-200 rounded-xl p-5">
+                            <div class="flex items-center gap-2 mb-4 pb-3 border-b border-primary-100">
+                                <iconify-icon icon="lucide:receipt-text" class="text-lg text-primary-500"></iconify-icon>
+                                <h6 class="font-bold text-sm text-neutral-800 m-0">Tóm tắt đơn hàng</h6>
+                            </div>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <div class="text-center p-3 bg-white/70 rounded-lg">
+                                    <div class="text-xs text-neutral-500 font-medium">Số sản phẩm</div>
+                                    <div class="text-lg font-bold text-neutral-800 mt-1">${totalItems}</div>
+                                </div>
+                                <div class="text-center p-3 bg-white/70 rounded-lg">
+                                    <div class="text-xs text-neutral-500 font-medium">Tổng số tấm</div>
+                                    <div class="text-lg font-bold text-neutral-800 mt-1">${totalSheets}</div>
+                                </div>
+                                <div class="text-center p-3 bg-white/70 rounded-lg">
+                                    <div class="text-xs text-neutral-500 font-medium">Tổng diện tích</div>
+                                    <div class="text-lg font-bold text-blue-600 mt-1">${totalArea}</div>
+                                </div>
+                                <div class="text-center p-3 bg-white/70 rounded-lg">
+                                    <div class="text-xs text-neutral-500 font-medium">Tổng tiền hàng</div>
+                                    <div class="text-lg font-bold text-neutral-800 mt-1">${totalAmount}</div>
+                                </div>
+                            </div>
+                            <div class="mt-4 pt-4 border-t border-primary-100 flex items-center justify-between">
+                                <span class="font-bold text-sm text-neutral-800">Tổng thanh toán:</span>
+                                <span class="text-2xl font-extrabold text-primary-600">${grandTotal}</span>
+                            </div>
+                        </div>
+
+                        <!-- Footer trên ảnh khi xuất -->
+                        <div class="pt-4 border-t border-neutral-200 flex items-center justify-between text-xs text-neutral-400">
+                            <span>Xưởng Nội Thất Gervin</span>
+                            <span>Phiếu xuất lúc: ${new Date().toLocaleString('vi-VN')}</span>
                         </div>
                     </div>
-
-                    <!-- Ghi chú -->
-                    ${(notes || customerPolicy) ? `
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        ${notes ? `
-                        <div class="bg-amber-50/50 border border-amber-200 rounded-xl p-5">
-                            <div class="flex items-center gap-2 mb-2">
-                                <iconify-icon icon="lucide:sticky-note" class="text-base text-amber-500"></iconify-icon>
-                                <span class="font-bold text-xs text-amber-700 uppercase">Ghi chú đơn hàng</span>
-                            </div>
-                            <p class="text-sm text-neutral-700 whitespace-pre-wrap m-0">${notes}</p>
-                        </div>` : ''}
-                        ${customerPolicy ? `
-                        <div class="bg-blue-50/50 border border-blue-200 rounded-xl p-5">
-                            <div class="flex items-center gap-2 mb-2">
-                                <iconify-icon icon="lucide:shield" class="text-base text-blue-500"></iconify-icon>
-                                <span class="font-bold text-xs text-blue-700 uppercase">Chính sách KH</span>
-                            </div>
-                            <p class="text-sm text-neutral-700 whitespace-pre-wrap m-0">${customerPolicy}</p>
-                        </div>` : ''}
-                    </div>` : ''}
-
-                    <!-- Vật tư & Sản phẩm -->
-                    ${suppliesHTML ? `
-                    <div class="bg-white border border-neutral-200 rounded-xl p-5 shadow-sm">
-                        <div class="flex items-center gap-2 mb-4 pb-3 border-b border-neutral-100">
-                            <iconify-icon icon="lucide:package-open" class="text-lg text-primary-500"></iconify-icon>
-                            <h6 class="font-bold text-sm text-neutral-800 m-0">Danh sách Vật tư & Sản phẩm</h6>
-                        </div>
-                        ${suppliesHTML}
-                    </div>` : ''}
-
-                    <!-- Hóa đơn dịch vụ -->
-                    ${paymentDetailsHTML ? `
-                    <div class="bg-white border border-neutral-200 rounded-xl p-5 shadow-sm">
-                        <div class="flex items-center gap-2 mb-4 pb-3 border-b border-neutral-100">
-                            <iconify-icon icon="lucide:receipt" class="text-lg text-primary-500"></iconify-icon>
-                            <h6 class="font-bold text-sm text-neutral-800 m-0">Chi tiết hóa đơn dịch vụ</h6>
-                        </div>
-                        <div class="overflow-x-auto rounded-lg border border-neutral-200">
-                            <table class="w-full">
-                                <thead>
-                                    <tr class="bg-primary-50/50">
-                                        <th class="px-3 py-2.5 text-xs font-bold text-neutral-600 uppercase border border-neutral-100 text-center whitespace-nowrap">STT</th>
-                                        <th class="px-3 py-2.5 text-xs font-bold text-neutral-600 uppercase border border-neutral-100 text-center whitespace-nowrap">Mã</th>
-                                        <th class="px-3 py-2.5 text-xs font-bold text-neutral-600 uppercase border border-neutral-100 text-left whitespace-nowrap">Tên nội dung</th>
-                                        <th class="px-3 py-2.5 text-xs font-bold text-neutral-600 uppercase border border-neutral-100 text-center whitespace-nowrap">Đơn vị</th>
-                                        <th class="px-3 py-2.5 text-xs font-bold text-neutral-600 uppercase border border-neutral-100 text-center whitespace-nowrap">Số lượng</th>
-                                        <th class="px-3 py-2.5 text-xs font-bold text-neutral-600 uppercase border border-neutral-100 text-center whitespace-nowrap">Đơn giá</th>
-                                        <th class="px-3 py-2.5 text-xs font-bold text-neutral-600 uppercase border border-neutral-100 text-center whitespace-nowrap">Thành tiền</th>
-                                    </tr>
-                                </thead>
-                                <tbody>${paymentDetailsHTML}</tbody>
-                            </table>
-                        </div>
-                    </div>` : ''}
-
-                    <!-- Tóm tắt -->
-                    <div class="bg-gradient-to-r from-primary-50 to-emerald-50 border border-primary-200 rounded-xl p-5">
-                        <div class="flex items-center gap-2 mb-4 pb-3 border-b border-primary-100">
-                            <iconify-icon icon="lucide:receipt-text" class="text-lg text-primary-500"></iconify-icon>
-                            <h6 class="font-bold text-sm text-neutral-800 m-0">Tóm tắt đơn hàng</h6>
-                        </div>
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div class="text-center p-3 bg-white/70 rounded-lg">
-                                <div class="text-xs text-neutral-500 font-medium">Số sản phẩm</div>
-                                <div class="text-lg font-bold text-neutral-800 mt-1">${totalItems}</div>
-                            </div>
-                            <div class="text-center p-3 bg-white/70 rounded-lg">
-                                <div class="text-xs text-neutral-500 font-medium">Tổng số tấm</div>
-                                <div class="text-lg font-bold text-neutral-800 mt-1">${totalSheets}</div>
-                            </div>
-                            <div class="text-center p-3 bg-white/70 rounded-lg">
-                                <div class="text-xs text-neutral-500 font-medium">Tổng diện tích</div>
-                                <div class="text-lg font-bold text-blue-600 mt-1">${totalArea}</div>
-                            </div>
-                            <div class="text-center p-3 bg-white/70 rounded-lg">
-                                <div class="text-xs text-neutral-500 font-medium">Tổng tiền hàng</div>
-                                <div class="text-lg font-bold text-neutral-800 mt-1">${totalAmount}</div>
-                            </div>
-                        </div>
-                        <div class="mt-4 pt-4 border-t border-primary-100 flex items-center justify-between">
-                            <span class="font-bold text-sm text-neutral-800">Tổng thanh toán:</span>
-                            <span class="text-2xl font-extrabold text-primary-600">${grandTotal}</span>
-                        </div>
-                    </div>
-
                 </div>
 
                 <!-- Footer -->
-                <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-neutral-200 flex-shrink-0 bg-neutral-50/50 flex-wrap">
-                    <button type="button" onclick="closePreviewOrder()" class="btn btn-outline-neutral px-5 py-2.5 rounded-lg text-sm font-semibold transition-all">Đóng</button>
-                    @if(!isset($acrylicOrder) || $isDraftCreate || $acrylicOrder->status === 'draft')
-                    <button type="button" onclick="closePreviewOrder(); if (typeof closeOrderSuppliesPopup === 'function') closeOrderSuppliesPopup(); document.getElementById('order-form-action').value = 'draft'; document.getElementById('order-form').requestSubmit();" class="btn bg-amber-500 hover:bg-amber-600 text-white px-5 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all flex items-center gap-1.5">
-                        <iconify-icon icon="lucide:file-text" class="text-base"></iconify-icon>
-                        Lưu nháp
-                    </button>
-                    @endif
-                    <button type="button" onclick="closePreviewOrder(); if (typeof closeOrderSuppliesPopup === 'function') closeOrderSuppliesPopup(); document.getElementById('order-form-action').value = 'save'; document.getElementById('order-form').requestSubmit();" class="btn btn-primary px-6 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all flex items-center gap-1.5">
-                        <iconify-icon icon="lucide:save" class="text-base"></iconify-icon>
-                        {{ isset($acrylicOrder) && !$isDraftCreate && $acrylicOrder->status !== 'draft' ? 'Cập nhật đơn hàng' : 'Lưu đơn hàng' }}
-                    </button>
+                <div class="flex items-center justify-between gap-3 px-6 py-4 border-t border-neutral-200 flex-shrink-0 bg-neutral-50/50 flex-wrap">
+                    <div class="flex items-center gap-2 text-xs text-neutral-600 mr-auto">
+                        <iconify-icon icon="lucide:sparkles" class="text-base text-amber-500 shrink-0"></iconify-icon>
+                        <span>Bấm <strong>Copy ảnh gửi Zalo</strong>, sau đó mở chat với khách và ấn <strong>Ctrl + V</strong> để gửi ảnh ngay.</span>
+                    </div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <button type="button" onclick="closePreviewOrder()" class="btn btn-outline-neutral px-5 py-2.5 rounded-lg text-sm font-semibold transition-all">Đóng</button>
+                        <button type="button" onclick="copyPreviewOrderImage()" class="btn text-white px-4 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all flex items-center gap-1.5 hover:opacity-95" style="background:#0068FF; border:none;" title="Copy ảnh để dán Ctrl + V vào Zalo">
+                            <iconify-icon icon="lucide:copy" class="text-base"></iconify-icon>
+                            Copy ảnh gửi Zalo
+                        </button>
+                        @if(!isset($acrylicOrder) || $isDraftCreate || $acrylicOrder->status === 'draft')
+                        <button type="button" onclick="closePreviewOrder(); if (typeof closeOrderSuppliesPopup === 'function') closeOrderSuppliesPopup(); document.getElementById('order-form-action').value = 'draft'; document.getElementById('order-form').requestSubmit();" class="btn bg-amber-500 hover:bg-amber-600 text-white px-5 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all flex items-center gap-1.5">
+                            <iconify-icon icon="lucide:file-text" class="text-base"></iconify-icon>
+                            Lưu nháp
+                        </button>
+                        @endif
+                        <button type="button" onclick="closePreviewOrder(); if (typeof closeOrderSuppliesPopup === 'function') closeOrderSuppliesPopup(); document.getElementById('order-form-action').value = 'save'; document.getElementById('order-form').requestSubmit();" class="btn btn-primary px-6 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all flex items-center gap-1.5">
+                            <iconify-icon icon="lucide:save" class="text-base"></iconify-icon>
+                            {{ isset($acrylicOrder) && !$isDraftCreate && $acrylicOrder->status !== 'draft' ? 'Cập nhật đơn hàng' : 'Lưu đơn hàng' }}
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -815,6 +866,158 @@ function previewOrder() {
         }
     };
     document.addEventListener('keydown', escHandler);
+}
+
+// === CÁC HÀM XỬ LÝ CHỤP & COPY ẢNH GỬI ZALO ===
+function showPreviewToast(message, type = 'success') {
+    let container = document.getElementById('preview-toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'preview-toast-container';
+        container.style.cssText = 'position:fixed; top:24px; right:24px; z-index:9999999999; display:flex; flex-direction:column; gap:10px; max-width:440px; pointer-events:none;';
+        document.body.appendChild(container);
+    }
+    const toast = document.createElement('div');
+    const isSuccess = type === 'success';
+    const isWarning = type === 'warning';
+    toast.style.cssText = 'pointer-events:auto; transition:all 0.3s cubic-bezier(0.16, 1, 0.3, 1); transform:translateY(-16px); opacity:0;';
+    
+    let bgBorder = 'bg-neutral-900/95 text-white border-emerald-500';
+    let icon = 'lucide:check-circle-2';
+    let iconColor = 'text-emerald-400';
+    if (type === 'error') {
+        bgBorder = 'bg-rose-900/95 text-white border-rose-500';
+        icon = 'lucide:alert-circle';
+        iconColor = 'text-rose-400';
+    } else if (isWarning) {
+        bgBorder = 'bg-amber-950/95 text-white border-amber-500';
+        icon = 'lucide:alert-triangle';
+        iconColor = 'text-amber-400';
+    }
+
+    toast.className = `p-4 rounded-xl shadow-2xl border flex items-start gap-3 backdrop-blur-md ${bgBorder}`;
+    toast.innerHTML = `
+        <iconify-icon icon="${icon}" class="text-xl shrink-0 mt-0.5 ${iconColor}"></iconify-icon>
+        <div class="text-sm font-medium leading-relaxed">${message}</div>
+    `;
+    container.appendChild(toast);
+    requestAnimationFrame(() => {
+        toast.style.transform = 'translateY(0)';
+        toast.style.opacity = '1';
+    });
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(-16px)';
+        setTimeout(() => toast.remove(), 350);
+    }, 4500);
+}
+
+async function ensureHtml2CanvasLoaded() {
+    if (window.html2canvas) return window.html2canvas;
+    return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+        script.onload = () => resolve(window.html2canvas);
+        script.onerror = () => reject(new Error('Không thể tải thư viện html2canvas từ CDN'));
+        document.head.appendChild(script);
+    });
+}
+
+async function getPreviewOrderImageBlob() {
+    const captureEl = document.getElementById('preview-order-capture-area');
+    if (!captureEl) throw new Error('Không tìm thấy vùng nội dung đơn hàng để chụp');
+
+    await ensureHtml2CanvasLoaded();
+
+    const scrollContainer = document.getElementById('preview-order-scroll-container');
+    const prevScrollTop = scrollContainer ? scrollContainer.scrollTop : 0;
+    if (scrollContainer) scrollContainer.scrollTop = 0;
+
+    try {
+        const canvas = await html2canvas(captureEl, {
+            scale: 2,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: '#ffffff',
+            logging: false,
+            windowWidth: captureEl.scrollWidth,
+        });
+
+        if (scrollContainer) scrollContainer.scrollTop = prevScrollTop;
+
+        return new Promise((resolve, reject) => {
+            canvas.toBlob((blob) => {
+                if (blob) resolve(blob);
+                else reject(new Error('Không thể xuất ảnh từ canvas'));
+            }, 'image/png', 0.95);
+        });
+    } catch (err) {
+        if (scrollContainer) scrollContainer.scrollTop = prevScrollTop;
+        throw err;
+    }
+}
+
+async function copyPreviewOrderImage() {
+    const orderCode = window.currentPreviewOrder?.orderCode || 'DON_HANG';
+    const btn = document.getElementById('btn-copy-preview-header');
+    const originalHTML = btn ? btn.innerHTML : '';
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<iconify-icon icon="lucide:loader-2" class="text-base animate-spin"></iconify-icon> <span>Đang chụp ảnh...</span>`;
+    }
+
+    try {
+        const blob = await getPreviewOrderImageBlob();
+        
+        if (navigator.clipboard && window.ClipboardItem) {
+            await navigator.clipboard.write([
+                new ClipboardItem({ 'image/png': blob })
+            ]);
+            showPreviewToast(`Đã sao chép ảnh đơn hàng <strong>${orderCode}</strong> thành công! Bạn chỉ cần vào khung chat Zalo của khách và bấm <strong>Ctrl + V</strong> để gửi ảnh ngay.`);
+        } else {
+            downloadBlob(blob, `Don_Hang_${orderCode}.png`);
+            showPreviewToast(`Trình duyệt không hỗ trợ sao chép ảnh trực tiếp, đã tự động tải ảnh về máy cho bạn.`, 'warning');
+        }
+    } catch (err) {
+        console.error('Lỗi sao chép ảnh:', err);
+        try {
+            const blob = await getPreviewOrderImageBlob();
+            downloadBlob(blob, `Don_Hang_${orderCode}.png`);
+            showPreviewToast(`Không thể copy trực tiếp vào bộ nhớ tạm do chính sách bảo mật trình duyệt. Đã tự động tải file ảnh về máy cho bạn.`, 'warning');
+        } catch (downloadErr) {
+            showPreviewToast('Không thể tạo ảnh đơn hàng: ' + (err.message || 'Lỗi không xác định'), 'error');
+        }
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalHTML;
+        }
+    }
+}
+
+async function downloadPreviewOrderImage() {
+    const orderCode = window.currentPreviewOrder?.orderCode || 'DON_HANG';
+    try {
+        const blob = await getPreviewOrderImageBlob();
+        downloadBlob(blob, `Don_Hang_${orderCode}.png`);
+        showPreviewToast(`Đã tải ảnh đơn hàng <strong>${orderCode}</strong> thành công!`);
+    } catch (err) {
+        console.error('Lỗi tải ảnh:', err);
+        showPreviewToast('Không thể tải ảnh: ' + (err.message || 'Lỗi không xác định'), 'error');
+    }
+}
+
+function downloadBlob(blob, fileName) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }, 100);
 }
 
 function updateOrderSummary() {
@@ -2822,4 +3025,7 @@ document.addEventListener('DOMContentLoaded', function() {
         background-color: transparent !important;
     }
 </style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
 
