@@ -497,7 +497,7 @@ class OrderController extends Controller
         $status = $request->status;
 
         if ($status === 'transferred') {
-            if ($order->status !== 'pending') {
+            if (!in_array($order->status, ['pending', 'draft'])) {
                 return redirect()->back()->with('error', 'Trạng thái đơn hàng không hợp lệ để chuyển sản xuất.');
             }
             $order->status = 'transferred';

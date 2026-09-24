@@ -946,8 +946,22 @@
             @endcan
 
             @can('edit order')
-            {{-- Chỉnh sửa đơn hàng --}}
+            {{-- Chuyển sản xuất --}}
+            @if(in_array($order->status, ['draft', 'pending']))
             <li class="border-t border-neutral-100 my-1 pt-1">
+                <form method="POST" action="{{ route('orders.update-status', $order) }}" onsubmit="return confirm('Xác nhận chuyển đơn hàng {{ $order->order_code }} sang sản xuất?')">
+                    @csrf
+                    <input type="hidden" name="status" value="transferred">
+                    <button type="submit" class="w-full flex items-center gap-2 px-4 py-2 hover:bg-violet-50 text-violet-700 text-left transition-colors font-medium">
+                        <iconify-icon icon="lucide:factory" class="text-violet-600 text-lg"></iconify-icon>
+                        <span>Chuyển sản xuất</span>
+                    </button>
+                </form>
+            </li>
+            @endif
+
+            {{-- Chỉnh sửa đơn hàng --}}
+            <li class="{{ in_array($order->status, ['draft', 'pending']) ? '' : 'border-t border-neutral-100 my-1 pt-1' }}">
                 @if(!in_array($order->status, ['in_production', 'cancelled']))
                     <a href="{{ route('orders.edit', $order) }}" class="flex items-center gap-2 px-4 py-2 hover:bg-neutral-50 text-neutral-700 transition-colors">
                         <iconify-icon icon="lucide:edit" class="text-primary-500 text-lg"></iconify-icon>

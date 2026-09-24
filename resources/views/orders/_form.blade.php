@@ -609,17 +609,37 @@ function previewOrder() {
                             textColor = '#d97706';
                         }
                     }
-                    // Đơn giá & Thành tiền
+                    // Đơn giá & Thành tiền (Xử lý định dạng VNĐ có dấu chấm phân cách hàng nghìn)
                     else if (titleLower.includes('đơn giá') || titleLower.includes('thành tiền')) {
                         align = 'right';
                         isBold = true;
-                        const num = parseFloat(cellVal.replace(/[^\d.-]/g, ''));
+                        let cleanVal = cellVal.replace(/[^\d.,-]/g, '');
+                        if (cleanVal.includes('.') && cleanVal.includes(',')) {
+                            if (cleanVal.lastIndexOf(',') > cleanVal.lastIndexOf('.')) {
+                                cleanVal = cleanVal.substring(0, cleanVal.lastIndexOf(',')).replace(/\./g, '');
+                            } else {
+                                cleanVal = cleanVal.substring(0, cleanVal.lastIndexOf('.')).replace(/,/g, '');
+                            }
+                        } else if (cleanVal.includes('.')) {
+                            // Số tiền VNĐ: dấu chấm luôn là dấu phân cách hàng nghìn (ví dụ 45.501 -> 45501)
+                            cleanVal = cleanVal.replace(/\./g, '');
+                        } else if (cleanVal.includes(',')) {
+                            const parts = cleanVal.split(',');
+                            if (parts.length > 1 && parts[parts.length - 1].length === 3) {
+                                cleanVal = cleanVal.replace(/,/g, '');
+                            } else {
+                                cleanVal = cleanVal.replace(',', '.');
+                            }
+                        }
+                        const num = parseFloat(cleanVal);
                         if (!isNaN(num) && num > 0) {
                             cellVal = Math.round(num).toLocaleString('vi-VN') + ' đ';
                             if (titleLower.includes('thành tiền')) {
                                 textColor = '#059669';
                                 sumTotalPrice += num;
                             }
+                        } else {
+                            cellVal = '';
                         }
                     }
                     // Số lượng

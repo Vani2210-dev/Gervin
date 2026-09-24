@@ -98,6 +98,18 @@
                             class="px-3 py-1 rounded-full text-xs font-semibold {{ $statusColors[$acrylicOrder->status] ?? 'bg-neutral-100 text-neutral-600' }}">
                             {{ $statusLabels[$acrylicOrder->status] ?? $acrylicOrder->status }}
                         </span>
+                        @can('edit order')
+                            @if(in_array($acrylicOrder->status, ['draft', 'pending']))
+                                <form method="POST" action="{{ route('orders.update-status', $acrylicOrder) }}" onsubmit="return confirm('Xác nhận chuyển đơn hàng {{ $acrylicOrder->order_code }} sang sản xuất?')" class="m-0 inline-block">
+                                    @csrf
+                                    <input type="hidden" name="status" value="transferred">
+                                    <button type="submit" class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-violet-600 hover:bg-violet-700 text-white transition-all shadow-xs flex items-center gap-1.5 cursor-pointer">
+                                        <iconify-icon icon="lucide:factory" class="text-sm"></iconify-icon>
+                                        <span>Chuyển sản xuất</span>
+                                    </button>
+                                </form>
+                            @endif
+                        @endcan
                     </div>
                 </div>
 
@@ -785,6 +797,16 @@
                     <iconify-icon icon="lucide:arrow-left" class="text-base"></iconify-icon> Quay lại danh sách
                 </a>
                 @can('edit order')
+                    @if(in_array($acrylicOrder->status, ['draft', 'pending']))
+                        <form method="POST" action="{{ route('orders.update-status', $acrylicOrder) }}" onsubmit="return confirm('Xác nhận chuyển đơn hàng {{ $acrylicOrder->order_code }} sang sản xuất?')" class="w-full m-0">
+                            @csrf
+                            <input type="hidden" name="status" value="transferred">
+                            <button type="submit"
+                                class="w-full justify-center flex items-center gap-2 py-3 rounded-xl font-semibold bg-violet-600 hover:bg-violet-700 text-white shadow-sm text-sm transition-colors cursor-pointer">
+                                <iconify-icon icon="lucide:factory" class="text-base"></iconify-icon> Chuyển sản xuất
+                            </button>
+                        </form>
+                    @endif
                     @if(!in_array($acrylicOrder->status, ['in_production', 'cancelled']))
                         <a href="{{ route('orders.edit', $acrylicOrder) }}"
                             class="w-full justify-center flex items-center gap-2 py-3 rounded-xl font-semibold bg-neutral-900 hover:bg-black text-white shadow-sm text-sm transition-colors cursor-pointer">
