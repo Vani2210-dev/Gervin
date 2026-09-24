@@ -500,7 +500,7 @@ function previewOrder() {
     const totalAmount = document.getElementById('total-amount')?.textContent || '0 VNĐ';
     const grandTotal = document.getElementById('grand-total')?.textContent || '0 VNĐ';
 
-    // Thu thập vật tư & sản phẩm
+    // Thu thập vật tư & sản phẩm (Đầy đủ 100% tất cả các cột)
     let suppliesHTML = '';
     const supplyRows = document.querySelectorAll('.order-supply-row');
     supplyRows.forEach((supplyRow, sIdx) => {
@@ -513,73 +513,183 @@ function previewOrder() {
         const supplyName = supplyRow.querySelector('[name*="supply_name"]')?.value || '';
         const supplyQty = supplyRow.querySelector('[name*="[quantity]"]:not([name*="items"])')?.value || '';
 
-        // Lấy headers từ bảng
+        // Lấy headers từ hàng đầu tiên của thead
         const table = supplyRow.querySelector('table');
         if (!table) return;
-        const headers = [];
-        table.querySelectorAll('thead th').forEach(th => {
-            headers.push(th.textContent.trim().replace(/\s*\*\s*/g, ''));
+        const theadFirstRow = table.querySelector('thead tr:first-child');
+        if (!theadFirstRow) return;
+
+        const thList = Array.from(theadFirstRow.querySelectorAll('th'));
+        const colDefs = [];
+        thList.forEach((th, idx) => {
+            const text = th.textContent.trim().replace(/\s*\*\s*/g, '');
+            // Bỏ cột Hành động ở cuối
+            if (text === 'Hành động' || th.querySelector('iconify-icon[icon*="trash"]') || idx === thList.length - 1) {
+                return;
+            }
+            colDefs.push({
+                index: idx,
+                title: text
+            });
         });
 
-        // Lấy dữ liệu từng item row
+        // Duyệt từng item row của vật tư
         let itemsHTML = '';
+        let sumQty = 0;
+        let sumWingArea = 0;
+        let sumMolding = 0;
+        let sumTotalPrice = 0;
+
         const itemRows = supplyRow.querySelectorAll('.order-item-row');
         itemRows.forEach((row, iIdx) => {
-            itemsHTML += '<tr class="border-b border-neutral-100 hover:bg-neutral-50/50">';
-            // STT
-            itemsHTML += `<td class="px-3 py-2 text-center text-xs text-neutral-500 border border-neutral-100">${iIdx + 1}</td>`;
-            // Đọc tất cả td (bỏ STT và Hành động)
             const tds = row.querySelectorAll('td');
-            tds.forEach((td, tdIdx) => {
-                if (tdIdx === 0) return; // Bỏ STT (đã render ở trên)
-                if (tdIdx === tds.length - 1) return; // Bỏ cột Hành động
+            if (tds.length === 0) return;
 
-                const input = td.querySelector('input, select, textarea');
-                let val = '';
-                if (input) {
-                    if (input.tagName === 'SELECT') {
-                        val = input.options[input.selectedIndex]?.text || '';
+            let rowHTML = '<tr style="border-bottom: 1px solid #cbd5e1;">';
+            colDefs.forEach(col => {
+                const td = tds[col.index];
+                let cellVal = '';
+                let align = 'center';
+                let isBold = false;
+                let textColor = '#0f172a';
+
+                if (col.index === 0) {
+                    // STT
+                    cellVal = (iIdx + 1).toString();
+                } else if (td) {
+                    // Trích xuất giá trị ô
+                    const input = td.querySelector('input:not([type="hidden"])');
+                    const select = td.querySelector('select');
+                    const textarea = td.querySelector('textarea');
+
+                    if (select) {
+                        if (select.tomselect) {
+                            cellVal = select.tomselect.getItem(select.tomselect.getValue())?.textContent?.trim() || '';
+                        } else if (select.selectedIndex >= 0 && select.options[select.selectedIndex]) {
+                            const optText = select.options[select.selectedIndex].text.trim();
+                            cellVal = (optText.startsWith('--') && optText.endsWith('--')) ? '' : optText;
+                        }
+                    } else if (input) {
+                        cellVal = input.value.trim();
+                    } else if (textarea) {
+                        cellVal = textarea.value.trim();
                     } else {
-                        val = input.value || '';
+                        cellVal = td.textContent.trim();
                     }
-                } else {
-                    val = td.textContent.trim();
+
+                    // Xử lý các cột đặc thù theo tiêu đề cột
+                    const titleLower = col.title.toLowerCase();
+
+                    // Tên sản phẩm
+                    if (titleLower.includes('tên')) {
+                        align = 'left';
+                        isBold = true;
+                        if (row.hasAttribute('data-is-labor') || row.classList.contains('bg-amber-50/60')) {
+                            cellVal = '[Công] ' + (cellVal || 'Công giả dày');
+                            textColor = '#d97706';
+                        }
+                    }
+                    // Đơn giá & Thành tiền
+                    else if (titleLower.includes('đơn giá') || titleLower.includes('thành tiền')) {
+                        align = 'right';
+                        isBold = true;
+                        const num = parseFloat(cellVal.replace(/[^\d.-]/g, ''));
+                        if (!isNaN(num) && num > 0) {
+                            cellVal = Math.round(num).toLocaleString('vi-VN') + ' đ';
+                            if (titleLower.includes('thành tiền')) {
+                                textColor = '#059669';
+                                sumTotalPrice += num;
+                            }
+                        }
+                    }
+                    // Số lượng
+                    else if (titleLower.includes('số lượng') || titleLower === 'sl' || titleLower === 'sl cánh') {
+                        const num = parseFloat(cellVal);
+                        if (!isNaN(num)) sumQty += num;
+                    }
+                    // Cánh (m2) hoặc Khối lượng
+                    else if (titleLower.includes('cánh') || titleLower.includes('m2') || titleLower.includes('khối lượng')) {
+                        const num = parseFloat(cellVal);
+                        if (!isNaN(num)) {
+                            sumWingArea += num;
+                            cellVal = num.toFixed(2);
+                        }
+                    }
+                    // Phào (m)
+                    else if (titleLower.includes('phào')) {
+                        const num = parseFloat(cellVal);
+                        if (!isNaN(num)) {
+                            sumMolding += num;
+                            cellVal = num.toFixed(2);
+                        }
+                    }
+                    // Chiều vân
+                    else if (titleLower.includes('chiều vân')) {
+                        if (cellVal === '0') cellVal = 'Không vân';
+                        else if (cellVal === '1') cellVal = 'Vân dọc';
+                        else if (cellVal === '2') cellVal = 'Vân ngang';
+                    }
+                    // Ghi chú
+                    else if (titleLower.includes('ghi chú')) {
+                        align = 'left';
+                    }
                 }
 
-                // Format tiền cho cột đơn giá và thành tiền
-                const name = input?.name || '';
-                if (name.includes('unit_price') || name.includes('total_price') || name.includes('[total]')) {
-                    const num = parseFloat(val);
-                    val = !isNaN(num) && num > 0 ? num.toLocaleString('vi-VN') : val;
-                }
-
-                itemsHTML += `<td class="px-3 py-2 text-xs text-neutral-700 border border-neutral-100 text-center">${val || '—'}</td>`;
+                rowHTML += `<td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: ${align}; color: ${textColor}; font-weight: ${isBold ? '600' : 'normal'}; font-size: 13px; white-space: nowrap;">${cellVal || '—'}</td>`;
             });
-            itemsHTML += '</tr>';
+            rowHTML += '</tr>';
+            itemsHTML += rowHTML;
         });
 
-        // Tạo headers (bỏ cột Hành động cuối)
-        let headerHTML = '<tr class="bg-primary-50/50">';
-        headers.forEach((h, hIdx) => {
-            if (hIdx === headers.length - 1) return; // Bỏ cột Hành động
-            headerHTML += `<th class="px-3 py-2.5 text-xs font-bold text-neutral-600 uppercase border border-neutral-100 text-center whitespace-nowrap">${h}</th>`;
+        // Tạo headers
+        let headerHTML = '<tr style="background-color: #f1f5f9;">';
+        colDefs.forEach(col => {
+            headerHTML += `<th style="border: 1.5px solid #cbd5e1; padding: 9px 8px; text-align: center; color: #0f172a; font-weight: 700; font-size: 12.5px; text-transform: uppercase; white-space: nowrap;">${col.title}</th>`;
         });
         headerHTML += '</tr>';
 
+        // Tạo dòng tổng cộng cho bảng này
+        let summaryRowHTML = '<tr style="background-color: #f8fafc; font-weight: 700; border-top: 2px solid #94a3b8;">';
+        colDefs.forEach((col, cIdx) => {
+            const titleLower = col.title.toLowerCase();
+            let val = '';
+            let align = 'center';
+            let color = '#0f172a';
+
+            if (cIdx === 0) {
+                val = 'TỔNG';
+            } else if (titleLower.includes('số lượng') || titleLower === 'sl' || titleLower === 'sl cánh') {
+                val = sumQty.toString();
+            } else if (titleLower.includes('cánh') || titleLower.includes('m2') || titleLower.includes('khối lượng')) {
+                val = sumWingArea > 0 ? sumWingArea.toFixed(2) + ' m²' : '—';
+                color = '#2563eb';
+            } else if (titleLower.includes('phào')) {
+                val = sumMolding > 0 ? sumMolding.toFixed(2) + ' m' : '—';
+            } else if (titleLower.includes('thành tiền')) {
+                val = sumTotalPrice > 0 ? Math.round(sumTotalPrice).toLocaleString('vi-VN') + ' đ' : '—';
+                align = 'right';
+                color = '#059669';
+            }
+
+            summaryRowHTML += `<td style="border: 1px solid #cbd5e1; padding: 8px 8px; text-align: ${align}; color: ${color}; font-size: 13px; font-weight: 700; white-space: nowrap;">${val}</td>`;
+        });
+        summaryRowHTML += '</tr>';
+
         suppliesHTML += `
-            <div class="mb-5">
-                <div class="flex items-center gap-3 mb-3">
-                    <div class="p-1.5 bg-primary-50 rounded-lg text-primary-500 flex items-center justify-center">
+            <div class="mb-6">
+                <div class="flex items-center gap-3 mb-2.5 pb-2 border-b border-neutral-200">
+                    <div class="p-1.5 bg-primary-100 rounded-lg text-primary-700 flex items-center justify-center font-bold">
                         <iconify-icon icon="lucide:clipboard-list" class="text-base"></iconify-icon>
                     </div>
-                    <span class="font-bold text-sm text-neutral-800">${supplyCode || 'Vật tư ' + (sIdx + 1)}</span>
-                    ${supplyName ? `<span class="text-xs text-neutral-500">— ${supplyName}</span>` : ''}
-                    ${supplyQty ? `<span class="text-xs bg-primary-50 text-primary-600 px-2 py-0.5 rounded-full font-semibold">SL: ${supplyQty}</span>` : ''}
+                    <span class="font-extrabold text-sm text-neutral-800">${supplyCode || 'Vật tư ' + (sIdx + 1)}</span>
+                    ${supplyName ? `<span class="text-xs font-semibold text-neutral-600">— ${supplyName}</span>` : ''}
+                    ${supplyQty ? `<span class="text-xs bg-primary-50 text-primary-700 border border-primary-200 px-2.5 py-0.5 rounded-full font-bold">SL tấm: ${supplyQty}</span>` : ''}
                 </div>
-                <div class="overflow-x-auto rounded-lg border border-neutral-200">
-                    <table class="w-full">
+                <div class="overflow-x-auto rounded-lg border border-neutral-300">
+                    <table class="w-full" style="border-collapse: collapse; min-width: 100%;">
                         <thead>${headerHTML}</thead>
-                        <tbody>${itemsHTML || '<tr><td colspan="20" class="text-center text-xs text-neutral-400 py-4">Chưa có sản phẩm</td></tr>'}</tbody>
+                        <tbody>${itemsHTML || '<tr><td colspan="' + colDefs.length + '" class="text-center text-xs text-neutral-400 py-4">Chưa có sản phẩm</td></tr>'}</tbody>
+                        <tfoot>${summaryRowHTML}</tfoot>
                     </table>
                 </div>
             </div>
@@ -588,6 +698,7 @@ function previewOrder() {
 
     // Thu thập chi tiết hóa đơn dịch vụ
     let paymentDetailsHTML = '';
+    let sumPaymentTotal = 0;
     const paymentRows = document.querySelectorAll('.payment-detail-row');
     if (paymentRows.length > 0) {
         paymentRows.forEach((row, rIdx) => {
@@ -615,20 +726,23 @@ function previewOrder() {
             }
             
             const pNum = parseFloat(price);
-            if (!isNaN(pNum) && pNum > 0) price = pNum.toLocaleString('vi-VN');
+            if (!isNaN(pNum) && pNum > 0) price = Math.round(pNum).toLocaleString('vi-VN') + ' đ';
             const tNum = parseFloat(total);
-            if (!isNaN(tNum) && tNum > 0) total = tNum.toLocaleString('vi-VN');
+            if (!isNaN(tNum) && tNum > 0) {
+                sumPaymentTotal += tNum;
+                total = Math.round(tNum).toLocaleString('vi-VN') + ' đ';
+            }
             
             if (!name && !qty && !price && !code) return;
             
-            paymentDetailsHTML += `<tr class="border-b border-neutral-100 hover:bg-neutral-50/50">
-                <td class="px-3 py-2 text-center text-xs text-neutral-500 border border-neutral-100">${rIdx + 1}</td>
-                <td class="px-3 py-2 text-xs text-neutral-700 border border-neutral-100 text-center font-semibold">${code || '—'}</td>
-                <td class="px-3 py-2 text-xs text-neutral-700 border border-neutral-100">${name || '—'}</td>
-                <td class="px-3 py-2 text-xs text-neutral-700 border border-neutral-100 text-center">${unit || '—'}</td>
-                <td class="px-3 py-2 text-xs text-neutral-700 border border-neutral-100 text-center font-medium">${qty || '—'}</td>
-                <td class="px-3 py-2 text-xs text-neutral-700 border border-neutral-100 text-right font-medium">${price || '—'}</td>
-                <td class="px-3 py-2 text-xs text-emerald-600 border border-neutral-100 text-right font-bold">${total || '—'}</td>
+            paymentDetailsHTML += `<tr style="border-bottom: 1px solid #cbd5e1;">
+                <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: center; font-size: 13px;">${rIdx + 1}</td>
+                <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: center; font-weight: 600; font-size: 13px;">${code || '—'}</td>
+                <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: left; font-weight: 600; font-size: 13px;">${name || '—'}</td>
+                <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: center; font-size: 13px;">${unit || '—'}</td>
+                <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: center; font-size: 13px;">${qty || '—'}</td>
+                <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: right; font-size: 13px;">${price || '—'}</td>
+                <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: right; font-weight: 700; color: #059669; font-size: 13px;">${total || '—'}</td>
             </tr>`;
         });
     }
@@ -688,7 +802,7 @@ function previewOrder() {
 
                 <!-- Body (scrollable) -->
                 <div class="flex-1 overflow-y-auto p-4 md:p-6 bg-neutral-100/50" style="min-height:0;" id="preview-order-scroll-container">
-                    <div id="preview-order-capture-area" class="bg-white p-6 space-y-5 rounded-2xl border border-neutral-200 shadow-sm max-w-5xl mx-auto">
+                    <div id="preview-order-capture-area" class="bg-white p-6 md:p-8 space-y-6 rounded-2xl border border-neutral-200 shadow-sm w-full mx-auto" style="min-width: 1100px;">
                         <!-- Header trên ảnh khi xuất -->
                         <div class="border-b-2 border-primary-500 pb-4 flex items-center justify-between">
                             <div class="flex items-center gap-3">
@@ -929,30 +1043,84 @@ async function getPreviewOrderImageBlob() {
 
     await ensureHtml2CanvasLoaded();
 
-    const scrollContainer = document.getElementById('preview-order-scroll-container');
-    const prevScrollTop = scrollContainer ? scrollContainer.scrollTop : 0;
-    if (scrollContainer) scrollContainer.scrollTop = 0;
+    // 1. Tạo một bản sao (clone) ẩn ngoài màn hình để bung toàn bộ chiều rộng 1750px (đầy đủ 100% cột, không bị cắt và cực nét)
+    const clone = captureEl.cloneNode(true);
+    clone.id = 'zalo-export-clone-node';
+    
+    // Đặt chiều rộng cố định 1750px để TẤT CẢ các cột bung ra thoải mái
+    clone.style.position = 'fixed';
+    clone.style.top = '0';
+    clone.style.left = '-99999px';
+    clone.style.width = '1750px';
+    clone.style.minWidth = '1750px';
+    clone.style.maxWidth = '1750px';
+    clone.style.height = 'auto';
+    clone.style.zIndex = '-999999';
+    clone.style.background = '#ffffff';
+    clone.style.padding = '35px 40px';
+    clone.style.boxSizing = 'border-box';
+    clone.style.boxShadow = 'none';
+    clone.style.borderRadius = '0';
+
+    // Bỏ tất cả các giới hạn cuộn và overflow trong clone để không bị cắt cột
+    clone.querySelectorAll('.overflow-x-auto, .overflow-y-auto, .overflow-hidden').forEach(el => {
+        el.style.overflow = 'visible';
+        el.style.width = '100%';
+        el.style.maxWidth = 'none';
+    });
+
+    // Tinh chỉnh bảng trong clone để hiển thị sắc nét từng đường viền và chữ
+    clone.querySelectorAll('table').forEach(tbl => {
+        tbl.style.width = '100%';
+        tbl.style.minWidth = '100%';
+        tbl.style.tableLayout = 'auto';
+        tbl.style.borderCollapse = 'collapse';
+        tbl.style.fontSize = '13.5px';
+    });
+    clone.querySelectorAll('th').forEach(th => {
+        th.style.padding = '10px 8px';
+        th.style.fontSize = '13px';
+        th.style.fontWeight = '700';
+        th.style.border = '1.5px solid #cbd5e1';
+        th.style.backgroundColor = '#f1f5f9';
+        th.style.color = '#0f172a';
+        th.style.whiteSpace = 'nowrap';
+    });
+    clone.querySelectorAll('td').forEach(td => {
+        td.style.padding = '8px 8px';
+        td.style.fontSize = '13px';
+        td.style.border = '1px solid #cbd5e1';
+        td.style.whiteSpace = 'nowrap';
+    });
+
+    document.body.appendChild(clone);
+
+    // Chờ 80ms để trình duyệt render các font và layout hoàn tất
+    await new Promise(r => setTimeout(r, 80));
 
     try {
-        const canvas = await html2canvas(captureEl, {
-            scale: 2,
+        // Chụp với scale 2.5 trên bề rộng 1750px -> ảnh rộng ~4375px cực nét (Retina 300DPI)
+        const canvas = await html2canvas(clone, {
+            scale: 2.5,
             useCORS: true,
             allowTaint: true,
             backgroundColor: '#ffffff',
             logging: false,
-            windowWidth: captureEl.scrollWidth,
+            width: clone.scrollWidth,
+            height: clone.scrollHeight,
+            windowWidth: 1750,
         });
 
-        if (scrollContainer) scrollContainer.scrollTop = prevScrollTop;
+        clone.remove();
 
         return new Promise((resolve, reject) => {
             canvas.toBlob((blob) => {
                 if (blob) resolve(blob);
                 else reject(new Error('Không thể xuất ảnh từ canvas'));
-            }, 'image/png', 0.95);
+            }, 'image/png', 0.98);
         });
     } catch (err) {
-        if (scrollContainer) scrollContainer.scrollTop = prevScrollTop;
+        if (clone && clone.parentNode) clone.remove();
         throw err;
     }
 }
