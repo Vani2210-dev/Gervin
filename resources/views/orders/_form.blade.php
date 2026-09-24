@@ -36,6 +36,7 @@
             <input type="hidden" name="draft_order_id" value="{{ $acrylicOrder->id }}">
         @endif
         <input type="hidden" name="supplies_json" id="supplies-json-input">
+        <input type="hidden" name="action" id="order-form-action" value="save">
         <div class="p-4">
             @if ($errors->any())
                 <div class="mb-4 p-4 rounded-xl border border-danger-200 bg-danger-50 text-danger-600 shadow-sm">
@@ -88,8 +89,8 @@
                                 </select>
                             </div>
                             <div class="form-group md:col-span-2">
-                                <label class="form-label font-semibold text-xs text-neutral-500 uppercase tracking-wider mb-2 block">Tên khách hàng <span class="text-danger-500">*</span></label>
-                                <input type="text" name="customer_name" class="form-control rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Nhập tên khách hàng" required value="{{ old('customer_name', $acrylicOrder?->customer_name ?? '') }}">
+                                <label class="form-label font-semibold text-xs text-neutral-500 uppercase tracking-wider mb-2 block">Tên công trình <span class="text-danger-500">*</span></label>
+                                <input type="text" name="customer_name" class="form-control rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Nhập tên công trình" required value="{{ old('customer_name', $acrylicOrder?->customer_name ?? '') }}">
                             </div>
                             <input type="hidden" name="type" value="{{ $currentOrderType }}">
                             <div class="form-group">
@@ -264,11 +265,19 @@
                 </div>
             </div>
         </div>
-        <div class="px-6 py-4 border-t border-neutral-100 bg-neutral-50/50 flex items-center justify-end gap-3 rounded-b-xl">
+        <div class="px-6 py-4 border-t border-neutral-100 bg-neutral-50/50 flex items-center justify-end gap-3 rounded-b-xl flex-wrap">
             <a href="{{ route('orders.index') }}" class="btn btn-outline-neutral px-5 py-2.5 rounded-lg text-sm font-semibold transition-all">Quay lại</a>
             <button type="button" onclick="previewOrder()" class="btn bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center gap-1.5">
                 <iconify-icon icon="lucide:eye" class="text-base"></iconify-icon> Xem trước
             </button>
+            
+            {{-- NÚT LƯU NHÁP --}}
+            @if(!isset($acrylicOrder) || $isDraftCreate || $acrylicOrder->status === 'draft')
+            <button type="submit" name="action" value="draft" class="btn bg-amber-500 hover:bg-amber-600 text-white px-5 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all flex items-center gap-1.5" onclick="document.getElementById('order-form-action').value = 'draft'">
+                <iconify-icon icon="lucide:file-text" class="text-base"></iconify-icon> Lưu nháp
+            </button>
+            @endif
+
             @if(isset($acrylicOrder) && !$isDraftCreate)
                 @if($acrylicOrder->status !== 'cancelled')
                 <button type="submit" name="status" value="cancelled" class="btn bg-danger-50 text-danger-600 hover:bg-danger-100 border border-danger-200 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all" onclick="return confirm('Bạn có chắc chắn muốn hủy đơn hàng này?')">Hủy đơn</button>
@@ -277,7 +286,10 @@
                 <button type="submit" name="status" value="transferred" class="btn bg-violet-50 text-violet-600 hover:bg-violet-100 border border-violet-200 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all" onclick="return confirm('Xác nhận chuyển đơn hàng sang sản xuất?')">Chuyển Sản xuất</button>
                 @endif
             @endif
-            <button type="submit" class="btn btn-primary px-6 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all">{{ isset($acrylicOrder) && !$isDraftCreate ? 'Cập nhật đơn hàng' : 'Lưu đơn hàng' }}</button>
+            <button type="submit" name="action" value="save" class="btn btn-primary px-6 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all flex items-center gap-1.5" onclick="document.getElementById('order-form-action').value = 'save'">
+                <iconify-icon icon="lucide:save" class="text-base"></iconify-icon>
+                {{ isset($acrylicOrder) && !$isDraftCreate && $acrylicOrder->status !== 'draft' ? 'Cập nhật đơn hàng' : 'Lưu đơn hàng' }}
+            </button>
         </div>
     </form>
 </div>
@@ -665,7 +677,7 @@ function previewOrder() {
                                 <iconify-icon icon="lucide:user" class="text-lg text-primary-500"></iconify-icon>
                                 <h6 class="font-bold text-sm text-neutral-800 m-0">Thông tin khách hàng</h6>
                             </div>
-                            ${infoRow('Tên khách hàng', customerName, 'lucide:user')}
+                            ${infoRow('Tên công trình', customerName, 'lucide:building')}
                             ${infoRow('Số điện thoại', phone, 'lucide:phone')}
                             ${infoRow('Địa chỉ', address, 'lucide:map-pin')}
                         </div>
@@ -772,11 +784,17 @@ function previewOrder() {
                 </div>
 
                 <!-- Footer -->
-                <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-neutral-200 flex-shrink-0 bg-neutral-50/50">
+                <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-neutral-200 flex-shrink-0 bg-neutral-50/50 flex-wrap">
                     <button type="button" onclick="closePreviewOrder()" class="btn btn-outline-neutral px-5 py-2.5 rounded-lg text-sm font-semibold transition-all">Đóng</button>
-                    <button type="button" onclick="closePreviewOrder(); if (typeof closeOrderSuppliesPopup === 'function') closeOrderSuppliesPopup(); document.getElementById('order-form').requestSubmit();" class="btn btn-primary px-6 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all flex items-center gap-1.5">
+                    @if(!isset($acrylicOrder) || $isDraftCreate || $acrylicOrder->status === 'draft')
+                    <button type="button" onclick="closePreviewOrder(); if (typeof closeOrderSuppliesPopup === 'function') closeOrderSuppliesPopup(); document.getElementById('order-form-action').value = 'draft'; document.getElementById('order-form').requestSubmit();" class="btn bg-amber-500 hover:bg-amber-600 text-white px-5 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all flex items-center gap-1.5">
+                        <iconify-icon icon="lucide:file-text" class="text-base"></iconify-icon>
+                        Lưu nháp
+                    </button>
+                    @endif
+                    <button type="button" onclick="closePreviewOrder(); if (typeof closeOrderSuppliesPopup === 'function') closeOrderSuppliesPopup(); document.getElementById('order-form-action').value = 'save'; document.getElementById('order-form').requestSubmit();" class="btn btn-primary px-6 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all flex items-center gap-1.5">
                         <iconify-icon icon="lucide:save" class="text-base"></iconify-icon>
-                        {{ isset($acrylicOrder) && !$isDraftCreate ? 'Cập nhật đơn hàng' : 'Lưu đơn hàng' }}
+                        {{ isset($acrylicOrder) && !$isDraftCreate && $acrylicOrder->status !== 'draft' ? 'Cập nhật đơn hàng' : 'Lưu đơn hàng' }}
                     </button>
                 </div>
             </div>

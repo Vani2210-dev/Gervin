@@ -177,7 +177,9 @@ class MinLateOrderService
             'vat_percent'     => $vatPercent,
             'vat_amount'      => $vatAmount,
             'total_amount'    => $totalAmount,
-            'status'          => $order->status === 'draft' ? 'pending' : ($request->status ?? $order->status),
+            'status'          => ($request->input('action') === 'draft' || $request->status === 'draft')
+                ? 'draft'
+                : ($order->status === 'draft' ? 'pending' : ($request->status ?? $order->status)),
             'attachments'   => !empty($allAttachments) ? json_encode($allAttachments) : null,
         ];
 

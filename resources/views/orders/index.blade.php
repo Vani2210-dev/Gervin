@@ -75,7 +75,25 @@
                     </div>
                 </div>
 
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 flex-wrap">
+                    @php
+                        $isViewingDrafts = request('filter_status') === 'draft';
+                    @endphp
+
+                    @if($isViewingDrafts)
+                    <a href="{{ route('orders.index') }}"
+                        class="btn bg-amber-500 hover:bg-amber-600 text-white text-sm btn-sm px-3 py-2 rounded-lg flex items-center gap-1.5 font-medium shadow-sm transition-all" title="Quay lại danh sách đơn hàng chính thức">
+                        <iconify-icon icon="lucide:arrow-left" class="icon text-base"></iconify-icon>
+                        Đang xem Đơn nháp (Quay lại)
+                    </a>
+                    @else
+                    <a href="{{ route('orders.index', ['filter_status' => 'draft']) }}"
+                        class="btn bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 text-sm btn-sm px-3 py-2 rounded-lg flex items-center gap-1.5 font-semibold transition-all" title="Xem tất cả đơn nháp đang lưu tạm">
+                        <iconify-icon icon="lucide:file-text" class="icon text-base text-amber-600"></iconify-icon>
+                        Xem đơn nháp <span class="bg-amber-200/80 text-amber-900 text-xs px-1.5 py-0.5 rounded-full font-bold ml-0.5">{{ $draftOrdersCount ?? 0 }}</span>
+                    </a>
+                    @endif
+
                     <button type="button" onclick="openModal('filter-modal')"
                         class="btn bg-light-600 text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2">
                         <iconify-icon icon="solar:filter-outline" class="icon text-xl line-height-1"></iconify-icon>
@@ -107,6 +125,16 @@
                     @endcan
                 </div>
             </div>
+
+            @if($isViewingDrafts)
+            <div class="mx-6 mt-4 p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-center justify-between text-xs text-amber-800">
+                <div class="flex items-center gap-2">
+                    <iconify-icon icon="lucide:info" class="text-base text-amber-600 shrink-0"></iconify-icon>
+                    <span>Đang hiển thị danh sách <strong>{{ $totalOrdersCount }} Đơn nháp (lưu tạm)</strong>. Bạn có thể bấm vào Sửa đơn để tiếp tục hoàn thiện hoặc chuyển thành đơn chính thức.</span>
+                </div>
+                <a href="{{ route('orders.index') }}" class="font-bold underline hover:text-amber-900 shrink-0 ml-2">← Quay lại đơn chính thức</a>
+            </div>
+            @endif
 
 
             @php
@@ -180,7 +208,7 @@
                                 <th scope="col">STT</th>
                                 <th scope="col">Mã đơn</th>
                                 <th scope="col">Loại đơn</th>
-                                <th scope="col">Khách hàng</th>
+                                <th scope="col">Tên công trình</th>
                                 <th scope="col">Số điện thoại</th>
                                 <th scope="col">Ngày tạo đơn</th>
                                 <th scope="col">Hạn đơn</th>

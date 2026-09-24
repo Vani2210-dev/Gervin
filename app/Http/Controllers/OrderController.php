@@ -125,6 +125,14 @@ class OrderController extends Controller
             $customers = \App\Models\Customer::orderBy('name')->get();
         }
 
+        $draftOrdersCount = Order::where('status', 'draft')
+            ->when($user && !$user->hasRole('Admin'), function ($q) use ($user) {
+                $q->whereHas('customer.users', function ($uq) use ($user) {
+                    $uq->where('users.id', $user->id);
+                });
+            })
+            ->count();
+
         return view('orders.index', compact(
             'orders', 
             'perPage', 
@@ -133,7 +141,8 @@ class OrderController extends Controller
             'totalAmountSum',
             'totalPaidSum',
             'totalDebtSum',
-            'customers'
+            'customers',
+            'draftOrdersCount'
         ));
     }
 
@@ -399,8 +408,29 @@ class OrderController extends Controller
 
         $service = $this->serviceFor($request->type);
 
-        $request->validate($service->getStoreRules());
+        $isDraftSave = $request->input('action') === 'draft';
+        if ($isDraftSave) {
+            $request->merge(['status' => 'draft']);
+        }
+
+        $rules = $service->getStoreRules();
+        if ($isDraftSave) {
+            foreach ($rules as $k => $v) {
+                if (is_string($v) && str_contains($v, 'required')) {
+                    $rules[$k] = str_replace(['required|', '|required', 'required'], ['nullable|', '', 'nullable'], $v);
+                }
+            }
+            if (!$request->filled('customer_name')) {
+                $request->merge(['customer_name' => 'Đơn nháp ' . $draftOrder->order_code]);
+            }
+        }
+
+        $request->validate($rules);
         $service->update($request, $draftOrder);
+
+        if ($isDraftSave) {
+            return redirect()->route('orders.index', ['filter_status' => 'draft'])->with('success', 'Đã lưu đơn nháp thành công.');
+        }
 
         return redirect()->route('orders.index')->with('success', 'Tạo đơn hàng thành công.');
     }
@@ -429,15 +459,30 @@ class OrderController extends Controller
             }
         }
 
-        if ($request->type === 'min_late') {
-            $request->validate($this->minLateOrderService->getUpdateRules());
-            $this->minLateOrderService->update($request, $order);
-        } elseif ($request->type === 'glass') {
-            $request->validate($this->glassOrderService->getUpdateRules());
-            $this->glassOrderService->update($request, $order);
-        } else {
-            $request->validate($this->acrylicOrderService->getUpdateRules());
-            $this->acrylicOrderService->update($request, $order);
+        $isDraftSave = $request->input('action') === 'draft' || ($request->status === 'draft' && $order->status === 'draft');
+        if ($isDraftSave) {
+            $request->merge(['status' => 'draft']);
+        }
+
+        $service = $this->serviceFor($request->type);
+        $rules = $service->getUpdateRules();
+
+        if ($isDraftSave) {
+            foreach ($rules as $k => $v) {
+                if (is_string($v) && str_contains($v, 'required')) {
+                    $rules[$k] = str_replace(['required|', '|required', 'required'], ['nullable|', '', 'nullable'], $v);
+                }
+            }
+            if (!$request->filled('customer_name')) {
+                $request->merge(['customer_name' => 'Đơn nháp ' . $order->order_code]);
+            }
+        }
+
+        $request->validate($rules);
+        $service->update($request, $order);
+
+        if ($isDraftSave) {
+            return redirect()->route('orders.index', ['filter_status' => 'draft'])->with('success', 'Đã lưu đơn nháp thành công.');
         }
 
         return redirect()->route('orders.index')->with('success', 'Cập nhật đơn hàng thành công.');
@@ -666,25 +711,33 @@ class OrderController extends Controller
         return response()->json(['ok' => true]);
     }
 
+    private function generateOrderCode(): string
+    {
+        $dateStr = now()->format('dmy');
+        $prefix = $dateStr . '_';
+
+        $orders = Order::where('order_code', 'like', $prefix . '%')
+            ->lockForUpdate()
+            ->pluck('order_code');
+
+        $maxNumber = 0;
+        foreach ($orders as $code) {
+            $parts = explode('_', $code);
+            if (isset($parts[1]) && is_numeric($parts[1])) {
+                $num = intval($parts[1]);
+                if ($num > $maxNumber) {
+                    $maxNumber = $num;
+                }
+            }
+        }
+
+        return $prefix . ($maxNumber + 1);
+    }
+
     private function createDraftOrder(string $type, ?string $relationType = null): Order
     {
         return DB::transaction(function () use ($type, $relationType) {
-            $dateStr = now()->format('ymd');
-            $prefix = 'DH' . $dateStr;
-
-            $lastOrder = Order::where('order_code', 'like', $prefix . '%')
-                ->lockForUpdate()
-                ->orderBy('order_code', 'desc')
-                ->first();
-
-            if ($lastOrder) {
-                $lastNumber = intval(substr($lastOrder->order_code, 8));
-                $nextNumber = $lastNumber + 1;
-            } else {
-                $nextNumber = 1;
-            }
-
-            $orderCode = $prefix . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+            $orderCode = $this->generateOrderCode();
 
             return Order::create([
                 'order_code' => $orderCode,
@@ -798,22 +851,7 @@ class OrderController extends Controller
     private function buildReuseDraftOrder(Order $order): Order
     {
         return DB::transaction(function () use ($order) {
-            $dateStr = now()->format('ymd');
-            $prefix = 'DH' . $dateStr;
-
-            $lastOrder = Order::where('order_code', 'like', $prefix . '%')
-                ->lockForUpdate()
-                ->orderBy('order_code', 'desc')
-                ->first();
-
-            if ($lastOrder) {
-                $lastNumber = intval(substr($lastOrder->order_code, 8));
-                $nextNumber = $lastNumber + 1;
-            } else {
-                $nextNumber = 1;
-            }
-
-            $orderCode = $prefix . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+            $orderCode = $this->generateOrderCode();
 
             return Order::create([
                 'parent_id' => $order->id,
@@ -874,22 +912,7 @@ class OrderController extends Controller
     private function buildReworkDraftOrder(Order $order, array $selectedItemIds): Order
     {
         return DB::transaction(function () use ($order, $selectedItemIds) {
-            $dateStr = now()->format('ymd');
-            $prefix = 'DH' . $dateStr;
-
-            $lastOrder = Order::where('order_code', 'like', $prefix . '%')
-                ->lockForUpdate()
-                ->orderBy('order_code', 'desc')
-                ->first();
-
-            if ($lastOrder) {
-                $lastNumber = intval(substr($lastOrder->order_code, 8));
-                $nextNumber = $lastNumber + 1;
-            } else {
-                $nextNumber = 1;
-            }
-
-            $orderCode = $prefix . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+            $orderCode = $this->generateOrderCode();
 
             $reworkOrder = Order::create([
                 'parent_id' => $order->id,
@@ -1029,22 +1052,7 @@ class OrderController extends Controller
     private function buildWarrantyDraftOrder(Order $order, array $selectedItemIds): Order
     {
         return DB::transaction(function () use ($order, $selectedItemIds) {
-            $dateStr = now()->format('ymd');
-            $prefix = 'DH' . $dateStr;
-
-            $lastOrder = Order::where('order_code', 'like', $prefix . '%')
-                ->lockForUpdate()
-                ->orderBy('order_code', 'desc')
-                ->first();
-
-            if ($lastOrder) {
-                $lastNumber = intval(substr($lastOrder->order_code, 8));
-                $nextNumber = $lastNumber + 1;
-            } else {
-                $nextNumber = 1;
-            }
-
-            $orderCode = $prefix . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+            $orderCode = $this->generateOrderCode();
 
             $warrantyOrder = Order::create([
                 'parent_id' => $order->id,
@@ -1184,22 +1192,7 @@ class OrderController extends Controller
                 $oldDraft->delete();
             }
 
-            $dateStr = now()->format('ymd');
-            $prefix = 'DH' . $dateStr;
-
-            $lastOrder = Order::where('order_code', 'like', $prefix . '%')
-                ->lockForUpdate()
-                ->orderBy('order_code', 'desc')
-                ->first();
-
-            if ($lastOrder) {
-                $lastNumber = intval(substr($lastOrder->order_code, 8));
-                $nextNumber = $lastNumber + 1;
-            } else {
-                $nextNumber = 1;
-            }
-
-            $orderCode = $prefix . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+            $orderCode = $this->generateOrderCode();
 
             $additionalOrder = Order::create([
                 'parent_id' => $order->id,
@@ -1309,22 +1302,7 @@ class OrderController extends Controller
     private function buildAdditionalDraftOrder(Order $order): Order
     {
         return \DB::transaction(function () use ($order) {
-            $dateStr = now()->format('ymd');
-            $prefix = 'DH' . $dateStr;
-
-            $lastOrder = Order::where('order_code', 'like', $prefix . '%')
-                ->lockForUpdate()
-                ->orderBy('order_code', 'desc')
-                ->first();
-
-            if ($lastOrder) {
-                $lastNumber = intval(substr($lastOrder->order_code, 8));
-                $nextNumber = $lastNumber + 1;
-            } else {
-                $nextNumber = 1;
-            }
-
-            $orderCode = $prefix . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+            $orderCode = $this->generateOrderCode();
 
             return Order::create([
                 'parent_id' => $order->id,
