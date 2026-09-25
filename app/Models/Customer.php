@@ -14,6 +14,7 @@ class Customer extends Model
         'debt',
         'debt_limit',
         'policy',
+        'market_group_id',
     ];
 
     public function orders()
@@ -26,12 +27,20 @@ class Customer extends Model
         return $this->belongsToMany(User::class);
     }
 
+    public function marketGroup()
+    {
+        return $this->belongsTo(MarketGroup::class, 'market_group_id');
+    }
+
     public function isAccessibleBy($user)
     {
         if (!$user) {
             return false;
         }
         if ($user->hasRole('Admin')) {
+            return true;
+        }
+        if ($this->market_group_id && $user->marketGroups()->where('market_groups.id', $this->market_group_id)->exists()) {
             return true;
         }
         return $this->users()->where('users.id', $user->id)->exists();

@@ -45,6 +45,12 @@
                     <span>Khách hàng</span>
                 </a>
             </li>
+            <li>
+                <a href="{{ route('market-groups.index') }}">
+                    <iconify-icon icon="solar:users-group-two-rounded-bold-duotone" class="menu-icon"></iconify-icon>
+                    <span>Nhóm thị trường</span>
+                </a>
+            </li>
             @endcan
 
             @can('view order')

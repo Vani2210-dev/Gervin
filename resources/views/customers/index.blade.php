@@ -133,7 +133,7 @@
                         <iconify-icon icon="solar:filter-outline" class="icon text-xl line-height-1"></iconify-icon>
                         Lọc
                     </button>
-                    @if(request()->filled('filter_customer_code') || request()->filled('filter_name') || request()->filled('filter_phone') || request()->filled('filter_start_date') || request()->filled('filter_end_date') || request()->filled('filter_customer_id') || request()->filled('filter_debt_level'))
+                    @if(request()->filled('filter_customer_code') || request()->filled('filter_name') || request()->filled('filter_phone') || request()->filled('filter_start_date') || request()->filled('filter_end_date') || request()->filled('filter_customer_id') || request()->filled('filter_debt_level') || request()->filled('filter_market_group_id'))
                     <a href="{{ route('customers.index') }}" class="btn text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2">
                         <iconify-icon icon="solar:close-circle-outline" class="icon text-xl line-height-1"></iconify-icon>
                         Xóa lọc
@@ -173,9 +173,7 @@
                                 <th scope="col">Số điện thoại</th>
                                 <th scope="col">Địa chỉ</th>
                                 <th scope="col">Chính sách KH</th>
-                                @if(auth()->user()->can('assign customer') || auth()->user()->hasRole('Admin'))
-                                <th scope="col">Nhân viên</th>
-                                @endif
+                                <th scope="col">Nhóm thị trường</th>
                                 <th scope="col" class="text-right">
                                     Đã thanh toán
                                     @if($startDate || $endDate)
@@ -214,66 +212,16 @@
                                 <td>
                                     <div class="max-w-[200px] truncate text-neutral-600" title="{{ $c->policy }}">{{ $c->policy ?: '—' }}</div>
                                 </td>
-                                @if(auth()->user()->can('assign customer') || auth()->user()->hasRole('Admin'))
                                 <td>
-                                    @if($c->users->isEmpty())
-                                        <span class="text-xs text-neutral-400">Chưa gán</span>
+                                    @if($c->marketGroup)
+                                        <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-primary-50 text-primary-700 border border-primary-200">
+                                            <iconify-icon icon="solar:users-group-two-rounded-bold" class="mr-1 text-sm"></iconify-icon>
+                                            {{ $c->marketGroup->name }}
+                                        </span>
                                     @else
-                                        @php
-                                            $userCount = $c->users->count();
-                                            $firstUser = $c->users->first();
-                                            $secondUser = $userCount > 1 ? $c->users->get(1) : null;
-                                            $moreUsers = $userCount > 2 ? $c->users->slice(2) : collect();
-                                        @endphp
-                                        <div class="flex flex-col items-start gap-1">
-                                            <span class="text-xs text-primary-600 bg-primary-50 px-2 py-0.5 rounded-md font-medium whitespace-nowrap inline-block">
-                                                {{ $firstUser->user_code ? '[' . $firstUser->user_code . '] ' : '' }}{{ $firstUser->name }}
-                                            </span>
-                                            @if($secondUser)
-                                                <div class="flex items-center gap-1.5 flex-wrap">
-                                                    <span class="text-xs text-primary-600 bg-primary-50 px-2 py-0.5 rounded-md font-medium whitespace-nowrap inline-block">
-                                                        {{ $secondUser->user_code ? '[' . $secondUser->user_code . '] ' : '' }}{{ $secondUser->name }}
-                                                    </span>
-                                                    @if($moreUsers->isNotEmpty())
-                                                        <button type="button"
-                                                            id="staff-expand-btn-{{ $c->id }}"
-                                                            onclick="toggleCustomerStaff({{ $c->id }})"
-                                                            class="text-xs font-semibold text-primary-600 hover:text-primary-800 bg-primary-100 hover:bg-primary-200 px-1.5 py-0.5 rounded transition-colors inline-flex items-center gap-0.5 cursor-pointer"
-                                                            title="Xem thêm nhân viên">
-                                                            <span>+{{ $moreUsers->count() }}</span>
-                                                            <iconify-icon icon="lucide:chevron-down" class="text-xs"></iconify-icon>
-                                                        </button>
-                                                    @endif
-                                                </div>
-                                            @endif
-                                            @if($moreUsers->isNotEmpty())
-                                                <div id="customer-staff-more-{{ $c->id }}" class="hidden flex flex-col items-start gap-1">
-                                                    @foreach($moreUsers as $u)
-                                                        @if($loop->last)
-                                                            <div class="flex items-center gap-1.5 flex-wrap">
-                                                                <span class="text-xs text-primary-600 bg-primary-50 px-2 py-0.5 rounded-md font-medium whitespace-nowrap inline-block">
-                                                                    {{ $u->user_code ? '[' . $u->user_code . '] ' : '' }}{{ $u->name }}
-                                                                </span>
-                                                                <button type="button"
-                                                                    onclick="toggleCustomerStaff({{ $c->id }})"
-                                                                    class="text-xs font-semibold text-primary-600 hover:text-primary-800 bg-primary-100 hover:bg-primary-200 px-1.5 py-0.5 rounded transition-colors inline-flex items-center gap-0.5 cursor-pointer"
-                                                                    title="Thu gọn danh sách">
-                                                                    <span>Thu gọn</span>
-                                                                    <iconify-icon icon="lucide:chevron-up" class="text-xs"></iconify-icon>
-                                                                </button>
-                                                            </div>
-                                                        @else
-                                                            <span class="text-xs text-primary-600 bg-primary-50 px-2 py-0.5 rounded-md font-medium whitespace-nowrap inline-block">
-                                                                {{ $u->user_code ? '[' . $u->user_code . '] ' : '' }}{{ $u->name }}
-                                                            </span>
-                                                        @endif
-                                                    @endforeach
-                                                </div>
-                                            @endif
-                                        </div>
+                                        <span class="text-xs text-neutral-400 italic">Chưa phân nhóm</span>
                                     @endif
                                 </td>
-                                @endif
                                 <td class="text-right">
                                     <span class="text-base font-bold text-success-600">
                                         {{ number_format($c->period_paid, 0, ',', '.') }} đ
@@ -289,14 +237,24 @@
                                         <button type="button"
                                             class="bg-info-100 hover:bg-info-200 text-info-600 font-medium w-9 h-9 flex justify-center items-center rounded-full transition-colors"
                                             title="Xem tổng quan"
-                                            onclick="openCustomerOverview({{ $c->id }}, '{{ addslashes($c->name) }}', '{{ $c->customer_code }}', '{{ $c->phone }}', '{{ addslashes($c->address) }}', '{{ addslashes($c->policy) }}', {{ $c->total_debt }})">
+                                            data-customer-id="{{ $c->id }}"
+                                            onclick="openCustomerOverview({{ $c->id }})">
                                             <iconify-icon icon="majesticons:eye-line" class="text-lg"></iconify-icon>
                                         </button>
                                         @can('edit customer')
                                         <button type="button"
-                                            onclick="openEditModal({{ $c->id }}, '{{ addslashes($c->customer_code) }}', '{{ addslashes($c->name) }}', '{{ addslashes($c->phone) }}', '{{ addslashes($c->address) }}', {{ $c->debt ?? 0 }}, {{ $c->debt_limit ?? 0 }}, '{{ addslashes($c->policy) }}', {{ json_encode($c->users->pluck('id')) }})"
-                                            class="bg-success-100 hover:bg-success-200 text-success-600 font-medium w-9 h-9 flex justify-center items-center rounded-full transition-colors"
-                                            title="Sửa">
+                                            class="bg-success-100 hover:bg-success-200 text-success-600 font-medium w-9 h-9 flex justify-center items-center rounded-full transition-colors customer-edit-btn"
+                                            title="Sửa"
+                                            data-id="{{ $c->id }}"
+                                            data-code="{{ $c->customer_code ?? '' }}"
+                                            data-name="{{ $c->name }}"
+                                            data-phone="{{ $c->phone ?? '' }}"
+                                            data-address="{{ $c->address ?? '' }}"
+                                            data-debt="{{ $c->debt ?? 0 }}"
+                                            data-debt-limit="{{ $c->debt_limit ?? 0 }}"
+                                            data-policy="{{ $c->policy ?? '' }}"
+                                            data-market-group-id="{{ $c->market_group_id ?? '' }}"
+                                            onclick="openEditCustomerModalFromBtn(this)">
                                             <iconify-icon icon="lucide:edit" class="text-lg"></iconify-icon>
                                         </button>
                                         @endcan
@@ -316,7 +274,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="{{ (auth()->user()->can('assign customer') || auth()->user()->hasRole('Admin')) ? '10' : '9' }}" class="text-center text-neutral-400 py-8">
+                                <td colspan="10" class="text-center text-neutral-400 py-8">
                                     Không tìm thấy khách hàng nào.
                                 </td>
                             </tr>
@@ -372,18 +330,17 @@
                 <label class="form-label font-semibold text-sm text-neutral-600">Chính sách KH</label>
                 <textarea name="policy" class="form-control rounded-lg" placeholder="Nhập chính sách khách hàng" rows="3">{{ old('policy') }}</textarea>
             </div>
-            @if((auth()->user()->can('assign customer') || auth()->user()->hasRole('Admin')) && !empty($users))
             <div class="form-group md:col-span-2">
-                <label class="form-label font-semibold text-sm text-neutral-600">Nhân viên chăm sóc</label>
-                <select name="user_ids[]" id="create_user_ids" multiple class="rounded-lg w-full" placeholder="Chọn hoặc tìm kiếm nhân viên...">
-                    @foreach($users as $u)
-                        <option value="{{ $u->id }}" {{ (is_array(old('user_ids')) && in_array($u->id, old('user_ids'))) ? 'selected' : '' }}>
-                            {{ $u->user_code ? '[' . $u->user_code . '] ' : '' }}{{ $u->name }}
+                <label class="form-label font-semibold text-sm text-neutral-600">Nhóm thị trường</label>
+                <select name="market_group_id" class="form-select rounded-lg w-full">
+                    <option value="">-- Chưa chọn nhóm --</option>
+                    @foreach($marketGroups as $mg)
+                        <option value="{{ $mg->id }}" {{ old('market_group_id') == $mg->id ? 'selected' : '' }}>
+                            {{ $mg->name }} ({{ $mg->code }})
                         </option>
                     @endforeach
                 </select>
             </div>
-            @endif
         </div>
         <div class="px-6 py-4 border-t border-neutral-200 flex gap-3 shrink-0 bg-white">
             <button type="submit" class="btn btn-primary px-5 py-2.5 rounded-lg">Lưu lại</button>
@@ -431,18 +388,17 @@
                 <label class="form-label font-semibold text-sm text-neutral-600">Chính sách KH</label>
                 <textarea id="edit_policy" name="policy" class="form-control rounded-lg" placeholder="Nhập chính sách khách hàng" rows="3"></textarea>
             </div>
-            @if((auth()->user()->can('assign customer') || auth()->user()->hasRole('Admin')) && !empty($users))
             <div class="form-group md:col-span-2">
-                <label class="form-label font-semibold text-sm text-neutral-600">Nhân viên chăm sóc</label>
-                <select name="user_ids[]" id="edit_user_ids" multiple class="rounded-lg w-full" placeholder="Chọn hoặc tìm kiếm nhân viên...">
-                    @foreach($users as $u)
-                        <option value="{{ $u->id }}">
-                            {{ $u->user_code ? '[' . $u->user_code . '] ' : '' }}{{ $u->name }}
+                <label class="form-label font-semibold text-sm text-neutral-600">Nhóm thị trường</label>
+                <select id="edit_market_group_id" name="market_group_id" class="form-select rounded-lg w-full">
+                    <option value="">-- Chưa chọn nhóm --</option>
+                    @foreach($marketGroups as $mg)
+                        <option value="{{ $mg->id }}">
+                            {{ $mg->name }} ({{ $mg->code }})
                         </option>
                     @endforeach
                 </select>
             </div>
-            @endif
         </div>
         <div class="px-6 py-4 border-t border-neutral-200 flex gap-3 shrink-0 bg-white">
             <button type="submit" class="btn btn-primary px-5 py-2.5 rounded-lg">Cập nhật</button>
@@ -452,87 +408,35 @@
 </x-modal>
 
 <script>
-let editUserTomSelect = null;
-let createUserTomSelect = null;
-
-function attachTomSelectAutoPosition(ts) {
-    if (!ts) return;
-    ts.on('dropdown_open', function (dropdown) {
-        const control = ts.control;
-        const rect = control.getBoundingClientRect();
-        const dropdownHeight = dropdown.offsetHeight || 180;
-        const spaceBelow = window.innerHeight - rect.bottom;
-        const spaceAbove = rect.top;
-
-        if (spaceBelow < dropdownHeight && spaceAbove > spaceBelow) {
-            dropdown.style.top = 'auto';
-            dropdown.style.bottom = '100%';
-            dropdown.style.marginTop = '0';
-            dropdown.style.marginBottom = '4px';
-            dropdown.style.boxShadow = '0 -4px 12px rgba(0, 0, 0, 0.12)';
-        } else {
-            dropdown.style.top = '100%';
-            dropdown.style.bottom = 'auto';
-            dropdown.style.marginTop = '4px';
-            dropdown.style.marginBottom = '0';
-            dropdown.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.12)';
-        }
-    });
-}
-
-function initUserTomSelects() {
-    if (typeof TomSelect !== 'undefined') {
-        const createEl = document.getElementById('create_user_ids');
-        if (createEl && !createUserTomSelect) {
-            createUserTomSelect = new TomSelect('#create_user_ids', {
-                plugins: ['remove_button'],
-                placeholder: 'Tìm kiếm theo tên hoặc mã nhân viên...',
-                maxItems: null,
-                closeAfterSelect: false,
-                maxOptions: 50,
-            });
-            attachTomSelectAutoPosition(createUserTomSelect);
-        }
-
-        const editEl = document.getElementById('edit_user_ids');
-        if (editEl && !editUserTomSelect) {
-            editUserTomSelect = new TomSelect('#edit_user_ids', {
-                plugins: ['remove_button'],
-                placeholder: 'Tìm kiếm theo tên hoặc mã nhân viên...',
-                maxItems: null,
-                closeAfterSelect: false,
-                maxOptions: 50,
-            });
-            attachTomSelectAutoPosition(editUserTomSelect);
-        }
-    }
-}
-
 function openCreateCustomerModal() {
-    initUserTomSelects();
-    if (createUserTomSelect) {
-        createUserTomSelect.clear();
-    }
     openModal('create-customer-modal');
 }
 
-function openEditModal(id, customerCode, name, phone, address, initialDebt, debtLimit, policy, userIds) {
+function openEditCustomerModalFromBtn(btn) {
+    const id = btn.getAttribute('data-id');
+    const code = btn.getAttribute('data-code') || '';
+    const name = btn.getAttribute('data-name') || '';
+    const phone = btn.getAttribute('data-phone') || '';
+    const address = btn.getAttribute('data-address') || '';
+    const debt = btn.getAttribute('data-debt') || 0;
+    const debtLimit = btn.getAttribute('data-debt-limit') || 0;
+    const policy = btn.getAttribute('data-policy') || '';
+    const marketGroupId = btn.getAttribute('data-market-group-id') || '';
+
     document.getElementById('edit-customer-form').action = '/customers/' + id;
-    document.getElementById('edit_customer_code').value = customerCode;
+    document.getElementById('edit_customer_code').value = code;
     document.getElementById('edit_name').value = name;
     document.getElementById('edit_phone').value = phone;
     document.getElementById('edit_address').value = address;
-    document.getElementById('edit_initial_debt').value = initialDebt || 0;
-    document.getElementById('edit_debt_limit').value = debtLimit || 0;
-    document.getElementById('edit_policy').value = policy || '';
-    initUserTomSelects();
-    if (editUserTomSelect) {
-        editUserTomSelect.clear();
-        if (userIds && Array.isArray(userIds)) {
-            editUserTomSelect.setValue(userIds.map(String));
-        }
-    }
+    document.getElementById('edit_initial_debt').value = debt;
+    document.getElementById('edit_debt_limit').value = debtLimit;
+    document.getElementById('edit_policy').value = policy;
     
+    const mgSelect = document.getElementById('edit_market_group_id');
+    if (mgSelect) {
+        mgSelect.value = marketGroupId;
+    }
+
     openModal('edit-customer-modal');
 }
 </script>
@@ -555,6 +459,18 @@ function openEditModal(id, customerCode, name, phone, address, initialDebt, debt
                     @foreach($filterCustomers as $fc)
                         <option value="{{ $fc->id }}" {{ request('filter_customer_id') == $fc->id ? 'selected' : '' }}>
                             {{ $fc->customer_code }} - {{ $fc->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="form-group md:col-span-2">
+                <label class="form-label font-semibold text-sm text-neutral-600">Nhóm thị trường</label>
+                <select name="filter_market_group_id" class="form-select rounded-lg w-full">
+                    <option value="">Tất cả nhóm thị trường</option>
+                    @foreach($marketGroups as $mg)
+                        <option value="{{ $mg->id }}" {{ request('filter_market_group_id') == $mg->id ? 'selected' : '' }}>
+                            {{ $mg->name }} ({{ $mg->code }})
                         </option>
                     @endforeach
                 </select>
@@ -868,8 +784,8 @@ function loadCustomerOverviewData(id, page, filterDate) {
     const loading  = document.getElementById('ov-loading');
     const content  = document.getElementById('ov-content');
 
-    document.getElementById('ov-name').textContent = currentOverviewName;
-    document.getElementById('ov-code').textContent = currentOverviewCode;
+    document.getElementById('ov-name').textContent = currentOverviewName || 'Đang tải...';
+    document.getElementById('ov-code').textContent = currentOverviewCode || '...';
 
     backdrop.style.display = 'block';
     modal.style.display    = 'block';
@@ -890,6 +806,10 @@ function loadCustomerOverviewData(id, page, filterDate) {
         .then(data => {
             loading.style.display = 'none';
             content.style.display = 'block';
+            if (data.customer) {
+                document.getElementById('ov-name').textContent = data.customer.name || '—';
+                document.getElementById('ov-code').textContent = data.customer.customer_code || '—';
+            }
             renderCustomerOverview(data);
             renderPaymentsPagination(data.payments_pagination);
         })
@@ -1084,7 +1004,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const urlParams = new URLSearchParams(window.location.search);
     const overviewId = urlParams.get('overview_id');
     if (overviewId) {
-        const btn = document.querySelector(`button[onclick*="openCustomerOverview(${overviewId},"]`);
+        const btn = document.querySelector(`button[data-customer-id="${overviewId}"]`);
         if (btn) {
             btn.click();
         }
@@ -1095,10 +1015,6 @@ document.addEventListener('DOMContentLoaded', function () {
             allowEmptyOption: true,
             placeholder: '-- Chọn khách hàng --',
         });
-    }
-
-    if (typeof initUserTomSelects === 'function') {
-        initUserTomSelects();
     }
 });
 </script>

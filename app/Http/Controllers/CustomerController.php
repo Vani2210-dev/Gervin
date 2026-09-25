@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\MarketGroup;
 use Illuminate\Http\Request;
 
 class CustomerController extends Controller
@@ -27,9 +28,17 @@ class CustomerController extends Controller
         $query = Customer::query();
 
         if ($user && !$user->hasRole('Admin')) {
-            $query->whereHas('users', function ($q) use ($user) {
-                $q->where('users.id', $user->id);
+            $userMarketGroupIds = $user->marketGroups()->pluck('market_groups.id');
+            $query->where(function ($q) use ($user, $userMarketGroupIds) {
+                $q->whereIn('market_group_id', $userMarketGroupIds)
+                  ->orWhereHas('users', function ($uq) use ($user) {
+                      $uq->where('users.id', $user->id);
+                  });
             });
+        }
+
+        if ($request->filled('filter_market_group_id')) {
+            $query->where('market_group_id', $request->filter_market_group_id);
         }
 
         if ($startDate || $endDate) {
@@ -92,7 +101,8 @@ class CustomerController extends Controller
         $totalCustomersCount = $matchingCustomerIds->count();
         $totalDebtSum = $matchingQuery->sum('debt');
 
-        $customers = $customersQuery->orderBy('id')
+        $customers = $customersQuery->with(['marketGroup', 'users'])
+            ->orderBy('id')
             ->paginate($perPage)
             ->withQueryString();
 
@@ -113,8 +123,12 @@ class CustomerController extends Controller
 
         $baseScopedQuery = Customer::query();
         if ($user && !$user->hasRole('Admin')) {
-            $baseScopedQuery->whereHas('users', function ($q) use ($user) {
-                $q->where('users.id', $user->id);
+            $userMarketGroupIds = $user->marketGroups()->pluck('market_groups.id');
+            $baseScopedQuery->where(function ($q) use ($user, $userMarketGroupIds) {
+                $q->whereIn('market_group_id', $userMarketGroupIds)
+                  ->orWhereHas('users', function ($uq) use ($user) {
+                      $uq->where('users.id', $user->id);
+                  });
             });
         }
 
@@ -146,14 +160,19 @@ class CustomerController extends Controller
         // Get allowed customers for select dropdown filter
         $filterQuery = Customer::query();
         if ($user && !$user->hasRole('Admin')) {
-            $filterQuery->whereHas('users', function ($q) use ($user) {
-                $q->where('users.id', $user->id);
+            $userMarketGroupIds = $user->marketGroups()->pluck('market_groups.id');
+            $filterQuery->where(function ($q) use ($user, $userMarketGroupIds) {
+                $q->whereIn('market_group_id', $userMarketGroupIds)
+                  ->orWhereHas('users', function ($uq) use ($user) {
+                      $uq->where('users.id', $user->id);
+                  });
             });
         }
         $filterCustomers = $filterQuery->orderBy('name')->get();
+        $marketGroups    = MarketGroup::orderBy('name')->get();
 
         return view('customers.index', compact(
-            'customers', 'perPage', 'search', 'users', 'filterCustomers',
+            'customers', 'perPage', 'search', 'users', 'filterCustomers', 'marketGroups',
             'startDate', 'endDate', 'paidStartDate', 'paidEndDate',
             'totalCustomersCount', 'totalDebtSum', 'totalPeriodPaidSum',
             'lostCustomersCount', 'newCustomersCount'
@@ -163,13 +182,14 @@ class CustomerController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'customer_code' => 'nullable|string|max:100|unique:customers,customer_code',
-            'name'   => 'required|string|max:255',
-            'phone'  => 'nullable|string|max:20',
-            'address'=> 'nullable|string',
-            'initial_debt' => 'nullable|numeric|min:0',
-            'debt_limit'   => 'nullable|numeric|min:0',
-            'policy' => 'nullable|string',
+            'customer_code'   => 'nullable|string|max:100|unique:customers,customer_code',
+            'name'            => 'required|string|max:255',
+            'phone'           => 'nullable|string|max:20',
+            'address'         => 'nullable|string',
+            'initial_debt'    => 'nullable|numeric|min:0',
+            'debt_limit'      => 'nullable|numeric|min:0',
+            'policy'          => 'nullable|string',
+            'market_group_id' => 'nullable|exists:market_groups,id',
         ]);
 
         // Use provided code or auto-generate KH00001, KH00002, etc.
@@ -182,13 +202,14 @@ class CustomerController extends Controller
         }
 
         $customer = Customer::create([
-            'customer_code' => $customerCode,
-            'name'          => $request->name,
-            'phone'         => $request->phone,
-            'address'       => $request->address,
-            'debt'          => $request->initial_debt ?? 0,
-            'debt_limit'    => $request->debt_limit ?? 0,
-            'policy'        => $request->policy,
+            'customer_code'   => $customerCode,
+            'name'            => $request->name,
+            'phone'           => $request->phone,
+            'address'         => $request->address,
+            'debt'            => $request->initial_debt ?? 0,
+            'debt_limit'      => $request->debt_limit ?? 0,
+            'policy'          => $request->policy,
+            'market_group_id' => $request->market_group_id,
         ]);
 
         $user = auth()->user();
@@ -210,21 +231,23 @@ class CustomerController extends Controller
         abort_unless($customer->isAccessibleBy(auth()->user()), 403, 'Bạn không có quyền cập nhật khách hàng này.');
 
         $request->validate([
-            'customer_code' => 'nullable|string|max:100|unique:customers,customer_code,' . $customer->id,
-            'name'   => 'required|string|max:255',
-            'phone'  => 'nullable|string|max:20',
-            'address'=> 'nullable|string',
-            'initial_debt' => 'nullable|numeric|min:0',
-            'debt_limit'   => 'nullable|numeric|min:0',
-            'policy' => 'nullable|string',
+            'customer_code'   => 'nullable|string|max:100|unique:customers,customer_code,' . $customer->id,
+            'name'            => 'required|string|max:255',
+            'phone'           => 'nullable|string|max:20',
+            'address'         => 'nullable|string',
+            'initial_debt'    => 'nullable|numeric|min:0',
+            'debt_limit'      => 'nullable|numeric|min:0',
+            'policy'          => 'nullable|string',
+            'market_group_id' => 'nullable|exists:market_groups,id',
         ]);
 
         $updateData = [
-            'name'       => $request->name,
-            'phone'      => $request->phone,
-            'address'    => $request->address,
-            'debt_limit' => $request->debt_limit ?? 0,
-            'policy'     => $request->policy,
+            'name'            => $request->name,
+            'phone'           => $request->phone,
+            'address'         => $request->address,
+            'debt_limit'      => $request->debt_limit ?? 0,
+            'policy'          => $request->policy,
+            'market_group_id' => $request->market_group_id,
         ];
         
         if ($request->has('initial_debt')) {
@@ -239,7 +262,9 @@ class CustomerController extends Controller
 
         $user = auth()->user();
         if ($user && ($user->can('assign customer') || $user->hasRole('Admin'))) {
-            $customer->users()->sync($request->input('user_ids', []));
+            if ($request->has('user_ids')) {
+                $customer->users()->sync($request->input('user_ids', []));
+            }
         }
 
         return redirect()->route('customers.index')->with('success', 'Cập nhật khách hàng thành công.');

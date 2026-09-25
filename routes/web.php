@@ -30,6 +30,7 @@ use App\Http\Controllers\QrScanController;
 use App\Http\Controllers\CustomerPaymentController;
 use App\Http\Controllers\GlassPriceController;
 use App\Http\Controllers\MinLatePriceController;
+use App\Http\Controllers\MarketGroupController;
 
 Route::middleware(['auth'])->group(function () {
     Route::controller(DashboardController::class)->group(function () {
@@ -258,6 +259,13 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('customers', CustomerController::class)->names('customers');
     Route::get('customers/{customer}/overview', [CustomerController::class, 'overview'])->name('customers.overview');
     Route::post('customers/quick-create', [CustomerController::class, 'quickCreate'])->name('customers.quick-create');
+
+    // Market Groups (Nhóm thị trường)
+    Route::resource('market-groups', MarketGroupController::class)->names('market-groups');
+    Route::post('market-groups/{marketGroup}/users', [MarketGroupController::class, 'assignUsers'])->name('market-groups.assign-users');
+    Route::post('market-groups/{marketGroup}/customers', [MarketGroupController::class, 'assignCustomers'])->name('market-groups.assign-customers');
+    Route::delete('market-groups/{marketGroup}/customers/{customer}', [MarketGroupController::class, 'removeCustomer'])->name('market-groups.remove-customer');
+    Route::get('market-groups/{marketGroup}/customers-data', [MarketGroupController::class, 'customersData'])->name('market-groups.customers-data');
 });
 
 // Orders

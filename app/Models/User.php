@@ -74,4 +74,9 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Customer::class);
     }
+
+    public function marketGroups()
+    {
+        return $this->belongsToMany(MarketGroup::class, 'market_group_user');
+    }
 }
