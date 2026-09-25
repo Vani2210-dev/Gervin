@@ -182,9 +182,9 @@
         <table class="table bordered-table w-full mb-0 text-xs text-left" style="min-width: 2280px;" id="page-customers-table">
             <thead>
                 <tr class="bg-neutral-100 text-neutral-700 font-bold border-b border-neutral-200 text-xs">
-                    <th style="width: 50px;" class="text-center py-3.5 px-2 sticky left-0 bg-neutral-100 z-10">STT</th>
-                    <th style="width: 100px;" class="py-3.5 px-3 sticky left-[50px] bg-neutral-100 z-10">Mã KH</th>
-                    <th style="min-width: 180px;" class="py-3.5 px-3 sticky left-[150px] bg-neutral-100 z-10 border-r border-neutral-200">Khách hàng</th>
+                    <th style="width: 50px;" class="text-center py-3.5 px-2">STT</th>
+                    <th style="width: 100px;" class="py-3.5 px-3">Mã KH</th>
+                    <th style="min-width: 180px;" class="py-3.5 px-3">Khách hàng</th>
                     <th style="min-width: 140px;" class="py-3.5 px-3 text-center">Trạng thái</th>
                     <th style="min-width: 240px;" class="py-3.5 px-3 bg-amber-50/70 border-x border-amber-200 text-neutral-800">
                         Nhật ký ghé & Cập nhật
@@ -238,13 +238,13 @@
                 @endphp
                 <tr class="hover:bg-neutral-50/80 transition-colors customer-row {{ $c->has_period_update ? 'bg-amber-50/30' : '' }}" data-search="{{ $rowSearchText }}" data-has-update="{{ $c->has_period_update ? 1 : 0 }}">
                     {{-- 1. STT --}}
-                    <td class="text-center font-medium text-neutral-500 py-3 px-2 sticky left-0 bg-white row-stt">{{ $index + 1 }}</td>
+                    <td class="text-center font-medium text-neutral-500 py-3 px-2 row-stt">{{ $index + 1 }}</td>
 
                     {{-- 2. Mã KH --}}
-                    <td class="font-semibold text-neutral-800 font-mono py-3 px-3 sticky left-[50px] bg-white">{{ $c->customer_code ?: '—' }}</td>
+                    <td class="font-semibold text-neutral-800 font-mono py-3 px-3">{{ $c->customer_code ?: '—' }}</td>
 
                     {{-- 3. Khách hàng --}}
-                    <td class="py-3 px-3 sticky left-[150px] bg-white border-r border-neutral-200">
+                    <td class="py-3 px-3">
                         <a href="{{ route('customers.index', ['overview_id' => $c->id]) }}" target="_blank" class="font-bold text-neutral-900 hover:text-primary-600 inline-flex items-center gap-1.5 leading-snug" title="Mở chi tiết khách hàng">
                             <span>{{ $c->name }}</span>
                             <iconify-icon icon="lucide:external-link" class="text-[11px] opacity-40 shrink-0"></iconify-icon>
