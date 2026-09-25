@@ -1032,6 +1032,7 @@
                 </div>
 
                 <div class="overflow-y-auto overflow-x-auto border border-neutral-200 rounded-lg" style="max-height: calc(95vh - 220px);">
+                    @php $displayStt = 1; @endphp
                     @if($acrylicOrder->type === 'min_late')
                         {{-- Bảng cho đơn Melamine/Laminate --}}
                         <table class="table bordered-table sm-table mb-0 w-full text-xs min-w-[1400px]">
@@ -1087,48 +1088,57 @@
                                                 if (is_string($edgeGluing)) {
                                                     $edgeGluing = json_decode($edgeGluing, true) ?? [];
                                                 }
+                                                $qty = max(1, intval($item->quantity ?? 1));
                                             @endphp
-                                            <tr class="border-b border-neutral-100 hover:bg-neutral-50/50">
-                                                <td class="text-center py-2.5 px-3">
-                                                    <input type="checkbox" data-item-id="{{ $item->id }}" class="rework-item-checkbox rounded text-primary-600 focus:ring-primary-500">
-                                                </td>
-                                                <td class="text-center text-neutral-500 py-2.5 px-3">{{ $itemIndex + 1 }}</td>
-                                                <td class="py-2.5 px-3 font-semibold text-neutral-600 text-left font-mono">
-                                                    @if($item->codes->count() > 0)
-                                                        {{ $item->codes->pluck('product_id')->implode(', ') }}
-                                                    @else
-                                                        {{ $item->product_code ?? '—' }}
-                                                    @endif
-                                                </td>
-                                                <td class="py-2.5 px-3 font-medium text-neutral-800 text-left">{{ $item->name }}</td>
-                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->thickness ?? '—' }}</td>
-                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $sizes['height'] ?? '—' }}</td>
-                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $sizes['width'] ?? '—' }}</td>
-                                                <td class="text-center text-neutral-600 py-2.5 px-3 font-medium">{{ $item->quantity }}</td>
-                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->bevel ?? '—' }}</td>
-                                                <td class="text-center text-neutral-600 py-2.5 px-3">
-                                                    @if(!empty($edgeGluing))
-                                                        <span class="text-xs bg-neutral-100 px-2 py-0.5 rounded text-neutral-600">{{ implode(', ', $edgeGluing) }}</span>
-                                                    @else
-                                                        —
-                                                    @endif
-                                                </td>
-                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->straight_paste_length ?? '—' }}</td>
-                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->beveled_length ?? '—' }}</td>
-                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->vat_moi_length ?? '—' }}</td>
-                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->ban_rong_40_59 ?? '—' }}</td>
-                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->ban_rong_17_39 ?? '—' }}</td>
-                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->ban_rong_25_35 ?? '—' }}</td>
-                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->beveled_handle ?? '—' }}</td>
-                                                <td class="text-center text-neutral-600 py-2.5 px-3">
-                                                    @if($item->cnc)
-                                                        <span class="text-success-600 font-bold"><iconify-icon icon="lucide:check"></iconify-icon></span>
-                                                    @else
-                                                        —
-                                                    @endif
-                                                </td>
-                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->direction ?? '—' }}</td>
-                                            </tr>
+                                            @for($pIdx = 0; $pIdx < $qty; $pIdx++)
+                                                @php
+                                                    $pieceCode = '—';
+                                                    if ($item->codes && $item->codes->count() > $pIdx) {
+                                                        $pieceCode = $item->codes[$pIdx]->product_id;
+                                                    } elseif ($item->codes && $item->codes->count() > 0) {
+                                                        $pieceCode = $item->codes->first()->product_id . ($qty > 1 ? '.' . ($pIdx + 1) : '');
+                                                    } else {
+                                                        $pieceCode = ($item->product_code ?? '—') . ($qty > 1 ? '.' . ($pIdx + 1) : '');
+                                                    }
+                                                @endphp
+                                                <tr class="border-b border-neutral-100 hover:bg-neutral-50/50">
+                                                    <td class="text-center py-2.5 px-3">
+                                                        <input type="checkbox" data-item-id="{{ $item->id }}" data-piece-index="{{ $pIdx }}" class="rework-item-checkbox rounded text-primary-600 focus:ring-primary-500">
+                                                    </td>
+                                                    <td class="text-center text-neutral-500 py-2.5 px-3">{{ $displayStt++ }}</td>
+                                                    <td class="py-2.5 px-3 font-semibold text-neutral-600 text-left font-mono">
+                                                        {{ $pieceCode }}
+                                                    </td>
+                                                    <td class="py-2.5 px-3 font-medium text-neutral-800 text-left">{{ $item->name }}</td>
+                                                    <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->thickness ?? '—' }}</td>
+                                                    <td class="text-center text-neutral-600 py-2.5 px-3">{{ $sizes['height'] ?? '—' }}</td>
+                                                    <td class="text-center text-neutral-600 py-2.5 px-3">{{ $sizes['width'] ?? '—' }}</td>
+                                                    <td class="text-center text-neutral-600 py-2.5 px-3 font-bold text-neutral-800">1</td>
+                                                    <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->bevel ?? '—' }}</td>
+                                                    <td class="text-center text-neutral-600 py-2.5 px-3">
+                                                        @if(!empty($edgeGluing))
+                                                            <span class="text-xs bg-neutral-100 px-2 py-0.5 rounded text-neutral-600">{{ implode(', ', $edgeGluing) }}</span>
+                                                        @else
+                                                            —
+                                                        @endif
+                                                    </td>
+                                                    <td class="text-center text-neutral-600 py-2.5 px-3">{{ $qty > 1 ? round(($item->straight_paste_length ?? 0) / $qty, 2) : ($item->straight_paste_length ?? '—') }}</td>
+                                                    <td class="text-center text-neutral-600 py-2.5 px-3">{{ $qty > 1 ? round(($item->beveled_length ?? 0) / $qty, 2) : ($item->beveled_length ?? '—') }}</td>
+                                                    <td class="text-center text-neutral-600 py-2.5 px-3">{{ $qty > 1 ? round(($item->vat_moi_length ?? 0) / $qty, 2) : ($item->vat_moi_length ?? '—') }}</td>
+                                                    <td class="text-center text-neutral-600 py-2.5 px-3">{{ $qty > 1 ? round(($item->ban_rong_40_59 ?? 0) / $qty, 2) : ($item->ban_rong_40_59 ?? '—') }}</td>
+                                                    <td class="text-center text-neutral-600 py-2.5 px-3">{{ $qty > 1 ? round(($item->ban_rong_17_39 ?? 0) / $qty, 2) : ($item->ban_rong_17_39 ?? '—') }}</td>
+                                                    <td class="text-center text-neutral-600 py-2.5 px-3">{{ $qty > 1 ? round(($item->ban_rong_25_35 ?? 0) / $qty, 2) : ($item->ban_rong_25_35 ?? '—') }}</td>
+                                                    <td class="text-center text-neutral-600 py-2.5 px-3">{{ $qty > 1 ? round(($item->beveled_handle ?? 0) / $qty, 2) : ($item->beveled_handle ?? '—') }}</td>
+                                                    <td class="text-center text-neutral-600 py-2.5 px-3">
+                                                        @if($item->cnc)
+                                                            <span class="text-success-600 font-bold"><iconify-icon icon="lucide:check"></iconify-icon></span>
+                                                        @else
+                                                            —
+                                                        @endif
+                                                    </td>
+                                                    <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->direction ?? '—' }}</td>
+                                                </tr>
+                                            @endfor
                                         @endforeach
                                     @endif
                                 @endforeach
@@ -1172,29 +1182,40 @@
                                             </td>
                                         </tr>
                                         @foreach($filteredItems as $itemIndex => $item)
-                                            <tr class="border-b border-neutral-100 hover:bg-neutral-50/50">
-                                                <td class="text-center py-2.5 px-3">
-                                                    <input type="checkbox" data-item-id="{{ $item->id }}" class="rework-item-checkbox rounded text-primary-600 focus:ring-primary-500">
-                                                </td>
-                                                <td class="text-center text-neutral-500 py-2.5 px-3">{{ $itemIndex + 1 }}</td>
-                                                <td class="py-2.5 px-3 font-semibold text-neutral-600 text-left font-mono">
-                                                    @if($item->codes->count() > 0)
-                                                        {{ $item->codes->pluck('product_id')->implode(', ') }}
-                                                    @else
-                                                        {{ $item->product_code ?? '—' }}
-                                                    @endif
-                                                </td>
-                                                <td class="py-2.5 px-3 font-medium text-neutral-800 text-left">{{ $item->product_name }}</td>
-                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->thickness ?? '—' }}</td>
-                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->wing_opening_direction ?? '—' }}</td>
-                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->aluminum_color ?? '—' }}</td>
-                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->glass_color ?? '—' }}</td>
-                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->height ?? '—' }}</td>
-                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->width ?? '—' }}</td>
-                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->unit ?? 'Bộ' }}</td>
-                                                <td class="text-center text-neutral-600 py-2.5 px-3 font-medium">{{ $item->wing_quantity }}</td>
-                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->area_m2 ?? '—' }}</td>
-                                            </tr>
+                                            @php
+                                                $qty = max(1, intval($item->wing_quantity ?? 1));
+                                            @endphp
+                                            @for($pIdx = 0; $pIdx < $qty; $pIdx++)
+                                                @php
+                                                    $pieceCode = '—';
+                                                    if ($item->codes && $item->codes->count() > $pIdx) {
+                                                        $pieceCode = $item->codes[$pIdx]->product_id;
+                                                    } elseif ($item->codes && $item->codes->count() > 0) {
+                                                        $pieceCode = $item->codes->first()->product_id . ($qty > 1 ? '.' . ($pIdx + 1) : '');
+                                                    } else {
+                                                        $pieceCode = ($item->product_code ?? '—') . ($qty > 1 ? '.' . ($pIdx + 1) : '');
+                                                    }
+                                                @endphp
+                                                <tr class="border-b border-neutral-100 hover:bg-neutral-50/50">
+                                                    <td class="text-center py-2.5 px-3">
+                                                        <input type="checkbox" data-item-id="{{ $item->id }}" data-piece-index="{{ $pIdx }}" class="rework-item-checkbox rounded text-primary-600 focus:ring-primary-500">
+                                                    </td>
+                                                    <td class="text-center text-neutral-500 py-2.5 px-3">{{ $displayStt++ }}</td>
+                                                    <td class="py-2.5 px-3 font-semibold text-neutral-600 text-left font-mono">
+                                                        {{ $pieceCode }}
+                                                    </td>
+                                                    <td class="py-2.5 px-3 font-medium text-neutral-800 text-left">{{ $item->product_name }}</td>
+                                                    <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->thickness ?? '—' }}</td>
+                                                    <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->wing_opening_direction ?? '—' }}</td>
+                                                    <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->aluminum_color ?? '—' }}</td>
+                                                    <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->glass_color ?? '—' }}</td>
+                                                    <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->height ?? '—' }}</td>
+                                                    <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->width ?? '—' }}</td>
+                                                    <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->unit ?? 'Bộ' }}</td>
+                                                    <td class="text-center text-neutral-600 py-2.5 px-3 font-bold text-neutral-800">1</td>
+                                                    <td class="text-center text-neutral-600 py-2.5 px-3">{{ $qty > 1 ? round(($item->area_m2 ?? 0) / $qty, 4) : ($item->area_m2 ?? '—') }}</td>
+                                                </tr>
+                                            @endfor
                                         @endforeach
                                     @endif
                                 @endforeach
@@ -1241,36 +1262,47 @@
                                             </td>
                                         </tr>
                                         @foreach($filteredItems as $itemIndex => $item)
-                                            <tr class="border-b border-neutral-100 hover:bg-neutral-50/50">
-                                                <td class="text-center py-2.5 px-3">
-                                                    <input type="checkbox" data-item-id="{{ $item->id }}" class="rework-item-checkbox rounded text-primary-600 focus:ring-primary-500">
-                                                </td>
-                                                <td class="text-center text-neutral-500 py-2.5 px-3">{{ $itemIndex + 1 }}</td>
-                                                <td class="py-2.5 px-3 font-semibold text-neutral-600 text-left font-mono">
-                                                    @if($item->codes->count() > 0)
-                                                        {{ $item->codes->pluck('product_id')->implode(', ') }}
-                                                    @else
-                                                        {{ $item->product_code ?? '—' }}
-                                                    @endif
-                                                </td>
-                                                <td class="py-2.5 px-3 font-medium text-neutral-800 text-left">{{ $item->product_name }}</td>
-                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->thickness ?? '—' }}</td>
-                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->height ?? '—' }}</td>
-                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->width ?? '—' }}</td>
-                                                <td class="text-center text-neutral-600 py-2.5 px-3 font-medium">{{ floatval($item->quantity) == intval($item->quantity) ? number_format($item->quantity, 0, ',', '.') : number_format($item->quantity, 2, ',', '.') }}</td>
-                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->bevel ?? '—' }}</td>
-                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->grain_direction ?? '—' }}</td>
-                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->wing_area ?? '—' }}</td>
-                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->molding_length ?? '—' }}</td>
-                                                <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->edge_bevel ?? '—' }}</td>
-                                                <td class="text-center text-neutral-600 py-2.5 px-3">
-                                                    @if($item->vertical_grain_cnc)
-                                                        <span class="text-success-600 font-bold"><iconify-icon icon="lucide:check"></iconify-icon></span>
-                                                    @else
-                                                        —
-                                                    @endif
-                                                </td>
-                                            </tr>
+                                            @php
+                                                $qty = max(1, intval($item->quantity ?? 1));
+                                            @endphp
+                                            @for($pIdx = 0; $pIdx < $qty; $pIdx++)
+                                                @php
+                                                    $pieceCode = '—';
+                                                    if ($item->codes && $item->codes->count() > $pIdx) {
+                                                        $pieceCode = $item->codes[$pIdx]->product_id;
+                                                    } elseif ($item->codes && $item->codes->count() > 0) {
+                                                        $pieceCode = $item->codes->first()->product_id . ($qty > 1 ? '.' . ($pIdx + 1) : '');
+                                                    } else {
+                                                        $pieceCode = ($item->product_code ?? '—') . ($qty > 1 ? '.' . ($pIdx + 1) : '');
+                                                    }
+                                                @endphp
+                                                <tr class="border-b border-neutral-100 hover:bg-neutral-50/50">
+                                                    <td class="text-center py-2.5 px-3">
+                                                        <input type="checkbox" data-item-id="{{ $item->id }}" data-piece-index="{{ $pIdx }}" class="rework-item-checkbox rounded text-primary-600 focus:ring-primary-500">
+                                                    </td>
+                                                    <td class="text-center text-neutral-500 py-2.5 px-3">{{ $displayStt++ }}</td>
+                                                    <td class="py-2.5 px-3 font-semibold text-neutral-600 text-left font-mono">
+                                                        {{ $pieceCode }}
+                                                    </td>
+                                                    <td class="py-2.5 px-3 font-medium text-neutral-800 text-left">{{ $item->product_name }}</td>
+                                                    <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->thickness ?? '—' }}</td>
+                                                    <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->height ?? '—' }}</td>
+                                                    <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->width ?? '—' }}</td>
+                                                    <td class="text-center text-neutral-600 py-2.5 px-3 font-bold text-neutral-800">1</td>
+                                                    <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->bevel ?? '—' }}</td>
+                                                    <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->grain_direction ?? '—' }}</td>
+                                                    <td class="text-center text-neutral-600 py-2.5 px-3">{{ $qty > 1 ? round(($item->wing_area ?? 0) / $qty, 4) : ($item->wing_area ?? '—') }}</td>
+                                                    <td class="text-center text-neutral-600 py-2.5 px-3">{{ $qty > 1 ? round(($item->molding_length ?? 0) / $qty, 2) : ($item->molding_length ?? '—') }}</td>
+                                                    <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->edge_bevel ?? '—' }}</td>
+                                                    <td class="text-center text-neutral-600 py-2.5 px-3">
+                                                        @if($item->vertical_grain_cnc)
+                                                            <span class="text-success-600 font-bold"><iconify-icon icon="lucide:check"></iconify-icon></span>
+                                                        @else
+                                                            —
+                                                        @endif
+                                                    </td>
+                                                </tr>
+                                            @endfor
                                         @endforeach
                                     @endif
                                 @endforeach
@@ -1317,7 +1349,7 @@
             const btnEl = document.getElementById('submit-rework-btn');
             
             if (titleEl) titleEl.textContent = 'Tạo đơn sửa tấm';
-            if (descEl) descEl.textContent = 'Tích chọn những tấm bị lỗi từ đơn gốc để sản xuất lại.';
+            if (descEl) descEl.textContent = 'Tích chọn từng tấm bị lỗi từ đơn gốc để sản xuất lại.';
             if (btnEl) {
                 btnEl.className = 'btn btn-primary font-semibold px-5 py-2.5 rounded-lg text-sm flex items-center gap-2';
                 btnEl.textContent = 'Tạo đơn sửa';
@@ -1371,12 +1403,19 @@
             submitBtn.innerHTML = '<iconify-icon icon="lucide:loader" class="animate-spin text-base"></iconify-icon> Đang tạo...';
 
             const itemIds = [];
+            const selectedPieces = [];
             checkedBoxes.forEach(cb => {
-                itemIds.push(parseInt(cb.dataset.itemId));
+                const itemId = parseInt(cb.dataset.itemId);
+                const pieceIdx = parseInt(cb.dataset.pieceIndex || 0);
+                itemIds.push(itemId);
+                selectedPieces.push({
+                    item_id: itemId,
+                    piece_index: pieceIdx
+                });
             });
 
             let targetUrl = '{{ route("orders.create-rework", $acrylicOrder->id) }}';
-            let payload = { item_ids: itemIds };
+            let payload = { item_ids: itemIds, selected_pieces: selectedPieces };
 
             if (mode === 'warranty') {
                 targetUrl = '{{ route("orders.create-warranty", $acrylicOrder->id) }}';

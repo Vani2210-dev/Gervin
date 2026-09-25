@@ -1341,6 +1341,74 @@ function updateOrderSummary() {
     let totalAmount = 0;
     
     if (orderType === 'min_late') {
+        // Tự động đồng bộ 3 dòng dịch vụ sửa tấm (LIC1, ML48, ML49) nếu là đơn sửa tấm
+        if (window.isReworkOrder) {
+            let reworkPlates = 0;
+            let reworkStraight = 0;
+            let reworkBeveled = 0;
+
+            document.querySelectorAll('.order-supply-row table tbody tr:not(.hidden)').forEach(r => {
+                const qInput = r.querySelector('input[name*="[quantity]"]');
+                const sInput = r.querySelector('input[name*="[straight_paste_length]"]');
+                const bInput = r.querySelector('input[name*="[beveled_length]"]');
+
+                const q = parseFloat(qInput ? qInput.value : 0) || 0;
+                if (q > 0) reworkPlates += q;
+
+                if (sInput && !sInput.disabled) {
+                    reworkStraight += parseFloat(sInput.getAttribute('data-exact-value') || sInput.value) || 0;
+                }
+                if (bInput && !bInput.disabled) {
+                    reworkBeveled += parseFloat(bInput.getAttribute('data-exact-value') || bInput.value) || 0;
+                }
+            });
+
+            const ml48Q = Math.round(reworkStraight * 1.05 * 100) / 100;
+            const ml49Q = Math.round(reworkBeveled * 1.05 * 100) / 100;
+
+            const pSection = document.getElementById('payment-details-section');
+            if (pSection && pSection.style.display === 'none') {
+                pSection.style.display = '';
+            }
+
+            const pRows = document.querySelectorAll('#payment-details-container tr.payment-detail-row');
+            pRows.forEach(pRow => {
+                const nameIn = pRow.querySelector('textarea[name*="[name]"]');
+                const qIn = pRow.querySelector('input[name*="[quantity]"]');
+                const pOnlyIn = pRow.querySelector('input[name*="[price_only]"]');
+                const nVal = (nameIn ? nameIn.value : '').toUpperCase();
+
+                if (nVal.includes('LIC1')) {
+                    if (qIn && parseFloat(qIn.value) !== reworkPlates) {
+                        qIn.value = reworkPlates;
+                        if (typeof calculatePaymentDetailRowTotal === 'function') calculatePaymentDetailRowTotal(pRow);
+                    }
+                } else if (nVal.includes('ML48')) {
+                    let changed = false;
+                    if (qIn && parseFloat(qIn.value) !== ml48Q) {
+                        qIn.value = ml48Q;
+                        changed = true;
+                    }
+                    if (pOnlyIn && parseFloat(pOnlyIn.value || 0) !== 18000) {
+                        pOnlyIn.value = 18000;
+                        changed = true;
+                    }
+                    if (changed && typeof calculatePaymentDetailRowTotal === 'function') calculatePaymentDetailRowTotal(pRow);
+                } else if (nVal.includes('ML49')) {
+                    let changed = false;
+                    if (qIn && parseFloat(qIn.value) !== ml49Q) {
+                        qIn.value = ml49Q;
+                        changed = true;
+                    }
+                    if (pOnlyIn && parseFloat(pOnlyIn.value || 0) !== 25000) {
+                        pOnlyIn.value = 25000;
+                        changed = true;
+                    }
+                    if (changed && typeof calculatePaymentDetailRowTotal === 'function') calculatePaymentDetailRowTotal(pRow);
+                }
+            });
+        }
+
         // Calculate items quantity from supplies.items
         const rows = document.querySelectorAll('.order-item-row');
         rows.forEach(row => {

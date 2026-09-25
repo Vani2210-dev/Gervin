@@ -250,7 +250,9 @@ class MarketGroupController extends Controller
             'dateMode',
             'dateVal',
             'dateLabel',
-            'inputType'
+            'inputType',
+            'startDate',
+            'endDate'
         ));
     }
 

@@ -541,8 +541,13 @@ function handlePaymentDetailCodeSelected(row, rawCode) {
             priceInput.dispatchEvent(new Event('input', { bubbles: true }));
         }
         if (priceOnlyInput) {
-            const rawPro = minLatePrice.price_only !== undefined ? minLatePrice.price_only : 0;
-            priceOnlyInput.value = Math.round(parseFloat(rawPro) || 0);
+            let defaultPriceOnly = minLatePrice.price_only !== undefined ? minLatePrice.price_only : 0;
+            if (codeLower === 'ml48' || (minLatePrice.code && minLatePrice.code.toUpperCase() === 'ML48')) {
+                defaultPriceOnly = 18000;
+            } else if (codeLower === 'ml49' || (minLatePrice.code && minLatePrice.code.toUpperCase() === 'ML49')) {
+                defaultPriceOnly = 25000;
+            }
+            priceOnlyInput.value = Math.round(parseFloat(defaultPriceOnly) || 0);
             applyFlashEffect(priceOnlyInput);
             priceOnlyInput.dispatchEvent(new Event('input', { bubbles: true }));
         }
@@ -551,6 +556,37 @@ function handlePaymentDetailCodeSelected(row, rawCode) {
     calculatePaymentDetailRowTotal(row);
     if (typeof updateOrderSummary === 'function') updateOrderSummary();
 }
+
+window.addPaymentDetailWithData = function(code, name, unit, qty, price, priceOnly) {
+    if (typeof addPaymentDetail !== 'function') return;
+    addPaymentDetail();
+    const rows = document.querySelectorAll('#payment-details-container tr.payment-detail-row');
+    const newRow = rows[rows.length - 1];
+    if (!newRow) return;
+
+    const nameInput = newRow.querySelector('textarea[name*="[name]"]');
+    const unitInput = newRow.querySelector('input[name*="[unit]"]');
+    const qtyInput = newRow.querySelector('input[name*="[quantity]"]');
+    const priceInput = newRow.querySelector('input[name*="[price]"]');
+    const priceOnlyInput = newRow.querySelector('input[name*="[price_only]"]');
+
+    if (nameInput) nameInput.value = name;
+    if (unitInput) unitInput.value = unit;
+    if (qtyInput) qtyInput.value = qty;
+    if (priceInput) priceInput.value = price;
+    if (priceOnlyInput) priceOnlyInput.value = priceOnly;
+
+    const select = newRow.querySelector('select.order-payment-code-select');
+    if (select) {
+        select.value = code;
+        if (select.tomselect) {
+            select.tomselect.setValue(code, true);
+        }
+    }
+
+    calculatePaymentDetailRowTotal(newRow);
+    if (typeof updateOrderSummary === 'function') updateOrderSummary();
+};
 
 function initPaymentCodeTomSelect(selectEl) {
     if (!selectEl || selectEl.tomselect) return;

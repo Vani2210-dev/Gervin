@@ -191,7 +191,9 @@ class OrderController extends Controller
             'draftOrdersCount',
             'dateMode',
             'dateVal',
-            'dateLabel'
+            'dateLabel',
+            'startDate',
+            'endDate'
         ));
     }
 
@@ -382,10 +384,13 @@ class OrderController extends Controller
 
     public function createByType(Request $request, string $type)
     {
+        $relationType = $request->query('relation_type'); // ví dụ: rework
+        if ($relationType === 'rework') {
+            $type = 'min_late';
+        }
         abort_unless(in_array($type, self::ORDER_TYPES, true), 404);
 
         $orderType = $type;
-        $relationType = $request->query('relation_type'); // ví dụ: rework
         
         $oldDraftId = old('draft_order_id');
         if ($oldDraftId) {
@@ -855,10 +860,19 @@ class OrderController extends Controller
     {
         $request->validate([
             'item_ids' => 'required|array|min:1',
-            'item_ids.*' => 'required|integer',
         ]);
 
-        session(['rework_item_ids_' . $order->id => $request->input('item_ids')]);
+        $selectedPieces = $request->input('selected_pieces', []);
+        if (empty($selectedPieces)) {
+            foreach ($request->input('item_ids') as $id) {
+                $selectedPieces[] = ['item_id' => (int)$id, 'piece_index' => 0];
+            }
+        }
+
+        session([
+            'rework_selected_pieces_' . $order->id => $selectedPieces,
+            'rework_item_ids_' . $order->id => $request->input('item_ids')
+        ]);
 
         return response()->json([
             'ok' => true,
@@ -942,11 +956,14 @@ class OrderController extends Controller
 
     /**
      * Hiển thị trang tạo đơn nháp sửa tấm (GET).
+     * Luôn sử dụng form đơn Min-late!
      */
     public function reworkCreateForm(Order $order)
     {
+        $selectedPieces = session('rework_selected_pieces_' . $order->id, []);
         $itemIds = session('rework_item_ids_' . $order->id, []);
-        if (empty($itemIds)) {
+
+        if (empty($selectedPieces) && empty($itemIds)) {
             return redirect()->route('orders.show', $order->id)->with('error', 'Chưa chọn tấm gỗ cần sửa.');
         }
 
@@ -956,10 +973,11 @@ class OrderController extends Controller
         }
 
         if (!isset($acrylicOrder) || !$acrylicOrder) {
-            $acrylicOrder = $this->buildReworkDraftOrder($order, $itemIds);
+            $acrylicOrder = $this->buildReworkDraftOrder($order, !empty($selectedPieces) ? $selectedPieces : $itemIds);
         }
 
-        $orderType = $order->type;
+        // Đơn sửa tấm PHẢI LUÔN DÙNG FORM ĐƠN MINLATE
+        $orderType = 'min_late';
         $isDraftCreate = true;
         $woodBoardPrices = \App\Models\WoodBoardPrice::orderBy('code', 'asc')->get();
         $cncTemplates = \App\Models\CncTemplate::orderBy('id', 'asc')->get();
@@ -971,39 +989,48 @@ class OrderController extends Controller
 
     /**
      * Tạo bản ghi đơn nháp sửa tấm trong DB.
+     * Đơn sửa tấm luôn là type = 'min_late'.
+     * Tách riêng từng tấm (mỗi tấm số lượng = 1).
+     * Ghi chú format: KTC: {cao} x {rộng}\nYêu cầu: Giữ nguyên cạnh vát.
+     * Tự động sinh 3 dòng dịch vụ: LIC1, ML48, ML49.
      */
-    private function buildReworkDraftOrder(Order $order, array $selectedItemIds): Order
+    private function buildReworkDraftOrder(Order $order, array $selectedPieces): Order
     {
-        return DB::transaction(function () use ($order, $selectedItemIds) {
+        return DB::transaction(function () use ($order, $selectedPieces) {
             $orderCode = $this->generateOrderCode();
 
             $reworkOrder = Order::create([
-                'parent_id' => $order->id,
-                'relation_type' => 'rework',
-                'order_code' => $orderCode,
-                'type' => $order->type,
-                'customer_id' => $order->customer_id,
-                'customer_name' => $order->customer_name,
-                'phone' => $order->phone,
-                'address' => $order->address,
+                'parent_id'        => $order->id,
+                'relation_type'    => 'rework',
+                'order_code'       => $orderCode,
+                'type'             => 'min_late', // LUÔN LUÔN DÙNG MIN_LATE
+                'customer_id'      => $order->customer_id,
+                'customer_name'    => $order->customer_name,
+                'phone'            => $order->phone,
+                'address'          => $order->address,
                 'discount_percent' => $order->discount_percent ?? 0,
-                'discount_amount' => 0,
-                'vat_percent' => $order->vat_percent ?? 0,
-                'vat_amount' => 0,
-                'total_amount' => 0,
-                'order_date' => now(),
-                'delivery_days' => null,
-                'deadline' => null,
-                'status' => 'draft',
-                'notes' => '[Sửa tấm] Đơn liên kết của ' . $order->order_code,
+                'discount_amount'  => 0,
+                'vat_percent'      => $order->vat_percent ?? 0,
+                'vat_amount'       => 0,
+                'total_amount'     => 0,
+                'order_date'       => now(),
+                'delivery_days'    => null,
+                'deadline'         => null,
+                'status'           => 'draft',
+                'notes'            => '[Sửa tấm] Đơn liên kết của ' . $order->order_code,
             ]);
 
             $supplyMapping = [];
+            $totalPlates = 0;
+            $totalStraightLength = 0;
+            $totalBeveledLength = 0;
 
-            foreach ($selectedItemIds as $itemId) {
+            foreach ($selectedPieces as $pieceInfo) {
+                $itemId = is_array($pieceInfo) ? ($pieceInfo['item_id'] ?? null) : $pieceInfo;
+                if (!$itemId) continue;
+
                 $originalItem = null;
                 $originalSupply = null;
-                $originalStt = 1;
 
                 if ($order->type === 'min_late') {
                     $originalItem = \App\Models\MinLateOrderItem::find($itemId);
@@ -1018,39 +1045,33 @@ class OrderController extends Controller
                 $originalSupply = $originalItem->orderSupply;
                 if (!$originalSupply) continue;
 
-                if ($order->type === 'min_late') {
-                    $siblings = $originalSupply->minLateItems()->orderBy('id')->get();
-                } elseif ($order->type === 'glass') {
-                    $siblings = $originalSupply->glassItems()->orderBy('id')->get();
-                } else {
-                    $siblings = $originalSupply->items()->orderBy('id')->get();
-                }
-
-                foreach ($siblings as $idx => $sib) {
-                    if ($sib->id == $originalItem->id) {
-                        $originalStt = $idx + 1;
-                        break;
-                    }
-                }
-
                 $parentSupplyId = $originalSupply->id;
                 if (!isset($supplyMapping[$parentSupplyId])) {
                     $newSupply = \App\Models\OrderSupply::create([
                         'order_id'          => $reworkOrder->id,
                         'order_supply_code' => $originalSupply->order_supply_code,
                         'supply_name'       => $originalSupply->supply_name ?? 'Vật tư',
-                        'quantity'          => $originalSupply->quantity ?? 1,
+                        'quantity'          => 1,
                     ]);
-                    $supplyMapping[$parentSupplyId] = $newSupply->id;
+                    $supplyMapping[$parentSupplyId] = $newSupply;
                 }
-                $newSupplyId = $supplyMapping[$parentSupplyId];
+                $newSupply = $supplyMapping[$parentSupplyId];
 
-                $itemData = $originalItem->toArray();
-                unset($itemData['id']);
-                $itemData['order_supply_id'] = $newSupplyId;
-
+                // Xác định kích thước gốc, độ dày và thông số dán cạnh
                 $origHeight = null;
                 $origWidth = null;
+                $origThickness = $originalItem->thickness ?? null;
+                $origName = $originalItem->name ?? ($originalItem->product_name ?? 'Tấm');
+                $edgeGluing = [];
+                $straightLength = 0;
+                $beveledLength = 0;
+                $vatMoiLength = 0;
+                $banRong40_59 = 0;
+                $banRong17_39 = 0;
+                $banRong25_35 = 0;
+                $beveledHandle = 0;
+                $cnc = 0;
+                $direction = null;
 
                 if ($order->type === 'min_late') {
                     $size = $originalItem->size ?? [];
@@ -1059,22 +1080,144 @@ class OrderController extends Controller
                     }
                     $origHeight = $size['height'] ?? null;
                     $origWidth = $size['width'] ?? null;
-                } else {
-                    $origHeight = $originalItem->height;
-                    $origWidth = $originalItem->width;
-                }
+                    $edgeGluing = $originalItem->edge_gluing ?? [];
+                    if (is_string($edgeGluing)) {
+                        $edgeGluing = json_decode($edgeGluing, true) ?? [];
+                    }
+                    $straightLength = (float)($originalItem->straight_paste_length ?? 0);
+                    $beveledLength = (float)($originalItem->beveled_length ?? 0);
+                    $vatMoiLength = (float)($originalItem->vat_moi_length ?? 0);
+                    $banRong40_59 = (float)($originalItem->ban_rong_40_59 ?? 0);
+                    $banRong17_39 = (float)($originalItem->ban_rong_17_39 ?? 0);
+                    $banRong25_35 = (float)($originalItem->ban_rong_25_35 ?? 0);
+                    $beveledHandle = (float)($originalItem->beveled_handle ?? 0);
+                    $cnc = (int)($originalItem->cnc ?? 0);
+                    $direction = $originalItem->direction ?? null;
 
-                $itemData['notes'] = $originalItem->notes ?? '';
-                $itemData['old_size'] = ($origHeight ?? '?') . ' x ' . ($origWidth ?? '?');
-
-                if ($order->type === 'min_late') {
-                    \App\Models\MinLateOrderItem::create($itemData);
+                    // Nếu bản ghi gốc có SL > 1 thì chia đều số mét cho 1 tấm
+                    $origQty = max(1, (float)($originalItem->quantity ?? 1));
+                    if ($origQty > 1) {
+                        $straightLength = round($straightLength / $origQty, 2);
+                        $beveledLength = round($beveledLength / $origQty, 2);
+                        $vatMoiLength = round($vatMoiLength / $origQty, 2);
+                        $banRong40_59 = round($banRong40_59 / $origQty, 2);
+                        $banRong17_39 = round($banRong17_39 / $origQty, 2);
+                        $banRong25_35 = round($banRong25_35 / $origQty, 2);
+                    }
                 } elseif ($order->type === 'glass') {
-                    \App\Models\GlassOrderItem::create($itemData);
+                    $origHeight = $originalItem->height ?? null;
+                    $origWidth = $originalItem->width ?? null;
+                    $h = (float)($origHeight ?? 0);
+                    $w = (float)($origWidth ?? 0);
+                    $straightLength = round(($h * 2 + $w * 2) / 1000, 2);
+                    $beveledLength = 0;
+                    $edgeGluing = ['height_1' => 'T', 'height_2' => 'T', 'width_1' => 'T', 'width_2' => 'T'];
                 } else {
-                    \App\Models\AcrylicOrderItem::create($itemData);
+                    // Acrylic
+                    $origHeight = $originalItem->height ?? null;
+                    $origWidth = $originalItem->width ?? null;
+                    $h = (float)($origHeight ?? 0);
+                    $w = (float)($origWidth ?? 0);
+                    $hasBevel = !empty($originalItem->bevel) && !in_array(strtolower(trim($originalItem->bevel)), ['k', 'không', '0', 'none']);
+                    $hasEdgeBevel = !empty($originalItem->edge_bevel) && !in_array(strtolower(trim($originalItem->edge_bevel)), ['k', 'không', '0', 'none']);
+
+                    if ($hasBevel || $hasEdgeBevel) {
+                        // 1 cạnh vát, 3 cạnh thẳng
+                        $beveledLength = round($w / 1000, 2);
+                        $straightLength = round(($h * 2 + $w) / 1000, 2);
+                        $edgeGluing = ['height_1' => 'T', 'height_2' => 'T', 'width_1' => 'V', 'width_2' => 'T'];
+                    } else {
+                        $beveledLength = 0;
+                        $straightLength = round(($h * 2 + $w * 2) / 1000, 2);
+                        $edgeGluing = ['height_1' => 'T', 'height_2' => 'T', 'width_1' => 'T', 'width_2' => 'T'];
+                    }
+                    $direction = $originalItem->grain_direction ?? null;
                 }
+
+                // Định dạng kích thước cũ (KTC) chuẩn xác theo yêu cầu
+                $hFormatted = (is_numeric($origHeight) && floatval($origHeight) == intval($origHeight)) ? number_format($origHeight, 0, '.', '') : (is_numeric($origHeight) ? rtrim(rtrim(number_format($origHeight, 2, '.', ''), '0'), '.') : ($origHeight ?? '—'));
+                $wFormatted = (is_numeric($origWidth) && floatval($origWidth) == intval($origWidth)) ? number_format($origWidth, 0, '.', '') : (is_numeric($origWidth) ? rtrim(rtrim(number_format($origWidth, 2, '.', ''), '0'), '.') : ($origWidth ?? '—'));
+
+                $formattedOldSize = "{$hFormatted} x {$wFormatted}";
+                $itemNotes = "KTC: {$formattedOldSize}\nYêu cầu: Giữ nguyên cạnh vát";
+
+                \App\Models\MinLateOrderItem::create([
+                    'order_supply_id'       => $newSupply->id,
+                    'name'                  => $origName,
+                    'thickness'             => $origThickness,
+                    'size'                  => [
+                        'height' => $origHeight,
+                        'width'  => $origWidth,
+                    ],
+                    'quantity'              => 1, // Từng tấm riêng biệt!
+                    'bevel'                 => $originalItem->bevel ?? null,
+                    'edge_gluing'           => $edgeGluing,
+                    'straight_paste_length' => $straightLength,
+                    'beveled_length'        => $beveledLength,
+                    'vat_moi_length'        => $vatMoiLength,
+                    'ban_rong_40_59'        => $banRong40_59,
+                    'ban_rong_17_39'        => $banRong17_39,
+                    'ban_rong_25_35'        => $banRong25_35,
+                    'beveled_handle'        => $beveledHandle,
+                    'cnc'                   => $cnc,
+                    'direction'             => $direction,
+                    'notes'                 => $itemNotes,
+                    'old_size'              => $formattedOldSize,
+                ]);
+
+                $totalPlates++;
+                $totalStraightLength += $straightLength;
+                $totalBeveledLength += $beveledLength;
             }
+
+            // Tự động tạo 3 dòng dịch vụ min-late:
+            // 1. LIC1 với số lượng = tổng số tấm
+            // 2. ML48 với số lượng = tổng số mét dán thẳng * 1.05 và đơn giá chỉ = 18000
+            // 3. ML49 với số lượng = tổng số mét dán vát * 1.05 và đơn giá chỉ = 25000
+
+            $ml48Qty = round($totalStraightLength * 1.05, 2);
+            $ml49Qty = round($totalBeveledLength * 1.05, 2);
+
+            $ml48PriceOnly = 18000;
+            $ml49PriceOnly = 25000;
+
+            $lic1Price = 0;
+            $lic1Total = round($totalPlates * $lic1Price);
+            $ml48Total = round($ml48Qty * $ml48PriceOnly);
+            $ml49Total = round($ml49Qty * $ml49PriceOnly);
+
+            \App\Models\PaymentDetail::create([
+                'order_id'   => $reworkOrder->id,
+                'name'       => 'LIC1 - Dịch vụ Min-late - Gia công cắt dán sửa tấm',
+                'unit'       => 'Tấm',
+                'quantity'   => $totalPlates,
+                'price'      => $lic1Price,
+                'price_only' => 0,
+                'total'      => $lic1Total,
+            ]);
+
+            \App\Models\PaymentDetail::create([
+                'order_id'   => $reworkOrder->id,
+                'name'       => 'ML48 - Dịch vụ Min-late - Dán chỉ thẳng',
+                'unit'       => 'm',
+                'quantity'   => $ml48Qty,
+                'price'      => 0,
+                'price_only' => $ml48PriceOnly,
+                'total'      => $ml48Total,
+            ]);
+
+            \App\Models\PaymentDetail::create([
+                'order_id'   => $reworkOrder->id,
+                'name'       => 'ML49 - Dịch vụ Min-late - Dán chỉ vát',
+                'unit'       => 'm',
+                'quantity'   => $ml49Qty,
+                'price'      => 0,
+                'price_only' => $ml49PriceOnly,
+                'total'      => $ml49Total,
+            ]);
+
+            $reworkOrder->total_amount = $lic1Total + $ml48Total + $ml49Total;
+            $reworkOrder->save();
 
             return $reworkOrder;
         });

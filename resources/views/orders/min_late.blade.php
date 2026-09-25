@@ -461,8 +461,8 @@
                                     <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][direction]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 px-1 py-1 h-8 text-xs" placeholder="Chiều vân" value="{{ $item->direction ?? '' }}">
                                 </td>
 
-                                <td style="min-width: 140px;" class="border border-neutral-200">
-                                    <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Ghi chú" value="{{ $item->notes ?? '' }}">
+                                <td style="min-width: 160px;" class="border border-neutral-200">
+                                    <textarea name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-xs w-full resize-none font-medium text-neutral-700 leading-tight" rows="2" style="min-height: 46px; padding: 4px 6px; font-size: 11px;" placeholder="Ghi chú">{{ $item->notes ?? '' }}</textarea>
                                 </td>
                                 <td style="width: 80px; min-width: 80px; position: sticky; right: 0; z-index: 1; background-color: #fff; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="text-center align-middle border border-neutral-200">
                                     <div class="flex items-center gap-1 justify-center">
@@ -769,8 +769,8 @@ function addMinLateOrderItem(button, isInitial = false, insertAfterRow = null) {
         <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
             <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][direction]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 px-1 py-1 h-8 text-xs" placeholder="Chiều vân" value="${lastData ? lastData.direction : ''}">
         </td>
-        <td style="min-width: 140px;" class="border border-neutral-200">
-            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Ghi chú" value="${lastData ? lastData.notes : ''}">
+        <td style="min-width: 160px;" class="border border-neutral-200">
+            <textarea name="supplies[${supplyIndex}][items][${itemIndex}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-xs w-full resize-none font-medium text-neutral-700 leading-tight" rows="2" style="min-height: 46px; padding: 4px 6px; font-size: 11px;" placeholder="Ghi chú">${lastData ? (lastData.notes || '') : ''}</textarea>
         </td>
         <td style="width: 80px; min-width: 80px; position: sticky; right: 0; z-index: 1; background-color: #fff; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="text-center align-middle border border-neutral-200">
             <div class="flex items-center gap-1 justify-center">
