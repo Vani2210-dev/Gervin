@@ -7,8 +7,25 @@
 @endphp
 
 <style>
-    /* Style TomSelect for Mã dropdown in the payment details table to match table rows */
-    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td .ts-wrapper.tom-select-payment-code {
+    /* Ẩn triệt để thẻ select HTML gốc để chỉ hiển thị hộp chọn tìm kiếm TomSelect */
+    #payment-details-container select.order-payment-code-select,
+    #payment-details-container select.tom-select-payment-code,
+    #payment-details-container select.tomselected,
+    .payment-detail-row select {
+        display: none !important;
+        visibility: hidden !important;
+        position: absolute !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        width: 0 !important;
+        height: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border: 0 !important;
+    }
+
+    /* Style TomSelect cho dropdown Mã trong bảng chi tiết hóa đơn */
+    #payment-details-container tr.payment-detail-row td .ts-wrapper {
         width: 100% !important;
         height: 100% !important;
         min-height: 42px !important;
@@ -18,13 +35,14 @@
         border-radius: 0 !important;
         background: transparent !important;
         box-shadow: none !important;
-        display: block !important;
+        display: flex !important;
+        align-items: center !important;
     }
-    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td .ts-wrapper.tom-select-payment-code .ts-control,
-    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td .ts-wrapper.tom-select-payment-code .ts-control * {
+    #payment-details-container tr.payment-detail-row td .ts-wrapper .ts-control,
+    #payment-details-container tr.payment-detail-row td .ts-wrapper .ts-control * {
         font-size: 12px !important;
     }
-    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td .ts-wrapper.tom-select-payment-code .ts-control {
+    #payment-details-container tr.payment-detail-row td .ts-wrapper .ts-control {
         width: 100% !important;
         height: 100% !important;
         min-height: 42px !important;
@@ -37,22 +55,28 @@
         color: #0f172a !important;
         display: flex !important;
         align-items: center !important;
+        cursor: pointer !important;
     }
-    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td .ts-wrapper.tom-select-payment-code .ts-control input {
+    #payment-details-container tr.payment-detail-row td .ts-wrapper .ts-control input {
         border: 0 !important;
         padding: 0 !important;
         margin: 0 !important;
         height: auto !important;
         min-height: 0 !important;
+        box-shadow: none !important;
     }
-    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td .ts-wrapper.tom-select-payment-code.focus .ts-control {
+    #payment-details-container tr.payment-detail-row td .ts-wrapper.focus .ts-control {
         background: #eff6ff !important;
         outline: 2px solid #3b82f6 !important;
         outline-offset: -2px !important;
         box-shadow: inset 0 0 0 1px #3b82f6 !important;
     }
-    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td .ts-wrapper.tom-select-payment-code .ts-control:after {
+    #payment-details-container tr.payment-detail-row td .ts-wrapper .ts-control:after {
         display: none !important;
+    }
+    .ts-dropdown {
+        font-size: 12px !important;
+        z-index: 99999 !important;
     }
 </style>
 
@@ -134,7 +158,7 @@
                                             }
                                         }
                                     @endphp
-                                    <select class="order-payment-code-select tom-select-payment-code w-full">
+                                    <select class="order-payment-code-select tom-select-payment-code" style="display: none !important;">
                                         <option value="">-- Chọn mã --</option>
                                         <optgroup label="🪵 Tấm ván riêng / Ván mộc">
                                             @foreach($woodBoardPrices ?? [] as $price)
@@ -294,7 +318,7 @@ function addPaymentDetail() {
             <span class="detail-index font-semibold text-neutral-500">${paymentDetailIndex + 1}</span>
         </td>
         <td class="border border-neutral-200" style="padding: 0 !important; position: relative; width: 140px; min-width: 120px; height: 42px;">
-            <select class="order-payment-code-select tom-select-payment-code w-full">
+            <select class="order-payment-code-select tom-select-payment-code" style="display: none !important;">
                 ${optionsHtml}
             </select>
         </td>
@@ -405,7 +429,9 @@ function bindPaymentDetailEvents(row) {
 
 function initPaymentCodeTomSelect(selectEl) {
     if (!selectEl || selectEl.tomselect) return;
+    selectEl.style.setProperty('display', 'none', 'important');
     const ts = new TomSelect(selectEl, {
+        wrapperClass: 'ts-wrapper tom-select-payment-code',
         create: true,
         placeholder: '-- Chọn mã --',
         allowEmptyOption: true,
@@ -422,6 +448,8 @@ function initPaymentCodeTomSelect(selectEl) {
             }
         }
     });
+    // Đảm bảo thẻ select gốc ẩn triệt để sau khi TomSelect được tạo
+    selectEl.style.setProperty('display', 'none', 'important');
     ts.on('change', function(value) {
         const row = selectEl.closest('.payment-detail-row');
         if (!row) return;

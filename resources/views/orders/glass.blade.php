@@ -245,54 +245,6 @@
     textarea, textarea.form-control {
         resize: none !important;
     }
-
-    /* Style TomSelect for Mã vật tư dropdown in the payment details table to match other borderless inputs */
-    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td .ts-wrapper.tom-select-payment-code {
-        width: 100% !important;
-        height: 100% !important;
-        min-height: 42px !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        border: 0 !important;
-        border-radius: 0 !important;
-        background: transparent !important;
-        box-shadow: none !important;
-        display: block !important;
-    }
-    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td .ts-wrapper.tom-select-payment-code .ts-control,
-    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td .ts-wrapper.tom-select-payment-code .ts-control * {
-        font-size: 12px !important;
-    }
-    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td .ts-wrapper.tom-select-payment-code .ts-control {
-        width: 100% !important;
-        height: 100% !important;
-        min-height: 42px !important;
-        padding: 0 12px !important;
-        margin: 0 !important;
-        border: 0 !important;
-        border-radius: 0 !important;
-        background: #ffffff !important;
-        box-shadow: none !important;
-        color: #0f172a !important;
-        display: flex !important;
-        align-items: center !important;
-    }
-    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td .ts-wrapper.tom-select-payment-code .ts-control input {
-        border: 0 !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        height: auto !important;
-        min-height: 0 !important;
-    }
-    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td .ts-wrapper.tom-select-payment-code.focus .ts-control {
-        background: #eff6ff !important;
-        outline: 2px solid #3b82f6 !important;
-        outline-offset: -2px !important;
-        box-shadow: inset 0 0 0 1px #3b82f6 !important;
-    }
-    table[data-order-resize-group="min_late_payment"] tbody#payment-details-container tr.payment-detail-row td .ts-wrapper.tom-select-payment-code .ts-control:after {
-        display: none !important;
-    }
 </style>
 <div class="order-supplies-popup bg-white border border-neutral-200 rounded-xl p-6 shadow-sm relative pt-8" data-order-supplies-zoom-panel data-order-supplies-storage-key="glass" data-order-supplies-zoom="100" data-order-supplies-visible-rows="5">
     <div class="order-supplies-header flex items-center justify-between border-b border-neutral-100 pb-4 mb-5">
