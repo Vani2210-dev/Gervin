@@ -85,7 +85,7 @@
                     <thead>
                         <tr class="bg-neutral-50 text-center">
                             <th scope="col" style="width: 50px; min-width: 50px; white-space: nowrap;" class="sticky-stt-th text-center border border-neutral-200 font-bold text-xs text-neutral-600 uppercase"><span class="order-stt-header-label">STT</span></th>
-                            <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Mã</th>
+                            <th scope="col" style="width: 140px; min-width: 120px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Mã</th>
                             <th scope="col" style="white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên nội dung <span class="text-danger-500">*</span></th>
                             <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn vị</th>
                             <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số lượng</th>
@@ -104,7 +104,7 @@
                                 <td style="width: 50px; min-width: 50px; padding: 0 !important;" class="sticky-stt-td text-center align-middle border border-neutral-200">
                                     <span class="detail-index font-semibold text-neutral-500">{{ $detailIndex + 1 }}</span>
                                 </td>
-                                <td class="border border-neutral-200" style="padding: 0 !important; position: relative; width: 200px; min-width: 200px; height: 42px;">
+                                <td class="border border-neutral-200" style="padding: 0 !important; position: relative; width: 140px; min-width: 120px; height: 42px;">
                                     @php
                                         $selectedCode = '';
                                         // 1. Kiểm tra WoodBoardPrice (Mua tấm ván riêng / Ván mộc)
@@ -293,7 +293,7 @@ function addPaymentDetail() {
         <td style="width: 50px; min-width: 50px; padding: 0 !important;" class="sticky-stt-td text-center align-middle border border-neutral-200">
             <span class="detail-index font-semibold text-neutral-500">${paymentDetailIndex + 1}</span>
         </td>
-        <td class="border border-neutral-200" style="padding: 0 !important; position: relative; width: 200px; min-width: 200px; height: 42px;">
+        <td class="border border-neutral-200" style="padding: 0 !important; position: relative; width: 140px; min-width: 120px; height: 42px;">
             <select class="order-payment-code-select tom-select-payment-code w-full">
                 ${optionsHtml}
             </select>
@@ -407,10 +407,20 @@ function initPaymentCodeTomSelect(selectEl) {
     if (!selectEl || selectEl.tomselect) return;
     const ts = new TomSelect(selectEl, {
         create: true,
-        placeholder: '-- Chọn mã hoặc gõ tìm --',
+        placeholder: '-- Chọn mã --',
         allowEmptyOption: true,
         maxOptions: null,
-        dropdownParent: 'body'
+        dropdownParent: 'body',
+        searchField: ['text', 'value'],
+        render: {
+            item: function(data, escape) {
+                if (!data.value) return '';
+                return '<div class="font-bold text-neutral-800">' + escape(data.value) + '</div>';
+            },
+            option: function(data, escape) {
+                return '<div>' + escape(data.text) + '</div>';
+            }
+        }
     });
     ts.on('change', function(value) {
         const row = selectEl.closest('.payment-detail-row');

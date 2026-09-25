@@ -97,6 +97,7 @@
                         <thead class="bg-neutral-50 font-semibold text-neutral-700 text-center uppercase tracking-wider">
                             <tr>
                                 <th class="border border-neutral-200 w-12 text-center">STT</th>
+                                <th class="border border-neutral-200 w-28 text-center">Mã dịch vụ</th>
                                 <th class="border border-neutral-200 text-left">Tên sản phẩm / Dịch vụ gia công</th>
                                 <th class="border border-neutral-200 w-24 text-center">Đơn vị</th>
                                 <th class="border border-neutral-200 w-36 text-end">Đơn giá</th>
@@ -111,7 +112,7 @@
                                 @if($item->category_name !== $currentCategoryName)
                                     @php $currentCategoryName = $item->category_name; @endphp
                                     <tr class="bg-emerald-50/60 font-bold">
-                                        <td colspan="6" class="p-3 text-emerald-800 text-sm border border-neutral-200">
+                                        <td colspan="7" class="p-3 text-emerald-800 text-sm border border-neutral-200">
                                             <div class="flex items-center gap-1.5">
                                                 <iconify-icon icon="solar:folder-open-bold" class="text-emerald-600 text-base"></iconify-icon>
                                                 {{ $currentCategoryName ?: 'KHÁC / CHƯA PHÂN NHÓM' }}
@@ -123,6 +124,9 @@
                                 <tr class="hover:bg-neutral-50/50 transition-colors">
                                     <td class="text-center border border-neutral-200 text-neutral-500 font-medium">
                                         {{ $item->stt ?: ($minlatePrices->firstItem() + $index) }}
+                                    </td>
+                                    <td class="text-center border border-neutral-200 font-mono font-semibold text-primary-700">
+                                        {{ $item->code ?: '—' }}
                                     </td>
                                     <td class="border border-neutral-200 font-medium text-neutral-800 max-w-[400px] whitespace-normal">
                                         {!! nl2br(e($item->product_name)) !!}
@@ -162,7 +166,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="text-center py-8">
+                                    <td colspan="7" class="text-center py-8">
                                         <p class="text-neutral-500 text-sm">Chưa có dòng bảng giá dịch vụ Min-late nào</p>
                                     </td>
                                 </tr>
@@ -199,9 +203,15 @@
                 <input type="text" name="category_name" class="form-control rounded-lg" placeholder="Ví dụ: ÉP MẶT, DÁN CẠNH..." value="{{ old('category_name') }}">
             </div>
             
-            <div class="form-group">
-                <label class="form-label font-semibold text-xs text-neutral-600 mb-1 block">Số thứ tự (STT)</label>
-                <input type="text" name="stt" class="form-control rounded-lg" placeholder="Ví dụ: 1, 2..." value="{{ old('stt') }}">
+            <div class="grid grid-cols-2 gap-4">
+                <div class="form-group">
+                    <label class="form-label font-semibold text-xs text-neutral-600 mb-1 block">Mã dịch vụ</label>
+                    <input type="text" name="code" class="form-control rounded-lg" placeholder="Ví dụ: ML01, DC01..." value="{{ old('code') }}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label font-semibold text-xs text-neutral-600 mb-1 block">Số thứ tự (STT)</label>
+                    <input type="text" name="stt" class="form-control rounded-lg" placeholder="Ví dụ: 1, 2..." value="{{ old('stt') }}">
+                </div>
             </div>
 
             <div class="form-group">
@@ -248,9 +258,15 @@
                 <input type="text" id="edit_category_name" name="category_name" class="form-control rounded-lg">
             </div>
             
-            <div class="form-group">
-                <label class="form-label font-semibold text-xs text-neutral-600 mb-1 block">Số thứ tự (STT)</label>
-                <input type="text" id="edit_stt" name="stt" class="form-control rounded-lg">
+            <div class="grid grid-cols-2 gap-4">
+                <div class="form-group">
+                    <label class="form-label font-semibold text-xs text-neutral-600 mb-1 block">Mã dịch vụ</label>
+                    <input type="text" id="edit_code" name="code" class="form-control rounded-lg" placeholder="Ví dụ: ML01, DC01...">
+                </div>
+                <div class="form-group">
+                    <label class="form-label font-semibold text-xs text-neutral-600 mb-1 block">Số thứ tự (STT)</label>
+                    <input type="text" id="edit_stt" name="stt" class="form-control rounded-lg">
+                </div>
             </div>
 
             <div class="form-group">
@@ -301,6 +317,7 @@
     function openEditModal(item) {
         document.getElementById('edit-price-form').action = '/minlate-prices/' + item.id;
         document.getElementById('edit_category_name').value = item.category_name || '';
+        document.getElementById('edit_code').value = item.code || '';
         document.getElementById('edit_stt').value = item.stt || '';
         document.getElementById('edit_product_name').value = item.product_name || '';
         document.getElementById('edit_unit').value = item.unit || '';
