@@ -27,53 +27,53 @@
     {{-- Cards Thống kê tổng hợp toàn bộ nhóm thị trường (chuẩn giao diện như trang chi tiết nhóm) --}}
     <div class="col-span-12">
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-            <div class="bg-white border border-neutral-200 rounded-xl p-3.5 shadow-2xs flex items-center gap-3">
+            <div class="bg-white border border-neutral-200 rounded-xl p-4 shadow-2xs flex items-center gap-3">
                 <div class="w-10 h-10 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center text-xl shrink-0">
                     <iconify-icon icon="solar:users-group-two-rounded-bold-duotone"></iconify-icon>
                 </div>
                 <div class="min-w-0">
                     <div class="text-[11px] text-neutral-500 font-medium truncate">Tổng khách hàng</div>
-                    <div class="text-base sm:text-lg font-bold text-neutral-800 mt-0.5 truncate">{{ $totalCustomers }} <span class="text-[11px] font-normal text-neutral-500">khách</span></div>
+                    <div class="text-base sm:text-lg font-bold text-neutral-800 mt-1 truncate">{{ $totalCustomers }} <span class="text-[11px] font-normal text-neutral-500">khách</span></div>
                 </div>
             </div>
 
-            <div class="bg-white border border-neutral-200 rounded-xl p-3.5 shadow-2xs flex items-center gap-3">
+            <div class="bg-white border border-neutral-200 rounded-xl p-4 shadow-2xs flex items-center gap-3">
                 <div class="w-10 h-10 rounded-lg bg-danger-50 text-danger-600 flex items-center justify-center text-xl shrink-0">
                     <iconify-icon icon="solar:wallet-money-bold-duotone"></iconify-icon>
                 </div>
                 <div class="min-w-0">
                     <div class="text-[11px] text-neutral-500 font-medium truncate">Tổng công nợ toàn hệ thống</div>
-                    <div class="text-base sm:text-lg font-bold text-danger-600 mt-0.5 truncate">{{ number_format($totalDebt, 0, ',', '.') }} <span class="text-[11px] font-normal text-neutral-500">₫</span></div>
+                    <div class="text-base sm:text-lg font-bold text-danger-600 mt-1 truncate">{{ number_format($totalDebt, 0, ',', '.') }} <span class="text-[11px] font-normal text-neutral-500">₫</span></div>
                 </div>
             </div>
 
-            <div class="bg-white border border-neutral-200 rounded-xl p-3.5 shadow-2xs flex items-center gap-3">
+            <div class="bg-white border border-neutral-200 rounded-xl p-4 shadow-2xs flex items-center gap-3">
                 <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl shrink-0">
                     <iconify-icon icon="solar:card-recive-bold-duotone"></iconify-icon>
                 </div>
                 <div class="min-w-0">
                     <div class="text-[11px] text-neutral-500 font-medium truncate" title="Đã thu tiền ({{ $dateLabel }})">Đã thu tiền ({{ $dateLabel }})</div>
-                    <div class="text-base sm:text-lg font-bold text-emerald-600 mt-0.5 truncate">{{ number_format($totalPaid, 0, ',', '.') }} <span class="text-[11px] font-normal text-neutral-500">₫</span></div>
+                    <div class="text-base sm:text-lg font-bold text-emerald-600 mt-1 truncate">{{ number_format($totalPaid, 0, ',', '.') }} <span class="text-[11px] font-normal text-neutral-500">₫</span></div>
                 </div>
             </div>
 
-            <div class="bg-white border border-neutral-200 rounded-xl p-3.5 shadow-2xs flex items-center gap-3">
+            <div class="bg-white border border-neutral-200 rounded-xl p-4 shadow-2xs flex items-center gap-3">
                 <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-xl shrink-0">
                     <iconify-icon icon="solar:history-bold-duotone"></iconify-icon>
                 </div>
                 <div class="min-w-0">
                     <div class="text-[11px] text-neutral-500 font-medium truncate" title="Cập nhật ({{ $dateLabel }})">Cập nhật ({{ $dateLabel }})</div>
-                    <div class="text-base sm:text-lg font-bold text-amber-600 mt-0.5 truncate">{{ $totalCustomerUpdates ?? 0 }} <span class="text-[11px] font-normal text-neutral-500">lần / {{ $updatedCustomersCount ?? 0 }} KH</span></div>
+                    <div class="text-base sm:text-lg font-bold text-amber-600 mt-1 truncate">{{ $totalCustomerUpdates ?? 0 }} <span class="text-[11px] font-normal text-neutral-500">lần / {{ $updatedCustomersCount ?? 0 }} KH</span></div>
                 </div>
             </div>
 
-            <div class="bg-white border border-neutral-200 rounded-xl p-3.5 shadow-2xs flex items-center gap-3">
+            <div class="bg-white border border-neutral-200 rounded-xl p-4 shadow-2xs flex items-center gap-3">
                 <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xl shrink-0">
                     <iconify-icon icon="solar:user-id-bold-duotone"></iconify-icon>
                 </div>
                 <div class="min-w-0">
                     <div class="text-[11px] text-neutral-500 font-medium truncate">Nhân sự phụ trách</div>
-                    <div class="text-base sm:text-lg font-bold text-neutral-800 mt-0.5 truncate">{{ $totalUsersCount }} <span class="text-[11px] font-normal text-neutral-500">lượt NV</span></div>
+                    <div class="text-base sm:text-lg font-bold text-neutral-800 mt-1 truncate">{{ $totalUsersCount }} <span class="text-[11px] font-normal text-neutral-500">lượt NV</span></div>
                 </div>
             </div>
         </div>
@@ -95,11 +95,11 @@
                         <input type="hidden" name="date_mode" value="{{ $dateMode }}">
                         <input type="hidden" name="date_val" value="{{ $dateVal }}">
                         <div class="relative">
-                            <input type="text" name="search" value="{{ $search }}" placeholder="Tìm kiếm nhóm..." class="form-control rounded-lg pl-9 pr-3 py-1.5 text-xs w-48 border-neutral-300">
+                            <input type="text" name="search" value="{{ $search }}" placeholder="Tìm kiếm nhóm..." class="form-control rounded-lg pl-9 pr-3 py-2 text-xs w-48 border-neutral-300">
                             <iconify-icon icon="lucide:search" class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm"></iconify-icon>
                         </div>
                     </form>
-                    <button type="button" onclick="openCreateGroupModal()" class="btn btn-sm btn-primary rounded-lg flex items-center gap-1.5 px-3 py-2 text-xs font-semibold shadow-sm">
+                    <button type="button" onclick="openCreateGroupModal()" class="btn btn-sm btn-primary rounded-lg flex items-center gap-2 px-3 py-2 text-xs font-semibold shadow-sm">
                         <iconify-icon icon="lucide:plus" class="text-base"></iconify-icon> Thêm nhóm mới
                     </button>
                 </div>
@@ -126,53 +126,53 @@
                         <tr class="hover:bg-neutral-50/70 transition-colors">
                             <td class="text-center font-semibold text-neutral-500 py-3">{{ $index + 1 }}</td>
                             <td class="py-3">
-                                <div class="flex items-center gap-2.5">
-                                    <span class="w-8 h-8 rounded-lg {{ $color['badge'] }} text-white font-bold text-sm flex items-center justify-center flex-shrink-0">
-                                        {{ $group->code ?: substr($group->name, -1) }}
-                                    </span>
-                                    <div>
-                                        <div class="font-bold text-sm text-neutral-800">{{ $group->name }}</div>
-                                        @if($group->code)
-                                            <span class="text-[10px] text-neutral-400 uppercase font-mono">Mã: {{ $group->code }}</span>
-                                        @endif
-                                    </div>
-                                </div>
+                                 <div class="flex items-center gap-2">
+                                     <span class="w-8 h-8 rounded-lg {{ $color['badge'] }} text-white font-bold text-sm flex items-center justify-center flex-shrink-0">
+                                         {{ $group->code ?: substr($group->name, -1) }}
+                                     </span>
+                                     <div>
+                                         <div class="font-bold text-sm text-neutral-800">{{ $group->name }}</div>
+                                         @if($group->code)
+                                             <span class="text-[10px] text-neutral-400 uppercase font-mono">Mã: {{ $group->code }}</span>
+                                         @endif
+                                     </div>
+                                 </div>
                             </td>
                             <td class="py-3 text-neutral-600">
-                                {{ $group->description ?: '—' }}
+                                 {{ $group->description ?: '—' }}
                             </td>
                             <td class="py-3">
-                                <div class="flex flex-wrap items-center gap-1.5">
-                                    @forelse($group->users as $u)
-                                        <span class="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-neutral-100 text-neutral-700 border border-neutral-200">
-                                            <iconify-icon icon="lucide:user" class="text-xs text-primary-500"></iconify-icon>
-                                            {{ $u->user_code ? '[' . $u->user_code . '] ' : '' }}{{ $u->name }}
-                                        </span>
-                                    @empty
-                                        <span class="text-neutral-400 italic">Chưa có nhân viên</span>
-                                    @endforelse
-                                    <button type="button" 
-                                        onclick="openAssignUsersModalFromBtn(this)" 
-                                        data-id="{{ $group->id }}" 
-                                        data-name="{{ $group->name }}" 
-                                        data-user-ids="{{ json_encode($group->users->pluck('id')) }}" 
-                                        class="text-primary-600 hover:text-primary-800 text-xs font-semibold p-1 hover:bg-primary-50 rounded" 
-                                        title="Phân bổ nhân viên">
-                                        <iconify-icon icon="lucide:user-plus" class="text-base"></iconify-icon>
-                                    </button>
-                                </div>
+                                 <div class="flex flex-wrap items-center gap-2">
+                                     @forelse($group->users as $u)
+                                         <span class="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-neutral-100 text-neutral-700 border border-neutral-200">
+                                             <iconify-icon icon="lucide:user" class="text-xs text-primary-500"></iconify-icon>
+                                             {{ $u->user_code ? '[' . $u->user_code . '] ' : '' }}{{ $u->name }}
+                                         </span>
+                                     @empty
+                                         <span class="text-neutral-400 italic">Chưa có nhân viên</span>
+                                     @endforelse
+                                     <button type="button" 
+                                         onclick="openAssignUsersModalFromBtn(this)" 
+                                         data-id="{{ $group->id }}" 
+                                         data-name="{{ $group->name }}" 
+                                         data-user-ids="{{ json_encode($group->users->pluck('id')) }}" 
+                                         class="text-primary-600 hover:text-primary-800 text-xs font-semibold p-1 hover:bg-primary-50 rounded" 
+                                         title="Phân bổ nhân viên">
+                                         <iconify-icon icon="lucide:user-plus" class="text-base"></iconify-icon>
+                                     </button>
+                                 </div>
                             </td>
                             <td class="py-3 text-center">
-                                <a href="{{ route('market-groups.show', $group->id) }}" 
-                                    class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold {{ $color['bg'] }} {{ $color['text'] }} hover:shadow border {{ $color['border'] }} transition-all" 
-                                    title="Mở trang chi tiết danh sách khách hàng nhóm">
-                                    <iconify-icon icon="solar:users-group-two-rounded-bold" class="text-sm"></iconify-icon>
-                                    <span>{{ $group->customers_count }} khách hàng</span>
-                                    <iconify-icon icon="solar:arrow-right-bold" class="text-xs opacity-70"></iconify-icon>
-                                </a>
+                                 <a href="{{ route('market-groups.show', $group->id) }}" 
+                                     class="inline-flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-bold {{ $color['bg'] }} {{ $color['text'] }} hover:shadow border {{ $color['border'] }} transition-all" 
+                                     title="Mở trang chi tiết danh sách khách hàng nhóm">
+                                     <iconify-icon icon="solar:users-group-two-rounded-bold" class="text-sm"></iconify-icon>
+                                     <span>{{ $group->customers_count }} khách hàng</span>
+                                     <iconify-icon icon="solar:arrow-right-bold" class="text-xs opacity-70"></iconify-icon>
+                                 </a>
                             </td>
                             <td class="py-3 text-center">
-                                <div class="flex items-center justify-center gap-1.5">
+                                <div class="flex items-center justify-center gap-2">
                                     <a href="{{ route('market-groups.show', $group->id) }}" 
                                         class="w-8 h-8 rounded-full bg-primary-50 hover:bg-primary-100 text-primary-600 flex items-center justify-center transition-colors" 
                                         title="Xem trang chi tiết tất cả khách hàng của nhóm">
@@ -335,19 +335,19 @@
                     <iconify-icon icon="solar:users-group-two-rounded-bold-duotone"></iconify-icon>
                 </div>
                 <div>
-                    <div class="flex items-center gap-2.5 flex-wrap">
+                    <div class="flex items-center gap-2 flex-wrap">
                         <h5 class="font-bold text-lg text-neutral-800 m-0">Chi tiết khách hàng: <span id="group-customers-title" class="text-primary-600"></span></h5>
-                        <span id="group-customers-total-count-badge" class="px-3 py-0.5 rounded-full text-xs font-bold bg-primary-100 text-primary-800 border border-primary-200 flex items-center gap-1">
+                        <span id="group-customers-total-count-badge" class="px-3 py-1 rounded-full text-xs font-bold bg-primary-100 text-primary-800 border border-primary-200 flex items-center gap-1">
                             <iconify-icon icon="solar:users-group-two-rounded-bold"></iconify-icon>
                             <span>0 khách hàng</span>
                         </span>
                     </div>
-                    <p class="text-xs text-neutral-500 m-0 mt-0.5">Bảng chi tiết toàn bộ thông tin khách hàng, phản ánh, ảnh chụp và công nợ thuộc nhóm thị trường</p>
+                    <p class="text-xs text-neutral-500 m-0 mt-1">Bảng chi tiết toàn bộ thông tin khách hàng, phản ánh, ảnh chụp và công nợ thuộc nhóm thị trường</p>
                 </div>
             </div>
             <div class="flex items-center gap-3">
                 <div class="relative">
-                    <input type="text" id="group-customers-search-input" onkeyup="filterGroupCustomersTable()" placeholder="Tìm nhanh khách hàng (tên, SĐT, địa chỉ, đối tác...)" class="form-control rounded-lg pl-9 pr-3 py-1.5 text-xs w-72 border-neutral-300">
+                    <input type="text" id="group-customers-search-input" onkeyup="filterGroupCustomersTable()" placeholder="Tìm nhanh khách hàng (tên, SĐT, địa chỉ, đối tác...)" class="form-control rounded-lg pl-9 pr-3 py-2 text-xs w-72 border-neutral-300">
                     <iconify-icon icon="lucide:search" class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm"></iconify-icon>
                 </div>
                 <button type="button" onclick="closeModal('modal-group-customers')" class="w-8 h-8 rounded-full bg-neutral-100 hover:bg-neutral-200 text-neutral-500 flex items-center justify-center text-lg leading-none">&times;</button>
@@ -358,7 +358,7 @@
         <div class="px-6 py-3 bg-neutral-50 border-b border-neutral-200 shrink-0">
             <form id="form-add-customers-to-group" method="POST" class="flex flex-wrap items-center gap-3">
                 @csrf
-                <div class="text-xs font-semibold text-neutral-700 flex items-center gap-1.5 shrink-0">
+                <div class="text-xs font-semibold text-neutral-700 flex items-center gap-2 shrink-0">
                     <iconify-icon icon="solar:user-plus-bold" class="text-primary-600 text-sm"></iconify-icon>
                     Gán khách hàng vào nhóm:
                 </div>
@@ -369,7 +369,7 @@
                         @endforeach
                     </select>
                 </div>
-                <button type="submit" class="btn btn-sm btn-primary rounded-lg px-4 py-2 text-xs font-semibold shrink-0 flex items-center gap-1.5 shadow-sm">
+                <button type="submit" class="btn btn-sm btn-primary rounded-lg px-4 py-2 text-xs font-semibold shrink-0 flex items-center gap-2 shadow-sm">
                     <iconify-icon icon="lucide:plus" class="text-sm"></iconify-icon> Thêm vào nhóm
                 </button>
             </form>
@@ -441,7 +441,7 @@
             <iconify-icon icon="lucide:x" class="text-2xl"></iconify-icon>
         </button>
         <img id="image-lightbox-img" src="" alt="Customer Photo" class="max-h-[82vh] max-w-full rounded-xl shadow-2xl border border-white/20 object-contain bg-black">
-        <div id="image-lightbox-caption" class="mt-3 text-white/90 text-xs md:text-sm font-medium bg-neutral-900/80 px-4 py-1.5 rounded-full border border-white/10 max-w-xl text-center truncate"></div>
+        <div id="image-lightbox-caption" class="mt-3 text-white/90 text-xs md:text-sm font-medium bg-neutral-900/80 px-4 py-2 rounded-full border border-white/10 max-w-xl text-center truncate"></div>
     </div>
 </div>
 
@@ -667,7 +667,7 @@ function renderGroupCustomersRows(customers) {
         // GPS Link
         let gpsHtml = '';
         if (c.latitude && c.longitude) {
-            gpsHtml = `<div class="mt-1"><a href="https://www.google.com/maps?q=${c.latitude},${c.longitude}" target="_blank" class="inline-flex items-center gap-1 text-[10px] text-primary-600 hover:text-primary-800 font-semibold bg-primary-50 px-1.5 py-0.5 rounded border border-primary-200 hover:bg-primary-100 transition-colors"><iconify-icon icon="solar:map-point-wave-bold" class="text-rose-500"></iconify-icon> Maps (${Number(c.latitude).toFixed(3)}, ${Number(c.longitude).toFixed(3)})</a></div>`;
+            gpsHtml = `<div class="mt-1"><a href="https://www.google.com/maps?q=${c.latitude},${c.longitude}" target="_blank" class="inline-flex items-center gap-1 text-[10px] text-primary-600 hover:text-primary-800 font-semibold bg-primary-50 px-2 py-1 rounded border border-primary-200 hover:bg-primary-100 transition-colors"><iconify-icon icon="solar:map-point-wave-bold" class="text-rose-500"></iconify-icon> Maps (${Number(c.latitude).toFixed(3)}, ${Number(c.longitude).toFixed(3)})</a></div>`;
         }
 
         // Photos thumbnails with lightbox
@@ -707,7 +707,7 @@ function renderGroupCustomersRows(customers) {
 
                 {{-- 3. Khách hàng --}}
                 <td class="py-3 px-3 sticky left-[150px] bg-white border-r border-neutral-200">
-                    <a href="/customers?overview_id=${c.id}" target="_blank" class="font-bold text-neutral-900 hover:text-primary-600 inline-flex items-center gap-1.5 leading-snug" title="Mở chi tiết khách hàng">
+                    <a href="/customers?overview_id=${c.id}" target="_blank" class="font-bold text-neutral-900 hover:text-primary-600 inline-flex items-center gap-2 leading-snug" title="Mở chi tiết khách hàng">
                         <span>${c.name}</span>
                         <iconify-icon icon="lucide:external-link" class="text-[11px] opacity-40 shrink-0"></iconify-icon>
                     </a>
@@ -715,7 +715,7 @@ function renderGroupCustomersRows(customers) {
 
                 {{-- 4. Trạng thái --}}
                 <td class="py-3 px-3 text-center">
-                    <span class="px-2.5 py-1 rounded text-[10px] font-bold border inline-block ${stClass}">${st}</span>
+                    <span class="px-3 py-1 rounded text-[10px] font-bold border inline-block ${stClass}">${st}</span>
                 </td>
 
                 {{-- 4. SĐT --}}
@@ -789,7 +789,7 @@ function renderGroupCustomersRows(customers) {
                     <form action="/market-groups/${currentActiveGroupId}/customers/${c.id}" method="POST" onsubmit="return confirm('Bỏ khách hàng ${c.name} khỏi nhóm này?')" class="inline">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" class="text-danger-500 hover:text-danger-700 p-1.5 rounded hover:bg-danger-50 transition-colors" title="Bỏ khỏi nhóm">
+                        <button type="submit" class="text-danger-500 hover:text-danger-700 p-1 rounded hover:bg-danger-50 transition-colors" title="Bỏ khỏi nhóm">
                             <iconify-icon icon="lucide:x-circle" class="text-lg"></iconify-icon>
                         </button>
                     </form>

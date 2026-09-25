@@ -20,7 +20,7 @@
 @if(isset($errors) && $errors->any())
 <div class="mb-4 p-4 rounded-xl border border-danger-200 bg-danger-50 text-danger-700">
     <div class="font-bold text-sm mb-1">Vui lòng kiểm tra lại:</div>
-    <ul class="list-disc list-inside text-xs space-y-0.5">
+    <ul class="list-disc list-inside text-xs space-y-1">
         @foreach($errors->all() as $error)
             <li>{{ $error }}</li>
         @endforeach
@@ -36,16 +36,16 @@
                 <iconify-icon icon="lucide:arrow-left" class="text-lg"></iconify-icon>
             </a>
             <div>
-                <div class="flex items-center gap-2.5 flex-wrap">
+                <div class="flex items-center gap-2 flex-wrap">
                     <span class="px-3 py-1 bg-amber-100 border border-amber-300 rounded-lg text-amber-950 font-black font-mono text-lg tracking-wider shadow-2xs">
                         {{ $vehicle->plate_number }}
                     </span>
                     <h2 class="text-lg sm:text-xl font-bold text-neutral-800">{{ $vehicle->name }}</h2>
-                    <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold {{ $vehicle->status === 'active' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-neutral-100 text-neutral-600' }}">
+                    <span class="px-3 py-1 rounded-full text-xs font-semibold {{ $vehicle->status === 'active' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-neutral-100 text-neutral-600' }}">
                         {{ $vehicle->status === 'active' ? 'Đang hoạt động' : ($vehicle->status === 'maintenance' ? 'Đang bảo dưỡng' : 'Tạm ngưng') }}
                     </span>
                 </div>
-                <div class="flex items-center gap-4 text-xs text-neutral-500 mt-1.5 flex-wrap">
+                <div class="flex items-center gap-4 text-xs text-neutral-500 mt-1 flex-wrap">
                     <span>Lái xe: <strong class="text-neutral-700">{{ $vehicle->driver_name ?: 'Chưa phân công' }}</strong> @if($vehicle->driver_phone)({{ $vehicle->driver_phone }})@endif</span>
                     <span>•</span>
                     <span>Nhiên liệu: <strong class="text-neutral-700 uppercase">{{ match($vehicle->fuel_type) { 'diesel' => 'Dầu Diesel', 'ron95' => 'Xăng RON 95', 'ron92' => 'Xăng RON 92', 'e5' => 'Xăng E5', default => $vehicle->fuel_type } }}</strong></span>
@@ -55,13 +55,13 @@
             </div>
         </div>
 
-        <div class="flex items-center gap-2.5 flex-wrap">
-            <button type="button" onclick="openAddFuelModal()" class="px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-xs font-semibold transition-all shadow-sm flex items-center gap-1.5">
+        <div class="flex items-center gap-2 flex-wrap">
+            <button type="button" onclick="openAddFuelModal()" class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-xs font-semibold transition-all shadow-sm flex items-center gap-2">
                 <iconify-icon icon="solar:gas-station-bold" class="text-base"></iconify-icon>
                 <span>+ Đổ Xăng / Dầu</span>
             </button>
 
-            <button type="button" onclick="openOilChangeModal()" class="px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-semibold transition-all shadow-sm flex items-center gap-1.5">
+            <button type="button" onclick="openOilChangeModal()" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-semibold transition-all shadow-sm flex items-center gap-2">
                 <iconify-icon icon="solar:wrench-bold" class="text-base"></iconify-icon>
                 <span>+ Ghi nhận Thay Dầu Máy</span>
             </button>
@@ -73,7 +73,7 @@
         {{-- Km hiện tại --}}
         <div class="bg-neutral-50 rounded-xl p-3 border border-neutral-100">
             <div class="text-[11px] text-neutral-500 font-medium">Số Km hiện tại</div>
-            <div class="text-lg font-bold text-neutral-900 font-mono mt-0.5">
+            <div class="text-lg font-bold text-neutral-900 font-mono mt-1">
                 {{ number_format($vehicle->current_km, 0, ',', '.') }} <span class="text-xs font-normal text-neutral-500">km</span>
             </div>
         </div>
@@ -95,10 +95,10 @@
                 <span>Mốc 5.000km thay dầu</span>
                 <span>{{ $oilPercent }}%</span>
             </div>
-            <div class="text-lg font-bold font-mono mt-0.5 {{ $oilTextColor }}">
+            <div class="text-lg font-bold font-mono mt-1 {{ $oilTextColor }}">
                 {{ number_format($kmSinceOil, 0, ',', '.') }} <span class="text-xs font-normal">/ {{ number_format($oilInterval, 0, ',', '.') }} km</span>
             </div>
-            <div class="text-[10px] mt-0.5 {{ $oilTextColor }}">
+            <div class="text-[10px] mt-1 {{ $oilTextColor }}">
                 @if($kmSinceOil >= $oilInterval)
                     Đã quá hạn {{ number_format($kmSinceOil - $oilInterval, 0, ',', '.') }} km! Cần thay ngay!
                 @else
@@ -110,10 +110,10 @@
         {{-- Lần thay dầu gần nhất --}}
         <div class="bg-neutral-50 rounded-xl p-3 border border-neutral-100">
             <div class="text-[11px] text-neutral-500 font-medium">Lần thay dầu gần nhất</div>
-            <div class="text-base font-bold text-neutral-800 font-mono mt-0.5">
+            <div class="text-base font-bold text-neutral-800 font-mono mt-1">
                 {{ $lastOilKm ? number_format($lastOilKm, 0, ',', '.') . ' km' : 'Chưa có' }}
             </div>
-            <div class="text-[10px] text-neutral-400 mt-0.5">
+            <div class="text-[10px] text-neutral-400 mt-1">
                 {{ $lastOilDate ? \Carbon\Carbon::parse($lastOilDate)->format('d/m/Y') : 'Từ đầu' }}
             </div>
         </div>
@@ -121,7 +121,7 @@
         {{-- Hiệu suất trung bình km/lít --}}
         <div class="bg-neutral-50 rounded-xl p-3 border border-neutral-100">
             <div class="text-[11px] text-neutral-500 font-medium">1 lít đi được TB</div>
-            <div class="text-lg font-bold text-primary-600 mt-0.5">
+            <div class="text-lg font-bold text-primary-600 mt-1">
                 {{ $avgKmPerLiter > 0 ? $avgKmPerLiter : '—' }} <span class="text-xs font-normal text-neutral-500">cây / lít</span>
             </div>
         </div>
@@ -129,7 +129,7 @@
         {{-- Tổng tiền đã đổ --}}
         <div class="bg-neutral-50 rounded-xl p-3 border border-neutral-100 col-span-2 sm:col-span-1">
             <div class="text-[11px] text-neutral-500 font-medium">Tổng tiền ({{ number_format($totalLiters, 1, ',', '.') }} lít)</div>
-            <div class="text-lg font-bold text-primary-600 mt-0.5 truncate">
+            <div class="text-lg font-bold text-primary-600 mt-1 truncate">
                 {{ number_format($totalExpense, 0, ',', '.') }} <span class="text-xs font-normal text-neutral-500">₫</span>
             </div>
         </div>
@@ -139,31 +139,31 @@
 {{-- Bộ lọc & Bảng nhật ký --}}
 <div class="bg-white border border-neutral-200 rounded-2xl shadow-2xs overflow-hidden mb-8">
     <div class="p-4 border-b border-neutral-200 flex flex-col md:flex-row md:items-center justify-between gap-3 bg-neutral-50/50">
-        <form method="GET" action="{{ route('vehicles.show', $vehicle->id) }}" class="flex flex-wrap items-center gap-2.5">
-            <div class="flex items-center gap-1.5 text-xs text-neutral-600">
+        <form method="GET" action="{{ route('vehicles.show', $vehicle->id) }}" class="flex flex-wrap items-center gap-2">
+            <div class="flex items-center gap-2 text-xs text-neutral-600">
                 <span>Từ ngày:</span>
                 <input type="date" name="from_date" value="{{ request('from_date') }}"
-                       class="px-2.5 py-1.5 text-xs border border-neutral-300 rounded-lg bg-white">
+                       class="px-3 py-2 text-xs border border-neutral-300 rounded-lg bg-white">
             </div>
 
-            <div class="flex items-center gap-1.5 text-xs text-neutral-600">
+            <div class="flex items-center gap-2 text-xs text-neutral-600">
                 <span>Đến ngày:</span>
                 <input type="date" name="to_date" value="{{ request('to_date') }}"
-                       class="px-2.5 py-1.5 text-xs border border-neutral-300 rounded-lg bg-white">
+                       class="px-3 py-2 text-xs border border-neutral-300 rounded-lg bg-white">
             </div>
 
-            <select name="log_type" class="px-2.5 py-1.5 text-xs border border-neutral-300 rounded-lg bg-white">
+            <select name="log_type" class="px-3 py-2 text-xs border border-neutral-300 rounded-lg bg-white">
                 <option value="">-- Tất cả loại --</option>
                 <option value="fuel" {{ request('log_type') == 'fuel' ? 'selected' : '' }}>Chỉ lần đổ dầu</option>
                 <option value="oil_change" {{ request('log_type') == 'oil_change' ? 'selected' : '' }}>Chỉ lần thay dầu</option>
             </select>
 
-            <button type="submit" class="px-3.5 py-1.5 bg-neutral-800 hover:bg-neutral-900 text-white rounded-lg text-xs font-medium inline-flex items-center gap-1">
+            <button type="submit" class="px-3 py-2 bg-neutral-800 hover:bg-neutral-900 text-white rounded-lg text-xs font-medium inline-flex items-center gap-1">
                 <iconify-icon icon="lucide:filter"></iconify-icon> Lọc
             </button>
 
             @if(request()->anyFilled(['from_date', 'to_date', 'log_type']))
-            <a href="{{ route('vehicles.show', $vehicle->id) }}" class="px-2.5 py-1.5 text-xs text-neutral-500 hover:text-neutral-700">
+            <a href="{{ route('vehicles.show', $vehicle->id) }}" class="px-3 py-2 text-xs text-neutral-500 hover:text-neutral-700">
                 Đặt lại
             </a>
             @endif
@@ -204,22 +204,22 @@
                     $oilKmClass = 'font-bold text-neutral-900';
                     if ($log->km_since_oil_change !== null) {
                         if ($log->km_since_oil_change >= 5000) {
-                            $oilKmClass = 'font-black text-rose-600 bg-rose-50 px-2 py-0.5 rounded';
+                            $oilKmClass = 'font-black text-rose-600 bg-rose-50 px-2 py-1 rounded';
                         } elseif ($log->km_since_oil_change >= 4500) {
-                            $oilKmClass = 'font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded';
+                            $oilKmClass = 'font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded';
                         }
                     }
                 @endphp
                 <tr class="hover:bg-neutral-50/80 transition-colors {{ $isOilChange ? 'bg-purple-50/40 font-semibold' : '' }}">
                     {{-- 1. Ngày tháng năm --}}
-                    <td class="py-2.5 px-3 border border-neutral-200 text-center font-mono whitespace-nowrap">
+                    <td class="py-3 px-3 border border-neutral-200 text-center font-mono whitespace-nowrap">
                         {{ \Carbon\Carbon::parse($log->date)->format('d/m/Y') }}
                     </td>
 
                     {{-- 2. Số Km --}}
-                    <td class="py-2.5 px-3 border border-neutral-200 text-center font-mono whitespace-nowrap">
+                    <td class="py-3 px-3 border border-neutral-200 text-center font-mono whitespace-nowrap">
                         @if($isOilChange)
-                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-purple-100 text-purple-700 border border-purple-300">
+                            <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-bold bg-purple-100 text-purple-700 border border-purple-300">
                                 <iconify-icon icon="solar:wrench-bold" class="text-xs"></iconify-icon>
                                 Thay dầu máy
                                 @if($log->odometer_km)
@@ -227,7 +227,7 @@
                                 @endif
                             </span>
                         @elseif($isMaintenance)
-                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-sky-100 text-sky-700 border border-sky-300">
+                            <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-bold bg-sky-100 text-sky-700 border border-sky-300">
                                 <iconify-icon icon="solar:settings-bold" class="text-xs"></iconify-icon>
                                 Bảo dưỡng
                             </span>
@@ -239,7 +239,7 @@
                     </td>
 
                     {{-- 3. Số lượng (lít) --}}
-                    <td class="py-2.5 px-3 border border-neutral-200 text-right font-mono whitespace-nowrap">
+                    <td class="py-3 px-3 border border-neutral-200 text-right font-mono whitespace-nowrap">
                         @if($log->liters !== null && $log->liters > 0)
                             {{ number_format($log->liters, 3, ',', '.') }}
                         @else
@@ -248,7 +248,7 @@
                     </td>
 
                     {{-- 4. Đơn giá --}}
-                    <td class="py-2.5 px-3 border border-neutral-200 text-right font-mono whitespace-nowrap">
+                    <td class="py-3 px-3 border border-neutral-200 text-right font-mono whitespace-nowrap">
                         @if($log->unit_price !== null && $log->unit_price > 0)
                             {{ number_format($log->unit_price, 0, ',', '.') }}
                         @else
@@ -257,7 +257,7 @@
                     </td>
 
                     {{-- 5. Số tiền = Đơn giá * số lít --}}
-                    <td class="py-2.5 px-3 border border-neutral-200 text-right font-mono whitespace-nowrap font-bold {{ $log->total_price > 0 ? 'text-neutral-900' : 'text-neutral-400' }}">
+                    <td class="py-3 px-3 border border-neutral-200 text-right font-mono whitespace-nowrap font-bold {{ $log->total_price > 0 ? 'text-neutral-900' : 'text-neutral-400' }}">
                         @if($log->total_price !== null && $log->total_price > 0)
                             {{ number_format($log->total_price, 0, ',', '.') }}
                         @else
@@ -266,7 +266,7 @@
                     </td>
 
                     {{-- 6. Tổng Số Km đổ dầu đi đc km --}}
-                    <td class="py-2.5 px-3 border border-neutral-200 text-right font-mono whitespace-nowrap font-semibold">
+                    <td class="py-3 px-3 border border-neutral-200 text-right font-mono whitespace-nowrap font-semibold">
                         @if($log->trip_km !== null && $log->trip_km > 0)
                             <span class="text-neutral-800">{{ number_format($log->trip_km, 0, ',', '.') }}</span>
                         @elseif($log->type === 'fuel' && $loop->last)
@@ -277,9 +277,9 @@
                     </td>
 
                     {{-- 7. 1 lít đi đc số cây = trip_km / liters --}}
-                    <td class="py-2.5 px-3 border border-neutral-200 text-right font-mono whitespace-nowrap font-bold">
+                    <td class="py-3 px-3 border border-neutral-200 text-right font-mono whitespace-nowrap font-bold">
                         @if($log->km_per_liter !== null && $log->km_per_liter > 0)
-                            <span class="text-primary-700 bg-primary-50/60 px-2 py-0.5 rounded">{{ number_format($log->km_per_liter, 2, ',', '.') }}</span>
+                            <span class="text-primary-700 bg-primary-50/60 px-2 py-1 rounded">{{ number_format($log->km_per_liter, 2, ',', '.') }}</span>
                         @elseif($log->type === 'fuel' && $loop->last)
                             <span class="text-[11px] text-neutral-400 italic">—</span>
                         @else
@@ -288,7 +288,7 @@
                     </td>
 
                     {{-- 8. Ghi chú 5.000km thay dầu --}}
-                    <td class="py-2.5 px-3 border border-neutral-200 text-right font-mono whitespace-nowrap">
+                    <td class="py-3 px-3 border border-neutral-200 text-right font-mono whitespace-nowrap">
                         @if($isOilChange)
                             <span class="text-purple-600 font-bold text-[11px]">Đã thay dầu (Mốc 0)</span>
                         @elseif($log->km_since_oil_change !== null)
@@ -299,12 +299,12 @@
                     </td>
 
                     {{-- 9. Ghi chú --}}
-                    <td class="py-2.5 px-3 border border-neutral-200 text-neutral-600">
+                    <td class="py-3 px-3 border border-neutral-200 text-neutral-600">
                         {{ $log->notes ?: '' }}
                     </td>
 
                     {{-- 10. Thao tác --}}
-                    <td class="py-2.5 px-2 border border-neutral-200 text-center whitespace-nowrap">
+                    <td class="py-3 px-2 border border-neutral-200 text-center whitespace-nowrap">
                         <div class="flex items-center justify-center gap-1">
                             <button type="button" onclick="openEditFuelModal({{ json_encode($log) }})" title="Chỉnh sửa dòng"
                                     class="p-1 text-neutral-400 hover:text-primary-600 hover:bg-neutral-100 rounded">

@@ -20,7 +20,7 @@
 @if(isset($errors) && $errors->any())
 <div class="mb-4 p-4 rounded-xl border border-danger-200 bg-danger-50 text-danger-700">
     <div class="font-bold text-sm mb-1">Vui lòng kiểm tra lại thông tin:</div>
-    <ul class="list-disc list-inside text-xs space-y-0.5">
+    <ul class="list-disc list-inside text-xs space-y-1">
         @foreach($errors->all() as $error)
             <li>{{ $error }}</li>
         @endforeach
@@ -30,49 +30,49 @@
 
 {{-- 4 Thẻ KPI thống kê đầu trang --}}
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-    <div class="bg-white border border-neutral-200 rounded-2xl p-4.5 shadow-2xs flex items-center gap-4">
+    <div class="bg-white border border-neutral-200 rounded-2xl p-5 shadow-2xs flex items-center gap-4">
         <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-2xl shrink-0">
             <iconify-icon icon="solar:bus-bold-duotone"></iconify-icon>
         </div>
         <div class="min-w-0">
             <div class="text-xs text-neutral-500 font-medium">Tổng phương tiện</div>
-            <div class="text-xl font-bold text-neutral-800 mt-0.5">
+            <div class="text-xl font-bold text-neutral-800 mt-1">
                 {{ $totalVehicles }} <span class="text-xs font-normal text-neutral-500">xe ({{ $activeVehicles }} hoạt động)</span>
             </div>
         </div>
     </div>
 
-    <div class="bg-white border border-neutral-200 rounded-2xl p-4.5 shadow-2xs flex items-center gap-4">
+    <div class="bg-white border border-neutral-200 rounded-2xl p-5 shadow-2xs flex items-center gap-4">
         <div class="w-12 h-12 rounded-xl {{ $needOilChangeCount > 0 ? 'bg-rose-50 text-rose-600 animate-pulse' : 'bg-emerald-50 text-emerald-600' }} flex items-center justify-center text-2xl shrink-0">
             <iconify-icon icon="solar:wrench-bold-duotone"></iconify-icon>
         </div>
         <div class="min-w-0">
             <div class="text-xs text-neutral-500 font-medium">Cần / Sắp thay dầu máy</div>
-            <div class="text-xl font-bold {{ $needOilChangeCount > 0 ? 'text-rose-600' : 'text-emerald-600' }} mt-0.5">
+            <div class="text-xl font-bold {{ $needOilChangeCount > 0 ? 'text-rose-600' : 'text-emerald-600' }} mt-1">
                 {{ $needOilChangeCount }} <span class="text-xs font-normal text-neutral-500">xe cần chú ý (mốc 5.000km)</span>
             </div>
         </div>
     </div>
 
-    <div class="bg-white border border-neutral-200 rounded-2xl p-4.5 shadow-2xs flex items-center gap-4">
+    <div class="bg-white border border-neutral-200 rounded-2xl p-5 shadow-2xs flex items-center gap-4">
         <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-2xl shrink-0">
             <iconify-icon icon="solar:gas-station-bold-duotone"></iconify-icon>
         </div>
         <div class="min-w-0">
             <div class="text-xs text-neutral-500 font-medium">Tổng nhiên liệu tiêu thụ</div>
-            <div class="text-xl font-bold text-neutral-800 mt-0.5">
+            <div class="text-xl font-bold text-neutral-800 mt-1">
                 {{ number_format($totalAllLiters, 1, ',', '.') }} <span class="text-xs font-normal text-neutral-500">lít</span>
             </div>
         </div>
     </div>
 
-    <div class="bg-white border border-neutral-200 rounded-2xl p-4.5 shadow-2xs flex items-center gap-4">
+    <div class="bg-white border border-neutral-200 rounded-2xl p-5 shadow-2xs flex items-center gap-4">
         <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-2xl shrink-0">
             <iconify-icon icon="solar:wallet-money-bold-duotone"></iconify-icon>
         </div>
         <div class="min-w-0">
             <div class="text-xs text-neutral-500 font-medium">Tổng tiền nhiên liệu</div>
-            <div class="text-xl font-bold text-primary-600 mt-0.5">
+            <div class="text-xl font-bold text-primary-600 mt-1">
                 {{ number_format($totalAllCost, 0, ',', '.') }} <span class="text-xs font-normal text-neutral-500">₫</span>
             </div>
         </div>
@@ -84,9 +84,9 @@
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <form method="GET" action="{{ route('vehicles.index') }}" class="flex flex-wrap items-center gap-3 flex-1">
             <div class="relative min-w-[240px] flex-1 max-w-md">
-                <iconify-icon icon="lucide:search" class="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400 text-base"></iconify-icon>
+                <iconify-icon icon="lucide:search" class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-base"></iconify-icon>
                 <input type="text" name="keyword" value="{{ request('keyword') }}" placeholder="Tìm biển số, tên xe, lái xe..."
-                       class="w-full pl-10 pr-3.5 py-2 text-sm border border-neutral-300 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-primary-500 bg-neutral-50/50">
+                       class="w-full pl-10 pr-3 py-2 text-sm border border-neutral-300 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-primary-500 bg-neutral-50/50">
             </div>
 
             <select name="status" class="py-2 px-3 text-sm border border-neutral-300 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-primary-500 bg-white">
@@ -104,7 +104,7 @@
                 <option value="e5" {{ request('fuel_type') == 'e5' ? 'selected' : '' }}>Xăng E5</option>
             </select>
 
-            <button type="submit" class="px-4 py-2 bg-neutral-800 hover:bg-neutral-900 text-white rounded-xl text-sm font-medium transition-colors inline-flex items-center gap-1.5 shadow-2xs">
+            <button type="submit" class="px-4 py-2 bg-neutral-800 hover:bg-neutral-900 text-white rounded-xl text-sm font-medium transition-colors inline-flex items-center gap-2 shadow-2xs">
                 <iconify-icon icon="lucide:filter" class="text-base"></iconify-icon>
                 Lọc
             </button>
@@ -118,7 +118,7 @@
         </form>
 
         <div>
-            <button type="button" onclick="openAddVehicleModal()" class="w-full sm:w-auto px-4.5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-xl text-sm transition-all shadow-sm hover:shadow flex items-center justify-center gap-2">
+            <button type="button" onclick="openAddVehicleModal()" class="w-full sm:w-auto px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-xl text-sm transition-all shadow-sm hover:shadow flex items-center justify-center gap-2">
                 <iconify-icon icon="lucide:plus" class="text-lg"></iconify-icon>
                 <span>Thêm phương tiện mới</span>
             </button>
@@ -164,24 +164,24 @@
             {{-- Header card: Biển số & Trạng thái --}}
             <div class="flex items-start justify-between gap-3 mb-3">
                 <div>
-                    <div class="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 border border-amber-300 rounded-lg text-amber-900 font-black font-mono text-base tracking-wider shadow-2xs">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 bg-amber-50 border border-amber-300 rounded-lg text-amber-900 font-black font-mono text-base tracking-wider shadow-2xs">
                         <iconify-icon icon="solar:shield-check-bold" class="text-amber-600 text-sm"></iconify-icon>
                         {{ $vehicle->plate_number }}
                     </div>
-                    <h3 class="font-bold text-neutral-800 text-base mt-2 flex items-center gap-1.5">
+                    <h3 class="font-bold text-neutral-800 text-base mt-2 flex items-center gap-2">
                         {{ $vehicle->name }}
                     </h3>
                 </div>
 
-                <div class="flex flex-col items-end gap-1.5">
+                <div class="flex flex-col items-end gap-2">
                     @if($vehicle->status === 'active')
-                        <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
-                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span> Hoạt động
+                        <span class="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span> Hoạt động
                         </span>
                     @elseif($vehicle->status === 'maintenance')
-                        <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">Bảo dưỡng</span>
+                        <span class="px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">Bảo dưỡng</span>
                     @else
-                        <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-neutral-100 text-neutral-600 border border-neutral-200">Tạm ngưng</span>
+                        <span class="px-3 py-1 rounded-full text-xs font-semibold bg-neutral-100 text-neutral-600 border border-neutral-200">Tạm ngưng</span>
                     @endif
 
                     <span class="text-[11px] text-neutral-400 font-medium uppercase tracking-wider">
@@ -193,7 +193,7 @@
             {{-- Thông tin Lái xe & Km hiện tại --}}
             <div class="bg-neutral-50/80 rounded-xl p-3 mb-4 space-y-2 text-xs border border-neutral-100">
                 <div class="flex items-center justify-between">
-                    <span class="text-neutral-500 flex items-center gap-1.5">
+                    <span class="text-neutral-500 flex items-center gap-2">
                         <iconify-icon icon="solar:user-circle-bold" class="text-neutral-400 text-sm"></iconify-icon>
                         Lái xe / Phụ trách:
                     </span>
@@ -206,7 +206,7 @@
                 </div>
 
                 <div class="flex items-center justify-between">
-                    <span class="text-neutral-500 flex items-center gap-1.5">
+                    <span class="text-neutral-500 flex items-center gap-2">
                         <iconify-icon icon="solar:speedometer-low-bold" class="text-neutral-400 text-sm"></iconify-icon>
                         Số Km hiện tại:
                     </span>
@@ -216,7 +216,7 @@
                 </div>
 
                 <div class="flex items-center justify-between">
-                    <span class="text-neutral-500 flex items-center gap-1.5">
+                    <span class="text-neutral-500 flex items-center gap-2">
                         <iconify-icon icon="solar:leaf-bold" class="text-neutral-400 text-sm"></iconify-icon>
                         Hiệu suất TB:
                     </span>
@@ -228,7 +228,7 @@
 
             {{-- Thanh theo dõi chu kỳ 5.000km thay dầu --}}
             <div class="bg-white border rounded-xl p-3 mb-4 {{ $badgeClass }}">
-                <div class="flex items-center justify-between text-xs mb-1.5">
+                <div class="flex items-center justify-between text-xs mb-1">
                     <span class="font-bold flex items-center gap-1 {{ $oilTextClass }}">
                         <iconify-icon icon="solar:drop-bold" class="text-sm"></iconify-icon>
                         Mốc 5.000km thay dầu
@@ -239,7 +239,7 @@
                 </div>
 
                 {{-- Progress bar --}}
-                <div class="w-full bg-neutral-200/80 rounded-full h-2 overflow-hidden mb-1.5">
+                <div class="w-full bg-neutral-200/80 rounded-full h-2 overflow-hidden mb-2">
                     <div class="{{ $oilAlertClass }} h-2 rounded-full transition-all duration-500" style="width: {{ $vehicle->oil_percent }}%"></div>
                 </div>
 
@@ -264,20 +264,20 @@
 
             {{-- Chi phí & Nhiên liệu đã đổ --}}
             <div class="grid grid-cols-2 gap-2 text-xs mb-4">
-                <div class="bg-neutral-50 p-2.5 rounded-lg border border-neutral-100">
+                <div class="bg-neutral-50 p-3 rounded-lg border border-neutral-100">
                     <div class="text-[11px] text-neutral-400">Đã đổ</div>
-                    <div class="font-bold text-neutral-800 mt-0.5">{{ number_format($vehicle->total_liters, 1, ',', '.') }} lít</div>
+                    <div class="font-bold text-neutral-800 mt-1">{{ number_format($vehicle->total_liters, 1, ',', '.') }} lít</div>
                 </div>
-                <div class="bg-neutral-50 p-2.5 rounded-lg border border-neutral-100">
+                <div class="bg-neutral-50 p-3 rounded-lg border border-neutral-100">
                     <div class="text-[11px] text-neutral-400">Tổng tiền</div>
-                    <div class="font-bold text-primary-600 mt-0.5">{{ number_format($vehicle->total_fuel_cost, 0, ',', '.') }} ₫</div>
+                    <div class="font-bold text-primary-600 mt-1">{{ number_format($vehicle->total_fuel_cost, 0, ',', '.') }} ₫</div>
                 </div>
             </div>
         </div>
 
         {{-- Actions --}}
         <div class="pt-3 border-t border-neutral-100 flex items-center justify-between gap-2">
-            <a href="{{ route('vehicles.show', $vehicle->id) }}" class="flex-1 py-2 px-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-xs font-semibold text-center transition-colors shadow-2xs flex items-center justify-center gap-1.5">
+            <a href="{{ route('vehicles.show', $vehicle->id) }}" class="flex-1 py-2 px-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-xs font-semibold text-center transition-colors shadow-2xs flex items-center justify-center gap-2">
                 <iconify-icon icon="solar:notes-bold" class="text-sm"></iconify-icon>
                 <span>Nhật ký đổ dầu & bảo dưỡng</span>
             </a>

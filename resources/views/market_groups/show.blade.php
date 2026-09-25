@@ -77,53 +77,53 @@
 
 {{-- Cards Thống kê nhóm (1 dòng duy nhất) --}}
 <div class="grid grid-cols-5 gap-3 mb-6">
-    <div class="bg-white border border-neutral-200 rounded-xl p-3.5 shadow-2xs flex items-center gap-3">
+    <div class="bg-white border border-neutral-200 rounded-xl p-4 shadow-2xs flex items-center gap-3">
         <div class="w-10 h-10 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center text-xl shrink-0">
             <iconify-icon icon="solar:users-group-two-rounded-bold-duotone"></iconify-icon>
         </div>
         <div class="min-w-0">
             <div class="text-[11px] text-neutral-500 font-medium truncate">Tổng khách hàng</div>
-            <div class="text-base sm:text-lg font-bold text-neutral-800 mt-0.5 truncate">{{ $totalCustomers }} <span class="text-[11px] font-normal text-neutral-500">khách</span></div>
+            <div class="text-base sm:text-lg font-bold text-neutral-800 mt-1 truncate">{{ $totalCustomers }} <span class="text-[11px] font-normal text-neutral-500">khách</span></div>
         </div>
     </div>
 
-    <div class="bg-white border border-neutral-200 rounded-xl p-3.5 shadow-2xs flex items-center gap-3">
+    <div class="bg-white border border-neutral-200 rounded-xl p-4 shadow-2xs flex items-center gap-3">
         <div class="w-10 h-10 rounded-lg bg-danger-50 text-danger-600 flex items-center justify-center text-xl shrink-0">
             <iconify-icon icon="solar:wallet-money-bold-duotone"></iconify-icon>
         </div>
         <div class="min-w-0">
             <div class="text-[11px] text-neutral-500 font-medium truncate">Tổng công nợ nhóm</div>
-            <div class="text-base sm:text-lg font-bold text-danger-600 mt-0.5 truncate">{{ number_format($totalDebt, 0, ',', '.') }} <span class="text-[11px] font-normal text-neutral-500">₫</span></div>
+            <div class="text-base sm:text-lg font-bold text-danger-600 mt-1 truncate">{{ number_format($totalDebt, 0, ',', '.') }} <span class="text-[11px] font-normal text-neutral-500">₫</span></div>
         </div>
     </div>
 
-    <div class="bg-white border border-neutral-200 rounded-xl p-3.5 shadow-2xs flex items-center gap-3">
+    <div class="bg-white border border-neutral-200 rounded-xl p-4 shadow-2xs flex items-center gap-3">
         <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl shrink-0">
             <iconify-icon icon="solar:card-recive-bold-duotone"></iconify-icon>
         </div>
         <div class="min-w-0">
             <div class="text-[11px] text-neutral-500 font-medium truncate" title="Đã thanh toán ({{ $dateLabel }})">Đã thanh toán ({{ $dateLabel }})</div>
-            <div class="text-base sm:text-lg font-bold text-emerald-600 mt-0.5 truncate">{{ number_format($totalPaid, 0, ',', '.') }} <span class="text-[11px] font-normal text-neutral-500">₫</span></div>
+            <div class="text-base sm:text-lg font-bold text-emerald-600 mt-1 truncate">{{ number_format($totalPaid, 0, ',', '.') }} <span class="text-[11px] font-normal text-neutral-500">₫</span></div>
         </div>
     </div>
 
-    <div class="bg-white border border-neutral-200 rounded-xl p-3.5 shadow-2xs flex items-center gap-3">
+    <div class="bg-white border border-neutral-200 rounded-xl p-4 shadow-2xs flex items-center gap-3">
         <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-xl shrink-0">
             <iconify-icon icon="solar:history-bold-duotone"></iconify-icon>
         </div>
         <div class="min-w-0">
             <div class="text-[11px] text-neutral-500 font-medium truncate" title="Cập nhật ({{ $dateLabel }})">Cập nhật ({{ $dateLabel }})</div>
-            <div class="text-base sm:text-lg font-bold text-amber-600 mt-0.5 truncate">{{ $totalCustomerUpdates ?? 0 }} <span class="text-[11px] font-normal text-neutral-500">lần / {{ $updatedCustomersCount ?? 0 }} KH</span></div>
+            <div class="text-base sm:text-lg font-bold text-amber-600 mt-1 truncate">{{ $totalCustomerUpdates ?? 0 }} <span class="text-[11px] font-normal text-neutral-500">lần / {{ $updatedCustomersCount ?? 0 }} KH</span></div>
         </div>
     </div>
 
-    <div class="bg-white border border-neutral-200 rounded-xl p-3.5 shadow-2xs flex items-center gap-3">
+    <div class="bg-white border border-neutral-200 rounded-xl p-4 shadow-2xs flex items-center gap-3">
         <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xl shrink-0">
             <iconify-icon icon="solar:user-id-bold-duotone"></iconify-icon>
         </div>
         <div class="min-w-0">
             <div class="text-[11px] text-neutral-500 font-medium truncate">Nhân viên phụ trách</div>
-            <div class="text-base sm:text-lg font-bold text-neutral-800 mt-0.5 truncate">{{ $marketGroup->users->count() }} <span class="text-[11px] font-normal text-neutral-500">nhân sự</span></div>
+            <div class="text-base sm:text-lg font-bold text-neutral-800 mt-1 truncate">{{ $marketGroup->users->count() }} <span class="text-[11px] font-normal text-neutral-500">nhân sự</span></div>
         </div>
     </div>
 </div>
