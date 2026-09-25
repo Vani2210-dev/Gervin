@@ -6,6 +6,9 @@
 
 @section('content')
 
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
 <style>
     .stats-custom-grid {
         display: grid;
@@ -203,11 +206,44 @@
                                     <span class="font-semibold text-neutral-800">{{ $c->customer_code ?? '—' }}</span>
                                 </td>
                                 <td>
-                                    <div class="font-medium text-neutral-800">{{ $c->name }}</div>
+                                    <div class="font-bold text-neutral-800">{{ $c->name }}</div>
+                                    <div class="flex items-center gap-1.5 mt-1 flex-wrap">
+                                        @if($c->status)
+                                            @php
+                                                $statusColor = match($c->status) {
+                                                    'Đang đặt hàng' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                                                    'Không đặt GERVIN' => 'bg-rose-50 text-rose-700 border-rose-200',
+                                                    'Khách hàng mới tiềm năng' => 'bg-blue-50 text-blue-700 border-blue-200',
+                                                    'Tạm dừng hợp tác' => 'bg-amber-50 text-amber-700 border-amber-200',
+                                                    default => 'bg-neutral-100 text-neutral-600 border-neutral-200'
+                                                };
+                                            @endphp
+                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold border {{ $statusColor }}">
+                                                {{ $c->status }}
+                                            </span>
+                                        @endif
+                                        @if($c->partner_competitors)
+                                            <span class="text-[10px] text-neutral-500 bg-neutral-100 px-1.5 py-0.5 rounded" title="Đối tác: {{ $c->partner_competitors }}">
+                                                <iconify-icon icon="lucide:handshake" class="inline text-xs mr-0.5"></iconify-icon>{{ Str::limit($c->partner_competitors, 20) }}
+                                            </span>
+                                        @endif
+                                    </div>
                                 </td>
                                 <td>{{ $c->phone ?: '—' }}</td>
                                 <td>
-                                    <div class="max-w-[200px] truncate" title="{{ $c->address }}">{{ $c->address ?: '—' }}</div>
+                                    @php
+                                        $fullAddress = implode(', ', array_filter([$c->address, $c->ward, $c->province]));
+                                    @endphp
+                                    <div class="flex items-start gap-1">
+                                        <div class="max-w-[200px] truncate text-neutral-700" title="{{ $fullAddress ?: ($c->address ?: '—') }}">
+                                            {{ $fullAddress ?: ($c->address ?: '—') }}
+                                        </div>
+                                        @if($c->latitude && $c->longitude)
+                                            <a href="https://www.google.com/maps?q={{ $c->latitude }},{{ $c->longitude }}" target="_blank" class="text-primary-600 hover:text-primary-800 shrink-0" title="Mở bản đồ toạ độ: {{ $c->latitude }}, {{ $c->longitude }}">
+                                                <iconify-icon icon="solar:map-point-bold" class="text-sm text-red-500"></iconify-icon>
+                                            </a>
+                                        @endif
+                                    </div>
                                 </td>
                                 <td>
                                     <div class="max-w-[200px] truncate text-neutral-600" title="{{ $c->policy }}">{{ $c->policy ?: '—' }}</div>
@@ -250,6 +286,17 @@
                                             data-name="{{ $c->name }}"
                                             data-phone="{{ $c->phone ?? '' }}"
                                             data-address="{{ $c->address ?? '' }}"
+                                            data-latitude="{{ $c->latitude ?? '' }}"
+                                            data-longitude="{{ $c->longitude ?? '' }}"
+                                            data-province="{{ $c->province ?? '' }}"
+                                            data-ward="{{ $c->ward ?? '' }}"
+                                            data-status="{{ $c->status ?? 'Đang đặt hàng' }}"
+                                            data-partner-competitors="{{ $c->partner_competitors ?? '' }}"
+                                            data-feedback="{{ $c->feedback ?? '' }}"
+                                            data-personality="{{ $c->personality ?? '' }}"
+                                            data-workshop-scale="{{ $c->workshop_scale ?? '' }}"
+                                            data-customer-proposal="{{ $c->customer_proposal ?? '' }}"
+                                            data-sale-proposal="{{ $c->sale_proposal ?? '' }}"
                                             data-debt="{{ $c->debt ?? 0 }}"
                                             data-debt-limit="{{ $c->debt_limit ?? 0 }}"
                                             data-policy="{{ $c->policy ?? '' }}"
@@ -293,58 +340,182 @@
 </div>
 
 {{-- Modal Thêm khách hàng --}}
+{{-- Modal Thêm khách hàng --}}
 @can('add customer')
-<x-modal name="create-customer-modal" maxWidth="lg">
+<x-modal name="create-customer-modal" maxWidth="5xl">
     <div class="px-6 py-4 border-b border-neutral-200 flex items-center justify-between shrink-0 bg-white">
-        <h5 class="font-semibold text-base">Thêm mới khách hàng</h5>
-        <button type="button" onclick="closeModal('create-customer-modal')" class="text-secondary-light hover:text-neutral-700 text-xl leading-none">&times;</button>
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center text-lg">
+                <iconify-icon icon="solar:user-plus-bold-duotone"></iconify-icon>
+            </div>
+            <div>
+                <h5 class="font-bold text-base text-neutral-800 m-0">Thêm mới khách hàng</h5>
+                <p class="text-[11px] text-neutral-400 m-0">Nhập đầy đủ thông tin, định vị bản đồ và hồ sơ thị trường của khách hàng</p>
+            </div>
+        </div>
+        <button type="button" onclick="closeModal('create-customer-modal')" class="text-neutral-400 hover:text-neutral-700 text-xl leading-none">&times;</button>
     </div>
     <form action="{{ route('customers.store') }}" method="POST" class="flex flex-col overflow-hidden max-h-[calc(95vh-65px)]">
         @csrf
-        <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4 overflow-y-auto">
-            <div class="form-group md:col-span-2">
-                <label class="form-label font-semibold text-sm text-neutral-600">Mã khách hàng</label>
-                <input type="text" name="customer_code" class="form-control rounded-lg" placeholder="Ví dụ: KH00001 (để trống hệ thống tự sinh)" value="{{ old('customer_code') }}">
-            </div>
-            <div class="form-group md:col-span-2">
-                <label class="form-label font-semibold text-sm text-neutral-600">Tên khách hàng <span class="text-danger-500">*</span></label>
-                <input type="text" name="name" class="form-control rounded-lg" placeholder="Nhập tên khách hàng" value="{{ old('name') }}" required>
-            </div>
-            <div class="form-group">
-                <label class="form-label font-semibold text-sm text-neutral-600">Số điện thoại</label>
-                <input type="text" name="phone" class="form-control rounded-lg" placeholder="Nhập số điện thoại" value="{{ old('phone') }}">
-            </div>
-            <div class="form-group">
-                <label class="form-label font-semibold text-sm text-neutral-600">Công nợ</label>
-                <input type="number" name="initial_debt" class="form-control rounded-lg" placeholder="Ví dụ: 10000000" min="0" value="{{ old('initial_debt') }}">
-            </div>
-            <div class="form-group md:col-span-2">
-                <label class="form-label font-semibold text-sm text-neutral-600">Định mức công nợ</label>
-                <input type="number" name="debt_limit" class="form-control rounded-lg" placeholder="Ví dụ: 50000000" min="0" value="{{ old('debt_limit') }}">
-            </div>
-            <div class="form-group md:col-span-2">
-                <label class="form-label font-semibold text-sm text-neutral-600">Địa chỉ</label>
-                <textarea name="address" class="form-control rounded-lg" placeholder="Nhập địa chỉ" rows="3">{{ old('address') }}</textarea>
-            </div>
-            <div class="form-group md:col-span-2">
-                <label class="form-label font-semibold text-sm text-neutral-600">Chính sách KH</label>
-                <textarea name="policy" class="form-control rounded-lg" placeholder="Nhập chính sách khách hàng" rows="3">{{ old('policy') }}</textarea>
-            </div>
-            <div class="form-group md:col-span-2">
-                <label class="form-label font-semibold text-sm text-neutral-600">Nhóm thị trường</label>
-                <select name="market_group_id" class="form-select rounded-lg w-full">
-                    <option value="">-- Chưa chọn nhóm --</option>
-                    @foreach($marketGroups as $mg)
-                        <option value="{{ $mg->id }}" {{ old('market_group_id') == $mg->id ? 'selected' : '' }}>
-                            {{ $mg->name }} ({{ $mg->code }})
-                        </option>
-                    @endforeach
-                </select>
+        <div class="p-6 overflow-y-auto">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                {{-- Cột 1: Thông tin cơ bản, Địa chỉ & Bản đồ Leaflet --}}
+                <div class="lg:col-span-6 space-y-3.5">
+                    <div class="border-b border-neutral-200 pb-1.5 flex items-center gap-2">
+                        <iconify-icon icon="solar:user-id-bold-duotone" class="text-primary-600 text-lg"></iconify-icon>
+                        <h6 class="font-bold text-xs uppercase tracking-wider text-neutral-700 m-0">Thông tin cơ bản & Vị trí</h6>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="form-label font-semibold text-xs text-neutral-600 mb-1">Mã khách hàng</label>
+                            <input type="text" name="customer_code" class="form-control rounded-lg text-xs" placeholder="Tự sinh nếu để trống" value="{{ old('customer_code') }}">
+                        </div>
+                        <div>
+                            <label class="form-label font-semibold text-xs text-neutral-600 mb-1">Nhóm thị trường</label>
+                            <select name="market_group_id" class="form-select rounded-lg text-xs w-full">
+                                <option value="">-- Chọn nhóm --</option>
+                                @foreach($marketGroups as $mg)
+                                    <option value="{{ $mg->id }}" {{ old('market_group_id') == $mg->id ? 'selected' : '' }}>
+                                        {{ $mg->name }} ({{ $mg->code }})
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="form-label font-semibold text-xs text-neutral-600 mb-1">Tên khách hàng <span class="text-danger-500">*</span></label>
+                            <input type="text" name="name" class="form-control rounded-lg text-xs" placeholder="Tên khách hàng / Xưởng" value="{{ old('name') }}" required>
+                        </div>
+                        <div>
+                            <label class="form-label font-semibold text-xs text-neutral-600 mb-1">Số điện thoại</label>
+                            <input type="text" name="phone" class="form-control rounded-lg text-xs" placeholder="Nhập số điện thoại" value="{{ old('phone') }}">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="form-label font-semibold text-xs text-neutral-600 mb-1">Tỉnh / Thành phố</label>
+                            <input type="text" name="province" id="create_province" class="form-control rounded-lg text-xs" placeholder="Ví dụ: Hà Nội, Bắc Ninh..." value="{{ old('province') }}">
+                        </div>
+                        <div>
+                            <label class="form-label font-semibold text-xs text-neutral-600 mb-1">Quận / Huyện / Xã</label>
+                            <input type="text" name="ward" id="create_ward" class="form-control rounded-lg text-xs" placeholder="Ví dụ: Thạch Thất, Hữu Bằng..." value="{{ old('ward') }}">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="form-label font-semibold text-xs text-neutral-600 mb-1">Địa chỉ chi tiết</label>
+                        <input type="text" name="address" id="create_address" class="form-control rounded-lg text-xs" placeholder="Ví dụ: Số 12 Đội 5, Làng nghề..." value="{{ old('address') }}">
+                    </div>
+
+                    {{-- Leaflet Map & GPS Location Picker --}}
+                    <div class="bg-neutral-50 rounded-xl p-3 border border-neutral-200 space-y-2">
+                        <div class="flex items-center justify-between flex-wrap gap-2">
+                            <div class="flex items-center gap-1.5">
+                                <iconify-icon icon="solar:map-point-wave-bold" class="text-primary-600 text-base"></iconify-icon>
+                                <span class="font-bold text-xs text-neutral-800">Định vị bản đồ (Leaflet)</span>
+                            </div>
+                            <button type="button" onclick="getCreateCurrentLocation()" id="btn-create-gps" class="btn btn-xs bg-primary-50 text-primary-700 hover:bg-primary-100 border border-primary-200 rounded-lg px-2.5 py-1 text-[11px] font-semibold flex items-center gap-1">
+                                <iconify-icon icon="lucide:crosshair" class="text-xs"></iconify-icon> Lấy vị trí hiện tại
+                            </button>
+                        </div>
+                        
+                        <input type="hidden" name="latitude" id="create_latitude" value="{{ old('latitude') }}">
+                        <input type="hidden" name="longitude" id="create_longitude" value="{{ old('longitude') }}">
+
+                        <div id="create-customer-map" style="height: 180px; width: 100%; border-radius: 8px;" class="border border-neutral-300"></div>
+
+                        <div class="flex items-center justify-between text-[11px] text-neutral-500 pt-0.5">
+                            <span>Toạ độ: <strong id="create_coords_display" class="text-neutral-700 font-mono">Chưa ghim vị trí</strong></span>
+                            <span class="text-neutral-400 italic">Click hoặc kéo ghim để chỉnh toạ độ</span>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Cột 2: Hồ sơ thị trường, đối tác & CSKH --}}
+                <div class="lg:col-span-6 space-y-3.5">
+                    <div class="border-b border-neutral-200 pb-1.5 flex items-center gap-2">
+                        <iconify-icon icon="solar:chart-square-bold-duotone" class="text-primary-600 text-lg"></iconify-icon>
+                        <h6 class="font-bold text-xs uppercase tracking-wider text-neutral-700 m-0">Hồ sơ thị trường & CSKH</h6>
+                    </div>
+
+                    <div>
+                        <label class="form-label font-semibold text-xs text-neutral-600 mb-1">Tình trạng hợp tác</label>
+                        <select name="status" class="form-select rounded-lg text-xs w-full">
+                            <option value="Đang đặt hàng" {{ old('status') == 'Đang đặt hàng' ? 'selected' : '' }}>Đang đặt hàng</option>
+                            <option value="Không đặt GERVIN" {{ old('status') == 'Không đặt GERVIN' ? 'selected' : '' }}>Không đặt GERVIN</option>
+                            <option value="Khách hàng mới tiềm năng" {{ old('status') == 'Khách hàng mới tiềm năng' ? 'selected' : '' }}>Khách hàng mới tiềm năng</option>
+                            <option value="Tạm dừng hợp tác" {{ old('status') == 'Tạm dừng hợp tác' ? 'selected' : '' }}>Tạm dừng hợp tác</option>
+                            <option value="Khác" {{ old('status') == 'Khác' ? 'selected' : '' }}>Khác</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="form-label font-semibold text-xs text-neutral-600 mb-0">Đối tác KH đang hợp tác</label>
+                            <span class="text-[10px] text-neutral-400">Chọn nhanh hoặc nhập thêm:</span>
+                        </div>
+                        <div class="flex items-center gap-1.5 flex-wrap mb-1.5" id="create-partner-pills">
+                            <button type="button" onclick="togglePartnerTag('create-partner-pills', 'create_partner_competitors', 'ALD')" data-partner="ALD" class="px-2 py-0.5 rounded text-[11px] font-semibold bg-neutral-100 text-neutral-700 border border-neutral-200 hover:border-primary-400 transition-all">+ ALD</button>
+                            <button type="button" onclick="togglePartnerTag('create-partner-pills', 'create_partner_competitors', 'LIVAS')" data-partner="LIVAS" class="px-2 py-0.5 rounded text-[11px] font-semibold bg-neutral-100 text-neutral-700 border border-neutral-200 hover:border-primary-400 transition-all">+ LIVAS</button>
+                            <button type="button" onclick="togglePartnerTag('create-partner-pills', 'create_partner_competitors', 'GERVIN')" data-partner="GERVIN" class="px-2 py-0.5 rounded text-[11px] font-semibold bg-neutral-100 text-neutral-700 border border-neutral-200 hover:border-primary-400 transition-all">+ GERVIN</button>
+                            <button type="button" onclick="togglePartnerTag('create-partner-pills', 'create_partner_competitors', 'ĐỖ THÀNH ĐẠT')" data-partner="ĐỖ THÀNH ĐẠT" class="px-2 py-0.5 rounded text-[11px] font-semibold bg-neutral-100 text-neutral-700 border border-neutral-200 hover:border-primary-400 transition-all">+ ĐỖ THÀNH ĐẠT</button>
+                        </div>
+                        <input type="text" name="partner_competitors" id="create_partner_competitors" class="form-control rounded-lg text-xs" placeholder="Ví dụ: ALD, LIVAS, GERVIN..." value="{{ old('partner_competitors') }}">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="form-label font-semibold text-xs text-neutral-600 mb-1">Quy mô xưởng</label>
+                            <input type="text" name="workshop_scale" class="form-control rounded-lg text-xs" placeholder="Ví dụ: 300m2, 5 thợ, 2 máy dán..." value="{{ old('workshop_scale') }}">
+                        </div>
+                        <div>
+                            <label class="form-label font-semibold text-xs text-neutral-600 mb-1">Tính cách khách hàng</label>
+                            <input type="text" name="personality" class="form-control rounded-lg text-xs" placeholder="Ví dụ: Kỹ tính, cẩn thận đường keo..." value="{{ old('personality') }}">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="form-label font-semibold text-xs text-neutral-600 mb-1">Phản ánh khách hàng về Gervin</label>
+                        <textarea name="feedback" rows="2" class="form-control rounded-lg text-xs" placeholder="Ghi nhận phản hồi về chất lượng nẹp, keo PUR, tiến độ giao hàng...">{{ old('feedback') }}</textarea>
+                    </div>
+
+                    <div>
+                        <label class="form-label font-semibold text-xs text-neutral-600 mb-1">Đề xuất Khách hàng (nếu có)</label>
+                        <textarea name="customer_proposal" rows="2" class="form-control rounded-lg text-xs" placeholder="Mong muốn, yêu cầu hoặc đề xuất từ phía khách hàng...">{{ old('customer_proposal') }}</textarea>
+                    </div>
+
+                    <div>
+                        <label class="form-label font-semibold text-xs text-neutral-600 mb-1">Đề xuất Sale (CSKH / kéo khách / mở mới)</label>
+                        <textarea name="sale_proposal" rows="2" class="form-control rounded-lg text-xs" placeholder="Kế hoạch chăm sóc, kéo khách quay lại hoặc mở mới...">{{ old('sale_proposal') }}</textarea>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 pt-1">
+                        <div>
+                            <label class="form-label font-semibold text-xs text-neutral-600 mb-1">Công nợ ban đầu (₫)</label>
+                            <input type="number" name="initial_debt" min="0" class="form-control rounded-lg text-xs" placeholder="Ví dụ: 10000000" value="{{ old('initial_debt') }}">
+                        </div>
+                        <div>
+                            <label class="form-label font-semibold text-xs text-neutral-600 mb-1">Định mức công nợ (₫)</label>
+                            <input type="number" name="debt_limit" min="0" class="form-control rounded-lg text-xs" placeholder="Ví dụ: 50000000" value="{{ old('debt_limit') }}">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="form-label font-semibold text-xs text-neutral-600 mb-1">Chính sách khách hàng</label>
+                        <input type="text" name="policy" class="form-control rounded-lg text-xs" placeholder="Chính sách giá, chiết khấu, điều khoản thanh toán..." value="{{ old('policy') }}">
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="px-6 py-4 border-t border-neutral-200 flex gap-3 shrink-0 bg-white">
-            <button type="submit" class="btn btn-primary px-5 py-2.5 rounded-lg">Lưu lại</button>
-            <button type="button" onclick="closeModal('create-customer-modal')" class="btn btn-neutral px-5 py-2.5 rounded-lg">Hủy</button>
+        <div class="px-6 py-4 border-t border-neutral-200 flex justify-end gap-3 shrink-0 bg-white">
+            <button type="button" onclick="closeModal('create-customer-modal')" class="btn btn-neutral px-5 py-2 text-xs rounded-lg font-semibold">Hủy</button>
+            <button type="submit" class="btn btn-primary px-6 py-2 text-xs rounded-lg font-semibold flex items-center gap-1.5">
+                <iconify-icon icon="lucide:check" class="text-sm"></iconify-icon> Lưu khách hàng
+            </button>
         </div>
     </form>
 </x-modal>
@@ -352,64 +523,383 @@
 
 {{-- Modal Sửa khách hàng --}}
 @can('edit customer')
-<x-modal name="edit-customer-modal" maxWidth="lg">
+<x-modal name="edit-customer-modal" maxWidth="5xl">
     <div class="px-6 py-4 border-b border-neutral-200 flex items-center justify-between shrink-0 bg-white">
-        <h5 class="font-semibold text-base">Chỉnh sửa khách hàng</h5>
-        <button type="button" onclick="closeModal('edit-customer-modal')" class="text-secondary-light hover:text-neutral-700 text-xl leading-none">&times;</button>
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg">
+                <iconify-icon icon="solar:pen-new-square-bold-duotone"></iconify-icon>
+            </div>
+            <div>
+                <h5 class="font-bold text-base text-neutral-800 m-0">Chỉnh sửa khách hàng</h5>
+                <p class="text-[11px] text-neutral-400 m-0">Cập nhật thông tin chi tiết, bản đồ toạ độ và hồ sơ thị trường</p>
+            </div>
+        </div>
+        <button type="button" onclick="closeModal('edit-customer-modal')" class="text-neutral-400 hover:text-neutral-700 text-xl leading-none">&times;</button>
     </div>
     <form id="edit-customer-form" action="" method="POST" class="flex flex-col overflow-hidden max-h-[calc(95vh-65px)]">
         @csrf @method('PUT')
-        <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4 overflow-y-auto">
-            <div class="form-group md:col-span-2">
-                <label class="form-label font-semibold text-sm text-neutral-600">Mã khách hàng</label>
-                <input type="text" id="edit_customer_code" name="customer_code" class="form-control rounded-lg">
-            </div>
-            <div class="form-group md:col-span-2">
-                <label class="form-label font-semibold text-sm text-neutral-600">Tên khách hàng <span class="text-danger-500">*</span></label>
-                <input type="text" id="edit_name" name="name" class="form-control rounded-lg" placeholder="Nhập tên khách hàng" required>
-            </div>
-            <div class="form-group">
-                <label class="form-label font-semibold text-sm text-neutral-600">Số điện thoại</label>
-                <input type="text" id="edit_phone" name="phone" class="form-control rounded-lg" placeholder="Nhập số điện thoại">
-            </div>
-            <div class="form-group">
-                <label class="form-label font-semibold text-sm text-neutral-600">Công nợ</label>
-                <input type="number" id="edit_initial_debt" name="initial_debt" class="form-control rounded-lg" placeholder="Ví dụ: 10000000" min="0">
-            </div>
-            <div class="form-group md:col-span-2">
-                <label class="form-label font-semibold text-sm text-neutral-600">Định mức công nợ</label>
-                <input type="number" id="edit_debt_limit" name="debt_limit" class="form-control rounded-lg" placeholder="Ví dụ: 50000000" min="0">
-            </div>
-            <div class="form-group md:col-span-2">
-                <label class="form-label font-semibold text-sm text-neutral-600">Địa chỉ</label>
-                <textarea id="edit_address" name="address" class="form-control rounded-lg" placeholder="Nhập địa chỉ" rows="3"></textarea>
-            </div>
-            <div class="form-group md:col-span-2">
-                <label class="form-label font-semibold text-sm text-neutral-600">Chính sách KH</label>
-                <textarea id="edit_policy" name="policy" class="form-control rounded-lg" placeholder="Nhập chính sách khách hàng" rows="3"></textarea>
-            </div>
-            <div class="form-group md:col-span-2">
-                <label class="form-label font-semibold text-sm text-neutral-600">Nhóm thị trường</label>
-                <select id="edit_market_group_id" name="market_group_id" class="form-select rounded-lg w-full">
-                    <option value="">-- Chưa chọn nhóm --</option>
-                    @foreach($marketGroups as $mg)
-                        <option value="{{ $mg->id }}">
-                            {{ $mg->name }} ({{ $mg->code }})
-                        </option>
-                    @endforeach
-                </select>
+        <div class="p-6 overflow-y-auto">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                {{-- Cột 1: Thông tin cơ bản, Địa chỉ & Bản đồ Leaflet --}}
+                <div class="lg:col-span-6 space-y-3.5">
+                    <div class="border-b border-neutral-200 pb-1.5 flex items-center gap-2">
+                        <iconify-icon icon="solar:user-id-bold-duotone" class="text-primary-600 text-lg"></iconify-icon>
+                        <h6 class="font-bold text-xs uppercase tracking-wider text-neutral-700 m-0">Thông tin cơ bản & Vị trí</h6>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="form-label font-semibold text-xs text-neutral-600 mb-1">Mã khách hàng</label>
+                            <input type="text" id="edit_customer_code" name="customer_code" class="form-control rounded-lg text-xs">
+                        </div>
+                        <div>
+                            <label class="form-label font-semibold text-xs text-neutral-600 mb-1">Nhóm thị trường</label>
+                            <select id="edit_market_group_id" name="market_group_id" class="form-select rounded-lg text-xs w-full">
+                                <option value="">-- Chưa chọn nhóm --</option>
+                                @foreach($marketGroups as $mg)
+                                    <option value="{{ $mg->id }}">
+                                        {{ $mg->name }} ({{ $mg->code }})
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="form-label font-semibold text-xs text-neutral-600 mb-1">Tên khách hàng <span class="text-danger-500">*</span></label>
+                            <input type="text" id="edit_name" name="name" class="form-control rounded-lg text-xs" placeholder="Nhập tên khách hàng" required>
+                        </div>
+                        <div>
+                            <label class="form-label font-semibold text-xs text-neutral-600 mb-1">Số điện thoại</label>
+                            <input type="text" id="edit_phone" name="phone" class="form-control rounded-lg text-xs" placeholder="Nhập số điện thoại">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="form-label font-semibold text-xs text-neutral-600 mb-1">Tỉnh / Thành phố</label>
+                            <input type="text" id="edit_province" name="province" class="form-control rounded-lg text-xs" placeholder="Ví dụ: Hà Nội, Bắc Ninh...">
+                        </div>
+                        <div>
+                            <label class="form-label font-semibold text-xs text-neutral-600 mb-1">Quận / Huyện / Xã</label>
+                            <input type="text" id="edit_ward" name="ward" class="form-control rounded-lg text-xs" placeholder="Ví dụ: Thạch Thất, Hữu Bằng...">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="form-label font-semibold text-xs text-neutral-600 mb-1">Địa chỉ chi tiết</label>
+                        <input type="text" id="edit_address" name="address" class="form-control rounded-lg text-xs" placeholder="Nhập địa chỉ chi tiết">
+                    </div>
+
+                    {{-- Leaflet Map & GPS Location Picker --}}
+                    <div class="bg-neutral-50 rounded-xl p-3 border border-neutral-200 space-y-2">
+                        <div class="flex items-center justify-between flex-wrap gap-2">
+                            <div class="flex items-center gap-1.5">
+                                <iconify-icon icon="solar:map-point-wave-bold" class="text-primary-600 text-base"></iconify-icon>
+                                <span class="font-bold text-xs text-neutral-800">Định vị bản đồ (Leaflet)</span>
+                            </div>
+                            <button type="button" onclick="getEditCurrentLocation()" id="btn-edit-gps" class="btn btn-xs bg-primary-50 text-primary-700 hover:bg-primary-100 border border-primary-200 rounded-lg px-2.5 py-1 text-[11px] font-semibold flex items-center gap-1">
+                                <iconify-icon icon="lucide:crosshair" class="text-xs"></iconify-icon> Lấy vị trí hiện tại
+                            </button>
+                        </div>
+                        
+                        <input type="hidden" name="latitude" id="edit_latitude">
+                        <input type="hidden" name="longitude" id="edit_longitude">
+
+                        <div id="edit-customer-map" style="height: 180px; width: 100%; border-radius: 8px;" class="border border-neutral-300"></div>
+
+                        <div class="flex items-center justify-between text-[11px] text-neutral-500 pt-0.5">
+                            <span>Toạ độ: <strong id="edit_coords_display" class="text-neutral-700 font-mono">Chưa ghim vị trí</strong></span>
+                            <span class="text-neutral-400 italic">Click hoặc kéo ghim để chỉnh toạ độ</span>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Cột 2: Hồ sơ thị trường, đối tác & CSKH --}}
+                <div class="lg:col-span-6 space-y-3.5">
+                    <div class="border-b border-neutral-200 pb-1.5 flex items-center gap-2">
+                        <iconify-icon icon="solar:chart-square-bold-duotone" class="text-primary-600 text-lg"></iconify-icon>
+                        <h6 class="font-bold text-xs uppercase tracking-wider text-neutral-700 m-0">Hồ sơ thị trường & CSKH</h6>
+                    </div>
+
+                    <div>
+                        <label class="form-label font-semibold text-xs text-neutral-600 mb-1">Tình trạng hợp tác</label>
+                        <select id="edit_status" name="status" class="form-select rounded-lg text-xs w-full">
+                            <option value="Đang đặt hàng">Đang đặt hàng</option>
+                            <option value="Không đặt GERVIN">Không đặt GERVIN</option>
+                            <option value="Khách hàng mới tiềm năng">Khách hàng mới tiềm năng</option>
+                            <option value="Tạm dừng hợp tác">Tạm dừng hợp tác</option>
+                            <option value="Khác">Khác</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="form-label font-semibold text-xs text-neutral-600 mb-0">Đối tác KH đang hợp tác</label>
+                            <span class="text-[10px] text-neutral-400">Chọn nhanh hoặc nhập thêm:</span>
+                        </div>
+                        <div class="flex items-center gap-1.5 flex-wrap mb-1.5" id="edit-partner-pills">
+                            <button type="button" onclick="togglePartnerTag('edit-partner-pills', 'edit_partner_competitors', 'ALD')" data-partner="ALD" class="px-2 py-0.5 rounded text-[11px] font-semibold bg-neutral-100 text-neutral-700 border border-neutral-200 hover:border-primary-400 transition-all">+ ALD</button>
+                            <button type="button" onclick="togglePartnerTag('edit-partner-pills', 'edit_partner_competitors', 'LIVAS')" data-partner="LIVAS" class="px-2 py-0.5 rounded text-[11px] font-semibold bg-neutral-100 text-neutral-700 border border-neutral-200 hover:border-primary-400 transition-all">+ LIVAS</button>
+                            <button type="button" onclick="togglePartnerTag('edit-partner-pills', 'edit_partner_competitors', 'GERVIN')" data-partner="GERVIN" class="px-2 py-0.5 rounded text-[11px] font-semibold bg-neutral-100 text-neutral-700 border border-neutral-200 hover:border-primary-400 transition-all">+ GERVIN</button>
+                            <button type="button" onclick="togglePartnerTag('edit-partner-pills', 'edit_partner_competitors', 'ĐỖ THÀNH ĐẠT')" data-partner="ĐỖ THÀNH ĐẠT" class="px-2 py-0.5 rounded text-[11px] font-semibold bg-neutral-100 text-neutral-700 border border-neutral-200 hover:border-primary-400 transition-all">+ ĐỖ THÀNH ĐẠT</button>
+                        </div>
+                        <input type="text" id="edit_partner_competitors" name="partner_competitors" class="form-control rounded-lg text-xs" placeholder="Ví dụ: ALD, LIVAS, GERVIN...">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="form-label font-semibold text-xs text-neutral-600 mb-1">Quy mô xưởng</label>
+                            <input type="text" id="edit_workshop_scale" name="workshop_scale" class="form-control rounded-lg text-xs" placeholder="Ví dụ: 300m2, 5 thợ, máy dán...">
+                        </div>
+                        <div>
+                            <label class="form-label font-semibold text-xs text-neutral-600 mb-1">Tính cách khách hàng</label>
+                            <input type="text" id="edit_personality" name="personality" class="form-control rounded-lg text-xs" placeholder="Ví dụ: Kỹ tính, cẩn thận đường keo...">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="form-label font-semibold text-xs text-neutral-600 mb-1">Phản ánh khách hàng về Gervin</label>
+                        <textarea id="edit_feedback" name="feedback" rows="2" class="form-control rounded-lg text-xs" placeholder="Ghi nhận phản hồi về chất lượng nẹp, keo PUR, tiến độ giao hàng..."></textarea>
+                    </div>
+
+                    <div>
+                        <label class="form-label font-semibold text-xs text-neutral-600 mb-1">Đề xuất Khách hàng (nếu có)</label>
+                        <textarea id="edit_customer_proposal" name="customer_proposal" rows="2" class="form-control rounded-lg text-xs" placeholder="Mong muốn, yêu cầu hoặc đề xuất từ phía khách hàng..."></textarea>
+                    </div>
+
+                    <div>
+                        <label class="form-label font-semibold text-xs text-neutral-600 mb-1">Đề xuất Sale (CSKH / kéo khách / mở mới)</label>
+                        <textarea id="edit_sale_proposal" name="sale_proposal" rows="2" class="form-control rounded-lg text-xs" placeholder="Kế hoạch chăm sóc, kéo khách quay lại hoặc mở mới..."></textarea>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 pt-1">
+                        <div>
+                            <label class="form-label font-semibold text-xs text-neutral-600 mb-1">Công nợ ban đầu (₫)</label>
+                            <input type="number" id="edit_initial_debt" name="initial_debt" min="0" class="form-control rounded-lg text-xs" placeholder="Ví dụ: 10000000">
+                        </div>
+                        <div>
+                            <label class="form-label font-semibold text-xs text-neutral-600 mb-1">Định mức công nợ (₫)</label>
+                            <input type="number" id="edit_debt_limit" name="debt_limit" min="0" class="form-control rounded-lg text-xs" placeholder="Ví dụ: 50000000">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="form-label font-semibold text-xs text-neutral-600 mb-1">Chính sách khách hàng</label>
+                        <input type="text" id="edit_policy" name="policy" class="form-control rounded-lg text-xs" placeholder="Chính sách giá, chiết khấu, điều khoản thanh toán...">
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="px-6 py-4 border-t border-neutral-200 flex gap-3 shrink-0 bg-white">
-            <button type="submit" class="btn btn-primary px-5 py-2.5 rounded-lg">Cập nhật</button>
-            <button type="button" onclick="closeModal('edit-customer-modal')" class="btn btn-neutral px-5 py-2.5 rounded-lg">Hủy</button>
+        <div class="px-6 py-4 border-t border-neutral-200 flex justify-end gap-3 shrink-0 bg-white">
+            <button type="button" onclick="closeModal('edit-customer-modal')" class="btn btn-neutral px-5 py-2 text-xs rounded-lg font-semibold">Hủy</button>
+            <button type="submit" class="btn btn-primary px-6 py-2 text-xs rounded-lg font-semibold flex items-center gap-1.5">
+                <iconify-icon icon="lucide:check" class="text-sm"></iconify-icon> Cập nhật khách hàng
+            </button>
         </div>
     </form>
 </x-modal>
 
 <script>
+let createMap = null;
+let createMarker = null;
+let editMap = null;
+let editMarker = null;
+
+function setCreateCoords(lat, lng) {
+    const latFixed = Number(lat).toFixed(7);
+    const lngFixed = Number(lng).toFixed(7);
+    document.getElementById('create_latitude').value = latFixed;
+    document.getElementById('create_longitude').value = lngFixed;
+    const textEl = document.getElementById('create_coords_display');
+    if (textEl) {
+        textEl.textContent = `${latFixed}, ${lngFixed}`;
+    }
+}
+
+function initCreateMap(defaultLat, defaultLng) {
+    const lat = Number(defaultLat) || 20.9800;
+    const lng = Number(defaultLng) || 105.7800;
+    const hasExistingCoords = !!(defaultLat && defaultLng);
+
+    setTimeout(() => {
+        if (!createMap) {
+            createMap = L.map('create-customer-map').setView([lat, lng], 14);
+            L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap'
+            }).addTo(createMap);
+
+            createMarker = L.marker([lat, lng], { draggable: true }).addTo(createMap);
+
+            createMap.on('click', function(e) {
+                createMarker.setLatLng(e.latlng);
+                setCreateCoords(e.latlng.lat, e.latlng.lng);
+            });
+
+            createMarker.on('dragend', function(e) {
+                const pos = createMarker.getLatLng();
+                setCreateCoords(pos.lat, pos.lng);
+            });
+        } else {
+            createMap.setView([lat, lng], 14);
+            createMarker.setLatLng([lat, lng]);
+            createMap.invalidateSize();
+        }
+
+        if (hasExistingCoords) {
+            setCreateCoords(lat, lng);
+        } else {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(pos) {
+                    const myLat = pos.coords.latitude;
+                    const myLng = pos.coords.longitude;
+                    if (createMap) {
+                        createMap.setView([myLat, myLng], 15);
+                        createMarker.setLatLng([myLat, myLng]);
+                    }
+                    setCreateCoords(myLat, myLng);
+                }, function() {}, { enableHighAccuracy: true, timeout: 5000 });
+            }
+        }
+    }, 200);
+}
+
+function getCreateCurrentLocation() {
+    if (!navigator.geolocation) {
+        alert('Trình duyệt không hỗ trợ Geolocation.');
+        return;
+    }
+    const btn = document.getElementById('btn-create-gps');
+    if (btn) btn.innerHTML = '<iconify-icon icon="lucide:loader-2" class="animate-spin"></iconify-icon> Đang tìm...';
+    navigator.geolocation.getCurrentPosition(function(pos) {
+        if (btn) btn.innerHTML = '<iconify-icon icon="lucide:crosshair"></iconify-icon> Lấy vị trí hiện tại';
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        if (createMap) {
+            createMap.setView([lat, lng], 16);
+            createMarker.setLatLng([lat, lng]);
+        }
+        setCreateCoords(lat, lng);
+    }, function(err) {
+        if (btn) btn.innerHTML = '<iconify-icon icon="lucide:crosshair"></iconify-icon> Lấy vị trí hiện tại';
+        alert('Không thể xác định vị trí: ' + err.message);
+    }, { enableHighAccuracy: true, timeout: 8000 });
+}
+
+function setEditCoords(lat, lng) {
+    const latFixed = Number(lat).toFixed(7);
+    const lngFixed = Number(lng).toFixed(7);
+    document.getElementById('edit_latitude').value = latFixed;
+    document.getElementById('edit_longitude').value = lngFixed;
+    const textEl = document.getElementById('edit_coords_display');
+    if (textEl) {
+        textEl.textContent = `${latFixed}, ${lngFixed}`;
+    }
+}
+
+function initEditMap(defaultLat, defaultLng) {
+    const lat = Number(defaultLat) || 20.9800;
+    const lng = Number(defaultLng) || 105.7800;
+    const hasExistingCoords = !!(defaultLat && defaultLng);
+
+    setTimeout(() => {
+        if (!editMap) {
+            editMap = L.map('edit-customer-map').setView([lat, lng], 14);
+            L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap'
+            }).addTo(editMap);
+
+            editMarker = L.marker([lat, lng], { draggable: true }).addTo(editMap);
+
+            editMap.on('click', function(e) {
+                editMarker.setLatLng(e.latlng);
+                setEditCoords(e.latlng.lat, e.latlng.lng);
+            });
+
+            editMarker.on('dragend', function(e) {
+                const pos = editMarker.getLatLng();
+                setEditCoords(pos.lat, pos.lng);
+            });
+        } else {
+            editMap.setView([lat, lng], 14);
+            editMarker.setLatLng([lat, lng]);
+            editMap.invalidateSize();
+        }
+
+        if (hasExistingCoords) {
+            setEditCoords(lat, lng);
+        } else {
+            document.getElementById('edit_latitude').value = '';
+            document.getElementById('edit_longitude').value = '';
+            const textEl = document.getElementById('edit_coords_display');
+            if (textEl) textEl.textContent = 'Chưa ghim vị trí';
+        }
+    }, 200);
+}
+
+function getEditCurrentLocation() {
+    if (!navigator.geolocation) {
+        alert('Trình duyệt không hỗ trợ Geolocation.');
+        return;
+    }
+    const btn = document.getElementById('btn-edit-gps');
+    if (btn) btn.innerHTML = '<iconify-icon icon="lucide:loader-2" class="animate-spin"></iconify-icon> Đang tìm...';
+    navigator.geolocation.getCurrentPosition(function(pos) {
+        if (btn) btn.innerHTML = '<iconify-icon icon="lucide:crosshair"></iconify-icon> Lấy vị trí hiện tại';
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        if (editMap) {
+            editMap.setView([lat, lng], 16);
+            editMarker.setLatLng([lat, lng]);
+        }
+        setEditCoords(lat, lng);
+    }, function(err) {
+        if (btn) btn.innerHTML = '<iconify-icon icon="lucide:crosshair"></iconify-icon> Lấy vị trí hiện tại';
+        alert('Không thể xác định vị trí: ' + err.message);
+    }, { enableHighAccuracy: true, timeout: 8000 });
+}
+
+function togglePartnerTag(containerId, inputId, partnerName) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    let list = input.value.split(',').map(s => s.trim()).filter(Boolean);
+    const idx = list.indexOf(partnerName);
+    if (idx > -1) {
+        list.splice(idx, 1);
+    } else {
+        list.push(partnerName);
+    }
+    input.value = list.join(', ');
+    updatePartnerTagButtons(containerId, inputId);
+}
+
+function updatePartnerTagButtons(containerId, inputId) {
+    const input = document.getElementById(inputId);
+    const container = document.getElementById(containerId);
+    if (!input || !container) return;
+    const list = input.value.split(',').map(s => s.trim().toUpperCase()).filter(Boolean);
+    container.querySelectorAll('[data-partner]').forEach(btn => {
+        const p = btn.getAttribute('data-partner').toUpperCase();
+        if (list.includes(p)) {
+            btn.classList.add('bg-primary-600', 'text-white', 'border-primary-600');
+            btn.classList.remove('bg-neutral-100', 'text-neutral-700', 'border-neutral-200');
+        } else {
+            btn.classList.remove('bg-primary-600', 'text-white', 'border-primary-600');
+            btn.classList.add('bg-neutral-100', 'text-neutral-700', 'border-neutral-200');
+        }
+    });
+}
+
 function openCreateCustomerModal() {
+    updatePartnerTagButtons('create-partner-pills', 'create_partner_competitors');
     openModal('create-customer-modal');
+    initCreateMap(
+        document.getElementById('create_latitude').value,
+        document.getElementById('create_longitude').value
+    );
 }
 
 function openEditCustomerModalFromBtn(btn) {
@@ -417,7 +907,18 @@ function openEditCustomerModalFromBtn(btn) {
     const code = btn.getAttribute('data-code') || '';
     const name = btn.getAttribute('data-name') || '';
     const phone = btn.getAttribute('data-phone') || '';
+    const province = btn.getAttribute('data-province') || '';
+    const ward = btn.getAttribute('data-ward') || '';
     const address = btn.getAttribute('data-address') || '';
+    const lat = btn.getAttribute('data-latitude') || '';
+    const lng = btn.getAttribute('data-longitude') || '';
+    const status = btn.getAttribute('data-status') || 'Đang đặt hàng';
+    const partner = btn.getAttribute('data-partner-competitors') || '';
+    const scale = btn.getAttribute('data-workshop-scale') || '';
+    const personality = btn.getAttribute('data-personality') || '';
+    const feedback = btn.getAttribute('data-feedback') || '';
+    const custProposal = btn.getAttribute('data-customer-proposal') || '';
+    const saleProposal = btn.getAttribute('data-sale-proposal') || '';
     const debt = btn.getAttribute('data-debt') || 0;
     const debtLimit = btn.getAttribute('data-debt-limit') || 0;
     const policy = btn.getAttribute('data-policy') || '';
@@ -427,7 +928,18 @@ function openEditCustomerModalFromBtn(btn) {
     document.getElementById('edit_customer_code').value = code;
     document.getElementById('edit_name').value = name;
     document.getElementById('edit_phone').value = phone;
+    document.getElementById('edit_province').value = province;
+    document.getElementById('edit_ward').value = ward;
     document.getElementById('edit_address').value = address;
+    document.getElementById('edit_latitude').value = lat;
+    document.getElementById('edit_longitude').value = lng;
+    document.getElementById('edit_status').value = status;
+    document.getElementById('edit_partner_competitors').value = partner;
+    document.getElementById('edit_workshop_scale').value = scale;
+    document.getElementById('edit_personality').value = personality;
+    document.getElementById('edit_feedback').value = feedback;
+    document.getElementById('edit_customer_proposal').value = custProposal;
+    document.getElementById('edit_sale_proposal').value = saleProposal;
     document.getElementById('edit_initial_debt').value = debt;
     document.getElementById('edit_debt_limit').value = debtLimit;
     document.getElementById('edit_policy').value = policy;
@@ -437,7 +949,10 @@ function openEditCustomerModalFromBtn(btn) {
         mgSelect.value = marketGroupId;
     }
 
+    updatePartnerTagButtons('edit-partner-pills', 'edit_partner_competitors');
+
     openModal('edit-customer-modal');
+    initEditMap(lat, lng);
 }
 </script>
 @endcan
@@ -543,6 +1058,68 @@ function openEditCustomerModalFromBtn(btn) {
 
     {{-- Content --}}
     <div id="ov-content" style="padding:24px 28px; display:none;">
+        {{-- Customer Market Profile & Details --}}
+        <div id="ov-customer-profile" class="mb-5 bg-neutral-50 rounded-xl p-4 border border-neutral-200">
+            <div class="flex items-center justify-between pb-3 mb-3 border-b border-neutral-200 flex-wrap gap-2">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span id="ov-status-badge" class="px-2.5 py-1 rounded text-xs font-bold border"></span>
+                    <span id="ov-market-group-badge" class="px-2.5 py-1 rounded text-xs font-semibold bg-primary-50 text-primary-700 border border-primary-200 flex items-center gap-1"></span>
+                </div>
+                <div id="ov-map-link" class="text-xs"></div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+                <div>
+                    <span class="text-neutral-400 block mb-0.5">Số điện thoại:</span>
+                    <span id="ov-phone" class="font-medium text-neutral-800"></span>
+                </div>
+                <div class="lg:col-span-2">
+                    <span class="text-neutral-400 block mb-0.5">Địa chỉ:</span>
+                    <span id="ov-address" class="font-medium text-neutral-800"></span>
+                </div>
+                <div>
+                    <span class="text-neutral-400 block mb-0.5">Đối tác đang hợp tác:</span>
+                    <span id="ov-partner" class="font-semibold text-neutral-800"></span>
+                </div>
+                <div>
+                    <span class="text-neutral-400 block mb-0.5">Quy mô xưởng:</span>
+                    <span id="ov-workshop" class="text-neutral-800"></span>
+                </div>
+                <div>
+                    <span class="text-neutral-400 block mb-0.5">Tính cách khách hàng:</span>
+                    <span id="ov-personality" class="text-neutral-800"></span>
+                </div>
+                <div>
+                    <span class="text-neutral-400 block mb-0.5">Định mức công nợ:</span>
+                    <span id="ov-debt-limit" class="font-semibold text-neutral-800"></span>
+                </div>
+                <div>
+                    <span class="text-neutral-400 block mb-0.5">Chính sách:</span>
+                    <span id="ov-policy" class="text-neutral-800 truncate block"></span>
+                </div>
+            </div>
+
+            <div id="ov-proposals-grid" class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3 pt-3 border-t border-neutral-200 text-xs">
+                <div class="bg-white p-3 rounded-lg border border-neutral-200">
+                    <div class="flex items-center gap-1.5 text-primary-700 font-bold mb-1">
+                        <iconify-icon icon="solar:chat-round-line-bold" class="text-sm"></iconify-icon> Phản ánh về Gervin:
+                    </div>
+                    <p id="ov-feedback" class="text-neutral-700 m-0 whitespace-pre-line text-[11px]"></p>
+                </div>
+                <div class="bg-white p-3 rounded-lg border border-neutral-200">
+                    <div class="flex items-center gap-1.5 text-emerald-700 font-bold mb-1">
+                        <iconify-icon icon="solar:lightbulb-bold" class="text-sm"></iconify-icon> Đề xuất của KH:
+                    </div>
+                    <p id="ov-cust-proposal" class="text-neutral-700 m-0 whitespace-pre-line text-[11px]"></p>
+                </div>
+                <div class="bg-white p-3 rounded-lg border border-neutral-200">
+                    <div class="flex items-center gap-1.5 text-amber-700 font-bold mb-1">
+                        <iconify-icon icon="solar:user-speak-rounded-bold" class="text-sm"></iconify-icon> Đề xuất Sale:
+                    </div>
+                    <p id="ov-sale-proposal" class="text-neutral-700 m-0 whitespace-pre-line text-[11px]"></p>
+                </div>
+            </div>
+        </div>
+
         {{-- Stat cards --}}
         <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:22px;" id="ov-stats-grid"></div>
 
@@ -868,6 +1445,56 @@ function closeEditCustPayment() {
 }
 
 function renderCustomerOverview(data) {
+    const cust = data.customer || {};
+
+    // Customer status & market group
+    const statusEl = document.getElementById('ov-status-badge');
+    if (statusEl) {
+        const st = cust.status || 'Đang đặt hàng';
+        statusEl.textContent = st;
+        let stClass = 'bg-neutral-100 text-neutral-600 border-neutral-200';
+        if (st === 'Đang đặt hàng') stClass = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+        else if (st === 'Không đặt GERVIN') stClass = 'bg-rose-50 text-rose-700 border-rose-200';
+        else if (st === 'Khách hàng mới tiềm năng') stClass = 'bg-blue-50 text-blue-700 border-blue-200';
+        else if (st === 'Tạm dừng hợp tác') stClass = 'bg-amber-50 text-amber-700 border-amber-200';
+        statusEl.className = `px-2.5 py-1 rounded text-xs font-bold border ${stClass}`;
+    }
+
+    const mgEl = document.getElementById('ov-market-group-badge');
+    if (mgEl) {
+        if (cust.market_group && cust.market_group.name) {
+            mgEl.innerHTML = `<iconify-icon icon="solar:users-group-two-rounded-bold"></iconify-icon> ${cust.market_group.name}`;
+            mgEl.style.display = 'inline-flex';
+        } else {
+            mgEl.style.display = 'none';
+        }
+    }
+
+    // Google Maps link
+    const mapLinkEl = document.getElementById('ov-map-link');
+    if (mapLinkEl) {
+        if (cust.latitude && cust.longitude) {
+            mapLinkEl.innerHTML = `<a href="https://www.google.com/maps?q=${cust.latitude},${cust.longitude}" target="_blank" class="inline-flex items-center gap-1 text-primary-600 hover:text-primary-800 font-semibold bg-white px-2.5 py-1 rounded-md border border-neutral-200 shadow-sm"><iconify-icon icon="solar:map-point-wave-bold" class="text-red-500 text-sm"></iconify-icon> Xem vị trí Google Maps (${Number(cust.latitude).toFixed(4)}, ${Number(cust.longitude).toFixed(4)})</a>`;
+        } else {
+            mapLinkEl.innerHTML = '<span class="text-neutral-400 italic">Chưa có toạ độ GPS</span>';
+        }
+    }
+
+    // Basic & Market fields
+    const fullAddr = [cust.address, cust.ward, cust.province].filter(Boolean).join(', ');
+    document.getElementById('ov-phone').textContent = cust.phone || '—';
+    document.getElementById('ov-address').textContent = fullAddr || (cust.address || '—');
+    document.getElementById('ov-partner').textContent = cust.partner_competitors || '—';
+    document.getElementById('ov-workshop').textContent = cust.workshop_scale || '—';
+    document.getElementById('ov-personality').textContent = cust.personality || '—';
+    document.getElementById('ov-debt-limit').textContent = cust.debt_limit ? ovFmt(cust.debt_limit) + '₫' : '—';
+    document.getElementById('ov-policy').textContent = cust.policy || '—';
+
+    // Proposals & Feedback
+    document.getElementById('ov-feedback').textContent = cust.feedback || 'Chưa có ghi nhận phản ánh';
+    document.getElementById('ov-cust-proposal').textContent = cust.customer_proposal || 'Chưa có đề xuất từ khách hàng';
+    document.getElementById('ov-sale-proposal').textContent = cust.sale_proposal || 'Chưa có kế hoạch đề xuất';
+
     const statusLabels = {
         draft:'Nháp', pending:'Chờ xử lý', transferred:'Chuyển sản xuất',
         in_production:'Đang sản xuất', completed:'Hoàn thành', cancelled:'Đã hủy'

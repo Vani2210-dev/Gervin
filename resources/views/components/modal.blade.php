@@ -13,7 +13,13 @@ $maxWidthPx = [
     'lg'  => '512px',
     'xl'  => '576px',
     '2xl' => '672px',
-][$maxWidth] ?? '672px';
+    '3xl' => '768px',
+    '4xl' => '896px',
+    '5xl' => '1024px',
+    '6xl' => '1152px',
+    '7xl' => '1280px',
+    'full'=> '95vw',
+][$maxWidth] ?? ($maxWidth && (str_ends_with($maxWidth, 'px') || str_ends_with($maxWidth, '%') || str_ends_with($maxWidth, 'vw')) ? $maxWidth : '672px');
 
 // Khi transparent = true: không nền, không shadow, co vừa kích thước ảnh, không giới hạn max-width (dùng cho image viewer)
 $contentStyle = $transparent

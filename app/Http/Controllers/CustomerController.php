@@ -182,14 +182,25 @@ class CustomerController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'customer_code'   => 'nullable|string|max:100|unique:customers,customer_code',
-            'name'            => 'required|string|max:255',
-            'phone'           => 'nullable|string|max:20',
-            'address'         => 'nullable|string',
-            'initial_debt'    => 'nullable|numeric|min:0',
-            'debt_limit'      => 'nullable|numeric|min:0',
-            'policy'          => 'nullable|string',
-            'market_group_id' => 'nullable|exists:market_groups,id',
+            'customer_code'       => 'nullable|string|max:100|unique:customers,customer_code',
+            'name'                => 'required|string|max:255',
+            'phone'               => 'nullable|string|max:20',
+            'address'             => 'nullable|string',
+            'latitude'            => 'nullable|numeric',
+            'longitude'           => 'nullable|numeric',
+            'province'            => 'nullable|string|max:100',
+            'ward'                => 'nullable|string|max:150',
+            'status'              => 'nullable|string|max:100',
+            'partner_competitors' => 'nullable',
+            'feedback'            => 'nullable|string',
+            'personality'         => 'nullable|string',
+            'workshop_scale'      => 'nullable|string|max:255',
+            'customer_proposal'   => 'nullable|string',
+            'sale_proposal'       => 'nullable|string',
+            'initial_debt'        => 'nullable|numeric|min:0',
+            'debt_limit'          => 'nullable|numeric|min:0',
+            'policy'              => 'nullable|string',
+            'market_group_id'     => 'nullable|exists:market_groups,id',
         ]);
 
         // Use provided code or auto-generate KH00001, KH00002, etc.
@@ -201,15 +212,31 @@ class CustomerController extends Controller
             $customerCode = 'KH' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
         }
 
+        $partnerCompetitors = $request->partner_competitors;
+        if (is_array($partnerCompetitors)) {
+            $partnerCompetitors = implode(', ', array_filter($partnerCompetitors));
+        }
+
         $customer = Customer::create([
-            'customer_code'   => $customerCode,
-            'name'            => $request->name,
-            'phone'           => $request->phone,
-            'address'         => $request->address,
-            'debt'            => $request->initial_debt ?? 0,
-            'debt_limit'      => $request->debt_limit ?? 0,
-            'policy'          => $request->policy,
-            'market_group_id' => $request->market_group_id,
+            'customer_code'       => $customerCode,
+            'name'                => $request->name,
+            'phone'               => $request->phone,
+            'address'             => $request->address,
+            'latitude'            => $request->latitude,
+            'longitude'           => $request->longitude,
+            'province'            => $request->province,
+            'ward'                => $request->ward,
+            'status'              => $request->status ?: 'Đang đặt hàng',
+            'partner_competitors' => $partnerCompetitors,
+            'feedback'            => $request->feedback,
+            'personality'         => $request->personality,
+            'workshop_scale'      => $request->workshop_scale,
+            'customer_proposal'   => $request->customer_proposal,
+            'sale_proposal'       => $request->sale_proposal,
+            'debt'                => $request->initial_debt ?? 0,
+            'debt_limit'          => $request->debt_limit ?? 0,
+            'policy'              => $request->policy,
+            'market_group_id'     => $request->market_group_id,
         ]);
 
         $user = auth()->user();
@@ -231,23 +258,50 @@ class CustomerController extends Controller
         abort_unless($customer->isAccessibleBy(auth()->user()), 403, 'Bạn không có quyền cập nhật khách hàng này.');
 
         $request->validate([
-            'customer_code'   => 'nullable|string|max:100|unique:customers,customer_code,' . $customer->id,
-            'name'            => 'required|string|max:255',
-            'phone'           => 'nullable|string|max:20',
-            'address'         => 'nullable|string',
-            'initial_debt'    => 'nullable|numeric|min:0',
-            'debt_limit'      => 'nullable|numeric|min:0',
-            'policy'          => 'nullable|string',
-            'market_group_id' => 'nullable|exists:market_groups,id',
+            'customer_code'       => 'nullable|string|max:100|unique:customers,customer_code,' . $customer->id,
+            'name'                => 'required|string|max:255',
+            'phone'               => 'nullable|string|max:20',
+            'address'             => 'nullable|string',
+            'latitude'            => 'nullable|numeric',
+            'longitude'           => 'nullable|numeric',
+            'province'            => 'nullable|string|max:100',
+            'ward'                => 'nullable|string|max:150',
+            'status'              => 'nullable|string|max:100',
+            'partner_competitors' => 'nullable',
+            'feedback'            => 'nullable|string',
+            'personality'         => 'nullable|string',
+            'workshop_scale'      => 'nullable|string|max:255',
+            'customer_proposal'   => 'nullable|string',
+            'sale_proposal'       => 'nullable|string',
+            'initial_debt'        => 'nullable|numeric|min:0',
+            'debt_limit'          => 'nullable|numeric|min:0',
+            'policy'              => 'nullable|string',
+            'market_group_id'     => 'nullable|exists:market_groups,id',
         ]);
 
+        $partnerCompetitors = $request->partner_competitors;
+        if (is_array($partnerCompetitors)) {
+            $partnerCompetitors = implode(', ', array_filter($partnerCompetitors));
+        }
+
         $updateData = [
-            'name'            => $request->name,
-            'phone'           => $request->phone,
-            'address'         => $request->address,
-            'debt_limit'      => $request->debt_limit ?? 0,
-            'policy'          => $request->policy,
-            'market_group_id' => $request->market_group_id,
+            'name'                => $request->name,
+            'phone'               => $request->phone,
+            'address'             => $request->address,
+            'latitude'            => $request->latitude,
+            'longitude'           => $request->longitude,
+            'province'            => $request->province,
+            'ward'                => $request->ward,
+            'status'              => $request->status,
+            'partner_competitors' => $partnerCompetitors,
+            'feedback'            => $request->feedback,
+            'personality'         => $request->personality,
+            'workshop_scale'      => $request->workshop_scale,
+            'customer_proposal'   => $request->customer_proposal,
+            'sale_proposal'       => $request->sale_proposal,
+            'debt_limit'          => $request->debt_limit ?? 0,
+            'policy'              => $request->policy,
+            'market_group_id'     => $request->market_group_id,
         ];
         
         if ($request->has('initial_debt')) {
@@ -319,6 +373,7 @@ class CustomerController extends Controller
     public function overview(Request $request, Customer $customer)
     {
         abort_unless($customer->isAccessibleBy(auth()->user()), 403, 'Bạn không có quyền xem thông tin khách hàng này.');
+        $customer->load('marketGroup');
 
         $excludeOrderId = $request->query('exclude_order_id');
         $paymentDate = $request->query('payment_date');
