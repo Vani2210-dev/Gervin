@@ -74,9 +74,25 @@
     #payment-details-container tr.payment-detail-row td .ts-wrapper .ts-control:after {
         display: none !important;
     }
-    .ts-dropdown {
+    .ts-dropdown,
+    body > .ts-dropdown {
         font-size: 12px !important;
-        z-index: 99999 !important;
+        z-index: 999999 !important;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 8px !important;
+    }
+    .ts-dropdown .option,
+    body > .ts-dropdown .option {
+        padding: 6px 12px !important;
+        font-size: 12px !important;
+    }
+    .ts-dropdown .optgroup-header,
+    body > .ts-dropdown .optgroup-header {
+        font-weight: 700 !important;
+        background: #f8fafc !important;
+        color: #475569 !important;
+        padding: 6px 10px !important;
     }
 </style>
 
@@ -547,6 +563,7 @@ function initPaymentCodeTomSelect(selectEl) {
         placeholder: '-- Chọn mã --',
         allowEmptyOption: true,
         maxOptions: null,
+        dropdownParent: 'body',
         searchField: ['text', 'value'],
         render: {
             item: function(data, escape) {
