@@ -229,6 +229,7 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('glass-prices', GlassPriceController::class)->names('glass_prices');
 
     // Min-late Prices
+    Route::get('minlate-prices/export', [MinLatePriceController::class, 'export'])->name('minlate_prices.export');
     Route::post('minlate-prices/import', [MinLatePriceController::class, 'import'])->name('minlate_prices.import');
     Route::resource('minlate-prices', MinLatePriceController::class)->names('minlate_prices');
 });

@@ -59,6 +59,12 @@
                 </div>
 
                 <div class="flex items-center gap-2">
+                    <a href="{{ route('minlate_prices.export') }}"
+                        class="btn bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 text-sm btn-sm px-3 py-2 rounded-lg flex items-center gap-1.5 transition-all"
+                        title="Tải file Excel bảng giá hiện tại để chỉnh sửa">
+                        <iconify-icon icon="lucide:download" class="text-lg"></iconify-icon>
+                        Xuất Excel
+                    </a>
                     @can('add supply')
                     <button type="button" onclick="triggerImportExcel()"
                         class="btn bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200 text-sm btn-sm px-3 py-2 rounded-lg flex items-center gap-1.5 transition-all">
