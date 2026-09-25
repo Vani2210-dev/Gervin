@@ -468,55 +468,67 @@ function handlePaymentDetailCodeSelected(row, rawCode) {
         if (nameInput) {
             nameInput.value = woodPrice.name ? `${woodPrice.code} - ${woodPrice.name}` : (woodPrice.code || '');
             applyFlashEffect(nameInput);
+            nameInput.dispatchEvent(new Event('input', { bubbles: true }));
         }
         if (unitInput) {
             unitInput.value = woodPrice.unit || 'tấm';
             applyFlashEffect(unitInput);
+            unitInput.dispatchEvent(new Event('input', { bubbles: true }));
         }
         if (priceInput) {
             const rawPr = woodPrice.price_board !== undefined ? woodPrice.price_board : (woodPrice.price !== undefined ? woodPrice.price : 0);
             priceInput.value = Math.round(parseFloat(rawPr) || 0);
             applyFlashEffect(priceInput);
+            priceInput.dispatchEvent(new Event('input', { bubbles: true }));
         }
         if (priceOnlyInput) {
             priceOnlyInput.value = 0;
+            priceOnlyInput.dispatchEvent(new Event('input', { bubbles: true }));
         }
     } else if (glassPrice) {
         if (nameInput) {
             nameInput.value = glassPrice.product_name ? `${glassPrice.code} - ${glassPrice.product_name}` : (glassPrice.code || '');
             applyFlashEffect(nameInput);
+            nameInput.dispatchEvent(new Event('input', { bubbles: true }));
         }
         if (unitInput) {
             unitInput.value = glassPrice.unit || 'm²';
             applyFlashEffect(unitInput);
+            unitInput.dispatchEvent(new Event('input', { bubbles: true }));
         }
         if (priceInput) {
             const rawPr = glassPrice.price !== undefined ? glassPrice.price : (glassPrice.unit_price !== undefined ? glassPrice.unit_price : 0);
             priceInput.value = Math.round(parseFloat(rawPr) || 0);
             applyFlashEffect(priceInput);
+            priceInput.dispatchEvent(new Event('input', { bubbles: true }));
         }
         if (priceOnlyInput) {
             priceOnlyInput.value = 0;
+            priceOnlyInput.dispatchEvent(new Event('input', { bubbles: true }));
         }
     } else if (minLatePrice) {
         if (nameInput) {
             const prefix = minLatePrice.category_name ? `[${minLatePrice.category_name}] ` : '';
             nameInput.value = `${prefix}${minLatePrice.product_name || ''}`;
             applyFlashEffect(nameInput);
+            nameInput.dispatchEvent(new Event('input', { bubbles: true }));
         }
         if (unitInput) {
             unitInput.value = minLatePrice.unit || 'm';
             applyFlashEffect(unitInput);
+            unitInput.dispatchEvent(new Event('input', { bubbles: true }));
         }
         if (priceInput) {
             const rawPr = minLatePrice.unit_price !== undefined ? minLatePrice.unit_price : (minLatePrice.price !== undefined ? minLatePrice.price : 0);
             priceInput.value = Math.round(parseFloat(rawPr) || 0);
             applyFlashEffect(priceInput);
+            priceInput.dispatchEvent(new Event('input', { bubbles: true }));
         }
         if (priceOnlyInput) {
             const rawPro = minLatePrice.price_only !== undefined ? minLatePrice.price_only : 0;
             priceOnlyInput.value = Math.round(parseFloat(rawPro) || 0);
             applyFlashEffect(priceOnlyInput);
+            priceOnlyInput.dispatchEvent(new Event('input', { bubbles: true }));
         }
     }
 
@@ -535,24 +547,26 @@ function initPaymentCodeTomSelect(selectEl) {
         placeholder: '-- Chọn mã --',
         allowEmptyOption: true,
         maxOptions: null,
-        dropdownParent: 'body',
         searchField: ['text', 'value'],
         render: {
             item: function(data, escape) {
-                if (!data.value) return '';
-                return '<div class="font-bold text-neutral-800">' + escape(data.value) + '</div>';
+                const label = data.value || data.text || '';
+                return '<div class="font-bold text-neutral-800">' + escape(label) + '</div>';
             },
             option: function(data, escape) {
-                return '<div>' + escape(data.text) + '</div>';
+                return '<div>' + escape(data.text || data.value || '') + '</div>';
             }
         }
     });
 
     selectEl.style.setProperty('display', 'none', 'important');
 
+    let lastFilledCode = null;
     const triggerFill = (val) => {
         const targetRow = row || selectEl.closest('.payment-detail-row');
         const code = (val !== undefined && val !== null && val !== '') ? val : (ts ? ts.getValue() : selectEl.value);
+        if (!code || code === lastFilledCode) return;
+        lastFilledCode = code;
         handlePaymentDetailCodeSelected(targetRow, code);
     };
 
