@@ -295,6 +295,11 @@ Route::middleware(['auth'])->group(function () {
     Route::post('customers/{customer}/payments', [CustomerPaymentController::class, 'store'])->name('customers.payments.store');
     Route::put('customers/{customer}/payments/{payment}', [CustomerPaymentController::class, 'update'])->name('customers.payments.update');
     Route::delete('customers/{customer}/payments/{payment}', [CustomerPaymentController::class, 'destroy'])->name('customers.payments.destroy');
+
+    // Customer Care Logs (Đi thị trường / Nhật ký chăm sóc)
+    Route::get('customers/{customer}/care-logs', [\App\Http\Controllers\CustomerCareLogController::class, 'index'])->name('customers.care-logs.index');
+    Route::post('customers/{customer}/care-logs', [\App\Http\Controllers\CustomerCareLogController::class, 'store'])->name('customers.care-logs.store');
+    Route::delete('customers/{customer}/care-logs/{careLog}', [\App\Http\Controllers\CustomerCareLogController::class, 'destroy'])->name('customers.care-logs.destroy');
 });
 
 // Manufacture Orders

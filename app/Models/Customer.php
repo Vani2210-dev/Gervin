@@ -67,6 +67,11 @@ class Customer extends Model
         return $this->hasMany(CustomerPayment::class, 'customer_id')->orderBy('payment_date');
     }
 
+    public function careLogs()
+    {
+        return $this->hasMany(CustomerCareLog::class, 'customer_id')->orderBy('visit_date', 'desc')->orderBy('id', 'desc');
+    }
+
     public function getTotalDebtAttribute()
     {
         return $this->debt;

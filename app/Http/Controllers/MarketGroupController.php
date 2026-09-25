@@ -115,11 +115,19 @@ class MarketGroupController extends Controller
         }
 
         $query = $marketGroup->customers()
-            ->with(['customerPayments' => function ($pq) use ($startDate, $endDate) {
-                if ($startDate && $endDate) {
-                    $pq->whereBetween('payment_date', [$startDate, $endDate]);
+            ->with([
+                'customerPayments' => function ($pq) use ($startDate, $endDate) {
+                    if ($startDate && $endDate) {
+                        $pq->whereBetween('payment_date', [$startDate, $endDate]);
+                    }
+                },
+                'careLogs' => function ($lq) use ($startDate, $endDate) {
+                    if ($startDate && $endDate) {
+                        $lq->whereBetween('visit_date', [$startDate, $endDate]);
+                    }
+                    $lq->with('user')->orderBy('visit_date', 'desc');
                 }
-            }])
+            ])
             ->orderBy('name');
 
         if ($search) {
@@ -141,6 +149,8 @@ class MarketGroupController extends Controller
 
         $customers = $query->get()->map(function ($c) {
             $c->period_paid = $c->customerPayments->sum('amount');
+            $c->period_care_count = $c->careLogs->count();
+            $c->latest_care_log = $c->careLogs->first();
             $fullAddr = implode(', ', array_filter([$c->address, $c->ward, $c->province]));
             $c->full_address = $fullAddr ?: ($c->address ?: '—');
             return $c;
@@ -156,6 +166,12 @@ class MarketGroupController extends Controller
         }
         $totalPaid = $paidQuery->sum('amount');
 
+        $careLogsCountQuery = \App\Models\CustomerCareLog::whereIn('customer_id', $groupCustomerIds);
+        if ($startDate && $endDate) {
+            $careLogsCountQuery->whereBetween('visit_date', [$startDate, $endDate]);
+        }
+        $totalCareVisits = $careLogsCountQuery->count();
+
         $allCustomers = Customer::orderBy('name')->get();
         $marketGroups = MarketGroup::orderBy('name')->get();
 
@@ -166,6 +182,7 @@ class MarketGroupController extends Controller
             'totalCustomers',
             'totalDebt',
             'totalPaid',
+            'totalCareVisits',
             'allCustomers',
             'search',
             'dateMode',
