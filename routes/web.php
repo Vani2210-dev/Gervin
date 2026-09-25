@@ -374,4 +374,13 @@ Route::middleware(['auth'])->prefix('reports')->name('reports.')->group(function
     Route::get('/revenue/get-target', [RevenueReportController::class, 'getTarget'])->name('revenue.get-target');
 });
 
+// Quản lý Xe & Nhật ký đổ dầu
+use App\Http\Controllers\VehicleController;
+Route::middleware(['auth'])->group(function () {
+    Route::resource('vehicles', VehicleController::class)->names('vehicles');
+    Route::post('vehicles/{vehicle}/fuel-logs', [VehicleController::class, 'storeFuelLog'])->name('vehicles.fuel-logs.store');
+    Route::put('vehicles/{vehicle}/fuel-logs/{fuelLog}', [VehicleController::class, 'updateFuelLog'])->name('vehicles.fuel-logs.update');
+    Route::delete('vehicles/{vehicle}/fuel-logs/{fuelLog}', [VehicleController::class, 'destroyFuelLog'])->name('vehicles.fuel-logs.destroy');
+});
+
 require __DIR__.'/auth.php';

@@ -1748,7 +1748,18 @@ function handleExcelFile(file) {
                 const height     = num(row[3]);
                 const width      = num(row[4]);
                 const qty        = parseInt(clean(row[5])) || 1;
-                const bevel      = clean(row[6]) !== '' ? clean(row[6]) : clean(row[13]); // Cột G (ưu tiên) hoặc fallback cột N
+                const rawBevel   = clean(row[6]) !== '' ? clean(row[6]) : clean(row[13]); // Cột G (ưu tiên) hoặc fallback cột N
+                let bevel = '';
+                if (rawBevel) {
+                    const bNumMatch = rawBevel.match(/\d+(\.\d+)?/);
+                    if (bNumMatch && parseFloat(bNumMatch[0]) > 0) {
+                        bevel = bNumMatch[0];
+                    } else if (/v[aá]t/i.test(rawBevel)) {
+                        bevel = (width !== '' && width > 0) ? String(width) : 'Vát';
+                    } else {
+                        bevel = rawBevel;
+                    }
+                }
                 const grain      = clean(row[7]);
                 const wingArea   = num(row[8]);
                 const molding    = num(row[9]);
@@ -1953,16 +1964,28 @@ function confirmExcelImport() {
             setVal('input[name*="[molding_length]"]',item.molding);
             setVal('input[name*="[unit_price]"]',    item.unit_price);
             setVal('input[name*="[notes]"]',         item.notes);
-            if (item.bevel === '' || item.bevel === null || item.bevel === undefined || item.bevel === '0' || item.bevel === 0) {
-                const bevelIn = newRow.querySelector('input[name*="[bevel]"]');
+            const bevelIn = newRow.querySelector('.product-bevel-input') || newRow.querySelector('input[name*="[bevel]"]:not([name*="[edge_bevel]"])');
+            if (item.bevel !== '' && item.bevel !== null && item.bevel !== undefined && item.bevel !== '0' && item.bevel !== 0) {
+                if (bevelIn) {
+                    bevelIn.value = item.bevel;
+                    if (item.width && String(item.bevel) === String(item.width)) {
+                        bevelIn.setAttribute('data-auto-sync', 'width');
+                    } else if (item.height && String(item.bevel) === String(item.height)) {
+                        bevelIn.setAttribute('data-auto-sync', 'height');
+                    } else {
+                        bevelIn.setAttribute('data-auto-sync', 'none');
+                    }
+                }
+            } else {
                 if (bevelIn) {
                     bevelIn.value = '';
                     bevelIn.setAttribute('data-auto-sync', 'none');
                 }
-            } else {
-                setVal('input[name*="[bevel]"]', item.bevel);
             }
-            setVal('input[name*="[edge_bevel]"]',    item.edge_bevel);
+            const edgeBevelIn = newRow.querySelector('.product-edge-bevel-input') || newRow.querySelector('input[name*="[edge_bevel]"]');
+            if (edgeBevelIn) {
+                edgeBevelIn.value = item.edge_bevel || (item.bevel ? 'Vát ' + item.bevel : '');
+            }
 
             const grainInput = newRow.querySelector('input[name*="[grain_direction]"], select[name*="[grain_direction]"]');
             if (grainInput) grainInput.value = item.grain !== undefined && item.grain !== null ? item.grain : '0';

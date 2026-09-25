@@ -571,21 +571,55 @@ function previewOrder() {
                     const titleLower = col.title.toLowerCase();
 
                     // 1. Cột Vát: Luôn lấy giá trị SỐ từ input thay vì text "▪ Bám theo Rộng" của select
-                    const bevelInput = td.querySelector('.product-bevel-input') || td.querySelector('input[name*="[bevel]"]:not([name*="[beveled_"])');
-                    if (titleLower === 'vát' || bevelInput) {
+                    const isExactBevelCol = (titleLower === 'vát' || titleLower === 'cạnh vát' || titleLower === 'vát (mm)');
+                    const bevelInput = td.querySelector('.product-bevel-input') || td.querySelector('input[name*="[bevel]"]:not([name*="[beveled_"]):not([name*="[edge_bevel]"])') || (isExactBevelCol ? (row.querySelector('.product-bevel-input') || row.querySelector('input[name*="[bevel]"]:not([name*="[beveled_"]):not([name*="[edge_bevel]"])')) : null);
+                    if (isExactBevelCol || (!titleLower.includes('dán') && !titleLower.includes('mét') && !titleLower.includes('tay nắm') && bevelInput)) {
+                        let bVal = '';
                         if (bevelInput) {
-                            let bVal = bevelInput.value.trim();
-                            // Fallback nếu đang ở chế độ bám theo Rộng / Dài mà ô vát chưa cập nhật số
-                            if (!bVal || bVal === '0') {
-                                const syncMode = bevelInput.getAttribute('data-auto-sync');
-                                if (syncMode === 'width') {
-                                    bVal = row.querySelector('input[name*="[width]"]')?.value?.trim() || '';
-                                } else if (syncMode === 'height') {
-                                    bVal = row.querySelector('input[name*="[height]"]')?.value?.trim() || '';
+                            bVal = (bevelInput.value || '').trim();
+                        }
+
+                        // Trích xuất số nếu có (ví dụ "408.75" hoặc "Vát 408.75")
+                        const numMatch = bVal.match(/\d+(\.\d+)?/);
+                        if (numMatch && parseFloat(numMatch[0]) > 0) {
+                            cellVal = numMatch[0];
+                        } else {
+                            const syncMode = bevelInput ? bevelInput.getAttribute('data-auto-sync') : '';
+                            const bevelSelect = td.querySelector('.product-bevel-select') || row.querySelector('.product-bevel-select');
+                            const selectVal = bevelSelect ? bevelSelect.value : '';
+
+                            if (syncMode === 'width' || selectVal === 'width' || /v[aá]t/i.test(bVal)) {
+                                const wVal = row.querySelector('input[name*="[width]"]')?.value?.trim();
+                                if (wVal && parseFloat(wVal) > 0) {
+                                    cellVal = wVal;
+                                } else {
+                                    cellVal = bVal || 'Vát';
+                                }
+                            } else if (syncMode === 'height' || selectVal === 'height') {
+                                const hVal = row.querySelector('input[name*="[height]"]')?.value?.trim();
+                                if (hVal && parseFloat(hVal) > 0) {
+                                    cellVal = hVal;
+                                } else {
+                                    cellVal = bVal || 'Vát';
+                                }
+                            } else if (bVal && bVal !== '0') {
+                                cellVal = bVal;
+                            }
+                        }
+
+                        // Fallback: nếu cellVal vẫn rỗng, kiểm tra ô edge_bevel ẩn
+                        if (!cellVal) {
+                            const edgeBevelInput = row.querySelector('.product-edge-bevel-input') || row.querySelector('input[name*="[edge_bevel]"]');
+                            if (edgeBevelInput && edgeBevelInput.value.trim()) {
+                                const ebVal = edgeBevelInput.value.trim();
+                                const ebMatch = ebVal.match(/\d+(\.\d+)?/);
+                                if (ebMatch && parseFloat(ebMatch[0]) > 0) {
+                                    cellVal = ebMatch[0];
+                                } else if (/v[aá]t/i.test(ebVal)) {
+                                    const wVal = row.querySelector('input[name*="[width]"]')?.value?.trim();
+                                    cellVal = (wVal && parseFloat(wVal) > 0) ? wVal : 'Vát';
                                 }
                             }
-                            const bNum = parseFloat(bVal);
-                            cellVal = (!isNaN(bNum) && bNum > 0) ? bVal : '';
                         }
                     }
                     // 2. Các ô khác: Trích xuất bình thường

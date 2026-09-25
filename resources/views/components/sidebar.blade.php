@@ -166,6 +166,13 @@
             </li>
             @endcan
 
+            <li>
+                <a href="{{ route('vehicles.index') }}">
+                    <iconify-icon icon="solar:bus-bold-duotone" class="menu-icon"></iconify-icon>
+                    <span>Quản lý Xe & Đổ Dầu</span>
+                </a>
+            </li>
+
             @if(auth()->user()->can('view qr device') || auth()->user()->hasRole('Admin'))
             <li>
                 <a href="{{ route('processes.qr-scans') }}">
