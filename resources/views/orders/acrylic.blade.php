@@ -1721,14 +1721,14 @@ function handleExcelFile(file) {
              *  D=3  Cao (height)
              *  E=4  Rộng (width)
              *  F=5  Số lượng
-             *  G=6  Chiều vân
-             *  H=7  (unused)
+             *  G=6  Vát                   (chuyển từ cột N sang cột G)
+             *  H=7  Chiều vân
              *  I=8  Cánh m2
              *  J=9  Phào m
              *  K=10 Đơn giá
              *  L=11 Thành tiền            (computed — skip)
              *  M=12 Ghi chú / loại đặc biệt ("Tấm giả dày", "Công giả dày"…)
-             *  N=13 Bevel/width sync
+             *  N=13 (trước đây là Vát)
              */
 
             const clean = v => (v === null || v === undefined) ? '' : String(v).trim();
@@ -1748,14 +1748,13 @@ function handleExcelFile(file) {
                 const height     = num(row[3]);
                 const width      = num(row[4]);
                 const qty        = parseInt(clean(row[5])) || 1;
-                const edgeBevel  = clean(row[6]);
+                const bevel      = clean(row[6]) !== '' ? clean(row[6]) : clean(row[13]); // Cột G (ưu tiên) hoặc fallback cột N
                 const grain      = clean(row[7]);
                 const wingArea   = num(row[8]);
                 const molding    = num(row[9]);
                 const unitPrice  = num(row[10]);
                 const totalPrice = num(row[11]);
                 const notes      = clean(row[12]);
-                const bevel      = clean(row[13]);
 
                 // Skip header rows (col A = La-mã I, II…) and summary/footer rows
                 if (isHeader(stt)) {
@@ -1778,7 +1777,7 @@ function handleExcelFile(file) {
                     height,
                     width,
                     quantity     : qty,
-                    edge_bevel   : edgeBevel,
+                    edge_bevel   : bevel,
                     grain        : grain || '0',
                     wing_area    : wingArea,
                     molding,
