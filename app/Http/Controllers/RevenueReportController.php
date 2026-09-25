@@ -141,9 +141,8 @@ class RevenueReportController extends Controller
             $staffUsers = User::orderBy('name')->get(['id', 'name', 'user_code']);
         } else {
             if ($currentUser) {
-                $customerQuery->whereHas('users', function ($q) use ($currentUser) {
-                    $q->where('users.id', $currentUser->id);
-                });
+                $userMarketGroupIds = $currentUser->marketGroups()->pluck('market_groups.id');
+                $customerQuery->whereIn('market_group_id', $userMarketGroupIds);
             }
             $staffUsers = collect();
         }
@@ -521,7 +520,8 @@ class RevenueReportController extends Controller
             }
         } else {
             if ($currentUser) {
-                $customerQuery->whereHas('users', fn($q) => $q->where('users.id', $currentUser->id));
+                $userMarketGroupIds = $currentUser->marketGroups()->pluck('market_groups.id');
+                $customerQuery->whereIn('market_group_id', $userMarketGroupIds);
             }
         }
 

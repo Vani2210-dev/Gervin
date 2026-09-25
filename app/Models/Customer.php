@@ -56,10 +56,10 @@ class Customer extends Model
         if ($user->hasRole('Admin')) {
             return true;
         }
-        if ($this->market_group_id && $user->marketGroups()->where('market_groups.id', $this->market_group_id)->exists()) {
-            return true;
+        if (!$this->market_group_id) {
+            return false;
         }
-        return $this->users()->where('users.id', $user->id)->exists();
+        return $user->marketGroups()->where('market_groups.id', $this->market_group_id)->exists();
     }
 
     public function customerPayments()
@@ -70,6 +70,11 @@ class Customer extends Model
     public function careLogs()
     {
         return $this->hasMany(CustomerCareLog::class, 'customer_id')->orderBy('visit_date', 'desc')->orderBy('id', 'desc');
+    }
+
+    public function histories()
+    {
+        return $this->hasMany(CustomerHistory::class, 'customer_id')->orderBy('created_at', 'desc')->orderBy('id', 'desc');
     }
 
     public function getTotalDebtAttribute()

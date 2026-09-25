@@ -70,15 +70,16 @@
                                 @php
                                     $currentUser = auth()->user();
                                     if ($currentUser && !$currentUser->hasRole('Admin')) {
-                                        $allowedCustomers = \App\Models\Customer::whereHas('users', function ($q) use ($currentUser) {
-                                            $q->where('users.id', $currentUser->id);
-                                        })->orderBy('name')->get();
+                                        $userMarketGroupIds = $currentUser->marketGroups()->pluck('market_groups.id');
+                                        $allowedCustomers = \App\Models\Customer::whereIn('market_group_id', $userMarketGroupIds)->orderBy('name')->get();
                                     } else {
                                         $allowedCustomers = \App\Models\Customer::orderBy('name')->get();
                                     }
 
                                     if (isset($acrylicOrder) && $acrylicOrder->customer && !$allowedCustomers->contains('id', $acrylicOrder->customer_id)) {
-                                        $allowedCustomers->push($acrylicOrder->customer);
+                                        if ($currentUser && ($currentUser->hasRole('Admin') || $acrylicOrder->customer->isAccessibleBy($currentUser))) {
+                                            $allowedCustomers->push($acrylicOrder->customer);
+                                        }
                                     }
                                 @endphp
                                 <select name="customer_id" id="customer-select" class="" onchange="fillCustomerInfo(this.value)">

@@ -296,6 +296,9 @@ Route::middleware(['auth'])->group(function () {
     Route::put('customers/{customer}/payments/{payment}', [CustomerPaymentController::class, 'update'])->name('customers.payments.update');
     Route::delete('customers/{customer}/payments/{payment}', [CustomerPaymentController::class, 'destroy'])->name('customers.payments.destroy');
 
+    // Customer History (Lịch sử chỉnh sửa thông tin khách hàng)
+    Route::get('customers/{customer}/histories', [CustomerController::class, 'getHistories'])->name('customers.histories');
+
     // Customer Care Logs (Đi thị trường / Nhật ký chăm sóc)
     Route::get('customers/{customer}/care-logs', [\App\Http\Controllers\CustomerCareLogController::class, 'index'])->name('customers.care-logs.index');
     Route::post('customers/{customer}/care-logs', [\App\Http\Controllers\CustomerCareLogController::class, 'store'])->name('customers.care-logs.store');

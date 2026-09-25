@@ -293,6 +293,12 @@
                                             onclick="openEditCustomerModalFromBtn(this)">
                                             <iconify-icon icon="lucide:edit" class="text-lg"></iconify-icon>
                                         </button>
+                                        <button type="button"
+                                            class="bg-amber-100 hover:bg-amber-200 text-amber-700 font-medium w-9 h-9 flex justify-center items-center rounded-full transition-colors"
+                                            title="Lịch sử chỉnh sửa thông tin"
+                                            onclick="openCustomerHistoryModal({{ $c->id }}, '{{ addslashes($c->name) }}', '{{ $c->customer_code ?? '' }}')">
+                                            <iconify-icon icon="solar:history-bold-duotone" class="text-lg"></iconify-icon>
+                                        </button>
                                         @endcan
                                         @can('delete customer')
                                         <form action="{{ route('customers.destroy', $c->id) }}" method="POST"
@@ -747,6 +753,14 @@
                         <label class="form-label font-semibold text-xs text-neutral-700 mb-1.5 block">Chính sách khách hàng</label>
                         <input type="text" id="edit_policy" name="policy" class="form-control rounded-xl text-sm py-2.5 px-3.5" placeholder="Chính sách giá, chiết khấu, điều khoản thanh toán...">
                     </div>
+
+                    <div class="border border-amber-200 bg-amber-50/60 rounded-xl p-3.5 mt-2">
+                        <label class="form-label font-bold text-xs text-amber-900 mb-1.5 flex items-center gap-1.5">
+                            <iconify-icon icon="solar:notes-bold" class="text-amber-600 text-base"></iconify-icon>
+                            Ghi chú lần đi thị trường / cập nhật này (tùy chọn)
+                        </label>
+                        <textarea id="edit_note" name="edit_note" rows="2" class="form-control rounded-xl text-sm py-2 px-3 border-amber-200 focus:border-amber-400" placeholder="Ví dụ: Đã ghé xưởng làm việc trực tiếp với anh Nam, giới thiệu bảng giá nẹp mới và cập nhật quy mô xưởng..."></textarea>
+                    </div>
                 </div>
             </div>
         </div>
@@ -757,6 +771,44 @@
             </button>
         </div>
     </form>
+</x-modal>
+
+{{-- ===== MODAL LỊCH SỬ CHỈNH SỬA THÔNG TIN KHÁCH HÀNG ===== --}}
+<x-modal name="customer-history-modal" maxWidth="3xl">
+    <div class="px-6 py-4 border-b border-neutral-200 flex items-center justify-between sticky top-0 bg-white z-10">
+        <div>
+            <h5 class="font-bold text-base text-neutral-800 m-0 flex items-center gap-2">
+                <iconify-icon icon="solar:history-bold-duotone" class="text-amber-600 text-xl"></iconify-icon>
+                <span>Lịch sử chỉnh sửa thông tin khách hàng</span>
+            </h5>
+            <div class="text-xs text-neutral-500 mt-0.5">
+                Khách hàng: <strong id="history_modal_customer_title" class="text-primary-700"></strong>
+            </div>
+        </div>
+        <button type="button" onclick="closeModal('customer-history-modal')" class="text-neutral-400 hover:text-neutral-600 text-2xl leading-none">&times;</button>
+    </div>
+
+    <div class="p-6 max-h-[75vh] overflow-y-auto">
+        <div id="customer-history-loading" class="text-center py-10 text-neutral-400">
+            <iconify-icon icon="lucide:loader-2" class="text-3xl animate-spin text-primary-500"></iconify-icon>
+            <div class="text-xs mt-2 font-medium">Đang tải lịch sử chỉnh sửa...</div>
+        </div>
+
+        <div id="customer-history-empty" class="hidden text-center py-12 text-neutral-400">
+            <iconify-icon icon="solar:history-line-duotone" class="text-4xl text-neutral-300"></iconify-icon>
+            <div class="text-sm font-bold text-neutral-700 mt-2">Chưa có lịch sử cập nhật nào</div>
+            <p class="text-xs text-neutral-500 mt-1">Khi nhân viên chỉnh sửa thông tin hoặc ghi chú chuyến đi, toàn bộ lịch sử sẽ lưu lại tại đây.</p>
+        </div>
+
+        <div id="customer-history-timeline" class="hidden space-y-4">
+            {{-- Content injected by JS --}}
+        </div>
+    </div>
+
+    <div class="px-6 py-3 border-t border-neutral-200 flex justify-between items-center bg-neutral-50/60">
+        <span class="text-xs text-neutral-500" id="customer-history-total-count">0 lần chỉnh sửa</span>
+        <button type="button" onclick="closeModal('customer-history-modal')" class="btn btn-neutral px-5 py-2 text-xs rounded-xl font-semibold">Đóng</button>
+    </div>
 </x-modal>
 
 <script>
@@ -1956,6 +2008,102 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 });
+
+function openCustomerHistoryModal(customerId, customerName, customerCode) {
+    document.getElementById('history_modal_customer_title').textContent = (customerCode ? `[${customerCode}] ` : '') + customerName;
+    const loading = document.getElementById('customer-history-loading');
+    const empty = document.getElementById('customer-history-empty');
+    const timeline = document.getElementById('customer-history-timeline');
+    const countEl = document.getElementById('customer-history-total-count');
+
+    loading.classList.remove('hidden');
+    empty.classList.add('hidden');
+    timeline.classList.add('hidden');
+    timeline.innerHTML = '';
+
+    openModal('customer-history-modal');
+
+    fetch(`/customers/${customerId}/histories`)
+        .then(res => res.json())
+        .then(data => {
+            loading.classList.add('hidden');
+            if (!data.histories || data.histories.length === 0) {
+                empty.classList.remove('hidden');
+                countEl.textContent = '0 lần chỉnh sửa';
+                return;
+            }
+
+            countEl.textContent = `${data.histories.length} lần chỉnh sửa`;
+            timeline.classList.remove('hidden');
+
+            data.histories.forEach((h, idx) => {
+                const item = document.createElement('div');
+                item.className = 'p-4 rounded-xl border border-neutral-200 bg-white shadow-2xs hover:border-neutral-300 transition';
+
+                const photosHtml = (h.photos && h.photos.length > 0)
+                    ? `<div class="mt-2.5 flex items-center gap-2 flex-wrap">` +
+                        h.photos.map(p => {
+                            const src = (p.startsWith('http') || p.startsWith('/')) ? p : '/' + p;
+                            return `<img src="${src}" class="w-14 h-14 rounded-lg border border-neutral-200 object-cover cursor-pointer hover:scale-105 transition-transform" onclick="openImageLightbox('${src}', 'Ảnh ngày ${h.created_at}')">`;
+                        }).join('') +
+                      `</div>`
+                    : '';
+
+                const mapsHtml = (h.latitude && h.longitude)
+                    ? `<a href="https://www.google.com/maps?q=${h.latitude},${h.longitude}" target="_blank" class="inline-flex items-center gap-1 text-[11px] text-primary-600 hover:text-primary-800 bg-primary-50 px-2 py-0.5 rounded border border-primary-200">
+                        <iconify-icon icon="solar:map-point-wave-bold" class="text-rose-500"></iconify-icon> GPS (${Number(h.latitude).toFixed(3)}, ${Number(h.longitude).toFixed(3)})
+                       </a>`
+                    : '';
+
+                let changesHtml = '';
+                if (h.changes && Array.isArray(h.changes) && h.changes.length > 0) {
+                    changesHtml = `<div class="bg-neutral-50 rounded-lg p-2.5 my-2 border border-neutral-100 text-xs space-y-1">` +
+                        h.changes.map(ch => `
+                            <div>
+                                <span class="font-bold text-neutral-600">${ch.label || ch.field}:</span>
+                                ${ch.old ? `<span class="line-through text-neutral-400 mx-1">${ch.old}</span> →` : ''}
+                                <span class="font-semibold text-emerald-700 ml-1">${ch.new || '(Trống)'}</span>
+                            </div>
+                        `).join('') +
+                    `</div>`;
+                }
+
+                item.innerHTML = `
+                    <div class="flex items-start justify-between gap-3 border-b border-neutral-100 pb-2.5 mb-2">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center font-bold text-xs shrink-0">
+                                #${data.histories.length - idx}
+                            </span>
+                            <div>
+                                <div class="text-xs font-bold text-neutral-800 flex items-center gap-2">
+                                    <span>${h.created_at}</span>
+                                    <span class="text-[11px] text-neutral-400 font-normal">(${h.diff})</span>
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold ${h.action === 'created' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'}">
+                                        ${h.action === 'created' ? 'Tạo mới' : 'Cập nhật'}
+                                    </span>
+                                </div>
+                                <div class="text-[11px] text-neutral-500 mt-0.5">
+                                    Thực hiện bởi: <strong class="text-neutral-700">${h.user_name}</strong>
+                                </div>
+                            </div>
+                        </div>
+                        <div>${mapsHtml}</div>
+                    </div>
+
+                    ${h.note ? `<div class="bg-amber-50/80 border border-amber-200 text-amber-900 rounded-lg p-2 text-xs mb-2"><strong>Ghi chú:</strong> ${h.note}</div>` : ''}
+                    ${changesHtml}
+                    ${h.summary && !changesHtml ? `<div class="text-xs text-neutral-600 italic mb-2">${h.summary}</div>` : ''}
+                    ${photosHtml}
+                `;
+                timeline.appendChild(item);
+            });
+        })
+        .catch(err => {
+            loading.classList.add('hidden');
+            empty.classList.remove('hidden');
+            empty.innerHTML = `<div class="text-danger-500 text-xs font-semibold">Lỗi khi tải lịch sử: ${err.message}</div>`;
+        });
+}
 </script>
 
 <style>

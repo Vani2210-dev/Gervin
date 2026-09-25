@@ -66,12 +66,7 @@ class CustomerController extends Controller
 
         if ($user && !$user->hasRole('Admin')) {
             $userMarketGroupIds = $user->marketGroups()->pluck('market_groups.id');
-            $query->where(function ($q) use ($user, $userMarketGroupIds) {
-                $q->whereIn('market_group_id', $userMarketGroupIds)
-                  ->orWhereHas('users', function ($uq) use ($user) {
-                      $uq->where('users.id', $user->id);
-                  });
-            });
+            $query->whereIn('market_group_id', $userMarketGroupIds);
         }
 
         if ($request->filled('filter_market_group_id')) {
@@ -161,12 +156,7 @@ class CustomerController extends Controller
         $baseScopedQuery = Customer::query();
         if ($user && !$user->hasRole('Admin')) {
             $userMarketGroupIds = $user->marketGroups()->pluck('market_groups.id');
-            $baseScopedQuery->where(function ($q) use ($user, $userMarketGroupIds) {
-                $q->whereIn('market_group_id', $userMarketGroupIds)
-                  ->orWhereHas('users', function ($uq) use ($user) {
-                      $uq->where('users.id', $user->id);
-                  });
-            });
+            $baseScopedQuery->whereIn('market_group_id', $userMarketGroupIds);
         }
 
         $lostCustomersCount = (clone $baseScopedQuery)->whereHas('orders')
@@ -198,15 +188,12 @@ class CustomerController extends Controller
         $filterQuery = Customer::query();
         if ($user && !$user->hasRole('Admin')) {
             $userMarketGroupIds = $user->marketGroups()->pluck('market_groups.id');
-            $filterQuery->where(function ($q) use ($user, $userMarketGroupIds) {
-                $q->whereIn('market_group_id', $userMarketGroupIds)
-                  ->orWhereHas('users', function ($uq) use ($user) {
-                      $uq->where('users.id', $user->id);
-                  });
-            });
+            $filterQuery->whereIn('market_group_id', $userMarketGroupIds);
+            $marketGroups = \App\Models\MarketGroup::whereIn('id', $userMarketGroupIds)->orderBy('name')->get();
+        } else {
+            $marketGroups = \App\Models\MarketGroup::orderBy('name')->get();
         }
         $filterCustomers = $filterQuery->orderBy('name')->get();
-        $marketGroups    = MarketGroup::orderBy('name')->get();
 
         return view('customers.index', compact(
             'customers', 'perPage', 'search', 'users', 'filterCustomers', 'marketGroups',
@@ -257,6 +244,19 @@ class CustomerController extends Controller
 
         $photos = $this->processCustomerPhotos($request);
 
+        $user = auth()->user();
+        $userMarketGroupIds = ($user && !$user->hasRole('Admin')) ? $user->marketGroups()->pluck('market_groups.id') : null;
+
+        $targetMarketGroupId = $request->market_group_id;
+        if ($userMarketGroupIds !== null) {
+            if ($targetMarketGroupId && !$userMarketGroupIds->contains($targetMarketGroupId)) {
+                abort(403, 'Bạn chỉ có thể thêm khách hàng vào nhóm thị trường của mình.');
+            }
+            if (!$targetMarketGroupId && $userMarketGroupIds->isNotEmpty()) {
+                $targetMarketGroupId = $userMarketGroupIds->first();
+            }
+        }
+
         $customer = Customer::create([
             'customer_code'       => $customerCode,
             'name'                => $request->name,
@@ -277,10 +277,9 @@ class CustomerController extends Controller
             'debt_limit'          => $request->debt_limit ?? 0,
             'policy'              => $request->policy,
             'photos'              => $photos,
-            'market_group_id'     => $request->market_group_id,
+            'market_group_id'     => $targetMarketGroupId,
         ]);
 
-        $user = auth()->user();
         if ($user) {
             if ($user->can('assign customer') || $user->hasRole('Admin')) {
                 if ($request->has('user_ids')) {
@@ -291,7 +290,21 @@ class CustomerController extends Controller
             }
         }
 
-        return redirect()->route('customers.index')->with('success', 'Thêm khách hàng thành công.');
+        // Log initial creation in CustomerHistory
+        \App\Models\CustomerHistory::create([
+            'customer_id'     => $customer->id,
+            'user_id'         => $user?->id,
+            'market_group_id' => $customer->market_group_id,
+            'action'          => 'created',
+            'summary'         => 'Khởi tạo thông tin khách hàng mới',
+            'changes'         => null,
+            'photos'          => $photos,
+            'latitude'        => $request->latitude,
+            'longitude'       => $request->longitude,
+            'note'            => $request->input('edit_note') ?: 'Tạo mới hồ sơ khách hàng',
+        ]);
+
+        return redirect()->back()->with('success', 'Thêm khách hàng thành công.');
     }
 
     public function update(Request $request, Customer $customer)
@@ -325,7 +338,36 @@ class CustomerController extends Controller
             $partnerCompetitors = implode(', ', array_filter($partnerCompetitors));
         }
 
-        $photos = $this->processCustomerPhotos($request, $customer->photos ?: []);
+        $user = auth()->user();
+        abort_unless($customer->isAccessibleBy($user), 403, 'Bạn không có quyền cập nhật khách hàng này.');
+
+        if ($user && !$user->hasRole('Admin') && $request->filled('market_group_id')) {
+            $userMarketGroupIds = $user->marketGroups()->pluck('market_groups.id');
+            if (!$userMarketGroupIds->contains($request->market_group_id)) {
+                abort(403, 'Bạn không thể chuyển khách sang nhóm thị trường khác nhóm của mình.');
+            }
+        }
+
+        $oldAttributes = [
+            'name'                => $customer->name,
+            'phone'               => $customer->phone,
+            'address'             => $customer->address,
+            'province'            => $customer->province,
+            'ward'                => $customer->ward,
+            'status'              => $customer->status,
+            'partner_competitors' => $customer->partner_competitors,
+            'feedback'            => $customer->feedback,
+            'personality'         => $customer->personality,
+            'workshop_scale'      => $customer->workshop_scale,
+            'customer_proposal'   => $customer->customer_proposal,
+            'sale_proposal'       => $customer->sale_proposal,
+            'debt_limit'          => $customer->debt_limit,
+            'policy'              => $customer->policy,
+            'market_group_id'     => $customer->market_group_id,
+        ];
+        $oldPhotos = is_array($customer->photos) ? $customer->photos : (is_string($customer->photos) ? (json_decode($customer->photos, true) ?: []) : []);
+
+        $photos = $this->processCustomerPhotos($request, $oldPhotos);
 
         $updateData = [
             'name'                => $request->name,
@@ -345,7 +387,7 @@ class CustomerController extends Controller
             'debt_limit'          => $request->debt_limit ?? 0,
             'policy'              => $request->policy,
             'photos'              => $photos,
-            'market_group_id'     => $request->market_group_id,
+            'market_group_id'     => $request->market_group_id ?? $customer->market_group_id,
         ];
         
         if ($request->has('initial_debt')) {
@@ -358,14 +400,75 @@ class CustomerController extends Controller
 
         $customer->update($updateData);
 
-        $user = auth()->user();
         if ($user && ($user->can('assign customer') || $user->hasRole('Admin'))) {
             if ($request->has('user_ids')) {
                 $customer->users()->sync($request->input('user_ids', []));
             }
         }
 
-        return redirect()->route('customers.index')->with('success', 'Cập nhật khách hàng thành công.');
+        // Track and log changes into CustomerHistory
+        $fieldLabels = [
+            'name'                => 'Tên khách hàng',
+            'phone'               => 'Số điện thoại',
+            'address'             => 'Địa chỉ',
+            'province'            => 'Tỉnh / TP',
+            'ward'                => 'Quận / Huyện / Xã',
+            'status'              => 'Trạng thái',
+            'partner_competitors' => 'Đối tác đối thủ',
+            'feedback'            => 'Phản ánh về Gervin',
+            'personality'         => 'Tính cách KH',
+            'workshop_scale'      => 'Quy mô xưởng',
+            'customer_proposal'   => 'Đề xuất KH',
+            'sale_proposal'       => 'Đề xuất Sale',
+            'debt_limit'          => 'Định mức nợ',
+            'policy'              => 'Chính sách',
+            'market_group_id'     => 'Nhóm thị trường',
+        ];
+
+        $changes = [];
+        $changedLabels = [];
+        foreach ($fieldLabels as $field => $label) {
+            $oldVal = $oldAttributes[$field] ?? null;
+            $newVal = $customer->$field;
+            $oldStr = trim((string)$oldVal);
+            $newStr = trim((string)$newVal);
+            if ($oldStr !== $newStr) {
+                $changes[] = [
+                    'field' => $field,
+                    'label' => $label,
+                    'old'   => $oldVal,
+                    'new'   => $newVal,
+                ];
+                $changedLabels[] = $label;
+            }
+        }
+
+        $newPhotos = array_values(array_diff($photos, $oldPhotos));
+        if (!empty($newPhotos)) {
+            $changedLabels[] = 'Thêm ' . count($newPhotos) . ' ảnh mới';
+        }
+
+        $editNote = trim((string)$request->input('edit_note'));
+        if (!empty($changes) || !empty($newPhotos) || !empty($editNote)) {
+            $summary = !empty($changedLabels)
+                ? 'Cập nhật ' . implode(', ', array_slice($changedLabels, 0, 3)) . (count($changedLabels) > 3 ? '...' : '')
+                : 'Cập nhật ghi chú thông tin';
+
+            \App\Models\CustomerHistory::create([
+                'customer_id'     => $customer->id,
+                'user_id'         => $user?->id,
+                'market_group_id' => $customer->market_group_id,
+                'action'          => 'updated',
+                'summary'         => $summary,
+                'changes'         => $changes,
+                'photos'          => $newPhotos,
+                'latitude'        => $request->latitude,
+                'longitude'       => $request->longitude,
+                'note'            => $editNote ?: null,
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Cập nhật khách hàng thành công.');
     }
 
     private function processCustomerPhotos(Request $request, $existingPhotos = [])
@@ -574,4 +677,41 @@ class CustomerController extends Controller
             'customer_orders' => $customerOrders,
         ]);
     }
+
+    public function getHistories(Customer $customer)
+    {
+        $user = auth()->user();
+        abort_unless($customer->isAccessibleBy($user), 403, 'Bạn không có quyền truy cập khách hàng này.');
+
+        $histories = $customer->histories()
+            ->with('user')
+            ->get()
+            ->map(function ($h) {
+                return [
+                    'id'         => $h->id,
+                    'action'     => $h->action,
+                    'summary'    => $h->summary,
+                    'changes'    => $h->changes,
+                    'photos'     => $h->photos,
+                    'latitude'   => $h->latitude,
+                    'longitude'  => $h->longitude,
+                    'note'       => $h->note,
+                    'user_name'  => $h->user?->name ?? 'Hệ thống',
+                    'created_at' => $h->created_at->format('H:i d/m/Y'),
+                    'diff'       => $h->created_at->diffForHumans(),
+                ];
+            });
+
+        return response()->json([
+            'customer' => [
+                'id'            => $customer->id,
+                'customer_code' => $customer->customer_code,
+                'name'          => $customer->name,
+                'phone'         => $customer->phone,
+                'status'        => $customer->status,
+            ],
+            'histories' => $histories,
+        ]);
+    }
 }
+

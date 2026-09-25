@@ -109,11 +109,11 @@
 
     <div class="bg-white border border-neutral-200 rounded-2xl p-5 shadow-xs flex items-center gap-4">
         <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-2xl shrink-0">
-            <iconify-icon icon="solar:clipboard-check-bold-duotone"></iconify-icon>
+            <iconify-icon icon="solar:history-bold-duotone"></iconify-icon>
         </div>
         <div>
-            <div class="text-xs text-neutral-500 font-medium truncate">Đi thị trường ({{ $dateLabel }})</div>
-            <div class="text-2xl font-bold text-amber-600 mt-0.5">{{ $totalCareVisits ?? 0 }} <span class="text-xs font-normal text-neutral-500">lượt</span></div>
+            <div class="text-xs text-neutral-500 font-medium truncate">Lịch sử cập nhật ({{ $dateLabel }})</div>
+            <div class="text-2xl font-bold text-amber-600 mt-0.5">{{ $totalCustomerUpdates ?? 0 }} <span class="text-xs font-normal text-neutral-500">lần</span></div>
         </div>
     </div>
 
@@ -130,6 +130,20 @@
 
 {{-- Main Container Card --}}
 <div class="bg-white border border-neutral-200 rounded-2xl shadow-sm overflow-hidden mb-8">
+    {{-- Tabs chuyển đổi giữa Danh sách khách hàng và Lịch sử chỉnh sửa thông tin --}}
+    <div class="border-b border-neutral-200 px-6 pt-3 flex items-center gap-6 bg-white">
+        <button type="button" onclick="switchMarketTab('customers')" id="tab-btn-customers" class="pb-3 text-xs md:text-sm font-bold border-b-2 border-primary-600 text-primary-600 flex items-center gap-2 transition-colors">
+            <iconify-icon icon="solar:users-group-two-rounded-bold" class="text-base"></iconify-icon>
+            Danh sách khách hàng ({{ count($customers) }})
+        </button>
+        <button type="button" onclick="switchMarketTab('histories')" id="tab-btn-histories" class="pb-3 text-xs md:text-sm font-semibold border-b-2 border-transparent text-neutral-500 hover:text-neutral-800 flex items-center gap-2 transition-colors">
+            <iconify-icon icon="solar:history-bold-duotone" class="text-base text-amber-500"></iconify-icon>
+            Lịch sử chỉnh sửa thông tin ({{ $histories->count() }})
+        </button>
+    </div>
+
+    {{-- TAB 1: DANH SÁCH KHÁCH HÀNG --}}
+    <div id="tab-pane-customers">
     {{-- Thanh công cụ: Gán thêm khách hàng & Bộ lọc thời gian linh hoạt & Tìm kiếm --}}
     <div class="p-5 border-b border-neutral-200 bg-neutral-50/60 flex flex-wrap items-center justify-between gap-4">
         {{-- Form gán khách hàng nhanh --}}
@@ -352,40 +366,10 @@
 
                     {{-- 17. Thao tác (Ghi nhận chăm sóc + Lịch sử + Sửa + Bỏ nhóm) --}}
                     <td class="py-3 px-3 text-center">
-                        <div class="flex items-center justify-center gap-1">
-                            {{-- Nút Ghi nhận đi thị trường --}}
+                        <div class="flex items-center justify-center gap-1.5">
+                            {{-- Nút Sửa thông tin khách hàng --}}
                             <button type="button"
-                                class="text-amber-600 hover:text-amber-800 p-1.5 rounded hover:bg-amber-50 transition-colors"
-                                title="Ghi nhận đi thị trường / chăm sóc khách này"
-                                data-id="{{ $c->id }}"
-                                data-code="{{ $c->customer_code ?? '' }}"
-                                data-name="{{ $c->name }}"
-                                data-status="{{ $c->status ?? 'Đang đặt hàng' }}"
-                                data-feedback="{{ $c->feedback ?? '' }}"
-                                data-customer-proposal="{{ $c->customer_proposal ?? '' }}"
-                                data-sale-proposal="{{ $c->sale_proposal ?? '' }}"
-                                data-lat="{{ $c->latitude ?? '' }}"
-                                data-lng="{{ $c->longitude ?? '' }}"
-                                onclick="openCreateCareLogModalFromBtn(this)">
-                                <iconify-icon icon="solar:clipboard-add-bold" class="text-base"></iconify-icon>
-                            </button>
-
-                            {{-- Nút Xem lịch sử chăm sóc --}}
-                            <button type="button"
-                                class="text-blue-600 hover:text-blue-800 p-1.5 rounded hover:bg-blue-50 transition-colors relative"
-                                title="Xem lịch sử các đợt đi thị trường / chăm sóc"
-                                onclick="openCareHistoryModal({{ $c->id }}, '{{ addslashes($c->name) }}')">
-                                <iconify-icon icon="solar:history-bold-duotone" class="text-base"></iconify-icon>
-                                @if($c->period_care_count > 0)
-                                    <span class="absolute -top-1 -right-1 bg-amber-500 text-white text-[9px] font-bold rounded-full w-3.5 h-3.5 flex items-center justify-center border border-white" title="{{ $c->period_care_count }} lượt CS trong {{ $dateLabel }}">
-                                        {{ $c->period_care_count }}
-                                    </span>
-                                @endif
-                            </button>
-
-                            {{-- Nút Sửa khách hàng --}}
-                            <button type="button"
-                                class="text-emerald-600 hover:text-emerald-800 p-1.5 rounded hover:bg-emerald-50 transition-colors"
+                                class="text-primary-600 hover:text-primary-800 p-1.5 rounded hover:bg-primary-50 transition-colors"
                                 title="Chỉnh sửa thông tin khách hàng"
                                 data-id="{{ $c->id }}"
                                 data-code="{{ $c->customer_code ?? '' }}"
@@ -410,6 +394,14 @@
                                 data-market-group-id="{{ $c->market_group_id ?? $marketGroup->id }}"
                                 onclick="openEditCustomerModalFromBtn(this)">
                                 <iconify-icon icon="lucide:edit-3" class="text-base"></iconify-icon>
+                            </button>
+
+                            {{-- Nút Xem lịch sử chỉnh sửa thông tin --}}
+                            <button type="button"
+                                class="text-amber-600 hover:text-amber-800 p-1.5 rounded hover:bg-amber-50 transition-colors"
+                                title="Xem lịch sử chỉnh sửa thông tin của khách hàng này"
+                                onclick="openCustomerHistoryModal({{ $c->id }}, '{{ addslashes($c->name) }}', '{{ $c->customer_code ?? '' }}')">
+                                <iconify-icon icon="solar:history-bold-duotone" class="text-base"></iconify-icon>
                             </button>
 
                             {{-- Nút Bỏ nhóm --}}
@@ -451,6 +443,144 @@
             Cập nhật dữ liệu thời gian thực
         </div>
     </div>
+    {{-- Hết TAB 1 --}}
+
+    {{-- TAB 2: LỊCH SỬ CHỈNH SỬA THÔNG TIN KHÁCH HÀNG (TOÀN NHÓM) --}}
+    <div id="tab-pane-histories" class="hidden p-6 bg-neutral-50/40">
+        <div class="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-neutral-200 pb-3">
+            <div>
+                <h6 class="font-bold text-sm text-neutral-800 m-0 flex items-center gap-2">
+                    <iconify-icon icon="solar:history-bold" class="text-amber-600 text-lg"></iconify-icon>
+                    Nhật ký chỉnh sửa thông tin khách hàng trong nhóm ({{ $dateLabel }})
+                </h6>
+                <div class="text-xs text-neutral-500 mt-0.5">
+                    Ghi lại mọi thay đổi về tình trạng, phản ánh, ảnh chụp timestamp và ghi chú chuyến đi của nhân viên.
+                </div>
+            </div>
+            <span class="px-3 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-full font-bold text-xs">
+                {{ $histories->count() }} lượt cập nhật
+            </span>
+        </div>
+
+        @if($histories->isEmpty())
+            <div class="text-center py-16 text-neutral-400">
+                <iconify-icon icon="solar:history-line-duotone" class="text-5xl text-neutral-300"></iconify-icon>
+                <div class="text-sm font-bold text-neutral-700 mt-2">Chưa có lượt cập nhật thông tin nào trong {{ $dateLabel }}</div>
+                <p class="text-xs text-neutral-400 mt-1">Khi nhân viên ghé thăm xưởng và cập nhật thông tin khách hàng, lịch sử sẽ tự động hiển thị tại đây.</p>
+            </div>
+        @else
+            <div class="space-y-4">
+                @foreach($histories as $h)
+                    @php
+                        $hCust = $h->customer;
+                        $hPhotos = is_array($h->photos) ? $h->photos : (is_string($h->photos) ? json_decode($h->photos, true) : []);
+                        $hPhotos = $hPhotos ?: [];
+                        $hChanges = is_array($h->changes) ? $h->changes : (is_string($h->changes) ? json_decode($h->changes, true) : []);
+                        $hChanges = $hChanges ?: [];
+                    @endphp
+                    <div class="bg-white border border-neutral-200 rounded-2xl p-5 shadow-2xs hover:border-neutral-300 transition-all">
+                        {{-- Header sự kiện --}}
+                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-100 pb-3 mb-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg font-bold shrink-0">
+                                    <iconify-icon icon="{{ $h->action === 'created' ? 'solar:user-plus-bold' : 'solar:pen-new-square-bold' }}"></iconify-icon>
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <a href="{{ $hCust ? route('customers.index', ['overview_id' => $hCust->id]) : '#' }}" target="_blank" class="font-bold text-sm text-neutral-900 hover:text-primary-600 flex items-center gap-1">
+                                            <span>{{ $hCust ? $hCust->name : 'Khách hàng đã xóa' }}</span>
+                                            @if($hCust && $hCust->customer_code)
+                                                <span class="text-xs font-mono font-normal text-neutral-500">[{{ $hCust->customer_code }}]</span>
+                                            @endif
+                                            <iconify-icon icon="lucide:external-link" class="text-xs opacity-50"></iconify-icon>
+                                        </a>
+                                        <span class="px-2 py-0.5 rounded text-[11px] font-bold border {{ $h->action === 'created' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200' }}">
+                                            {{ $h->action === 'created' ? 'Khởi tạo KH' : 'Cập nhật thông tin' }}
+                                        </span>
+                                    </div>
+                                    <div class="text-xs text-neutral-500 mt-0.5 flex items-center gap-2">
+                                        <span>Bởi: <strong class="text-neutral-700">{{ $h->user?->name ?? 'Hệ thống' }}</strong></span>
+                                        <span>•</span>
+                                        <span class="flex items-center gap-1">
+                                            <iconify-icon icon="lucide:clock" class="text-xs"></iconify-icon>
+                                            {{ $h->created_at->format('H:i d/m/Y') }} ({{ $h->created_at->diffForHumans() }})
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            @if($h->latitude && $h->longitude)
+                                <a href="https://www.google.com/maps?q={{ $h->latitude }},{{ $h->longitude }}" target="_blank" class="inline-flex items-center gap-1.5 text-xs text-primary-700 bg-primary-50 border border-primary-200 px-3 py-1.5 rounded-xl font-medium hover:bg-primary-100 transition-colors">
+                                    <iconify-icon icon="solar:map-point-wave-bold" class="text-rose-500 text-sm"></iconify-icon>
+                                    GPS Check-in ({{ number_format($h->latitude, 4) }}, {{ number_format($h->longitude, 4) }})
+                                </a>
+                            @endif
+                        </div>
+
+                        {{-- Ghi chú chuyến đi thị trường nếu có --}}
+                        @if($h->note)
+                            <div class="bg-amber-50/70 border border-amber-200 text-amber-950 rounded-xl p-3.5 mb-3 text-xs leading-relaxed flex items-start gap-2.5">
+                                <iconify-icon icon="solar:notes-bold" class="text-amber-600 text-base shrink-0 mt-0.5"></iconify-icon>
+                                <div>
+                                    <span class="font-bold">Ghi chú chuyến đi / cập nhật:</span>
+                                    <p class="mt-0.5 mb-0 text-neutral-700 whitespace-pre-wrap">{{ $h->note }}</p>
+                                </div>
+                            </div>
+                        @endif
+
+                        {{-- Tóm tắt / Chi tiết thay đổi --}}
+                        @if(!empty($hChanges))
+                            <div class="bg-neutral-50 rounded-xl p-3 mb-3 border border-neutral-200">
+                                <div class="text-[11px] font-bold uppercase tracking-wider text-neutral-500 mb-2">Các trường thông tin đã thay đổi:</div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+                                    @foreach($hChanges as $ch)
+                                        <div class="bg-white rounded-lg p-2.5 border border-neutral-200 flex flex-col justify-center">
+                                            <span class="font-bold text-neutral-700 text-[11px] mb-1">{{ $ch['label'] ?? $ch['field'] }}:</span>
+                                            <div class="flex items-center gap-2 flex-wrap">
+                                                @if(!empty($ch['old']))
+                                                    <span class="line-through text-neutral-400 bg-neutral-100 px-2 py-0.5 rounded text-[11px] truncate max-w-[180px]" title="{{ $ch['old'] }}">{{ $ch['old'] }}</span>
+                                                    <iconify-icon icon="lucide:arrow-right" class="text-neutral-400 text-xs shrink-0"></iconify-icon>
+                                                @endif
+                                                <span class="font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded text-[11px] truncate max-w-[220px]" title="{{ $ch['new'] }}">{{ $ch['new'] ?: '(Trống)' }}</span>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @elseif($h->summary)
+                            <div class="text-xs text-neutral-600 mb-3 italic">
+                                {{ $h->summary }}
+                            </div>
+                        @endif
+
+                        {{-- Ảnh chụp kèm timestamp --}}
+                        @if(!empty($hPhotos))
+                            <div class="mt-3">
+                                <div class="text-[11px] font-bold text-neutral-500 mb-1.5 flex items-center gap-1.5">
+                                    <iconify-icon icon="solar:camera-bold" class="text-primary-600 text-sm"></iconify-icon>
+                                    Ảnh chụp hiện trường đính kèm ({{ count($hPhotos) }} ảnh):
+                                </div>
+                                <div class="flex items-center gap-2.5 flex-wrap">
+                                    @foreach($hPhotos as $p)
+                                        @php
+                                            $fullSrc = str_starts_with($p, 'http') || str_starts_with($p, '/') ? $p : '/' . $p;
+                                        @endphp
+                                        <div class="relative group cursor-pointer" onclick="openImageLightbox('{{ $fullSrc }}', 'Ảnh hiện trường: {{ addslashes($hCust?->name ?? '') }} ({{ $h->created_at->format('d/m/Y H:i') }})')">
+                                            <img src="{{ $fullSrc }}" class="w-16 h-16 md:w-20 md:h-20 rounded-xl object-cover border border-neutral-300 shadow-2xs group-hover:scale-105 group-hover:shadow-md transition-all">
+                                            <div class="absolute inset-0 bg-black/30 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                                                <iconify-icon icon="lucide:zoom-in" class="text-lg"></iconify-icon>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
+        @endif
+    </div>
+    {{-- Hết TAB 2 --}}
 </div>
 
 {{-- ===== MODAL 1: THÊM MỚI KHÁCH HÀNG ===== --}}
@@ -868,6 +998,14 @@
                         <label class="form-label font-semibold text-xs text-neutral-700 mb-1.5 block">Chính sách khách hàng</label>
                         <input type="text" id="edit_policy" name="policy" class="form-control rounded-xl text-sm py-2.5 px-3.5" placeholder="Chính sách giá, chiết khấu, điều khoản thanh toán...">
                     </div>
+
+                    <div class="border border-amber-200 bg-amber-50/60 rounded-xl p-3.5 mt-2">
+                        <label class="form-label font-bold text-xs text-amber-900 mb-1.5 flex items-center gap-1.5">
+                            <iconify-icon icon="solar:notes-bold" class="text-amber-600 text-base"></iconify-icon>
+                            Ghi chú lần đi thị trường / cập nhật này (tùy chọn)
+                        </label>
+                        <textarea id="edit_note" name="edit_note" rows="2" class="form-control rounded-xl text-sm py-2 px-3 border-amber-200 focus:border-amber-400" placeholder="Ví dụ: Đã ghé xưởng làm việc trực tiếp với anh Nam, giới thiệu bảng giá nẹp mới và cập nhật quy mô xưởng..."></textarea>
+                    </div>
                 </div>
             </div>
         </div>
@@ -880,131 +1018,41 @@
     </form>
 </x-modal>
 
-{{-- ===== MODAL GHI NHẬN ĐI THỊ TRƯỜNG / CHĂM SÓC KHÁCH HÀNG ===== --}}
-<x-modal name="create-care-log-modal" maxWidth="2xl">
+{{-- ===== MODAL LỊCH SỬ CHỈNH SỬA THÔNG TIN KHÁCH HÀNG ===== --}}
+<x-modal name="customer-history-modal" maxWidth="3xl">
     <div class="px-6 py-4 border-b border-neutral-200 flex items-center justify-between sticky top-0 bg-white z-10">
         <div>
             <h5 class="font-bold text-base text-neutral-800 m-0 flex items-center gap-2">
-                <iconify-icon icon="solar:clipboard-add-bold" class="text-amber-600 text-xl"></iconify-icon>
-                <span>Ghi nhận đi thị trường / Chăm sóc khách hàng</span>
+                <iconify-icon icon="solar:history-bold-duotone" class="text-amber-600 text-xl"></iconify-icon>
+                <span>Lịch sử chỉnh sửa thông tin khách hàng</span>
             </h5>
             <div class="text-xs text-neutral-500 mt-0.5">
-                Khách hàng: <strong id="care_customer_title" class="text-primary-700"></strong>
+                Khách hàng: <strong id="history_modal_customer_title" class="text-primary-700"></strong>
             </div>
         </div>
-        <button type="button" onclick="closeModal('create-care-log-modal')" class="text-neutral-400 hover:text-neutral-600 text-2xl leading-none">&times;</button>
-    </div>
-
-    <form id="createCareLogForm" method="POST" action="" enctype="multipart/form-data">
-        @csrf
-        <div class="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label class="form-label font-semibold text-xs text-neutral-700 mb-1.5 block">Ngày đi chăm sóc <span class="text-danger-500">*</span></label>
-                    <input type="date" id="care_visit_date" name="visit_date" value="{{ date('Y-m-d') }}" required class="form-control rounded-xl text-sm py-2 px-3">
-                </div>
-                <div>
-                    <label class="form-label font-semibold text-xs text-neutral-700 mb-1.5 block">Tình trạng hiện tại của khách</label>
-                    <select id="care_status" name="status" class="form-select rounded-xl text-sm py-2 px-3">
-                        <option value="Đang đặt hàng">Đang đặt hàng</option>
-                        <option value="Không đặt GERVIN">Không đặt GERVIN</option>
-                        <option value="Khách hàng mới tiềm năng">Khách hàng mới tiềm năng</option>
-                        <option value="Tạm dừng hợp tác">Tạm dừng hợp tác</option>
-                    </select>
-                </div>
-            </div>
-
-            <div>
-                <label class="form-label font-semibold text-xs text-neutral-700 mb-1.5 block">Phản ánh khách hàng về Gervin (chất lượng, keo PUR, tiến độ...)</label>
-                <textarea id="care_feedback" name="feedback" rows="2" class="form-control rounded-xl text-sm py-2 px-3.5" placeholder="Ghi nhận cụ thể khách khen, chê hoặc góp ý điều gì..."></textarea>
-            </div>
-
-            <div>
-                <label class="form-label font-semibold text-xs text-neutral-700 mb-1.5 block">Đề xuất Khách hàng (nếu có)</label>
-                <textarea id="care_customer_proposal" name="customer_proposal" rows="2" class="form-control rounded-xl text-sm py-2 px-3.5" placeholder="Khách hàng mong muốn điều chỉnh chính sách, giá, mẫu mã..."></textarea>
-            </div>
-
-            <div>
-                <label class="form-label font-semibold text-xs text-neutral-700 mb-1.5 block">Đề xuất Sale (CSKH / giải pháp kéo khách)</label>
-                <textarea id="care_sale_proposal" name="sale_proposal" rows="2" class="form-control rounded-xl text-sm py-2 px-3.5" placeholder="Kế hoạch tiếp theo của sale để giữ khách hoặc đẩy số lượng..."></textarea>
-            </div>
-
-            {{-- Chụp ảnh hiện trường có timestamp --}}
-            <div class="border border-neutral-200 rounded-xl p-4 bg-neutral-50/60">
-                <div class="flex items-center justify-between mb-2">
-                    <label class="form-label font-bold text-xs text-neutral-800 m-0 flex items-center gap-1.5">
-                        <iconify-icon icon="solar:camera-bold" class="text-primary-600 text-base"></iconify-icon>
-                        Ảnh chụp hiện trường (tự động đóng dấu Ngày/Giờ)
-                    </label>
-                    <label for="care_photo_input" class="btn btn-xs bg-primary-50 text-primary-700 border border-primary-200 hover:bg-primary-100 rounded-lg px-2.5 py-1 text-[11px] font-semibold cursor-pointer flex items-center gap-1">
-                        <iconify-icon icon="solar:camera-add-bold" class="text-sm"></iconify-icon> Chụp / Tải ảnh
-                    </label>
-                    <input type="file" id="care_photo_input" accept="image/*" capture="environment" multiple class="hidden" onchange="handleCarePhotosSelected(this)">
-                </div>
-                <p class="text-[11px] text-neutral-500 mb-2.5">Chụp trực tiếp xưởng, bảng biển, sản phẩm thực tế... Hệ thống tự động in đè dấu thời gian (Timestamp) lên ảnh.</p>
-                <div id="care-photo-preview-grid" class="flex flex-wrap gap-2.5 min-h-[48px] items-center">
-                    <span class="text-xs text-neutral-400 italic">Chưa có ảnh chụp đợt này</span>
-                </div>
-            </div>
-
-            {{-- Tọa độ GPS check-in --}}
-            <input type="hidden" id="care_lat" name="latitude" value="">
-            <input type="hidden" id="care_lng" name="longitude" value="">
-            <div class="flex items-center justify-between bg-neutral-100/80 rounded-xl px-3.5 py-2 text-xs text-neutral-600">
-                <div class="flex items-center gap-1.5">
-                    <iconify-icon icon="solar:map-point-wave-bold" class="text-rose-500 text-sm"></iconify-icon>
-                    <span id="care_coords_text">Vị trí check-in: Chưa lấy GPS</span>
-                </div>
-                <button type="button" onclick="getCareGPSLocation()" id="btn-care-gps" class="text-primary-600 hover:text-primary-800 font-semibold text-xs flex items-center gap-1">
-                    <iconify-icon icon="solar:gps-bold" class="text-xs"></iconify-icon> Lấy vị trí hiện tại
-                </button>
-            </div>
-        </div>
-
-        <div class="px-6 py-4 border-t border-neutral-200 flex justify-end gap-3 shrink-0 bg-white">
-            <button type="button" onclick="closeModal('create-care-log-modal')" class="btn btn-neutral px-5 py-2 text-xs rounded-xl font-semibold">Hủy</button>
-            <button type="submit" class="btn btn-primary px-6 py-2 text-xs rounded-xl font-semibold flex items-center gap-2 shadow-sm">
-                <iconify-icon icon="lucide:check" class="text-base"></iconify-icon> Lưu nhật ký đi thị trường
-            </button>
-        </div>
-    </form>
-</x-modal>
-
-{{-- ===== MODAL LỊCH SỬ ĐI THỊ TRƯỜNG / CHĂM SÓC KHÁCH HÀNG ===== --}}
-<x-modal name="view-care-history-modal" maxWidth="3xl">
-    <div class="px-6 py-4 border-b border-neutral-200 flex items-center justify-between sticky top-0 bg-white z-10">
-        <div>
-            <h5 class="font-bold text-base text-neutral-800 m-0 flex items-center gap-2">
-                <iconify-icon icon="solar:history-bold-duotone" class="text-blue-600 text-xl"></iconify-icon>
-                <span>Lịch sử đi thị trường / Chăm sóc khách hàng</span>
-            </h5>
-            <div class="text-xs text-neutral-500 mt-0.5">
-                Khách hàng: <strong id="history_customer_title" class="text-primary-700"></strong>
-            </div>
-        </div>
-        <button type="button" onclick="closeModal('view-care-history-modal')" class="text-neutral-400 hover:text-neutral-600 text-2xl leading-none">&times;</button>
+        <button type="button" onclick="closeModal('customer-history-modal')" class="text-neutral-400 hover:text-neutral-600 text-2xl leading-none">&times;</button>
     </div>
 
     <div class="p-6 max-h-[75vh] overflow-y-auto">
-        <div id="care-history-loading" class="text-center py-10 text-neutral-400">
-            <iconify-icon icon="lucide:loader-2" class="text-3xl animate-spin"></iconify-icon>
-            <div class="text-xs mt-2 font-medium">Đang tải lịch sử chăm sóc...</div>
+        <div id="customer-history-loading" class="text-center py-10 text-neutral-400">
+            <iconify-icon icon="lucide:loader-2" class="text-3xl animate-spin text-primary-500"></iconify-icon>
+            <div class="text-xs mt-2 font-medium">Đang tải lịch sử chỉnh sửa...</div>
         </div>
 
-        <div id="care-history-empty" class="hidden text-center py-12 text-neutral-400">
-            <iconify-icon icon="solar:clipboard-list-line-duotone" class="text-4xl text-neutral-300"></iconify-icon>
-            <div class="text-sm font-bold text-neutral-700 mt-2">Chưa có nhật ký đi thị trường nào</div>
-            <p class="text-xs text-neutral-500 mt-1">Bấm nút "Ghi nhận đi thị trường" ở danh sách để thêm lượt chăm sóc đầu tiên.</p>
+        <div id="customer-history-empty" class="hidden text-center py-12 text-neutral-400">
+            <iconify-icon icon="solar:history-line-duotone" class="text-4xl text-neutral-300"></iconify-icon>
+            <div class="text-sm font-bold text-neutral-700 mt-2">Chưa có lịch sử cập nhật nào</div>
+            <p class="text-xs text-neutral-500 mt-1">Khi nhân viên chỉnh sửa thông tin hoặc ghi chú chuyến đi, toàn bộ lịch sử sẽ lưu lại tại đây.</p>
         </div>
 
-        <div id="care-history-timeline" class="hidden space-y-4">
+        <div id="customer-history-timeline" class="hidden space-y-4">
             {{-- Content injected by JS --}}
         </div>
     </div>
 
     <div class="px-6 py-3 border-t border-neutral-200 flex justify-between items-center bg-neutral-50/60">
-        <span class="text-xs text-neutral-500" id="care-history-total-count">0 lượt chăm sóc</span>
-        <button type="button" onclick="closeModal('view-care-history-modal')" class="btn btn-neutral px-5 py-2 text-xs rounded-xl font-semibold">Đóng</button>
+        <span class="text-xs text-neutral-500" id="customer-history-total-count">0 lần chỉnh sửa</span>
+        <button type="button" onclick="closeModal('customer-history-modal')" class="btn btn-neutral px-5 py-2 text-xs rounded-xl font-semibold">Đóng</button>
     </div>
 </x-modal>
 
@@ -1537,185 +1585,122 @@ function previewCustomerPhotos(photos, custName) {
     openImageLightbox(full, `Ảnh của khách: ${custName || ''} (${photos.length} ảnh)`);
 }
 
-// ===== XỬ LÝ GHI NHẬN & LỊCH SỬ ĐI THỊ TRƯỜNG =====
-let currentCareCustomerId = null;
-let currentCareCustomerName = '';
-let currentCareCustomerCode = '';
+// ===== TABS & XỬ LÝ LỊCH SỬ CHỈNH SỬA THÔNG TIN KHÁCH HÀNG =====
+function switchMarketTab(tab) {
+    const paneCust = document.getElementById('tab-pane-customers');
+    const paneHist = document.getElementById('tab-pane-histories');
+    const btnCust = document.getElementById('tab-btn-customers');
+    const btnHist = document.getElementById('tab-btn-histories');
 
-function openCreateCareLogModalFromBtn(btn) {
-    const id = btn.dataset.id;
-    const name = btn.dataset.name;
-    const code = btn.dataset.code;
-    const status = btn.dataset.status || 'Đang đặt hàng';
-    const feedback = btn.dataset.feedback || '';
-    const customerProposal = btn.dataset.customerProposal || '';
-    const saleProposal = btn.dataset.saleProposal || '';
-    const lat = btn.dataset.lat || '';
-    const lng = btn.dataset.lng || '';
-
-    currentCareCustomerId = id;
-    currentCareCustomerName = name;
-    currentCareCustomerCode = code;
-
-    const form = document.getElementById('createCareLogForm');
-    form.action = `/customers/${id}/care-logs`;
-
-    document.getElementById('care_customer_title').textContent = (code ? `[${code}] ` : '') + name;
-    document.getElementById('care_status').value = status;
-    document.getElementById('care_feedback').value = feedback;
-    document.getElementById('care_customer_proposal').value = customerProposal;
-    document.getElementById('care_sale_proposal').value = saleProposal;
-    document.getElementById('care_lat').value = lat;
-    document.getElementById('care_lng').value = lng;
-
-    const coordsText = document.getElementById('care_coords_text');
-    if (lat && lng) {
-        coordsText.textContent = `Tọa độ: ${Number(lat).toFixed(4)}, ${Number(lng).toFixed(4)}`;
+    if (tab === 'histories') {
+        if (paneCust) paneCust.classList.add('hidden');
+        if (paneHist) paneHist.classList.remove('hidden');
+        if (btnCust) {
+            btnCust.classList.remove('border-primary-600', 'text-primary-600');
+            btnCust.classList.add('border-transparent', 'text-neutral-500');
+        }
+        if (btnHist) {
+            btnHist.classList.add('border-primary-600', 'text-primary-600');
+            btnHist.classList.remove('border-transparent', 'text-neutral-500');
+        }
     } else {
-        coordsText.textContent = 'Vị trí check-in: Chưa lấy GPS';
+        if (paneCust) paneCust.classList.remove('hidden');
+        if (paneHist) paneHist.classList.add('hidden');
+        if (btnCust) {
+            btnCust.classList.add('border-primary-600', 'text-primary-600');
+            btnCust.classList.remove('border-transparent', 'text-neutral-500');
+        }
+        if (btnHist) {
+            btnHist.classList.remove('border-primary-600', 'text-primary-600');
+            btnHist.classList.add('border-transparent', 'text-neutral-500');
+        }
     }
-
-    const previewGrid = document.getElementById('care-photo-preview-grid');
-    previewGrid.innerHTML = '<span class="text-xs text-neutral-400 italic">Chưa có ảnh chụp đợt này</span>';
-
-    openModal('create-care-log-modal');
 }
 
-function getCareGPSLocation() {
-    if (!navigator.geolocation) {
-        alert('Trình duyệt không hỗ trợ Geolocation.');
-        return;
-    }
-    const btn = document.getElementById('btn-care-gps');
-    const textEl = document.getElementById('care_coords_text');
-    if (btn) btn.innerHTML = '<iconify-icon icon="lucide:loader-2" class="animate-spin"></iconify-icon> Đang lấy...';
-
-    navigator.geolocation.getCurrentPosition(function(pos) {
-        const lat = pos.coords.latitude.toFixed(7);
-        const lng = pos.coords.longitude.toFixed(7);
-        document.getElementById('care_lat').value = lat;
-        document.getElementById('care_lng').value = lng;
-        textEl.textContent = `Tọa độ: ${Number(lat).toFixed(5)}, ${Number(lng).toFixed(5)}`;
-        if (btn) btn.innerHTML = '<iconify-icon icon="lucide:check" class="text-success-600"></iconify-icon> Đã lấy GPS';
-    }, function(err) {
-        alert('Không thể lấy tọa độ GPS: ' + (err.message || 'Lỗi quyền truy cập'));
-        if (btn) btn.innerHTML = '<iconify-icon icon="solar:gps-bold" class="text-xs"></iconify-icon> Thử lại';
-    }, { enableHighAccuracy: true, timeout: 6000 });
-}
-
-function handleCarePhotosSelected(input) {
-    if (!input.files || input.files.length === 0) return;
-
-    const lat = document.getElementById('care_lat').value;
-    const lng = document.getElementById('care_lng').value;
-    const coordsStr = (lat && lng) ? `${Number(lat).toFixed(5)}, ${Number(lng).toFixed(5)}` : '';
-
-    const previewGrid = document.getElementById('care-photo-preview-grid');
-    const emptyHint = previewGrid.querySelector('span.italic');
-    if (emptyHint) emptyHint.remove();
-
-    Array.from(input.files).forEach(file => {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const img = new Image();
-            img.onload = function() {
-                const stampedBase64 = applyTimestampWatermark(img, {
-                    name: currentCareCustomerName,
-                    code: currentCareCustomerCode,
-                    coords: coordsStr,
-                    address: '',
-                });
-
-                const thumb = document.createElement('div');
-                thumb.className = 'relative w-16 h-16 rounded-xl border border-neutral-300 overflow-hidden shadow-xs group shrink-0';
-                thumb.innerHTML = `
-                    <img src="${stampedBase64}" class="w-full h-full object-cover cursor-pointer" onclick="openImageLightbox('${stampedBase64}', 'Ảnh đi thị trường')">
-                    <button type="button" onclick="this.parentElement.remove()" class="absolute top-1 right-1 w-5 h-5 rounded-full bg-danger-600 text-white flex items-center justify-center text-xs opacity-80 hover:opacity-100 shadow transition">&times;</button>
-                    <input type="hidden" name="photo_data[]" value="${stampedBase64}">
-                `;
-                previewGrid.appendChild(thumb);
-            };
-            img.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
-    });
-
-    input.value = '';
-}
-
-function openCareHistoryModal(customerId, customerName) {
-    document.getElementById('history_customer_title').textContent = customerName;
-    const loading = document.getElementById('care-history-loading');
-    const empty = document.getElementById('care-history-empty');
-    const timeline = document.getElementById('care-history-timeline');
-    const countEl = document.getElementById('care-history-total-count');
+function openCustomerHistoryModal(customerId, customerName, customerCode) {
+    document.getElementById('history_modal_customer_title').textContent = (customerCode ? `[${customerCode}] ` : '') + customerName;
+    const loading = document.getElementById('customer-history-loading');
+    const empty = document.getElementById('customer-history-empty');
+    const timeline = document.getElementById('customer-history-timeline');
+    const countEl = document.getElementById('customer-history-total-count');
 
     loading.classList.remove('hidden');
     empty.classList.add('hidden');
     timeline.classList.add('hidden');
     timeline.innerHTML = '';
 
-    openModal('view-care-history-modal');
+    openModal('customer-history-modal');
 
-    fetch(`/customers/${customerId}/care-logs`)
+    fetch(`/customers/${customerId}/histories`)
         .then(res => res.json())
         .then(data => {
             loading.classList.add('hidden');
-            if (!data.logs || data.logs.length === 0) {
+            if (!data.histories || data.histories.length === 0) {
                 empty.classList.remove('hidden');
-                countEl.textContent = '0 lượt chăm sóc';
+                countEl.textContent = '0 lần chỉnh sửa';
                 return;
             }
 
-            countEl.textContent = `${data.logs.length} lượt chăm sóc`;
+            countEl.textContent = `${data.histories.length} lần chỉnh sửa`;
             timeline.classList.remove('hidden');
 
-            data.logs.forEach((log, idx) => {
+            data.histories.forEach((h, idx) => {
                 const item = document.createElement('div');
                 item.className = 'p-4 rounded-xl border border-neutral-200 bg-white shadow-2xs hover:border-neutral-300 transition';
 
-                const photosHtml = (log.photos && log.photos.length > 0)
+                const photosHtml = (h.photos && h.photos.length > 0)
                     ? `<div class="mt-2.5 flex items-center gap-2 flex-wrap">` +
-                        log.photos.map(p => {
+                        h.photos.map(p => {
                             const src = (p.startsWith('http') || p.startsWith('/')) ? p : '/' + p;
-                            return `<img src="${src}" class="w-12 h-12 rounded-lg border border-neutral-200 object-cover cursor-pointer hover:scale-105 transition-transform" onclick="openImageLightbox('${src}', 'Ảnh ngày ${log.visit_date}')">`;
+                            return `<img src="${src}" class="w-14 h-14 rounded-lg border border-neutral-200 object-cover cursor-pointer hover:scale-105 transition-transform" onclick="openImageLightbox('${src}', 'Ảnh ngày ${h.created_at}')">`;
                         }).join('') +
                       `</div>`
                     : '';
 
-                const mapsHtml = (log.latitude && log.longitude)
-                    ? `<a href="https://www.google.com/maps?q=${log.latitude},${log.longitude}" target="_blank" class="inline-flex items-center gap-1 text-[11px] text-primary-600 hover:text-primary-800 bg-primary-50 px-2 py-0.5 rounded border border-primary-200">
-                        <iconify-icon icon="solar:map-point-wave-bold" class="text-rose-500"></iconify-icon> GPS (${Number(log.latitude).toFixed(3)}, ${Number(log.longitude).toFixed(3)})
+                const mapsHtml = (h.latitude && h.longitude)
+                    ? `<a href="https://www.google.com/maps?q=${h.latitude},${h.longitude}" target="_blank" class="inline-flex items-center gap-1 text-[11px] text-primary-600 hover:text-primary-800 bg-primary-50 px-2 py-0.5 rounded border border-primary-200">
+                        <iconify-icon icon="solar:map-point-wave-bold" class="text-rose-500"></iconify-icon> GPS (${Number(h.latitude).toFixed(3)}, ${Number(h.longitude).toFixed(3)})
                        </a>`
                     : '';
 
+                let changesHtml = '';
+                if (h.changes && Array.isArray(h.changes) && h.changes.length > 0) {
+                    changesHtml = `<div class="bg-neutral-50 rounded-lg p-2.5 my-2 border border-neutral-100 text-xs space-y-1">` +
+                        h.changes.map(ch => `
+                            <div>
+                                <span class="font-bold text-neutral-600">${ch.label || ch.field}:</span>
+                                ${ch.old ? `<span class="line-through text-neutral-400 mx-1">${ch.old}</span> →` : ''}
+                                <span class="font-semibold text-emerald-700 ml-1">${ch.new || '(Trống)'}</span>
+                            </div>
+                        `).join('') +
+                    `</div>`;
+                }
+
                 item.innerHTML = `
-                    <div class="flex items-start justify-between gap-3 border-b border-neutral-100 pb-2.5 mb-2.5">
-                        <div class="flex items-center gap-2">
-                            <span class="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-xs shrink-0">
-                                #${data.logs.length - idx}
+                    <div class="flex items-start justify-between gap-3 border-b border-neutral-100 pb-2.5 mb-2">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center font-bold text-xs shrink-0">
+                                #${data.histories.length - idx}
                             </span>
                             <div>
                                 <div class="text-xs font-bold text-neutral-800 flex items-center gap-2">
-                                    <span>Ngày: ${log.visit_date}</span>
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-neutral-100 text-neutral-700 border border-neutral-200">${log.status || 'Đang đặt hàng'}</span>
+                                    <span>${h.created_at}</span>
+                                    <span class="text-[11px] text-neutral-400 font-normal">(${h.diff})</span>
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold ${h.action === 'created' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'}">
+                                        ${h.action === 'created' ? 'Tạo mới' : 'Cập nhật'}
+                                    </span>
                                 </div>
                                 <div class="text-[11px] text-neutral-500 mt-0.5">
-                                    Người đi: <strong class="text-neutral-700">${log.user_name}</strong>
-                                    ${log.created_at ? ` · Lưu lúc ${log.created_at}` : ''}
+                                    Thực hiện bởi: <strong class="text-neutral-700">${h.user_name}</strong>
                                 </div>
                             </div>
                         </div>
                         <div>${mapsHtml}</div>
                     </div>
 
-                    <div class="space-y-1.5 text-xs text-neutral-700">
-                        ${log.feedback ? `<div><span class="font-semibold text-neutral-500">Phản ánh khách:</span> ${log.feedback}</div>` : ''}
-                        ${log.customer_proposal ? `<div><span class="font-semibold text-neutral-500">Đề xuất khách:</span> ${log.customer_proposal}</div>` : ''}
-                        ${log.sale_proposal ? `<div><span class="font-semibold text-neutral-500">Đề xuất sale:</span> ${log.sale_proposal}</div>` : ''}
-                        ${log.notes ? `<div><span class="font-semibold text-neutral-500">Ghi chú:</span> ${log.notes}</div>` : ''}
-                    </div>
-
+                    ${h.note ? `<div class="bg-amber-50/80 border border-amber-200 text-amber-900 rounded-lg p-2 text-xs mb-2"><strong>Ghi chú:</strong> ${h.note}</div>` : ''}
+                    ${changesHtml}
+                    ${h.summary && !changesHtml ? `<div class="text-xs text-neutral-600 italic mb-2">${h.summary}</div>` : ''}
                     ${photosHtml}
                 `;
                 timeline.appendChild(item);
@@ -1724,7 +1709,7 @@ function openCareHistoryModal(customerId, customerName) {
         .catch(err => {
             loading.classList.add('hidden');
             empty.classList.remove('hidden');
-            empty.innerHTML = `<div class="text-danger-500 text-xs font-semibold">Lỗi khi tải lịch sử chăm sóc: ${err.message}</div>`;
+            empty.innerHTML = `<div class="text-danger-500 text-xs font-semibold">Lỗi khi tải lịch sử: ${err.message}</div>`;
         });
 }
 </script>

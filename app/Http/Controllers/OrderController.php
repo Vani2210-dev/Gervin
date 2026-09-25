@@ -44,8 +44,9 @@ class OrderController extends Controller
                 $q->whereIn('status', ['stamps_received', 'in_production', 'completed']);
             }])
             ->when($user && !$user->hasRole('Admin'), function ($q) use ($user) {
-                $q->whereHas('customer.users', function ($uq) use ($user) {
-                    $uq->where('users.id', $user->id);
+                $userMarketGroupIds = $user->marketGroups()->pluck('market_groups.id');
+                $q->whereHas('customer', function ($cq) use ($userMarketGroupIds) {
+                    $cq->whereIn('market_group_id', $userMarketGroupIds);
                 });
             })
             ->when($request->input('filter_status') !== 'draft', function ($q) {
@@ -163,17 +164,17 @@ class OrderController extends Controller
             ->withQueryString();
 
         if ($user && !$user->hasRole('Admin')) {
-            $customers = \App\Models\Customer::whereHas('users', function ($q) use ($user) {
-                $q->where('users.id', $user->id);
-            })->orderBy('name')->get();
+            $userMarketGroupIds = $user->marketGroups()->pluck('market_groups.id');
+            $customers = \App\Models\Customer::whereIn('market_group_id', $userMarketGroupIds)->orderBy('name')->get();
         } else {
             $customers = \App\Models\Customer::orderBy('name')->get();
         }
 
         $draftOrdersCount = Order::where('status', 'draft')
             ->when($user && !$user->hasRole('Admin'), function ($q) use ($user) {
-                $q->whereHas('customer.users', function ($uq) use ($user) {
-                    $uq->where('users.id', $user->id);
+                $userMarketGroupIds = $user->marketGroups()->pluck('market_groups.id');
+                $q->whereHas('customer', function ($cq) use ($userMarketGroupIds) {
+                    $cq->whereIn('market_group_id', $userMarketGroupIds);
                 });
             })
             ->count();
@@ -450,6 +451,14 @@ class OrderController extends Controller
 
         $draftOrder = Order::where('status', 'draft')->findOrFail($request->draft_order_id);
 
+        $user = auth()->user();
+        if ($user && !$user->hasRole('Admin') && $request->filled('customer_id')) {
+            $cust = \App\Models\Customer::find($request->customer_id);
+            if ($cust && !$cust->isAccessibleBy($user)) {
+                abort(403, 'Bạn chỉ có thể tạo đơn cho khách hàng thuộc nhóm thị trường của mình.');
+            }
+        }
+
         if ($draftOrder->type !== $request->type) {
             abort(422, 'Loại đơn không khớp với đơn nháp.');
         }
@@ -489,6 +498,12 @@ class OrderController extends Controller
         if ($user && !$user->hasRole('Admin')) {
             if (!$order->customer || !$order->customer->isAccessibleBy($user)) {
                 abort(403, 'Bạn không có quyền truy cập đơn hàng này.');
+            }
+            if ($request->filled('customer_id')) {
+                $targetCust = \App\Models\Customer::find($request->customer_id);
+                if ($targetCust && !$targetCust->isAccessibleBy($user)) {
+                    abort(403, 'Bạn chỉ có thể chọn khách hàng thuộc nhóm thị trường của mình.');
+                }
             }
         }
 

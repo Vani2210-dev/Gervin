@@ -13,17 +13,24 @@ class MarketGroupController extends Controller
     {
         $search = $request->input('search', '');
 
-        $marketGroups = MarketGroup::with(['users' => function ($q) {
+        $user = auth()->user();
+        $groupsQuery = MarketGroup::with(['users' => function ($q) {
             $q->orderBy('name');
         }])
         ->withCount(['users', 'customers'])
+        ->when($user && !$user->hasRole('Admin'), function ($q) use ($user) {
+            $q->whereHas('users', function ($uq) use ($user) {
+                $uq->where('users.id', $user->id);
+            });
+        })
         ->when($search, function ($q) use ($search) {
             $q->where('name', 'like', "%$search%")
               ->orWhere('code', 'like', "%$search%")
               ->orWhere('description', 'like', "%$search%");
         })
-        ->orderBy('name')
-        ->get();
+        ->orderBy('name');
+
+        $marketGroups = $groupsQuery->get();
 
         $allUsers = User::whereDoesntHave('roles', function ($q) {
             $q->where('name', 'Admin');
@@ -67,6 +74,13 @@ class MarketGroupController extends Controller
 
     public function show(Request $request, MarketGroup $marketGroup)
     {
+        $user = auth()->user();
+        if ($user && !$user->hasRole('Admin')) {
+            if (!$marketGroup->users()->where('users.id', $user->id)->exists()) {
+                abort(403, 'Bạn không thuộc nhóm thị trường này.');
+            }
+        }
+
         $marketGroup->load(['users']);
 
         $search = $request->input('search');
@@ -166,14 +180,29 @@ class MarketGroupController extends Controller
         }
         $totalPaid = $paidQuery->sum('amount');
 
-        $careLogsCountQuery = \App\Models\CustomerCareLog::whereIn('customer_id', $groupCustomerIds);
-        if ($startDate && $endDate) {
-            $careLogsCountQuery->whereBetween('visit_date', [$startDate, $endDate]);
-        }
-        $totalCareVisits = $careLogsCountQuery->count();
+        // Customer Histories (Lịch sử chỉnh sửa thông tin khách hàng)
+        $historiesQuery = \App\Models\CustomerHistory::where(function ($hq) use ($marketGroup, $groupCustomerIds) {
+            $hq->where('market_group_id', $marketGroup->id)
+              ->orWhereIn('customer_id', $groupCustomerIds);
+        })
+        ->with(['customer', 'user'])
+        ->orderBy('created_at', 'desc');
 
-        $allCustomers = Customer::orderBy('name')->get();
-        $marketGroups = MarketGroup::orderBy('name')->get();
+        if ($startDate && $endDate) {
+            $historiesQuery->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
+        }
+        $histories = $historiesQuery->get();
+        $totalCustomerUpdates = $histories->count();
+        $totalCareVisits = $totalCustomerUpdates; // For backward compatibility
+
+        if ($user && !$user->hasRole('Admin')) {
+            $userMarketGroupIds = $user->marketGroups()->pluck('market_groups.id');
+            $allCustomers = Customer::whereIn('market_group_id', $userMarketGroupIds)->orderBy('name')->get();
+            $marketGroups = MarketGroup::whereIn('id', $userMarketGroupIds)->orderBy('name')->get();
+        } else {
+            $allCustomers = Customer::orderBy('name')->get();
+            $marketGroups = MarketGroup::orderBy('name')->get();
+        }
 
         return view('market_groups.show', compact(
             'marketGroup',
@@ -182,7 +211,9 @@ class MarketGroupController extends Controller
             'totalCustomers',
             'totalDebt',
             'totalPaid',
+            'totalCustomerUpdates',
             'totalCareVisits',
+            'histories',
             'allCustomers',
             'search',
             'dateMode',
