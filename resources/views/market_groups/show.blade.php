@@ -163,7 +163,8 @@
                 <tr class="bg-neutral-100 text-neutral-700 font-bold border-b border-neutral-200 text-xs">
                     <th style="width: 50px;" class="text-center py-3.5 px-2 sticky left-0 bg-neutral-100 z-10">STT</th>
                     <th style="width: 100px;" class="py-3.5 px-3 sticky left-[50px] bg-neutral-100 z-10">Mã KH</th>
-                    <th style="min-width: 230px;" class="py-3.5 px-3 sticky left-[150px] bg-neutral-100 z-10 border-r border-neutral-200">Khách hàng & Trạng thái</th>
+                    <th style="min-width: 180px;" class="py-3.5 px-3 sticky left-[150px] bg-neutral-100 z-10 border-r border-neutral-200">Khách hàng</th>
+                    <th style="min-width: 150px;" class="py-3.5 px-3 text-center">Trạng thái</th>
                     <th style="min-width: 120px;" class="py-3.5 px-3">Số điện thoại</th>
                     <th style="min-width: 260px;" class="py-3.5 px-3">Địa chỉ & Bản đồ GPS</th>
                     <th style="min-width: 140px;" class="py-3.5 px-3 text-center">Ảnh hiện trường</th>
@@ -213,15 +214,17 @@
                     {{-- 2. Mã KH --}}
                     <td class="font-semibold text-neutral-800 font-mono py-3 px-3 sticky left-[50px] bg-white">{{ $c->customer_code ?: '—' }}</td>
 
-                    {{-- 3. Khách hàng & Trạng thái --}}
+                    {{-- 3. Khách hàng --}}
                     <td class="py-3 px-3 sticky left-[150px] bg-white border-r border-neutral-200">
-                        <a href="{{ route('customers.index', ['overview_id' => $c->id]) }}" target="_blank" class="font-bold text-neutral-900 hover:text-primary-600 flex items-center gap-1 leading-snug" title="Mở chi tiết khách hàng">
+                        <a href="{{ route('customers.index', ['overview_id' => $c->id]) }}" target="_blank" class="font-bold text-neutral-900 hover:text-primary-600 inline-flex items-center gap-1.5 leading-snug" title="Mở chi tiết khách hàng">
                             <span>{{ $c->name }}</span>
                             <iconify-icon icon="lucide:external-link" class="text-[11px] opacity-40 shrink-0"></iconify-icon>
                         </a>
-                        <div class="mt-1">
-                            <span class="px-2 py-0.5 rounded text-[10px] font-bold border inline-block {{ $stClass }}">{{ $st }}</span>
-                        </div>
+                    </td>
+
+                    {{-- 4. Trạng thái --}}
+                    <td class="py-3 px-3 text-center">
+                        <span class="px-2.5 py-1 rounded text-[11px] font-bold border inline-block {{ $stClass }}">{{ $st }}</span>
                     </td>
 
                     {{-- 4. SĐT --}}
@@ -376,7 +379,7 @@
                 </tr>
                 @empty
                 <tr id="page-customers-empty-row">
-                    <td colspan="17" class="text-center py-20 text-neutral-400">
+                    <td colspan="18" class="text-center py-20 text-neutral-400">
                         <iconify-icon icon="solar:users-group-two-rounded-line-duotone" class="text-4xl text-neutral-300"></iconify-icon>
                         <div class="text-sm mt-2 font-bold text-neutral-700">Nhóm này chưa có khách hàng nào</div>
                         <div class="text-xs text-neutral-400 mt-1">Sử dụng ô chọn phía trên để gán khách hàng hoặc thêm khách hàng mới.</div>
@@ -384,7 +387,7 @@
                 </tr>
                 @endforelse
                 <tr id="page-customers-no-search-row" class="hidden">
-                    <td colspan="17" class="text-center py-16 text-neutral-400">
+                    <td colspan="18" class="text-center py-16 text-neutral-400">
                         <iconify-icon icon="lucide:search-x" class="text-3xl text-neutral-300"></iconify-icon>
                         <div class="text-xs mt-2 font-medium">Không tìm thấy khách hàng nào khớp với từ khóa tìm kiếm.</div>
                     </td>
