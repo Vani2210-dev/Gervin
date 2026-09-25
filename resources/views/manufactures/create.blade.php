@@ -46,7 +46,8 @@
                                         <th scope="col" style="width: 50px;" class="text-center">Chọn</th>
                                         <th scope="col">Mã đơn hàng</th>
                                         <th scope="col">Loại đơn</th>
-                                        <th scope="col">Tên khách hàng</th>
+                                        <th scope="col">Khách hàng</th>
+                                        <th scope="col">Tên công trình</th>
                                         <th scope="col">Hạn giao hàng</th>
                                         <th scope="col">Tổng tiền</th>
                                         <th scope="col">Trạng thái</th>
@@ -83,7 +84,10 @@
                                             </span>
                                         </td>
                                         <td>
-                                            <span class="text-base text-secondary-light font-medium">{{ $order->customer_name }}</span>
+                                            <span class="font-medium text-neutral-800">{{ $order->customer?->name ?: '—' }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="text-base text-secondary-light font-medium">{{ $order->customer_name ?: '—' }}</span>
                                         </td>
                                         <td>
                                             <span class="text-base text-secondary-light">

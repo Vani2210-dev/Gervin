@@ -172,8 +172,20 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-sm">
                         <div class="flex flex-col gap-1">
                             <span class="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Khách hàng</span>
+                            <span class="font-bold text-neutral-800">
+                                @if($acrylicOrder->customer)
+                                    <a href="{{ route('customers.index', ['overview_id' => $acrylicOrder->customer->id]) }}" class="text-primary-600 hover:underline">
+                                        {{ $acrylicOrder->customer->name }} ({{ $acrylicOrder->customer->customer_code }})
+                                    </a>
+                                @else
+                                    —
+                                @endif
+                            </span>
+                        </div>
+                        <div class="flex flex-col gap-1">
+                            <span class="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Tên công trình</span>
                             <span class="font-medium text-neutral-800">
-                                {{ $acrylicOrder->customer_name }}
+                                {{ $acrylicOrder->customer_name ?: '—' }}
                             </span>
                         </div>
                         <div class="flex flex-col gap-1">
@@ -613,6 +625,9 @@
                     </div>
 
                     <div class="p-6">
+                        @php
+                            $hasPriceOnly = $acrylicOrder->type === 'min_late' || $acrylicOrder->paymentDetails->contains(fn($d) => floatval($d->price_only ?? 0) > 0);
+                        @endphp
                         <div class="overflow-x-auto">
                             <table class="table bordered-table sm-table mb-0 min-w-[800px]">
                                 <thead>
@@ -622,7 +637,7 @@
                                         <th scope="col" class="w-28 text-center">Đơn vị</th>
                                         <th scope="col" class="w-24 text-center">Số lượng</th>
                                         <th scope="col" class="w-32 text-end">Đơn giá</th>
-                                        @if($acrylicOrder->type === 'min_late')
+                                        @if($hasPriceOnly)
                                             <th scope="col" class="w-32 text-end">Đơn giá chỉ</th>
                                         @endif
                                         <th scope="col" class="w-32 text-end">Thành tiền</th>
@@ -637,9 +652,9 @@
                                             <td class="text-center font-medium">{{ floatval($detail->quantity) == intval($detail->quantity) ? number_format($detail->quantity, 0, ',', '.') : number_format($detail->quantity, 2, ',', '.') }}</td>
                                             <td class="text-end font-medium text-neutral-600">
                                                 {{ number_format($detail->price, 0, ',', '.') }}</td>
-                                            @if($acrylicOrder->type === 'min_late')
+                                            @if($hasPriceOnly)
                                                 <td class="text-end font-medium text-neutral-600">
-                                                    {{ number_format($detail->price_only, 0, ',', '.') }}</td>
+                                                    {{ ($detail->price_only ?? 0) > 0 ? number_format($detail->price_only, 0, ',', '.') : '—' }}</td>
                                             @endif
                                             <td class="text-end font-bold text-primary-600">
                                                 {{ number_format($detail->total, 0, ',', '.') }}</td>

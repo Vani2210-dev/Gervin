@@ -208,6 +208,7 @@
                                 <th scope="col">STT</th>
                                 <th scope="col">Mã đơn</th>
                                 <th scope="col">Loại đơn</th>
+                                <th scope="col">Khách hàng</th>
                                 <th scope="col">Tên công trình</th>
                                 <th scope="col">Số điện thoại</th>
                                 <th scope="col">Ngày tạo đơn</th>
@@ -307,7 +308,17 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <span class="text-base font-medium text-secondary-light">{{ $order->customer_name }}</span>
+                                    @if($order->customer)
+                                        <a href="{{ route('customers.index', ['overview_id' => $order->customer->id]) }}" class="font-semibold text-neutral-800 hover:text-primary-600 block leading-tight">
+                                            {{ $order->customer->name }}
+                                        </a>
+                                        <span class="text-xs text-neutral-400 block mt-0.5">{{ $order->customer->customer_code }}</span>
+                                    @else
+                                        <span class="text-neutral-400">—</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    <span class="text-base font-medium text-secondary-light">{{ $order->customer_name ?: '—' }}</span>
                                 </td>
                                 <td>
                                     <span class="text-base text-secondary-light">{{ $order->phone ?? '—' }}</span>
@@ -374,7 +385,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="{{ $canBulkDeleteOrders ? 10 : 9 }}" class="text-center py-8">
+                                <td colspan="{{ $canBulkDeleteOrders ? 12 : 11 }}" class="text-center py-8">
                                     <p class="text-neutral-500">Chưa có đơn hàng nào</p>
                                 </td>
                             </tr>

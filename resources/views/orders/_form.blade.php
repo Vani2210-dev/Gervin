@@ -453,6 +453,16 @@ function previewOrder() {
     const typeLabels = { acrylic: 'Acrylic', glass: 'Glass', min_late: 'Min Late' };
     const typeLabel = typeLabels[orderType] || orderType;
     const customerName = getVal('[name="customer_name"]');
+    const customerEl = form.querySelector('[name="customer_id"]');
+    let customerText = '';
+    if (customerEl) {
+        if (customerEl.tomselect) {
+            customerText = customerEl.tomselect.getItem(customerEl.tomselect.getValue())?.textContent || '';
+        } else if (customerEl.selectedIndex >= 0 && customerEl.options[customerEl.selectedIndex]) {
+            const t = customerEl.options[customerEl.selectedIndex].text.trim();
+            customerText = t.startsWith('--') ? '' : t;
+        }
+    }
     const phone = getVal('[name="phone"]');
     const orderDate = getVal('[name="order_date"]');
     const deliveryDays = getVal('[name="delivery_days"]');
@@ -866,6 +876,7 @@ function previewOrder() {
                                     <iconify-icon icon="lucide:user" class="text-lg text-primary-500"></iconify-icon>
                                     <h6 class="font-bold text-sm text-neutral-800 m-0">Thông tin khách hàng & công trình</h6>
                                 </div>
+                                ${customerText ? infoRow('Khách hàng', customerText, 'lucide:user') : ''}
                                 ${infoRow('Tên công trình', customerName, 'lucide:building')}
                                 ${infoRow('Số điện thoại', phone, 'lucide:phone')}
                                 ${infoRow('Địa chỉ', address, 'lucide:map-pin')}

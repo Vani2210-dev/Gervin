@@ -334,15 +334,16 @@ class CustomerController extends Controller
         $recentOrders = $orders->take(10)->map(function ($o) use ($statusLabels) {
             $paid = $o->orderPayments->sum('amount');
             return [
-                'id'           => $o->id,
-                'order_code'   => $o->order_code,
-                'order_date'   => $o->order_date,
-                'status'       => $o->status,
-                'status_label' => $statusLabels[$o->status] ?? $o->status,
-                'total_amount' => round($o->total_amount, -3),
-                'paid'         => $paid,
-                'debt'         => in_array($o->status, ['draft', 'cancelled', 'pending']) ? 0 : max(0, round($o->total_amount ?? 0, -3) - $paid),
-                'payments_count' => $o->orderPayments->count(),
+                'id'            => $o->id,
+                'order_code'    => $o->order_code,
+                'customer_name' => $o->customer_name,
+                'order_date'    => $o->order_date,
+                'status'        => $o->status,
+                'status_label'  => $statusLabels[$o->status] ?? $o->status,
+                'total_amount'  => round($o->total_amount, -3),
+                'paid'          => $paid,
+                'debt'          => in_array($o->status, ['draft', 'cancelled', 'pending']) ? 0 : max(0, round($o->total_amount ?? 0, -3) - $paid),
+                'payments_count'=> $o->orderPayments->count(),
             ];
         });
 

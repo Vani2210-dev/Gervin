@@ -652,6 +652,7 @@ function openEditModal(id, customerCode, name, phone, address, initialDebt, debt
                         <thead>
                             <tr style="background:#edf2f7;">
                                 <th style="padding:8px 10px; text-align:left; color:#4a5568; font-weight:600; border-bottom:1px solid #cbd5e0;">Mã đơn</th>
+                                <th style="padding:8px 10px; text-align:left; color:#4a5568; font-weight:600; border-bottom:1px solid #cbd5e0;">Tên công trình</th>
                                 <th style="padding:8px 10px; text-align:left; color:#4a5568; font-weight:600; border-bottom:1px solid #cbd5e0;">Ngày</th>
                                 <th style="padding:8px 10px; text-align:right; color:#4a5568; font-weight:600; border-bottom:1px solid #cbd5e0;">Giá trị</th>
                                 <th style="padding:8px 10px; text-align:center; color:#4a5568; font-weight:600; border-bottom:1px solid #cbd5e0;">Trạng thái</th>
@@ -995,6 +996,7 @@ function renderCustomerOverview(data) {
                 <td style="padding:9px 10px;">
                     <a href="/orders/${o.id}" target="_blank" style="color:#6366f1;font-weight:600;text-decoration:none;">${o.order_code||'—'}</a>
                 </td>
+                <td style="padding:9px 10px; font-weight:500; color:#334155;">${o.customer_name || '—'}</td>
                 <td style="padding:9px 10px; color:#374151;">${o.order_date ? String(o.order_date).substr(0,10) : '—'}</td>
                 <td style="padding:9px 10px; text-align:right; color:#0f172a;">${ovFmt(o.total_amount)}₫</td>
                 <td style="padding:9px 10px; text-align:center;">

@@ -367,7 +367,7 @@ class AcrylicOrderService
                 'unit'       => $detail['unit'] ?? null,
                 'quantity'   => $detail['quantity'] ?? 0,
                 'price'      => round($detail['price'] ?? 0),
-                'price_only' => 0,
+                'price_only' => round($detail['price_only'] ?? 0),
                 'total'      => round(str_replace('.', '', $detail['total'] ?? 0)),
             ]);
         }
