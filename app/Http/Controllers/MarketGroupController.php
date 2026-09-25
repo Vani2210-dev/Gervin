@@ -71,8 +71,55 @@ class MarketGroupController extends Controller
 
         $search = $request->input('search');
 
+        // Date Filter Mode: day | month | year | all
+        $dateMode = $request->input('date_mode', 'month');
+        $dateVal = $request->input('date_val');
+
+        if (!$dateVal && $dateMode !== 'all') {
+            if ($dateMode === 'day') {
+                $dateVal = now()->toDateString();
+            } elseif ($dateMode === 'year') {
+                $dateVal = now()->format('Y');
+            } else { // month
+                $dateMode = 'month';
+                $dateVal = now()->format('Y-m');
+            }
+        }
+
+        $startDate = null;
+        $endDate = null;
+        $dateLabel = 'Toàn thời gian';
+        $inputType = 'month';
+
+        if ($dateMode === 'day' && $dateVal) {
+            $startDate = $dateVal;
+            $endDate = $dateVal;
+            $dateLabel = 'Ngày ' . \Carbon\Carbon::parse($dateVal)->format('d/m/Y');
+            $inputType = 'date';
+        } elseif ($dateMode === 'month' && $dateVal) {
+            $cDate = \Carbon\Carbon::parse($dateVal . '-01');
+            $startDate = $cDate->copy()->startOfMonth()->toDateString();
+            $endDate = $cDate->copy()->endOfMonth()->toDateString();
+            $dateLabel = 'Tháng ' . $cDate->format('m/Y');
+            $inputType = 'month';
+        } elseif ($dateMode === 'year' && $dateVal) {
+            $startDate = $dateVal . '-01-01';
+            $endDate = $dateVal . '-12-31';
+            $dateLabel = 'Năm ' . $dateVal;
+            $inputType = 'number';
+        } else {
+            $dateMode = 'all';
+            $dateVal = '';
+            $dateLabel = 'Toàn bộ thời gian';
+            $inputType = 'text';
+        }
+
         $query = $marketGroup->customers()
-            ->with('customerPayments')
+            ->with(['customerPayments' => function ($pq) use ($startDate, $endDate) {
+                if ($startDate && $endDate) {
+                    $pq->whereBetween('payment_date', [$startDate, $endDate]);
+                }
+            }])
             ->orderBy('name');
 
         if ($search) {
@@ -102,7 +149,12 @@ class MarketGroupController extends Controller
         $totalCustomers = $marketGroup->customers()->count();
         $totalDebt = $marketGroup->customers()->sum('debt');
         $groupCustomerIds = $marketGroup->customers()->pluck('id');
-        $totalPaid = \App\Models\CustomerPayment::whereIn('customer_id', $groupCustomerIds)->sum('amount');
+
+        $paidQuery = \App\Models\CustomerPayment::whereIn('customer_id', $groupCustomerIds);
+        if ($startDate && $endDate) {
+            $paidQuery->whereBetween('payment_date', [$startDate, $endDate]);
+        }
+        $totalPaid = $paidQuery->sum('amount');
 
         $allCustomers = Customer::orderBy('name')->get();
         $marketGroups = MarketGroup::orderBy('name')->get();
@@ -115,7 +167,11 @@ class MarketGroupController extends Controller
             'totalDebt',
             'totalPaid',
             'allCustomers',
-            'search'
+            'search',
+            'dateMode',
+            'dateVal',
+            'dateLabel',
+            'inputType'
         ));
     }
 

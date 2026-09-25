@@ -102,7 +102,7 @@
             <iconify-icon icon="solar:card-recive-bold-duotone"></iconify-icon>
         </div>
         <div>
-            <div class="text-xs text-neutral-500 font-medium">Đã thanh toán</div>
+            <div class="text-xs text-neutral-500 font-medium">Đã thanh toán ({{ $dateLabel }})</div>
             <div class="text-2xl font-bold text-emerald-600 mt-0.5">{{ number_format($totalPaid, 0, ',', '.') }} <span class="text-xs font-normal text-neutral-500">₫</span></div>
         </div>
     </div>
@@ -120,17 +120,17 @@
 
 {{-- Main Container Card --}}
 <div class="bg-white border border-neutral-200 rounded-2xl shadow-sm overflow-hidden mb-8">
-    {{-- Thanh công cụ: Gán thêm khách hàng & Tìm kiếm --}}
+    {{-- Thanh công cụ: Gán thêm khách hàng & Bộ lọc thời gian linh hoạt & Tìm kiếm --}}
     <div class="p-5 border-b border-neutral-200 bg-neutral-50/60 flex flex-wrap items-center justify-between gap-4">
         {{-- Form gán khách hàng nhanh --}}
-        <form action="{{ route('market-groups.assign-customers', $marketGroup->id) }}" method="POST" class="flex flex-wrap items-center gap-3 flex-1 min-w-[320px]">
+        <form action="{{ route('market-groups.assign-customers', $marketGroup->id) }}" method="POST" class="flex flex-wrap items-center gap-2.5 min-w-[280px]">
             @csrf
             <div class="text-xs font-bold text-neutral-700 flex items-center gap-1.5 shrink-0">
                 <iconify-icon icon="solar:user-plus-bold" class="text-primary-600 text-base"></iconify-icon>
-                Gán khách hàng vào nhóm:
+                Gán vào nhóm:
             </div>
-            <div class="flex-1 min-w-[280px] max-w-lg">
-                <select name="customer_ids[]" id="select-customers-to-add" multiple placeholder="Tìm & chọn khách hàng để thêm vào nhóm này...">
+            <div class="w-64">
+                <select name="customer_ids[]" id="select-customers-to-add" multiple placeholder="Chọn khách hàng...">
                     @foreach($allCustomers as $c)
                         <option value="{{ $c->id }}" {{ $c->market_group_id == $marketGroup->id ? 'disabled' : '' }}>
                             {{ $c->customer_code ? '[' . $c->customer_code . '] ' : '' }}{{ $c->name }}
@@ -139,15 +139,67 @@
                     @endforeach
                 </select>
             </div>
-            <button type="submit" class="btn btn-sm btn-primary rounded-xl px-4 py-2.5 text-xs font-semibold shrink-0 flex items-center gap-1.5 shadow-sm">
-                <iconify-icon icon="lucide:plus" class="text-sm"></iconify-icon> Thêm vào nhóm
+            <button type="submit" class="btn btn-sm btn-primary rounded-xl px-3.5 py-2 text-xs font-semibold shrink-0 flex items-center gap-1.5 shadow-sm">
+                <iconify-icon icon="lucide:plus" class="text-sm"></iconify-icon> Thêm
             </button>
+        </form>
+
+        {{-- Bộ lọc Ngày / Tháng / Năm linh hoạt (1 ô date duy nhất) --}}
+        <form method="GET" action="{{ route('market-groups.show', $marketGroup->id) }}" id="dateFilterForm" class="flex items-center gap-2 flex-wrap">
+            @if($search)
+                <input type="hidden" name="search" value="{{ $search }}">
+            @endif
+            <div class="inline-flex items-center bg-white border border-neutral-300 rounded-xl p-1 shadow-2xs">
+                {{-- Selector chọn chế độ --}}
+                <div class="flex items-center bg-neutral-100 rounded-lg p-0.5 text-xs font-semibold mr-1.5">
+                    <button type="button" onclick="setDateMode('day')" id="mode-btn-day" 
+                        class="px-2.5 py-1 rounded-md transition-all {{ $dateMode === 'day' ? 'bg-white text-primary-700 shadow-2xs font-bold' : 'text-neutral-500 hover:text-neutral-800' }}">
+                        Ngày
+                    </button>
+                    <button type="button" onclick="setDateMode('month')" id="mode-btn-month" 
+                        class="px-2.5 py-1 rounded-md transition-all {{ $dateMode === 'month' ? 'bg-white text-primary-700 shadow-2xs font-bold' : 'text-neutral-500 hover:text-neutral-800' }}">
+                        Tháng
+                    </button>
+                    <button type="button" onclick="setDateMode('year')" id="mode-btn-year" 
+                        class="px-2.5 py-1 rounded-md transition-all {{ $dateMode === 'year' ? 'bg-white text-primary-700 shadow-2xs font-bold' : 'text-neutral-500 hover:text-neutral-800' }}">
+                        Năm
+                    </button>
+                    <button type="button" onclick="setDateMode('all')" id="mode-btn-all" 
+                        class="px-2.5 py-1 rounded-md transition-all {{ $dateMode === 'all' ? 'bg-white text-primary-700 shadow-2xs font-bold' : 'text-neutral-500 hover:text-neutral-800' }}">
+                        Tất cả
+                    </button>
+                </div>
+                <input type="hidden" name="date_mode" id="date_mode" value="{{ $dateMode }}">
+
+                {{-- Ô nhập date duy nhất linh hoạt --}}
+                <div id="date-input-container" class="flex items-center">
+                    @if($dateMode === 'all')
+                        <input type="text" readonly value="Toàn thời gian" class="border-0 bg-transparent text-xs py-1 px-2 font-semibold text-neutral-500 w-28 cursor-default outline-none">
+                    @elseif($dateMode === 'day')
+                        <input type="date" name="date_val" id="date_val" value="{{ $dateVal }}" 
+                            class="border-0 bg-transparent text-xs py-1 px-1.5 font-medium text-neutral-800 outline-none cursor-pointer" 
+                            onchange="this.form.submit()">
+                    @elseif($dateMode === 'month')
+                        <input type="month" name="date_val" id="date_val" value="{{ $dateVal }}" 
+                            class="border-0 bg-transparent text-xs py-1 px-1.5 font-medium text-neutral-800 outline-none cursor-pointer" 
+                            onchange="this.form.submit()">
+                    @elseif($dateMode === 'year')
+                        <input type="number" min="2000" max="2099" name="date_val" id="date_val" value="{{ $dateVal }}" 
+                            class="border-0 bg-transparent text-xs py-1 px-1.5 font-medium text-neutral-800 outline-none w-20" 
+                            placeholder="Năm..." onchange="this.form.submit()">
+                    @endif
+                </div>
+
+                <button type="submit" class="btn btn-xs btn-primary rounded-lg px-2.5 py-1.5 text-xs font-semibold flex items-center gap-1 ml-1" title="Áp dụng lọc">
+                    <iconify-icon icon="lucide:arrow-right" class="text-xs"></iconify-icon>
+                </button>
+            </div>
         </form>
 
         {{-- Ô tìm kiếm lọc bảng --}}
         <div class="flex items-center gap-3">
             <div class="relative">
-                <input type="text" id="page-customer-search" onkeyup="filterPageCustomerTable()" placeholder="Tìm nhanh (Tên, SĐT, địa chỉ, đối tác...)" class="form-control rounded-xl pl-9 pr-3 py-2 text-xs w-72 md:w-80 border-neutral-300 shadow-2xs">
+                <input type="text" id="page-customer-search" onkeyup="filterPageCustomerTable()" placeholder="Tìm nhanh khách hàng..." class="form-control rounded-xl pl-9 pr-3 py-2 text-xs w-60 md:w-64 border-neutral-300 shadow-2xs">
                 <iconify-icon icon="lucide:search" class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm"></iconify-icon>
             </div>
             <span id="page-search-count-badge" class="px-2.5 py-1 rounded-full text-xs font-semibold bg-neutral-100 text-neutral-600 border border-neutral-200 shrink-0">
@@ -177,7 +229,10 @@
                     <th style="min-width: 150px;" class="py-3.5 px-3">Chính sách</th>
                     <th style="min-width: 120px;" class="py-3.5 px-3 text-right">Định mức nợ</th>
                     <th style="min-width: 130px;" class="py-3.5 px-3 text-right">Công nợ</th>
-                    <th style="min-width: 130px;" class="py-3.5 px-3 text-right">Đã thanh toán</th>
+                    <th style="min-width: 140px;" class="py-3.5 px-3 text-right">
+                        Đã thanh toán
+                        <div class="text-[10px] font-normal text-neutral-400 capitalize">({{ $dateLabel }})</div>
+                    </th>
                     <th style="width: 90px;" class="py-3.5 px-3 text-center">Thao tác</th>
                 </tr>
             </thead>
@@ -893,6 +948,51 @@ function filterPageCustomerTable() {
             noSearchRow.classList.add('hidden');
         }
     }
+}
+
+// ===== DATE FILTER FLEXIBLE SWITCHER =====
+function setDateMode(mode) {
+    const hiddenMode = document.getElementById('date_mode');
+    const container = document.getElementById('date-input-container');
+    const oldInput = document.getElementById('date_val');
+    const oldVal = oldInput ? oldInput.value : '';
+    
+    hiddenMode.value = mode;
+    updateModeButtonStyles(mode);
+
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const todayStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+    const thisMonthStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}`;
+    const thisYearStr = `${now.getFullYear()}`;
+
+    if (mode === 'day') {
+        const val = (oldVal && oldVal.length === 10) ? oldVal : todayStr;
+        container.innerHTML = `<input type="date" name="date_val" id="date_val" value="${val}" class="border-0 bg-transparent text-xs py-1 px-1.5 font-medium text-neutral-800 outline-none cursor-pointer" onchange="this.form.submit()">`;
+    } else if (mode === 'month') {
+        const val = (oldVal && oldVal.length >= 7) ? oldVal.substring(0, 7) : thisMonthStr;
+        container.innerHTML = `<input type="month" name="date_val" id="date_val" value="${val}" class="border-0 bg-transparent text-xs py-1 px-1.5 font-medium text-neutral-800 outline-none cursor-pointer" onchange="this.form.submit()">`;
+    } else if (mode === 'year') {
+        const val = (oldVal && oldVal.length >= 4) ? oldVal.substring(0, 4) : thisYearStr;
+        container.innerHTML = `<input type="number" min="2000" max="2099" name="date_val" id="date_val" value="${val}" class="border-0 bg-transparent text-xs py-1 px-1.5 font-medium text-neutral-800 outline-none w-20" placeholder="Năm..." onchange="this.form.submit()">`;
+    } else {
+        container.innerHTML = `<input type="text" readonly value="Toàn thời gian" class="border-0 bg-transparent text-xs py-1 px-2 font-semibold text-neutral-500 w-28 cursor-default outline-none">`;
+    }
+
+    // Auto submit form on mode change
+    document.getElementById('dateFilterForm').submit();
+}
+
+function updateModeButtonStyles(activeMode) {
+    ['day', 'month', 'year', 'all'].forEach(m => {
+        const btn = document.getElementById('mode-btn-' + m);
+        if (!btn) return;
+        if (m === activeMode) {
+            btn.className = 'px-2.5 py-1 rounded-md transition-all bg-white text-primary-700 shadow-2xs font-bold';
+        } else {
+            btn.className = 'px-2.5 py-1 rounded-md transition-all text-neutral-500 hover:text-neutral-800';
+        }
+    });
 }
 
 // ===== LEAFLET MAP FUNCTIONS =====
