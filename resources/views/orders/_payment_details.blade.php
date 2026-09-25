@@ -201,11 +201,44 @@
 @endif
 
 <script>
+window.escapeHtml = window.escapeHtml || function(text) {
+    if (text === undefined || text === null) return '';
+    return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+};
+var escapeHtml = window.escapeHtml;
+
+window.refreshPaymentDetailsTableLayout = window.refreshPaymentDetailsTableLayout || function() {
+    const panel = document.querySelector('[data-order-supplies-storage-key="min_late_payment"]');
+    if (panel && typeof applyOrderSuppliesVisibleRows === 'function') {
+        applyOrderSuppliesVisibleRows(panel, panel.dataset.orderSuppliesVisibleRows || '5');
+    }
+
+    if (typeof initOrderColumnResize === 'function') {
+        initOrderColumnResize(document);
+    }
+};
+var refreshPaymentDetailsTableLayout = window.refreshPaymentDetailsTableLayout;
+
+window.applyFlashEffect = window.applyFlashEffect || function(el) {
+    if (!el) return;
+    el.classList.add('bg-amber-100', 'transition-colors', 'duration-500');
+    setTimeout(() => {
+        el.classList.remove('bg-amber-100');
+    }, 1000);
+};
+var applyFlashEffect = window.applyFlashEffect;
+
 window.woodBoardPricesData = @json($woodBoardPrices ?? []);
 window.glassPricesData = @json($glassPrices ?? []);
 window.minLatePricesData = @json($minLatePrices ?? []);
-let paymentDetailIndex = {{ isset($acrylicOrder) && isset($acrylicOrder->paymentDetails) ? $acrylicOrder->paymentDetails->count() : 0 }};
-const isMinLateOrderType = {{ $isMinLateOrder ? 'true' : 'false' }};
+var paymentDetailIndex = typeof window.paymentDetailIndex !== 'undefined' ? window.paymentDetailIndex : {{ isset($acrylicOrder) && isset($acrylicOrder->paymentDetails) ? $acrylicOrder->paymentDetails->count() : 0 }};
+window.paymentDetailIndex = paymentDetailIndex;
+var isMinLateOrderType = {{ $isMinLateOrder ? 'true' : 'false' }};
 
 function getPaymentCodeOptionsHtml() {
     let optionsHtml = '<option value="">-- Chọn mã --</option>';

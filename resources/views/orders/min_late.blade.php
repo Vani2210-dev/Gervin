@@ -1229,29 +1229,6 @@ document.addEventListener('input', function(e) {
     }
 });
 
-let paymentDetailIndex = {{ (isset($acrylicOrder) && $acrylicOrder->type == 'min_late' && isset($acrylicOrder->paymentDetails)) ? $acrylicOrder->paymentDetails->count() : 0 }};
-
-// Đồng bộ lại chiều cao hiển thị và co giãn cột sau khi thêm/xóa dòng chi tiết.
-function refreshPaymentDetailsTableLayout() {
-    const panel = document.querySelector('[data-order-supplies-storage-key="min_late_payment"]');
-    if (panel && typeof applyOrderSuppliesVisibleRows === 'function') {
-        applyOrderSuppliesVisibleRows(panel, panel.dataset.orderSuppliesVisibleRows || '5');
-    }
-
-    if (typeof initOrderColumnResize === 'function') {
-        initOrderColumnResize(document);
-    }
-}
-
-function escapeHtml(text) {
-    if (!text) return '';
-    return text
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-}
 
 // Payment details handled by _payment_details.blade.php
 

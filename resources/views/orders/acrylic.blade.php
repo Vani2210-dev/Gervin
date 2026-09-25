@@ -2082,27 +2082,4 @@ function escHtml(str) {
     return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-let paymentDetailIndex = {{ (isset($acrylicOrder) && isset($acrylicOrder->paymentDetails)) ? $acrylicOrder->paymentDetails->count() : 0 }};
-
-function refreshPaymentDetailsTableLayout() {
-    const panel = document.querySelector('[data-order-supplies-storage-key="min_late_payment"]');
-    if (panel && typeof applyOrderSuppliesVisibleRows === 'function') {
-        applyOrderSuppliesVisibleRows(panel, panel.dataset.orderSuppliesVisibleRows || '5');
-    }
-
-    if (typeof initOrderColumnResize === 'function') {
-        initOrderColumnResize(document);
-    }
-}
-
-function escapeHtml(text) {
-    if (!text) return '';
-    return text
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-}
-
 </script>
