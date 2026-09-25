@@ -135,11 +135,11 @@ class MarketGroupController extends Controller
                         $pq->whereBetween('payment_date', [$startDate, $endDate]);
                     }
                 },
-                'careLogs' => function ($lq) use ($startDate, $endDate) {
+                'histories' => function ($hq) use ($startDate, $endDate) {
                     if ($startDate && $endDate) {
-                        $lq->whereBetween('visit_date', [$startDate, $endDate]);
+                        $hq->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
                     }
-                    $lq->with('user')->orderBy('visit_date', 'desc');
+                    $hq->with('user')->orderBy('created_at', 'desc');
                 }
             ])
             ->orderBy('name');
@@ -161,10 +161,38 @@ class MarketGroupController extends Controller
             });
         }
 
-        $customers = $query->get()->map(function ($c) {
+        $updatedCustomersCount = 0;
+        $totalCustomerUpdates = 0;
+
+        $customers = $query->get()->map(function ($c) use (&$updatedCustomersCount, &$totalCustomerUpdates) {
             $c->period_paid = $c->customerPayments->sum('amount');
-            $c->period_care_count = $c->careLogs->count();
-            $c->latest_care_log = $c->careLogs->first();
+            $c->period_histories_count = $c->histories->count();
+            $c->period_history = $c->histories->first();
+
+            if ($c->period_histories_count > 0) {
+                $updatedCustomersCount++;
+                $totalCustomerUpdates += $c->period_histories_count;
+                $c->has_period_update = true;
+                $c->period_update_time = $c->period_history->created_at->format('H:i d/m/Y');
+                $c->period_update_user = $c->period_history->user?->name ?? 'Hệ thống';
+                $c->period_note = $c->period_history->note;
+                $pPhotos = is_array($c->period_history->photos) ? $c->period_history->photos : (is_string($c->period_history->photos) ? json_decode($c->period_history->photos, true) : []);
+                $c->period_photos = !empty($pPhotos) ? $pPhotos : null;
+            } elseif ($startDate && $endDate && $c->updated_at && $c->updated_at->between($startDate . ' 00:00:00', $endDate . ' 23:59:59')) {
+                $updatedCustomersCount++;
+                $totalCustomerUpdates++;
+                $c->has_period_update = true;
+                $c->period_update_time = $c->updated_at->format('H:i d/m/Y');
+                $c->period_update_user = 'Hệ thống';
+                $c->period_note = $c->feedback ?: ($c->customer_proposal ?: ($c->sale_proposal ?: null));
+                $cPhotos = is_array($c->photos) ? $c->photos : (is_string($c->photos) ? json_decode($c->photos, true) : []);
+                $c->period_photos = !empty($cPhotos) ? $cPhotos : null;
+            } else {
+                $c->has_period_update = false;
+                $c->period_photos = null;
+                $c->period_note = null;
+            }
+
             $fullAddr = implode(', ', array_filter([$c->address, $c->ward, $c->province]));
             $c->full_address = $fullAddr ?: ($c->address ?: '—');
             return $c;
@@ -192,7 +220,9 @@ class MarketGroupController extends Controller
             $historiesQuery->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
         }
         $histories = $historiesQuery->get();
-        $totalCustomerUpdates = $histories->count();
+        if ($totalCustomerUpdates === 0) {
+            $totalCustomerUpdates = $histories->count();
+        }
         $totalCareVisits = $totalCustomerUpdates; // For backward compatibility
 
         if ($user && !$user->hasRole('Admin')) {
@@ -211,6 +241,7 @@ class MarketGroupController extends Controller
             'totalCustomers',
             'totalDebt',
             'totalPaid',
+            'updatedCustomersCount',
             'totalCustomerUpdates',
             'totalCareVisits',
             'histories',
