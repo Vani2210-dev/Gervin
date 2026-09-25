@@ -24,36 +24,56 @@
 @endif
 
 <div class="grid grid-cols-12 gap-6">
-    {{-- Card Thống kê --}}
+    {{-- Cards Thống kê tổng hợp toàn bộ nhóm thị trường (chuẩn giao diện như trang chi tiết nhóm) --}}
     <div class="col-span-12">
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div class="bg-white border border-neutral-200 rounded-2xl p-4 shadow-sm flex items-center gap-4">
-                <div class="w-12 h-12 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center text-2xl flex-shrink-0">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            <div class="bg-white border border-neutral-200 rounded-xl p-3.5 shadow-2xs flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center text-xl shrink-0">
                     <iconify-icon icon="solar:users-group-two-rounded-bold-duotone"></iconify-icon>
                 </div>
-                <div>
-                    <div class="text-xs text-neutral-500 font-medium">Tổng số nhóm thị trường</div>
-                    <div class="text-xl font-bold text-neutral-800">{{ $marketGroups->count() }} nhóm</div>
+                <div class="min-w-0">
+                    <div class="text-[11px] text-neutral-500 font-medium truncate">Tổng khách hàng</div>
+                    <div class="text-base sm:text-lg font-bold text-neutral-800 mt-0.5 truncate">{{ $totalCustomers }} <span class="text-[11px] font-normal text-neutral-500">khách</span></div>
                 </div>
             </div>
 
-            <div class="bg-white border border-neutral-200 rounded-2xl p-4 shadow-sm flex items-center gap-4">
-                <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-2xl flex-shrink-0">
+            <div class="bg-white border border-neutral-200 rounded-xl p-3.5 shadow-2xs flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-danger-50 text-danger-600 flex items-center justify-center text-xl shrink-0">
+                    <iconify-icon icon="solar:wallet-money-bold-duotone"></iconify-icon>
+                </div>
+                <div class="min-w-0">
+                    <div class="text-[11px] text-neutral-500 font-medium truncate">Tổng công nợ toàn hệ thống</div>
+                    <div class="text-base sm:text-lg font-bold text-danger-600 mt-0.5 truncate">{{ number_format($totalDebt, 0, ',', '.') }} <span class="text-[11px] font-normal text-neutral-500">₫</span></div>
+                </div>
+            </div>
+
+            <div class="bg-white border border-neutral-200 rounded-xl p-3.5 shadow-2xs flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl shrink-0">
+                    <iconify-icon icon="solar:card-recive-bold-duotone"></iconify-icon>
+                </div>
+                <div class="min-w-0">
+                    <div class="text-[11px] text-neutral-500 font-medium truncate" title="Đã thu tiền ({{ $dateLabel }})">Đã thu tiền ({{ $dateLabel }})</div>
+                    <div class="text-base sm:text-lg font-bold text-emerald-600 mt-0.5 truncate">{{ number_format($totalPaid, 0, ',', '.') }} <span class="text-[11px] font-normal text-neutral-500">₫</span></div>
+                </div>
+            </div>
+
+            <div class="bg-white border border-neutral-200 rounded-xl p-3.5 shadow-2xs flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-xl shrink-0">
+                    <iconify-icon icon="solar:history-bold-duotone"></iconify-icon>
+                </div>
+                <div class="min-w-0">
+                    <div class="text-[11px] text-neutral-500 font-medium truncate" title="Cập nhật ({{ $dateLabel }})">Cập nhật ({{ $dateLabel }})</div>
+                    <div class="text-base sm:text-lg font-bold text-amber-600 mt-0.5 truncate">{{ $totalCustomerUpdates ?? 0 }} <span class="text-[11px] font-normal text-neutral-500">lần / {{ $updatedCustomersCount ?? 0 }} KH</span></div>
+                </div>
+            </div>
+
+            <div class="bg-white border border-neutral-200 rounded-xl p-3.5 shadow-2xs flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xl shrink-0">
                     <iconify-icon icon="solar:user-id-bold-duotone"></iconify-icon>
                 </div>
-                <div>
-                    <div class="text-xs text-neutral-500 font-medium">Tổng nhân viên trong nhóm</div>
-                    <div class="text-xl font-bold text-neutral-800">{{ $marketGroups->sum('users_count') }} lượt NV</div>
-                </div>
-            </div>
-
-            <div class="bg-white border border-neutral-200 rounded-2xl p-4 shadow-sm flex items-center gap-4">
-                <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-2xl flex-shrink-0">
-                    <iconify-icon icon="solar:user-hand-up-bold-duotone"></iconify-icon>
-                </div>
-                <div>
-                    <div class="text-xs text-neutral-500 font-medium">Tổng khách hàng đã gán nhóm</div>
-                    <div class="text-xl font-bold text-neutral-800">{{ $marketGroups->sum('customers_count') }} KH</div>
+                <div class="min-w-0">
+                    <div class="text-[11px] text-neutral-500 font-medium truncate">Nhân sự phụ trách</div>
+                    <div class="text-base sm:text-lg font-bold text-neutral-800 mt-0.5 truncate">{{ $totalUsersCount }} <span class="text-[11px] font-normal text-neutral-500">lượt NV</span></div>
                 </div>
             </div>
         </div>
@@ -62,19 +82,24 @@
     {{-- Main Table Card --}}
     <div class="col-span-12">
         <div class="bg-white border border-neutral-200 rounded-2xl shadow-sm overflow-hidden">
-            <div class="p-6 border-b border-neutral-200 flex flex-wrap items-center justify-between gap-4">
+            <div class="p-5 border-b border-neutral-200 bg-neutral-50/60 flex flex-wrap items-center justify-between gap-4">
                 <div>
                     <h5 class="font-bold text-lg text-neutral-800 m-0">Danh sách Nhóm thị trường</h5>
-                    <p class="text-xs text-neutral-500 mt-1">Phân quyền chăm sóc khách hàng và doanh số theo từng nhóm thị trường</p>
+                    <p class="text-xs text-neutral-500 mt-1">Phân quyền chăm sóc khách hàng, theo dõi công nợ và doanh số theo kỳ lọc</p>
                 </div>
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-3 flex-wrap">
+                    {{-- Bộ lọc Ngày / Tháng / Năm linh hoạt --}}
+                    <x-flexible-date-filter :dateMode="$dateMode" :dateVal="$dateVal" />
+
                     <form method="GET" action="{{ route('market-groups.index') }}" class="flex items-center">
+                        <input type="hidden" name="date_mode" value="{{ $dateMode }}">
+                        <input type="hidden" name="date_val" value="{{ $dateVal }}">
                         <div class="relative">
                             <input type="text" name="search" value="{{ $search }}" placeholder="Tìm kiếm nhóm..." class="form-control rounded-lg pl-9 pr-3 py-1.5 text-xs w-48 border-neutral-300">
                             <iconify-icon icon="lucide:search" class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm"></iconify-icon>
                         </div>
                     </form>
-                    <button type="button" onclick="openCreateGroupModal()" class="btn btn-sm btn-primary rounded-lg flex items-center gap-1.5 px-3 py-2 text-xs font-semibold">
+                    <button type="button" onclick="openCreateGroupModal()" class="btn btn-sm btn-primary rounded-lg flex items-center gap-1.5 px-3 py-2 text-xs font-semibold shadow-sm">
                         <iconify-icon icon="lucide:plus" class="text-base"></iconify-icon> Thêm nhóm mới
                     </button>
                 </div>
@@ -84,12 +109,15 @@
                 <table class="table bordered-table mb-0 w-full">
                     <thead>
                         <tr class="bg-neutral-50 text-neutral-600 font-semibold text-xs uppercase border-b border-neutral-200">
-                            <th style="width: 60px;" class="text-center py-3">STT</th>
-                            <th style="width: 180px;" class="py-3">Tên nhóm</th>
+                            <th style="width: 50px;" class="text-center py-3">STT</th>
+                            <th style="width: 170px;" class="py-3">Tên nhóm</th>
+                            <th style="width: 180px;" class="py-3">Nhân viên phụ trách</th>
+                            <th style="width: 130px;" class="text-center py-3">Khách hàng</th>
+                            <th style="width: 140px;" class="text-right py-3">Tổng nợ nhóm</th>
+                            <th style="width: 150px;" class="text-right py-3" title="Số tiền khách hàng đã thanh toán trong kỳ {{ $dateLabel }}">Thu tiền ({{ $dateLabel }})</th>
+                            <th style="width: 120px;" class="text-center py-3" title="Lượt cập nhật hồ sơ khách hàng trong kỳ {{ $dateLabel }}">Cập nhật ({{ $dateLabel }})</th>
                             <th class="py-3">Mô tả</th>
-                            <th style="width: 320px;" class="py-3">Nhân viên trong nhóm</th>
-                            <th style="width: 180px;" class="text-center py-3">Khách hàng</th>
-                            <th style="width: 120px;" class="text-center py-3">Hành động</th>
+                            <th style="width: 110px;" class="text-center py-3">Hành động</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-neutral-200 text-xs">
@@ -101,20 +129,17 @@
                         <tr class="hover:bg-neutral-50/70 transition-colors">
                             <td class="text-center font-semibold text-neutral-500 py-3">{{ $index + 1 }}</td>
                             <td class="py-3">
-                                <div class="flex items-center gap-2.5">
-                                    <span class="w-8 h-8 rounded-lg {{ $color['badge'] }} text-white font-bold text-sm flex items-center justify-center flex-shrink-0">
+                                <a href="{{ route('market-groups.show', [$group->id, 'date_mode' => $dateMode, 'date_val' => $dateVal]) }}" class="flex items-center gap-2.5 group">
+                                    <span class="w-8 h-8 rounded-lg {{ $color['badge'] }} text-white font-bold text-sm flex items-center justify-center flex-shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
                                         {{ $group->code ?: substr($group->name, -1) }}
                                     </span>
                                     <div>
-                                        <div class="font-bold text-sm text-neutral-800">{{ $group->name }}</div>
+                                        <div class="font-bold text-sm text-neutral-800 group-hover:text-primary-600 transition-colors">{{ $group->name }}</div>
                                         @if($group->code)
                                             <span class="text-[10px] text-neutral-400 uppercase font-mono">Mã: {{ $group->code }}</span>
                                         @endif
                                     </div>
-                                </div>
-                            </td>
-                            <td class="py-3 text-neutral-600">
-                                {{ $group->description ?: '—' }}
+                                </a>
                             </td>
                             <td class="py-3">
                                 <div class="flex flex-wrap items-center gap-1.5">
@@ -138,17 +163,44 @@
                                 </div>
                             </td>
                             <td class="py-3 text-center">
-                                <a href="{{ route('market-groups.show', $group->id) }}" 
-                                    class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold {{ $color['bg'] }} {{ $color['text'] }} hover:shadow border {{ $color['border'] }} transition-all" 
+                                <a href="{{ route('market-groups.show', [$group->id, 'date_mode' => $dateMode, 'date_val' => $dateVal]) }}" 
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold {{ $color['bg'] }} {{ $color['text'] }} hover:shadow-xs border {{ $color['border'] }} transition-all" 
                                     title="Mở trang chi tiết danh sách khách hàng nhóm">
                                     <iconify-icon icon="solar:users-group-two-rounded-bold" class="text-sm"></iconify-icon>
-                                    <span>{{ $group->customers_count }} khách hàng</span>
+                                    <span>{{ $group->customers_count }} KH</span>
                                     <iconify-icon icon="solar:arrow-right-bold" class="text-xs opacity-70"></iconify-icon>
                                 </a>
                             </td>
+                            <td class="py-3 text-right">
+                                <span class="font-bold {{ $group->total_debt > 0 ? 'text-danger-600' : 'text-neutral-600' }}">
+                                    {{ number_format($group->total_debt, 0, ',', '.') }} ₫
+                                </span>
+                            </td>
+                            <td class="py-3 text-right">
+                                @if($group->period_paid > 0)
+                                    <span class="font-bold text-emerald-600">
+                                        +{{ number_format($group->period_paid, 0, ',', '.') }} ₫
+                                    </span>
+                                @else
+                                    <span class="text-neutral-400 font-medium">0 ₫</span>
+                                @endif
+                            </td>
+                            <td class="py-3 text-center">
+                                @if($group->period_updates_count > 0)
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                        <iconify-icon icon="solar:history-bold" class="text-xs"></iconify-icon>
+                                        {{ $group->period_updates_count }} lần
+                                    </span>
+                                @else
+                                    <span class="text-neutral-400 italic">0</span>
+                                @endif
+                            </td>
+                            <td class="py-3 text-neutral-600">
+                                {{ $group->description ?: '—' }}
+                            </td>
                             <td class="py-3 text-center">
                                 <div class="flex items-center justify-center gap-1.5">
-                                    <a href="{{ route('market-groups.show', $group->id) }}" 
+                                    <a href="{{ route('market-groups.show', [$group->id, 'date_mode' => $dateMode, 'date_val' => $dateVal]) }}" 
                                         class="w-8 h-8 rounded-full bg-primary-50 hover:bg-primary-100 text-primary-600 flex items-center justify-center transition-colors" 
                                         title="Xem trang chi tiết tất cả khách hàng của nhóm">
                                         <iconify-icon icon="solar:eye-bold" class="text-sm"></iconify-icon>
@@ -176,12 +228,24 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="6" class="text-center py-10 text-neutral-400">
+                            <td colspan="9" class="text-center py-10 text-neutral-400">
                                 Chưa có nhóm thị trường nào.
                             </td>
                         </tr>
                         @endforelse
                     </tbody>
+                    @if($marketGroups->count() > 0)
+                    <tfoot>
+                        <tr class="bg-neutral-100/90 font-bold text-neutral-800 border-t-2 border-neutral-300 text-xs">
+                            <td colspan="3" class="py-3 text-center uppercase tracking-wider text-neutral-600">TỔNG TOÀN BỘ ({{ $totalGroups }} NHÓM)</td>
+                            <td class="py-3 text-center text-primary-700">{{ $totalCustomers }} KH</td>
+                            <td class="py-3 text-right text-danger-600">{{ number_format($totalDebt, 0, ',', '.') }} ₫</td>
+                            <td class="py-3 text-right text-emerald-600">+{{ number_format($totalPaid, 0, ',', '.') }} ₫</td>
+                            <td class="py-3 text-center text-amber-700">{{ $totalCustomerUpdates }} lần</td>
+                            <td colspan="2"></td>
+                        </tr>
+                    </tfoot>
+                    @endif
                 </table>
             </div>
         </div>

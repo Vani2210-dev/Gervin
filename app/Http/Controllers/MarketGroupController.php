@@ -13,6 +13,49 @@ class MarketGroupController extends Controller
     {
         $search = $request->input('search', '');
 
+        // Date Filter Mode: day | month | year | all
+        $dateMode = $request->input('date_mode', 'month');
+        $dateVal = $request->input('date_val');
+
+        if (!$dateVal && $dateMode !== 'all') {
+            if ($dateMode === 'day') {
+                $dateVal = now()->toDateString();
+            } elseif ($dateMode === 'year') {
+                $dateVal = now()->format('Y');
+            } else { // month
+                $dateMode = 'month';
+                $dateVal = now()->format('Y-m');
+            }
+        }
+
+        $startDate = null;
+        $endDate = null;
+        $dateLabel = 'Toàn thời gian';
+        $inputType = 'month';
+
+        if ($dateMode === 'day' && $dateVal) {
+            $startDate = $dateVal;
+            $endDate = $dateVal;
+            $dateLabel = 'Ngày ' . \Carbon\Carbon::parse($dateVal)->format('d/m/Y');
+            $inputType = 'date';
+        } elseif ($dateMode === 'month' && $dateVal) {
+            $cDate = \Carbon\Carbon::parse($dateVal . '-01');
+            $startDate = $cDate->copy()->startOfMonth()->toDateString();
+            $endDate = $cDate->copy()->endOfMonth()->toDateString();
+            $dateLabel = 'Tháng ' . $cDate->format('m/Y');
+            $inputType = 'month';
+        } elseif ($dateMode === 'year' && $dateVal) {
+            $startDate = $dateVal . '-01-01';
+            $endDate = $dateVal . '-12-31';
+            $dateLabel = 'Năm ' . $dateVal;
+            $inputType = 'number';
+        } else {
+            $dateMode = 'all';
+            $dateVal = '';
+            $dateLabel = 'Toàn bộ thời gian';
+            $inputType = 'text';
+        }
+
         $user = auth()->user();
         $groupsQuery = MarketGroup::with(['users' => function ($q) {
             $q->orderBy('name');
@@ -31,6 +74,64 @@ class MarketGroupController extends Controller
         ->orderBy('name');
 
         $marketGroups = $groupsQuery->get();
+        $marketGroupIds = $marketGroups->pluck('id');
+
+        // 1. Tính tổng công nợ theo từng nhóm
+        $debtsByGroup = Customer::whereIn('market_group_id', $marketGroupIds)
+            ->groupBy('market_group_id')
+            ->selectRaw('market_group_id, sum(debt) as total_debt')
+            ->pluck('total_debt', 'market_group_id');
+
+        // 2. Tính số tiền thanh toán theo từng nhóm trong kỳ lọc
+        $paidByGroup = \App\Models\CustomerPayment::join('customers', 'customer_payments.customer_id', '=', 'customers.id')
+            ->whereIn('customers.market_group_id', $marketGroupIds)
+            ->when($startDate && $endDate, function ($q) use ($startDate, $endDate) {
+                $q->whereBetween('customer_payments.payment_date', [$startDate, $endDate]);
+            })
+            ->groupBy('customers.market_group_id')
+            ->selectRaw('customers.market_group_id, sum(customer_payments.amount) as total_paid')
+            ->pluck('total_paid', 'customers.market_group_id');
+
+        // 3. Tính số lượt cập nhật theo từng nhóm trong kỳ lọc
+        $updatesByGroup = \App\Models\CustomerHistory::leftJoin('customers', 'customer_histories.customer_id', '=', 'customers.id')
+            ->where(function ($q) use ($marketGroupIds) {
+                $q->whereIn('customer_histories.market_group_id', $marketGroupIds)
+                  ->orWhereIn('customers.market_group_id', $marketGroupIds);
+            })
+            ->when($startDate && $endDate, function ($q) use ($startDate, $endDate) {
+                $q->whereBetween('customer_histories.created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
+            })
+            ->groupBy(\Illuminate\Support\Facades\DB::raw('COALESCE(customer_histories.market_group_id, customers.market_group_id)'))
+            ->selectRaw('COALESCE(customer_histories.market_group_id, customers.market_group_id) as mg_id, count(customer_histories.id) as total_updates')
+            ->pluck('total_updates', 'mg_id');
+
+        // Gán chỉ số cho từng nhóm
+        foreach ($marketGroups as $group) {
+            $group->total_debt = (float)($debtsByGroup[$group->id] ?? 0);
+            $group->period_paid = (float)($paidByGroup[$group->id] ?? 0);
+            $group->period_updates_count = (int)($updatesByGroup[$group->id] ?? 0);
+        }
+
+        // Tổng hợp toàn bộ các nhóm
+        $totalCustomers = $marketGroups->sum('customers_count');
+        $totalDebt = $marketGroups->sum('total_debt');
+        $totalPaid = $marketGroups->sum('period_paid');
+        $totalCustomerUpdates = $marketGroups->sum('period_updates_count');
+        
+        $updatedCustomersCount = \App\Models\CustomerHistory::leftJoin('customers', 'customer_histories.customer_id', '=', 'customers.id')
+            ->where(function ($q) use ($marketGroupIds) {
+                $q->whereIn('customer_histories.market_group_id', $marketGroupIds)
+                  ->orWhereIn('customers.market_group_id', $marketGroupIds);
+            })
+            ->when($startDate && $endDate, function ($q) use ($startDate, $endDate) {
+                $q->whereBetween('customer_histories.created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
+            })
+            ->whereNotNull('customer_histories.customer_id')
+            ->distinct('customer_histories.customer_id')
+            ->count('customer_histories.customer_id');
+
+        $totalGroups = $marketGroups->count();
+        $totalUsersCount = $marketGroups->sum('users_count');
 
         $allUsers = User::whereDoesntHave('roles', function ($q) {
             $q->where('name', 'Admin');
@@ -46,7 +147,25 @@ class MarketGroupController extends Controller
 
         $allCustomers = Customer::orderBy('name')->select('id', 'customer_code', 'name', 'phone', 'market_group_id')->get();
 
-        return view('market_groups.index', compact('marketGroups', 'allUsers', 'allCustomers', 'search'));
+        return view('market_groups.index', compact(
+            'marketGroups',
+            'allUsers',
+            'allCustomers',
+            'search',
+            'dateMode',
+            'dateVal',
+            'dateLabel',
+            'inputType',
+            'startDate',
+            'endDate',
+            'totalCustomers',
+            'totalDebt',
+            'totalPaid',
+            'totalCustomerUpdates',
+            'updatedCustomersCount',
+            'totalGroups',
+            'totalUsersCount'
+        ));
     }
 
     public function store(Request $request)
