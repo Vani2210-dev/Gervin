@@ -261,7 +261,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('customers/quick-create', [CustomerController::class, 'quickCreate'])->name('customers.quick-create');
 
     // Market Groups (Nhóm thị trường)
-    Route::resource('market-groups', MarketGroupController::class)->names('market-groups');
+    Route::resource('market-groups', MarketGroupController::class)->parameters(['market-groups' => 'marketGroup'])->names('market-groups');
     Route::post('market-groups/{marketGroup}/users', [MarketGroupController::class, 'assignUsers'])->name('market-groups.assign-users');
     Route::post('market-groups/{marketGroup}/customers', [MarketGroupController::class, 'assignCustomers'])->name('market-groups.assign-customers');
     Route::delete('market-groups/{marketGroup}/customers/{customer}', [MarketGroupController::class, 'removeCustomer'])->name('market-groups.remove-customer');
