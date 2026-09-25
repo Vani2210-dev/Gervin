@@ -274,7 +274,7 @@ class MinLatePriceController extends Controller
                 // Delete existing records
                 MinLatePrice::query()->delete();
 
-                // 1. Detect Header row and column indexes
+                // 1. Detect Header row and column indexes accurately
                 $headerRowIdx = null;
                 $colStt = 0;
                 $colCode = -1;
@@ -284,40 +284,53 @@ class MinLatePriceController extends Controller
                 $colNotes = 4;
 
                 for ($r = 0; $r < min(10, count($rows)); $r++) {
-                    $rowVals = array_map(function($v) {
-                        return mb_strtolower(trim((string)$v), 'UTF-8');
-                    }, $rows[$r]);
+                    $row = $rows[$r];
+                    
+                    // Header row must have at least 3 non-empty cells
+                    $nonEmptyCells = 0;
+                    foreach ($row as $cell) {
+                        if (!is_null($cell) && trim((string)$cell) !== '') {
+                            $nonEmptyCells++;
+                        }
+                    }
+                    if ($nonEmptyCells < 3) {
+                        continue;
+                    }
 
-                    $hasStt = false;
-                    $hasName = false;
-                    $hasPrice = false;
+                    $detectedStt = -1;
+                    $detectedCode = -1;
+                    $detectedName = -1;
+                    $detectedUnit = -1;
+                    $detectedPrice = -1;
+                    $detectedNotes = -1;
 
-                    foreach ($rowVals as $idx => $val) {
-                        if ($val === 'stt' || str_contains($val, 'số thứ tự')) {
-                            $hasStt = true;
-                            $colStt = $idx;
-                        }
-                        if (str_contains($val, 'mã') || str_contains($val, 'code')) {
-                            $colCode = $idx;
-                        }
-                        if (str_contains($val, 'sản phẩm') || str_contains($val, 'tên') || str_contains($val, 'dịch vụ')) {
-                            $hasName = true;
-                            $colName = $idx;
-                        }
-                        if (str_contains($val, 'đơn vị') || str_contains($val, 'đvt')) {
-                            $colUnit = $idx;
-                        }
-                        if (str_contains($val, 'giá') || str_contains($val, 'đơn giá')) {
-                            $hasPrice = true;
-                            $colPrice = $idx;
-                        }
-                        if (str_contains($val, 'ghi chú') || str_contains($val, 'note')) {
-                            $colNotes = $idx;
+                    foreach ($row as $idx => $cell) {
+                        $val = mb_strtolower(trim((string)$cell), 'UTF-8');
+                        if (empty($val)) continue;
+
+                        if ($val === 'stt' || preg_match('/^(stt|số thứ tự)$/u', $val)) {
+                            $detectedStt = $idx;
+                        } elseif (preg_match('/(mã dịch vụ|mã sp|mã|code)/u', $val) && !preg_match('/(sản phẩm|quy cách)/u', $val)) {
+                            $detectedCode = $idx;
+                        } elseif (preg_match('/(sản phẩm|tên sản phẩm|tên dịch vụ|quy cách|nội dung)/u', $val)) {
+                            $detectedName = $idx;
+                        } elseif (preg_match('/(đơn vị|đvt)/u', $val)) {
+                            $detectedUnit = $idx;
+                        } elseif (preg_match('/(đơn giá|giá)/u', $val) && !str_contains($val, 'bảng giá')) {
+                            $detectedPrice = $idx;
+                        } elseif (preg_match('/(ghi chú|note)/u', $val)) {
+                            $detectedNotes = $idx;
                         }
                     }
 
-                    if ($hasName && ($hasPrice || $hasStt)) {
+                    if ($detectedName >= 0 && $detectedPrice >= 0 && ($detectedStt >= 0 || $detectedUnit >= 0)) {
                         $headerRowIdx = $r;
+                        $colStt   = $detectedStt >= 0 ? $detectedStt : 0;
+                        $colCode  = $detectedCode;
+                        $colName  = $detectedName;
+                        $colUnit  = $detectedUnit >= 0 ? $detectedUnit : ($detectedName + 1);
+                        $colPrice = $detectedPrice;
+                        $colNotes = $detectedNotes >= 0 ? $detectedNotes : ($detectedPrice + 1);
                         break;
                     }
                 }
@@ -347,10 +360,19 @@ class MinLatePriceController extends Controller
                     $priceVal    = isset($row[$colPrice]) ? $row[$colPrice] : null;
                     $notes       = isset($row[$colNotes]) ? trim((string)$row[$colNotes]) : '';
 
-                    // Check if Category Header Row
+                    // Check if Category Header Row (e.g. STT is Roman Numeral like I, II, III and Price is empty)
                     $priceStr = trim((string)$priceVal);
                     if ($this->isRomanNumeral($stt) && ($priceStr === '' || is_null($priceVal))) {
-                        $currentCategory = !empty($productName) ? $productName : $stt;
+                        // Find category name: non-empty cell in row after STT
+                        $catName = '';
+                        for ($c = 1; $c < count($row); $c++) {
+                            $cVal = trim((string)($row[$c] ?? ''));
+                            if (!empty($cVal)) {
+                                $catName = $cVal;
+                                break;
+                            }
+                        }
+                        $currentCategory = !empty($catName) ? $catName : $stt;
                         continue;
                     }
 
@@ -373,12 +395,12 @@ class MinLatePriceController extends Controller
                     $price = $this->cleanPrice($priceVal, $cleanNotes);
 
                     MinLatePrice::create([
-                        'category_name' => $currentCategory,
-                        'stt'           => $stt,
+                        'category_name' => !empty($currentCategory) ? mb_substr($currentCategory, 0, 255, 'UTF-8') : null,
+                        'stt'           => !empty($stt) ? mb_substr($stt, 0, 50, 'UTF-8') : null,
                         'product_name'  => $productName,
-                        'unit'          => $unit,
+                        'unit'          => !empty($unit) ? mb_substr($unit, 0, 50, 'UTF-8') : null,
                         'price'         => $price,
-                        'code'          => !empty($code) ? $code : null,
+                        'code'          => !empty($code) ? mb_substr($code, 0, 100, 'UTF-8') : null,
                         'notes'         => !empty($cleanNotes) ? $cleanNotes : null,
                     ]);
                 }
