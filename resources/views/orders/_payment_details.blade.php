@@ -427,9 +427,108 @@ function bindPaymentDetailEvents(row) {
     });
 }
 
+function handlePaymentDetailCodeSelected(row, rawCode) {
+    if (!row || rawCode === undefined || rawCode === null) return;
+    const selectedCode = String(rawCode).trim();
+    if (!selectedCode) return;
+
+    const codeLower = selectedCode.toLowerCase();
+
+    // Lấy dữ liệu nguồn cho cả 3 loại (kiểm tra cả window và biến global)
+    const woodList = window.woodBoardPricesData || (typeof woodBoardPricesData !== 'undefined' ? woodBoardPricesData : []);
+    const glassList = window.glassPricesData || (typeof glassPricesData !== 'undefined' ? glassPricesData : []);
+    const minLateList = window.minLatePricesData || (typeof minLatePricesData !== 'undefined' ? minLatePricesData : []);
+
+    // 1. Tìm trong WoodBoardPrice (Tấm ván riêng / Ván mộc)
+    const woodPrice = woodList.find(p => p && p.code && String(p.code).trim().toLowerCase() === codeLower);
+
+    // 2. Tìm trong GlassPrice (Kính & nhôm)
+    const glassPrice = glassList.find(p => {
+        if (!p) return false;
+        const c = p.code ? String(p.code).trim().toLowerCase() : '';
+        const n = p.product_name ? String(p.product_name).trim().toLowerCase() : '';
+        return c === codeLower || n === codeLower;
+    });
+
+    // 3. Tìm trong MinLatePrice (Dịch vụ min-late)
+    const minLatePrice = minLateList.find(p => {
+        if (!p) return false;
+        const c = p.code ? String(p.code).trim().toLowerCase() : '';
+        const pc = p.product_code ? String(p.product_code).trim().toLowerCase() : '';
+        const ml = ('ML' + p.id).toLowerCase();
+        return c === codeLower || pc === codeLower || ml === codeLower;
+    });
+
+    const nameInput = row.querySelector('[name*="[name]"]');
+    const unitInput = row.querySelector('[name*="[unit]"]');
+    const priceInput = row.querySelector('input[name*="[price]"]:not([name*="[price_only]"])');
+    const priceOnlyInput = row.querySelector('[name*="[price_only]"]');
+
+    if (woodPrice) {
+        if (nameInput) {
+            nameInput.value = woodPrice.name ? `${woodPrice.code} - ${woodPrice.name}` : (woodPrice.code || '');
+            applyFlashEffect(nameInput);
+        }
+        if (unitInput) {
+            unitInput.value = woodPrice.unit || 'tấm';
+            applyFlashEffect(unitInput);
+        }
+        if (priceInput) {
+            const rawPr = woodPrice.price_board !== undefined ? woodPrice.price_board : (woodPrice.price !== undefined ? woodPrice.price : 0);
+            priceInput.value = Math.round(parseFloat(rawPr) || 0);
+            applyFlashEffect(priceInput);
+        }
+        if (priceOnlyInput) {
+            priceOnlyInput.value = 0;
+        }
+    } else if (glassPrice) {
+        if (nameInput) {
+            nameInput.value = glassPrice.product_name ? `${glassPrice.code} - ${glassPrice.product_name}` : (glassPrice.code || '');
+            applyFlashEffect(nameInput);
+        }
+        if (unitInput) {
+            unitInput.value = glassPrice.unit || 'm²';
+            applyFlashEffect(unitInput);
+        }
+        if (priceInput) {
+            const rawPr = glassPrice.price !== undefined ? glassPrice.price : (glassPrice.unit_price !== undefined ? glassPrice.unit_price : 0);
+            priceInput.value = Math.round(parseFloat(rawPr) || 0);
+            applyFlashEffect(priceInput);
+        }
+        if (priceOnlyInput) {
+            priceOnlyInput.value = 0;
+        }
+    } else if (minLatePrice) {
+        if (nameInput) {
+            const prefix = minLatePrice.category_name ? `[${minLatePrice.category_name}] ` : '';
+            nameInput.value = `${prefix}${minLatePrice.product_name || ''}`;
+            applyFlashEffect(nameInput);
+        }
+        if (unitInput) {
+            unitInput.value = minLatePrice.unit || 'm';
+            applyFlashEffect(unitInput);
+        }
+        if (priceInput) {
+            const rawPr = minLatePrice.unit_price !== undefined ? minLatePrice.unit_price : (minLatePrice.price !== undefined ? minLatePrice.price : 0);
+            priceInput.value = Math.round(parseFloat(rawPr) || 0);
+            applyFlashEffect(priceInput);
+        }
+        if (priceOnlyInput) {
+            const rawPro = minLatePrice.price_only !== undefined ? minLatePrice.price_only : 0;
+            priceOnlyInput.value = Math.round(parseFloat(rawPro) || 0);
+            applyFlashEffect(priceOnlyInput);
+        }
+    }
+
+    calculatePaymentDetailRowTotal(row);
+    if (typeof updateOrderSummary === 'function') updateOrderSummary();
+}
+
 function initPaymentCodeTomSelect(selectEl) {
     if (!selectEl || selectEl.tomselect) return;
+    const row = selectEl.closest('.payment-detail-row');
     selectEl.style.setProperty('display', 'none', 'important');
+
     const ts = new TomSelect(selectEl, {
         wrapperClass: 'ts-wrapper tom-select-payment-code',
         create: true,
@@ -448,77 +547,25 @@ function initPaymentCodeTomSelect(selectEl) {
             }
         }
     });
-    // Đảm bảo thẻ select gốc ẩn triệt để sau khi TomSelect được tạo
+
     selectEl.style.setProperty('display', 'none', 'important');
+
+    const triggerFill = (val) => {
+        const targetRow = row || selectEl.closest('.payment-detail-row');
+        const code = (val !== undefined && val !== null && val !== '') ? val : (ts ? ts.getValue() : selectEl.value);
+        handlePaymentDetailCodeSelected(targetRow, code);
+    };
+
     ts.on('change', function(value) {
-        const row = selectEl.closest('.payment-detail-row');
-        if (!row) return;
+        triggerFill(value);
+    });
 
-        // 1. Tìm trong WoodBoardPrice (Tấm ván riêng / Ván mộc)
-        const woodPrice = (window.woodBoardPricesData || []).find(p => p.code === value);
-        // 2. Tìm trong GlassPrice (Kính & nhôm)
-        const glassPrice = (window.glassPricesData || []).find(p => p.code === value || p.product_name === value);
-        // 3. Tìm trong MinLatePrice (Dịch vụ min-late)
-        const minLatePrice = (window.minLatePricesData || []).find(p => (p.code === value || p.product_code === value || ('ML' + p.id) === value));
+    ts.on('item_add', function(value) {
+        triggerFill(value);
+    });
 
-        const nameInput = row.querySelector('[name*="[name]"]');
-        const unitInput = row.querySelector('[name*="[unit]"]');
-        const priceInput = row.querySelector('[name*="[price]"]');
-        const priceOnlyInput = row.querySelector('[name*="[price_only]"]');
-
-        if (woodPrice) {
-            if (nameInput) {
-                nameInput.value = `${woodPrice.code} - ${woodPrice.name || 'Tấm ván'}`;
-                applyFlashEffect(nameInput);
-            }
-            if (unitInput) {
-                unitInput.value = 'tấm';
-                applyFlashEffect(unitInput);
-            }
-            if (priceInput) {
-                priceInput.value = woodPrice.price_board ?? woodPrice.price ?? 0;
-                applyFlashEffect(priceInput);
-            }
-            if (priceOnlyInput) {
-                priceOnlyInput.value = 0;
-            }
-        } else if (glassPrice) {
-            if (nameInput) {
-                nameInput.value = `${glassPrice.code} - ${glassPrice.product_name || ''}`;
-                applyFlashEffect(nameInput);
-            }
-            if (unitInput) {
-                unitInput.value = glassPrice.unit || 'm²';
-                applyFlashEffect(unitInput);
-            }
-            if (priceInput) {
-                priceInput.value = glassPrice.price ?? glassPrice.unit_price ?? 0;
-                applyFlashEffect(priceInput);
-            }
-            if (priceOnlyInput) {
-                priceOnlyInput.value = 0;
-            }
-        } else if (minLatePrice) {
-            if (nameInput) {
-                const prefix = minLatePrice.category_name ? `[${minLatePrice.category_name}] ` : '';
-                nameInput.value = `${prefix}${minLatePrice.product_name || ''}`;
-                applyFlashEffect(nameInput);
-            }
-            if (unitInput) {
-                unitInput.value = minLatePrice.unit || 'm';
-                applyFlashEffect(unitInput);
-            }
-            if (priceInput) {
-                priceInput.value = minLatePrice.unit_price ?? minLatePrice.price ?? 0;
-                applyFlashEffect(priceInput);
-            }
-            if (priceOnlyInput) {
-                priceOnlyInput.value = minLatePrice.price_only ?? 0;
-                applyFlashEffect(priceOnlyInput);
-            }
-        }
-        calculatePaymentDetailRowTotal(row);
-        if (typeof updateOrderSummary === 'function') updateOrderSummary();
+    selectEl.addEventListener('change', function() {
+        triggerFill(this.value);
     });
 }
 
