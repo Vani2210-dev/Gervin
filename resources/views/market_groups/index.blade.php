@@ -138,27 +138,21 @@
                                 </div>
                             </td>
                             <td class="py-3 text-center">
-                                <button type="button" 
-                                    onclick="openGroupCustomersModalFromBtn(this)" 
-                                    data-id="{{ $group->id }}" 
-                                    data-name="{{ $group->name }}" 
-                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold {{ $color['bg'] }} {{ $color['text'] }} hover:shadow border {{ $color['border'] }} transition-all" 
-                                    title="Xem bảng chi tiết danh sách khách hàng nhóm">
+                                <a href="{{ route('market-groups.show', $group->id) }}" 
+                                    class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold {{ $color['bg'] }} {{ $color['text'] }} hover:shadow border {{ $color['border'] }} transition-all" 
+                                    title="Mở trang chi tiết danh sách khách hàng nhóm">
                                     <iconify-icon icon="solar:users-group-two-rounded-bold" class="text-sm"></iconify-icon>
                                     <span>{{ $group->customers_count }} khách hàng</span>
-                                    <iconify-icon icon="solar:eye-bold" class="text-xs"></iconify-icon>
-                                </button>
+                                    <iconify-icon icon="solar:arrow-right-bold" class="text-xs opacity-70"></iconify-icon>
+                                </a>
                             </td>
                             <td class="py-3 text-center">
                                 <div class="flex items-center justify-center gap-1.5">
-                                    <button type="button" 
-                                        onclick="openGroupCustomersModalFromBtn(this)" 
-                                        data-id="{{ $group->id }}" 
-                                        data-name="{{ $group->name }}" 
+                                    <a href="{{ route('market-groups.show', $group->id) }}" 
                                         class="w-8 h-8 rounded-full bg-primary-50 hover:bg-primary-100 text-primary-600 flex items-center justify-center transition-colors" 
-                                        title="Xem chi tiết tất cả khách hàng của nhóm">
+                                        title="Xem trang chi tiết tất cả khách hàng của nhóm">
                                         <iconify-icon icon="solar:eye-bold" class="text-sm"></iconify-icon>
-                                    </button>
+                                    </a>
                                     <button type="button" 
                                         onclick="openEditGroupModalFromBtn(this)" 
                                         data-id="{{ $group->id }}" 

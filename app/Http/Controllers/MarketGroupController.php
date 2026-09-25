@@ -65,6 +65,60 @@ class MarketGroupController extends Controller
         return redirect()->route('market-groups.index')->with('success', 'Tạo nhóm thị trường thành công.');
     }
 
+    public function show(Request $request, MarketGroup $marketGroup)
+    {
+        $marketGroup->load(['users']);
+
+        $search = $request->input('search');
+
+        $query = $marketGroup->customers()
+            ->with('customerPayments')
+            ->orderBy('name');
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('customer_code', 'like', "%{$search}%")
+                  ->orWhere('phone', 'like', "%{$search}%")
+                  ->orWhere('address', 'like', "%{$search}%")
+                  ->orWhere('province', 'like', "%{$search}%")
+                  ->orWhere('ward', 'like', "%{$search}%")
+                  ->orWhere('partner_competitors', 'like', "%{$search}%")
+                  ->orWhere('workshop_scale', 'like', "%{$search}%")
+                  ->orWhere('personality', 'like', "%{$search}%")
+                  ->orWhere('feedback', 'like', "%{$search}%")
+                  ->orWhere('customer_proposal', 'like', "%{$search}%")
+                  ->orWhere('sale_proposal', 'like', "%{$search}%");
+            });
+        }
+
+        $customers = $query->get()->map(function ($c) {
+            $c->period_paid = $c->customerPayments->sum('amount');
+            $fullAddr = implode(', ', array_filter([$c->address, $c->ward, $c->province]));
+            $c->full_address = $fullAddr ?: ($c->address ?: '—');
+            return $c;
+        });
+
+        $totalCustomers = $marketGroup->customers()->count();
+        $totalDebt = $marketGroup->customers()->sum('debt');
+        $groupCustomerIds = $marketGroup->customers()->pluck('id');
+        $totalPaid = \App\Models\CustomerPayment::whereIn('customer_id', $groupCustomerIds)->sum('amount');
+
+        $allCustomers = Customer::orderBy('name')->get();
+        $marketGroups = MarketGroup::orderBy('name')->get();
+
+        return view('market_groups.show', compact(
+            'marketGroup',
+            'marketGroups',
+            'customers',
+            'totalCustomers',
+            'totalDebt',
+            'totalPaid',
+            'allCustomers',
+            'search'
+        ));
+    }
+
     public function update(Request $request, MarketGroup $marketGroup)
     {
         $request->validate([

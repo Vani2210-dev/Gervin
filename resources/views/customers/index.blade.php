@@ -310,8 +310,6 @@
                                             onclick="openEditCustomerModalFromBtn(this)">
                                             <iconify-icon icon="lucide:edit" class="text-lg"></iconify-icon>
                                         </button>
-                                            <iconify-icon icon="lucide:edit" class="text-lg"></iconify-icon>
-                                        </button>
                                         @endcan
                                         @can('delete customer')
                                         <form action="{{ route('customers.destroy', $c->id) }}" method="POST"
