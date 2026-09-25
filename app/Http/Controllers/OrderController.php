@@ -1170,26 +1170,33 @@ class OrderController extends Controller
                 $totalBeveledLength += $beveledLength;
             }
 
-            // Tự động tạo 3 dòng dịch vụ min-late:
-            // 1. LIC1 với số lượng = tổng số tấm
-            // 2. ML48 với số lượng = tổng số mét dán thẳng * 1.05 và đơn giá chỉ = 18000
-            // 3. ML49 với số lượng = tổng số mét dán vát * 1.05 và đơn giá chỉ = 25000
+            // Lấy trực tiếp thông tin tên nội dung, đơn vị, đơn giá từ database (bảng minlate_prices)
+            $lic1Db = \App\Models\MinLatePrice::where('code', 'LIC1')->first();
+            $ml48Db = \App\Models\MinLatePrice::where('code', 'ML48')->first();
+            $ml49Db = \App\Models\MinLatePrice::where('code', 'ML49')->first();
 
             $ml48Qty = round($totalStraightLength * 1.05, 2);
             $ml49Qty = round($totalBeveledLength * 1.05, 2);
 
-            $ml48PriceOnly = 18000;
-            $ml49PriceOnly = 25000;
-
-            $lic1Price = 0;
+            $lic1Name  = $lic1Db ? $lic1Db->product_name : 'Gia công cắt dán sửa tấm';
+            $lic1Unit  = $lic1Db ? ($lic1Db->unit ?: 'Tấm') : 'Tấm';
+            $lic1Price = $lic1Db ? (float)$lic1Db->price : 10000;
             $lic1Total = round($totalPlates * $lic1Price);
-            $ml48Total = round($ml48Qty * $ml48PriceOnly);
-            $ml49Total = round($ml49Qty * $ml49PriceOnly);
+
+            $ml48Name  = $ml48Db ? $ml48Db->product_name : 'Dán chỉ thẳng';
+            $ml48Unit  = $ml48Db ? ($ml48Db->unit ?: 'm') : 'm';
+            $ml48Price = $ml48Db ? (float)$ml48Db->price : 18000;
+            $ml48Total = round($ml48Qty * $ml48Price);
+
+            $ml49Name  = $ml49Db ? $ml49Db->product_name : 'Dán chỉ vát';
+            $ml49Unit  = $ml49Db ? ($ml49Db->unit ?: 'm') : 'm';
+            $ml49Price = $ml49Db ? (float)$ml49Db->price : 25000;
+            $ml49Total = round($ml49Qty * $ml49Price);
 
             \App\Models\PaymentDetail::create([
                 'order_id'   => $reworkOrder->id,
-                'name'       => 'LIC1 - Dịch vụ Min-late - Gia công cắt dán sửa tấm',
-                'unit'       => 'Tấm',
+                'name'       => $lic1Name,
+                'unit'       => $lic1Unit,
                 'quantity'   => $totalPlates,
                 'price'      => $lic1Price,
                 'price_only' => 0,
@@ -1198,21 +1205,21 @@ class OrderController extends Controller
 
             \App\Models\PaymentDetail::create([
                 'order_id'   => $reworkOrder->id,
-                'name'       => 'ML48 - Dịch vụ Min-late - Dán chỉ thẳng',
-                'unit'       => 'm',
+                'name'       => $ml48Name,
+                'unit'       => $ml48Unit,
                 'quantity'   => $ml48Qty,
-                'price'      => 0,
-                'price_only' => $ml48PriceOnly,
+                'price'      => $ml48Price,
+                'price_only' => 0,
                 'total'      => $ml48Total,
             ]);
 
             \App\Models\PaymentDetail::create([
                 'order_id'   => $reworkOrder->id,
-                'name'       => 'ML49 - Dịch vụ Min-late - Dán chỉ vát',
-                'unit'       => 'm',
+                'name'       => $ml49Name,
+                'unit'       => $ml49Unit,
                 'quantity'   => $ml49Qty,
-                'price'      => 0,
-                'price_only' => $ml49PriceOnly,
+                'price'      => $ml49Price,
+                'price_only' => 0,
                 'total'      => $ml49Total,
             ]);
 

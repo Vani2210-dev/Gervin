@@ -524,8 +524,7 @@ function handlePaymentDetailCodeSelected(row, rawCode) {
         }
     } else if (minLatePrice) {
         if (nameInput) {
-            const prefix = minLatePrice.category_name ? `[${minLatePrice.category_name}] ` : '';
-            nameInput.value = `${prefix}${minLatePrice.product_name || ''}`;
+            nameInput.value = minLatePrice.product_name || (minLatePrice.category_name || '');
             applyFlashEffect(nameInput);
             nameInput.dispatchEvent(new Event('input', { bubbles: true }));
         }
@@ -535,19 +534,13 @@ function handlePaymentDetailCodeSelected(row, rawCode) {
             unitInput.dispatchEvent(new Event('input', { bubbles: true }));
         }
         if (priceInput) {
-            const rawPr = minLatePrice.unit_price !== undefined ? minLatePrice.unit_price : (minLatePrice.price !== undefined ? minLatePrice.price : 0);
+            const rawPr = minLatePrice.price !== undefined ? minLatePrice.price : (minLatePrice.unit_price !== undefined ? minLatePrice.unit_price : 0);
             priceInput.value = Math.round(parseFloat(rawPr) || 0);
             applyFlashEffect(priceInput);
             priceInput.dispatchEvent(new Event('input', { bubbles: true }));
         }
         if (priceOnlyInput) {
-            let defaultPriceOnly = minLatePrice.price_only !== undefined ? minLatePrice.price_only : 0;
-            if (codeLower === 'ml48' || (minLatePrice.code && minLatePrice.code.toUpperCase() === 'ML48')) {
-                defaultPriceOnly = 18000;
-            } else if (codeLower === 'ml49' || (minLatePrice.code && minLatePrice.code.toUpperCase() === 'ML49')) {
-                defaultPriceOnly = 25000;
-            }
-            priceOnlyInput.value = Math.round(parseFloat(defaultPriceOnly) || 0);
+            priceOnlyInput.value = 0;
             applyFlashEffect(priceOnlyInput);
             priceOnlyInput.dispatchEvent(new Event('input', { bubbles: true }));
         }

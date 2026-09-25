@@ -769,31 +769,71 @@ function previewOrder() {
             const unit = getPDVal('[name*="[unit]"]');
             let qty = getPDVal('[name*="[quantity]"]');
             let price = getPDVal('[name*="[price]"]');
+            let priceOnly = getPDVal('[name*="[price_only]"]');
             let total = getPDVal('[name*="[total]"]');
-            
-            const qNum = parseFloat(qty);
-            if (!isNaN(qNum) && qNum > 0) {
-                qty = Number.isInteger(qNum) ? qNum.toLocaleString('vi-VN') : qNum.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+            // Hàm phân tích tiền tệ VNĐ (loại bỏ triệt để dấu chấm/phẩy phân cách hàng nghìn)
+            const parseVNMoney = (val) => {
+                if (val === undefined || val === null || val === '') return 0;
+                if (typeof val === 'number') return val;
+                let s = String(val).trim().replace(/[^\d.,-]/g, '');
+                if (!s) return 0;
+                s = s.replace(/\./g, '').replace(/,/g, '');
+                return parseFloat(s) || 0;
+            };
+
+            // Hàm phân tích số lượng (có thể có phần thập phân như 5.23 hoặc 0.75)
+            const parseVNQty = (val) => {
+                if (val === undefined || val === null || val === '') return 0;
+                if (typeof val === 'number') return val;
+                let s = String(val).trim().replace(/[^\d.,-]/g, '');
+                if (!s) return 0;
+                if (s.includes(',')) s = s.replace(',', '.');
+                return parseFloat(s) || 0;
+            };
+
+            const qNum = parseVNQty(qty);
+            const pNum = parseVNMoney(price);
+            const poNum = parseVNMoney(priceOnly);
+            const effectiveUnitPrice = (pNum + poNum) > 0 ? (pNum + poNum) : pNum;
+
+            let tNum = 0;
+            if (qNum > 0 && effectiveUnitPrice > 0) {
+                tNum = Math.round(qNum * effectiveUnitPrice);
+            } else {
+                tNum = parseVNMoney(total);
             }
-            
-            const pNum = parseFloat(price);
-            if (!isNaN(pNum) && pNum > 0) price = Math.round(pNum).toLocaleString('vi-VN') + ' đ';
-            const tNum = parseFloat(total);
-            if (!isNaN(tNum) && tNum > 0) {
+
+            if (!name && !qNum && !effectiveUnitPrice && !code) return;
+
+            let displayQty = '—';
+            if (qNum > 0) {
+                displayQty = Number.isInteger(qNum) ? qNum.toLocaleString('vi-VN') : qNum.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+
+            let displayPrice = '—';
+            if (effectiveUnitPrice > 0) {
+                displayPrice = Math.round(effectiveUnitPrice).toLocaleString('vi-VN') + ' đ';
+            } else if (pNum > 0) {
+                displayPrice = Math.round(pNum).toLocaleString('vi-VN') + ' đ';
+            }
+
+            let displayTotal = '—';
+            if (tNum > 0) {
                 sumPaymentTotal += tNum;
-                total = Math.round(tNum).toLocaleString('vi-VN') + ' đ';
+                displayTotal = Math.round(tNum).toLocaleString('vi-VN') + ' đ';
+            } else if (tNum === 0 && (qNum > 0 || effectiveUnitPrice > 0)) {
+                displayTotal = '0 đ';
             }
-            
-            if (!name && !qty && !price && !code) return;
-            
+
             paymentDetailsHTML += `<tr style="border-bottom: 1px solid #cbd5e1;">
                 <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: center; font-size: 13px;">${rIdx + 1}</td>
                 <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: center; font-weight: 600; font-size: 13px;">${code || '—'}</td>
                 <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: left; font-weight: 600; font-size: 13px;">${name || '—'}</td>
                 <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: center; font-size: 13px;">${unit || '—'}</td>
-                <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: center; font-size: 13px;">${qty || '—'}</td>
-                <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: right; font-size: 13px;">${price || '—'}</td>
-                <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: right; font-weight: 700; color: #059669; font-size: 13px;">${total || '—'}</td>
+                <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: center; font-size: 13px;">${displayQty}</td>
+                <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: right; font-size: 13px;">${displayPrice}</td>
+                <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: right; font-weight: 700; color: #059669; font-size: 13px;">${displayTotal}</td>
             </tr>`;
         });
     }
@@ -1375,36 +1415,29 @@ function updateOrderSummary() {
             pRows.forEach(pRow => {
                 const nameIn = pRow.querySelector('textarea[name*="[name]"]');
                 const qIn = pRow.querySelector('input[name*="[quantity]"]');
-                const pOnlyIn = pRow.querySelector('input[name*="[price_only]"]');
+                const selIn = pRow.querySelector('.order-payment-code-select');
+                const codeVal = (selIn ? (selIn.tomselect ? selIn.tomselect.getValue() : selIn.value) : '').toUpperCase();
                 const nVal = (nameIn ? nameIn.value : '').toUpperCase();
 
-                if (nVal.includes('LIC1')) {
+                const isLic1 = codeVal === 'LIC1' || nVal.includes('LIC1') || nVal.includes('SỬA TẤM');
+                const isMl48 = codeVal === 'ML48' || nVal.includes('ML48') || nVal.includes('DÁN CHỈ THẲNG');
+                const isMl49 = codeVal === 'ML49' || nVal.includes('ML49') || nVal.includes('DÁN CHỈ VÁT');
+
+                if (isLic1) {
                     if (qIn && parseFloat(qIn.value) !== reworkPlates) {
                         qIn.value = reworkPlates;
                         if (typeof calculatePaymentDetailRowTotal === 'function') calculatePaymentDetailRowTotal(pRow);
                     }
-                } else if (nVal.includes('ML48')) {
-                    let changed = false;
+                } else if (isMl48) {
                     if (qIn && parseFloat(qIn.value) !== ml48Q) {
                         qIn.value = ml48Q;
-                        changed = true;
+                        if (typeof calculatePaymentDetailRowTotal === 'function') calculatePaymentDetailRowTotal(pRow);
                     }
-                    if (pOnlyIn && parseFloat(pOnlyIn.value || 0) !== 18000) {
-                        pOnlyIn.value = 18000;
-                        changed = true;
-                    }
-                    if (changed && typeof calculatePaymentDetailRowTotal === 'function') calculatePaymentDetailRowTotal(pRow);
-                } else if (nVal.includes('ML49')) {
-                    let changed = false;
+                } else if (isMl49) {
                     if (qIn && parseFloat(qIn.value) !== ml49Q) {
                         qIn.value = ml49Q;
-                        changed = true;
+                        if (typeof calculatePaymentDetailRowTotal === 'function') calculatePaymentDetailRowTotal(pRow);
                     }
-                    if (pOnlyIn && parseFloat(pOnlyIn.value || 0) !== 25000) {
-                        pOnlyIn.value = 25000;
-                        changed = true;
-                    }
-                    if (changed && typeof calculatePaymentDetailRowTotal === 'function') calculatePaymentDetailRowTotal(pRow);
                 }
             });
         }
