@@ -25,7 +25,12 @@ class Customer extends Model
         'debt',
         'debt_limit',
         'policy',
+        'photos',
         'market_group_id',
+    ];
+
+    protected $casts = [
+        'photos' => 'array',
     ];
 
     public function orders()

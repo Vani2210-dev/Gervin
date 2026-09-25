@@ -134,13 +134,42 @@ class MarketGroupController extends Controller
     public function customersData(MarketGroup $marketGroup)
     {
         $customers = $marketGroup->customers()
-            ->select('id', 'customer_code', 'name', 'phone', 'address', 'debt')
+            ->with('customerPayments')
             ->orderBy('name')
-            ->get();
+            ->get()
+            ->map(function ($c) {
+                $paid = $c->customerPayments->sum('amount');
+                $fullAddr = implode(', ', array_filter([$c->address, $c->ward, $c->province]));
+                return [
+                    'id'                  => $c->id,
+                    'customer_code'       => $c->customer_code,
+                    'name'                => $c->name,
+                    'phone'               => $c->phone,
+                    'province'            => $c->province,
+                    'ward'                => $c->ward,
+                    'address'             => $c->address,
+                    'full_address'        => $fullAddr ?: ($c->address ?: '—'),
+                    'latitude'            => $c->latitude,
+                    'longitude'           => $c->longitude,
+                    'status'              => $c->status ?: 'Đang đặt hàng',
+                    'partner_competitors' => $c->partner_competitors,
+                    'workshop_scale'      => $c->workshop_scale,
+                    'personality'         => $c->personality,
+                    'feedback'            => $c->feedback,
+                    'customer_proposal'   => $c->customer_proposal,
+                    'sale_proposal'       => $c->sale_proposal,
+                    'policy'              => $c->policy,
+                    'photos'              => $c->photos ?: [],
+                    'debt'                => $c->debt ?? 0,
+                    'debt_limit'          => $c->debt_limit ?? 0,
+                    'period_paid'         => $paid,
+                ];
+            });
 
         return response()->json([
-            'group'     => $marketGroup,
-            'customers' => $customers,
+            'group'       => $marketGroup,
+            'total_count' => $customers->count(),
+            'customers'   => $customers,
         ]);
     }
 }

@@ -217,6 +217,8 @@ class CustomerController extends Controller
             $partnerCompetitors = implode(', ', array_filter($partnerCompetitors));
         }
 
+        $photos = $this->processCustomerPhotos($request);
+
         $customer = Customer::create([
             'customer_code'       => $customerCode,
             'name'                => $request->name,
@@ -236,6 +238,7 @@ class CustomerController extends Controller
             'debt'                => $request->initial_debt ?? 0,
             'debt_limit'          => $request->debt_limit ?? 0,
             'policy'              => $request->policy,
+            'photos'              => $photos,
             'market_group_id'     => $request->market_group_id,
         ]);
 
@@ -284,6 +287,8 @@ class CustomerController extends Controller
             $partnerCompetitors = implode(', ', array_filter($partnerCompetitors));
         }
 
+        $photos = $this->processCustomerPhotos($request, $customer->photos ?: []);
+
         $updateData = [
             'name'                => $request->name,
             'phone'               => $request->phone,
@@ -301,6 +306,7 @@ class CustomerController extends Controller
             'sale_proposal'       => $request->sale_proposal,
             'debt_limit'          => $request->debt_limit ?? 0,
             'policy'              => $request->policy,
+            'photos'              => $photos,
             'market_group_id'     => $request->market_group_id,
         ];
         
@@ -322,6 +328,55 @@ class CustomerController extends Controller
         }
 
         return redirect()->route('customers.index')->with('success', 'Cập nhật khách hàng thành công.');
+    }
+
+    private function processCustomerPhotos(Request $request, $existingPhotos = [])
+    {
+        $photos = is_array($existingPhotos) ? $existingPhotos : [];
+
+        // Nếu form gửi danh sách ảnh cũ cần giữ lại
+        if ($request->has('keep_photos')) {
+            $keep = (array) $request->keep_photos;
+            $photos = array_values(array_intersect($photos, $keep));
+        }
+
+        $uploadDir = public_path('uploads/customers');
+        if (!file_exists($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
+        // 1. Ảnh base64 đã qua canvas đóng dấu watermark timestamp
+        if ($request->filled('photo_data')) {
+            $base64List = (array) $request->photo_data;
+            foreach ($base64List as $b64) {
+                if (empty($b64)) continue;
+                if (preg_match('/^data:image\/(\w+);base64,/', $b64, $type)) {
+                    $raw = substr($b64, strpos($b64, ',') + 1);
+                    $decoded = base64_decode($raw);
+                    if ($decoded !== false) {
+                        $ext = strtolower($type[1]);
+                        if (!in_array($ext, ['jpg', 'jpeg', 'png', 'webp'])) $ext = 'jpg';
+                        $filename = 'kh_' . uniqid() . '_' . time() . '.' . $ext;
+                        file_put_contents($uploadDir . '/' . $filename, $decoded);
+                        $photos[] = 'uploads/customers/' . $filename;
+                    }
+                }
+            }
+        }
+
+        // 2. File upload trực tiếp
+        if ($request->hasFile('photos_files')) {
+            foreach ((array)$request->file('photos_files') as $file) {
+                if ($file && $file->isValid()) {
+                    $ext = $file->getClientOriginalExtension() ?: 'jpg';
+                    $filename = 'kh_' . uniqid() . '_' . time() . '.' . $ext;
+                    $file->move($uploadDir, $filename);
+                    $photos[] = 'uploads/customers/' . $filename;
+                }
+            }
+        }
+
+        return array_values(array_unique($photos));
     }
 
     public function destroy(Customer $customer)
