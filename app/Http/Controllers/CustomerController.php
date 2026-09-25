@@ -21,8 +21,45 @@ class CustomerController extends Controller
         $perPage = $request->input('per_page', 10);
         $search  = $request->input('search', '');
         
-        $startDate = $request->input('filter_start_date');
-        $endDate   = $request->input('filter_end_date');
+        // Date Filter Mode: day | month | year | all | custom
+        $dateMode = $request->input('date_mode');
+        $dateVal = $request->input('date_val');
+        $filterStartDate = $request->input('filter_start_date');
+        $filterEndDate = $request->input('filter_end_date');
+
+        $startDate = null;
+        $endDate = null;
+        $dateLabel = 'Toàn thời gian';
+
+        if ($dateMode) {
+            if ($dateMode === 'day' && $dateVal) {
+                $startDate = $dateVal;
+                $endDate = $dateVal;
+                $dateLabel = 'Ngày ' . \Carbon\Carbon::parse($dateVal)->format('d/m/Y');
+            } elseif ($dateMode === 'month' && $dateVal) {
+                $cDate = \Carbon\Carbon::parse($dateVal . '-01');
+                $startDate = $cDate->copy()->startOfMonth()->toDateString();
+                $endDate = $cDate->copy()->endOfMonth()->toDateString();
+                $dateLabel = 'Tháng ' . $cDate->format('m/Y');
+            } elseif ($dateMode === 'year' && $dateVal) {
+                $startDate = $dateVal . '-01-01';
+                $endDate = $dateVal . '-12-31';
+                $dateLabel = 'Năm ' . $dateVal;
+            } elseif ($dateMode === 'all') {
+                $startDate = null;
+                $endDate = null;
+                $dateLabel = 'Toàn thời gian';
+            }
+        } elseif ($filterStartDate || $filterEndDate) {
+            $startDate = $filterStartDate;
+            $endDate = $filterEndDate;
+            $dateMode = 'custom';
+            $dateLabel = ($startDate ? 'Từ ' . \Carbon\Carbon::parse($startDate)->format('d/m/Y') : '') . ($endDate ? ' đến ' . \Carbon\Carbon::parse($endDate)->format('d/m/Y') : '');
+        } else {
+            $dateMode = 'all';
+            $dateVal = '';
+            $dateLabel = 'Toàn thời gian';
+        }
 
         $user = auth()->user();
         $query = Customer::query();
@@ -106,20 +143,20 @@ class CustomerController extends Controller
             ->paginate($perPage)
             ->withQueryString();
 
-        $paidStartDate = $startDate ?: now()->startOfMonth()->toDateString();
-        $paidEndDate   = $endDate ?: now()->endOfMonth()->toDateString();
+        $paidStartDate = $startDate;
+        $paidEndDate   = $endDate;
 
         foreach ($customers as $c) {
-            $c->period_paid = $c->customerPayments()
-                ->where('payment_date', '>=', $paidStartDate)
-                ->where('payment_date', '<=', $paidEndDate)
-                ->sum('amount');
+            $cPaymentQuery = $c->customerPayments();
+            if ($paidStartDate) $cPaymentQuery->where('payment_date', '>=', $paidStartDate);
+            if ($paidEndDate)   $cPaymentQuery->where('payment_date', '<=', $paidEndDate);
+            $c->period_paid = $cPaymentQuery->sum('amount');
         }
 
-        $totalPeriodPaidSum = \App\Models\CustomerPayment::whereIn('customer_id', $matchingCustomerIds)
-            ->where('payment_date', '>=', $paidStartDate)
-            ->where('payment_date', '<=', $paidEndDate)
-            ->sum('amount');
+        $allPaidQuery = \App\Models\CustomerPayment::whereIn('customer_id', $matchingCustomerIds);
+        if ($paidStartDate) $allPaidQuery->where('payment_date', '>=', $paidStartDate);
+        if ($paidEndDate)   $allPaidQuery->where('payment_date', '<=', $paidEndDate);
+        $totalPeriodPaidSum = $allPaidQuery->sum('amount');
 
         $baseScopedQuery = Customer::query();
         if ($user && !$user->hasRole('Admin')) {
@@ -137,10 +174,10 @@ class CustomerController extends Controller
                 $q->where('order_date', '>=', now()->subMonths(2)->toDateString());
             })->count();
 
-        $newCustomersCount = (clone $baseScopedQuery)
-            ->where('created_at', '>=', $paidStartDate . ' 00:00:00')
-            ->where('created_at', '<=', $paidEndDate . ' 23:59:59')
-            ->count();
+        $newCustQuery = (clone $baseScopedQuery);
+        if ($paidStartDate) $newCustQuery->where('created_at', '>=', $paidStartDate . ' 00:00:00');
+        if ($paidEndDate)   $newCustQuery->where('created_at', '<=', $paidEndDate . ' 23:59:59');
+        $newCustomersCount = $newCustQuery->count();
 
         $users = [];
         if ($user && ($user->can('assign customer') || $user->hasRole('Admin'))) {
@@ -175,7 +212,8 @@ class CustomerController extends Controller
             'customers', 'perPage', 'search', 'users', 'filterCustomers', 'marketGroups',
             'startDate', 'endDate', 'paidStartDate', 'paidEndDate',
             'totalCustomersCount', 'totalDebtSum', 'totalPeriodPaidSum',
-            'lostCustomersCount', 'newCustomersCount'
+            'lostCustomersCount', 'newCustomersCount',
+            'dateMode', 'dateVal', 'dateLabel'
         ));
     }
 

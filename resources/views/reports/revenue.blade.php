@@ -63,8 +63,11 @@
                 </div>
             </div>
 
-            {{-- Phía Phải: Nút Lọc, Xóa Lọc, Cài Đặt, Nút Xuất Excel --}}
+            {{-- Phía Phải: Bộ lọc ngày/tháng nhanh, Nút Lọc, Xóa Lọc, Cài Đặt, Nút Xuất Excel --}}
             <div class="flex items-center gap-2 flex-wrap">
+
+                {{-- Bộ lọc Ngày / Tháng linh hoạt --}}
+                <x-flexible-date-filter :dateMode="$dateMode" :dateVal="$dateVal" :showAll="false" :showYear="false" />
 
                 {{-- Nút Lọc chuẩn theme template --}}
                 <button type="button" onclick="openModal('revenue-filter-modal')"

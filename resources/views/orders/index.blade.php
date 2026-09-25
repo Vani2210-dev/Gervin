@@ -29,7 +29,10 @@
                     <iconify-icon icon="lucide:shopping-bag"></iconify-icon>
                 </div>
                 <div>
-                    <div class="text-xs text-neutral-500 font-medium mb-1">Tổng đơn hàng</div>
+                    <div class="text-xs text-neutral-500 font-medium mb-1">
+                        Tổng đơn hàng
+                        <span class="text-[10px] font-normal text-neutral-400 capitalize">({{ $dateLabel }})</span>
+                    </div>
                     <div class="text-xl font-bold text-neutral-800">{{ $totalOrdersCount }} đơn</div>
                 </div>
             </div>
@@ -39,7 +42,10 @@
                     <iconify-icon icon="lucide:circle-dollar-sign"></iconify-icon>
                 </div>
                 <div>
-                    <div class="text-xs text-neutral-500 font-medium mb-1">Tổng tiền hàng</div>
+                    <div class="text-xs text-neutral-500 font-medium mb-1">
+                        Tổng tiền hàng
+                        <span class="text-[10px] font-normal text-neutral-400 capitalize">({{ $dateLabel }})</span>
+                    </div>
                     <div class="text-xl font-bold text-neutral-800">{{ number_format($totalAmountSum, 0, ',', '.') }}₫</div>
                 </div>
             </div>
@@ -51,12 +57,16 @@
             {{-- Header --}}
             <div class="card-header border-b border-neutral-200 bg-white py-4 px-6 flex items-center flex-wrap gap-3 justify-between">
                 <div class="flex items-center flex-wrap gap-3">
-                    {{-- Search (Bên trái ngoài cùng) --}}
+                    {{-- Search --}}
                     <form method="GET" action="{{ route('orders.index') }}" class="navbar-search">
                         <input type="hidden" name="per_page" value="{{ $perPage }}">
+                        @if($dateMode && $dateMode !== 'all')
+                            <input type="hidden" name="date_mode" value="{{ $dateMode }}">
+                            <input type="hidden" name="date_val" value="{{ $dateVal }}">
+                        @endif
                         <div class="relative">
                             <iconify-icon icon="solar:magnifer-linear" class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-base"></iconify-icon>
-                            <input type="text" name="search" class="form-control form-control-sm border-neutral-200 rounded-lg pl-9 pr-3 w-64 md:w-80" placeholder="Tìm kiếm..." value="{{ $search }}">
+                            <input type="text" name="search" class="form-control form-control-sm border-neutral-200 rounded-lg pl-9 pr-3 w-64 md:w-80" placeholder="Tìm kiếm đơn hàng..." value="{{ $search }}">
                         </div>
                     </form>
 
@@ -65,6 +75,10 @@
                         <span class="text-base font-medium text-secondary-light mb-0">Hiển thị</span>
                         <form method="GET" action="{{ route('orders.index') }}" id="perPageForm">
                             <input type="hidden" name="search" value="{{ $search }}">
+                            @if($dateMode && $dateMode !== 'all')
+                                <input type="hidden" name="date_mode" value="{{ $dateMode }}">
+                                <input type="hidden" name="date_val" value="{{ $dateVal }}">
+                            @endif
                             <select name="per_page" class="form-select form-select-sm w-auto border-neutral-200 rounded-lg"
                                 onchange="document.getElementById('perPageForm').submit()">
                                 @foreach([10, 25, 50, 100] as $option)
@@ -73,6 +87,9 @@
                             </select>
                         </form>
                     </div>
+
+                    {{-- Bộ lọc Ngày / Tháng / Năm / Tất cả linh hoạt --}}
+                    <x-flexible-date-filter :dateMode="$dateMode" :dateVal="$dateVal" />
                 </div>
 
                 <div class="flex items-center gap-2 flex-wrap">
@@ -99,7 +116,7 @@
                         <iconify-icon icon="solar:filter-outline" class="icon text-xl line-height-1"></iconify-icon>
                         Lọc
                     </button>
-                    @if(request()->filled('filter_customer_id') || request()->filled('filter_status') || request()->filled('filter_type') || request()->filled('filter_start_date') || request()->filled('filter_end_date'))
+                    @if(request()->filled('filter_customer_id') || request()->filled('filter_status') || request()->filled('filter_type') || request()->filled('filter_start_date') || request()->filled('filter_end_date') || ($dateMode !== 'all' && request()->filled('date_mode')))
                     <a href="{{ route('orders.index') }}" class="btn text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2">
                         <iconify-icon icon="solar:close-circle-outline" class="icon text-xl line-height-1"></iconify-icon>
                         Xóa lọc
@@ -413,7 +430,7 @@
         <h5 class="font-semibold text-base">Lọc đơn hàng</h5>
         <button type="button" onclick="closeModal('filter-modal')" class="text-secondary-light hover:text-neutral-700 text-xl leading-none">&times;</button>
     </div>
-    <form action="{{ route('orders.index') }}" method="GET">
+    <form action="{{ route('orders.index') }}" method="GET" id="orderFilterModalForm">
         <input type="hidden" name="per_page" value="{{ $perPage }}">
         <input type="hidden" name="search" value="{{ $search }}">
         <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -450,13 +467,9 @@
                     <option value="min_late" {{ request('filter_type') === 'min_late' ? 'selected' : '' }}>Min Late</option>
                 </select>
             </div>
-            <div class="form-group">
-                <label class="form-label font-semibold text-sm text-neutral-600">Từ ngày</label>
-                <input type="date" name="filter_start_date" class="form-control rounded-lg" value="{{ request('filter_start_date') }}">
-            </div>
-            <div class="form-group">
-                <label class="form-label font-semibold text-sm text-neutral-600">Đến ngày</label>
-                <input type="date" name="filter_end_date" class="form-control rounded-lg" value="{{ request('filter_end_date') }}">
+            <div class="form-group md:col-span-2">
+                <label class="form-label font-semibold text-sm text-neutral-600 mb-1.5 block">Thời gian đặt đơn</label>
+                <x-flexible-date-filter :dateMode="$dateMode" :dateVal="$dateVal" :standalone="false" formId="orderFilterModalForm" prefix="modal_order_fdf" />
             </div>
         </div>
         <div class="px-6 py-4 border-t border-neutral-200 flex gap-3">

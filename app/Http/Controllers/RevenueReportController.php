@@ -40,6 +40,25 @@ class RevenueReportController extends Controller
             $selectedDate = $todayDate;
         }
 
+        if ($request->filled('date_mode')) {
+            $fMode = $request->input('date_mode');
+            $fVal  = $request->input('date_val');
+            if ($fMode === 'month') {
+                $viewMode = 'month';
+                if ($fVal && strlen($fVal) >= 7) {
+                    $request->merge([
+                        'year' => (int) substr($fVal, 0, 4),
+                        'month' => (int) substr($fVal, 5, 2),
+                    ]);
+                }
+            } elseif ($fMode === 'day') {
+                $viewMode = 'day';
+                if ($fVal) {
+                    $selectedDate = $fVal;
+                }
+            }
+        }
+
         $fromDate = $request->input('from_date');
         $toDate = $request->input('to_date');
         if (!$fromDate || !$toDate) {
@@ -402,6 +421,8 @@ class RevenueReportController extends Controller
 
         $isFiltered = $activeFilterCount > 0;
         $tableRows = $displayRows;
+        $dateMode = $viewMode === 'month' ? 'month' : 'day';
+        $dateVal = $dateMode === 'month' ? sprintf('%04d-%02d', $year, $month) : $selectedDate;
 
         return view('reports.revenue', compact(
             'viewMode', 'segment', 'allRowsCount', 'activeCustCount', 'activeFilterCount', 'isFiltered',
@@ -415,7 +436,8 @@ class RevenueReportController extends Controller
             'displayAcrylicMain', 'displayAcrylicWarranty',
             'displayGlass', 'displayMinLate', 'displayPaidInDay', 'displayEndDayDebt',
             'displayDebtVsPolicy', 'debtVsPolicyPercent', 'displayLaminateCommercial', 'displayPlywoodCommercial',
-            'staffUsers', 'filterUserId', 'selectedStaffUser', 'search'
+            'staffUsers', 'filterUserId', 'selectedStaffUser', 'search',
+            'dateMode', 'dateVal'
         ));
     }
 

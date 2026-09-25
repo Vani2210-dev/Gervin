@@ -71,13 +71,54 @@ class OrderController extends Controller
             })
             ->when($request->filled('filter_type'), function ($q) use ($request) {
                 $q->where('type', $request->filter_type);
-            })
-            ->when($request->filled('filter_start_date'), function ($q) use ($request) {
-                $q->whereDate('order_date', '>=', $request->filter_start_date);
-            })
-            ->when($request->filled('filter_end_date'), function ($q) use ($request) {
-                $q->whereDate('order_date', '<=', $request->filter_end_date);
             });
+
+        // Filter Date Mode: day | month | year | all | custom
+        $dateMode = $request->input('date_mode');
+        $dateVal = $request->input('date_val');
+        $filterStartDate = $request->input('filter_start_date');
+        $filterEndDate = $request->input('filter_end_date');
+
+        $startDate = null;
+        $endDate = null;
+        $dateLabel = 'Toàn thời gian';
+
+        if ($dateMode) {
+            if ($dateMode === 'day' && $dateVal) {
+                $startDate = $dateVal;
+                $endDate = $dateVal;
+                $dateLabel = 'Ngày ' . \Carbon\Carbon::parse($dateVal)->format('d/m/Y');
+            } elseif ($dateMode === 'month' && $dateVal) {
+                $cDate = \Carbon\Carbon::parse($dateVal . '-01');
+                $startDate = $cDate->copy()->startOfMonth()->toDateString();
+                $endDate = $cDate->copy()->endOfMonth()->toDateString();
+                $dateLabel = 'Tháng ' . $cDate->format('m/Y');
+            } elseif ($dateMode === 'year' && $dateVal) {
+                $startDate = $dateVal . '-01-01';
+                $endDate = $dateVal . '-12-31';
+                $dateLabel = 'Năm ' . $dateVal;
+            } elseif ($dateMode === 'all') {
+                $startDate = null;
+                $endDate = null;
+                $dateLabel = 'Toàn thời gian';
+            }
+        } elseif ($filterStartDate || $filterEndDate) {
+            $startDate = $filterStartDate;
+            $endDate = $filterEndDate;
+            $dateMode = 'custom';
+            $dateLabel = ($startDate ? 'Từ ' . \Carbon\Carbon::parse($startDate)->format('d/m/Y') : '') . ($endDate ? ' đến ' . \Carbon\Carbon::parse($endDate)->format('d/m/Y') : '');
+        } else {
+            $dateMode = 'all';
+            $dateVal = '';
+            $dateLabel = 'Toàn thời gian';
+        }
+
+        if ($startDate) {
+            $query->whereDate('order_date', '>=', $startDate);
+        }
+        if ($endDate) {
+            $query->whereDate('order_date', '<=', $endDate);
+        }
 
         // Compute totals before pagination
         $totalsQuery = clone $query;
@@ -146,7 +187,10 @@ class OrderController extends Controller
             'totalPaidSum',
             'totalDebtSum',
             'customers',
-            'draftOrdersCount'
+            'draftOrdersCount',
+            'dateMode',
+            'dateVal',
+            'dateLabel'
         ));
     }
 
