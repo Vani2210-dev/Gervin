@@ -22,6 +22,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\QrCodeGeneratorController;
 use App\Http\Controllers\ManufactureController;
 use App\Http\Controllers\WarehouseController;
+use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\ManufactureStepController;
 use App\Http\Controllers\DispatchPackageController;
 use App\Http\Controllers\DeliveryPackageController;
@@ -240,21 +241,56 @@ Route::middleware(['auth'])->prefix('qrcode')->name('qrcode.')->group(function (
     Route::get('/', [QrCodeGeneratorController::class, 'index'])->name('index');
 });
 
-// Warehouses
-Route::middleware(['auth'])->group(function () {
-    Route::resource('warehouses', WarehouseController::class)->names('warehouses');
-    Route::post('warehouses/{warehouse}/config', [WarehouseController::class, 'updateConfig'])->name('warehouses.config.update');
-    Route::post('warehouses/{warehouse}/records', [WarehouseController::class, 'storeRecord'])->name('warehouses.records.store');
-    Route::put('warehouses/{warehouse}/records/{record}', [WarehouseController::class, 'updateRecord'])->name('warehouses.records.update');
-    Route::delete('warehouses/{warehouse}/records/{record}', [WarehouseController::class, 'destroyRecord'])->name('warehouses.records.destroy');
-    Route::get('warehouses/{warehouse}/export-template', [WarehouseController::class, 'exportTemplate'])->name('warehouses.export-template');
-    Route::get('warehouses/{warehouse}/export-data', [WarehouseController::class, 'exportData'])->name('warehouses.export-data');
-    Route::post('warehouses/{warehouse}/import', [WarehouseController::class, 'import'])->name('warehouses.import');
-    Route::post('warehouses/{warehouse}/import-json', [WarehouseController::class, 'importJson'])->name('warehouses.import-json');
-    Route::get('warehouses/{warehouse}/records/{record}/print', [WarehouseController::class, 'printRecordVoucher'])->name('warehouses.records.print');
-    Route::get('warehouses/{warehouse}/export-matrix', [WarehouseController::class, 'exportMatrix'])->name('warehouses.export-matrix');
-    Route::post('warehouses/{warehouse}/import-matrix', [WarehouseController::class, 'importMatrix'])->name('warehouses.import-matrix');
+// Inventory & Warehouses (KiotViet / MISA Architecture)
+Route::middleware(['auth'])->prefix('warehouses')->name('inventory.')->group(function () {
+    // 1. Dashboard & Materials (Tồn kho & Hàng hóa)
+    Route::get('/', [InventoryController::class, 'index'])->name('index');
+    Route::post('/materials', [InventoryController::class, 'storeMaterial'])->name('materials.store');
+    Route::put('/materials/{material}', [InventoryController::class, 'updateMaterial'])->name('materials.update');
+    Route::delete('/materials/{material}', [InventoryController::class, 'destroyMaterial'])->name('materials.destroy');
+    Route::get('/materials/{material}/stock-card', [InventoryController::class, 'stockCard'])->name('materials.stock-card');
+    Route::get('/export-stock', [InventoryController::class, 'exportStock'])->name('export-stock');
+
+    // 2. Receipts (Phiếu Nhập kho - PNK)
+    Route::get('/receipts', [InventoryController::class, 'receipts'])->name('receipts.index');
+    Route::get('/receipts/create', [InventoryController::class, 'createReceipt'])->name('receipts.create');
+    Route::post('/receipts', [InventoryController::class, 'storeReceipt'])->name('receipts.store');
+    Route::get('/receipts/{receipt}', [InventoryController::class, 'showReceipt'])->name('receipts.show');
+    Route::get('/receipts/{receipt}/print', [InventoryController::class, 'printReceipt'])->name('receipts.print');
+    Route::delete('/receipts/{receipt}', [InventoryController::class, 'destroyReceipt'])->name('receipts.destroy');
+
+    // 3. Issues (Phiếu Xuất kho - PXK)
+    Route::get('/issues', [InventoryController::class, 'issues'])->name('issues.index');
+    Route::get('/issues/create', [InventoryController::class, 'createIssue'])->name('issues.create');
+    Route::post('/issues', [InventoryController::class, 'storeIssue'])->name('issues.store');
+    Route::get('/issues/{issue}', [InventoryController::class, 'showIssue'])->name('issues.show');
+    Route::get('/issues/{issue}/print', [InventoryController::class, 'printIssue'])->name('issues.print');
+    Route::delete('/issues/{issue}', [InventoryController::class, 'destroyIssue'])->name('issues.destroy');
+
+    // 4. Stocktakes (Kiểm kê kho - PKK & Cân bằng kho)
+    Route::get('/stocktakes', [InventoryController::class, 'stocktakes'])->name('stocktakes.index');
+    Route::get('/stocktakes/create', [InventoryController::class, 'createStocktake'])->name('stocktakes.create');
+    Route::post('/stocktakes', [InventoryController::class, 'storeStocktake'])->name('stocktakes.store');
+    Route::get('/stocktakes/{stocktake}', [InventoryController::class, 'showStocktake'])->name('stocktakes.show');
+    Route::post('/stocktakes/{stocktake}/balance', [InventoryController::class, 'balanceStocktake'])->name('stocktakes.balance');
+    Route::delete('/stocktakes/{stocktake}', [InventoryController::class, 'destroyStocktake'])->name('stocktakes.destroy');
+
+    // 5. Reports (Báo cáo Xuất-Nhập-Tồn & Ma trận kế toán)
+    Route::get('/reports', [InventoryController::class, 'reports'])->name('reports.index');
+    Route::get('/reports/export', [InventoryController::class, 'exportReport'])->name('reports.export');
+    Route::get('/reports/export-matrix', [InventoryController::class, 'exportMatrixReport'])->name('reports.export-matrix');
+
+    // 6. Warehouses List (Danh sách Kho)
+    Route::get('/list', [InventoryController::class, 'warehouseList'])->name('warehouses.index');
+    Route::post('/list', [InventoryController::class, 'storeWarehouse'])->name('warehouses.store');
+    Route::put('/list/{warehouse}', [InventoryController::class, 'updateWarehouse'])->name('warehouses.update');
+    Route::delete('/list/{warehouse}', [InventoryController::class, 'destroyWarehouse'])->name('warehouses.destroy');
 });
+
+// Alias route for backwards compatibility
+Route::get('warehouses-redirect', function() {
+    return redirect()->route('inventory.index');
+})->name('warehouses.index');
 
 // Customers
 Route::middleware(['auth'])->group(function () {

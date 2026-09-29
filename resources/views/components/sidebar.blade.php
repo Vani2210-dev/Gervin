@@ -34,7 +34,7 @@
             </li>
 
             {{-- Nhóm Nghiệp vụ & Đơn hàng --}}
-            @if(auth()->user()->can('view customer') || auth()->user()->can('view order') || auth()->user()->can('view revenue report') || auth()->user()->hasRole('Admin'))
+            @if(auth()->check() && (auth()->user()->can('view customer') || auth()->user()->can('view order') || auth()->user()->can('view revenue report') || auth()->user()->hasRole('Admin')))
             <li class="sidebar-menu-group-title">Kinh doanh & Đơn hàng</li>
             @endif
 
@@ -203,7 +203,7 @@
                 <ul class="sidebar-submenu">
                     @can('view warehouse')
                     <li>
-                        <a href="{{ route('warehouses.index') }}"><i class="ri-circle-fill circle-icon text-primary-600 w-auto"></i> Kho vật tư</a>
+                        <a href="{{ route('inventory.index') }}"><i class="ri-circle-fill circle-icon text-primary-600 w-auto"></i> Tồn kho & Vật tư</a>
                     </li>
                     @endcan
 
