@@ -145,4 +145,19 @@ class QrScanConfigTest extends TestCase
             'cmd' => '<cmd>wifi -ssid "CTY GERVIN - XUONG" -pass "68686868"',
         ]);
     }
+
+    public function test_can_export_qr_configuration_pdf()
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->get(route('processes.qr-scans.export-pdf'));
+
+        $response->assertStatus(200);
+        $response->assertHeader('content-type', 'application/pdf');
+
+        // Test download parameter
+        $downloadResponse = $this->actingAs($user)->get(route('processes.qr-scans.export-pdf', ['download' => 1]));
+        $downloadResponse->assertStatus(200);
+        $downloadResponse->assertHeader('content-type', 'application/pdf');
+    }
 }

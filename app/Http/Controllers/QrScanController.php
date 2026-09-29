@@ -300,6 +300,38 @@ class QrScanController extends Controller
     }
 
     /**
+     * GET /processes/qr-scans/export-pdf
+     * Xuất toàn bộ bộ mã QR cấu hình ra file PDF chuẩn A4.
+     */
+    public function exportPdf(Request $request)
+    {
+        $commands = QrConfigCommand::where('is_active', true)
+            ->orderBy('sort_order', 'asc')
+            ->orderBy('step', 'asc')
+            ->get();
+
+        if ($commands->isEmpty()) {
+            foreach (QrConfigCommand::defaultCommands() as $cmd) {
+                QrConfigCommand::create($cmd);
+            }
+            $commands = QrConfigCommand::where('is_active', true)
+                ->orderBy('sort_order', 'asc')
+                ->get();
+        }
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('processes.qr_config_pdf', compact('commands'))
+            ->setPaper('a4', 'portrait');
+
+        $fileName = 'Cau_Hinh_May_Quet_QR_Gervin.pdf';
+
+        if ($request->has('download')) {
+            return $pdf->download($fileName);
+        }
+
+        return $pdf->stream($fileName);
+    }
+
+    /**
      * POST /processes/qr-scans/config-commands
      * Cập nhật danh sách các lệnh mã QR cấu hình máy quét.
      */
