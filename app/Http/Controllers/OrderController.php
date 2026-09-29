@@ -134,13 +134,22 @@ class OrderController extends Controller
         // Compute totals before pagination
         $totalsQuery = clone $query;
         $totalOrdersCount = $totalsQuery->count();
-        $totalAmountSum = $totalsQuery->sum('total_amount');
+        $totalAmountSum = (float) $totalsQuery->sum('total_amount');
         
-        $matchingOrderIds = $totalsQuery->pluck('id');
+        $matchingOrders = (clone $totalsQuery)->get();
+        $matchingOrderIds = $matchingOrders->pluck('id');
         $totalPaidSum = DB::table('customer_payments')
             ->whereIn('order_id', $matchingOrderIds)
             ->sum('amount');
         $totalDebtSum = max(0, $totalAmountSum - $totalPaidSum);
+
+        $totalSheetsSum = (float) $matchingOrders->sum(function ($order) {
+            return (float) $order->total_sheets;
+        });
+
+        $totalMetersSum = (float) $matchingOrders->sum(function ($order) {
+            return (float) $order->total_meters;
+        });
 
         $deadlineThreshold = (int) \Illuminate\Support\Facades\Cache::get('deadline_warning_days', 0);
         
@@ -195,6 +204,8 @@ class OrderController extends Controller
             'search',
             'totalOrdersCount',
             'totalAmountSum',
+            'totalSheetsSum',
+            'totalMetersSum',
             'totalPaidSum',
             'totalDebtSum',
             'customers',

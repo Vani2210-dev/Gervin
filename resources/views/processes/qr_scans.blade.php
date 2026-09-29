@@ -5,7 +5,7 @@
     $subTitle = 'Cấu hình, Thiết bị & Nhật ký';
 
     $configCommands = $configCommands ?? \App\Models\QrConfigCommand::where('is_active', true)->orderBy('sort_order', 'asc')->get();
-    if ($configCommands->isEmpty()) {
+    if (blank($configCommands)) {
         $configCommands = \App\Models\QrConfigCommand::defaultCommands();
     }
 
@@ -150,11 +150,14 @@
             <div class="p-6 md:p-8 max-w-3xl mx-auto space-y-6">
                 @foreach($configCommands as $idx => $item)
                     @php
-                        $qrSvg = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')
+                        $rawCmd = is_array($item) ? ($item['cmd'] ?? '') : ($item->cmd ?? '');
+                        $qrSvg = (string) \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')
                             ->size(150)
                             ->margin(1)
-                            ->generate($item['cmd']);
-                        $qrSvg = str_replace('<?xml version="1.0" encoding="UTF-8"?>', '', $qrSvg);
+                            ->generate($rawCmd);
+                        if (($svgStart = strpos($qrSvg, '<svg')) !== false) {
+                            $qrSvg = substr($qrSvg, $svgStart);
+                        }
                     @endphp
 
                     <div class="relative bg-neutral-50/90 dark:bg-neutral-800/50 p-5 rounded-2xl border border-neutral-200/90 dark:border-neutral-700 shadow-xs flex flex-col md:flex-row items-center gap-6">

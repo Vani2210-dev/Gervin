@@ -22,29 +22,64 @@
 <div class="grid grid-cols-12 gap-y-6">
     <div class="col-span-12">
         {{-- Statistics Grid --}}
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <!-- Card 1 -->
-            <div class="bg-white border border-neutral-200 rounded-2xl p-5 shadow-sm flex items-center gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            <!-- Card 1: Tổng đơn hàng -->
+            <div class="bg-white border border-neutral-200 rounded-2xl p-5 shadow-sm flex items-center gap-4 transition-all hover:shadow-md">
                 <div class="w-12 h-12 rounded-xl bg-primary-50 flex items-center justify-center text-primary-600 text-2xl flex-shrink-0">
                     <iconify-icon icon="lucide:shopping-bag"></iconify-icon>
                 </div>
-                <div>
-                    <div class="text-xs text-neutral-500 font-medium mb-1">
-                        Tổng đơn hàng
-                        <span class="text-[10px] font-normal text-neutral-400 capitalize">({{ $dateLabel }})</span>
+                <div class="min-w-0 flex-1">
+                    <div class="text-xs text-neutral-500 font-medium mb-1 flex items-center gap-1.5 flex-wrap">
+                        <span>Tổng đơn hàng</span>
+                        <span class="text-[10px] font-normal text-neutral-400 capitalize whitespace-nowrap">({{ $dateLabel }})</span>
                     </div>
-                    <div class="text-xl font-bold text-neutral-800">{{ $totalOrdersCount }} đơn</div>
+                    <div class="text-xl font-bold text-neutral-800">{{ number_format($totalOrdersCount, 0, ',', '.') }} <span class="text-sm font-medium text-neutral-500">đơn</span></div>
                 </div>
             </div>
-            <!-- Card 2 -->
-            <div class="bg-white border border-neutral-200 rounded-2xl p-5 shadow-sm flex items-center gap-4">
+
+            <!-- Card 2: Tổng số tấm -->
+            <div class="bg-white border border-neutral-200 rounded-2xl p-5 shadow-sm flex items-center gap-4 transition-all hover:shadow-md">
+                <div class="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 text-2xl flex-shrink-0">
+                    <iconify-icon icon="solar:layers-minimalistic-bold-duotone"></iconify-icon>
+                </div>
+                <div class="min-w-0 flex-1">
+                    <div class="text-xs text-neutral-500 font-medium mb-1 flex items-center gap-1.5 flex-wrap">
+                        <span>Tổng số tấm</span>
+                        <span class="text-[10px] font-normal text-neutral-400 capitalize whitespace-nowrap">({{ $dateLabel }})</span>
+                    </div>
+                    <div class="text-xl font-bold text-neutral-800">
+                        {{ floatval($totalSheetsSum ?? 0) == intval($totalSheetsSum ?? 0) ? number_format($totalSheetsSum ?? 0, 0, ',', '.') : number_format($totalSheetsSum ?? 0, 1, ',', '.') }}
+                        <span class="text-sm font-medium text-neutral-500">tấm</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 3: Tổng số mét -->
+            <div class="bg-white border border-neutral-200 rounded-2xl p-5 shadow-sm flex items-center gap-4 transition-all hover:shadow-md">
+                <div class="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 text-2xl flex-shrink-0">
+                    <iconify-icon icon="solar:ruler-angular-bold-duotone"></iconify-icon>
+                </div>
+                <div class="min-w-0 flex-1">
+                    <div class="text-xs text-neutral-500 font-medium mb-1 flex items-center gap-1.5 flex-wrap">
+                        <span>Tổng số mét</span>
+                        <span class="text-[10px] font-normal text-neutral-400 capitalize whitespace-nowrap">({{ $dateLabel }})</span>
+                    </div>
+                    <div class="text-xl font-bold text-neutral-800">
+                        {{ floatval($totalMetersSum ?? 0) == intval($totalMetersSum ?? 0) ? number_format($totalMetersSum ?? 0, 0, ',', '.') : rtrim(rtrim(number_format($totalMetersSum ?? 0, 2, ',', '.'), '0'), ',') }}
+                        <span class="text-sm font-medium text-neutral-500">m</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 4: Tổng tiền hàng -->
+            <div class="bg-white border border-neutral-200 rounded-2xl p-5 shadow-sm flex items-center gap-4 transition-all hover:shadow-md">
                 <div class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 text-2xl flex-shrink-0">
                     <iconify-icon icon="lucide:circle-dollar-sign"></iconify-icon>
                 </div>
-                <div>
-                    <div class="text-xs text-neutral-500 font-medium mb-1">
-                        Tổng tiền hàng
-                        <span class="text-[10px] font-normal text-neutral-400 capitalize">({{ $dateLabel }})</span>
+                <div class="min-w-0 flex-1">
+                    <div class="text-xs text-neutral-500 font-medium mb-1 flex items-center gap-1.5 flex-wrap">
+                        <span>Tổng tiền hàng</span>
+                        <span class="text-[10px] font-normal text-neutral-400 capitalize whitespace-nowrap">({{ $dateLabel }})</span>
                     </div>
                     <div class="text-xl font-bold text-neutral-800">{{ number_format($totalAmountSum, 0, ',', '.') }}₫</div>
                 </div>
@@ -221,7 +256,7 @@
                 @endif
 
                 <div class="table-responsive scroll-sm">
-                    <table class="table bordered-table sm-table mb-0">
+                    <table class="table bordered-table sm-table mb-0 min-w-[1380px]">
                         <thead>
                             <tr>
                                 @if($canBulkDeleteOrders)
@@ -229,19 +264,19 @@
                                     <input type="checkbox" id="bulkSelectAllOrders" class="form-check-input rounded border-neutral-300 text-primary-600 focus:ring-primary-500">
                                 </th>
                                 @endif
-                                <th scope="col">STT</th>
-                                <th scope="col">Mã đơn</th>
-                                <th scope="col">Loại đơn</th>
-                                <th scope="col">Khách hàng</th>
-                                <th scope="col">Tên công trình</th>
-                                <th scope="col">Số điện thoại</th>
-                                <th scope="col">Ngày tạo đơn</th>
-                                <th scope="col">Hạn đơn</th>
-                                <th scope="col" class="text-center whitespace-nowrap">Số tấm</th>
-                                <th scope="col" class="text-center whitespace-nowrap">Tổng số mét</th>
-                                <th scope="col">Tổng tiền</th>
-                                <th scope="col">Trạng thái</th>
-                                <th scope="col" class="text-center whitespace-nowrap" style="width: 100px; min-width: 100px;">Hành động</th>
+                                <th scope="col" class="text-center px-3" style="width: 50px;">STT</th>
+                                <th scope="col" class="px-3" style="min-width: 120px;">Mã đơn</th>
+                                <th scope="col" class="px-3" style="min-width: 90px;">Loại đơn</th>
+                                <th scope="col" class="px-3" style="min-width: 140px;">Khách hàng</th>
+                                <th scope="col" class="px-3" style="min-width: 130px;">Tên công trình</th>
+                                <th scope="col" class="px-3" style="min-width: 110px;">Số điện thoại</th>
+                                <th scope="col" class="whitespace-nowrap px-3" style="min-width: 130px;">Ngày tạo đơn</th>
+                                <th scope="col" class="whitespace-nowrap px-3" style="min-width: 130px;">Hạn đơn</th>
+                                <th scope="col" class="text-center whitespace-nowrap px-3" style="min-width: 95px;">Số tấm</th>
+                                <th scope="col" class="text-center whitespace-nowrap px-3" style="min-width: 115px;">Tổng số mét</th>
+                                <th scope="col" class="text-end whitespace-nowrap px-3" style="min-width: 115px;">Tổng tiền</th>
+                                <th scope="col" class="px-3" style="min-width: 130px;">Trạng thái</th>
+                                <th scope="col" class="text-center whitespace-nowrap px-3" style="width: 100px; min-width: 100px;">Hành động</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -257,8 +292,8 @@
                                         class="bulk-order-checkbox form-check-input rounded border-neutral-300 text-primary-600 focus:ring-primary-500">
                                 </td>
                                 @endif
-                                <td>{{ $stt }}</td>
-                                <td>
+                                <td class="text-center px-3">{{ $stt }}</td>
+                                <td class="px-3">
                                     @php
                                         // Đọc mốc cảnh báo từ cache, mặc định 0 ngày
                                         $deadlineThreshold = \Illuminate\Support\Facades\Cache::get('deadline_warning_days', 0);
@@ -312,7 +347,7 @@
                                         @endif
                                     </div>
                                 </td>
-                                <td>
+                                <td class="px-3">
                                     @if($order->type)
                                         @php
                                             $typeColors = [
@@ -333,7 +368,7 @@
                                         <span class="text-neutral-400 text-xs">—</span>
                                     @endif
                                 </td>
-                                <td>
+                                <td class="px-3">
                                     @if($order->customer)
                                         <a href="{{ route('customers.index', ['overview_id' => $order->customer->id]) }}" class="font-semibold text-neutral-800 hover:text-primary-600 block leading-tight">
                                             {{ $order->customer->name }}
@@ -343,42 +378,42 @@
                                         <span class="text-neutral-400">—</span>
                                     @endif
                                 </td>
-                                <td>
+                                <td class="px-3">
                                     <span class="text-base font-medium text-secondary-light">{{ $order->customer_name ?: '—' }}</span>
                                 </td>
-                                <td>
+                                <td class="px-3">
                                     <span class="text-base text-secondary-light">{{ $order->phone ?? '—' }}</span>
                                 </td>
-                                <td>
+                                <td class="whitespace-nowrap px-3">
                                     <span class="text-base text-secondary-light">{{ $order->order_date ? $order->order_date->format('H:i d/m/Y') : '—' }}</span>
                                 </td>
-                                <td>
+                                <td class="whitespace-nowrap px-3">
                                     <span class="text-base text-secondary-light">{{ $order->deadline ? $order->deadline->format('H:i d/m/Y') : '—' }}</span>
                                 </td>
-                                <td class="text-center whitespace-nowrap">
+                                <td class="text-center whitespace-nowrap px-3">
                                     @if($order->total_sheets > 0)
-                                        <span class="inline-flex items-center gap-1 font-semibold text-neutral-800 bg-neutral-100 px-2 py-0.5 rounded-md text-xs">
-                                            <iconify-icon icon="solar:layers-minimalistic-bold" class="text-neutral-500 text-xs"></iconify-icon>
+                                        <span class="inline-flex items-center justify-center gap-1.5 font-semibold text-neutral-800 bg-neutral-100 px-2.5 py-1 rounded-md text-xs">
+                                            <iconify-icon icon="solar:layers-minimalistic-bold" class="text-neutral-500 text-sm"></iconify-icon>
                                             {{ floatval($order->total_sheets) == intval($order->total_sheets) ? number_format($order->total_sheets, 0, ',', '.') : number_format($order->total_sheets, 1, ',', '.') }}
                                         </span>
                                     @else
                                         <span class="text-neutral-300">—</span>
                                     @endif
                                 </td>
-                                <td class="text-center whitespace-nowrap">
+                                <td class="text-center whitespace-nowrap px-3">
                                     @if($order->total_meters > 0)
-                                        <span class="inline-flex items-center gap-1 font-semibold text-primary-700 bg-primary-50 px-2 py-0.5 rounded-md text-xs border border-primary-100">
-                                            <iconify-icon icon="solar:ruler-angular-bold" class="text-primary-500 text-xs"></iconify-icon>
+                                        <span class="inline-flex items-center justify-center gap-1.5 font-semibold text-primary-700 bg-primary-50 px-2.5 py-1 rounded-md text-xs border border-primary-100">
+                                            <iconify-icon icon="solar:ruler-angular-bold" class="text-primary-500 text-sm"></iconify-icon>
                                             {{ floatval($order->total_meters) == intval($order->total_meters) ? number_format($order->total_meters, 0, ',', '.') : rtrim(rtrim(number_format($order->total_meters, 2, ',', '.'), '0'), ',') }} m
                                         </span>
                                     @else
                                         <span class="text-neutral-300">—</span>
                                     @endif
                                 </td>
-                                <td>
-                                    <span class="text-base font-medium text-secondary-light">{{ number_format(round($order->total_amount, -3), 0, ',', '.') }}</span>
+                                <td class="text-end whitespace-nowrap px-3">
+                                    <span class="text-base font-semibold text-neutral-800">{{ number_format(round($order->total_amount, -3), 0, ',', '.') }}₫</span>
                                 </td>
-                                <td>
+                                <td class="px-3">
                                     @php
                                         $statusColors = [
                                             'draft' => 'bg-neutral-100 text-neutral-600',
@@ -411,7 +446,7 @@
                                         </span>
                                     @endif
                                 </td>
-                                <td class="text-center whitespace-nowrap">
+                                <td class="text-center whitespace-nowrap px-3">
                                     <div class="flex items-center gap-2 justify-center">
                                         @can('view order')
                                         {{-- Xem chi tiết (luôn hiển thị ngoài) --}}

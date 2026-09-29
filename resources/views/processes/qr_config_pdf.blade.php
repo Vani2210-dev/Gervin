@@ -152,10 +152,10 @@
     <table class="commands-table">
         @foreach($commands as $idx => $cmd)
             @php
-                $qrSvg = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')
+                $qrSvg = (string) \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')
                     ->size(130)
                     ->margin(1)
-                    ->generate($cmd->cmd);
+                    ->generate($cmd->cmd ?? '');
                 $qrDataUri = 'data:image/svg+xml;base64,' . base64_encode($qrSvg);
             @endphp
             <tr>
