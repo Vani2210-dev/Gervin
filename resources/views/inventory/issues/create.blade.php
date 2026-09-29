@@ -78,7 +78,7 @@
                                 <thead class="bg-neutral-50 text-neutral-700 font-bold border-b border-neutral-200">
                                     <tr>
                                         <th class="py-2 px-3 w-12 text-center">STT</th>
-                                        <th class="py-2 px-3 min-w-[240px]">Mặt hàng vật tư <span class="text-danger-500">*</span></th>
+                                        <th class="py-2 px-3 min-w-[340px]">Mặt hàng vật tư (Mã ván) <span class="text-danger-500">*</span></th>
                                         <th class="py-2 px-3 w-20 text-center">ĐVT</th>
                                         <th class="py-2 px-3 w-28 text-right bg-amber-50 text-amber-900">Tồn hiện tại</th>
                                         <th class="py-2 px-3 w-32 text-right">Số lượng xuất <span class="text-danger-500">*</span></th>
@@ -115,60 +115,184 @@
     </div>
 </div>
 
+<style>
+    .issue-ts-wrapper {
+        width: 100% !important;
+    }
+    .issue-ts-wrapper .ts-control {
+        border-radius: 0.5rem !important;
+        border: 1px solid #e5e7eb !important;
+        padding: 5px 10px !important;
+        font-size: 12px !important;
+        min-height: 36px !important;
+        line-height: 1.25rem !important;
+        background-color: #ffffff !important;
+        box-shadow: none !important;
+        display: flex !important;
+        align-items: center !important;
+        color: #1f2937 !important;
+    }
+    .issue-ts-wrapper.focus .ts-control {
+        border-color: #e11d48 !important;
+        box-shadow: 0 0 0 2px rgba(225, 29, 72, 0.15) !important;
+    }
+    .issue-ts-dropdown {
+        font-size: 12px !important;
+        border-radius: 0.5rem !important;
+        border: 1px solid #e5e7eb !important;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08) !important;
+        z-index: 99999 !important;
+        max-height: 320px !important;
+        overflow-y: auto !important;
+        background-color: #ffffff !important;
+    }
+    .issue-ts-dropdown .ts-dropdown-content {
+        max-height: 320px !important;
+    }
+    .issue-ts-dropdown .active {
+        background-color: #fff1f2 !important;
+        color: #be123c !important;
+    }
+    select.material-tom-select.tomselected {
+        display: none !important;
+    }
+</style>
+@endsection
+
+@push('scripts')
 <script>
     const MATERIALS = @json($materials);
+    const MATERIAL_OPTIONS = MATERIALS.map(m => ({
+        value: String(m.id),
+        code: m.code || '',
+        name: m.name || '',
+        origin_code: m.origin_code || '',
+        category: m.category || '',
+        unit: m.unit || 'Tấm',
+        stock: m.current_stock || 0
+    }));
+
     let rowCount = 0;
 
     function addItemRow(selectedMaterialId = '', qty = '') {
         const tbody = document.getElementById('itemsTableBody');
         const tr = document.createElement('tr');
-        tr.id = `row_${rowCount}`;
-        tr.className = 'hover:bg-neutral-50';
-
-        let optionsHtml = '<option value="">-- Chọn mặt hàng vật tư xuất --</option>';
-        MATERIALS.forEach(m => {
-            const isSel = (m.id == selectedMaterialId) ? 'selected' : '';
-            optionsHtml += `<option value="${m.id}" data-unit="${m.unit}" data-stock="${m.current_stock}" ${isSel}>${m.code} - ${m.name} (Tồn: ${m.current_stock})</option>`;
-        });
+        const thisRowIdx = rowCount;
+        tr.id = `row_${thisRowIdx}`;
+        tr.className = 'hover:bg-neutral-50 transition-colors';
 
         tr.innerHTML = `
             <td class="py-2 px-3 text-center text-neutral-400 font-medium row-stt">${tbody.children.length + 1}</td>
             <td class="py-2 px-3">
-                <select name="items[${rowCount}][material_id]" class="form-select rounded-lg w-full border-neutral-200 px-2 py-2 text-xs material-select focus:border-rose-500" required onchange="onMaterialChange(this, ${rowCount})">
-                    ${optionsHtml}
+                <select id="select_mat_${thisRowIdx}" name="items[${thisRowIdx}][material_id]" class="material-tom-select w-full" required>
+                    <option value="">-- Chọn / tìm mã ván xuất kho... --</option>
                 </select>
             </td>
             <td class="py-2 px-3 text-center text-neutral-600 unit-cell">Tấm</td>
             <td class="py-2 px-3 text-right font-bold text-amber-900 bg-amber-50 bg-opacity-40 stock-cell">-</td>
             <td class="py-2 px-3 text-right">
-                <input type="number" name="items[${rowCount}][quantity]" value="${qty}" step="0.01" min="0.01" class="form-control rounded-lg w-full border-neutral-200 px-2 py-1 text-right text-xs font-bold text-rose-700 focus:border-rose-500 qty-input" required oninput="calcTotals()">
+                <input type="number" name="items[${thisRowIdx}][quantity]" value="${qty}" step="0.01" min="0.01" class="form-control rounded-lg w-full border-neutral-200 px-2 py-1 text-right text-xs font-bold text-rose-700 focus:border-rose-500 qty-input" required oninput="calcTotals()">
                 <div class="text-[10px] text-danger-600 stock-warn hidden mt-1 font-semibold">Vượt số lượng tồn!</div>
             </td>
             <td class="py-2 px-3">
-                <input type="text" name="items[${rowCount}][notes]" class="form-control rounded-lg w-full border-neutral-200 px-2 py-1 text-xs" placeholder="Ghi chú...">
+                <input type="text" name="items[${thisRowIdx}][notes]" class="form-control rounded-lg w-full border-neutral-200 px-2 py-1 text-xs" placeholder="Ghi chú...">
             </td>
             <td class="py-2 px-3 text-center">
-                <button type="button" onclick="removeRow(${rowCount})" class="text-danger-500 hover:text-danger-700 p-1 text-base leading-none" title="Xóa dòng">&times;</button>
+                <button type="button" onclick="removeRow(${thisRowIdx})" class="text-danger-500 hover:text-danger-700 p-1 text-base leading-none" title="Xóa dòng">&times;</button>
             </td>
         `;
 
         tbody.appendChild(tr);
         rowCount++;
+
+        initTomSelectForRow(thisRowIdx, selectedMaterialId);
         updateStt();
         calcTotals();
     }
 
-    function onMaterialChange(selectElem, rowIdx) {
+    function initTomSelectForRow(rowIdx, selectedMaterialId) {
+        const selectEl = document.getElementById(`select_mat_${rowIdx}`);
+        if (!selectEl) return;
+
+        if (typeof TomSelect !== 'undefined') {
+            const ts = new TomSelect(selectEl, {
+                options: MATERIAL_OPTIONS,
+                valueField: 'value',
+                labelField: 'code',
+                searchField: ['code', 'origin_code', 'name', 'category'],
+                create: false,
+                maxItems: 1,
+                placeholder: '-- Tìm kiếm mã ván, tên màu... --',
+                allowEmptyOption: true,
+                dropdownParent: 'body',
+                wrapperClass: 'ts-wrapper issue-ts-wrapper',
+                dropdownClass: 'ts-dropdown issue-ts-dropdown',
+                render: {
+                    option: function(data, escape) {
+                        const originHtml = data.origin_code 
+                            ? `<span class="inline-block bg-amber-50 text-amber-700 border border-amber-200 rounded px-1 text-[10px] font-bold ml-1">${escape(data.origin_code)}</span>`
+                            : '';
+                        const catHtml = data.category
+                            ? `<span class="text-neutral-400 text-[11px]">&bull; ${escape(data.category)}</span>`
+                            : '';
+                        const stockFormatted = Number(data.stock || 0).toLocaleString('vi-VN');
+                        const isOutOfStock = Number(data.stock || 0) <= 0;
+                        const stockBadge = isOutOfStock
+                            ? `<span class="text-[11px] font-bold text-rose-700 bg-rose-50 border border-rose-200 rounded px-2 py-1">Hết hàng (0 ${escape(data.unit)})</span>`
+                            : `<span class="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded px-2 py-1">Tồn: ${stockFormatted} ${escape(data.unit)}</span>`;
+
+                        return `
+                            <div class="py-2 px-3 flex items-center justify-between border-b border-neutral-100 hover:bg-rose-50 transition-colors">
+                                <div class="flex-1 min-w-0 pr-2">
+                                    <div class="flex items-center">
+                                        <span class="font-bold text-neutral-800 text-xs">${escape(data.code)}</span>
+                                        ${originHtml}
+                                    </div>
+                                    <div class="text-[11px] text-neutral-600 truncate mt-1">
+                                        ${escape(data.name)} ${catHtml}
+                                    </div>
+                                </div>
+                                <div class="text-right shrink-0">
+                                    ${stockBadge}
+                                </div>
+                            </div>
+                        `;
+                    },
+                    item: function(data, escape) {
+                        const originText = data.origin_code ? ` [${escape(data.origin_code)}]` : '';
+                        return `<div class="truncate text-xs font-semibold text-neutral-800">
+                            <span class="font-bold text-rose-700">${escape(data.code)}</span>${originText} - ${escape(data.name)}
+                        </div>`;
+                    }
+                },
+                onChange: function(val) {
+                    onMaterialSelected(rowIdx, val);
+                }
+            });
+
+            selectEl._tomSelect = ts;
+
+            if (selectedMaterialId) {
+                ts.setValue(String(selectedMaterialId), true);
+                onMaterialSelected(rowIdx, selectedMaterialId);
+            }
+        }
+    }
+
+    function onMaterialSelected(rowIdx, materialId) {
         const tr = document.getElementById(`row_${rowIdx}`);
-        const selectedOption = selectElem.options[selectElem.selectedIndex];
-        if (!selectedOption || !selectedOption.value) {
+        if (!tr) return;
+
+        const mat = MATERIALS.find(m => String(m.id) === String(materialId));
+        if (!mat) {
             tr.querySelector('.unit-cell').textContent = 'Tấm';
             tr.querySelector('.stock-cell').textContent = '-';
+            tr.removeAttribute('data-max-stock');
             return;
         }
 
-        const unit = selectedOption.getAttribute('data-unit') || 'Tấm';
-        const stock = parseFloat(selectedOption.getAttribute('data-stock') || 0);
+        const unit = mat.unit || 'Tấm';
+        const stock = parseFloat(mat.current_stock || 0);
 
         tr.querySelector('.unit-cell').textContent = unit;
         tr.querySelector('.stock-cell').textContent = stock.toLocaleString('vi-VN');
@@ -179,7 +303,13 @@
 
     function removeRow(rowIdx) {
         const tr = document.getElementById(`row_${rowIdx}`);
-        if (tr) tr.remove();
+        if (tr) {
+            const selectEl = document.getElementById(`select_mat_${rowIdx}`);
+            if (selectEl && selectEl._tomSelect) {
+                selectEl._tomSelect.destroy();
+            }
+            tr.remove();
+        }
         updateStt();
         calcTotals();
     }
@@ -216,10 +346,17 @@
         document.getElementById('lblTotalQty').textContent = totalQty.toLocaleString('vi-VN');
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
+    // Initialize 3 rows
+    function initDefaultRows() {
         addItemRow();
         addItemRow();
         addItemRow();
-    });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initDefaultRows);
+    } else {
+        initDefaultRows();
+    }
 </script>
-@endsection
+@endpush
