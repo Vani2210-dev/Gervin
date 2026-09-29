@@ -30,7 +30,7 @@ class CustomerPaymentController extends Controller
             'created_by'     => Auth::id(),
         ]);
 
-        return redirect()->route('customers.index', ['overview_id' => $customer->id])
+        return redirect()->back()
             ->with('success', 'Đã ghi nhận đợt thanh toán cho khách hàng.');
     }
 
@@ -56,7 +56,7 @@ class CustomerPaymentController extends Controller
             'order_id'       => $request->order_id,
         ]);
 
-        return redirect()->route('customers.index', ['overview_id' => $customer->id])
+        return redirect()->back()
             ->with('success', 'Đã cập nhật đợt thanh toán.');
     }
 
@@ -68,7 +68,7 @@ class CustomerPaymentController extends Controller
 
         $payment->delete();
 
-        return redirect()->route('customers.index', ['overview_id' => $customer->id])
+        return redirect()->back()
             ->with('success', 'Đã xóa đợt thanh toán.');
     }
 }

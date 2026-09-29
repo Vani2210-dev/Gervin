@@ -231,7 +231,11 @@
                                             <button type="button" onclick="openStockCardModal({{ $m->id }})" class="p-1 text-primary-600 hover:text-primary-800 text-base" title="Xem thẻ kho">
                                                 <iconify-icon icon="solar:history-bold"></iconify-icon>
                                             </button>
-                                            <button type="button" onclick="editMaterial(@json($m))" class="p-1 text-warning-600 hover:text-warning-800 text-base" title="Chỉnh sửa">
+                                            <button type="button" 
+                                                    data-material="{{ htmlspecialchars(json_encode($m), ENT_QUOTES, 'UTF-8') }}"
+                                                    onclick="editMaterial(this)" 
+                                                    class="p-1 text-warning-600 hover:text-warning-800 text-base transition-colors cursor-pointer" 
+                                                    title="Chỉnh sửa vật tư">
                                                 <iconify-icon icon="lucide:edit"></iconify-icon>
                                             </button>
                                             <form action="{{ route('inventory.materials.destroy', $m) }}" method="POST" onsubmit="return confirm('Bạn có chắc muốn xóa vật tư {{ $m->code }}? Dữ liệu giao dịch liên quan sẽ bị xóa.')">
@@ -518,13 +522,24 @@
 </x-modal>
 
 <script>
-    function editMaterial(item) {
+    function editMaterial(btnOrObj) {
+        let item = btnOrObj;
+        if (btnOrObj instanceof HTMLElement) {
+            try {
+                item = JSON.parse(btnOrObj.getAttribute('data-material'));
+            } catch (e) {
+                console.error("Lỗi parse data-material:", e);
+                return;
+            }
+        }
+        if (!item) return;
+
         document.getElementById('editMaterialForm').action = `/warehouses/materials/${item.id}`;
-        document.getElementById('edit_code_label').textContent = item.code;
-        document.getElementById('edit_code').value = item.code;
-        document.getElementById('edit_name').value = item.name || '';
+        document.getElementById('edit_code_label').textContent = item.code || item.color_code || '';
+        document.getElementById('edit_code').value = item.code || item.color_code || '';
+        document.getElementById('edit_name').value = item.name || ('Tấm ' + (item.color_code || ''));
         document.getElementById('edit_origin_code').value = item.origin_code || '';
-        document.getElementById('edit_category').value = item.category || '';
+        document.getElementById('edit_category').value = item.category || item.price_group || '';
         document.getElementById('edit_unit').value = item.unit || 'Tấm';
         document.getElementById('edit_cost_price').value = item.cost_price || 0;
         document.getElementById('edit_min_stock').value = item.min_stock || 50;

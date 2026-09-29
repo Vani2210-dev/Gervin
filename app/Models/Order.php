@@ -171,5 +171,154 @@ class Order extends Model
     {
         return $this->hasMany(Order::class, 'parent_id');
     }
+
+    public function getTotalSheetsAttribute()
+    {
+        if (isset($this->attributes['total_sheets'])) {
+            return (float) $this->attributes['total_sheets'];
+        }
+
+        $sheets = 0;
+        if ($this->relationLoaded('supplies')) {
+            foreach ($this->supplies as $supply) {
+                if ($this->type === 'min_late') {
+                    if ($supply->relationLoaded('minLateItems')) {
+                        $sheets += (float) $supply->minLateItems->sum('quantity');
+                    }
+                } elseif ($this->type === 'glass') {
+                    if ($supply->relationLoaded('glassItems')) {
+                        $sheets += (float) $supply->glassItems->sum('wing_quantity');
+                    }
+                } else {
+                    if ($supply->relationLoaded('items')) {
+                        $sheets += (float) $supply->items->sum('quantity');
+                    }
+                }
+            }
+            if ($sheets <= 0) {
+                $sheets = (float) $this->supplies->sum('quantity');
+            }
+        } else {
+            if ($this->type === 'min_late') {
+                $sheets = (float) $this->minLateItems()->sum('min_late_order_items.quantity');
+            } elseif ($this->type === 'glass') {
+                $sheets = (float) $this->glassItems()->sum('glass_order_items.wing_quantity');
+            } else {
+                $sheets = (float) $this->items()->sum('acrylic_order_items.quantity');
+            }
+            if ($sheets <= 0) {
+                $sheets = (float) $this->supplies()->sum('order_supplies.quantity');
+            }
+        }
+
+        return $sheets;
+    }
+
+    public function getTotalMetersAttribute()
+    {
+        if (isset($this->attributes['total_meters'])) {
+            return (float) $this->attributes['total_meters'];
+        }
+
+        $meters = 0;
+        if ($this->relationLoaded('supplies')) {
+            foreach ($this->supplies as $supply) {
+                if ($this->type === 'min_late' && $supply->relationLoaded('minLateItems')) {
+                    foreach ($supply->minLateItems as $item) {
+                        $itemMeters = (float) ($item->straight_paste_length ?? 0)
+                                    + (float) ($item->beveled_length ?? 0)
+                                    + (float) ($item->vat_moi_length ?? 0)
+                                    + (float) ($item->ban_rong_40_59 ?? 0)
+                                    + (float) ($item->ban_rong_17_39 ?? 0)
+                                    + (float) ($item->ban_rong_25_35 ?? 0)
+                                    + (float) ($item->beveled_handle ?? 0);
+
+                        if ($itemMeters <= 0 && !empty($item->size)) {
+                            $size = is_string($item->size) ? json_decode($item->size, true) : $item->size;
+                            $h = (float) ($size['height'] ?? 0);
+                            $w = (float) ($size['width'] ?? 0);
+                            $qty = (float) ($item->quantity ?? 1);
+                            if ($h > 0 && $w > 0) {
+                                $itemMeters = (($h * 2 + $w * 2) / 1000) * $qty;
+                            }
+                        }
+                        $meters += $itemMeters;
+                    }
+                } elseif ($this->type === 'glass' && $supply->relationLoaded('glassItems')) {
+                    foreach ($supply->glassItems as $item) {
+                        $h = (float) ($item->height ?? 0);
+                        $w = (float) ($item->width ?? 0);
+                        $qty = (float) ($item->wing_quantity ?? 1);
+                        if ($h > 0 && $w > 0) {
+                            $meters += (($h * 2 + $w * 2) / 1000) * $qty;
+                        }
+                    }
+                } else {
+                    if ($supply->relationLoaded('items')) {
+                        foreach ($supply->items as $item) {
+                            if ((float) ($item->molding_length ?? 0) > 0) {
+                                $meters += (float) $item->molding_length;
+                            } elseif ((float) ($item->height ?? 0) > 0 && (float) ($item->width ?? 0) > 0) {
+                                $qty = (float) ($item->quantity ?? 1);
+                                $meters += (($item->height * 2 + $item->width * 2) / 1000) * $qty;
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            if ($this->type === 'min_late') {
+                foreach ($this->minLateItems as $item) {
+                    $itemMeters = (float) ($item->straight_paste_length ?? 0)
+                                + (float) ($item->beveled_length ?? 0)
+                                + (float) ($item->vat_moi_length ?? 0)
+                                + (float) ($item->ban_rong_40_59 ?? 0)
+                                + (float) ($item->ban_rong_17_39 ?? 0)
+                                + (float) ($item->ban_rong_25_35 ?? 0)
+                                + (float) ($item->beveled_handle ?? 0);
+
+                    if ($itemMeters <= 0 && !empty($item->size)) {
+                        $size = is_string($item->size) ? json_decode($item->size, true) : $item->size;
+                        $h = (float) ($size['height'] ?? 0);
+                        $w = (float) ($size['width'] ?? 0);
+                        $qty = (float) ($item->quantity ?? 1);
+                        if ($h > 0 && $w > 0) {
+                            $itemMeters = (($h * 2 + $w * 2) / 1000) * $qty;
+                        }
+                    }
+                    $meters += $itemMeters;
+                }
+            } elseif ($this->type === 'glass') {
+                foreach ($this->glassItems as $item) {
+                    $h = (float) ($item->height ?? 0);
+                    $w = (float) ($item->width ?? 0);
+                    $qty = (float) ($item->wing_quantity ?? 1);
+                    if ($h > 0 && $w > 0) {
+                        $meters += (($h * 2 + $w * 2) / 1000) * $qty;
+                    }
+                }
+            } else {
+                foreach ($this->items as $item) {
+                    if ((float) ($item->molding_length ?? 0) > 0) {
+                        $meters += (float) $item->molding_length;
+                    } elseif ((float) ($item->height ?? 0) > 0 && (float) ($item->width ?? 0) > 0) {
+                        $qty = (float) ($item->quantity ?? 1);
+                        $meters += (($item->height * 2 + $item->width * 2) / 1000) * $qty;
+                    }
+                }
+            }
+        }
+
+        // Check payment details for meter units (m, md, mét)
+        $paymentDetails = $this->relationLoaded('paymentDetails') ? $this->paymentDetails : $this->paymentDetails()->get();
+        foreach ($paymentDetails as $detail) {
+            $unit = mb_strtolower(trim($detail->unit ?? ''));
+            if (in_array($unit, ['m', 'md', 'mét', 'm dài', 'met', 'm.dài'])) {
+                $meters += (float) ($detail->quantity ?? 0);
+            }
+        }
+
+        return round($meters, 2);
+    }
 }
 

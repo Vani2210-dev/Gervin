@@ -186,10 +186,10 @@
                             <tr>
                                 <td>{{ $stt }}</td>
                                 <td>
-                                    <span class="font-semibold text-neutral-800">{{ $c->customer_code ?? '—' }}</span>
+                                    <a href="{{ route('customers.show', $c->id) }}" class="font-semibold text-primary-600 hover:underline">{{ $c->customer_code ?? '—' }}</a>
                                 </td>
                                 <td>
-                                    <div class="font-bold text-neutral-800">{{ $c->name }}</div>
+                                    <a href="{{ route('customers.show', $c->id) }}" class="font-bold text-neutral-800 hover:text-primary-600 transition-colors">{{ $c->name }}</a>
                                     <div class="flex items-center gap-1.5 mt-1 flex-wrap">
                                         @if($c->status)
                                             @php
@@ -258,13 +258,11 @@
                                 </td>
                                 <td class="text-center">
                                     <div class="flex items-center gap-3 justify-center">
-                                        <button type="button"
+                                        <a href="{{ route('customers.show', $c->id) }}"
                                             class="bg-info-100 hover:bg-info-200 text-info-600 font-medium w-9 h-9 flex justify-center items-center rounded-full transition-colors"
-                                            title="Xem tổng quan"
-                                            data-customer-id="{{ $c->id }}"
-                                            onclick="openCustomerOverview({{ $c->id }})">
+                                            title="Xem chi tiết khách hàng">
                                             <iconify-icon icon="majesticons:eye-line" class="text-lg"></iconify-icon>
-                                        </button>
+                                        </a>
                                         @can('edit customer')
                                         <button type="button"
                                             class="bg-success-100 hover:bg-success-200 text-success-600 font-medium w-9 h-9 flex justify-center items-center rounded-full transition-colors customer-edit-btn"
@@ -1995,10 +1993,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const urlParams = new URLSearchParams(window.location.search);
     const overviewId = urlParams.get('overview_id');
     if (overviewId) {
-        const btn = document.querySelector(`button[data-customer-id="${overviewId}"]`);
-        if (btn) {
-            btn.click();
-        }
+        window.location.href = `/customers/${overviewId}`;
     }
 
     if (typeof TomSelect !== 'undefined' && document.getElementById('filter_customer_id')) {

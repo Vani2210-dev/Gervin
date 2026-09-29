@@ -224,4 +224,61 @@ class CustomerAccessControlTest extends TestCase
         // Reset test time
         \Carbon\Carbon::setTestNow();
     }
+
+    public function test_admin_and_assigned_employee_can_view_customer_show_screen(): void
+    {
+        $marketGroup = \App\Models\MarketGroup::create(['name' => 'Market A', 'code' => 'MA']);
+        $this->employee1->marketGroups()->attach($marketGroup->id);
+
+        $customer = Customer::create([
+            'name' => 'Khách Hàng VIP',
+            'customer_code' => 'KH99999',
+            'market_group_id' => $marketGroup->id,
+            'phone' => '0988776655',
+            'address' => 'Hà Nội',
+        ]);
+
+        $order1 = Order::create([
+            'order_code' => 'ORD-SHOW-01',
+            'customer_id' => $customer->id,
+            'customer_name' => $customer->name,
+            'status' => 'pending',
+            'total_amount' => 5000000,
+            'order_date' => now(),
+        ]);
+
+        $order2 = Order::create([
+            'order_code' => 'ORD-SHOW-02',
+            'customer_id' => $customer->id,
+            'customer_name' => $customer->name,
+            'status' => 'completed',
+            'total_amount' => 8000000,
+            'order_date' => now(),
+        ]);
+
+        // 1. Employee assigned to market group can view show screen
+        $response = $this->actingAs($this->employee1)->get(route('customers.show', $customer));
+        $response->assertOk();
+        $response->assertSee('Khách Hàng VIP');
+        $response->assertSee('KH99999');
+        $response->assertSee('ORD-SHOW-01');
+        $response->assertSee('ORD-SHOW-02');
+        $response->assertSee('Danh sách đơn hàng');
+        $response->assertSee('Lịch sử thanh toán');
+
+        // 2. Filter orders by status
+        $responseFilter = $this->actingAs($this->employee1)->get(route('customers.show', [
+            'customer' => $customer,
+            'status' => 'completed',
+        ]));
+        $responseFilter->assertOk();
+        $responseFilter->assertSee('ORD-SHOW-02');
+        $responseFilter->assertViewHas('orders', function ($orders) {
+            return $orders->total() === 1 && $orders->first()->order_code === 'ORD-SHOW-02';
+        });
+
+        // 3. Employee NOT assigned to market group gets 403
+        $responseForbidden = $this->actingAs($this->employee2)->get(route('customers.show', $customer));
+        $responseForbidden->assertStatus(403);
+    }
 }

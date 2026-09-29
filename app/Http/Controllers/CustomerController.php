@@ -10,7 +10,7 @@ class CustomerController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:view customer',   ['only' => ['index']]);
+        $this->middleware('permission:view customer',   ['only' => ['index', 'show']]);
         $this->middleware('permission:add customer',    ['only' => ['store']]);
         $this->middleware('permission:edit customer',   ['only' => ['update']]);
         $this->middleware('permission:delete customer', ['only' => ['destroy']]);
@@ -201,6 +201,136 @@ class CustomerController extends Controller
             'totalCustomersCount', 'totalDebtSum', 'totalPeriodPaidSum',
             'lostCustomersCount', 'newCustomersCount',
             'dateMode', 'dateVal', 'dateLabel'
+        ));
+    }
+
+    public function show(Request $request, Customer $customer)
+    {
+        $user = auth()->user();
+        abort_unless($customer->isAccessibleBy($user), 403, 'Bạn không có quyền xem thông tin khách hàng này.');
+
+        $customer->load(['marketGroup', 'users']);
+
+        // Stats calculations
+        $allOrders = $customer->orders()->with('orderPayments')->get();
+        $validOrders = $allOrders->filter(function($o) {
+            return !in_array($o->status, ['draft', 'cancelled', 'pending']);
+        });
+
+        $totalOrdersCount = $validOrders->count();
+        $totalOrdersAmount = $validOrders->sum(function($o) {
+            return round($o->total_amount, -3);
+        });
+
+        // Tổng đã thu = tổng các đợt thanh toán thực tế của khách hàng (customer_payments)
+        $totalPaid = $customer->customerPayments()->sum('amount');
+        $totalDebt = $customer->total_debt;
+
+        $statusCounts = $allOrders->groupBy('status')->map->count();
+
+        $statusLabels = [
+            'draft'         => 'Nháp',
+            'pending'       => 'Chờ xử lý',
+            'transferred'   => 'Chuyển sản xuất',
+            'in_production' => 'Đang sản xuất',
+            'completed'     => 'Hoàn thành',
+            'cancelled'     => 'Đã hủy',
+        ];
+
+        // Filters for Orders
+        $perPage   = (int) $request->input('per_page', 10);
+        $search    = $request->input('search', '');
+        $status    = $request->input('status', 'all');
+        $dateMode  = $request->input('date_mode', 'all');
+        $dateVal   = $request->input('date_val', '');
+        $startDate = $request->input('start_date');
+        $endDate   = $request->input('end_date');
+
+        if ($dateMode && $dateMode !== 'custom') {
+            if ($dateMode === 'day' && $dateVal) {
+                $startDate = $dateVal;
+                $endDate = $dateVal;
+            } elseif ($dateMode === 'month' && $dateVal) {
+                $cDate = \Carbon\Carbon::parse($dateVal . '-01');
+                $startDate = $cDate->copy()->startOfMonth()->toDateString();
+                $endDate = $cDate->copy()->endOfMonth()->toDateString();
+            } elseif ($dateMode === 'year' && $dateVal) {
+                $startDate = $dateVal . '-01-01';
+                $endDate = $dateVal . '-12-31';
+            } elseif ($dateMode === 'all') {
+                $startDate = null;
+                $endDate = null;
+            }
+        }
+
+        $ordersQuery = $customer->orders()->with([
+            'orderPayments',
+            'supplies.items',
+            'supplies.minLateItems',
+            'supplies.glassItems',
+            'paymentDetails'
+        ])
+            ->when($search, function ($q) use ($search) {
+                $q->where(function ($sub) use ($search) {
+                    $sub->where('order_code', 'like', "%{$search}%")
+                        ->orWhere('customer_name', 'like', "%{$search}%");
+                });
+            })
+            ->when($status && $status !== 'all', function ($q) use ($status) {
+                $q->where('status', $status);
+            })
+            ->when($startDate, function ($q) use ($startDate) {
+                $q->where('order_date', '>=', $startDate . ' 00:00:00');
+            })
+            ->when($endDate, function ($q) use ($endDate) {
+                $q->where('order_date', '<=', $endDate . ' 23:59:59');
+            })
+            ->orderBy('order_date', 'desc')
+            ->orderBy('id', 'desc');
+
+        $orders = $ordersQuery->paginate($perPage)->withQueryString();
+
+        foreach ($orders as $o) {
+            $o->paid = $o->orderPayments->sum('amount');
+            $o->debt = in_array($o->status, ['draft', 'cancelled', 'pending']) ? 0 : max(0, round($o->total_amount ?? 0, -3) - $o->paid);
+        }
+
+        // Customer payments with date filtering
+        $paymentDate = $request->input('payment_date');
+        $paymentsQuery = $customer->customerPayments()->with(['creator', 'order']);
+        if ($paymentDate) {
+            $paymentsQuery->whereDate('payment_date', $paymentDate);
+        }
+        $payments = $paymentsQuery->orderBy('payment_date', 'desc')->orderBy('id', 'desc')->paginate(10, ['*'], 'payment_page')->withQueryString();
+
+        // Customer orders eligible for payment linking
+        $customerOrders = $customer->orders()
+            ->whereNotIn('status', ['draft', 'cancelled'])
+            ->orderBy('order_date', 'desc')
+            ->get(['id', 'order_code', 'total_amount']);
+
+        $marketGroups = \App\Models\MarketGroup::orderBy('name')->get();
+
+        return view('customers.show', compact(
+            'customer',
+            'totalOrdersCount',
+            'totalOrdersAmount',
+            'totalPaid',
+            'totalDebt',
+            'statusCounts',
+            'statusLabels',
+            'orders',
+            'perPage',
+            'search',
+            'status',
+            'dateMode',
+            'dateVal',
+            'startDate',
+            'endDate',
+            'payments',
+            'paymentDate',
+            'customerOrders',
+            'marketGroups'
         ));
     }
 

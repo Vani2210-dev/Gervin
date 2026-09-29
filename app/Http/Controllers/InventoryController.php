@@ -293,7 +293,11 @@ class InventoryController extends Controller
     public function stockCard(Request $request, $id)
     {
         $material = WoodBoard::findOrFail($id);
-        $transactions = $material->transactions()->with(['warehouse', 'creator'])->paginate(30);
+        $txQuery = $material->transactions()->with(['warehouse', 'creator']);
+        if ($request->filled('warehouse_id')) {
+            $txQuery->where('warehouse_id', $request->input('warehouse_id'));
+        }
+        $transactions = $txQuery->paginate(30);
 
         if ($request->ajax()) {
             return view('inventory.partials.stock_card_modal_content', compact('material', 'transactions'));
@@ -601,25 +605,48 @@ class InventoryController extends Controller
         $startDate = $request->input('start_date', date('Y-01-01'));
         $endDate = $request->input('end_date', date('Y-m-d'));
         $year = (int)$request->input('year', date('Y'));
+        $warehouseId = $request->input('warehouse_id');
+
+        $warehouses = Warehouse::orderBy('name')->get();
+
+        // Query materials filtered by warehouse if specified
+        $materialsQuery = WoodBoard::with('warehouse')->orderBy('price_group')->orderBy('color_code');
+        if ($warehouseId) {
+            $materialsQuery->where(function($q) use ($warehouseId) {
+                $q->where('warehouse_id', $warehouseId)
+                  ->orWhereHas('transactions', function($t) use ($warehouseId) {
+                      $t->where('warehouse_id', $warehouseId);
+                  });
+            });
+        }
+        $materials = $materialsQuery->get();
 
         // Tab 1: Xuất Nhập Tồn tổng hợp
-        $materials = WoodBoard::with('warehouse')->orderBy('price_group')->orderBy('color_code')->get();
         $reportData = [];
 
         foreach ($materials as $m) {
-            $inQty = InventoryTransaction::where('wood_board_id', $m->id)
+            $inQuery = InventoryTransaction::where('wood_board_id', $m->id)
                 ->whereBetween('date', [$startDate, $endDate])
-                ->where('in_qty', '>', 0)
-                ->sum('in_qty');
+                ->where('in_qty', '>', 0);
+            if ($warehouseId) {
+                $inQuery->where('warehouse_id', $warehouseId);
+            }
+            $inQty = (float)$inQuery->sum('in_qty');
 
-            $outQty = InventoryTransaction::where('wood_board_id', $m->id)
+            $outQuery = InventoryTransaction::where('wood_board_id', $m->id)
                 ->whereBetween('date', [$startDate, $endDate])
-                ->where('out_qty', '>', 0)
-                ->sum('out_qty');
+                ->where('out_qty', '>', 0);
+            if ($warehouseId) {
+                $outQuery->where('warehouse_id', $warehouseId);
+            }
+            $outQty = (float)$outQuery->sum('out_qty');
 
-            $startStock = InventoryTransaction::where('wood_board_id', $m->id)
-                ->where('date', '<', $startDate)
-                ->sum(DB::raw('in_qty - out_qty'));
+            $startQuery = InventoryTransaction::where('wood_board_id', $m->id)
+                ->where('date', '<', $startDate);
+            if ($warehouseId) {
+                $startQuery->where('warehouse_id', $warehouseId);
+            }
+            $startStock = (float)$startQuery->sum(DB::raw('in_qty - out_qty'));
 
             $endStock = $startStock + $inQty - $outQty;
 
@@ -646,9 +673,12 @@ class InventoryController extends Controller
         }
 
         foreach ($materials as $idx => $m) {
-            $initYearStock = InventoryTransaction::where('wood_board_id', $m->id)
-                ->where('date', '<', $year . '-01-01')
-                ->sum(DB::raw('in_qty - out_qty'));
+            $initYearQuery = InventoryTransaction::where('wood_board_id', $m->id)
+                ->where('date', '<', $year . '-01-01');
+            if ($warehouseId) {
+                $initYearQuery->where('warehouse_id', $warehouseId);
+            }
+            $initYearStock = (float)$initYearQuery->sum(DB::raw('in_qty - out_qty'));
 
             $running = $initYearStock;
             $rowMonths = [];
@@ -659,13 +689,19 @@ class InventoryController extends Controller
                 $mStart = sprintf('%04d-%02d-01', $year, $month);
                 $mEnd = date('Y-m-t', strtotime($mStart));
 
-                $mIn = (float)InventoryTransaction::where('wood_board_id', $m->id)
-                    ->whereBetween('date', [$mStart, $mEnd])
-                    ->sum('in_qty');
+                $mInQuery = InventoryTransaction::where('wood_board_id', $m->id)
+                    ->whereBetween('date', [$mStart, $mEnd]);
+                if ($warehouseId) {
+                    $mInQuery->where('warehouse_id', $warehouseId);
+                }
+                $mIn = (float)$mInQuery->sum('in_qty');
 
-                $mOut = (float)InventoryTransaction::where('wood_board_id', $m->id)
-                    ->whereBetween('date', [$mStart, $mEnd])
-                    ->sum('out_qty');
+                $mOutQuery = InventoryTransaction::where('wood_board_id', $m->id)
+                    ->whereBetween('date', [$mStart, $mEnd]);
+                if ($warehouseId) {
+                    $mOutQuery->where('warehouse_id', $warehouseId);
+                }
+                $mOut = (float)$mOutQuery->sum('out_qty');
 
                 $running = $running + $mIn - $mOut;
                 $rowMonths[$month] = ['in' => $mIn, 'out' => $mOut, 'stock' => $running];
@@ -698,11 +734,12 @@ class InventoryController extends Controller
             $colTotals['final_stock'] += $running;
         }
 
-        $availableYears = InventoryTransaction::selectRaw('DISTINCT YEAR(date) as y')
-            ->whereNotNull('date')
-            ->orderByDesc('y')
-            ->pluck('y')
-            ->toArray();
+        $yearsQuery = InventoryTransaction::selectRaw('DISTINCT YEAR(date) as y')
+            ->whereNotNull('date');
+        if ($warehouseId) {
+            $yearsQuery->where('warehouse_id', $warehouseId);
+        }
+        $availableYears = $yearsQuery->orderByDesc('y')->pluck('y')->toArray();
 
         if (empty($availableYears)) $availableYears = [date('Y')];
 
@@ -711,6 +748,8 @@ class InventoryController extends Controller
             'startDate',
             'endDate',
             'year',
+            'warehouseId',
+            'warehouses',
             'reportData',
             'matrixRows',
             'colTotals',
@@ -725,15 +764,30 @@ class InventoryController extends Controller
     {
         $startDate = $request->input('start_date', date('Y-01-01'));
         $endDate = $request->input('end_date', date('Y-m-d'));
+        $warehouseId = $request->input('warehouse_id');
 
-        $materials = WoodBoard::with('warehouse')->orderBy('price_group')->orderBy('color_code')->get();
+        $materialsQuery = WoodBoard::with('warehouse')->orderBy('price_group')->orderBy('color_code');
+        if ($warehouseId) {
+            $materialsQuery->where(function($q) use ($warehouseId) {
+                $q->where('warehouse_id', $warehouseId)
+                  ->orWhereHas('transactions', function($t) use ($warehouseId) {
+                      $t->where('warehouse_id', $warehouseId);
+                  });
+            });
+        }
+        $materials = $materialsQuery->get();
 
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Xuat_Nhap_Ton');
 
         $sheet->setCellValue('A1', 'BÁO CÁO TỔNG HỢP XUẤT - NHẬP - TỒN');
-        $sheet->setCellValue('A2', 'Từ ngày: ' . date('d/m/Y', strtotime($startDate)) . ' đến ngày: ' . date('d/m/Y', strtotime($endDate)));
+        $subTitle = 'Từ ngày: ' . date('d/m/Y', strtotime($startDate)) . ' đến ngày: ' . date('d/m/Y', strtotime($endDate));
+        if ($warehouseId) {
+            $wh = Warehouse::find($warehouseId);
+            if ($wh) $subTitle .= ' | Kho: ' . $wh->name;
+        }
+        $sheet->setCellValue('A2', $subTitle);
         $sheet->mergeCells('A1:I1');
         $sheet->mergeCells('A2:I2');
         $sheet->getStyle('A1')->getFont()->setSize(14)->setBold(true);
@@ -754,19 +808,28 @@ class InventoryController extends Controller
 
         $row = 5;
         foreach ($materials as $idx => $m) {
-            $inQty = (float)InventoryTransaction::where('wood_board_id', $m->id)
+            $inQuery = InventoryTransaction::where('wood_board_id', $m->id)
                 ->whereBetween('date', [$startDate, $endDate])
-                ->where('in_qty', '>', 0)
-                ->sum('in_qty');
+                ->where('in_qty', '>', 0);
+            if ($warehouseId) {
+                $inQuery->where('warehouse_id', $warehouseId);
+            }
+            $inQty = (float)$inQuery->sum('in_qty');
 
-            $outQty = (float)InventoryTransaction::where('wood_board_id', $m->id)
+            $outQuery = InventoryTransaction::where('wood_board_id', $m->id)
                 ->whereBetween('date', [$startDate, $endDate])
-                ->where('out_qty', '>', 0)
-                ->sum('out_qty');
+                ->where('out_qty', '>', 0);
+            if ($warehouseId) {
+                $outQuery->where('warehouse_id', $warehouseId);
+            }
+            $outQty = (float)$outQuery->sum('out_qty');
 
-            $startStock = (float)InventoryTransaction::where('wood_board_id', $m->id)
-                ->where('date', '<', $startDate)
-                ->sum(DB::raw('in_qty - out_qty'));
+            $startQuery = InventoryTransaction::where('wood_board_id', $m->id)
+                ->where('date', '<', $startDate);
+            if ($warehouseId) {
+                $startQuery->where('warehouse_id', $warehouseId);
+            }
+            $startStock = (float)$startQuery->sum(DB::raw('in_qty - out_qty'));
 
             $endStock = $startStock + $inQty - $outQty;
 
@@ -815,13 +878,29 @@ class InventoryController extends Controller
     public function exportMatrixReport(Request $request)
     {
         $year = (int)$request->input('year', date('Y'));
-        $materials = WoodBoard::with('warehouse')->orderBy('price_group')->orderBy('color_code')->get();
+        $warehouseId = $request->input('warehouse_id');
+
+        $materialsQuery = WoodBoard::with('warehouse')->orderBy('price_group')->orderBy('color_code');
+        if ($warehouseId) {
+            $materialsQuery->where(function($q) use ($warehouseId) {
+                $q->where('warehouse_id', $warehouseId)
+                  ->orWhereHas('transactions', function($t) use ($warehouseId) {
+                      $t->where('warehouse_id', $warehouseId);
+                  });
+            });
+        }
+        $materials = $materialsQuery->get();
 
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Ma_Tran_Tieu_Thu_' . $year);
 
-        $sheet->setCellValue('A1', "BÁO CÁO MA TRẬN NHẬP - XUẤT - TỒN 12 THÁNG NĂM {$year}");
+        $title = "BÁO CÁO MA TRẬN NHẬP - XUẤT - TỒN 12 THÁNG NĂM {$year}";
+        if ($warehouseId) {
+            $wh = Warehouse::find($warehouseId);
+            if ($wh) $title .= ' - KHO: ' . mb_strtoupper($wh->name);
+        }
+        $sheet->setCellValue('A1', $title);
         $sheet->getStyle('A1')->getFont()->setSize(14)->setBold(true);
 
         // Header Rows (Row 3 & 4)
@@ -874,9 +953,12 @@ class InventoryController extends Controller
             $sheet->setCellValue('C' . $row, $m->origin_code ?: '-');
             $sheet->setCellValue('D' . $row, 'Tấm ' . $m->color_code);
 
-            $initYearStock = (float)InventoryTransaction::where('wood_board_id', $m->id)
-                ->where('date', '<', $year . '-01-01')
-                ->sum(DB::raw('in_qty - out_qty'));
+            $initYearQuery = InventoryTransaction::where('wood_board_id', $m->id)
+                ->where('date', '<', $year . '-01-01');
+            if ($warehouseId) {
+                $initYearQuery->where('warehouse_id', $warehouseId);
+            }
+            $initYearStock = (float)$initYearQuery->sum(DB::raw('in_qty - out_qty'));
             $sheet->setCellValue('E' . $row, $initYearStock);
 
             $running = $initYearStock;
@@ -888,13 +970,19 @@ class InventoryController extends Controller
                 $mStart = sprintf('%04d-%02d-01', $year, $month);
                 $mEnd = date('Y-m-t', strtotime($mStart));
 
-                $mIn = (float)InventoryTransaction::where('wood_board_id', $m->id)
-                    ->whereBetween('date', [$mStart, $mEnd])
-                    ->sum('in_qty');
+                $mInQuery = InventoryTransaction::where('wood_board_id', $m->id)
+                    ->whereBetween('date', [$mStart, $mEnd]);
+                if ($warehouseId) {
+                    $mInQuery->where('warehouse_id', $warehouseId);
+                }
+                $mIn = (float)$mInQuery->sum('in_qty');
 
-                $mOut = (float)InventoryTransaction::where('wood_board_id', $m->id)
-                    ->whereBetween('date', [$mStart, $mEnd])
-                    ->sum('out_qty');
+                $mOutQuery = InventoryTransaction::where('wood_board_id', $m->id)
+                    ->whereBetween('date', [$mStart, $mEnd]);
+                if ($warehouseId) {
+                    $mOutQuery->where('warehouse_id', $warehouseId);
+                }
+                $mOut = (float)$mOutQuery->sum('out_qty');
 
                 $running = $running + $mIn - $mOut;
                 $yearIn += $mIn;
@@ -953,7 +1041,7 @@ class InventoryController extends Controller
      */
     public function warehouseList(Request $request)
     {
-        $warehouses = Warehouse::withCount('woodBoards')->orderBy('name')->get();
+        $warehouses = Warehouse::withCount(['woodBoards as materials_count'])->orderBy('name')->get();
         return view('inventory.warehouses.index', compact('warehouses'));
     }
 

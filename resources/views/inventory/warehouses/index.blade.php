@@ -94,9 +94,10 @@
 
                                     <div class="flex items-center gap-1">
                                         <button type="button" 
-                                                onclick="openEditWarehouseModal({{ json_encode($w) }})" 
-                                                class="p-2 text-neutral-400 hover:text-primary-600 hover:bg-neutral-50 rounded-lg" 
-                                                title="Chỉnh sửa">
+                                                data-warehouse="{{ htmlspecialchars(json_encode($w), ENT_QUOTES, 'UTF-8') }}"
+                                                onclick="openEditWarehouseModal(this)" 
+                                                class="p-2 text-neutral-400 hover:text-primary-600 hover:bg-neutral-50 rounded-lg transition-colors cursor-pointer" 
+                                                title="Chỉnh sửa kho hàng">
                                             <iconify-icon icon="solar:pen-bold" class="text-base"></iconify-icon>
                                         </button>
                                         @if($w->materials_count == 0)
@@ -124,8 +125,8 @@
 </div>
 
 {{-- Modal Thêm mới Kho hàng --}}
-<div id="createWarehouseModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
-    <div class="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
+<div id="createWarehouseModal" class="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 hidden" onclick="if(event.target === this) closeCreateWarehouseModal()">
+    <div class="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl relative" onclick="event.stopPropagation()">
         <form action="{{ route('inventory.warehouses.store') }}" method="POST">
             @csrf
             <div class="p-4 border-b border-neutral-200 flex items-center justify-between bg-neutral-50">
@@ -169,8 +170,8 @@
 </div>
 
 {{-- Modal Chỉnh sửa Kho hàng --}}
-<div id="editWarehouseModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
-    <div class="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
+<div id="editWarehouseModal" class="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 hidden" onclick="if(event.target === this) closeEditWarehouseModal()">
+    <div class="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl relative" onclick="event.stopPropagation()">
         <form id="editWarehouseForm" method="POST">
             @csrf
             @method('PUT')
@@ -224,12 +225,25 @@
 <script>
     function openCreateWarehouseModal() {
         document.getElementById('createWarehouseModal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
     }
     function closeCreateWarehouseModal() {
         document.getElementById('createWarehouseModal').classList.add('hidden');
+        document.body.style.overflow = '';
     }
 
-    function openEditWarehouseModal(warehouse) {
+    function openEditWarehouseModal(btnOrObj) {
+        let warehouse = btnOrObj;
+        if (btnOrObj instanceof HTMLElement) {
+            try {
+                warehouse = JSON.parse(btnOrObj.getAttribute('data-warehouse'));
+            } catch (e) {
+                console.error("Lỗi parse data-warehouse:", e);
+                return;
+            }
+        }
+        if (!warehouse) return;
+
         document.getElementById('editWarehouseForm').action = `/warehouses/list/${warehouse.id}`;
         document.getElementById('edit_name').value = warehouse.name || '';
         document.getElementById('edit_code').value = warehouse.code || '';
@@ -239,9 +253,18 @@
         document.getElementById('edit_description').value = warehouse.description || '';
 
         document.getElementById('editWarehouseModal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
     }
     function closeEditWarehouseModal() {
         document.getElementById('editWarehouseModal').classList.add('hidden');
+        document.body.style.overflow = '';
     }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeCreateWarehouseModal();
+            closeEditWarehouseModal();
+        }
+    });
 </script>
 @endsection
