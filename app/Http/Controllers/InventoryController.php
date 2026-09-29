@@ -71,6 +71,42 @@ class InventoryController extends Controller
         $stockFilter = $request->input('stock_filter', 'all'); // 'all', 'low_stock', 'out_of_stock', 'in_stock'
         $search = trim((string)$request->input('search'));
 
+        // Smart Date Filter handling (tương tự orders và customers)
+        $dateMode = $request->input('date_mode', 'all');
+        $dateVal = $request->input('date_val', '');
+        $filterStartDate = $request->input('filter_start_date');
+        $filterEndDate = $request->input('filter_end_date');
+
+        $startDate = null;
+        $endDate = null;
+        $dateLabel = 'Toàn thời gian';
+
+        if ($dateMode && $dateMode !== 'all') {
+            if ($dateMode === 'day' && $dateVal) {
+                $startDate = $dateVal;
+                $endDate = $dateVal;
+                $dateLabel = 'Ngày ' . \Carbon\Carbon::parse($dateVal)->format('d/m/Y');
+            } elseif ($dateMode === 'month' && $dateVal) {
+                $cDate = \Carbon\Carbon::parse($dateVal . '-01');
+                $startDate = $cDate->copy()->startOfMonth()->toDateString();
+                $endDate = $cDate->copy()->endOfMonth()->toDateString();
+                $dateLabel = 'Tháng ' . $cDate->format('m/Y');
+            } elseif ($dateMode === 'year' && $dateVal) {
+                $startDate = $dateVal . '-01-01';
+                $endDate = $dateVal . '-12-31';
+                $dateLabel = 'Năm ' . $dateVal;
+            }
+        } elseif ($filterStartDate || $filterEndDate) {
+            $startDate = $filterStartDate;
+            $endDate = $filterEndDate;
+            $dateMode = 'custom';
+            $dateLabel = ($startDate ? 'Từ ' . \Carbon\Carbon::parse($startDate)->format('d/m/Y') : '') . ($endDate ? ' đến ' . \Carbon\Carbon::parse($endDate)->format('d/m/Y') : '');
+        } else {
+            $dateMode = 'all';
+            $dateVal = '';
+            $dateLabel = 'Toàn thời gian';
+        }
+
         $query = Material::with('warehouse');
 
         if ($selectedWarehouseId) {
@@ -87,6 +123,14 @@ class InventoryController extends Controller
             $query->where('current_stock', '<=', 0);
         } elseif ($stockFilter === 'in_stock') {
             $query->where('current_stock', '>', 0);
+        }
+
+        if ($startDate && $endDate) {
+            $query->where(function ($q) use ($startDate, $endDate) {
+                $q->whereHas('transactions', function ($t) use ($startDate, $endDate) {
+                    $t->whereBetween('date', [$startDate, $endDate]);
+                })->orWhereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
+            });
         }
 
         if ($search) {
@@ -110,6 +154,13 @@ class InventoryController extends Controller
 
         $categories = Material::select('category')->whereNotNull('category')->distinct()->pluck('category');
 
+        $activeFilterCount = 0;
+        if ($selectedWarehouseId) $activeFilterCount++;
+        if ($selectedCategory) $activeFilterCount++;
+        if ($stockFilter !== 'all') $activeFilterCount++;
+        if ($dateMode !== 'all' && !empty($dateMode)) $activeFilterCount++;
+        $isFiltered = ($activeFilterCount > 0) || !empty($search);
+
         return view('inventory.index', compact(
             'materials',
             'warehouses',
@@ -121,7 +172,14 @@ class InventoryController extends Controller
             'totalStockQty',
             'totalStockValue',
             'lowStockCount',
-            'categories'
+            'categories',
+            'dateMode',
+            'dateVal',
+            'startDate',
+            'endDate',
+            'dateLabel',
+            'activeFilterCount',
+            'isFiltered'
         ));
     }
 

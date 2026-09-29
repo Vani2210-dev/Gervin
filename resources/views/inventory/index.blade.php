@@ -77,71 +77,82 @@
         </div>
 
         {{-- Filter & Action Bar --}}
+        {{-- Filter & Action Bar --}}
         <div class="card p-0 rounded-xl border-0 bg-white shadow-sm mb-6">
-            <div class="p-4 border-b border-neutral-200">
-                <form action="{{ route('inventory.index') }}" method="GET" class="flex flex-wrap items-center justify-between gap-4">
-                    {{-- Left filters --}}
-                    <div class="flex flex-wrap items-center gap-3">
-                        {{-- Search Input --}}
-                        <div class="relative">
-                            <iconify-icon icon="ion:search-outline" class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400"></iconify-icon>
-                            <input type="text" name="search" value="{{ $search }}" class="form-control rounded-lg pl-9 pr-4 py-2 border-neutral-200 text-xs w-64 focus:border-primary-500" 
-                                placeholder="Tìm mã SKU, tên, xuất xứ...">
-                        </div>
+            <div class="p-4 border-b border-neutral-200 flex flex-wrap items-center justify-between gap-3">
+                {{-- Left: Search & Smart Date Filter --}}
+                <div class="flex items-center gap-3 flex-wrap">
+                    {{-- Quick Search --}}
+                    <form action="{{ route('inventory.index') }}" method="GET" class="relative">
+                        @if(request('warehouse_id')) <input type="hidden" name="warehouse_id" value="{{ request('warehouse_id') }}"> @endif
+                        @if(request('category')) <input type="hidden" name="category" value="{{ request('category') }}"> @endif
+                        @if(request('stock_filter')) <input type="hidden" name="stock_filter" value="{{ request('stock_filter') }}"> @endif
+                        @if(request('date_mode')) <input type="hidden" name="date_mode" value="{{ request('date_mode') }}"> @endif
+                        @if(request('date_val')) <input type="hidden" name="date_val" value="{{ request('date_val') }}"> @endif
 
-                        {{-- Category filter --}}
-                        <select name="category" onchange="this.form.submit()" class="form-select rounded-lg py-2 px-3 border-neutral-200 text-xs text-neutral-700 focus:border-primary-500">
-                            <option value="">-- Tất cả nhóm hàng --</option>
-                            @foreach($categories as $cat)
-                                <option value="{{ $cat }}" {{ $selectedCategory == $cat ? 'selected' : '' }}>{{ $cat }}</option>
-                            @endforeach
-                        </select>
+                        <iconify-icon icon="ion:search-outline" class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400"></iconify-icon>
+                        <input type="text" name="search" value="{{ $search }}" class="form-control rounded-xl pl-9 pr-3 py-2 border-neutral-300 text-xs w-60 focus:border-primary-500 shadow-2xs" 
+                            placeholder="Tìm mã SKU, tên, xuất xứ...">
+                    </form>
 
-                        {{-- Warehouse filter --}}
-                        <select name="warehouse_id" onchange="this.form.submit()" class="form-select rounded-lg py-2 px-3 border-neutral-200 text-xs text-neutral-700 focus:border-primary-500">
-                            <option value="">-- Tất cả kho --</option>
-                            @foreach($warehouses as $wh)
-                                <option value="{{ $wh->id }}" {{ $selectedWarehouseId == $wh->id ? 'selected' : '' }}>{{ $wh->name }}</option>
-                            @endforeach
-                        </select>
+                    {{-- Bộ lọc Ngày / Tháng / Năm / Tất cả thông minh --}}
+                    <x-flexible-date-filter :dateMode="$dateMode" :dateVal="$dateVal" />
 
-                        <button type="submit" class="btn bg-neutral-100 hover:bg-neutral-200 text-neutral-700 px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-1">
-                            <iconify-icon icon="solar:filter-bold" class="text-sm"></iconify-icon> Lọc
-                        </button>
+                    @if($dateMode !== 'all')
+                        <span class="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-1 rounded-md bg-primary-50 text-primary-700 border border-primary-200">
+                            <iconify-icon icon="solar:calendar-date-bold" class="text-xs"></iconify-icon>
+                            {{ $dateLabel }}
+                        </span>
+                    @endif
+                </div>
 
-                        @if($search || $selectedCategory || $selectedWarehouseId || $stockFilter !== 'all')
-                            <a href="{{ route('inventory.index') }}" class="text-xs text-danger-600 hover:underline flex items-center gap-1">
-                                <iconify-icon icon="solar:restart-bold"></iconify-icon> Xóa lọc
-                            </a>
+                {{-- Right: Filter Button (modal), Reset filter, Status Pills, Export, Add --}}
+                <div class="flex items-center gap-2 flex-wrap">
+                    {{-- Nút Bộ lọc Modal --}}
+                    <button type="button" onclick="openModal('inventoryFilterModal')" 
+                        class="btn bg-white border border-neutral-300 hover:bg-neutral-50 text-neutral-700 text-xs px-3 py-2 rounded-xl flex items-center gap-2 shadow-2xs font-semibold">
+                        <iconify-icon icon="solar:filter-outline" class="text-base text-neutral-500"></iconify-icon>
+                        <span>Bộ lọc</span>
+                        @if($activeFilterCount > 0)
+                            <span class="w-5 h-5 rounded-full bg-primary-600 text-white text-[10px] font-bold flex items-center justify-center">
+                                {{ $activeFilterCount }}
+                            </span>
                         @endif
-                    </div>
+                    </button>
 
-                    {{-- Right status pills & buttons --}}
-                    <div class="flex flex-wrap items-center gap-3">
-                        <div class="bg-neutral-100 p-1 rounded-lg flex items-center gap-1 text-xs font-semibold">
-                            <a href="{{ route('inventory.index', array_merge(request()->query(), ['stock_filter' => 'all'])) }}"
-                               class="px-3 py-1 rounded-md transition-all {{ $stockFilter === 'all' ? 'bg-white text-neutral-900 shadow-sm font-bold' : 'text-neutral-600 hover:text-neutral-900' }}">
-                                Tất cả ({{ $totalItems }})
-                            </a>
-                            <a href="{{ route('inventory.index', array_merge(request()->query(), ['stock_filter' => 'low_stock'])) }}"
-                               class="px-3 py-1 rounded-md transition-all {{ $stockFilter === 'low_stock' ? 'bg-warning-500 text-white shadow-sm font-bold' : 'text-warning-700 hover:text-warning-800' }}">
-                                Tồn thấp
-                            </a>
-                            <a href="{{ route('inventory.index', array_merge(request()->query(), ['stock_filter' => 'out_of_stock'])) }}"
-                               class="px-3 py-1 rounded-md transition-all {{ $stockFilter === 'out_of_stock' ? 'bg-danger-600 text-white shadow-sm font-bold' : 'text-danger-600 hover:text-danger-800' }}">
-                                Hết hàng
-                            </a>
-                        </div>
-
-                        <a href="{{ route('inventory.export-stock') }}" class="btn border border-neutral-300 text-neutral-700 hover:bg-neutral-100 px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-2">
-                            <iconify-icon icon="solar:file-excel-outline" class="text-base text-success-600"></iconify-icon> Xuất Excel
+                    @if($isFiltered)
+                        <a href="{{ route('inventory.index') }}" class="btn text-xs px-2 py-2 rounded-xl flex items-center gap-1 text-rose-600 hover:bg-rose-50 font-semibold" title="Xóa tất cả bộ lọc">
+                            <iconify-icon icon="solar:close-circle-outline" class="text-base"></iconify-icon>
+                            Xóa lọc
                         </a>
+                    @endif
 
-                        <button type="button" onclick="openModal('createMaterialModal')" class="btn btn-primary px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 shadow-sm">
-                            <iconify-icon icon="ic:baseline-plus" class="text-base"></iconify-icon> Thêm vật tư mới
-                        </button>
+                    {{-- Status Pills (All / Low stock / Out of stock) --}}
+                    <div class="bg-neutral-100 p-1 rounded-xl flex items-center gap-1 text-xs font-semibold">
+                        <a href="{{ route('inventory.index', array_merge(request()->query(), ['stock_filter' => 'all'])) }}"
+                           class="px-3 py-1 rounded-lg transition-all {{ $stockFilter === 'all' ? 'bg-white text-neutral-900 shadow-2xs font-bold' : 'text-neutral-500 hover:text-neutral-900' }}">
+                            Tất cả ({{ $totalItems }})
+                        </a>
+                        <a href="{{ route('inventory.index', array_merge(request()->query(), ['stock_filter' => 'low_stock'])) }}"
+                           class="px-3 py-1 rounded-lg transition-all {{ $stockFilter === 'low_stock' ? 'bg-warning-500 text-white shadow-2xs font-bold' : 'text-warning-700 hover:text-warning-800' }}">
+                            Tồn thấp
+                        </a>
+                        <a href="{{ route('inventory.index', array_merge(request()->query(), ['stock_filter' => 'out_of_stock'])) }}"
+                           class="px-3 py-1 rounded-lg transition-all {{ $stockFilter === 'out_of_stock' ? 'bg-rose-600 text-white shadow-2xs font-bold' : 'text-rose-600 hover:text-rose-800' }}">
+                            Hết hàng
+                        </a>
                     </div>
-                </form>
+
+                    {{-- Export Excel --}}
+                    <a href="{{ route('inventory.export-stock', request()->query()) }}" class="btn bg-white border border-neutral-300 text-neutral-700 hover:bg-neutral-50 px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shadow-2xs">
+                        <iconify-icon icon="solar:file-excel-outline" class="text-base text-emerald-600"></iconify-icon> Xuất Excel
+                    </a>
+
+                    {{-- Add Material --}}
+                    <button type="button" onclick="openModal('createMaterialModal')" class="btn btn-primary px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm">
+                        <iconify-icon icon="ic:baseline-plus" class="text-base"></iconify-icon> Thêm vật tư mới
+                    </button>
+                </div>
             </div>
 
             {{-- Table Area --}}
@@ -426,6 +437,84 @@
             <p class="text-xs">Đang tải lịch sử thẻ kho...</p>
         </div>
     </div>
+</x-modal>
+
+{{-- MODAL 4: BỘ LỌC VẬT TƯ & TỒN KHO NÂNG CAO --}}
+<x-modal name="inventoryFilterModal" maxWidth="md">
+    <div class="px-6 py-4 border-b border-neutral-200 flex items-center justify-between bg-neutral-50 rounded-t-xl">
+        <div class="flex items-center gap-2">
+            <iconify-icon icon="solar:filter-bold" class="text-xl text-primary-600"></iconify-icon>
+            <h5 class="font-bold text-base text-neutral-800 mb-0">Bộ lọc vật tư & tồn kho</h5>
+        </div>
+        <button type="button" onclick="closeModal('inventoryFilterModal')" class="text-neutral-400 hover:text-neutral-700 text-xl leading-none">&times;</button>
+    </div>
+
+    <form action="{{ route('inventory.index') }}" method="GET" id="inventoryFilterForm">
+        {{-- Giữ lại từ khóa tìm kiếm và lọc ngày hiện tại --}}
+        @if(request('search')) <input type="hidden" name="search" value="{{ request('search') }}"> @endif
+        @if(request('date_mode')) <input type="hidden" name="date_mode" value="{{ request('date_mode') }}"> @endif
+        @if(request('date_val')) <input type="hidden" name="date_val" value="{{ request('date_val') }}"> @endif
+
+        <div class="p-6 space-y-4">
+            {{-- Nhóm hàng --}}
+            <div>
+                <label class="form-label text-xs font-semibold text-neutral-700 mb-1 block">Nhóm hàng / Phân loại</label>
+                <select name="category" class="form-select rounded-lg w-full border-neutral-300 px-3 py-2 text-xs focus:border-primary-500">
+                    <option value="">-- Tất cả nhóm hàng --</option>
+                    @foreach($categories as $cat)
+                        <option value="{{ $cat }}" {{ $selectedCategory == $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            {{-- Kho hàng --}}
+            <div>
+                <label class="form-label text-xs font-semibold text-neutral-700 mb-1 block">Kho lưu trữ</label>
+                <select name="warehouse_id" class="form-select rounded-lg w-full border-neutral-300 px-3 py-2 text-xs focus:border-primary-500">
+                    <option value="">-- Tất cả kho --</option>
+                    @foreach($warehouses as $wh)
+                        <option value="{{ $wh->id }}" {{ $selectedWarehouseId == $wh->id ? 'selected' : '' }}>{{ $wh->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            {{-- Tình trạng tồn --}}
+            <div>
+                <label class="form-label text-xs font-semibold text-neutral-700 mb-1 block">Tình trạng tồn kho</label>
+                <select name="stock_filter" class="form-select rounded-lg w-full border-neutral-300 px-3 py-2 text-xs focus:border-primary-500">
+                    <option value="all" {{ $stockFilter === 'all' ? 'selected' : '' }}>Tất cả</option>
+                    <option value="in_stock" {{ $stockFilter === 'in_stock' ? 'selected' : '' }}>Còn hàng trong kho</option>
+                    <option value="low_stock" {{ $stockFilter === 'low_stock' ? 'selected' : '' }}>Tồn thấp (Dưới định mức an toàn)</option>
+                    <option value="out_of_stock" {{ $stockFilter === 'out_of_stock' ? 'selected' : '' }}>Hết hàng (Tồn = 0)</option>
+                </select>
+            </div>
+
+            {{-- Khoảng ngày phát sinh tùy chọn --}}
+            <div class="border-t border-neutral-200 pt-3">
+                <label class="form-label text-xs font-semibold text-neutral-700 mb-1 block">Hoặc lọc theo khoảng ngày phát sinh</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <span class="text-[11px] text-neutral-500 block mb-1">Từ ngày</span>
+                        <input type="date" name="filter_start_date" value="{{ request('filter_start_date') }}" class="form-control rounded-lg w-full border-neutral-300 px-3 py-2 text-xs">
+                    </div>
+                    <div>
+                        <span class="text-[11px] text-neutral-500 block mb-1">Đến ngày</span>
+                        <input type="date" name="filter_end_date" value="{{ request('filter_end_date') }}" class="form-control rounded-lg w-full border-neutral-300 px-3 py-2 text-xs">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="px-6 py-4 border-t border-neutral-200 flex items-center justify-between bg-neutral-50 rounded-b-xl">
+            <a href="{{ route('inventory.index') }}" class="text-xs text-rose-600 hover:underline font-semibold flex items-center gap-1">
+                <iconify-icon icon="solar:restart-bold"></iconify-icon> Thiết lập lại
+            </a>
+            <div class="flex items-center gap-2">
+                <button type="button" onclick="closeModal('inventoryFilterModal')" class="btn border border-neutral-300 text-neutral-700 hover:bg-neutral-100 px-4 py-2 rounded-lg text-xs font-medium">Đóng</button>
+                <button type="submit" class="btn btn-primary px-5 py-2 rounded-lg text-xs font-bold shadow-sm">Áp dụng lọc</button>
+            </div>
+        </div>
+    </form>
 </x-modal>
 
 <script>

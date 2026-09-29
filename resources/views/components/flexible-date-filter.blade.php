@@ -37,31 +37,31 @@
 
     <div class="inline-flex items-center bg-white border border-neutral-300 rounded-xl p-1 shadow-2xs {{ !$standalone ? $class : '' }}">
         {{-- Selector chọn chế độ --}}
-        <div class="flex items-center bg-neutral-100 rounded-lg p-0.5 text-xs font-semibold mr-1.5">
+        <div class="flex items-center bg-neutral-100 rounded-lg p-1 text-xs font-semibold mr-2">
             @if($showDay)
             <button type="button" onclick="{{ $uid }}_setMode('day')" id="{{ $uid }}_btn_day"
-                class="px-2.5 py-1 rounded-md transition-all {{ $currentMode === 'day' ? 'bg-white text-primary-700 shadow-2xs font-bold' : 'text-neutral-500 hover:text-neutral-800' }}">
+                class="px-3 py-1 rounded-md transition-all {{ $currentMode === 'day' ? 'bg-white text-primary-700 shadow-2xs font-bold' : 'text-neutral-500 hover:text-neutral-800' }}">
                 Ngày
             </button>
             @endif
 
             @if($showMonth)
             <button type="button" onclick="{{ $uid }}_setMode('month')" id="{{ $uid }}_btn_month"
-                class="px-2.5 py-1 rounded-md transition-all {{ $currentMode === 'month' ? 'bg-white text-primary-700 shadow-2xs font-bold' : 'text-neutral-500 hover:text-neutral-800' }}">
+                class="px-3 py-1 rounded-md transition-all {{ $currentMode === 'month' ? 'bg-white text-primary-700 shadow-2xs font-bold' : 'text-neutral-500 hover:text-neutral-800' }}">
                 Tháng
             </button>
             @endif
 
             @if($showYear)
             <button type="button" onclick="{{ $uid }}_setMode('year')" id="{{ $uid }}_btn_year"
-                class="px-2.5 py-1 rounded-md transition-all {{ $currentMode === 'year' ? 'bg-white text-primary-700 shadow-2xs font-bold' : 'text-neutral-500 hover:text-neutral-800' }}">
+                class="px-3 py-1 rounded-md transition-all {{ $currentMode === 'year' ? 'bg-white text-primary-700 shadow-2xs font-bold' : 'text-neutral-500 hover:text-neutral-800' }}">
                 Năm
             </button>
             @endif
 
             @if($showAll)
             <button type="button" onclick="{{ $uid }}_setMode('all')" id="{{ $uid }}_btn_all"
-                class="px-2.5 py-1 rounded-md transition-all {{ $currentMode === 'all' ? 'bg-white text-primary-700 shadow-2xs font-bold' : 'text-neutral-500 hover:text-neutral-800' }}">
+                class="px-3 py-1 rounded-md transition-all {{ $currentMode === 'all' ? 'bg-white text-primary-700 shadow-2xs font-bold' : 'text-neutral-500 hover:text-neutral-800' }}">
                 Tất cả
             </button>
             @endif
@@ -75,20 +75,20 @@
                 <input type="text" readonly value="Toàn thời gian" class="border-0 bg-transparent text-xs py-1 px-2 font-semibold text-neutral-500 w-28 cursor-default outline-none">
             @elseif($currentMode === 'day')
                 <input type="date" name="date_val" id="{{ $uid }}_val" value="{{ $currentVal }}"
-                    class="border-0 bg-transparent text-xs py-1 px-1.5 font-medium text-neutral-800 outline-none cursor-pointer"
+                    class="border-0 bg-transparent text-xs py-1 px-2 font-medium text-neutral-800 outline-none cursor-pointer"
                     onchange="document.getElementById('{{ $actualFormId }}').submit()">
             @elseif($currentMode === 'month')
                 <input type="month" name="date_val" id="{{ $uid }}_val" value="{{ $currentVal }}"
-                    class="border-0 bg-transparent text-xs py-1 px-1.5 font-medium text-neutral-800 outline-none cursor-pointer"
+                    class="border-0 bg-transparent text-xs py-1 px-2 font-medium text-neutral-800 outline-none cursor-pointer"
                     onchange="document.getElementById('{{ $actualFormId }}').submit()">
             @elseif($currentMode === 'year')
                 <input type="number" min="2000" max="2099" name="date_val" id="{{ $uid }}_val" value="{{ $currentVal }}"
-                    class="border-0 bg-transparent text-xs py-1 px-1.5 font-medium text-neutral-800 outline-none w-20"
+                    class="border-0 bg-transparent text-xs py-1 px-2 font-medium text-neutral-800 outline-none w-20"
                     placeholder="Năm..." onchange="document.getElementById('{{ $actualFormId }}').submit()">
             @endif
         </div>
 
-        <button type="submit" class="btn btn-xs btn-primary rounded-lg px-2.5 py-1.5 text-xs font-semibold flex items-center gap-1 ml-1" title="Áp dụng lọc">
+        <button type="submit" class="btn btn-xs btn-primary rounded-lg px-2 py-1 text-xs font-semibold flex items-center gap-1 ml-1" title="Áp dụng lọc">
             <iconify-icon icon="lucide:arrow-right" class="text-xs"></iconify-icon>
         </button>
     </div>
