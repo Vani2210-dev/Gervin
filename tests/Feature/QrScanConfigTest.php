@@ -69,4 +69,80 @@ class QrScanConfigTest extends TestCase
         $response->assertSee('Máy quét Test Xưởng 1');
         $response->assertSee('DH001-CANH-02-LATEST');
     }
+
+    public function test_can_update_qr_configuration_commands()
+    {
+        $user = User::factory()->create();
+
+        $updatedCommands = [
+            [
+                'step'  => 1,
+                'badge' => 'Bước 1: Reset Máy',
+                'title' => 'Khôi phục cài đặt xuất xưởng',
+                'desc'  => 'Reset toàn bộ về mặc định',
+                'cmd'   => '<cmd>rk_reset',
+            ],
+            [
+                'step'  => 2,
+                'badge' => 'Bước 2: Wi-Fi Mới',
+                'title' => 'Kết nối Wi-Fi Văn phòng',
+                'desc'  => 'SSID: "GERVIN_OFFICE" | Pass: "99999999"',
+                'cmd'   => '<cmd>wifi -ssid "GERVIN_OFFICE" -pass "99999999"',
+            ],
+            [
+                'step'  => 3,
+                'badge' => 'Bước 3: Server Mới',
+                'title' => 'Cấu hình Server ERP',
+                'desc'  => 'URL máy chủ nhận mã',
+                'cmd'   => '<cmd>server -url "https://gervinwood.vn/api/scan" -dup 1 -queue 30',
+            ],
+        ];
+
+        $response = $this->actingAs($user)->post(route('processes.qr-scans.update-config-commands'), [
+            'commands' => $updatedCommands,
+        ]);
+
+        $response->assertRedirect(route('processes.qr-scans', ['tab' => 'config']));
+        $response->assertSessionHas('success');
+
+        // Kiểm tra trong database
+        $this->assertDatabaseHas('qr_config_commands', [
+            'cmd' => '<cmd>wifi -ssid "GERVIN_OFFICE" -pass "99999999"',
+            'title' => 'Kết nối Wi-Fi Văn phòng',
+        ]);
+        $this->assertDatabaseHas('qr_config_commands', [
+            'cmd' => '<cmd>server -url "https://gervinwood.vn/api/scan" -dup 1 -queue 30',
+        ]);
+
+        // Kiểm tra trang hiển thị nội dung mới
+        $getPage = $this->actingAs($user)->get(route('processes.qr-scans'));
+        $getPage->assertSee('Kết nối Wi-Fi Văn phòng');
+        $getPage->assertSee('&lt;cmd&gt;wifi -ssid &quot;GERVIN_OFFICE&quot; -pass &quot;99999999&quot;', false);
+    }
+
+    public function test_can_reset_qr_configuration_commands_to_default()
+    {
+        $user = User::factory()->create();
+
+        // Đổi cấu hình trước
+        \App\Models\QrConfigCommand::truncate();
+        \App\Models\QrConfigCommand::create([
+            'step' => 1,
+            'badge' => 'Custom',
+            'title' => 'Custom Command',
+            'cmd' => '<cmd>custom_test',
+        ]);
+
+        // Thực hiện reset
+        $response = $this->actingAs($user)->post(route('processes.qr-scans.reset-config-commands'));
+
+        $response->assertRedirect(route('processes.qr-scans', ['tab' => 'config']));
+        $response->assertSessionHas('success');
+
+        // Kiểm tra database có lại 5 lệnh mặc định
+        $this->assertEquals(5, \App\Models\QrConfigCommand::count());
+        $this->assertDatabaseHas('qr_config_commands', [
+            'cmd' => '<cmd>wifi -ssid "CTY GERVIN - XUONG" -pass "68686868"',
+        ]);
+    }
 }

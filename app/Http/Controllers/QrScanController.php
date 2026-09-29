@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\QrDevice;
 use App\Models\QrScanLog;
+use App\Models\QrConfigCommand;
 use App\Models\User;
 use App\Services\CNCService;
 use App\Services\PressingService;
@@ -12,6 +13,7 @@ use App\Services\EdgeBandingService;
 use App\Services\FinishingService;
 use App\Services\QCService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class QrScanController extends Controller
@@ -259,6 +261,21 @@ class QrScanController extends Controller
 
         $logs = $query->paginate($perPage);
 
+        // Lấy danh sách lệnh cấu hình máy quét
+        $configCommands = QrConfigCommand::where('is_active', true)
+            ->orderBy('sort_order', 'asc')
+            ->orderBy('step', 'asc')
+            ->get();
+
+        if ($configCommands->isEmpty()) {
+            foreach (QrConfigCommand::defaultCommands() as $cmd) {
+                QrConfigCommand::create($cmd);
+            }
+            $configCommands = QrConfigCommand::where('is_active', true)
+                ->orderBy('sort_order', 'asc')
+                ->get();
+        }
+
         // Xác định tab đang mở
         $currTab = $request->input('tab');
         if (!$currTab) {
@@ -277,8 +294,60 @@ class QrScanController extends Controller
             'search',
             'statusFilter',
             'deviceFilter',
-            'currTab'
+            'currTab',
+            'configCommands'
         ));
+    }
+
+    /**
+     * POST /processes/qr-scans/config-commands
+     * Cập nhật danh sách các lệnh mã QR cấu hình máy quét.
+     */
+    public function updateConfigCommands(Request $request)
+    {
+        $request->validate([
+            'commands'         => 'required|array|min:1',
+            'commands.*.title' => 'required|string|max:255',
+            'commands.*.cmd'   => 'required|string',
+            'commands.*.badge' => 'nullable|string|max:255',
+            'commands.*.desc'  => 'nullable|string',
+        ]);
+
+        DB::transaction(function () use ($request) {
+            QrConfigCommand::truncate();
+            foreach ($request->commands as $idx => $cmdData) {
+                $stepNumber = $idx + 1;
+                QrConfigCommand::create([
+                    'step'       => $stepNumber,
+                    'badge'      => !empty($cmdData['badge']) ? $cmdData['badge'] : ('Bước ' . $stepNumber),
+                    'title'      => $cmdData['title'],
+                    'desc'       => $cmdData['desc'] ?? null,
+                    'cmd'        => $cmdData['cmd'],
+                    'sort_order' => $stepNumber,
+                    'is_active'  => true,
+                ]);
+            }
+        });
+
+        return redirect()->route('processes.qr-scans', ['tab' => 'config'])
+            ->with('success', 'Đã lưu và cập nhật cấu hình bộ mã QR thành công!');
+    }
+
+    /**
+     * POST /processes/qr-scans/config-commands/reset
+     * Khôi phục bộ lệnh QR về mặc định gốc.
+     */
+    public function resetConfigCommands()
+    {
+        DB::transaction(function () {
+            QrConfigCommand::truncate();
+            foreach (QrConfigCommand::defaultCommands() as $cmd) {
+                QrConfigCommand::create($cmd);
+            }
+        });
+
+        return redirect()->route('processes.qr-scans', ['tab' => 'config'])
+            ->with('success', 'Đã khôi phục các mã QR cấu hình về mặc định ban đầu!');
     }
 
     /**

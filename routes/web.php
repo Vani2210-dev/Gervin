@@ -390,6 +390,8 @@ Route::middleware(['auth'])->prefix('processes')->name('processes.')->group(func
 
     // QR Devices Configuration & Log Dashboard
     Route::get('/qr-scans', [QrScanController::class, 'index'])->name('qr-scans');
+    Route::post('/qr-scans/config-commands', [QrScanController::class, 'updateConfigCommands'])->name('qr-scans.update-config-commands');
+    Route::post('/qr-scans/config-commands/reset', [QrScanController::class, 'resetConfigCommands'])->name('qr-scans.reset-config-commands');
     Route::post('/qr-scans/devices/{device}', [QrScanController::class, 'updateDevice'])->name('qr-scans.update-device');
     Route::delete('/qr-scans/devices/{device}', [QrScanController::class, 'deleteDevice'])->name('qr-scans.delete-device');
 });

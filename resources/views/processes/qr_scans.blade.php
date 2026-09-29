@@ -4,43 +4,10 @@
     $title = 'Thiết bị quét QR';
     $subTitle = 'Cấu hình, Thiết bị & Nhật ký';
 
-    $configCommands = [
-        [
-            'step'    => 1,
-            'title'   => 'Khôi phục cài đặt gốc',
-            'desc'    => 'Đặt lại toàn bộ thông số máy quét về mặc định ban đầu',
-            'cmd'     => '<cmd>rk_reset',
-            'badge'   => 'Bước 1: Reset',
-        ],
-        [
-            'step'    => 2,
-            'title'   => 'Kết nối Wi-Fi xưởng',
-            'desc'    => 'SSID: "CTY GERVIN - XUONG" | Pass: "68686868"',
-            'cmd'     => '<cmd>wifi -ssid "CTY GERVIN - XUONG" -pass "68686868"',
-            'badge'   => 'Bước 2: Wi-Fi',
-        ],
-        [
-            'step'    => 3,
-            'title'   => 'Cấu hình Máy chủ Server',
-            'desc'    => 'URL: https://gervinwood.vn/scan -dup 1 -queue 20',
-            'cmd'     => '<cmd>server -url "https://gervinwood.vn/scan" -dup 1 -queue 20',
-            'badge'   => 'Bước 3: Server',
-        ],
-        [
-            'step'    => 4,
-            'title'   => 'Thời gian nghỉ giữa các lần quét',
-            'desc'    => 'Tạm dừng 1500ms (1.5 giây) giữa 2 lần quét',
-            'cmd'     => '<cmd>rk -pause 1500',
-            'badge'   => 'Bước 4: Pause 1.5s',
-        ],
-        [
-            'step'    => 5,
-            'title'   => 'Màn hình luôn sáng',
-            'desc'    => 'Timeout = 0: Không bao giờ tắt màn hình máy quét',
-            'cmd'     => '<cmd>screen -timeout 0',
-            'badge'   => 'Bước 5: Screen Timeout',
-        ],
-    ];
+    $configCommands = $configCommands ?? \App\Models\QrConfigCommand::where('is_active', true)->orderBy('sort_order', 'asc')->get();
+    if ($configCommands->isEmpty()) {
+        $configCommands = \App\Models\QrConfigCommand::defaultCommands();
+    }
 
     $currTab = $currTab ?? 'config';
 @endphp
@@ -111,7 +78,7 @@
                 <iconify-icon icon="solar:qr-code-bold-duotone" class="text-lg"></iconify-icon>
                 <span>Cấu hình máy quét</span>
                 <span id="tab-badge-config" class="px-2 py-0.5 rounded-full text-xs font-extrabold {{ $currTab === 'config' ? 'bg-white/20 text-white' : 'bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-200' }}">
-                    5 mã QR
+                    {{ count($configCommands) }} mã QR
                 </span>
             </button>
 
@@ -152,11 +119,18 @@
                         <span class="text-xs text-neutral-400">Dành cho Rakinda RK80ER & các đầu đọc QR kết nối Wi-Fi</span>
                     </div>
                 </div>
-                <button type="button" onclick="openModal('printQrConfigModal')"
-                        class="btn bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950 dark:hover:bg-indigo-900 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-xs font-semibold px-3 py-2 rounded-xl flex items-center gap-2 transition shadow-2xs">
-                    <iconify-icon icon="solar:printer-bold" class="text-base"></iconify-icon>
-                    In bộ mã ra giấy A4
-                </button>
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="openModal('editQrConfigModal')"
+                            class="btn bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition shadow-xs">
+                        <iconify-icon icon="solar:pen-new-square-bold" class="text-base"></iconify-icon>
+                        Sửa cấu hình mã QR
+                    </button>
+                    <button type="button" onclick="openModal('printQrConfigModal')"
+                            class="btn bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950 dark:hover:bg-indigo-900 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-xs font-semibold px-3 py-2 rounded-xl flex items-center gap-1.5 transition shadow-2xs">
+                        <iconify-icon icon="solar:printer-bold" class="text-base"></iconify-icon>
+                        In mã A4
+                    </button>
+                </div>
             </div>
 
             {{-- Alert instruction banner --}}
@@ -167,12 +141,12 @@
                         Quét từ trên xuống để cấu hình Máy quét
                     </span>
                     <span class="text-neutral-600 dark:text-neutral-300 leading-relaxed block text-xs">
-                        Đưa mắt quét qua lần lượt từng mã QR theo đúng trình tự từ <strong>Bước 1</strong> đến <strong>Bước 5</strong> từ trên xuống dưới. Sau khi quét xong Bước 5, máy quét sẽ tự động kết nối Wi-Fi xưởng và gửi dữ liệu về máy chủ ERP.
+                        Đưa mắt quét qua lần lượt từng mã QR theo đúng trình tự từ <strong>Bước 1</strong> đến <strong>Bước {{ count($configCommands) }}</strong> từ trên xuống dưới. Sau khi quét xong, máy quét sẽ tự động kết nối Wi-Fi xưởng và gửi dữ liệu về máy chủ ERP.
                     </span>
                 </div>
             </div>
 
-            {{-- 5 Step QR Sequence List (Top-to-Bottom) --}}
+            {{-- Dynamic Step QR Sequence List (Top-to-Bottom) --}}
             <div class="p-6 md:p-8 max-w-3xl mx-auto space-y-6">
                 @foreach($configCommands as $idx => $item)
                     @php
@@ -186,7 +160,7 @@
                     <div class="relative bg-neutral-50/90 dark:bg-neutral-800/50 p-5 rounded-2xl border border-neutral-200/90 dark:border-neutral-700 shadow-xs flex flex-col md:flex-row items-center gap-6">
                         {{-- Step Counter Box --}}
                         <div class="w-12 h-12 rounded-2xl bg-indigo-600 text-white font-extrabold text-lg flex items-center justify-center shrink-0 shadow-sm shadow-indigo-300">
-                            #{{ $item['step'] }}
+                            #{{ $item['step'] ?? ($idx + 1) }}
                         </div>
 
                         {{-- QR Code Display (High Contrast Frame) --}}
@@ -201,30 +175,41 @@
                             <div class="flex flex-wrap items-center justify-center md:justify-start gap-2 mb-1.5">
                                 <span class="inline-flex items-center gap-1 text-xs font-extrabold px-3 py-1 rounded-full bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
                                     <iconify-icon icon="solar:round-alt-arrow-down-bold"></iconify-icon>
-                                    {{ $item['badge'] }}
+                                    {{ $item['badge'] ?? ('Bước ' . ($idx + 1)) }}
                                 </span>
                                 <span class="text-xs font-mono text-neutral-400 font-semibold">
-                                    Thứ tự: {{ $item['step'] }}/{{ count($configCommands) }}
+                                    Thứ tự: {{ $idx + 1 }}/{{ count($configCommands) }}
                                 </span>
                             </div>
 
                             <h6 class="font-bold text-sm text-neutral-900 dark:text-neutral-100 mb-1">
                                 {{ $item['title'] }}
                             </h6>
-                            <p class="text-xs text-neutral-500 dark:text-neutral-400 mb-3">
-                                {{ $item['desc'] }}
-                            </p>
+                            @if(!empty($item['desc']))
+                                <p class="text-xs text-neutral-500 dark:text-neutral-400 mb-3">
+                                    {{ $item['desc'] }}
+                                </p>
+                            @else
+                                <div class="mb-2"></div>
+                            @endif
 
-                            {{-- Command box with quick copy --}}
+                            {{-- Command box with quick copy and edit shortcut --}}
                             <div class="flex items-center justify-between bg-white dark:bg-neutral-900 px-3 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 text-left">
                                 <code class="text-xs font-mono font-bold text-indigo-600 dark:text-indigo-400 truncate select-all flex-1" title="{{ $item['cmd'] }}">
                                     {{ $item['cmd'] }}
                                 </code>
-                                <button type="button" onclick="copyQrCommand('{{ addslashes($item['cmd']) }}', this)"
-                                        class="text-neutral-400 hover:text-indigo-600 ml-2 p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors shrink-0"
-                                        title="Sao chép nội dung lệnh">
-                                    <iconify-icon icon="solar:copy-bold" class="text-base"></iconify-icon>
-                                </button>
+                                <div class="flex items-center gap-1.5 shrink-0 ml-2">
+                                    <button type="button" onclick="copyQrCommand('{{ addslashes($item['cmd']) }}', this)"
+                                            class="text-neutral-400 hover:text-indigo-600 p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                                            title="Sao chép nội dung lệnh">
+                                        <iconify-icon icon="solar:copy-bold" class="text-base"></iconify-icon>
+                                    </button>
+                                    <button type="button" onclick="openModal('editQrConfigModal')"
+                                            class="text-neutral-400 hover:text-indigo-600 p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                                            title="Chỉnh sửa cấu hình">
+                                        <iconify-icon icon="solar:pen-new-square-bold" class="text-base"></iconify-icon>
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
@@ -567,6 +552,99 @@
         </div>
     </div>
 
+    {{-- ======================================================== --}}
+    {{-- MODAL: CHỈNH SỬA BỘ MÃ QR CẤU HÌNH                       --}}
+    {{-- ======================================================== --}}
+    <x-modal name="editQrConfigModal" maxWidth="3xl">
+        <div class="px-6 py-4 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between bg-neutral-50 dark:bg-neutral-900/50 rounded-t-xl">
+            <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-xl shrink-0">
+                    <iconify-icon icon="solar:pen-new-square-bold-duotone"></iconify-icon>
+                </div>
+                <div>
+                    <h5 class="text-base font-bold text-neutral-800 dark:text-neutral-100 m-0">Chỉnh sửa Bộ mã QR Cấu hình</h5>
+                    <span class="text-xs text-neutral-400">Sửa đổi các câu lệnh cấu hình máy quét và lưu lại vào hệ thống</span>
+                </div>
+            </div>
+            <button type="button" onclick="closeModal('editQrConfigModal')" class="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 text-xl leading-none">&times;</button>
+        </div>
+
+        <form method="POST" action="{{ route('processes.qr-scans.update-config-commands') }}" id="editConfigCommandsForm">
+            @csrf
+            <div class="p-6 space-y-4 max-h-[68vh] overflow-y-auto" id="config-commands-container">
+                @foreach($configCommands as $idx => $cmd)
+                    <div class="command-row bg-neutral-50 dark:bg-neutral-800/40 border border-neutral-200 dark:border-neutral-700 p-4 rounded-xl relative">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="step-label font-extrabold text-xs text-indigo-600 dark:text-indigo-400 uppercase flex items-center gap-1">
+                                <iconify-icon icon="solar:round-alt-arrow-down-bold"></iconify-icon>
+                                Bước <span class="step-num">{{ $idx + 1 }}</span>
+                            </span>
+                            <button type="button" onclick="removeCommandRow(this)" class="text-neutral-400 hover:text-rose-600 text-xs font-semibold flex items-center gap-1 transition">
+                                <iconify-icon icon="lucide:trash-2" class="text-sm"></iconify-icon> Xóa bước này
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+                            <div class="md:col-span-4">
+                                <label class="block text-xs font-bold text-neutral-600 dark:text-neutral-400 mb-1">Nhãn / Huy hiệu</label>
+                                <input type="text" name="commands[{{ $idx }}][badge]" value="{{ $cmd['badge'] ?? ('Bước ' . ($idx + 1)) }}"
+                                       class="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-700 rounded-lg text-xs bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100"
+                                       placeholder="Ví dụ: Bước 1: Reset">
+                            </div>
+
+                            <div class="md:col-span-8">
+                                <label class="block text-xs font-bold text-neutral-600 dark:text-neutral-400 mb-1">Tiêu đề bước <span class="text-rose-500">*</span></label>
+                                <input type="text" name="commands[{{ $idx }}][title]" value="{{ $cmd['title'] }}" required
+                                       class="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-700 rounded-lg text-xs bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 font-semibold"
+                                       placeholder="Ví dụ: Khôi phục cài đặt gốc">
+                            </div>
+
+                            <div class="md:col-span-12">
+                                <label class="block text-xs font-bold text-neutral-600 dark:text-neutral-400 mb-1">Nội dung mã lệnh QR (&lt;cmd&gt;...) <span class="text-rose-500">*</span></label>
+                                <input type="text" name="commands[{{ $idx }}][cmd]" value="{{ $cmd['cmd'] }}" required
+                                       class="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-700 rounded-lg text-xs bg-white dark:bg-neutral-800 text-indigo-600 dark:text-indigo-400 font-mono font-bold"
+                                       placeholder="Ví dụ: <cmd>rk_reset">
+                            </div>
+
+                            <div class="md:col-span-12">
+                                <label class="block text-xs font-bold text-neutral-600 dark:text-neutral-400 mb-1">Mô tả / Hướng dẫn thêm</label>
+                                <input type="text" name="commands[{{ $idx }}][desc]" value="{{ $cmd['desc'] ?? '' }}"
+                                       class="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-700 rounded-lg text-xs bg-white dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300"
+                                       placeholder="Ví dụ: Đặt lại toàn bộ thông số máy quét về mặc định ban đầu">
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+
+            <div class="p-4 border-t border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50 flex flex-wrap items-center justify-between gap-3">
+                <button type="button" onclick="addNewCommandRow()"
+                        class="btn bg-white hover:bg-neutral-100 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-200 border border-neutral-300 dark:border-neutral-700 text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 shadow-2xs">
+                    <iconify-icon icon="solar:add-circle-bold" class="text-base text-indigo-600"></iconify-icon> Thêm bước cấu hình mới
+                </button>
+
+                <div class="flex items-center gap-2.5">
+                    <button type="button" onclick="confirmResetDefaults()"
+                            class="px-3 py-2 text-rose-600 hover:text-rose-800 dark:hover:text-rose-400 text-xs font-semibold rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/30 transition">
+                        Khôi phục mặc định gốc
+                    </button>
+                    <button type="button" onclick="closeModal('editQrConfigModal')"
+                            class="px-4 py-2 border border-neutral-300 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 rounded-xl font-bold text-xs hover:bg-neutral-100 dark:hover:bg-neutral-800 transition">
+                        Hủy
+                    </button>
+                    <button type="submit"
+                            class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs shadow-sm transition">
+                        Lưu cấu hình
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        <form id="resetConfigForm" method="POST" action="{{ route('processes.qr-scans.reset-config-commands') }}" class="hidden">
+            @csrf
+        </form>
+    </x-modal>
+
     {{-- Modal: Bản in Cấu hình Máy quét QR --}}
     <x-modal name="printQrConfigModal" maxWidth="3xl">
         <div class="px-6 py-4 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between bg-white dark:bg-neutral-900 print:hidden">
@@ -602,10 +680,14 @@
                     @endphp
                     <div class="border-2 border-neutral-300 rounded-xl p-3.5 flex flex-col items-center text-center {{ $loop->last ? 'sm:col-span-2 sm:max-w-md sm:mx-auto w-full' : '' }}">
                         <span class="text-xs font-extrabold uppercase bg-neutral-100 text-neutral-800 px-3 py-0.5 rounded-full border border-neutral-300 mb-1">
-                            {{ $item['badge'] }}
+                            {{ $item['badge'] ?? ('Bước ' . ($loop->index + 1)) }}
                         </span>
                         <h6 class="font-bold text-xs text-neutral-900 mb-0.5">{{ $item['title'] }}</h6>
-                        <p class="text-[11px] text-neutral-500 mb-2">{{ $item['desc'] }}</p>
+                        @if(!empty($item['desc']))
+                            <p class="text-[11px] text-neutral-500 mb-2">{{ $item['desc'] }}</p>
+                        @else
+                            <div class="mb-2"></div>
+                        @endif
 
                         <div class="bg-white p-2 border border-neutral-300 rounded-lg shadow-xs">
                             <div class="w-[140px] h-[140px] flex items-center justify-center">
@@ -773,6 +855,82 @@
         const url = new URL(window.location.href);
         url.searchParams.set('tab', tabName);
         window.history.replaceState({}, '', url.toString());
+    }
+
+    function addNewCommandRow() {
+        const container = document.getElementById('config-commands-container');
+        const rows = container.querySelectorAll('.command-row');
+        const newIdx = rows.length;
+        const stepNum = newIdx + 1;
+
+        const div = document.createElement('div');
+        div.className = 'command-row bg-neutral-50 dark:bg-neutral-800/40 border border-neutral-200 dark:border-neutral-700 p-4 rounded-xl relative';
+        div.innerHTML = `
+            <div class="flex items-center justify-between mb-3">
+                <span class="step-label font-extrabold text-xs text-indigo-600 dark:text-indigo-400 uppercase flex items-center gap-1">
+                    <iconify-icon icon="solar:round-alt-arrow-down-bold"></iconify-icon>
+                    Bước <span class="step-num">${stepNum}</span>
+                </span>
+                <button type="button" onclick="removeCommandRow(this)" class="text-neutral-400 hover:text-rose-600 text-xs font-semibold flex items-center gap-1 transition">
+                    <iconify-icon icon="lucide:trash-2" class="text-sm"></iconify-icon> Xóa bước này
+                </button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+                <div class="md:col-span-4">
+                    <label class="block text-xs font-bold text-neutral-600 dark:text-neutral-400 mb-1">Nhãn / Huy hiệu</label>
+                    <input type="text" name="commands[${newIdx}][badge]" value="Bước ${stepNum}"
+                           class="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-700 rounded-lg text-xs bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100"
+                           placeholder="Ví dụ: Bước ${stepNum}">
+                </div>
+                <div class="md:col-span-8">
+                    <label class="block text-xs font-bold text-neutral-600 dark:text-neutral-400 mb-1">Tiêu đề bước <span class="text-rose-500">*</span></label>
+                    <input type="text" name="commands[${newIdx}][title]" value="" required
+                           class="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-700 rounded-lg text-xs bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 font-semibold"
+                           placeholder="Nhập tiêu đề bước cấu hình">
+                </div>
+                <div class="md:col-span-12">
+                    <label class="block text-xs font-bold text-neutral-600 dark:text-neutral-400 mb-1">Nội dung mã lệnh QR (&lt;cmd&gt;...) <span class="text-rose-500">*</span></label>
+                    <input type="text" name="commands[${newIdx}][cmd]" value="" required
+                           class="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-700 rounded-lg text-xs bg-white dark:bg-neutral-800 text-indigo-600 dark:text-indigo-400 font-mono font-bold"
+                           placeholder="Ví dụ: <cmd>...">
+                </div>
+                <div class="md:col-span-12">
+                    <label class="block text-xs font-bold text-neutral-600 dark:text-neutral-400 mb-1">Mô tả / Hướng dẫn thêm</label>
+                    <input type="text" name="commands[${newIdx}][desc]" value=""
+                           class="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-700 rounded-lg text-xs bg-white dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300"
+                           placeholder="Mô tả tác dụng của lệnh">
+                </div>
+            </div>
+        `;
+        container.appendChild(div);
+    }
+
+    function removeCommandRow(btn) {
+        const container = document.getElementById('config-commands-container');
+        const rows = container.querySelectorAll('.command-row');
+        if (rows.length <= 1) {
+            alert('Phải giữ lại ít nhất 1 bước cấu hình!');
+            return;
+        }
+        btn.closest('.command-row').remove();
+        // Re-index step numbers
+        const updatedRows = container.querySelectorAll('.command-row');
+        updatedRows.forEach((row, i) => {
+            const stepNum = i + 1;
+            row.querySelector('.step-num').textContent = stepNum;
+            row.querySelectorAll('input').forEach(input => {
+                const name = input.getAttribute('name');
+                if (name) {
+                    input.setAttribute('name', name.replace(/commands\[\d+\]/, `commands[${i}]`));
+                }
+            });
+        });
+    }
+
+    function confirmResetDefaults() {
+        if (confirm('Bạn có chắc chắn muốn khôi phục lại các mã QR cấu hình mặc định gốc ban đầu?')) {
+            document.getElementById('resetConfigForm').submit();
+        }
     }
 
     function openEditModal(device) {
