@@ -2,7 +2,7 @@
 
 @php
     $title = 'Thiết bị quét QR';
-    $subTitle = 'Cấu hình & Nhật ký';
+    $subTitle = 'Cấu hình, Thiết bị & Nhật ký';
 
     $configCommands = [
         [
@@ -41,6 +41,8 @@
             'badge'   => 'Bước 5: Screen Timeout',
         ],
     ];
+
+    $currTab = $currTab ?? 'config';
 @endphp
 
 @section('content')
@@ -96,338 +98,476 @@
         }
     </style>
 
-    <div class="-mt-4 mb-6">
-        <p class="text-sm text-neutral-500 dark:text-neutral-400">Xem nhật ký quét thời gian thực và quản lý liên kết cấu hình cho thiết bị Rakinda RK80ER.</p>
+    <div class="-mt-4 mb-4">
+        <p class="text-sm text-neutral-500 dark:text-neutral-400">Hệ thống quản lý máy quét mã QR Rakinda RK80ER: Cấu hình nhanh thiết bị, danh sách máy quét tại xưởng và nhật ký quét thời gian thực.</p>
     </div>
 
-    <!-- Main Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        <!-- Left: Devices Configuration (4 Columns) -->
-        <div class="lg:col-span-4 flex flex-col gap-6">
+    {{-- 3 Tab Navigation Header --}}
+    <div class="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200/80 dark:border-neutral-800 shadow-xs p-2 mb-6">
+        <div class="flex items-center gap-2 overflow-x-auto">
+            {{-- Tab 1: Cấu hình --}}
+            <button type="button" onclick="switchQrTab('config')" id="tab-btn-config"
+                class="flex items-center gap-2.5 px-5 py-3 rounded-xl font-bold text-xs sm:text-sm transition-all {{ $currTab === 'config' ? 'bg-primary-600 text-white shadow-sm shadow-primary-200' : 'bg-neutral-50 dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 text-neutral-600 dark:text-neutral-300' }}">
+                <iconify-icon icon="solar:qr-code-bold-duotone" class="text-lg"></iconify-icon>
+                <span>Cấu hình máy quét</span>
+                <span id="tab-badge-config" class="px-2 py-0.5 rounded-full text-xs font-extrabold {{ $currTab === 'config' ? 'bg-white/20 text-white' : 'bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-200' }}">
+                    5 mã QR
+                </span>
+            </button>
 
-            <!-- Card: Cấu hình Máy quét QR -->
-            <div class="card bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-sm overflow-hidden">
-                <div class="card-header border-b border-neutral-200 dark:border-neutral-800 py-3.5 px-5 flex justify-between items-center bg-white dark:bg-neutral-900/50">
-                    <div class="flex items-center gap-2.5">
-                        <div class="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-xl shrink-0">
-                            <iconify-icon icon="solar:qr-code-bold-duotone"></iconify-icon>
-                        </div>
-                        <div>
-                            <h5 class="text-sm font-bold text-neutral-800 dark:text-neutral-100 m-0">Cấu hình Máy quét</h5>
-                            <span class="text-[11px] text-neutral-400">Rakinda RK80ER & Thiết bị QR</span>
-                        </div>
+            {{-- Tab 2: Danh sách máy --}}
+            <button type="button" onclick="switchQrTab('devices')" id="tab-btn-devices"
+                class="flex items-center gap-2.5 px-5 py-3 rounded-xl font-bold text-xs sm:text-sm transition-all {{ $currTab === 'devices' ? 'bg-primary-600 text-white shadow-sm shadow-primary-200' : 'bg-neutral-50 dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 text-neutral-600 dark:text-neutral-300' }}">
+                <iconify-icon icon="solar:devices-bold-duotone" class="text-lg"></iconify-icon>
+                <span>Danh sách máy</span>
+                <span id="tab-badge-devices" class="px-2 py-0.5 rounded-full text-xs font-extrabold {{ $currTab === 'devices' ? 'bg-white/20 text-white' : 'bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-200' }}">
+                    {{ $devices->count() }} máy
+                </span>
+            </button>
+
+            {{-- Tab 3: Nhật ký quét --}}
+            <button type="button" onclick="switchQrTab('logs')" id="tab-btn-logs"
+                class="flex items-center gap-2.5 px-5 py-3 rounded-xl font-bold text-xs sm:text-sm transition-all {{ $currTab === 'logs' ? 'bg-primary-600 text-white shadow-sm shadow-primary-200' : 'bg-neutral-50 dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 text-neutral-600 dark:text-neutral-300' }}">
+                <iconify-icon icon="solar:history-bold-duotone" class="text-lg"></iconify-icon>
+                <span>Nhật ký quét</span>
+                <span id="tab-badge-logs" class="px-2 py-0.5 rounded-full text-xs font-extrabold {{ $currTab === 'logs' ? 'bg-white/20 text-white' : 'bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-200' }}">
+                    {{ $logs->total() }} bản ghi
+                </span>
+            </button>
+        </div>
+    </div>
+
+    {{-- ======================================================== --}}
+    {{-- TAB 1: CẤU HÌNH MÁY QUÉT QR                              --}}
+    {{-- ======================================================== --}}
+    <div id="tab-pane-config" class="{{ $currTab === 'config' ? '' : 'hidden' }} space-y-6">
+        <div class="card bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-2xl shadow-sm overflow-hidden">
+            <div class="card-header border-b border-neutral-200 dark:border-neutral-800 py-4 px-6 flex flex-wrap gap-3 justify-between items-center bg-white dark:bg-neutral-900/50">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-2xl shrink-0">
+                        <iconify-icon icon="solar:qr-code-bold-duotone"></iconify-icon>
                     </div>
-                    <button type="button" onclick="openModal('printQrConfigModal')"
-                            class="btn bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950 dark:hover:bg-indigo-900 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-xs font-semibold px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 transition">
-                        <iconify-icon icon="solar:printer-bold" class="text-sm"></iconify-icon>
-                        In mã A4
-                    </button>
-                </div>
-
-                {{-- Alert instruction --}}
-                <div class="p-3.5 bg-amber-50 dark:bg-amber-950/20 border-b border-amber-200 dark:border-amber-800/40 flex items-start gap-2.5">
-                    <iconify-icon icon="solar:danger-triangle-bold" class="text-amber-600 text-lg shrink-0 mt-0.5"></iconify-icon>
-                    <div class="text-xs text-amber-900 dark:text-amber-200">
-                        <span class="font-bold uppercase tracking-wide block mb-0.5">Quét từ trên xuống để cấu hình Máy quét</span>
-                        <span class="text-neutral-600 dark:text-neutral-300 leading-relaxed">Đưa đầu đọc máy quét lần lượt qua từng mã QR từ <strong>Bước 1</strong> đến <strong>Bước 5</strong> từ trên xuống dưới để thiết lập máy.</span>
+                    <div>
+                        <h5 class="text-base font-bold text-neutral-800 dark:text-neutral-100 m-0">Bộ mã QR Cấu hình Thiết bị quét</h5>
+                        <span class="text-xs text-neutral-400">Dành cho Rakinda RK80ER & các đầu đọc QR kết nối Wi-Fi</span>
                     </div>
                 </div>
+                <button type="button" onclick="openModal('printQrConfigModal')"
+                        class="btn bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950 dark:hover:bg-indigo-900 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-xs font-semibold px-3 py-2 rounded-xl flex items-center gap-2 transition shadow-2xs">
+                    <iconify-icon icon="solar:printer-bold" class="text-base"></iconify-icon>
+                    In bộ mã ra giấy A4
+                </button>
+            </div>
 
-                {{-- QR Sequence List --}}
-                <div class="card-body p-4 space-y-4 max-h-[820px] overflow-y-auto">
-                    @foreach($configCommands as $idx => $item)
-                        @php
-                            $qrSvg = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')
-                                ->size(140)
-                                ->margin(1)
-                                ->generate($item['cmd']);
-                            $qrSvg = str_replace('<?xml version="1.0" encoding="UTF-8"?>', '', $qrSvg);
-                        @endphp
-                        <div class="relative bg-neutral-50/80 dark:bg-neutral-800/40 p-3.5 rounded-xl border border-neutral-200/80 dark:border-neutral-700 flex flex-col items-center text-center">
-                            {{-- Step indicator header --}}
-                            <div class="w-full flex items-center justify-between mb-2">
-                                <span class="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+            {{-- Alert instruction banner --}}
+            <div class="p-4 bg-amber-50 dark:bg-amber-950/20 border-b border-amber-200 dark:border-amber-800/40 flex items-start gap-3">
+                <iconify-icon icon="solar:danger-triangle-bold" class="text-amber-600 text-2xl shrink-0 mt-0.5"></iconify-icon>
+                <div class="text-xs text-amber-900 dark:text-amber-200">
+                    <span class="font-extrabold uppercase tracking-wide block mb-1 text-sm text-amber-800 dark:text-amber-300">
+                        Quét từ trên xuống để cấu hình Máy quét
+                    </span>
+                    <span class="text-neutral-600 dark:text-neutral-300 leading-relaxed block text-xs">
+                        Đưa mắt quét qua lần lượt từng mã QR theo đúng trình tự từ <strong>Bước 1</strong> đến <strong>Bước 5</strong> từ trên xuống dưới. Sau khi quét xong Bước 5, máy quét sẽ tự động kết nối Wi-Fi xưởng và gửi dữ liệu về máy chủ ERP.
+                    </span>
+                </div>
+            </div>
+
+            {{-- 5 Step QR Sequence List (Top-to-Bottom) --}}
+            <div class="p-6 md:p-8 max-w-3xl mx-auto space-y-6">
+                @foreach($configCommands as $idx => $item)
+                    @php
+                        $qrSvg = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')
+                            ->size(150)
+                            ->margin(1)
+                            ->generate($item['cmd']);
+                        $qrSvg = str_replace('<?xml version="1.0" encoding="UTF-8"?>', '', $qrSvg);
+                    @endphp
+
+                    <div class="relative bg-neutral-50/90 dark:bg-neutral-800/50 p-5 rounded-2xl border border-neutral-200/90 dark:border-neutral-700 shadow-xs flex flex-col md:flex-row items-center gap-6">
+                        {{-- Step Counter Box --}}
+                        <div class="w-12 h-12 rounded-2xl bg-indigo-600 text-white font-extrabold text-lg flex items-center justify-center shrink-0 shadow-sm shadow-indigo-300">
+                            #{{ $item['step'] }}
+                        </div>
+
+                        {{-- QR Code Display (High Contrast Frame) --}}
+                        <div class="bg-white p-3 rounded-2xl border border-neutral-200 shadow-xs flex items-center justify-center shrink-0 hover:scale-105 transition-transform">
+                            <div class="w-[140px] h-[140px] flex items-center justify-center">
+                                {!! $qrSvg !!}
+                            </div>
+                        </div>
+
+                        {{-- Step Description & Command --}}
+                        <div class="flex-1 w-full text-center md:text-left">
+                            <div class="flex flex-wrap items-center justify-center md:justify-start gap-2 mb-1.5">
+                                <span class="inline-flex items-center gap-1 text-xs font-extrabold px-3 py-1 rounded-full bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
                                     <iconify-icon icon="solar:round-alt-arrow-down-bold"></iconify-icon>
                                     {{ $item['badge'] }}
                                 </span>
-                                <span class="text-[10px] font-mono text-neutral-400 font-semibold">
-                                    Mã #{{ $item['step'] }}/{{ count($configCommands) }}
+                                <span class="text-xs font-mono text-neutral-400 font-semibold">
+                                    Thứ tự: {{ $item['step'] }}/{{ count($configCommands) }}
                                 </span>
                             </div>
 
-                            <h6 class="font-bold text-xs text-neutral-800 dark:text-neutral-100 mb-0.5">
+                            <h6 class="font-bold text-sm text-neutral-900 dark:text-neutral-100 mb-1">
                                 {{ $item['title'] }}
                             </h6>
-                            <p class="text-[11px] text-neutral-500 dark:text-neutral-400 mb-2">
+                            <p class="text-xs text-neutral-500 dark:text-neutral-400 mb-3">
                                 {{ $item['desc'] }}
                             </p>
 
-                            {{-- High-contrast white QR frame for reliable optical scanning --}}
-                            <div class="bg-white p-2.5 rounded-xl border border-neutral-200 shadow-2xs flex items-center justify-center my-1 hover:scale-105 transition-transform">
-                                <div class="w-[140px] h-[140px] flex items-center justify-center">
-                                    {!! $qrSvg !!}
-                                </div>
-                            </div>
-
-                            {{-- Command box with copy --}}
-                            <div class="mt-2 w-full flex items-center justify-between bg-white dark:bg-neutral-900 px-2.5 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-700 text-left">
-                                <code class="text-[11px] font-mono text-indigo-600 dark:text-indigo-400 truncate select-all flex-1" title="{{ $item['cmd'] }}">
+                            {{-- Command box with quick copy --}}
+                            <div class="flex items-center justify-between bg-white dark:bg-neutral-900 px-3 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 text-left">
+                                <code class="text-xs font-mono font-bold text-indigo-600 dark:text-indigo-400 truncate select-all flex-1" title="{{ $item['cmd'] }}">
                                     {{ $item['cmd'] }}
                                 </code>
                                 <button type="button" onclick="copyQrCommand('{{ addslashes($item['cmd']) }}', this)"
-                                        class="text-neutral-400 hover:text-indigo-600 ml-1.5 p-1 rounded transition-colors shrink-0"
-                                        title="Sao chép lệnh">
-                                    <iconify-icon icon="solar:copy-bold" class="text-sm"></iconify-icon>
+                                        class="text-neutral-400 hover:text-indigo-600 ml-2 p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors shrink-0"
+                                        title="Sao chép nội dung lệnh">
+                                    <iconify-icon icon="solar:copy-bold" class="text-base"></iconify-icon>
                                 </button>
                             </div>
-
-                            @if(!$loop->last)
-                                <div class="absolute -bottom-3 left-1/2 -translate-x-1/2 z-10 w-6 h-6 rounded-full bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 flex items-center justify-center text-neutral-400 text-xs shadow-xs">
-                                    <iconify-icon icon="lucide:arrow-down"></iconify-icon>
-                                </div>
-                            @endif
                         </div>
-                    @endforeach
+
+                        {{-- Connector Arrow between steps --}}
+                        @if(!$loop->last)
+                            <div class="absolute -bottom-4 left-1/2 -translate-x-1/2 z-10 w-8 h-8 rounded-full bg-white dark:bg-neutral-900 border-2 border-indigo-200 dark:border-neutral-700 flex items-center justify-center text-indigo-600 dark:text-indigo-400 text-sm shadow-xs">
+                                <iconify-icon icon="solar:arrow-down-bold"></iconify-icon>
+                            </div>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    </div>
+
+    {{-- ======================================================== --}}
+    {{-- TAB 2: DANH SÁCH MÁY (KÈM CỘT MÃ QUÉT GẦN NHẤT)          --}}
+    {{-- ======================================================== --}}
+    <div id="tab-pane-devices" class="{{ $currTab === 'devices' ? '' : 'hidden' }} space-y-6">
+        <div class="card bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-2xl shadow-sm overflow-hidden">
+            <div class="card-header border-b border-neutral-200 dark:border-neutral-800 py-4 px-6 flex flex-wrap gap-3 justify-between items-center bg-white dark:bg-neutral-900/50">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-2xl shrink-0">
+                        <iconify-icon icon="solar:devices-bold-duotone"></iconify-icon>
+                    </div>
+                    <div>
+                        <h5 class="text-base font-bold text-neutral-800 dark:text-neutral-100 m-0">Danh sách Thiết bị Quét QR</h5>
+                        <span class="text-xs text-neutral-400">Quản lý định danh thiết bị, công đoạn sản xuất và mã quét gần nhất</span>
+                    </div>
                 </div>
+                <span class="text-xs font-bold px-3 py-1.5 bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 rounded-xl">
+                    Tổng số: {{ $devices->count() }} thiết bị
+                </span>
             </div>
 
-            <!-- Existing Card: Danh sách Thiết bị -->
-            <div class="card bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-sm">
-                <div class="card-header border-b border-neutral-200 dark:border-neutral-800 py-4 px-6 flex justify-between items-center bg-white dark:bg-neutral-900/50">
-                    <h5 class="text-lg font-bold text-neutral-800 dark:text-neutral-100 mb-0 flex items-center gap-2">
-                        <iconify-icon icon="lucide:cpu" class="text-indigo-600 text-xl"></iconify-icon>
-                        Danh sách Thiết bị
-                    </h5>
-                    <span class="text-xs font-semibold px-2.5 py-1 bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 rounded-full">
-                        {{ $devices->count() }} thiết bị
-                    </span>
-                </div>
-                <div class="card-body p-6 flex flex-col gap-3">
-                    @forelse($devices as $device)
-                        @php
-                            $stepName = 'Chưa cấu hình';
-                            $stepIcon = 'lucide:help-circle';
-                            $stepColor = 'text-neutral-400';
-                            
-                            switch($device->process_step) {
-                                case 'cnc':
-                                    $stepName = 'Cắt CNC';
-                                    $stepIcon = 'lucide:scissors';
-                                    $stepColor = 'text-indigo-500';
-                                    break;
-                                case 'pressing':
-                                    $stepName = 'Ép ván dán mặt';
-                                    $stepIcon = 'lucide:layers';
-                                    $stepColor = 'text-emerald-500';
-                                    break;
-                                case 'edge_banding':
-                                    $stepName = 'Dán cạnh';
-                                    $stepIcon = 'lucide:brush';
-                                    $stepColor = 'text-sky-500';
-                                    break;
-                                case 'finishing':
-                                    $stepName = 'Làm đẹp';
-                                    $stepIcon = 'lucide:sparkles';
-                                    $stepColor = 'text-amber-500';
-                                    break;
-                                case 'qc':
-                                    $stepName = 'QC (Kiểm soát)';
-                                    $stepIcon = 'lucide:check-circle';
-                                    $stepColor = 'text-red-500';
-                                    break;
-                            }
-                        @endphp
-                        
-                        <div class="p-4 border rounded-xl flex flex-col gap-3 transition-colors {{ $device->is_active ? 'border-neutral-200 dark:border-neutral-800 hover:border-indigo-500/50' : 'border-dashed border-red-300 bg-red-50/10' }}">
-                            <div class="flex items-start justify-between">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center {{ $stepColor }}">
-                                        <iconify-icon icon="{{ $stepIcon }}" class="text-xl"></iconify-icon>
-                                    </div>
-                                    <div>
-                                        <span class="block font-bold text-neutral-800 dark:text-neutral-200">{{ $device->name }}</span>
-                                        <span class="block text-xs font-mono text-neutral-400">ID: {{ $device->id }}</span>
-                                    </div>
-                                </div>
-                                
-                                <div class="flex items-center gap-2">
-                                    <button type="button" 
-                                            onclick="openEditModal({{ json_encode($device) }})"
-                                            class="p-1.5 text-neutral-400 hover:text-indigo-600 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
-                                        <iconify-icon icon="lucide:edit" class="text-base"></iconify-icon>
-                                    </button>
-                                    <form action="{{ route('processes.qr-scans.delete-device', $device->id) }}" method="POST" onsubmit="return confirm('Xóa thiết bị quét này khỏi hệ thống?')" class="inline">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="p-1.5 text-neutral-400 hover:text-red-600 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
-                                            <iconify-icon icon="lucide:trash-2" class="text-base"></iconify-icon>
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-                            
-                            <div class="grid grid-cols-2 gap-2 text-xs border-t border-neutral-100 dark:border-neutral-800 pt-3">
-                                <div>
-                                    <span class="block text-neutral-400 font-medium">Công đoạn</span>
-                                    <span class="block font-bold text-neutral-700 dark:text-neutral-300 flex items-center gap-1 mt-0.5">
-                                        {{ $stepName }}
-                                    </span>
-                                </div>
-                                <div>
-                                    <span class="block text-neutral-400 font-medium">Hành động</span>
-                                    <span class="block font-bold text-neutral-700 dark:text-neutral-300 mt-0.5 uppercase">
-                                        {{ $device->action_type ?: 'complete' }}
-                                    </span>
-                                </div>
-                                <div class="col-span-2 mt-1">
-                                    <span class="block text-neutral-400 font-medium">Nhân viên phụ trách</span>
-                                    <span class="block font-bold text-neutral-700 dark:text-neutral-300 mt-0.5">
-                                        {{ $device->operator->name ?? 'Mặc định (Hệ thống)' }}
-                                    </span>
-                                </div>
-                            </div>
-                            
-                            @if($device->notes)
-                                <div class="text-[11px] text-neutral-500 bg-neutral-50 dark:bg-neutral-800/40 p-2 rounded-lg border border-neutral-100 dark:border-neutral-800/50">
-                                    <strong>Ghi chú:</strong> {{ $device->notes }}
-                                </div>
-                            @endif
-                        </div>
-                    @empty
-                        <div class="text-center py-8 text-neutral-400 dark:text-neutral-500 border border-dashed border-neutral-200 dark:border-neutral-800 rounded-xl">
-                            <iconify-icon icon="lucide:cpu" class="text-3xl mb-2"></iconify-icon>
-                            <p class="text-sm">Chưa có thiết bị nào được kết nối.</p>
-                            <p class="text-xs text-neutral-400 mt-1">Thiết bị sẽ tự động xuất hiện ở đây khi quét mã đầu tiên.</p>
-                        </div>
-                    @endforelse
+            <div class="p-4 bg-sky-50/60 dark:bg-sky-950/20 border-b border-sky-100 dark:border-sky-900/30 flex items-center gap-2.5 text-xs text-sky-800 dark:text-sky-300">
+                <iconify-icon icon="solar:info-circle-bold" class="text-sky-600 text-lg shrink-0"></iconify-icon>
+                <span>Hệ thống tự động đăng ký máy quét mới vào danh sách khi thiết bị gửi dữ liệu quét lần đầu tiên.</span>
+            </div>
+
+            <div class="card-body p-0">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr class="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50 whitespace-nowrap text-xs">
+                                <th class="py-3.5 px-4 font-bold text-neutral-600 dark:text-neutral-400">MÃ THIẾT BỊ</th>
+                                <th class="py-3.5 px-4 font-bold text-neutral-600 dark:text-neutral-400">TÊN THIẾT BỊ</th>
+                                <th class="py-3.5 px-4 font-bold text-neutral-600 dark:text-neutral-400">CÔNG ĐOẠN</th>
+                                <th class="py-3.5 px-4 font-bold text-neutral-600 dark:text-neutral-400">HÀNH ĐỘNG</th>
+                                <th class="py-3.5 px-4 font-bold text-neutral-600 dark:text-neutral-400">NHÂN VIÊN PHỤ TRÁCH</th>
+                                <th class="py-3.5 px-4 font-bold text-indigo-800 dark:text-indigo-300 bg-indigo-50/50 dark:bg-indigo-950/20">MÃ QUÉT GẦN NHẤT</th>
+                                <th class="py-3.5 px-4 font-bold text-neutral-600 dark:text-neutral-400">TRẠNG THÁI</th>
+                                <th class="py-3.5 px-4 font-bold text-neutral-600 dark:text-neutral-400 text-right">THAO TÁC</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-neutral-100 dark:divide-neutral-800">
+                            @forelse($devices as $device)
+                                @php
+                                    $stepName = 'Chưa cấu hình';
+                                    $stepIcon = 'lucide:help-circle';
+                                    $stepBadge = 'bg-neutral-100 text-neutral-600 border-neutral-200';
+                                    
+                                    switch($device->process_step) {
+                                        case 'cnc':
+                                            $stepName = 'Cắt CNC';
+                                            $stepIcon = 'lucide:scissors';
+                                            $stepBadge = 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/50 dark:text-indigo-300';
+                                            break;
+                                        case 'pressing':
+                                            $stepName = 'Ép ván dán mặt';
+                                            $stepIcon = 'lucide:layers';
+                                            $stepBadge = 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300';
+                                            break;
+                                        case 'edge_banding':
+                                            $stepName = 'Dán cạnh';
+                                            $stepIcon = 'lucide:brush';
+                                            $stepBadge = 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/50 dark:text-sky-300';
+                                            break;
+                                        case 'finishing':
+                                            $stepName = 'Làm đẹp';
+                                            $stepIcon = 'lucide:sparkles';
+                                            $stepBadge = 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300';
+                                            break;
+                                        case 'qc':
+                                            $stepName = 'QC (Kiểm soát)';
+                                            $stepIcon = 'lucide:check-circle';
+                                            $stepBadge = 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/50 dark:text-rose-300';
+                                            break;
+                                    }
+
+                                    $lastLog = $device->latestLog;
+                                @endphp
+                                <tr class="hover:bg-neutral-50/60 dark:hover:bg-neutral-800/20 transition-colors">
+                                    {{-- ID --}}
+                                    <td class="py-3.5 px-4 whitespace-nowrap font-mono text-xs text-neutral-500 font-bold">
+                                        #{{ $device->id }}
+                                    </td>
+
+                                    {{-- Tên thiết bị --}}
+                                    <td class="py-3.5 px-4 whitespace-nowrap">
+                                        <div class="font-bold text-neutral-800 dark:text-neutral-100 flex items-center gap-2">
+                                            <iconify-icon icon="solar:scanner-bold-duotone" class="text-indigo-600 text-lg"></iconify-icon>
+                                            <span>{{ $device->name }}</span>
+                                        </div>
+                                        @if($device->notes)
+                                            <span class="block text-[11px] text-neutral-400 mt-0.5 truncate max-w-xs" title="{{ $device->notes }}">
+                                                {{ $device->notes }}
+                                            </span>
+                                        @endif
+                                    </td>
+
+                                    {{-- Công đoạn --}}
+                                    <td class="py-3.5 px-4 whitespace-nowrap">
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border {{ $stepBadge }}">
+                                            <iconify-icon icon="{{ $stepIcon }}" class="text-sm"></iconify-icon>
+                                            {{ $stepName }}
+                                        </span>
+                                    </td>
+
+                                    {{-- Hành động --}}
+                                    <td class="py-3.5 px-4 whitespace-nowrap">
+                                        <span class="font-mono text-xs font-bold text-neutral-700 dark:text-neutral-300 uppercase px-2 py-0.5 bg-neutral-100 dark:bg-neutral-800 rounded border border-neutral-200 dark:border-neutral-700">
+                                            {{ $device->action_type ?: 'complete' }}
+                                        </span>
+                                    </td>
+
+                                    {{-- Nhân viên phụ trách --}}
+                                    <td class="py-3.5 px-4 whitespace-nowrap text-xs text-neutral-700 dark:text-neutral-300 font-medium">
+                                        <div class="flex items-center gap-1.5">
+                                            <iconify-icon icon="solar:user-bold" class="text-neutral-400"></iconify-icon>
+                                            <span>{{ $device->operator->name ?? 'Mặc định (Hệ thống)' }}</span>
+                                        </div>
+                                    </td>
+
+                                    {{-- Cột mới: MÃ QUÉT GẦN NHẤT --}}
+                                    <td class="py-3.5 px-4 whitespace-nowrap bg-indigo-50/30 dark:bg-indigo-950/10">
+                                        @if($lastLog)
+                                            <div class="flex flex-col gap-1">
+                                                <div class="flex items-center gap-1.5">
+                                                    <span class="font-mono text-xs font-bold text-neutral-800 dark:text-neutral-100 bg-white dark:bg-neutral-800 px-2 py-0.5 rounded border border-neutral-200 dark:border-neutral-700 shadow-2xs">
+                                                        {{ $lastLog->barcode }}
+                                                    </span>
+                                                    @if($lastLog->status === 'success')
+                                                        <span class="status-badge status-success">Thành công</span>
+                                                    @elseif($lastLog->status === 'failed')
+                                                        <span class="status-badge status-failed">Thất bại</span>
+                                                    @elseif($lastLog->status === 'duplicate')
+                                                        <span class="status-badge status-duplicate">Trùng lặp</span>
+                                                    @else
+                                                        <span class="status-badge status-unmapped">Chưa map</span>
+                                                    @endif
+                                                </div>
+                                                <span class="text-[11px] text-neutral-400 flex items-center gap-1" title="{{ $lastLog->scanned_at ? $lastLog->scanned_at->format('d/m/Y H:i:s') : $lastLog->scanned_at_raw }}">
+                                                    <iconify-icon icon="solar:clock-circle-bold" class="text-xs"></iconify-icon>
+                                                    {{ $lastLog->scanned_at ? $lastLog->scanned_at->format('H:i d/m/Y') : $lastLog->scanned_at_raw }}
+                                                </span>
+                                            </div>
+                                        @else
+                                            <span class="text-xs text-neutral-400 italic">Chưa có lượt quét</span>
+                                        @endif
+                                    </td>
+
+                                    {{-- Trạng thái --}}
+                                    <td class="py-3.5 px-4 whitespace-nowrap">
+                                        @if($device->is_active)
+                                            <span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 px-2.5 py-0.5 rounded-full">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Hoạt động
+                                            </span>
+                                        @else
+                                            <span class="inline-flex items-center gap-1 text-[11px] font-bold text-neutral-500 bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 px-2.5 py-0.5 rounded-full">
+                                                Tạm dừng
+                                            </span>
+                                        @endif
+                                    </td>
+
+                                    {{-- Thao tác --}}
+                                    <td class="py-3.5 px-4 whitespace-nowrap text-right">
+                                        <div class="inline-flex items-center gap-1.5">
+                                            <button type="button" 
+                                                    onclick="openEditModal({{ json_encode($device) }})"
+                                                    class="p-2 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-950 rounded-lg transition-colors"
+                                                    title="Sửa cấu hình thiết bị">
+                                                <iconify-icon icon="lucide:edit-3" class="text-base"></iconify-icon>
+                                            </button>
+                                            <form action="{{ route('processes.qr-scans.delete-device', $device->id) }}" method="POST" onsubmit="return confirm('Xóa thiết bị quét này khỏi hệ thống?')" class="inline">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950 rounded-lg transition-colors" title="Xóa máy quét">
+                                                    <iconify-icon icon="lucide:trash-2" class="text-base"></iconify-icon>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="8" class="py-12 text-center text-neutral-400 dark:text-neutral-500">
+                                        <iconify-icon icon="solar:devices-bold-duotone" class="text-4xl mb-2 block mx-auto text-neutral-300"></iconify-icon>
+                                        <p class="text-sm font-semibold m-0">Chưa có thiết bị nào trong danh sách.</p>
+                                        <p class="text-xs text-neutral-400 mt-1">Thiết bị sẽ tự động xuất hiện ở đây ngay khi quét mã QR đầu tiên.</p>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Right: Scan Logs (8 Columns) -->
-        <div class="lg:col-span-8 flex flex-col gap-6">
-            <div class="card bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-sm overflow-hidden">
-                <div class="card-header border-b border-neutral-200 dark:border-neutral-800 py-4 px-6 flex flex-wrap gap-3 items-center justify-between bg-white dark:bg-neutral-900/50">
-                    <h5 class="text-lg font-bold text-neutral-800 dark:text-neutral-100 mb-0 flex items-center gap-2">
-                        <iconify-icon icon="lucide:activity" class="text-indigo-600 text-xl"></iconify-icon>
-                        Nhật ký Quét QR
-                    </h5>
-                    
-                    <div class="flex items-center flex-wrap gap-2">
-                        <!-- Filter Forms -->
-                        <form method="GET" action="{{ route('processes.qr-scans') }}" class="flex items-center flex-wrap gap-2">
-                            <input type="hidden" name="per_page" value="{{ $perPage }}">
-
-                            <!-- Search -->
-                            <div class="relative w-44 sm:w-52">
-                                <span class="absolute top-1/2 -translate-y-1/2 text-neutral-400 flex items-center justify-center pointer-events-none" style="left: 10px;">
-                                    <iconify-icon icon="lucide:search" class="text-base"></iconify-icon>
-                                </span>
-                                <input type="text" name="search"
-                                    class="w-full pr-3 py-1.5 border border-neutral-300 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 text-xs focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                    style="padding-left: 34px;"
-                                    placeholder="Tìm mã sản phẩm..." value="{{ $search }}">
-                            </div>
-
-                            <!-- Status Filter -->
-                            <select name="status" onchange="this.form.submit()"
-                                    class="form-select form-select-sm w-auto border border-neutral-200 dark:border-neutral-700 rounded-lg py-1 px-2 text-xs bg-transparent dark:text-neutral-300">
-                                <option value="">-- Tất cả trạng thái --</option>
-                                <option value="success" {{ $statusFilter === 'success' ? 'selected' : '' }}>Thành công</option>
-                                <option value="failed" {{ $statusFilter === 'failed' ? 'selected' : '' }}>Thất bại</option>
-                                <option value="duplicate" {{ $statusFilter === 'duplicate' ? 'selected' : '' }}>Trùng lặp</option>
-                                <option value="unmapped" {{ $statusFilter === 'unmapped' ? 'selected' : '' }}>Chưa cấu hình</option>
-                            </select>
-
-                            <!-- Device Filter -->
-                            <select name="device_id" onchange="this.form.submit()"
-                                    class="form-select form-select-sm w-auto border border-neutral-200 dark:border-neutral-700 rounded-lg py-1 px-2 text-xs bg-transparent dark:text-neutral-300">
-                                <option value="">-- Tất cả máy quét --</option>
-                                @foreach($devices as $dev)
-                                    <option value="{{ $dev->id }}" {{ $deviceFilter == $dev->id ? 'selected' : '' }}>{{ $dev->name }}</option>
-                                @endforeach
-                            </select>
-                        </form>
+    {{-- ======================================================== --}}
+    {{-- TAB 3: NHẬT KÝ QUÉT                                      --}}
+    {{-- ======================================================== --}}
+    <div id="tab-pane-logs" class="{{ $currTab === 'logs' ? '' : 'hidden' }} space-y-6">
+        <div class="card bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-2xl shadow-sm overflow-hidden">
+            <div class="card-header border-b border-neutral-200 dark:border-neutral-800 py-4 px-6 flex flex-wrap gap-3 items-center justify-between bg-white dark:bg-neutral-900/50">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-2xl shrink-0">
+                        <iconify-icon icon="solar:history-bold-duotone"></iconify-icon>
+                    </div>
+                    <div>
+                        <h5 class="text-base font-bold text-neutral-800 dark:text-neutral-100 m-0">Nhật ký Quét QR Thời gian thực</h5>
+                        <span class="text-xs text-neutral-400">Theo dõi toàn bộ lịch sử quét mã của các thiết bị tại xưởng</span>
                     </div>
                 </div>
                 
-                <div class="card-body p-6">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse text-sm" id="logsTable">
-                            <thead>
-                                <tr class="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50 whitespace-nowrap">
-                                    <th class="py-3 px-4 font-semibold text-neutral-600 dark:text-neutral-400">THỜI GIAN</th>
-                                    <th class="py-3 px-4 font-semibold text-neutral-600 dark:text-neutral-400">MÁY QUÉT</th>
-                                    <th class="py-3 px-4 font-semibold text-neutral-600 dark:text-neutral-400">MÃ SẢN PHẨM (QR)</th>
-                                    <th class="py-3 px-4 font-semibold text-neutral-600 dark:text-neutral-400">TRẠNG THÁI</th>
-                                    <th class="py-3 px-4 font-semibold text-neutral-600 dark:text-neutral-400">MÔ TẢ KẾT QUẢ</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-neutral-100 dark:divide-neutral-800">
-                                @forelse($logs as $log)
-                                    <tr class="hover:bg-neutral-50/50 dark:hover:bg-neutral-800/10 transition-colors">
-                                        <td class="py-3.5 px-4 whitespace-nowrap text-xs text-neutral-500">
-                                            {{ $log->scanned_at ? $log->scanned_at->format('d-m-Y H:i:s') : $log->scanned_at_raw }}
-                                        </td>
-                                        <td class="py-3.5 px-4 font-semibold text-neutral-800 dark:text-neutral-200">
-                                            {{ $log->device->name ?? 'Máy quét #' . $log->device_id }}
-                                        </td>
-                                        <td class="py-3.5 px-4 font-mono text-xs">
-                                            <span class="bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-700 px-2 py-0.5 rounded">
-                                                {{ $log->barcode }}
-                                            </span>
-                                        </td>
-                                        <td class="py-3.5 px-4">
-                                            @if($log->status === 'success')
-                                                <span class="status-badge status-success">
-                                                    <iconify-icon icon="lucide:check-circle"></iconify-icon> Thành công
-                                                </span>
-                                            @elseif($log->status === 'failed')
-                                                <span class="status-badge status-failed">
-                                                    <iconify-icon icon="lucide:alert-circle"></iconify-icon> Thất bại
-                                                </span>
-                                            @elseif($log->status === 'duplicate')
-                                                <span class="status-badge status-duplicate">
-                                                    <iconify-icon icon="lucide:copy"></iconify-icon> Trùng lặp
-                                                </span>
-                                            @else
-                                                <span class="status-badge status-unmapped">
-                                                    <iconify-icon icon="lucide:help-circle"></iconify-icon> Chưa cấu hình
-                                                </span>
-                                            @endif
-                                        </td>
-                                        <td class="py-3.5 px-4 text-xs text-neutral-600 dark:text-neutral-400">
-                                            {{ $log->message ?: '—' }}
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="5" class="py-12 text-center text-neutral-400 dark:text-neutral-500">
-                                            Không có nhật ký quét nào phù hợp với bộ lọc.
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+                {{-- Filter Forms --}}
+                <form method="GET" action="{{ route('processes.qr-scans') }}" class="flex items-center flex-wrap gap-2">
+                    <input type="hidden" name="tab" value="logs">
+                    <input type="hidden" name="per_page" value="{{ $perPage }}">
+
+                    {{-- Search --}}
+                    <div class="relative w-44 sm:w-56">
+                        <span class="absolute top-1/2 -translate-y-1/2 text-neutral-400 flex items-center justify-center pointer-events-none" style="left: 10px;">
+                            <iconify-icon icon="lucide:search" class="text-base"></iconify-icon>
+                        </span>
+                        <input type="text" name="search"
+                            class="w-full pr-3 py-1.5 border border-neutral-300 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 text-xs focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            style="padding-left: 34px;"
+                            placeholder="Tìm mã sản phẩm..." value="{{ $search }}">
                     </div>
-                    
-                    @if($logs->hasPages())
-                        <div class="flex items-center justify-between flex-wrap gap-2 mt-6">
-                            <span class="text-secondary-light text-sm">
-                                Hiển thị {{ $logs->firstItem() ?? 0 }} đến {{ $logs->lastItem() ?? 0 }}
-                                trong tổng {{ $logs->total() }} bản ghi nhật ký
-                            </span>
-                            {{ $logs->appends(request()->query())->links() }}
-                        </div>
+
+                    {{-- Status Filter --}}
+                    <select name="status" onchange="this.form.submit()"
+                            class="form-select form-select-sm w-auto border border-neutral-200 dark:border-neutral-700 rounded-lg py-1 px-2.5 text-xs bg-transparent dark:text-neutral-300">
+                        <option value="">-- Tất cả trạng thái --</option>
+                        <option value="success" {{ $statusFilter === 'success' ? 'selected' : '' }}>Thành công</option>
+                        <option value="failed" {{ $statusFilter === 'failed' ? 'selected' : '' }}>Thất bại</option>
+                        <option value="duplicate" {{ $statusFilter === 'duplicate' ? 'selected' : '' }}>Trùng lặp</option>
+                        <option value="unmapped" {{ $statusFilter === 'unmapped' ? 'selected' : '' }}>Chưa cấu hình</option>
+                    </select>
+
+                    {{-- Device Filter --}}
+                    <select name="device_id" onchange="this.form.submit()"
+                            class="form-select form-select-sm w-auto border border-neutral-200 dark:border-neutral-700 rounded-lg py-1 px-2.5 text-xs bg-transparent dark:text-neutral-300">
+                        <option value="">-- Tất cả máy quét --</option>
+                        @foreach($devices as $dev)
+                            <option value="{{ $dev->id }}" {{ $deviceFilter == $dev->id ? 'selected' : '' }}>{{ $dev->name }}</option>
+                        @endforeach
+                    </select>
+
+                    @if($search || $statusFilter || $deviceFilter)
+                        <a href="{{ route('processes.qr-scans', ['tab' => 'logs']) }}" class="text-xs text-neutral-500 hover:text-red-600 px-2 py-1 rounded">
+                            Xóa lọc
+                        </a>
                     @endif
+                </form>
+            </div>
+            
+            <div class="card-body p-0">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm" id="logsTable">
+                        <thead>
+                            <tr class="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50 whitespace-nowrap text-xs">
+                                <th class="py-3.5 px-4 font-bold text-neutral-600 dark:text-neutral-400">THỜI GIAN</th>
+                                <th class="py-3.5 px-4 font-bold text-neutral-600 dark:text-neutral-400">MÁY QUÉT</th>
+                                <th class="py-3.5 px-4 font-bold text-neutral-600 dark:text-neutral-400">MÃ SẢN PHẨM (QR)</th>
+                                <th class="py-3.5 px-4 font-bold text-neutral-600 dark:text-neutral-400">TRẠNG THÁI</th>
+                                <th class="py-3.5 px-4 font-bold text-neutral-600 dark:text-neutral-400">MÔ TẢ KẾT QUẢ</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-neutral-100 dark:divide-neutral-800">
+                            @forelse($logs as $log)
+                                <tr class="hover:bg-neutral-50/50 dark:hover:bg-neutral-800/10 transition-colors">
+                                    <td class="py-3.5 px-4 whitespace-nowrap text-xs text-neutral-500">
+                                        {{ $log->scanned_at ? $log->scanned_at->format('d-m-Y H:i:s') : $log->scanned_at_raw }}
+                                    </td>
+                                    <td class="py-3.5 px-4 font-semibold text-neutral-800 dark:text-neutral-200">
+                                        {{ $log->device->name ?? 'Máy quét #' . $log->device_id }}
+                                    </td>
+                                    <td class="py-3.5 px-4 font-mono text-xs">
+                                        <span class="bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-700 px-2 py-0.5 rounded">
+                                            {{ $log->barcode }}
+                                        </span>
+                                    </td>
+                                    <td class="py-3.5 px-4">
+                                        @if($log->status === 'success')
+                                            <span class="status-badge status-success">
+                                                <iconify-icon icon="lucide:check-circle"></iconify-icon> Thành công
+                                            </span>
+                                        @elseif($log->status === 'failed')
+                                            <span class="status-badge status-failed">
+                                                <iconify-icon icon="lucide:alert-circle"></iconify-icon> Thất bại
+                                            </span>
+                                        @elseif($log->status === 'duplicate')
+                                            <span class="status-badge status-duplicate">
+                                                <iconify-icon icon="lucide:copy"></iconify-icon> Trùng lặp
+                                            </span>
+                                        @else
+                                            <span class="status-badge status-unmapped">
+                                                <iconify-icon icon="lucide:help-circle"></iconify-icon> Chưa cấu hình
+                                            </span>
+                                        @endif
+                                    </td>
+                                    <td class="py-3.5 px-4 text-xs text-neutral-600 dark:text-neutral-400">
+                                        {{ $log->message ?: '—' }}
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="py-12 text-center text-neutral-400 dark:text-neutral-500">
+                                        Không có nhật ký quét nào phù hợp với bộ lọc.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
+                
+                @if($logs->hasPages())
+                    <div class="p-4 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between flex-wrap gap-2">
+                        <span class="text-secondary-light text-sm">
+                            Hiển thị {{ $logs->firstItem() ?? 0 }} đến {{ $logs->lastItem() ?? 0 }}
+                            trong tổng {{ $logs->total() }} bản ghi nhật ký
+                        </span>
+                        {{ $logs->appends(array_merge(request()->query(), ['tab' => 'logs']))->links() }}
+                    </div>
+                @endif
             </div>
         </div>
-
     </div>
 
-    <!-- Modal: Bản in Cấu hình Máy quét QR -->
+    {{-- Modal: Bản in Cấu hình Máy quét QR --}}
     <x-modal name="printQrConfigModal" maxWidth="3xl">
         <div class="px-6 py-4 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between bg-white dark:bg-neutral-900 print:hidden">
             <h5 class="font-bold text-base text-neutral-800 dark:text-neutral-100 m-0 flex items-center gap-2">
@@ -487,7 +627,7 @@
         </div>
     </x-modal>
 
-    <!-- Edit Device Modal -->
+    {{-- Edit Device Modal --}}
     <x-modal name="editDeviceModal" maxWidth="lg">
         <div class="px-5 py-4 border-b border-neutral-100 dark:border-neutral-800 flex justify-between items-center bg-neutral-50 dark:bg-neutral-900/50 rounded-t-xl">
             <span class="font-bold text-neutral-800 dark:text-neutral-100 flex items-center gap-2">
@@ -583,7 +723,6 @@
         </form>
     </x-modal>
 
-
     <!-- Notification Toasts -->
     @if(session('success'))
         <div id="successToast" class="fixed bottom-5 right-5 z-50 flex items-center gap-3 px-4 py-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/50 text-emerald-800 dark:text-emerald-300 text-sm font-semibold transition-all duration-300">
@@ -604,6 +743,38 @@
 
 @push('scripts')
 <script>
+    function switchQrTab(tabName) {
+        const tabs = ['config', 'devices', 'logs'];
+        tabs.forEach(t => {
+            const pane = document.getElementById('tab-pane-' + t);
+            const btn = document.getElementById('tab-btn-' + t);
+            const badge = document.getElementById('tab-badge-' + t);
+
+            if (t === tabName) {
+                if (pane) pane.classList.remove('hidden');
+                if (btn) {
+                    btn.className = 'flex items-center gap-2.5 px-5 py-3 rounded-xl font-bold text-xs sm:text-sm transition-all bg-primary-600 text-white shadow-sm shadow-primary-200';
+                }
+                if (badge) {
+                    badge.className = 'px-2 py-0.5 rounded-full text-xs font-extrabold bg-white/20 text-white';
+                }
+            } else {
+                if (pane) pane.classList.add('hidden');
+                if (btn) {
+                    btn.className = 'flex items-center gap-2.5 px-5 py-3 rounded-xl font-bold text-xs sm:text-sm transition-all bg-neutral-50 dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 text-neutral-600 dark:text-neutral-300';
+                }
+                if (badge) {
+                    badge.className = 'px-2 py-0.5 rounded-full text-xs font-extrabold bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-200';
+                }
+            }
+        });
+
+        // Update URL query parameter without full reload
+        const url = new URL(window.location.href);
+        url.searchParams.set('tab', tabName);
+        window.history.replaceState({}, '', url.toString());
+    }
+
     function openEditModal(device) {
         document.getElementById("modal_device_id").value = device.id;
         document.getElementById("modal_name").value = device.name;
@@ -661,7 +832,7 @@
         if (navigator.clipboard) {
             navigator.clipboard.writeText(text).then(() => {
                 const oldHtml = btn.innerHTML;
-                btn.innerHTML = '<iconify-icon icon="solar:check-circle-bold" class="text-emerald-600 text-sm"></iconify-icon>';
+                btn.innerHTML = '<iconify-icon icon="solar:check-circle-bold" class="text-emerald-600 text-base"></iconify-icon>';
                 setTimeout(() => { btn.innerHTML = oldHtml; }, 2000);
             });
         }

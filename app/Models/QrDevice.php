@@ -35,4 +35,9 @@ class QrDevice extends Model
     {
         return $this->hasMany(QrScanLog::class, 'device_id');
     }
+
+    public function latestLog()
+    {
+        return $this->hasOne(QrScanLog::class, 'device_id')->latestOfMany();
+    }
 }

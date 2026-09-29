@@ -231,7 +231,7 @@ class QrScanController extends Controller
      */
     public function index(Request $request)
     {
-        $devices = QrDevice::with('operator')->get();
+        $devices = QrDevice::with(['operator', 'latestLog'])->get();
         $users = User::orderBy('name', 'asc')->get();
 
         // Xây dựng bộ lọc nhật ký quét
@@ -259,6 +259,16 @@ class QrScanController extends Controller
 
         $logs = $query->paginate($perPage);
 
+        // Xác định tab đang mở
+        $currTab = $request->input('tab');
+        if (!$currTab) {
+            if ($request->hasAny(['search', 'status', 'device_id', 'page'])) {
+                $currTab = 'logs';
+            } else {
+                $currTab = 'config';
+            }
+        }
+
         return view('processes.qr_scans', compact(
             'devices',
             'users',
@@ -266,7 +276,8 @@ class QrScanController extends Controller
             'perPage',
             'search',
             'statusFilter',
-            'deviceFilter'
+            'deviceFilter',
+            'currTab'
         ));
     }
 
