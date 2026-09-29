@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class WoodBoard extends Model
 {
@@ -11,87 +13,72 @@ class WoodBoard extends Model
     protected $fillable = [
         'price_group',
         'color_code',
+        'origin_code',
+        'unit',
+        'cost_price',
+        'min_stock',
+        'initial_stock',
+        'current_stock',
+        'warehouse_id',
+        'status',
+        'notes',
     ];
 
-    public function prices()
+    protected $casts = [
+        'cost_price'    => 'double',
+        'min_stock'     => 'double',
+        'initial_stock' => 'double',
+        'current_stock' => 'double',
+    ];
+
+    protected $appends = [
+        'code',
+        'name',
+        'category',
+    ];
+
+    public function getCodeAttribute(): string
+    {
+        return (string)($this->color_code ?? '');
+    }
+
+    public function getNameAttribute(): string
+    {
+        return 'Tấm ' . ($this->color_code ?? '');
+    }
+
+    public function getCategoryAttribute(): string
+    {
+        return (string)($this->price_group ?: 'Tấm cốt gỗ / Acrylic');
+    }
+
+    public function prices(): HasMany
     {
         return $this->hasMany(WoodBoardPrice::class, 'wood_board_id');
     }
 
-    public function material()
+    public function warehouse(): BelongsTo
     {
-        return $this->hasOne(Material::class, 'wood_board_id');
+        return $this->belongsTo(Warehouse::class, 'warehouse_id');
     }
 
-    public function getCurrentStockAttribute(): float
+    public function transactions(): HasMany
     {
-        if ($this->relationLoaded('material') && $this->material) {
-            return (float)$this->material->current_stock;
-        }
-
-        $mat = Material::where('wood_board_id', $this->id)
-            ->orWhere('code', $this->color_code)
-            ->first();
-
-        return $mat ? (float)$mat->current_stock : 0;
+        return $this->hasMany(InventoryTransaction::class, 'wood_board_id')->orderBy('date', 'desc')->orderBy('id', 'desc');
     }
 
-    protected static function booted()
+    public function receiptItems(): HasMany
     {
-        static::created(function (WoodBoard $board) {
-            static::syncWithMaterial($board);
-        });
-
-        static::updated(function (WoodBoard $board) {
-            static::syncWithMaterial($board);
-        });
-
-        static::deleting(function (WoodBoard $board) {
-            $material = Material::where('wood_board_id', $board->id)->first();
-            if ($material) {
-                // If material has transactions, keep history but set inactive
-                if ($material->transactions()->exists()) {
-                    $material->update(['status' => 'inactive', 'wood_board_id' => null]);
-                } else {
-                    $material->delete();
-                }
-            }
-        });
+        return $this->hasMany(InventoryReceiptItem::class, 'wood_board_id');
     }
 
-    public static function syncWithMaterial(WoodBoard $board): Material
+    public function issueItems(): HasMany
     {
-        $defaultWarehouse = Warehouse::first();
-        if (!$defaultWarehouse) {
-            $defaultWarehouse = Warehouse::create(['name' => 'Kho Chính', 'code' => 'KHO-CHINH']);
-        }
+        return $this->hasMany(InventoryIssueItem::class, 'wood_board_id');
+    }
 
-        // Check if material already exists by wood_board_id or matching code/color_code
-        $material = Material::where('wood_board_id', $board->id)
-            ->orWhere('code', $board->color_code)
-            ->first();
-
-        if ($material) {
-            $material->update([
-                'wood_board_id' => $board->id,
-                'code'          => $board->color_code,
-                'category'      => $material->category ?: ($board->price_group ?: 'Tấm cốt gỗ / Acrylic'),
-            ]);
-        } else {
-            $material = Material::create([
-                'wood_board_id' => $board->id,
-                'code'          => $board->color_code,
-                'name'          => 'Tấm ' . $board->color_code,
-                'category'      => $board->price_group ?: 'Tấm cốt gỗ / Acrylic',
-                'unit'          => 'Tấm',
-                'cost_price'    => 0,
-                'min_stock'     => 50,
-                'current_stock' => 0,
-                'warehouse_id'  => $defaultWarehouse->id,
-                'status'        => 'active',
-            ]);
-        }
-
-        return $material;
+    public function stocktakeItems(): HasMany
+    {
+        return $this->hasMany(InventoryStocktakeItem::class, 'wood_board_id');
     }
 }

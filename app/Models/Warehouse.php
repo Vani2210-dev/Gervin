@@ -27,9 +27,14 @@ class Warehouse extends Model
         return $this->hasMany(WarehouseRecord::class);
     }
 
+    public function woodBoards(): HasMany
+    {
+        return $this->hasMany(WoodBoard::class);
+    }
+
     public function materials(): HasMany
     {
-        return $this->hasMany(Material::class);
+        return $this->woodBoards();
     }
 
     public function receipts(): HasMany

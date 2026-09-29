@@ -9,7 +9,7 @@ class InventoryTransaction extends Model
 {
     protected $fillable = [
         'warehouse_id',
-        'material_id',
+        'wood_board_id',
         'date',
         'type', // 'receipt', 'issue', 'stocktake', 'initial'
         'voucher_code',
@@ -36,9 +36,9 @@ class InventoryTransaction extends Model
         return $this->belongsTo(Warehouse::class);
     }
 
-    public function material(): BelongsTo
+    public function woodBoard(): BelongsTo
     {
-        return $this->belongsTo(Material::class);
+        return $this->belongsTo(WoodBoard::class, 'wood_board_id');
     }
 
     public function creator(): BelongsTo

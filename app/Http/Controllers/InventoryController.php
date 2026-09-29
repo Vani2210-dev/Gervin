@@ -3,10 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Warehouse;
-use App\Models\Material;
+use App\Models\WoodBoard;
 use App\Models\InventoryReceipt;
+use App\Models\InventoryReceiptItem;
 use App\Models\InventoryIssue;
+use App\Models\InventoryIssueItem;
 use App\Models\InventoryStocktake;
+use App\Models\InventoryStocktakeItem;
 use App\Models\InventoryTransaction;
 use App\Services\InventoryService;
 use Illuminate\Http\Request;
@@ -27,20 +30,14 @@ class InventoryController extends Controller
         $this->inventoryService = $inventoryService;
 
         $this->middleware('permission:view warehouse', ['only' => [
-            'index', 'stockCard', 'exportStock', 
-            'receipts', 'showReceipt', 'printReceipt',
-            'issues', 'showIssue', 'printIssue',
-            'stocktakes', 'showStocktake',
-            'reports', 'exportReport', 'exportMatrixReport',
-            'warehouseList'
+            'index', 'stockCard', 'exportStock', 'receipts', 'showReceipt', 'printReceipt',
+            'issues', 'showIssue', 'printIssue', 'stocktakes', 'showStocktake', 'reports',
+            'exportReport', 'exportMatrixReport', 'warehouseList'
         ]]);
 
         $this->middleware('permission:add warehouse', ['only' => [
-            'storeMaterial', 'importMaterials',
-            'createReceipt', 'storeReceipt',
-            'createIssue', 'storeIssue',
-            'createStocktake', 'storeStocktake',
-            'storeWarehouse'
+            'storeMaterial', 'createReceipt', 'storeReceipt', 'createIssue', 'storeIssue',
+            'createStocktake', 'storeStocktake', 'storeWarehouse'
         ]]);
 
         $this->middleware('permission:edit warehouse', ['only' => [
@@ -53,12 +50,12 @@ class InventoryController extends Controller
     }
 
     /**
-     * 1. Dashboard & Danh sách Hàng hóa - Vật tư tồn kho
+     * 1. Dashboard & Danh sách Tấm ván tồn kho
      */
     public function index(Request $request)
     {
-        // Auto-seed Acrylic data if database has 0 materials
-        if (Material::count() === 0) {
+        // Auto-seed Acrylic data if database has 0 boards
+        if (WoodBoard::count() === 0) {
             $excelPath = base_path('docs/TỒN KHO TIÊU THỤ  ACRYLIC TQ.xlsx');
             if (file_exists($excelPath)) {
                 $this->inventoryService->seedAcrylicFromExcel($excelPath);
@@ -71,7 +68,7 @@ class InventoryController extends Controller
         $stockFilter = $request->input('stock_filter', 'all'); // 'all', 'low_stock', 'out_of_stock', 'in_stock'
         $search = trim((string)$request->input('search'));
 
-        // Smart Date Filter handling (tương tự orders và customers)
+        // Smart Date Filter handling
         $dateMode = $request->input('date_mode', 'all');
         $dateVal = $request->input('date_val', '');
         $filterStartDate = $request->input('filter_start_date');
@@ -107,14 +104,14 @@ class InventoryController extends Controller
             $dateLabel = 'Toàn thời gian';
         }
 
-        $query = Material::with('warehouse');
+        $query = WoodBoard::with('warehouse');
 
         if ($selectedWarehouseId) {
             $query->where('warehouse_id', $selectedWarehouseId);
         }
 
         if ($selectedCategory) {
-            $query->where('category', $selectedCategory);
+            $query->where('price_group', $selectedCategory);
         }
 
         if ($stockFilter === 'low_stock') {
@@ -135,24 +132,23 @@ class InventoryController extends Controller
 
         if ($search) {
             $query->where(function ($q) use ($search) {
-                $q->where('code', 'like', "%{$search}%")
-                  ->orWhere('name', 'like', "%{$search}%")
+                $q->where('color_code', 'like', "%{$search}%")
                   ->orWhere('origin_code', 'like', "%{$search}%")
-                  ->orWhere('category', 'like', "%{$search}%");
+                  ->orWhere('price_group', 'like', "%{$search}%");
             });
         }
 
-        $materials = $query->orderBy('category')->orderBy('code')->paginate(50)->withQueryString();
+        $materials = $query->orderBy('price_group')->orderBy('color_code')->paginate(50)->withQueryString();
 
         // Summary KPIs
-        $totalItems = Material::count();
-        $totalStockQty = Material::sum('current_stock');
-        $totalStockValue = Material::selectRaw('SUM(current_stock * cost_price) as val')->value('val') ?? 0;
-        $lowStockCount = Material::where(function ($q) {
+        $totalItems = WoodBoard::count();
+        $totalStockQty = WoodBoard::sum('current_stock');
+        $totalStockValue = WoodBoard::selectRaw('SUM(current_stock * cost_price) as val')->value('val') ?? 0;
+        $lowStockCount = WoodBoard::where(function ($q) {
             $q->whereColumn('current_stock', '<=', 'min_stock')->orWhere('current_stock', '<=', 0);
         })->count();
 
-        $categories = Material::select('category')->whereNotNull('category')->distinct()->pluck('category');
+        $categories = WoodBoard::select('price_group as category')->whereNotNull('price_group')->distinct()->pluck('category');
 
         $activeFilterCount = 0;
         if ($selectedWarehouseId) $activeFilterCount++;
@@ -184,16 +180,18 @@ class InventoryController extends Controller
     }
 
     /**
-     * Store new material
+     * Store new wood board in inventory
      */
     public function storeMaterial(Request $request)
     {
+        $code = trim($request->color_code ?: $request->code);
+        $category = trim($request->price_group ?: $request->category);
+
         $request->validate([
-            'code' => 'required|string|max:100|unique:materials,code',
-            'name' => 'required|string|max:255',
+            'color_code' => 'nullable|string|max:100',
+            'code' => 'nullable|string|max:100',
             'origin_code' => 'nullable|string|max:100',
-            'category' => 'nullable|string|max:255',
-            'unit' => 'required|string|max:50',
+            'unit' => 'nullable|string|max:50',
             'cost_price' => 'nullable|numeric|min:0',
             'min_stock' => 'nullable|numeric|min:0',
             'initial_stock' => 'nullable|numeric|min:0',
@@ -201,13 +199,20 @@ class InventoryController extends Controller
             'notes' => 'nullable|string',
         ]);
 
+        if (!$code) {
+            return back()->withErrors(['code' => 'Vui lòng nhập mã màu ván!']);
+        }
+
+        if (WoodBoard::where('color_code', $code)->exists()) {
+            return back()->withErrors(['code' => 'Mã màu ván này đã tồn tại trong hệ thống!']);
+        }
+
         $initStock = (float)($request->initial_stock ?? 0);
 
-        $material = Material::create([
-            'code' => trim($request->code),
-            'name' => trim($request->name),
+        $board = WoodBoard::create([
+            'color_code' => $code,
             'origin_code' => trim($request->origin_code),
-            'category' => trim($request->category) ?: 'Vật tư chung',
+            'price_group' => $category ?: 'Tấm cốt gỗ / Acrylic',
             'unit' => trim($request->unit) ?: 'Tấm',
             'cost_price' => (float)($request->cost_price ?? 0),
             'min_stock' => (float)($request->min_stock ?? 50),
@@ -220,8 +225,8 @@ class InventoryController extends Controller
 
         if ($initStock > 0) {
             InventoryTransaction::create([
-                'warehouse_id' => $material->warehouse_id ?? Warehouse::first()->id,
-                'material_id' => $material->id,
+                'warehouse_id' => $board->warehouse_id ?? Warehouse::first()->id,
+                'wood_board_id' => $board->id,
                 'date' => date('Y-m-d'),
                 'type' => 'initial',
                 'voucher_code' => 'DK-' . date('Y'),
@@ -233,56 +238,61 @@ class InventoryController extends Controller
             ]);
         }
 
-        return back()->with('success', 'Thêm mới vật tư ' . $material->code . ' thành công!');
+        return back()->with('success', 'Thêm mới tấm ván ' . $board->color_code . ' thành công!');
     }
 
     /**
-     * Update material
+     * Update wood board
      */
-    public function updateMaterial(Request $request, Material $material)
+    public function updateMaterial(Request $request, $id)
     {
+        $material = WoodBoard::findOrFail($id);
+
         $request->validate([
-            'name' => 'required|string|max:255',
             'origin_code' => 'nullable|string|max:100',
+            'price_group' => 'nullable|string|max:255',
             'category' => 'nullable|string|max:255',
-            'unit' => 'required|string|max:50',
+            'unit' => 'nullable|string|max:50',
             'cost_price' => 'nullable|numeric|min:0',
             'min_stock' => 'nullable|numeric|min:0',
             'warehouse_id' => 'nullable|exists:warehouses,id',
-            'status' => 'required|in:active,inactive',
+            'status' => 'nullable|in:active,inactive',
             'notes' => 'nullable|string',
         ]);
 
+        $group = trim($request->price_group ?: $request->category);
+
         $material->update([
-            'name' => trim($request->name),
             'origin_code' => trim($request->origin_code),
-            'category' => trim($request->category) ?: $material->category,
+            'price_group' => $group ?: $material->price_group,
             'unit' => trim($request->unit) ?: $material->unit,
-            'cost_price' => (float)($request->cost_price ?? 0),
-            'min_stock' => (float)($request->min_stock ?? 50),
+            'cost_price' => (float)($request->cost_price ?? $material->cost_price),
+            'min_stock' => (float)($request->min_stock ?? $material->min_stock),
             'warehouse_id' => $request->warehouse_id,
-            'status' => $request->status,
+            'status' => $request->status ?: $material->status,
             'notes' => $request->notes,
         ]);
 
-        return back()->with('success', 'Cập nhật vật tư ' . $material->code . ' thành công!');
+        return back()->with('success', 'Cập nhật thông tin tấm ' . $material->color_code . ' thành công!');
     }
 
     /**
-     * Delete material
+     * Delete wood board
      */
-    public function destroyMaterial(Material $material)
+    public function destroyMaterial($id)
     {
-        $code = $material->code;
+        $material = WoodBoard::findOrFail($id);
+        $code = $material->color_code;
         $material->delete();
-        return back()->with('success', 'Đã xóa vật tư ' . $code . '!');
+        return back()->with('success', 'Đã xóa tấm ' . $code . '!');
     }
 
     /**
-     * Thẻ kho (Stock Card - lịch sử biến động của 1 mã vật tư)
+     * Thẻ kho (Stock Card - lịch sử biến động của 1 mã tấm)
      */
-    public function stockCard(Request $request, Material $material)
+    public function stockCard(Request $request, $id)
     {
+        $material = WoodBoard::findOrFail($id);
         $transactions = $material->transactions()->with(['warehouse', 'creator'])->paginate(30);
 
         if ($request->ajax()) {
@@ -297,18 +307,18 @@ class InventoryController extends Controller
      */
     public function exportStock(Request $request)
     {
-        $materials = Material::with('warehouse')->orderBy('category')->orderBy('code')->get();
+        $materials = WoodBoard::with('warehouse')->orderBy('price_group')->orderBy('color_code')->get();
 
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Danh_Sach_Ton_Kho');
 
         // Headers
-        $sheet->setCellValue('A1', 'BÁO CÁO TỒN KHO VẬT TƯ - ' . date('d/m/Y H:i'));
+        $sheet->setCellValue('A1', 'BÁO CÁO TỒN KHO TẤM VÁN - ' . date('d/m/Y H:i'));
         $sheet->mergeCells('A1:I1');
         $sheet->getStyle('A1')->getFont()->setSize(14)->setBold(true);
 
-        $headers = ['STT', 'Mã SKU', 'Tên vật tư', 'Mã xuất xứ', 'Nhóm hàng', 'ĐVT', 'Tồn kho', 'Giá vốn (đ)', 'Giá trị tồn (đ)'];
+        $headers = ['STT', 'Mã màu ván', 'Tên mặt hàng', 'Mã xuất xứ TQ', 'Nhóm giá / Loại', 'ĐVT', 'Tồn kho', 'Giá vốn (đ)', 'Giá trị tồn (đ)'];
         $cols = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
         foreach ($headers as $idx => $h) {
             $sheet->setCellValue($cols[$idx] . '3', $h);
@@ -324,10 +334,10 @@ class InventoryController extends Controller
         $row = 4;
         foreach ($materials as $i => $m) {
             $sheet->setCellValue('A' . $row, $i + 1);
-            $sheet->setCellValue('B' . $row, $m->code);
-            $sheet->setCellValue('C' . $row, $m->name);
+            $sheet->setCellValue('B' . $row, $m->color_code);
+            $sheet->setCellValue('C' . $row, 'Tấm ' . $m->color_code);
             $sheet->setCellValue('D' . $row, $m->origin_code ?: '-');
-            $sheet->setCellValue('E' . $row, $m->category);
+            $sheet->setCellValue('E' . $row, $m->price_group);
             $sheet->setCellValue('F' . $row, $m->unit);
             $sheet->setCellValue('G' . $row, $m->current_stock);
             $sheet->setCellValue('H' . $row, $m->cost_price);
@@ -351,7 +361,7 @@ class InventoryController extends Controller
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 
-        $fileName = 'Ton_Kho_Vat_Tu_' . date('Ymd_His') . '.xlsx';
+        $fileName = 'Ton_Kho_Tam_Van_' . date('Ymd_His') . '.xlsx';
         $writer = new Xlsx($spreadsheet);
 
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
@@ -372,6 +382,8 @@ class InventoryController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('code', 'like', "%{$search}%")
                   ->orWhere('supplier_name', 'like', "%{$search}%")
+                  ->orWhere('deliverer', 'like', "%{$search}%")
+                  ->orWhere('receiver', 'like', "%{$search}%")
                   ->orWhere('notes', 'like', "%{$search}%");
             });
         }
@@ -384,7 +396,7 @@ class InventoryController extends Controller
     public function createReceipt(Request $request)
     {
         $warehouses = Warehouse::orderBy('name')->get();
-        $materials = Material::where('status', 'active')->orderBy('category')->orderBy('code')->get();
+        $materials = WoodBoard::where('status', 'active')->orderBy('price_group')->orderBy('color_code')->get();
         $nextCode = $this->inventoryService->generateCode('PNK', 'inventory_receipts');
 
         return view('inventory.receipts.create', compact('warehouses', 'materials', 'nextCode'));
@@ -396,7 +408,7 @@ class InventoryController extends Controller
             'warehouse_id' => 'required|exists:warehouses,id',
             'date' => 'required|date',
             'items' => 'required|array|min:1',
-            'items.*.material_id' => 'required|exists:materials,id',
+            'items.*.material_id' => 'required|exists:wood_boards,id',
             'items.*.quantity' => 'required|numeric|min:0.01',
             'items.*.unit_price' => 'nullable|numeric|min:0',
         ]);
@@ -415,13 +427,13 @@ class InventoryController extends Controller
 
     public function showReceipt(InventoryReceipt $receipt)
     {
-        $receipt->load(['warehouse', 'creator', 'items.material']);
+        $receipt->load(['warehouse', 'creator', 'items.woodBoard']);
         return view('inventory.receipts.show', compact('receipt'));
     }
 
     public function printReceipt(InventoryReceipt $receipt)
     {
-        $receipt->load(['warehouse', 'creator', 'items.material']);
+        $receipt->load(['warehouse', 'creator', 'items.woodBoard']);
         return view('inventory.receipts.print', compact('receipt'));
     }
 
@@ -456,7 +468,7 @@ class InventoryController extends Controller
     public function createIssue(Request $request)
     {
         $warehouses = Warehouse::orderBy('name')->get();
-        $materials = Material::where('status', 'active')->orderBy('category')->orderBy('code')->get();
+        $materials = WoodBoard::where('status', 'active')->orderBy('price_group')->orderBy('color_code')->get();
         $nextCode = $this->inventoryService->generateCode('PXK', 'inventory_issues');
 
         return view('inventory.issues.create', compact('warehouses', 'materials', 'nextCode'));
@@ -468,7 +480,7 @@ class InventoryController extends Controller
             'warehouse_id' => 'required|exists:warehouses,id',
             'date' => 'required|date',
             'items' => 'required|array|min:1',
-            'items.*.material_id' => 'required|exists:materials,id',
+            'items.*.material_id' => 'required|exists:wood_boards,id',
             'items.*.quantity' => 'required|numeric|min:0.01',
         ]);
 
@@ -486,13 +498,13 @@ class InventoryController extends Controller
 
     public function showIssue(InventoryIssue $issue)
     {
-        $issue->load(['warehouse', 'creator', 'items.material']);
+        $issue->load(['warehouse', 'creator', 'items.woodBoard']);
         return view('inventory.issues.show', compact('issue'));
     }
 
     public function printIssue(InventoryIssue $issue)
     {
-        $issue->load(['warehouse', 'creator', 'items.material']);
+        $issue->load(['warehouse', 'creator', 'items.woodBoard']);
         return view('inventory.issues.print', compact('issue'));
     }
 
@@ -530,9 +542,9 @@ class InventoryController extends Controller
             $warehouse = Warehouse::create(['name' => 'Kho Chính', 'code' => 'KHO-CHINH']);
         }
 
-        $materials = Material::where('status', 'active')
-            ->orderBy('category')
-            ->orderBy('code')
+        $materials = WoodBoard::where('status', 'active')
+            ->orderBy('price_group')
+            ->orderBy('color_code')
             ->get();
 
         $nextCode = $this->inventoryService->generateCode('PKK', 'inventory_stocktakes');
@@ -546,7 +558,8 @@ class InventoryController extends Controller
             'warehouse_id' => 'required|exists:warehouses,id',
             'date' => 'required|date',
             'items' => 'required|array|min:1',
-            'items.*.material_id' => 'required|exists:materials,id',
+            'items.*.material_id' => 'required|exists:wood_boards,id',
+            'items.*.book_quantity' => 'required|numeric',
             'items.*.actual_quantity' => 'required|numeric|min:0',
         ]);
 
@@ -559,32 +572,24 @@ class InventoryController extends Controller
             Auth::id()
         );
 
-        // If user also checked "auto balance"
         if ($request->boolean('auto_balance')) {
             $this->inventoryService->balanceStocktake($stocktake, Auth::id());
-            return redirect()->route('inventory.stocktakes.show', $stocktake)->with('success', 'Đã lưu và Cân bằng kho thành công!');
+            return redirect()->route('inventory.stocktakes.show', $stocktake)->with('success', 'Tạo và Cân bằng kho cho phiếu ' . $stocktake->code . ' thành công!');
         }
 
-        return redirect()->route('inventory.stocktakes.show', $stocktake)->with('success', 'Tạo phiếu kiểm kê ' . $stocktake->code . ' thành công!');
+        return redirect()->route('inventory.stocktakes.show', $stocktake)->with('success', 'Lưu phiếu kiểm kê ' . $stocktake->code . ' thành công!');
     }
 
     public function showStocktake(InventoryStocktake $stocktake)
     {
-        $stocktake->load(['warehouse', 'balancedByUser', 'items.material']);
+        $stocktake->load(['warehouse', 'balancedByUser', 'items.woodBoard']);
         return view('inventory.stocktakes.show', compact('stocktake'));
     }
 
     public function balanceStocktake(InventoryStocktake $stocktake)
     {
         $this->inventoryService->balanceStocktake($stocktake, Auth::id());
-        return back()->with('success', 'Cân bằng kho thành công! Số lượng tồn thực tế đã được cập nhật.');
-    }
-
-    public function destroyStocktake(InventoryStocktake $stocktake)
-    {
-        $code = $stocktake->code;
-        $stocktake->delete();
-        return redirect()->route('inventory.stocktakes.index')->with('success', 'Đã xóa phiếu kiểm kê ' . $code . '!');
+        return redirect()->route('inventory.stocktakes.show', $stocktake)->with('success', 'Cân bằng tồn kho cho phiếu ' . $stocktake->code . ' thành công!');
     }
 
     /**
@@ -598,23 +603,21 @@ class InventoryController extends Controller
         $year = (int)$request->input('year', date('Y'));
 
         // Tab 1: Xuất Nhập Tồn tổng hợp
-        $materials = Material::with('warehouse')->orderBy('category')->orderBy('code')->get();
+        $materials = WoodBoard::with('warehouse')->orderBy('price_group')->orderBy('color_code')->get();
         $reportData = [];
 
         foreach ($materials as $m) {
-            // In & Out during period
-            $inQty = InventoryTransaction::where('material_id', $m->id)
+            $inQty = InventoryTransaction::where('wood_board_id', $m->id)
                 ->whereBetween('date', [$startDate, $endDate])
                 ->where('in_qty', '>', 0)
                 ->sum('in_qty');
 
-            $outQty = InventoryTransaction::where('material_id', $m->id)
+            $outQty = InventoryTransaction::where('wood_board_id', $m->id)
                 ->whereBetween('date', [$startDate, $endDate])
                 ->where('out_qty', '>', 0)
                 ->sum('out_qty');
 
-            // Start Stock before startDate
-            $startStock = InventoryTransaction::where('material_id', $m->id)
+            $startStock = InventoryTransaction::where('wood_board_id', $m->id)
                 ->where('date', '<', $startDate)
                 ->sum(DB::raw('in_qty - out_qty'));
 
@@ -643,8 +646,7 @@ class InventoryController extends Controller
         }
 
         foreach ($materials as $idx => $m) {
-            // Start of year stock
-            $initYearStock = InventoryTransaction::where('material_id', $m->id)
+            $initYearStock = InventoryTransaction::where('wood_board_id', $m->id)
                 ->where('date', '<', $year . '-01-01')
                 ->sum(DB::raw('in_qty - out_qty'));
 
@@ -657,11 +659,11 @@ class InventoryController extends Controller
                 $mStart = sprintf('%04d-%02d-01', $year, $month);
                 $mEnd = date('Y-m-t', strtotime($mStart));
 
-                $mIn = (float)InventoryTransaction::where('material_id', $m->id)
+                $mIn = (float)InventoryTransaction::where('wood_board_id', $m->id)
                     ->whereBetween('date', [$mStart, $mEnd])
                     ->sum('in_qty');
 
-                $mOut = (float)InventoryTransaction::where('material_id', $m->id)
+                $mOut = (float)InventoryTransaction::where('wood_board_id', $m->id)
                     ->whereBetween('date', [$mStart, $mEnd])
                     ->sum('out_qty');
 
@@ -678,10 +680,10 @@ class InventoryController extends Controller
 
             $matrixRows[] = [
                 'stt' => $idx + 1,
-                'code' => $m->code,
-                'name' => $m->name,
+                'code' => $m->color_code,
+                'name' => 'Tấm ' . $m->color_code,
                 'origin_code' => $m->origin_code,
-                'category' => $m->category,
+                'category' => $m->price_group,
                 'start_stock' => $initYearStock,
                 'months' => $rowMonths,
                 'total_year_in' => $totalYearIn,
@@ -724,7 +726,7 @@ class InventoryController extends Controller
         $startDate = $request->input('start_date', date('Y-01-01'));
         $endDate = $request->input('end_date', date('Y-m-d'));
 
-        $materials = Material::with('warehouse')->orderBy('category')->orderBy('code')->get();
+        $materials = WoodBoard::with('warehouse')->orderBy('price_group')->orderBy('color_code')->get();
 
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
@@ -737,7 +739,7 @@ class InventoryController extends Controller
         $sheet->getStyle('A1')->getFont()->setSize(14)->setBold(true);
         $sheet->getStyle('A2')->getFont()->setSize(11)->setItalic(true);
 
-        $headers = ['STT', 'Mã SKU', 'Mã gốc TQ', 'Tên vật tư', 'ĐVT', 'Tồn đầu kỳ', 'Nhập trong kỳ', 'Xuất trong kỳ', 'Tồn cuối kỳ'];
+        $headers = ['STT', 'Mã màu ván', 'Mã gốc TQ', 'Tên mặt hàng', 'ĐVT', 'Tồn đầu kỳ', 'Nhập trong kỳ', 'Xuất trong kỳ', 'Tồn cuối kỳ'];
         $cols = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
         foreach ($headers as $idx => $h) {
             $sheet->setCellValue($cols[$idx] . '4', $h);
@@ -752,26 +754,26 @@ class InventoryController extends Controller
 
         $row = 5;
         foreach ($materials as $idx => $m) {
-            $inQty = (float)InventoryTransaction::where('material_id', $m->id)
+            $inQty = (float)InventoryTransaction::where('wood_board_id', $m->id)
                 ->whereBetween('date', [$startDate, $endDate])
                 ->where('in_qty', '>', 0)
                 ->sum('in_qty');
 
-            $outQty = (float)InventoryTransaction::where('material_id', $m->id)
+            $outQty = (float)InventoryTransaction::where('wood_board_id', $m->id)
                 ->whereBetween('date', [$startDate, $endDate])
                 ->where('out_qty', '>', 0)
                 ->sum('out_qty');
 
-            $startStock = (float)InventoryTransaction::where('material_id', $m->id)
+            $startStock = (float)InventoryTransaction::where('wood_board_id', $m->id)
                 ->where('date', '<', $startDate)
                 ->sum(DB::raw('in_qty - out_qty'));
 
             $endStock = $startStock + $inQty - $outQty;
 
             $sheet->setCellValue('A' . $row, $idx + 1);
-            $sheet->setCellValue('B' . $row, $m->code);
+            $sheet->setCellValue('B' . $row, $m->color_code);
             $sheet->setCellValue('C' . $row, $m->origin_code ?: '-');
-            $sheet->setCellValue('D' . $row, $m->name);
+            $sheet->setCellValue('D' . $row, 'Tấm ' . $m->color_code);
             $sheet->setCellValue('E' . $row, $m->unit);
             $sheet->setCellValue('F' . $row, $startStock);
             $sheet->setCellValue('G' . $row, $inQty);
@@ -813,7 +815,7 @@ class InventoryController extends Controller
     public function exportMatrixReport(Request $request)
     {
         $year = (int)$request->input('year', date('Y'));
-        $materials = Material::with('warehouse')->orderBy('category')->orderBy('code')->get();
+        $materials = WoodBoard::with('warehouse')->orderBy('price_group')->orderBy('color_code')->get();
 
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
@@ -825,7 +827,7 @@ class InventoryController extends Controller
         // Header Rows (Row 3 & 4)
         $sheet->setCellValue('A3', 'STT');
         $sheet->mergeCells('A3:A4');
-        $sheet->setCellValue('B3', 'Mã Gervin');
+        $sheet->setCellValue('B3', 'Mã màu ván');
         $sheet->mergeCells('B3:B4');
         $sheet->setCellValue('C3', 'Mã TQ');
         $sheet->mergeCells('C3:C4');
@@ -834,7 +836,7 @@ class InventoryController extends Controller
         $sheet->setCellValue('E3', 'Tồn đầu ' . $year);
         $sheet->mergeCells('E3:E4');
 
-        $currentColIdx = 6; // Column F is 6
+        $currentColIdx = 6;
         for ($m = 1; $m <= 12; $m++) {
             $colLetter1 = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($currentColIdx);
             $colLetter3 = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($currentColIdx + 2);
@@ -868,11 +870,11 @@ class InventoryController extends Controller
         $row = 5;
         foreach ($materials as $idx => $m) {
             $sheet->setCellValue('A' . $row, $idx + 1);
-            $sheet->setCellValue('B' . $row, $m->code);
+            $sheet->setCellValue('B' . $row, $m->color_code);
             $sheet->setCellValue('C' . $row, $m->origin_code ?: '-');
-            $sheet->setCellValue('D' . $row, $m->name);
+            $sheet->setCellValue('D' . $row, 'Tấm ' . $m->color_code);
 
-            $initYearStock = (float)InventoryTransaction::where('material_id', $m->id)
+            $initYearStock = (float)InventoryTransaction::where('wood_board_id', $m->id)
                 ->where('date', '<', $year . '-01-01')
                 ->sum(DB::raw('in_qty - out_qty'));
             $sheet->setCellValue('E' . $row, $initYearStock);
@@ -886,11 +888,11 @@ class InventoryController extends Controller
                 $mStart = sprintf('%04d-%02d-01', $year, $month);
                 $mEnd = date('Y-m-t', strtotime($mStart));
 
-                $mIn = (float)InventoryTransaction::where('material_id', $m->id)
+                $mIn = (float)InventoryTransaction::where('wood_board_id', $m->id)
                     ->whereBetween('date', [$mStart, $mEnd])
                     ->sum('in_qty');
 
-                $mOut = (float)InventoryTransaction::where('material_id', $m->id)
+                $mOut = (float)InventoryTransaction::where('wood_board_id', $m->id)
                     ->whereBetween('date', [$mStart, $mEnd])
                     ->sum('out_qty');
 
@@ -951,7 +953,7 @@ class InventoryController extends Controller
      */
     public function warehouseList(Request $request)
     {
-        $warehouses = Warehouse::withCount('materials')->orderBy('name')->get();
+        $warehouses = Warehouse::withCount('woodBoards')->orderBy('name')->get();
         return view('inventory.warehouses.index', compact('warehouses'));
     }
 

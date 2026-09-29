@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Models\Warehouse;
-use App\Models\Material;
+use App\Models\WoodBoard;
 use App\Models\InventoryReceipt;
 use App\Models\InventoryReceiptItem;
 use App\Models\InventoryIssue;
@@ -64,7 +64,9 @@ class InventoryService
             $totalAmount = 0;
 
             foreach ($items as $item) {
-                $materialId = $item['material_id'];
+                $boardId = $item['wood_board_id'] ?? $item['material_id'] ?? null;
+                if (!$boardId) continue;
+
                 $qty = (float)($item['quantity'] ?? 0);
                 if ($qty <= 0) continue;
 
@@ -73,25 +75,25 @@ class InventoryService
 
                 $receiptItem = InventoryReceiptItem::create([
                     'receipt_id' => $receipt->id,
-                    'material_id' => $materialId,
+                    'wood_board_id' => $boardId,
                     'quantity' => $qty,
                     'unit_price' => $price,
                     'total_price' => $lineTotal,
                     'notes' => $item['notes'] ?? null,
                 ]);
 
-                // Update Material stock
-                $material = Material::findOrFail($materialId);
-                $material->current_stock += $qty;
+                // Update WoodBoard stock
+                $board = WoodBoard::findOrFail($boardId);
+                $board->current_stock += $qty;
                 if ($price > 0) {
-                    $material->cost_price = $price;
+                    $board->cost_price = $price;
                 }
-                $material->save();
+                $board->save();
 
                 // Create stock transaction
                 InventoryTransaction::create([
                     'warehouse_id' => $warehouse->id,
-                    'material_id' => $material->id,
+                    'wood_board_id' => $board->id,
                     'date' => $date,
                     'type' => 'receipt',
                     'voucher_code' => $code,
@@ -99,7 +101,7 @@ class InventoryService
                     'reference_type' => InventoryReceipt::class,
                     'in_qty' => $qty,
                     'out_qty' => 0,
-                    'stock_after' => $material->current_stock,
+                    'stock_after' => $board->current_stock,
                     'unit_price' => $price,
                     'notes' => $data['notes'] ?? ('Nhập kho theo phiếu ' . $code),
                     'created_by' => $userId,
@@ -145,31 +147,33 @@ class InventoryService
             $totalAmount = 0;
 
             foreach ($items as $item) {
-                $materialId = $item['material_id'];
+                $boardId = $item['wood_board_id'] ?? $item['material_id'] ?? null;
+                if (!$boardId) continue;
+
                 $qty = (float)($item['quantity'] ?? 0);
                 if ($qty <= 0) continue;
 
-                $material = Material::findOrFail($materialId);
-                $price = (float)($item['unit_price'] ?? $material->cost_price);
+                $board = WoodBoard::findOrFail($boardId);
+                $price = (float)($item['unit_price'] ?? $board->cost_price);
                 $lineTotal = $qty * $price;
 
                 InventoryIssueItem::create([
                     'issue_id' => $issue->id,
-                    'material_id' => $materialId,
+                    'wood_board_id' => $boardId,
                     'quantity' => $qty,
                     'unit_price' => $price,
                     'total_price' => $lineTotal,
                     'notes' => $item['notes'] ?? null,
                 ]);
 
-                // Update Material stock
-                $material->current_stock -= $qty;
-                $material->save();
+                // Update WoodBoard stock
+                $board->current_stock -= $qty;
+                $board->save();
 
                 // Create stock transaction
                 InventoryTransaction::create([
                     'warehouse_id' => $warehouse->id,
-                    'material_id' => $material->id,
+                    'wood_board_id' => $board->id,
                     'date' => $date,
                     'type' => 'issue',
                     'voucher_code' => $code,
@@ -177,7 +181,7 @@ class InventoryService
                     'reference_type' => InventoryIssue::class,
                     'in_qty' => 0,
                     'out_qty' => $qty,
-                    'stock_after' => $material->current_stock,
+                    'stock_after' => $board->current_stock,
                     'unit_price' => $price,
                     'notes' => $data['notes'] ?? ('Xuất kho theo phiếu ' . $code),
                     'created_by' => $userId,
@@ -222,14 +226,16 @@ class InventoryService
             $totalDiff = 0;
 
             foreach ($items as $item) {
-                $materialId = $item['material_id'];
+                $boardId = $item['wood_board_id'] ?? $item['material_id'] ?? null;
+                if (!$boardId) continue;
+
                 $bookQty = (float)($item['book_quantity'] ?? 0);
                 $actualQty = (float)($item['actual_quantity'] ?? $bookQty);
                 $diff = $actualQty - $bookQty;
 
                 InventoryStocktakeItem::create([
                     'stocktake_id' => $stocktake->id,
-                    'material_id' => $materialId,
+                    'wood_board_id' => $boardId,
                     'book_quantity' => $bookQty,
                     'actual_quantity' => $actualQty,
                     'difference' => $diff,
@@ -260,17 +266,17 @@ class InventoryService
 
         DB::transaction(function () use ($stocktake, $userId) {
             foreach ($stocktake->items as $item) {
-                $material = $item->material;
-                if (!$material) continue;
+                $board = $item->woodBoard;
+                if (!$board) continue;
 
                 $diff = $item->difference;
                 if ($diff != 0) {
-                    $material->current_stock = $item->actual_quantity;
-                    $material->save();
+                    $board->current_stock = $item->actual_quantity;
+                    $board->save();
 
                     InventoryTransaction::create([
                         'warehouse_id' => $stocktake->warehouse_id,
-                        'material_id' => $material->id,
+                        'wood_board_id' => $board->id,
                         'date' => $stocktake->date,
                         'type' => 'stocktake',
                         'voucher_code' => $stocktake->code,
@@ -278,8 +284,8 @@ class InventoryService
                         'reference_type' => InventoryStocktake::class,
                         'in_qty' => $diff > 0 ? $diff : 0,
                         'out_qty' => $diff < 0 ? abs($diff) : 0,
-                        'stock_after' => $material->current_stock,
-                        'unit_price' => $material->cost_price,
+                        'stock_after' => $board->current_stock,
+                        'unit_price' => $board->cost_price,
                         'notes' => 'Cân bằng kho sau kiểm kê ' . $stocktake->code . ($item->reason ? (' (' . $item->reason . ')') : ''),
                         'created_by' => $userId,
                     ]);
@@ -295,7 +301,7 @@ class InventoryService
     }
 
     /**
-     * Initialize Acrylic Materials and historical data from Excel file
+     * Initialize Acrylic WoodBoards and historical data from Excel file
      */
     public function seedAcrylicFromExcel(string $filePath): Warehouse
     {
@@ -331,19 +337,17 @@ class InventoryService
                 }
 
                 $originCode = trim((string)$sheet->getCell('C' . $r)->getValue());
-                $nameEn = trim((string)$sheet->getCell('D' . $r)->getValue());
                 $group = trim((string)$sheet->getCell('F' . $r)->getValue()) ?: 'Acrylic TQ';
                 $initStock = (float)$sheet->getCell('G' . $r)->getCalculatedValue();
 
-                $material = Material::updateOrCreate(
+                $board = WoodBoard::updateOrCreate(
                     [
-                        'warehouse_id' => $warehouse->id,
-                        'code' => $code,
+                        'color_code' => $code,
                     ],
                     [
-                        'name' => 'Acrylic ' . $code,
-                        'origin_code' => $originCode,
-                        'category' => $group,
+                        'warehouse_id' => $warehouse->id,
+                        'origin_code' => $originCode ?: null,
+                        'price_group' => $group,
                         'unit' => 'Tấm',
                         'cost_price' => 0,
                         'min_stock' => 150,
@@ -354,7 +358,7 @@ class InventoryService
                 );
 
                 $items[$code] = [
-                    'material' => $material,
+                    'board' => $board,
                     'row' => $r,
                     'initial_stock' => $initStock,
                     'running_stock' => $initStock,
@@ -365,7 +369,7 @@ class InventoryService
                     InventoryTransaction::updateOrCreate(
                         [
                             'warehouse_id' => $warehouse->id,
-                            'material_id' => $material->id,
+                            'wood_board_id' => $board->id,
                             'voucher_code' => 'DK-2023',
                         ],
                         [
@@ -420,7 +424,7 @@ class InventoryService
 
                     if ($inVal > 0) {
                         $inItems[] = [
-                            'material_id' => $info['material']->id,
+                            'wood_board_id' => $info['board']->id,
                             'quantity' => $inVal,
                             'unit_price' => 0,
                             'stock_after' => $info['running_stock'],
@@ -428,7 +432,7 @@ class InventoryService
                     }
                     if ($outVal > 0) {
                         $outItems[] = [
-                            'material_id' => $info['material']->id,
+                            'wood_board_id' => $info['board']->id,
                             'quantity' => $outVal,
                             'unit_price' => 0,
                             'stock_after' => $info['running_stock'],
@@ -457,7 +461,7 @@ class InventoryService
                     foreach ($inItems as $ii) {
                         InventoryReceiptItem::create([
                             'receipt_id' => $rc->id,
-                            'material_id' => $ii['material_id'],
+                            'wood_board_id' => $ii['wood_board_id'],
                             'quantity' => $ii['quantity'],
                             'unit_price' => 0,
                             'total_price' => 0,
@@ -465,7 +469,7 @@ class InventoryService
                         InventoryTransaction::updateOrCreate(
                             [
                                 'warehouse_id' => $warehouse->id,
-                                'material_id' => $ii['material_id'],
+                                'wood_board_id' => $ii['wood_board_id'],
                                 'voucher_code' => $pnkCode,
                             ],
                             [
@@ -502,7 +506,7 @@ class InventoryService
                     foreach ($outItems as $oi) {
                         InventoryIssueItem::create([
                             'issue_id' => $iss->id,
-                            'material_id' => $oi['material_id'],
+                            'wood_board_id' => $oi['wood_board_id'],
                             'quantity' => $oi['quantity'],
                             'unit_price' => 0,
                             'total_price' => 0,
@@ -510,7 +514,7 @@ class InventoryService
                         InventoryTransaction::updateOrCreate(
                             [
                                 'warehouse_id' => $warehouse->id,
-                                'material_id' => $oi['material_id'],
+                                'wood_board_id' => $oi['wood_board_id'],
                                 'voucher_code' => $pxkCode,
                             ],
                             [
@@ -528,11 +532,11 @@ class InventoryService
                 }
             }
 
-            // Save final running stock to each material
+            // Save final running stock to each board
             foreach ($items as $code => $info) {
-                $m = $info['material'];
-                $m->current_stock = $info['running_stock'];
-                $m->save();
+                $b = $info['board'];
+                $b->current_stock = $info['running_stock'];
+                $b->save();
             }
 
             return $warehouse;

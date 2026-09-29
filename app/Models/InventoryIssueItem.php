@@ -9,7 +9,7 @@ class InventoryIssueItem extends Model
 {
     protected $fillable = [
         'issue_id',
-        'material_id',
+        'wood_board_id',
         'quantity',
         'unit_price',
         'total_price',
@@ -27,8 +27,16 @@ class InventoryIssueItem extends Model
         return $this->belongsTo(InventoryIssue::class, 'issue_id');
     }
 
+    public function woodBoard(): BelongsTo
+    {
+        return $this->belongsTo(WoodBoard::class, 'wood_board_id');
+    }
+
+    /**
+     * Backward-compatible alias for existing views
+     */
     public function material(): BelongsTo
     {
-        return $this->belongsTo(Material::class, 'material_id');
+        return $this->woodBoard();
     }
 }

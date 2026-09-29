@@ -9,7 +9,7 @@ class InventoryStocktakeItem extends Model
 {
     protected $fillable = [
         'stocktake_id',
-        'material_id',
+        'wood_board_id',
         'book_quantity',
         'actual_quantity',
         'difference',
@@ -27,8 +27,16 @@ class InventoryStocktakeItem extends Model
         return $this->belongsTo(InventoryStocktake::class, 'stocktake_id');
     }
 
+    public function woodBoard(): BelongsTo
+    {
+        return $this->belongsTo(WoodBoard::class, 'wood_board_id');
+    }
+
+    /**
+     * Backward-compatible alias for existing views
+     */
     public function material(): BelongsTo
     {
-        return $this->belongsTo(Material::class, 'material_id');
+        return $this->woodBoard();
     }
 }
