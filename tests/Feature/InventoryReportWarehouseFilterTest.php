@@ -6,14 +6,14 @@ use App\Models\User;
 use App\Models\Warehouse;
 use App\Models\WoodBoard;
 use App\Models\InventoryTransaction;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class InventoryReportWarehouseFilterTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     protected User $admin;
     protected Warehouse $warehouseA;

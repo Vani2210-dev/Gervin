@@ -95,17 +95,24 @@
                                     <div class="flex items-center gap-1">
                                         <button type="button" 
                                                 data-warehouse="{{ htmlspecialchars(json_encode($w), ENT_QUOTES, 'UTF-8') }}"
+                                                data-id="{{ $w->id }}"
+                                                data-name="{{ $w->name }}"
+                                                data-code="{{ $w->code }}"
+                                                data-manager="{{ $w->manager }}"
+                                                data-address="{{ $w->address }}"
+                                                data-status="{{ $w->status }}"
+                                                data-description="{{ $w->description }}"
                                                 onclick="openEditWarehouseModal(this)" 
                                                 class="p-2 text-neutral-400 hover:text-primary-600 hover:bg-neutral-50 rounded-lg transition-colors cursor-pointer" 
                                                 title="Chỉnh sửa kho hàng">
-                                            <iconify-icon icon="solar:pen-bold" class="text-base"></iconify-icon>
+                                            <iconify-icon icon="solar:pen-bold" class="text-base pointer-events-none"></iconify-icon>
                                         </button>
                                         @if($w->materials_count == 0)
                                             <form action="{{ route('inventory.warehouses.destroy', $w) }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa kho này?');" class="inline-block">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="p-2 text-neutral-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg" title="Xóa">
-                                                    <iconify-icon icon="solar:trash-bin-trash-bold" class="text-base"></iconify-icon>
+                                                    <iconify-icon icon="solar:trash-bin-trash-bold" class="text-base pointer-events-none"></iconify-icon>
                                                 </button>
                                             </form>
                                         @endif
@@ -125,146 +132,172 @@
 </div>
 
 {{-- Modal Thêm mới Kho hàng --}}
-<div id="createWarehouseModal" class="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 hidden" onclick="if(event.target === this) closeCreateWarehouseModal()">
-    <div class="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl relative" onclick="event.stopPropagation()">
-        <form action="{{ route('inventory.warehouses.store') }}" method="POST">
-            @csrf
-            <div class="p-4 border-b border-neutral-200 flex items-center justify-between bg-neutral-50">
-                <h6 class="font-bold text-neutral-800 text-sm mb-0">Thêm kho hàng mới</h6>
-                <button type="button" onclick="closeCreateWarehouseModal()" class="text-neutral-400 hover:text-neutral-800 p-1 rounded-lg">
-                    <iconify-icon icon="solar:close-circle-bold" class="text-2xl"></iconify-icon>
-                </button>
-            </div>
-            <div class="p-6 space-y-4 text-xs">
-                <div>
-                    <label class="block font-bold text-neutral-700 mb-1">Tên kho hàng <span class="text-rose-500">*</span></label>
-                    <input type="text" name="name" class="form-control rounded-lg px-3 py-2 border-neutral-300 text-xs w-full" placeholder="Ví dụ: Kho Acrylic TQ, Kho Phụ kiện..." required>
-                </div>
-                <div>
-                    <label class="block font-bold text-neutral-700 mb-1">Mã kho (tùy chọn)</label>
-                    <input type="text" name="code" class="form-control rounded-lg px-3 py-2 border-neutral-300 text-xs w-full" placeholder="Ví dụ: KHO-ACRYLIC">
-                </div>
-                <div>
-                    <label class="block font-bold text-neutral-700 mb-1">Thủ kho / Quản lý</label>
-                    <input type="text" name="manager" class="form-control rounded-lg px-3 py-2 border-neutral-300 text-xs w-full" placeholder="Tên nhân sự quản lý kho">
-                </div>
-                <div>
-                    <label class="block font-bold text-neutral-700 mb-1">Địa chỉ kho</label>
-                    <input type="text" name="address" class="form-control rounded-lg px-3 py-2 border-neutral-300 text-xs w-full" placeholder="Xưởng sản xuất hoặc chi nhánh...">
-                </div>
-                <div>
-                    <label class="block font-bold text-neutral-700 mb-1">Ghi chú / Mô tả</label>
-                    <textarea name="description" rows="2" class="form-control rounded-lg px-3 py-2 border-neutral-300 text-xs w-full" placeholder="Mô tả chức năng kho..."></textarea>
-                </div>
-            </div>
-            <div class="p-4 border-t border-neutral-200 bg-neutral-50 flex items-center justify-end gap-2">
-                <button type="button" onclick="closeCreateWarehouseModal()" class="btn btn-secondary px-4 py-2 rounded-lg text-xs font-bold text-neutral-600 border border-neutral-300">
-                    Hủy bỏ
-                </button>
-                <button type="submit" class="btn btn-primary px-4 py-2 rounded-lg text-xs font-bold shadow-sm">
-                    Lưu kho hàng
-                </button>
-            </div>
-        </form>
+<x-modal name="createWarehouseModal" maxWidth="md">
+    <div class="p-4 border-b border-neutral-200 flex items-center justify-between bg-neutral-50 rounded-t-xl">
+        <h6 class="font-bold text-neutral-800 text-sm mb-0">Thêm kho hàng mới</h6>
+        <button type="button" onclick="closeCreateWarehouseModal()" class="text-neutral-400 hover:text-neutral-800 p-1 rounded-lg">
+            <iconify-icon icon="solar:close-circle-bold" class="text-2xl"></iconify-icon>
+        </button>
     </div>
-</div>
+    <form action="{{ route('inventory.warehouses.store') }}" method="POST">
+        @csrf
+        <div class="p-6 space-y-4 text-xs">
+            <div>
+                <label class="block font-bold text-neutral-700 mb-1">Tên kho hàng <span class="text-rose-500">*</span></label>
+                <input type="text" name="name" class="form-control rounded-lg px-3 py-2 border-neutral-300 text-xs w-full" placeholder="Ví dụ: Kho Acrylic TQ, Kho Phụ kiện..." required>
+            </div>
+            <div>
+                <label class="block font-bold text-neutral-700 mb-1">Mã kho (tùy chọn)</label>
+                <input type="text" name="code" class="form-control rounded-lg px-3 py-2 border-neutral-300 text-xs w-full" placeholder="Ví dụ: KHO-ACRYLIC">
+            </div>
+            <div>
+                <label class="block font-bold text-neutral-700 mb-1">Thủ kho / Quản lý</label>
+                <input type="text" name="manager" class="form-control rounded-lg px-3 py-2 border-neutral-300 text-xs w-full" placeholder="Tên nhân sự quản lý kho">
+            </div>
+            <div>
+                <label class="block font-bold text-neutral-700 mb-1">Địa chỉ kho</label>
+                <input type="text" name="address" class="form-control rounded-lg px-3 py-2 border-neutral-300 text-xs w-full" placeholder="Xưởng sản xuất hoặc chi nhánh...">
+            </div>
+            <div>
+                <label class="block font-bold text-neutral-700 mb-1">Ghi chú / Mô tả</label>
+                <textarea name="description" rows="2" class="form-control rounded-lg px-3 py-2 border-neutral-300 text-xs w-full" placeholder="Mô tả chức năng kho..."></textarea>
+            </div>
+        </div>
+        <div class="p-4 border-t border-neutral-200 bg-neutral-50 flex items-center justify-end gap-2 rounded-b-xl">
+            <button type="button" onclick="closeCreateWarehouseModal()" class="btn btn-secondary px-4 py-2 rounded-lg text-xs font-bold text-neutral-600 border border-neutral-300">
+                Hủy bỏ
+            </button>
+            <button type="submit" class="btn btn-primary px-4 py-2 rounded-lg text-xs font-bold shadow-sm">
+                Lưu kho hàng
+            </button>
+        </div>
+    </form>
+</x-modal>
 
 {{-- Modal Chỉnh sửa Kho hàng --}}
-<div id="editWarehouseModal" class="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 hidden" onclick="if(event.target === this) closeEditWarehouseModal()">
-    <div class="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl relative" onclick="event.stopPropagation()">
-        <form id="editWarehouseForm" method="POST">
-            @csrf
-            @method('PUT')
-            <div class="p-4 border-b border-neutral-200 flex items-center justify-between bg-neutral-50">
-                <h6 class="font-bold text-neutral-800 text-sm mb-0">Cập nhật thông tin kho hàng</h6>
-                <button type="button" onclick="closeEditWarehouseModal()" class="text-neutral-400 hover:text-neutral-800 p-1 rounded-lg">
-                    <iconify-icon icon="solar:close-circle-bold" class="text-2xl"></iconify-icon>
-                </button>
-            </div>
-            <div class="p-6 space-y-4 text-xs">
-                <div>
-                    <label class="block font-bold text-neutral-700 mb-1">Tên kho hàng <span class="text-rose-500">*</span></label>
-                    <input type="text" id="edit_name" name="name" class="form-control rounded-lg px-3 py-2 border-neutral-300 text-xs w-full" required>
-                </div>
-                <div>
-                    <label class="block font-bold text-neutral-700 mb-1">Mã kho</label>
-                    <input type="text" id="edit_code" name="code" class="form-control rounded-lg px-3 py-2 border-neutral-300 text-xs w-full">
-                </div>
-                <div>
-                    <label class="block font-bold text-neutral-700 mb-1">Thủ kho / Quản lý</label>
-                    <input type="text" id="edit_manager" name="manager" class="form-control rounded-lg px-3 py-2 border-neutral-300 text-xs w-full">
-                </div>
-                <div>
-                    <label class="block font-bold text-neutral-700 mb-1">Địa chỉ kho</label>
-                    <input type="text" id="edit_address" name="address" class="form-control rounded-lg px-3 py-2 border-neutral-300 text-xs w-full">
-                </div>
-                <div>
-                    <label class="block font-bold text-neutral-700 mb-1">Trạng thái hoạt động</label>
-                    <select id="edit_status" name="status" class="form-select rounded-lg px-3 py-2 border-neutral-300 text-xs w-full">
-                        <option value="active">Đang hoạt động</option>
-                        <option value="inactive">Tạm ngưng</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block font-bold text-neutral-700 mb-1">Ghi chú / Mô tả</label>
-                    <textarea id="edit_description" name="description" rows="2" class="form-control rounded-lg px-3 py-2 border-neutral-300 text-xs w-full"></textarea>
-                </div>
-            </div>
-            <div class="p-4 border-t border-neutral-200 bg-neutral-50 flex items-center justify-end gap-2">
-                <button type="button" onclick="closeEditWarehouseModal()" class="btn btn-secondary px-4 py-2 rounded-lg text-xs font-bold text-neutral-600 border border-neutral-300">
-                    Hủy bỏ
-                </button>
-                <button type="submit" class="btn btn-primary px-4 py-2 rounded-lg text-xs font-bold shadow-sm">
-                    Lưu thay đổi
-                </button>
-            </div>
-        </form>
+<x-modal name="editWarehouseModal" maxWidth="md">
+    <div class="p-4 border-b border-neutral-200 flex items-center justify-between bg-neutral-50 rounded-t-xl">
+        <h6 class="font-bold text-neutral-800 text-sm mb-0">Cập nhật thông tin kho hàng</h6>
+        <button type="button" onclick="closeEditWarehouseModal()" class="text-neutral-400 hover:text-neutral-800 p-1 rounded-lg">
+            <iconify-icon icon="solar:close-circle-bold" class="text-2xl"></iconify-icon>
+        </button>
     </div>
-</div>
+    <form id="editWarehouseForm" method="POST">
+        @csrf
+        @method('PUT')
+        <div class="p-6 space-y-4 text-xs">
+            <div>
+                <label class="block font-bold text-neutral-700 mb-1">Tên kho hàng <span class="text-rose-500">*</span></label>
+                <input type="text" id="edit_name" name="name" class="form-control rounded-lg px-3 py-2 border-neutral-300 text-xs w-full" required>
+            </div>
+            <div>
+                <label class="block font-bold text-neutral-700 mb-1">Mã kho</label>
+                <input type="text" id="edit_code" name="code" class="form-control rounded-lg px-3 py-2 border-neutral-300 text-xs w-full">
+            </div>
+            <div>
+                <label class="block font-bold text-neutral-700 mb-1">Thủ kho / Quản lý</label>
+                <input type="text" id="edit_manager" name="manager" class="form-control rounded-lg px-3 py-2 border-neutral-300 text-xs w-full">
+            </div>
+            <div>
+                <label class="block font-bold text-neutral-700 mb-1">Địa chỉ kho</label>
+                <input type="text" id="edit_address" name="address" class="form-control rounded-lg px-3 py-2 border-neutral-300 text-xs w-full">
+            </div>
+            <div>
+                <label class="block font-bold text-neutral-700 mb-1">Trạng thái hoạt động</label>
+                <select id="edit_status" name="status" class="form-select rounded-lg px-3 py-2 border-neutral-300 text-xs w-full">
+                    <option value="active">Đang hoạt động</option>
+                    <option value="inactive">Tạm ngưng</option>
+                </select>
+            </div>
+            <div>
+                <label class="block font-bold text-neutral-700 mb-1">Ghi chú / Mô tả</label>
+                <textarea id="edit_description" name="description" rows="2" class="form-control rounded-lg px-3 py-2 border-neutral-300 text-xs w-full"></textarea>
+            </div>
+        </div>
+        <div class="p-4 border-t border-neutral-200 bg-neutral-50 flex items-center justify-end gap-2 rounded-b-xl">
+            <button type="button" onclick="closeEditWarehouseModal()" class="btn btn-secondary px-4 py-2 rounded-lg text-xs font-bold text-neutral-600 border border-neutral-300">
+                Hủy bỏ
+            </button>
+            <button type="submit" class="btn btn-primary px-4 py-2 rounded-lg text-xs font-bold shadow-sm">
+                Lưu thay đổi
+            </button>
+        </div>
+    </form>
+</x-modal>
 
 <script>
     function openCreateWarehouseModal() {
-        document.getElementById('createWarehouseModal').classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
+        openModal('createWarehouseModal');
     }
     function closeCreateWarehouseModal() {
-        document.getElementById('createWarehouseModal').classList.add('hidden');
-        document.body.style.overflow = '';
+        closeModal('createWarehouseModal');
     }
 
     function openEditWarehouseModal(btnOrObj) {
-        let warehouse = btnOrObj;
-        if (btnOrObj instanceof HTMLElement) {
-            try {
-                warehouse = JSON.parse(btnOrObj.getAttribute('data-warehouse'));
-            } catch (e) {
-                console.error("Lỗi parse data-warehouse:", e);
-                return;
+        let btn = btnOrObj;
+        if (btn instanceof Event) {
+            btn = btn.currentTarget || btn.target;
+        }
+        if (btn && btn.closest) {
+            btn = btn.closest('button') || btn;
+        }
+
+        let id = '', name = '', code = '', manager = '', address = '', status = 'active', description = '';
+
+        if (btn && btn.dataset) {
+            id = btn.dataset.id;
+            name = btn.dataset.name;
+            code = btn.dataset.code;
+            manager = btn.dataset.manager;
+            address = btn.dataset.address;
+            status = btn.dataset.status;
+            description = btn.dataset.description;
+
+            if (!id && btn.getAttribute('data-warehouse')) {
+                try {
+                    const parsed = JSON.parse(btn.getAttribute('data-warehouse'));
+                    id = parsed.id;
+                    name = parsed.name;
+                    code = parsed.code;
+                    manager = parsed.manager;
+                    address = parsed.address;
+                    status = parsed.status;
+                    description = parsed.description;
+                } catch(e) {}
             }
+        } else if (typeof btnOrObj === 'object' && btnOrObj !== null) {
+            id = btnOrObj.id;
+            name = btnOrObj.name;
+            code = btnOrObj.code;
+            manager = btnOrObj.manager;
+            address = btnOrObj.address;
+            status = btnOrObj.status;
+            description = btnOrObj.description;
         }
-        if (!warehouse) return;
 
-        document.getElementById('editWarehouseForm').action = `/warehouses/list/${warehouse.id}`;
-        document.getElementById('edit_name').value = warehouse.name || '';
-        document.getElementById('edit_code').value = warehouse.code || '';
-        document.getElementById('edit_manager').value = warehouse.manager || '';
-        document.getElementById('edit_address').value = warehouse.address || '';
-        document.getElementById('edit_status').value = warehouse.status || 'active';
-        document.getElementById('edit_description').value = warehouse.description || '';
+        if (!id) return;
 
-        document.getElementById('editWarehouseModal').classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
+        const form = document.getElementById('editWarehouseForm');
+        if (form) {
+            form.action = `/warehouses/list/${id}`;
+        }
+        const setVal = (elmId, val) => {
+            const elm = document.getElementById(elmId);
+            if (elm) elm.value = val || '';
+        };
+
+        setVal('edit_name', name);
+        setVal('edit_code', code);
+        setVal('edit_manager', manager);
+        setVal('edit_address', address);
+        setVal('edit_status', status || 'active');
+        setVal('edit_description', description);
+
+        openModal('editWarehouseModal');
     }
+
     function closeEditWarehouseModal() {
-        document.getElementById('editWarehouseModal').classList.add('hidden');
-        document.body.style.overflow = '';
+        closeModal('editWarehouseModal');
     }
-
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            closeCreateWarehouseModal();
-            closeEditWarehouseModal();
-        }
-    });
 </script>
 @endsection

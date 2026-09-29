@@ -5,14 +5,14 @@ namespace Tests\Feature;
 use App\Models\User;
 use App\Models\Warehouse;
 use App\Models\WoodBoard;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class WarehouseEditTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     protected function setUp(): void
     {
@@ -94,7 +94,7 @@ class WarehouseEditTest extends TestCase
         ]);
 
         // 1. Check GET /warehouses
-        $response = $this->actingAs($admin)->get(route('inventory.index'));
+        $response = $this->actingAs($admin)->get(route('inventory.index', ['search' => 'PARC01']));
         $response->assertStatus(200);
         $response->assertSee('PARC01');
         $response->assertSee('data-material=', false);
