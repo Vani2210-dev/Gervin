@@ -294,6 +294,9 @@ Route::get('warehouses-redirect', function() {
 
 // Customers
 Route::middleware(['auth'])->group(function () {
+    Route::get('customers/export', [CustomerController::class, 'exportExcel'])->name('customers.export');
+    Route::get('customers/{customer}/orders/export', [CustomerController::class, 'exportOrdersExcel'])->name('customers.orders.export');
+    Route::get('customers/{customer}/payments/export', [CustomerController::class, 'exportPaymentsExcel'])->name('customers.payments.export');
     Route::resource('customers', CustomerController::class)->names('customers');
     Route::get('customers/{customer}/overview', [CustomerController::class, 'overview'])->name('customers.overview');
     Route::post('customers/quick-create', [CustomerController::class, 'quickCreate'])->name('customers.quick-create');
@@ -308,6 +311,7 @@ Route::middleware(['auth'])->group(function () {
 
 // Orders
 Route::middleware(['auth'])->group(function () {
+    Route::get('orders/export', [OrderController::class, 'exportExcel'])->name('orders.export');
     Route::resource('orders', OrderController::class)->names('orders');
     Route::post('orders/bulk-destroy', [OrderController::class, 'bulkDestroy'])->name('orders.bulk-destroy');
     Route::post('orders/bulk-export-data', [OrderController::class, 'bulkExportData'])->name('orders.bulk-export-data');

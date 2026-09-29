@@ -3,6 +3,44 @@
 @php
     $title = 'Thiết bị quét QR';
     $subTitle = 'Cấu hình & Nhật ký';
+
+    $configCommands = [
+        [
+            'step'    => 1,
+            'title'   => 'Khôi phục cài đặt gốc',
+            'desc'    => 'Đặt lại toàn bộ thông số máy quét về mặc định ban đầu',
+            'cmd'     => '<cmd>rk_reset',
+            'badge'   => 'Bước 1: Reset',
+        ],
+        [
+            'step'    => 2,
+            'title'   => 'Kết nối Wi-Fi xưởng',
+            'desc'    => 'SSID: "CTY GERVIN - XUONG" | Pass: "68686868"',
+            'cmd'     => '<cmd>wifi -ssid "CTY GERVIN - XUONG" -pass "68686868"',
+            'badge'   => 'Bước 2: Wi-Fi',
+        ],
+        [
+            'step'    => 3,
+            'title'   => 'Cấu hình Máy chủ Server',
+            'desc'    => 'URL: https://gervinwood.vn/scan -dup 1 -queue 20',
+            'cmd'     => '<cmd>server -url "https://gervinwood.vn/scan" -dup 1 -queue 20',
+            'badge'   => 'Bước 3: Server',
+        ],
+        [
+            'step'    => 4,
+            'title'   => 'Thời gian nghỉ giữa các lần quét',
+            'desc'    => 'Tạm dừng 1500ms (1.5 giây) giữa 2 lần quét',
+            'cmd'     => '<cmd>rk -pause 1500',
+            'badge'   => 'Bước 4: Pause 1.5s',
+        ],
+        [
+            'step'    => 5,
+            'title'   => 'Màn hình luôn sáng',
+            'desc'    => 'Timeout = 0: Không bao giờ tắt màn hình máy quét',
+            'cmd'     => '<cmd>screen -timeout 0',
+            'badge'   => 'Bước 5: Screen Timeout',
+        ],
+    ];
 @endphp
 
 @section('content')
@@ -67,6 +105,94 @@
         
         <!-- Left: Devices Configuration (4 Columns) -->
         <div class="lg:col-span-4 flex flex-col gap-6">
+
+            <!-- Card: Cấu hình Máy quét QR -->
+            <div class="card bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-sm overflow-hidden">
+                <div class="card-header border-b border-neutral-200 dark:border-neutral-800 py-3.5 px-5 flex justify-between items-center bg-white dark:bg-neutral-900/50">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-xl shrink-0">
+                            <iconify-icon icon="solar:qr-code-bold-duotone"></iconify-icon>
+                        </div>
+                        <div>
+                            <h5 class="text-sm font-bold text-neutral-800 dark:text-neutral-100 m-0">Cấu hình Máy quét</h5>
+                            <span class="text-[11px] text-neutral-400">Rakinda RK80ER & Thiết bị QR</span>
+                        </div>
+                    </div>
+                    <button type="button" onclick="openModal('printQrConfigModal')"
+                            class="btn bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950 dark:hover:bg-indigo-900 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-xs font-semibold px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 transition">
+                        <iconify-icon icon="solar:printer-bold" class="text-sm"></iconify-icon>
+                        In mã A4
+                    </button>
+                </div>
+
+                {{-- Alert instruction --}}
+                <div class="p-3.5 bg-amber-50 dark:bg-amber-950/20 border-b border-amber-200 dark:border-amber-800/40 flex items-start gap-2.5">
+                    <iconify-icon icon="solar:danger-triangle-bold" class="text-amber-600 text-lg shrink-0 mt-0.5"></iconify-icon>
+                    <div class="text-xs text-amber-900 dark:text-amber-200">
+                        <span class="font-bold uppercase tracking-wide block mb-0.5">Quét từ trên xuống để cấu hình Máy quét</span>
+                        <span class="text-neutral-600 dark:text-neutral-300 leading-relaxed">Đưa đầu đọc máy quét lần lượt qua từng mã QR từ <strong>Bước 1</strong> đến <strong>Bước 5</strong> từ trên xuống dưới để thiết lập máy.</span>
+                    </div>
+                </div>
+
+                {{-- QR Sequence List --}}
+                <div class="card-body p-4 space-y-4 max-h-[820px] overflow-y-auto">
+                    @foreach($configCommands as $idx => $item)
+                        @php
+                            $qrSvg = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')
+                                ->size(140)
+                                ->margin(1)
+                                ->generate($item['cmd']);
+                            $qrSvg = str_replace('<?xml version="1.0" encoding="UTF-8"?>', '', $qrSvg);
+                        @endphp
+                        <div class="relative bg-neutral-50/80 dark:bg-neutral-800/40 p-3.5 rounded-xl border border-neutral-200/80 dark:border-neutral-700 flex flex-col items-center text-center">
+                            {{-- Step indicator header --}}
+                            <div class="w-full flex items-center justify-between mb-2">
+                                <span class="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                                    <iconify-icon icon="solar:round-alt-arrow-down-bold"></iconify-icon>
+                                    {{ $item['badge'] }}
+                                </span>
+                                <span class="text-[10px] font-mono text-neutral-400 font-semibold">
+                                    Mã #{{ $item['step'] }}/{{ count($configCommands) }}
+                                </span>
+                            </div>
+
+                            <h6 class="font-bold text-xs text-neutral-800 dark:text-neutral-100 mb-0.5">
+                                {{ $item['title'] }}
+                            </h6>
+                            <p class="text-[11px] text-neutral-500 dark:text-neutral-400 mb-2">
+                                {{ $item['desc'] }}
+                            </p>
+
+                            {{-- High-contrast white QR frame for reliable optical scanning --}}
+                            <div class="bg-white p-2.5 rounded-xl border border-neutral-200 shadow-2xs flex items-center justify-center my-1 hover:scale-105 transition-transform">
+                                <div class="w-[140px] h-[140px] flex items-center justify-center">
+                                    {!! $qrSvg !!}
+                                </div>
+                            </div>
+
+                            {{-- Command box with copy --}}
+                            <div class="mt-2 w-full flex items-center justify-between bg-white dark:bg-neutral-900 px-2.5 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-700 text-left">
+                                <code class="text-[11px] font-mono text-indigo-600 dark:text-indigo-400 truncate select-all flex-1" title="{{ $item['cmd'] }}">
+                                    {{ $item['cmd'] }}
+                                </code>
+                                <button type="button" onclick="copyQrCommand('{{ addslashes($item['cmd']) }}', this)"
+                                        class="text-neutral-400 hover:text-indigo-600 ml-1.5 p-1 rounded transition-colors shrink-0"
+                                        title="Sao chép lệnh">
+                                    <iconify-icon icon="solar:copy-bold" class="text-sm"></iconify-icon>
+                                </button>
+                            </div>
+
+                            @if(!$loop->last)
+                                <div class="absolute -bottom-3 left-1/2 -translate-x-1/2 z-10 w-6 h-6 rounded-full bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 flex items-center justify-center text-neutral-400 text-xs shadow-xs">
+                                    <iconify-icon icon="lucide:arrow-down"></iconify-icon>
+                                </div>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+
+            <!-- Existing Card: Danh sách Thiết bị -->
             <div class="card bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-sm">
                 <div class="card-header border-b border-neutral-200 dark:border-neutral-800 py-4 px-6 flex justify-between items-center bg-white dark:bg-neutral-900/50">
                     <h5 class="text-lg font-bold text-neutral-800 dark:text-neutral-100 mb-0 flex items-center gap-2">
@@ -301,6 +427,66 @@
 
     </div>
 
+    <!-- Modal: Bản in Cấu hình Máy quét QR -->
+    <x-modal name="printQrConfigModal" maxWidth="3xl">
+        <div class="px-6 py-4 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between bg-white dark:bg-neutral-900 print:hidden">
+            <h5 class="font-bold text-base text-neutral-800 dark:text-neutral-100 m-0 flex items-center gap-2">
+                <iconify-icon icon="solar:printer-bold" class="text-indigo-600 text-xl"></iconify-icon>
+                Bản in Mã QR Cấu hình Máy quét
+            </h5>
+            <div class="flex items-center gap-2">
+                <button type="button" onclick="printQrSheet()"
+                        class="btn bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-xs">
+                    <iconify-icon icon="solar:printer-bold"></iconify-icon> In ngay (Print)
+                </button>
+                <button type="button" onclick="closeModal('printQrConfigModal')" class="text-neutral-400 hover:text-neutral-700 text-xl leading-none">&times;</button>
+            </div>
+        </div>
+        <div class="p-6 bg-white text-neutral-900" id="printable-qr-content">
+            <div class="text-center border-b-2 border-neutral-900 pb-3 mb-4">
+                <h2 class="text-xl font-extrabold uppercase tracking-wide text-neutral-900 m-0">CÔNG TY GERVIN - HƯỚNG DẪN CẤU HÌNH MÁY QUÉT QR</h2>
+                <div class="mt-2 inline-block bg-neutral-900 text-white text-xs font-bold uppercase tracking-wider px-4 py-1 rounded">
+                    Quét từ trên xuống để cấu hình Máy quét
+                </div>
+                <p class="text-xs text-neutral-500 mt-1 mb-0">Thiết bị: Rakinda RK80ER | Hệ thống: https://gervinwood.vn/scan</p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                @foreach($configCommands as $item)
+                    @php
+                        $printSvg = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')
+                            ->size(150)
+                            ->margin(1)
+                            ->generate($item['cmd']);
+                        $printSvg = str_replace('<?xml version="1.0" encoding="UTF-8"?>', '', $printSvg);
+                    @endphp
+                    <div class="border-2 border-neutral-300 rounded-xl p-3.5 flex flex-col items-center text-center {{ $loop->last ? 'sm:col-span-2 sm:max-w-md sm:mx-auto w-full' : '' }}">
+                        <span class="text-xs font-extrabold uppercase bg-neutral-100 text-neutral-800 px-3 py-0.5 rounded-full border border-neutral-300 mb-1">
+                            {{ $item['badge'] }}
+                        </span>
+                        <h6 class="font-bold text-xs text-neutral-900 mb-0.5">{{ $item['title'] }}</h6>
+                        <p class="text-[11px] text-neutral-500 mb-2">{{ $item['desc'] }}</p>
+
+                        <div class="bg-white p-2 border border-neutral-300 rounded-lg shadow-xs">
+                            <div class="w-[140px] h-[140px] flex items-center justify-center">
+                                {!! $printSvg !!}
+                            </div>
+                        </div>
+
+                        <code class="text-[11px] font-mono font-bold text-neutral-900 bg-neutral-100 px-2 py-1 rounded mt-2 border border-neutral-200">
+                            {{ $item['cmd'] }}
+                        </code>
+                    </div>
+                @endforeach
+            </div>
+            
+            <div class="mt-4 pt-3 border-t border-neutral-200 flex justify-between items-center text-[11px] text-neutral-500">
+                <span>Hệ thống ERP GervinWood.vn</span>
+                <span>Ngày xuất bản: {{ date('d/m/Y H:i') }}</span>
+            </div>
+        </div>
+    </x-modal>
+
     <!-- Edit Device Modal -->
     <x-modal name="editDeviceModal" maxWidth="lg">
         <div class="px-5 py-4 border-b border-neutral-100 dark:border-neutral-800 flex justify-between items-center bg-neutral-50 dark:bg-neutral-900/50 rounded-t-xl">
@@ -416,61 +602,81 @@
     @endif
 @endsection
 
-@php
-    $script = '
-    <script>
-        function openEditModal(device) {
-            document.getElementById("modal_device_id").value = device.id;
-            document.getElementById("modal_name").value = device.name;
-            document.getElementById("modal_process_step").value = device.process_step || "";
-            document.getElementById("modal_action_type").value = device.action_type || "";
-            document.getElementById("modal_operator").value = device.operator_user_id || "";
-            document.getElementById("modal_is_active").checked = !!device.is_active;
-            document.getElementById("modal_notes").value = device.notes || "";
+@push('scripts')
+<script>
+    function openEditModal(device) {
+        document.getElementById("modal_device_id").value = device.id;
+        document.getElementById("modal_name").value = device.name;
+        document.getElementById("modal_process_step").value = device.process_step || "";
+        document.getElementById("modal_action_type").value = device.action_type || "";
+        document.getElementById("modal_operator").value = device.operator_user_id || "";
+        document.getElementById("modal_is_active").checked = !!device.is_active;
+        document.getElementById("modal_notes").value = device.notes || "";
 
-            // Set form action dynamic route
-            const form = document.getElementById("editDeviceForm");
-            form.action = "/processes/qr-scans/devices/" + device.id;
+        // Set form action dynamic route
+        const form = document.getElementById("editDeviceForm");
+        form.action = "/processes/qr-scans/devices/" + device.id;
 
-            updateActionPlaceholder();
+        updateActionPlaceholder();
 
-            // Dùng openModal() từ x-modal component
-            openModal("editDeviceModal");
-        }
+        // Dùng openModal() từ x-modal component
+        openModal("editDeviceModal");
+    }
+    
+    function updateActionPlaceholder() {
+        const step = document.getElementById("modal_process_step").value;
+        const actionInp = document.getElementById("modal_action_type");
+        const helpTxt = document.getElementById("action_help_text");
         
-        function updateActionPlaceholder() {
-            const step = document.getElementById("modal_process_step").value;
-            const actionInp = document.getElementById("modal_action_type");
-            const helpTxt = document.getElementById("action_help_text");
-            
-            if (!actionInp || !helpTxt) return;
-            
-            switch(step) {
-                case "cnc":
-                    actionInp.placeholder = "complete";
-                    helpTxt.textContent = "Gợi ý hành động: complete (hoàn thành) hoặc rollback (quay lại).";
-                    break;
-                case "pressing":
-                    actionInp.placeholder = "ép đơn";
-                    helpTxt.textContent = "Gợi ý hành động: làm lệnh ép, xuất kho ván, ép đơn, ép dự trữ, rollback.";
-                    break;
-                case "edge_banding":
-                    actionInp.placeholder = "complete";
-                    helpTxt.textContent = "Gợi ý hành động: complete hoặc rollback.";
-                    break;
-                case "finishing":
-                    actionInp.placeholder = "complete";
-                    helpTxt.textContent = "Gợi ý hành động: complete hoặc rollback.";
-                    break;
-                case "qc":
-                    actionInp.placeholder = "complete";
-                    helpTxt.textContent = "Gợi ý hành động: complete, lỗi ép ván, lỗi cắt cnc, lỗi dán cạnh, lỗi làm đẹp.";
-                    break;
-                default:
-                    actionInp.placeholder = "";
-                    helpTxt.textContent = "Nhập hành động của công đoạn.";
-            }
+        if (!actionInp || !helpTxt) return;
+        
+        switch(step) {
+            case "cnc":
+                actionInp.placeholder = "complete";
+                helpTxt.textContent = "Gợi ý hành động: complete (hoàn thành) hoặc rollback (quay lại).";
+                break;
+            case "pressing":
+                actionInp.placeholder = "ép đơn";
+                helpTxt.textContent = "Gợi ý hành động: làm lệnh ép, xuất kho ván, ép đơn, ép dự trữ, rollback.";
+                break;
+            case "edge_banding":
+                actionInp.placeholder = "complete";
+                helpTxt.textContent = "Gợi ý hành động: complete hoặc rollback.";
+                break;
+            case "finishing":
+                actionInp.placeholder = "complete";
+                helpTxt.textContent = "Gợi ý hành động: complete hoặc rollback.";
+                break;
+            case "qc":
+                actionInp.placeholder = "complete";
+                helpTxt.textContent = "Gợi ý hành động: complete, lỗi ép ván, lỗi cắt cnc, lỗi dán cạnh, lỗi làm đẹp.";
+                break;
+            default:
+                actionInp.placeholder = "";
+                helpTxt.textContent = "Nhập hành động của công đoạn.";
         }
-    </script>
-    ';
-@endphp
+    }
+
+    function copyQrCommand(text, btn) {
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(text).then(() => {
+                const oldHtml = btn.innerHTML;
+                btn.innerHTML = '<iconify-icon icon="solar:check-circle-bold" class="text-emerald-600 text-sm"></iconify-icon>';
+                setTimeout(() => { btn.innerHTML = oldHtml; }, 2000);
+            });
+        }
+    }
+
+    function printQrSheet() {
+        const printContent = document.getElementById("printable-qr-content").innerHTML;
+        const printWin = window.open("", "", "width=850,height=900");
+        printWin.document.write("<!DOCTYPE html><html><head><title>Cau_Hinh_May_Quet_QR_Gervin</title><style>body { font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif; margin: 20px; color: #111; } .text-center { text-align: center; } .grid { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; } .qr-card { border: 2px solid #333; border-radius: 8px; padding: 12px; margin: 6px; width: 44%; box-sizing: border-box; text-align: center; } code { font-family: monospace; font-size: 11px; background: #eee; padding: 3px 6px; border-radius: 4px; display: inline-block; word-break: break-all; } h2 { font-size: 16px; margin: 0 0 6px 0; } h6 { font-size: 13px; margin: 4px 0; } p { font-size: 11px; color: #555; margin: 2px 0 6px 0; } .badge { font-size: 11px; font-weight: bold; background: #222; color: #fff; padding: 2px 8px; border-radius: 4px; display: inline-block; } svg { width: 140px; height: 140px; display: block; margin: 0 auto; } @media print { @page { margin: 10mm; } }</style></head><body>" + printContent + "</body></html>");
+        printWin.document.close();
+        printWin.focus();
+        setTimeout(() => {
+            printWin.print();
+            printWin.close();
+        }, 400);
+    }
+</script>
+@endpush

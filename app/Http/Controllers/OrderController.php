@@ -9,6 +9,11 @@ use App\Services\GlassOrderService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 class OrderController extends Controller
 {
@@ -27,7 +32,7 @@ class OrderController extends Controller
         $this->minLateOrderService = $minLateOrderService;
         $this->glassOrderService = $glassOrderService;
 
-        $this->middleware('permission:view order',   ['only' => ['index', 'show']]);
+        $this->middleware('permission:view order',   ['only' => ['index', 'show', 'exportExcel']]);
         $this->middleware('permission:add order',    ['only' => ['create', 'createByType', 'store']]);
         $this->middleware('permission:edit order',   ['only' => ['edit', 'update']]);
         $this->middleware('permission:delete order', ['only' => ['destroy', 'bulkDestroy']]);
@@ -215,6 +220,226 @@ class OrderController extends Controller
         $acrylicOrder = $order;
         $exportData = $this->getExportData($order);
         return view('orders.show', compact('acrylicOrder', 'exportData'));
+    }
+
+    public function exportExcel(Request $request)
+    {
+        $search = $request->input('search', '');
+        $user = auth()->user();
+
+        $query = Order::with([
+            'customer',
+            'supplies.items',
+            'supplies.minLateItems',
+            'supplies.glassItems'
+        ])
+            ->when($user && !$user->hasRole('Admin'), function ($q) use ($user) {
+                $userMarketGroupIds = $user->marketGroups()->pluck('market_groups.id');
+                $q->whereHas('customer', function ($cq) use ($userMarketGroupIds) {
+                    $cq->whereIn('market_group_id', $userMarketGroupIds);
+                });
+            })
+            ->when($request->input('filter_status') !== 'draft', function ($q) {
+                $q->where('status', '!=', 'draft');
+            })
+            ->when($search, function ($q) use ($search) {
+                $q->where(function ($query) use ($search) {
+                    $query->where('order_code', 'like', "%$search%")
+                        ->orWhere('customer_name', 'like', "%$search%")
+                        ->orWhere('phone', 'like', "%$search%")
+                        ->orWhereHas('customer', function ($cq) use ($search) {
+                            $cq->where('name', 'like', "%$search%")
+                               ->orWhere('customer_code', 'like', "%$search%");
+                        });
+                });
+            })
+            ->when($request->filled('filter_customer_id'), function ($q) use ($request) {
+                $q->where('customer_id', $request->filter_customer_id);
+            })
+            ->when($request->filled('filter_status'), function ($q) use ($request) {
+                $q->where('status', $request->filter_status);
+            })
+            ->when($request->filled('filter_type'), function ($q) use ($request) {
+                $q->where('type', $request->filter_type);
+            });
+
+        // Date Filter Mode: day | month | year | all | custom
+        $dateMode = $request->input('date_mode');
+        $dateVal = $request->input('date_val');
+        $filterStartDate = $request->input('filter_start_date');
+        $filterEndDate = $request->input('filter_end_date');
+
+        $startDate = null;
+        $endDate = null;
+        $dateLabel = 'Toàn thời gian';
+
+        if ($dateMode) {
+            if ($dateMode === 'day' && $dateVal) {
+                $startDate = $dateVal;
+                $endDate = $dateVal;
+                $dateLabel = 'Ngày ' . \Carbon\Carbon::parse($dateVal)->format('d/m/Y');
+            } elseif ($dateMode === 'month' && $dateVal) {
+                $cDate = \Carbon\Carbon::parse($dateVal . '-01');
+                $startDate = $cDate->copy()->startOfMonth()->toDateString();
+                $endDate = $cDate->copy()->endOfMonth()->toDateString();
+                $dateLabel = 'Tháng ' . $cDate->format('m/Y');
+            } elseif ($dateMode === 'year' && $dateVal) {
+                $startDate = $dateVal . '-01-01';
+                $endDate = $dateVal . '-12-31';
+                $dateLabel = 'Năm ' . $dateVal;
+            } elseif ($dateMode === 'all') {
+                $startDate = null;
+                $endDate = null;
+                $dateLabel = 'Toàn thời gian';
+            }
+        } elseif ($filterStartDate || $filterEndDate) {
+            $startDate = $filterStartDate;
+            $endDate = $filterEndDate;
+            $dateLabel = ($startDate ? 'Từ ' . \Carbon\Carbon::parse($startDate)->format('d/m/Y') : '') . ($endDate ? ' đến ' . \Carbon\Carbon::parse($endDate)->format('d/m/Y') : '');
+        }
+
+        if ($startDate) {
+            $query->whereDate('order_date', '>=', $startDate);
+        }
+        if ($endDate) {
+            $query->whereDate('order_date', '<=', $endDate);
+        }
+
+        $orders = $query->orderBy('order_date', 'desc')->orderBy('id', 'desc')->get();
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Danh_sach_don_hang');
+
+        // Banner Title
+        $sheet->setCellValue('A1', 'BÁO CÁO DANH SÁCH ĐƠN HÀNG');
+        $sheet->mergeCells('A1:L1');
+        $sheet->getStyle('A1')->getFont()->setSize(16)->setBold(true)->getColor()->setARGB('FF1E3A8A');
+        $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+        $sheet->setCellValue('A2', 'Kỳ báo cáo: ' . $dateLabel . ' | Ngày xuất: ' . date('d/m/Y H:i'));
+        $sheet->mergeCells('A2:L2');
+        $sheet->getStyle('A2')->getFont()->setItalic(true)->setSize(10)->getColor()->setARGB('FF64748B');
+        $sheet->getStyle('A2')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+        // Headers
+        $headers = [
+            'STT', 'Mã đơn', 'Loại đơn', 'Khách hàng', 'Tên công trình',
+            'Số điện thoại', 'Ngày tạo đơn', 'Hạn giao', 'Số tấm', 'Tổng số mét (m)',
+            'Tổng tiền (₫)', 'Trạng thái'
+        ];
+        $cols = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
+        foreach ($headers as $idx => $h) {
+            $sheet->setCellValue($cols[$idx] . '4', $h);
+        }
+
+        $sheet->getStyle('A4:L4')->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']],
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
+                'wrapText' => true
+            ],
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['argb' => 'FF1E293B']
+            ]
+        ]);
+        $sheet->getRowDimension(4)->setRowHeight(28);
+
+        $statusLabels = [
+            'draft'         => 'Nháp',
+            'pending'       => 'Chờ xử lý',
+            'transferred'   => 'Chuyển sản xuất',
+            'in_production' => 'Đang sản xuất',
+            'completed'     => 'Hoàn thành',
+            'cancelled'     => 'Đã hủy',
+        ];
+        $typeLabels = [
+            'acrylic'  => 'Acrylic',
+            'min_late' => 'Min Late',
+            'glass'    => 'Cánh kính',
+        ];
+
+        $row = 5;
+        $totalSheets = 0;
+        $totalMeters = 0;
+        $totalAmount = 0;
+
+        foreach ($orders as $i => $o) {
+            $sheets = (float) $o->total_sheets;
+            $meters = (float) $o->total_meters;
+            $amount = (float) round($o->total_amount, -3);
+
+            $totalSheets += $sheets;
+            $totalMeters += $meters;
+            $totalAmount += $amount;
+
+            $sheet->setCellValue('A' . $row, $i + 1);
+            $sheet->setCellValue('B' . $row, $o->order_code ?: '—');
+            $sheet->setCellValue('C' . $row, $typeLabels[$o->type] ?? ($o->type ?: '—'));
+            $sheet->setCellValue('D' . $row, $o->customer ? $o->customer->name : '—');
+            $sheet->setCellValue('E' . $row, $o->customer_name ?: '—');
+            $sheet->setCellValueExplicit('F' . $row, (string) ($o->phone ?? ''), \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+            $sheet->setCellValue('G' . $row, $o->order_date ? \Carbon\Carbon::parse($o->order_date)->format('d/m/Y H:i') : '—');
+            $sheet->setCellValue('H' . $row, $o->deadline ? \Carbon\Carbon::parse($o->deadline)->format('d/m/Y H:i') : '—');
+            $sheet->setCellValue('I' . $row, $sheets > 0 ? $sheets : 0);
+            $sheet->setCellValue('J' . $row, $meters > 0 ? $meters : 0);
+            $sheet->setCellValue('K' . $row, $amount);
+            $sheet->setCellValue('L' . $row, $statusLabels[$o->status] ?? $o->status);
+
+            $row++;
+        }
+
+        // Summary row
+        $sheet->setCellValue('A' . $row, 'TỔNG CỘNG (' . count($orders) . ' đơn hàng):');
+        $sheet->mergeCells("A{$row}:H{$row}");
+        $sheet->setCellValue('I' . $row, $totalSheets);
+        $sheet->setCellValue('J' . $row, $totalMeters);
+        $sheet->setCellValue('K' . $row, $totalAmount);
+        $sheet->setCellValue('L' . $row, '');
+
+        $lastRow = $row;
+
+        // Styling
+        $sheet->getStyle("A4:L{$lastRow}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+        if ($lastRow > 5) {
+            $sheet->getStyle("A5:C" . ($lastRow - 1))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle("D5:E" . ($lastRow - 1))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+            $sheet->getStyle("F5:H" . ($lastRow - 1))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle("I5:K{$lastRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+            $sheet->getStyle("L5:L{$lastRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        }
+
+        // Number formats
+        $sheet->getStyle("I5:I{$lastRow}")->getNumberFormat()->setFormatCode('#,##0.##');
+        $sheet->getStyle("J5:J{$lastRow}")->getNumberFormat()->setFormatCode('#,##0.00');
+        $sheet->getStyle("K5:K{$lastRow}")->getNumberFormat()->setFormatCode('#,##0');
+
+        // Summary row styling
+        $sheet->getStyle("A{$lastRow}:L{$lastRow}")->applyFromArray([
+            'font' => ['bold' => true],
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['argb' => 'FFF1F5F9']
+            ]
+        ]);
+        $sheet->getStyle("A{$lastRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+
+        // Auto width
+        foreach ($cols as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $filename = 'Danh_Sach_Don_Hang_' . date('Ymd_His') . '.xlsx';
+
+        return response()->streamDownload(function() use ($spreadsheet) {
+            $writer = new Xlsx($spreadsheet);
+            $writer->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Cache-Control' => 'max-age=0',
+        ]);
     }
 
     public function bulkExportData(\Illuminate\Http\Request $request)

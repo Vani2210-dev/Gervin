@@ -5,12 +5,17 @@ namespace App\Http\Controllers;
 use App\Models\Customer;
 use App\Models\MarketGroup;
 use Illuminate\Http\Request;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 class CustomerController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:view customer',   ['only' => ['index', 'show']]);
+        $this->middleware('permission:view customer',   ['only' => ['index', 'show', 'exportExcel', 'exportOrdersExcel', 'exportPaymentsExcel']]);
         $this->middleware('permission:add customer',    ['only' => ['store']]);
         $this->middleware('permission:edit customer',   ['only' => ['update']]);
         $this->middleware('permission:delete customer', ['only' => ['destroy']]);
@@ -342,6 +347,440 @@ class CustomerController extends Controller
             'marketGroups',
             'activeTab'
         ));
+    }
+
+    public function exportExcel(Request $request)
+    {
+        $search = $request->input('search', '');
+        $user = auth()->user();
+
+        $query = Customer::query()->with(['marketGroup', 'users']);
+
+        if ($user && !$user->hasRole('Admin')) {
+            $userMarketGroupIds = $user->marketGroups()->pluck('market_groups.id');
+            $query->whereIn('market_group_id', $userMarketGroupIds);
+        }
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('customer_code', 'like', "%{$search}%")
+                  ->orWhere('phone', 'like', "%{$search}%")
+                  ->orWhere('address', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('filter_customer_code')) {
+            $query->where('customer_code', 'like', '%' . $request->filter_customer_code . '%');
+        }
+        if ($request->filled('filter_name')) {
+            $query->where('name', 'like', '%' . $request->filter_name . '%');
+        }
+        if ($request->filled('filter_phone')) {
+            $query->where('phone', 'like', '%' . $request->filter_phone . '%');
+        }
+        if ($request->filled('filter_customer_id')) {
+            $query->where('id', $request->filter_customer_id);
+        }
+        if ($request->filled('filter_market_group_id')) {
+            $query->where('market_group_id', $request->filter_market_group_id);
+        }
+        if ($request->filled('filter_user_id')) {
+            $query->whereHas('users', function ($q) use ($request) {
+                $q->where('users.id', $request->filter_user_id);
+            });
+        }
+
+        $dateMode = $request->input('date_mode');
+        $dateVal = $request->input('date_val');
+        $startDate = null;
+        $endDate = null;
+        $dateLabel = 'Toàn thời gian';
+
+        if ($dateMode === 'day' && $dateVal) {
+            $startDate = $dateVal;
+            $endDate = $dateVal;
+            $dateLabel = 'Ngày ' . \Carbon\Carbon::parse($dateVal)->format('d/m/Y');
+        } elseif ($dateMode === 'month' && $dateVal) {
+            $cDate = \Carbon\Carbon::parse($dateVal . '-01');
+            $startDate = $cDate->copy()->startOfMonth()->toDateString();
+            $endDate = $cDate->copy()->endOfMonth()->toDateString();
+            $dateLabel = 'Tháng ' . $cDate->format('m/Y');
+        } elseif ($dateMode === 'year' && $dateVal) {
+            $startDate = $dateVal . '-01-01';
+            $endDate = $dateVal . '-12-31';
+            $dateLabel = 'Năm ' . $dateVal;
+        } elseif ($request->filled('filter_start_date') || $request->filled('filter_end_date')) {
+            $startDate = $request->filter_start_date;
+            $endDate = $request->filter_end_date;
+            $dateLabel = ($startDate ? 'Từ ' . \Carbon\Carbon::parse($startDate)->format('d/m/Y') : '') . ($endDate ? ' đến ' . \Carbon\Carbon::parse($endDate)->format('d/m/Y') : '');
+        }
+
+        $customers = $query->orderBy('name')->get();
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Danh_sach_khach_hang');
+
+        // Banner Title
+        $sheet->setCellValue('A1', 'BÁO CÁO DANH SÁCH KHÁCH HÀNG & CÔNG NỢ');
+        $sheet->mergeCells('A1:L1');
+        $sheet->getStyle('A1')->getFont()->setSize(16)->setBold(true)->getColor()->setARGB('FF1E3A8A');
+        $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+        $sheet->setCellValue('A2', 'Kỳ báo cáo: ' . $dateLabel . ' | Ngày xuất: ' . date('d/m/Y H:i'));
+        $sheet->mergeCells('A2:L2');
+        $sheet->getStyle('A2')->getFont()->setItalic(true)->setSize(10)->getColor()->setARGB('FF64748B');
+        $sheet->getStyle('A2')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+        $headers = [
+            'STT', 'Mã KH', 'Tên khách hàng', 'Số điện thoại', 'Địa chỉ',
+            'Nhóm thị trường', 'Nhân viên phụ trách', 'Trạng thái', 'Quy mô xưởng',
+            'Định mức nợ (₫)', 'Đã thu trong kỳ (₫)', 'Còn nợ hiện tại (₫)'
+        ];
+        $cols = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
+        foreach ($headers as $idx => $h) {
+            $sheet->setCellValue($cols[$idx] . '4', $h);
+        }
+
+        $sheet->getStyle('A4:L4')->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']],
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
+                'wrapText' => true
+            ],
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['argb' => 'FF1E293B']
+            ]
+        ]);
+        $sheet->getRowDimension(4)->setRowHeight(28);
+
+        $row = 5;
+        $totalPaidSum = 0;
+        $totalDebtSum = 0;
+
+        foreach ($customers as $i => $c) {
+            $cPaymentQuery = $c->customerPayments();
+            if ($startDate) $cPaymentQuery->where('payment_date', '>=', $startDate);
+            if ($endDate)   $cPaymentQuery->where('payment_date', '<=', $endDate);
+            $paid = (float) $cPaymentQuery->sum('amount');
+            $debt = (float) $c->total_debt;
+
+            $totalPaidSum += $paid;
+            $totalDebtSum += $debt;
+
+            $sheet->setCellValue('A' . $row, $i + 1);
+            $sheet->setCellValue('B' . $row, $c->customer_code ?: '—');
+            $sheet->setCellValue('C' . $row, $c->name);
+            $sheet->setCellValueExplicit('D' . $row, (string) ($c->phone ?? ''), \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+            $sheet->setCellValue('E' . $row, $c->address ?: '—');
+            $sheet->setCellValue('F' . $row, $c->marketGroup ? $c->marketGroup->name : 'Chưa phân nhóm');
+            $sheet->setCellValue('G' . $row, $c->users ? $c->users->pluck('name')->implode(', ') : '—');
+            $sheet->setCellValue('H' . $row, $c->status ?: '—');
+            $sheet->setCellValue('I' . $row, $c->workshop_scale ?: '—');
+            $sheet->setCellValue('J' . $row, (float) ($c->debt_limit ?? 0));
+            $sheet->setCellValue('K' . $row, $paid);
+            $sheet->setCellValue('L' . $row, $debt);
+
+            $row++;
+        }
+
+        // Summary row
+        $sheet->setCellValue('A' . $row, 'TỔNG CỘNG (' . count($customers) . ' khách hàng):');
+        $sheet->mergeCells("A{$row}:I{$row}");
+        $sheet->setCellValue('J' . $row, '');
+        $sheet->setCellValue('K' . $row, $totalPaidSum);
+        $sheet->setCellValue('L' . $row, $totalDebtSum);
+
+        $lastRow = $row;
+
+        // Styling
+        $sheet->getStyle("A4:L{$lastRow}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+        if ($lastRow > 5) {
+            $sheet->getStyle("A5:B" . ($lastRow - 1))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle("C5:C" . ($lastRow - 1))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+            $sheet->getStyle("D5:D" . ($lastRow - 1))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle("E5:G" . ($lastRow - 1))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+            $sheet->getStyle("H5:I" . ($lastRow - 1))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle("J5:L{$lastRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+        }
+
+        // Number formats
+        $sheet->getStyle("J5:L{$lastRow}")->getNumberFormat()->setFormatCode('#,##0');
+
+        $sheet->getStyle("A{$lastRow}:L{$lastRow}")->applyFromArray([
+            'font' => ['bold' => true],
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['argb' => 'FFF1F5F9']
+            ]
+        ]);
+        $sheet->getStyle("A{$lastRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+
+        foreach ($cols as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $filename = 'Bao_Cao_Khach_Hang_Cong_No_' . date('Ymd_His') . '.xlsx';
+
+        return response()->streamDownload(function() use ($spreadsheet) {
+            $writer = new Xlsx($spreadsheet);
+            $writer->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Cache-Control' => 'max-age=0',
+        ]);
+    }
+
+    public function exportOrdersExcel(Request $request, Customer $customer)
+    {
+        $user = auth()->user();
+        abort_unless($customer->isAccessibleBy($user), 403, 'Bạn không có quyền truy cập khách hàng này.');
+
+        $search    = $request->input('search', '');
+        $status    = $request->input('status', 'all');
+        $startDate = $request->input('start_date');
+        $endDate   = $request->input('end_date');
+
+        $query = $customer->orders()->with([
+            'orderPayments',
+            'supplies.items',
+            'supplies.minLateItems',
+            'supplies.glassItems',
+        ])
+            ->when($search, function ($q) use ($search) {
+                $q->where(function ($sub) use ($search) {
+                    $sub->where('order_code', 'like', "%{$search}%")
+                        ->orWhere('customer_name', 'like', "%{$search}%");
+                });
+            })
+            ->when($status && $status !== 'all', function ($q) use ($status) {
+                $q->where('status', $status);
+            })
+            ->when($startDate, function ($q) use ($startDate) {
+                $q->where('order_date', '>=', $startDate . ' 00:00:00');
+            })
+            ->when($endDate, function ($q) use ($endDate) {
+                $q->where('order_date', '<=', $endDate . ' 23:59:59');
+            })
+            ->orderBy('order_date', 'desc')
+            ->orderBy('id', 'desc');
+
+        $orders = $query->get();
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Don_hang');
+
+        $sheet->setCellValue('A1', 'DANH SÁCH ĐƠN HÀNG - ' . mb_strtoupper($customer->name));
+        $sheet->mergeCells('A1:J1');
+        $sheet->getStyle('A1')->getFont()->setSize(15)->setBold(true)->getColor()->setARGB('FF1E3A8A');
+        $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+        $sheet->setCellValue('A2', 'Mã KH: ' . ($customer->customer_code ?: '—') . ' | SĐT: ' . ($customer->phone ?: '—') . ' | Ngày xuất: ' . date('d/m/Y H:i'));
+        $sheet->mergeCells('A2:J2');
+        $sheet->getStyle('A2')->getFont()->setItalic(true)->setSize(10)->getColor()->setARGB('FF64748B');
+        $sheet->getStyle('A2')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+        $headers = ['STT', 'Mã đơn', 'Tên công trình', 'Ngày đặt', 'Số tấm', 'Tổng số mét (m)', 'Giá trị đơn (₫)', 'Đã thanh toán (₫)', 'Còn nợ (₫)', 'Trạng thái'];
+        $cols = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+        foreach ($headers as $idx => $h) {
+            $sheet->setCellValue($cols[$idx] . '4', $h);
+        }
+
+        $sheet->getStyle('A4:J4')->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF1E293B']]
+        ]);
+        $sheet->getRowDimension(4)->setRowHeight(26);
+
+        $statusLabels = [
+            'draft'         => 'Nháp',
+            'pending'       => 'Chờ xử lý',
+            'transferred'   => 'Chuyển sản xuất',
+            'in_production' => 'Đang sản xuất',
+            'completed'     => 'Hoàn thành',
+            'cancelled'     => 'Đã hủy',
+        ];
+
+        $row = 5;
+        $totalSheets = 0;
+        $totalMeters = 0;
+        $totalAmount = 0;
+        $totalPaid = 0;
+        $totalDebt = 0;
+
+        foreach ($orders as $i => $o) {
+            $sheets = (float) $o->total_sheets;
+            $meters = (float) $o->total_meters;
+            $amount = (float) round($o->total_amount, -3);
+            $paid   = (float) $o->orderPayments->sum('amount');
+            $debt   = in_array($o->status, ['draft', 'cancelled', 'pending']) ? 0 : max(0, $amount - $paid);
+
+            $totalSheets += $sheets;
+            $totalMeters += $meters;
+            $totalAmount += $amount;
+            $totalPaid   += $paid;
+            $totalDebt   += $debt;
+
+            $sheet->setCellValue('A' . $row, $i + 1);
+            $sheet->setCellValue('B' . $row, $o->order_code ?: '—');
+            $sheet->setCellValue('C' . $row, $o->customer_name ?: '—');
+            $sheet->setCellValue('D' . $row, $o->order_date ? \Carbon\Carbon::parse($o->order_date)->format('d/m/Y') : '—');
+            $sheet->setCellValue('E' . $row, $sheets > 0 ? $sheets : 0);
+            $sheet->setCellValue('F' . $row, $meters > 0 ? $meters : 0);
+            $sheet->setCellValue('G' . $row, $amount);
+            $sheet->setCellValue('H' . $row, $paid);
+            $sheet->setCellValue('I' . $row, $debt);
+            $sheet->setCellValue('J' . $row, $statusLabels[$o->status] ?? $o->status);
+
+            $row++;
+        }
+
+        // Summary row
+        $sheet->setCellValue('A' . $row, 'TỔNG CỘNG (' . count($orders) . ' đơn hàng):');
+        $sheet->mergeCells("A{$row}:D{$row}");
+        $sheet->setCellValue('E' . $row, $totalSheets);
+        $sheet->setCellValue('F' . $row, $totalMeters);
+        $sheet->setCellValue('G' . $row, $totalAmount);
+        $sheet->setCellValue('H' . $row, $totalPaid);
+        $sheet->setCellValue('I' . $row, $totalDebt);
+        $sheet->setCellValue('J' . $row, '');
+
+        $lastRow = $row;
+        $sheet->getStyle("A4:J{$lastRow}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+        if ($lastRow > 5) {
+            $sheet->getStyle("A5:B" . ($lastRow - 1))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle("C5:C" . ($lastRow - 1))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+            $sheet->getStyle("D5:D" . ($lastRow - 1))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle("E5:I{$lastRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+            $sheet->getStyle("J5:J{$lastRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        }
+
+        $sheet->getStyle("E5:E{$lastRow}")->getNumberFormat()->setFormatCode('#,##0.##');
+        $sheet->getStyle("F5:F{$lastRow}")->getNumberFormat()->setFormatCode('#,##0.00');
+        $sheet->getStyle("G5:I{$lastRow}")->getNumberFormat()->setFormatCode('#,##0');
+
+        $sheet->getStyle("A{$lastRow}:J{$lastRow}")->applyFromArray([
+            'font' => ['bold' => true],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFF1F5F9']]
+        ]);
+        $sheet->getStyle("A{$lastRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+
+        foreach ($cols as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $filename = 'Don_Hang_' . ($customer->customer_code ?: 'KH') . '_' . date('Ymd_His') . '.xlsx';
+
+        return response()->streamDownload(function() use ($spreadsheet) {
+            $writer = new Xlsx($spreadsheet);
+            $writer->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Cache-Control' => 'max-age=0',
+        ]);
+    }
+
+    public function exportPaymentsExcel(Request $request, Customer $customer)
+    {
+        $user = auth()->user();
+        abort_unless($customer->isAccessibleBy($user), 403, 'Bạn không có quyền truy cập khách hàng này.');
+
+        $paymentDate = $request->input('payment_date');
+        $query = $customer->customerPayments()->with(['creator', 'order']);
+        if ($paymentDate) {
+            $query->whereDate('payment_date', $paymentDate);
+        }
+        $payments = $query->orderBy('payment_date', 'desc')->orderBy('id', 'desc')->get();
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Thanh_toan');
+
+        $sheet->setCellValue('A1', 'LỊCH SỬ THANH TOÁN - ' . mb_strtoupper($customer->name));
+        $sheet->mergeCells('A1:G1');
+        $sheet->getStyle('A1')->getFont()->setSize(15)->setBold(true)->getColor()->setARGB('FF1E3A8A');
+        $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+        $sheet->setCellValue('A2', 'Mã KH: ' . ($customer->customer_code ?: '—') . ' | SĐT: ' . ($customer->phone ?: '—') . ' | Ngày xuất: ' . date('d/m/Y H:i'));
+        $sheet->mergeCells('A2:G2');
+        $sheet->getStyle('A2')->getFont()->setItalic(true)->setSize(10)->getColor()->setARGB('FF64748B');
+        $sheet->getStyle('A2')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+        $headers = ['STT', 'Ngày thanh toán', 'Số tiền (₫)', 'Phương thức', 'Đơn hàng liên kết', 'Ghi chú', 'Người ghi nhận'];
+        $cols = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
+        foreach ($headers as $idx => $h) {
+            $sheet->setCellValue($cols[$idx] . '4', $h);
+        }
+
+        $sheet->getStyle('A4:G4')->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF1E293B']]
+        ]);
+        $sheet->getRowDimension(4)->setRowHeight(26);
+
+        $row = 5;
+        $totalPaid = 0;
+
+        foreach ($payments as $i => $p) {
+            $amount = (float) $p->amount;
+            $totalPaid += $amount;
+
+            $sheet->setCellValue('A' . $row, $i + 1);
+            $sheet->setCellValue('B' . $row, $p->payment_date ? \Carbon\Carbon::parse($p->payment_date)->format('d/m/Y') : '—');
+            $sheet->setCellValue('C' . $row, $amount);
+            $sheet->setCellValue('D' . $row, \App\Models\CustomerPayment::methodLabel($p->payment_method));
+            $sheet->setCellValue('E' . $row, $p->order ? $p->order->order_code : 'Thanh toán chung');
+            $sheet->setCellValue('F' . $row, $p->note ?: '—');
+            $sheet->setCellValue('G' . $row, $p->creator->name ?? 'Hệ thống');
+
+            $row++;
+        }
+
+        // Summary row
+        $sheet->setCellValue('A' . $row, 'TỔNG CỘNG (' . count($payments) . ' giao dịch):');
+        $sheet->mergeCells("A{$row}:B{$row}");
+        $sheet->setCellValue('C' . $row, $totalPaid);
+        $sheet->setCellValue('D' . $row, '');
+        $sheet->setCellValue('E' . $row, '');
+        $sheet->setCellValue('F' . $row, '');
+        $sheet->setCellValue('G' . $row, '');
+
+        $lastRow = $row;
+        $sheet->getStyle("A4:G{$lastRow}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+        if ($lastRow > 5) {
+            $sheet->getStyle("A5:B" . ($lastRow - 1))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle("C5:C{$lastRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+            $sheet->getStyle("D5:E" . ($lastRow - 1))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle("F5:G" . ($lastRow - 1))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+        }
+
+        $sheet->getStyle("C5:C{$lastRow}")->getNumberFormat()->setFormatCode('#,##0');
+
+        $sheet->getStyle("A{$lastRow}:G{$lastRow}")->applyFromArray([
+            'font' => ['bold' => true],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFF1F5F9']]
+        ]);
+        $sheet->getStyle("A{$lastRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+
+        foreach ($cols as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $filename = 'Lich_Su_TT_' . ($customer->customer_code ?: 'KH') . '_' . date('Ymd_His') . '.xlsx';
+
+        return response()->streamDownload(function() use ($spreadsheet) {
+            $writer = new Xlsx($spreadsheet);
+            $writer->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Cache-Control' => 'max-age=0',
+        ]);
     }
 
     public function store(Request $request)

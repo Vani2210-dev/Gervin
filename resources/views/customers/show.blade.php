@@ -447,6 +447,12 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
+                    <a href="{{ route('customers.orders.export', array_merge(['customer' => $customer->id], request()->query())) }}"
+                        class="btn bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold px-3 py-1.5 flex items-center gap-1.5 shadow-2xs transition"
+                        title="Xuất danh sách đơn hàng của khách hàng ra Excel">
+                        <iconify-icon icon="solar:file-spreadsheet-bold" class="text-sm"></iconify-icon>
+                        Xuất Excel
+                    </a>
                     <span class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-primary-50 text-primary-700 border border-primary-200">
                         {{ $orders->total() }} đơn hàng
                     </span>
@@ -659,6 +665,12 @@
                             Còn nợ: {{ number_format($totalDebt, 0, ',', '.') }}₫
                         </span>
                     </div>
+                    <a href="{{ route('customers.payments.export', array_merge(['customer' => $customer->id], request()->query())) }}"
+                        class="btn bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-2xs transition"
+                        title="Xuất lịch sử thanh toán của khách hàng ra Excel">
+                        <iconify-icon icon="solar:file-spreadsheet-bold" class="text-base"></iconify-icon>
+                        Xuất Excel
+                    </a>
                     <button type="button" onclick="openModal('add-payment-modal')"
                         class="btn bg-primary-600 hover:bg-primary-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-2xs transition">
                         <iconify-icon icon="lucide:plus" class="text-sm"></iconify-icon>

@@ -126,6 +126,13 @@
                     <button type="button" onclick="openDeadlineSettings()" class="btn bg-light-600 text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2" title="Cài đặt cảnh báo deadline">
                         <iconify-icon icon="lucide:settings" class="icon text-xl line-height-1"></iconify-icon>
                     </button>
+                    {{-- Nút Xuất Excel toàn bộ danh sách đơn theo bộ lọc --}}
+                    <a href="{{ route('orders.export', request()->query()) }}"
+                        class="btn bg-emerald-600 hover:bg-emerald-700 text-white text-sm btn-sm px-3 py-2 rounded-lg flex items-center gap-1.5 shadow-sm transition"
+                        title="Xuất danh sách đơn hàng theo bộ lọc ra file Excel">
+                        <iconify-icon icon="solar:file-spreadsheet-bold" class="text-lg"></iconify-icon>
+                        <span>Xuất Excel</span>
+                    </a>
                     @can('add order')
                     <a href="{{ route('orders.create') }}"
                         class="btn btn-primary text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2">

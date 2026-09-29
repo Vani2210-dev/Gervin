@@ -137,6 +137,12 @@
                         Xóa lọc
                     </a>
                     @endif
+                    <a href="{{ route('customers.export', request()->query()) }}"
+                        class="btn bg-emerald-600 hover:bg-emerald-700 text-white text-sm btn-sm px-3 py-2 rounded-lg flex items-center gap-1.5 shadow-sm transition"
+                        title="Xuất danh sách khách hàng & công nợ ra file Excel">
+                        <iconify-icon icon="solar:file-spreadsheet-bold" class="text-lg"></iconify-icon>
+                        <span>Xuất Excel</span>
+                    </a>
                     @can('add customer')
                     <button type="button" onclick="openCreateCustomerModal()"
                         class="btn btn-primary text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2">

@@ -157,6 +157,28 @@ class CustomerShowSheetsMetersTest extends TestCase
         $indexResponse->assertSee('DH_MIN_01');
         $indexResponse->assertSee('DH_ACR_02');
         $indexResponse->assertSee('DH_GLS_03');
+
+        // Verify Excel exports
+        // 1. Orders index export
+        $orderExportResponse = $this->actingAs($admin)->get(route('orders.export'));
+        $orderExportResponse->assertStatus(200);
+        $this->assertStringContainsString('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', $orderExportResponse->headers->get('content-type'));
+
+        // 2. Customers index export
+        $custExportResponse = $this->actingAs($admin)->get(route('customers.export'));
+        $custExportResponse->assertStatus(200);
+        $this->assertStringContainsString('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', $custExportResponse->headers->get('content-type'));
+
+        // 3. Customer orders export
+        $custOrdersExportResponse = $this->actingAs($admin)->get(route('customers.orders.export', $customer));
+        $custOrdersExportResponse->assertStatus(200);
+        $this->assertStringContainsString('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', $custOrdersExportResponse->headers->get('content-type'));
+
+        // 4. Customer payments export
+        $custPaymentsExportResponse = $this->actingAs($admin)->get(route('customers.payments.export', $customer));
+        $custPaymentsExportResponse->assertStatus(200);
+        $this->assertStringContainsString('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', $custPaymentsExportResponse->headers->get('content-type'));
     }
 }
+
 
