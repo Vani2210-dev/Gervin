@@ -1,0 +1,19 @@
+{
+  "resources/css/app.css": {
+    "file": "assets/app-BOfboDsT.css",
+    "src": "resources/css/app.css",
+    "isEntry": true
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-CoaHkm5D.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true
+  },
+  "resources/js/order-export.js": {
+    "file": "assets/order-export-j6zkywwv.js",
+    "name": "order-export",
+    "src": "resources/js/order-export.js",
+    "isEntry": true
+  }
+}
