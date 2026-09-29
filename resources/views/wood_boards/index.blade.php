@@ -152,7 +152,17 @@
                             <tr class="hover:bg-neutral-50/30">
                                 <td class="text-center border border-neutral-200">{{ $stt }}</td>
                                 <td class="text-center font-medium border border-neutral-200">{{ $board->price_group ?? '—' }}</td>
-                                <td class="text-center font-bold text-neutral-800 border border-neutral-200">{{ $board->color_code }}</td>
+                                <td class="text-center border border-neutral-200">
+                                    <span class="font-bold text-neutral-800 block">{{ $board->color_code }}</span>
+                                    @if($board->current_stock > 0)
+                                        <a href="{{ route('inventory.index', ['search' => $board->color_code]) }}" 
+                                           class="inline-flex items-center gap-1 mt-1 px-2 py-1 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-100" 
+                                           title="Xem thẻ kho & tồn chi tiết">
+                                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                            Tồn: {{ fmod($board->current_stock, 1) == 0 ? number_format($board->current_stock, 0, ',', '.') : number_format($board->current_stock, 2, ',', '.') }}
+                                        </a>
+                                    @endif
+                                </td>
                                 
                                 {{-- Render values for each type --}}
                                 @foreach($boardTypes as $idx => $type)

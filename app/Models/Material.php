@@ -21,6 +21,7 @@ class Material extends Model
         'current_stock',
         'initial_stock',
         'warehouse_id',
+        'wood_board_id',
         'status',
         'notes',
     ];
@@ -37,6 +38,11 @@ class Material extends Model
     public function warehouse(): BelongsTo
     {
         return $this->belongsTo(Warehouse::class);
+    }
+
+    public function woodBoard(): BelongsTo
+    {
+        return $this->belongsTo(WoodBoard::class, 'wood_board_id');
     }
 
     public function transactions(): HasMany

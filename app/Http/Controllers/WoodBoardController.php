@@ -30,7 +30,7 @@ class WoodBoardController extends Controller
         // Fetch all wood board price groups with their default prices
         $priceGroups = WoodBoardPriceGroup::with('prices')->get();
 
-        $woodBoards = WoodBoard::with('prices')
+        $woodBoards = WoodBoard::with(['prices', 'material'])
             ->when($search, function ($q) use ($search) {
                 $q->where('color_code', 'like', "%$search%")
                   ->orWhere('price_group', 'like', "%$search%")
