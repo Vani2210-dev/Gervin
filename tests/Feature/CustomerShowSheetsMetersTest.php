@@ -25,8 +25,9 @@ class CustomerShowSheetsMetersTest extends TestCase
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
         Permission::create(['name' => 'view customer']);
+        Permission::create(['name' => 'view order']);
         $adminRole = Role::create(['name' => 'Admin']);
-        $adminRole->givePermissionTo('view customer');
+        $adminRole->givePermissionTo(['view customer', 'view order']);
     }
 
     public function test_customer_show_displays_total_sheets_and_total_meters()
@@ -147,5 +148,15 @@ class CustomerShowSheetsMetersTest extends TestCase
         $response->assertSee('DH_GLS_03');
         $response->assertSee('6');
         $response->assertSee('30 m');
+
+        // Verify HTML rendering on orders.index
+        $indexResponse = $this->actingAs($admin)->get(route('orders.index'));
+        $indexResponse->assertStatus(200);
+        $indexResponse->assertSee('Số tấm');
+        $indexResponse->assertSee('Tổng số mét');
+        $indexResponse->assertSee('DH_MIN_01');
+        $indexResponse->assertSee('DH_ACR_02');
+        $indexResponse->assertSee('DH_GLS_03');
     }
 }
+

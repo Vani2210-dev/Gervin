@@ -151,98 +151,10 @@
         </div>
     </div>
 
-    {{-- Customer Market Profile & Details Card --}}
-    <div class="bg-white rounded-2xl p-6 border border-neutral-200/80 shadow-xs space-y-5">
-        <div class="flex items-center justify-between border-b border-neutral-100 pb-3">
-            <div class="flex items-center gap-2">
-                <iconify-icon icon="solar:user-id-bold-duotone" class="text-primary-600 text-lg"></iconify-icon>
-                <h6 class="font-bold text-xs uppercase tracking-wider text-neutral-700 m-0">Hồ sơ thị trường & Thông tin chi tiết</h6>
-            </div>
-            <button type="button" onclick="toggleDetailsSection()" id="toggle-details-btn" class="text-xs text-primary-600 hover:text-primary-800 font-semibold flex items-center gap-1">
-                <span id="toggle-details-text">Thu gọn</span>
-                <iconify-icon icon="lucide:chevron-up" id="toggle-details-icon" class="text-sm"></iconify-icon>
-            </button>
-        </div>
-
-        <div id="details-section-body" class="space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
-                <div class="bg-neutral-50/70 p-3 rounded-xl border border-neutral-200/70">
-                    <span class="text-neutral-400 block mb-1">Số điện thoại:</span>
-                    <span class="font-semibold text-neutral-800">{{ $customer->phone ?: '—' }}</span>
-                </div>
-                <div class="bg-neutral-50/70 p-3 rounded-xl border border-neutral-200/70 lg:col-span-2">
-                    <span class="text-neutral-400 block mb-1">Địa chỉ:</span>
-                    <span class="font-semibold text-neutral-800">{{ $fullAddress ?: ($customer->address ?: '—') }}</span>
-                </div>
-                <div class="bg-neutral-50/70 p-3 rounded-xl border border-neutral-200/70">
-                    <span class="text-neutral-400 block mb-1">Đối tác đang hợp tác:</span>
-                    <span class="font-bold text-primary-700">{{ $customer->partner_competitors ?: '—' }}</span>
-                </div>
-                <div class="bg-neutral-50/70 p-3 rounded-xl border border-neutral-200/70">
-                    <span class="text-neutral-400 block mb-1">Quy mô xưởng:</span>
-                    <span class="font-medium text-neutral-800">{{ $customer->workshop_scale ?: '—' }}</span>
-                </div>
-                <div class="bg-neutral-50/70 p-3 rounded-xl border border-neutral-200/70">
-                    <span class="text-neutral-400 block mb-1">Tính cách khách hàng:</span>
-                    <span class="font-medium text-neutral-800">{{ $customer->personality ?: '—' }}</span>
-                </div>
-                <div class="bg-neutral-50/70 p-3 rounded-xl border border-neutral-200/70">
-                    <span class="text-neutral-400 block mb-1">Định mức công nợ:</span>
-                    <span class="font-bold text-neutral-800">{{ $customer->debt_limit ? number_format($customer->debt_limit, 0, ',', '.') . '₫' : '—' }}</span>
-                </div>
-                <div class="bg-neutral-50/70 p-3 rounded-xl border border-neutral-200/70">
-                    <span class="text-neutral-400 block mb-1">Chính sách:</span>
-                    <span class="font-medium text-neutral-800" title="{{ $customer->policy }}">{{ $customer->policy ?: '—' }}</span>
-                </div>
-            </div>
-
-            {{-- Proposals & Feedback --}}
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs pt-1">
-                <div class="bg-purple-50/50 p-3.5 rounded-xl border border-purple-200/80">
-                    <div class="flex items-center gap-1.5 text-primary-700 font-bold mb-1.5">
-                        <iconify-icon icon="solar:chat-round-line-bold" class="text-base"></iconify-icon> Phản ánh về Gervin:
-                    </div>
-                    <p class="text-neutral-700 m-0 whitespace-pre-line text-xs leading-relaxed">{{ $customer->feedback ?: 'Chưa có ghi nhận phản ánh' }}</p>
-                </div>
-                <div class="bg-emerald-50/50 p-3.5 rounded-xl border border-emerald-200/80">
-                    <div class="flex items-center gap-1.5 text-emerald-700 font-bold mb-1.5">
-                        <iconify-icon icon="solar:lightbulb-bold" class="text-base"></iconify-icon> Đề xuất của KH:
-                    </div>
-                    <p class="text-neutral-700 m-0 whitespace-pre-line text-xs leading-relaxed">{{ $customer->customer_proposal ?: 'Chưa có đề xuất từ khách hàng' }}</p>
-                </div>
-                <div class="bg-amber-50/50 p-3.5 rounded-xl border border-amber-200/80">
-                    <div class="flex items-center gap-1.5 text-amber-700 font-bold mb-1.5">
-                        <iconify-icon icon="solar:user-speak-rounded-bold" class="text-base"></iconify-icon> Đề xuất Sale:
-                    </div>
-                    <p class="text-neutral-700 m-0 whitespace-pre-line text-xs leading-relaxed">{{ $customer->sale_proposal ?: 'Chưa có kế hoạch đề xuất' }}</p>
-                </div>
-            </div>
-
-            {{-- Photos Gallery --}}
-            @if(!empty($customer->photos) && is_array($customer->photos) && count($customer->photos) > 0)
-            <div class="mt-4 pt-3 border-t border-neutral-100">
-                <div class="text-xs font-bold text-neutral-800 mb-2 flex items-center justify-between">
-                    <span class="flex items-center gap-1.5 text-primary-700">
-                        <iconify-icon icon="solar:camera-bold" class="text-base"></iconify-icon> Hình ảnh xưởng & bảng biểu chụp thực tế:
-                    </span>
-                    <span class="text-[11px] font-normal text-neutral-500 bg-neutral-100 px-2 py-0.5 rounded-full">{{ count($customer->photos) }} hình ảnh</span>
-                </div>
-                <div class="flex flex-wrap gap-3">
-                    @foreach($customer->photos as $idx => $photo)
-                        @php
-                            $photoUrl = (str_starts_with($photo, 'http') || str_starts_with($photo, '/')) ? $photo : '/' . $photo;
-                        @endphp
-                        <div class="relative group w-20 h-20 rounded-xl overflow-hidden border border-neutral-300 shadow-xs shrink-0 bg-neutral-100 cursor-pointer"
-                             onclick="openImageLightbox('{{ $photoUrl }}', '{{ addslashes($customer->name) }} - Ảnh {{ $idx + 1 }}')">
-                            <img src="{{ $photoUrl }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform">
-                            <div class="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors"></div>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-            @endif
-        </div>
-    </div>
+    @php
+        $currTab = $activeTab ?? 'info';
+        $payPercent = ($totalOrdersAmount > 0) ? min(100, round(($totalPaid / $totalOrdersAmount) * 100)) : 0;
+    @endphp
 
     {{-- Stat cards --}}
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -293,284 +205,511 @@
         </div>
     </div>
 
-    {{-- Order Status Distribution breakdown --}}
-    <div class="bg-white rounded-2xl p-4 border border-neutral-200/80 shadow-xs">
-        <div class="flex items-center justify-between mb-2 flex-wrap gap-2">
-            <div class="flex items-center gap-2 text-xs font-bold text-neutral-700 uppercase tracking-wide">
-                <iconify-icon icon="solar:pie-chart-2-bold" class="text-primary-600 text-base"></iconify-icon>
-                Phân bổ trạng thái đơn hàng (Bấm để lọc nhanh)
-            </div>
-            @if(request('status') && request('status') !== 'all')
-                <a href="{{ request()->fullUrlWithQuery(['status' => 'all', 'page' => 1]) }}" class="text-xs text-primary-600 hover:underline font-semibold flex items-center gap-1">
-                    <iconify-icon icon="lucide:x"></iconify-icon> Bỏ lọc trạng thái
-                </a>
-            @endif
-        </div>
-        <div class="flex flex-wrap gap-2">
-            @foreach($statusLabels as $stKey => $stLabel)
-                @php
-                    $cnt = $statusCounts[$stKey] ?? 0;
-                    $isActive = request('status') === $stKey;
-                    $stBadgeColor = $orderStatusColors[$stKey] ?? 'bg-neutral-100 text-neutral-600 border-neutral-200';
-                @endphp
-                <a href="{{ request()->fullUrlWithQuery(['status' => $isActive ? 'all' : $stKey, 'page' => 1]) }}"
-                   class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border transition-all duration-150 {{ $stBadgeColor }} {{ $isActive ? 'ring-2 ring-primary-500 ring-offset-1 font-bold shadow-xs' : 'hover:opacity-85' }}">
-                    <span>{{ $stLabel }}</span>
-                    <span class="bg-white/80 px-1.5 py-0.2 rounded-full text-[11px] font-bold">{{ $cnt }}</span>
-                </a>
-            @endforeach
+    {{-- 3 Tab Navigation Header --}}
+    <div class="bg-white rounded-2xl border border-neutral-200/80 shadow-xs p-2">
+        <div class="flex items-center gap-2 overflow-x-auto">
+            <button type="button" onclick="switchCustomerTab('info')" id="tab-btn-info"
+                class="flex items-center gap-2.5 px-5 py-3 rounded-xl font-bold text-xs sm:text-sm transition-all {{ $currTab === 'info' ? 'bg-primary-600 text-white shadow-sm shadow-primary-200' : 'bg-neutral-50 hover:bg-neutral-100 text-neutral-600' }}">
+                <iconify-icon icon="solar:user-id-bold-duotone" class="text-lg"></iconify-icon>
+                <span>Thông tin chung</span>
+            </button>
+
+            <button type="button" onclick="switchCustomerTab('orders')" id="tab-btn-orders"
+                class="flex items-center gap-2.5 px-5 py-3 rounded-xl font-bold text-xs sm:text-sm transition-all {{ $currTab === 'orders' ? 'bg-primary-600 text-white shadow-sm shadow-primary-200' : 'bg-neutral-50 hover:bg-neutral-100 text-neutral-600' }}">
+                <iconify-icon icon="solar:bag-3-bold-duotone" class="text-lg"></iconify-icon>
+                <span>Đơn hàng</span>
+                <span id="tab-badge-orders" class="px-2 py-0.5 rounded-full text-xs font-extrabold {{ $currTab === 'orders' ? 'bg-white/20 text-white' : 'bg-neutral-200 text-neutral-700' }}">
+                    {{ $orders->total() }}
+                </span>
+            </button>
+
+            <button type="button" onclick="switchCustomerTab('payments')" id="tab-btn-payments"
+                class="flex items-center gap-2.5 px-5 py-3 rounded-xl font-bold text-xs sm:text-sm transition-all {{ $currTab === 'payments' ? 'bg-primary-600 text-white shadow-sm shadow-primary-200' : 'bg-neutral-50 hover:bg-neutral-100 text-neutral-600' }}">
+                <iconify-icon icon="solar:wallet-money-bold-duotone" class="text-lg"></iconify-icon>
+                <span>Lịch sử thanh toán</span>
+                <span id="tab-badge-payments" class="px-2 py-0.5 rounded-full text-xs font-extrabold {{ $currTab === 'payments' ? 'bg-white/20 text-white' : 'bg-neutral-200 text-neutral-700' }}">
+                    {{ $payments->total() }}
+                </span>
+            </button>
         </div>
     </div>
 
-    {{-- Side-by-side Layout: Left (Orders List with filters & pagination) | Right (Payments History) --}}
-    <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
-
-        {{-- LEFT COLUMN: Orders List --}}
-        <div class="xl:col-span-8 space-y-4">
-            <div class="bg-white rounded-2xl border border-neutral-200/80 shadow-xs overflow-hidden">
-                {{-- Header with title and count --}}
-                <div class="p-5 border-b border-neutral-200 flex flex-wrap items-center justify-between gap-3 bg-neutral-50/50">
-                    <div class="flex items-center gap-2.5">
-                        <div class="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-lg">
-                            <iconify-icon icon="solar:document-text-bold-duotone"></iconify-icon>
-                        </div>
-                        <div>
-                            <h3 class="text-base font-bold text-neutral-800 m-0">Danh sách đơn hàng</h3>
-                            <span class="text-xs text-neutral-400">Tất cả đơn hàng của khách hàng này có bộ lọc & phân trang</span>
-                        </div>
+    {{-- ======================================================== --}}
+    {{-- TAB 1: THÔNG TIN CHUNG                                   --}}
+    {{-- ======================================================== --}}
+    <div id="tab-pane-info" class="space-y-6 {{ $currTab === 'info' ? '' : 'hidden' }}">
+        {{-- Card: Chi tiết hồ sơ thị trường & Hoạt động --}}
+        <div class="bg-white rounded-2xl p-6 border border-neutral-200/80 shadow-xs space-y-6">
+            <div class="flex items-center justify-between border-b border-neutral-100 pb-4">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center text-lg">
+                        <iconify-icon icon="solar:user-id-bold-duotone"></iconify-icon>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <span class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-primary-50 text-primary-700 border border-primary-200">
-                            {{ $orders->total() }} đơn hàng
-                        </span>
-                    </div>
-                </div>
-
-                {{-- Filter Toolbar --}}
-                <div class="p-4 bg-white border-b border-neutral-200">
-                    <form action="{{ route('customers.show', $customer) }}" method="GET" class="space-y-3">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-                            {{-- Search input --}}
-                            <div class="col-span-1 sm:col-span-2 md:col-span-1">
-                                <label class="text-[11px] font-semibold text-neutral-600 mb-1 block">Tìm kiếm</label>
-                                <div class="relative">
-                                    <input type="text" name="search" value="{{ request('search') }}"
-                                           placeholder="Mã đơn, tên CT..."
-                                           class="form-control rounded-xl text-xs py-2 pl-8 pr-2 w-full border border-neutral-200">
-                                    <iconify-icon icon="lucide:search" class="absolute left-2.5 top-2.5 text-neutral-400 text-sm"></iconify-icon>
-                                </div>
-                            </div>
-
-                            {{-- Status select --}}
-                            <div>
-                                <label class="text-[11px] font-semibold text-neutral-600 mb-1 block">Trạng thái</label>
-                                <select name="status" class="form-select rounded-xl text-xs py-2 px-3 w-full border border-neutral-200">
-                                    <option value="all" {{ request('status', 'all') === 'all' ? 'selected' : '' }}>-- Tất cả trạng thái --</option>
-                                    @foreach($statusLabels as $sKey => $sVal)
-                                        <option value="{{ $sKey }}" {{ request('status') === $sKey ? 'selected' : '' }}>{{ $sVal }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            {{-- Date range: From date --}}
-                            <div>
-                                <label class="text-[11px] font-semibold text-neutral-600 mb-1 block">Từ ngày</label>
-                                <input type="date" name="start_date" value="{{ request('start_date') }}"
-                                       class="form-control rounded-xl text-xs py-2 px-3 w-full border border-neutral-200">
-                            </div>
-
-                            {{-- Date range: To date --}}
-                            <div>
-                                <label class="text-[11px] font-semibold text-neutral-600 mb-1 block">Đến ngày</label>
-                                <input type="date" name="end_date" value="{{ request('end_date') }}"
-                                       class="form-control rounded-xl text-xs py-2 px-3 w-full border border-neutral-200">
-                            </div>
-                        </div>
-
-                        {{-- Lower Filter row: per_page & action buttons --}}
-                        <div class="flex items-center justify-between flex-wrap gap-2 pt-1 border-t border-neutral-100">
-                            <div class="flex items-center gap-2">
-                                <span class="text-xs text-neutral-500 font-medium">Hiển thị:</span>
-                                <select name="per_page" onchange="this.form.submit()" class="form-select rounded-lg text-xs py-1 px-2 border border-neutral-200 bg-white">
-                                    <option value="10" {{ $perPage == 10 ? 'selected' : '' }}>10 đơn / trang</option>
-                                    <option value="25" {{ $perPage == 25 ? 'selected' : '' }}>25 đơn / trang</option>
-                                    <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>50 đơn / trang</option>
-                                    <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>100 đơn / trang</option>
-                                </select>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <button type="submit" class="btn bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-xs font-semibold px-4 py-2 flex items-center gap-1.5 shadow-2xs">
-                                    <iconify-icon icon="lucide:filter" class="text-sm"></iconify-icon> Áp dụng lọc
-                                </button>
-                                <a href="{{ route('customers.show', $customer) }}" class="btn bg-neutral-100 hover:bg-neutral-200 text-neutral-700 rounded-xl text-xs font-semibold px-3 py-2">
-                                    Xóa lọc
-                                </a>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-
-                {{-- Orders Table --}}
-                <div class="overflow-x-auto">
-                    <table class="table bordered-table sm-table mb-0 w-full text-xs">
-                        <thead>
-                            <tr class="bg-neutral-50 text-neutral-700 border-b border-neutral-200">
-                                <th class="text-center w-12 py-3">STT</th>
-                                <th class="text-left py-3">Mã đơn</th>
-                                <th class="text-left py-3">Tên công trình</th>
-                                <th class="text-left py-3">Ngày đặt</th>
-                                <th class="text-center py-3 whitespace-nowrap">Số tấm</th>
-                                <th class="text-center py-3 whitespace-nowrap">Tổng số mét</th>
-                                <th class="text-right py-3">Giá trị đơn</th>
-                                <th class="text-right py-3">Đã TT</th>
-                                <th class="text-right py-3">Còn nợ</th>
-                                <th class="text-center py-3">Trạng thái</th>
-                                <th class="text-center py-3 w-16">Xem</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-neutral-100">
-                            @forelse($orders as $o)
-                            @php
-                                $stt = $orders->firstItem() + $loop->index;
-                                $badgeColor = $orderStatusColors[$o->status] ?? 'bg-neutral-100 text-neutral-600 border-neutral-200';
-                            @endphp
-                            <tr class="hover:bg-neutral-50/70 transition-colors">
-                                <td class="text-center text-neutral-400 font-mono">{{ $stt }}</td>
-                                <td>
-                                    <a href="{{ route('orders.show', $o->id) }}" target="_blank"
-                                       class="font-bold text-primary-600 hover:text-primary-800 hover:underline flex items-center gap-1">
-                                        {{ $o->order_code ?: '—' }}
-                                        <iconify-icon icon="lucide:external-link" class="text-[10px] text-neutral-400"></iconify-icon>
-                                    </a>
-                                </td>
-                                <td>
-                                    <div class="font-semibold text-neutral-800 max-w-[180px] truncate" title="{{ $o->customer_name }}">
-                                        {{ $o->customer_name ?: '—' }}
-                                    </div>
-                                </td>
-                                <td class="text-neutral-600 whitespace-nowrap">
-                                    {{ $o->order_date ? \Carbon\Carbon::parse($o->order_date)->format('d/m/Y') : '—' }}
-                                </td>
-                                <td class="text-center whitespace-nowrap">
-                                    @if($o->total_sheets > 0)
-                                        <span class="inline-flex items-center gap-1 font-semibold text-neutral-800 bg-neutral-100 px-2 py-0.5 rounded-md text-[11px]">
-                                            <iconify-icon icon="solar:layers-minimalistic-bold" class="text-neutral-500 text-xs"></iconify-icon>
-                                            {{ floatval($o->total_sheets) == intval($o->total_sheets) ? number_format($o->total_sheets, 0, ',', '.') : number_format($o->total_sheets, 1, ',', '.') }}
-                                        </span>
-                                    @else
-                                        <span class="text-neutral-300">—</span>
-                                    @endif
-                                </td>
-                                <td class="text-center whitespace-nowrap">
-                                    @if($o->total_meters > 0)
-                                        <span class="inline-flex items-center gap-1 font-semibold text-primary-700 bg-primary-50 px-2 py-0.5 rounded-md text-[11px] border border-primary-100">
-                                            <iconify-icon icon="solar:ruler-angular-bold" class="text-primary-500 text-xs"></iconify-icon>
-                                            {{ floatval($o->total_meters) == intval($o->total_meters) ? number_format($o->total_meters, 0, ',', '.') : rtrim(rtrim(number_format($o->total_meters, 2, ',', '.'), '0'), ',') }} m
-                                        </span>
-                                    @else
-                                        <span class="text-neutral-300">—</span>
-                                    @endif
-                                </td>
-                                <td class="text-right font-bold text-neutral-900 whitespace-nowrap">
-                                    {{ number_format(round($o->total_amount, -3), 0, ',', '.') }}₫
-                                </td>
-                                <td class="text-right font-semibold text-emerald-600 whitespace-nowrap">
-                                    {{ number_format($o->paid, 0, ',', '.') }}₫
-                                </td>
-                                <td class="text-right font-bold {{ $o->debt > 0 ? 'text-rose-600' : 'text-neutral-400' }} whitespace-nowrap">
-                                    {{ number_format($o->debt, 0, ',', '.') }}₫
-                                </td>
-                                <td class="text-center whitespace-nowrap">
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border {{ $badgeColor }}">
-                                        {{ $statusLabels[$o->status] ?? $o->status }}
-                                    </span>
-                                </td>
-                                <td class="text-center">
-                                    <a href="{{ route('orders.show', $o->id) }}" target="_blank"
-                                       class="w-7 h-7 inline-flex items-center justify-center rounded-lg bg-neutral-100 hover:bg-primary-50 text-neutral-600 hover:text-primary-700 transition"
-                                       title="Xem chi tiết đơn hàng">
-                                        <iconify-icon icon="solar:eye-bold" class="text-sm"></iconify-icon>
-                                    </a>
-                                </td>
-                            </tr>
-                            @empty
-                            <tr>
-                                <td colspan="11" class="text-center py-12 text-neutral-400">
-                                    <div class="flex flex-col items-center justify-center gap-2">
-                                        <iconify-icon icon="solar:box-minimalistic-linear" class="text-4xl text-neutral-300"></iconify-icon>
-                                        <span class="text-xs">Không tìm thấy đơn hàng nào phù hợp với bộ lọc</span>
-                                        @if(request('search') || request('status') !== 'all' || request('start_date') || request('end_date'))
-                                            <a href="{{ route('customers.show', $customer) }}" class="text-primary-600 font-semibold text-xs hover:underline mt-1">
-                                                Đặt lại bộ lọc
-                                            </a>
-                                        @endif
-                                    </div>
-                                </td>
-                            </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-
-                {{-- Pagination summary & links --}}
-                @if($orders->hasPages() || $orders->total() > 0)
-                <div class="px-5 py-4 border-t border-neutral-200 bg-neutral-50/50 flex flex-wrap items-center justify-between gap-3 text-xs">
-                    <span class="text-neutral-500 font-medium">
-                        Hiển thị <strong>{{ $orders->firstItem() ?? 0 }}</strong> đến <strong>{{ $orders->lastItem() ?? 0 }}</strong> trong tổng số <strong>{{ $orders->total() }}</strong> đơn hàng
-                    </span>
                     <div>
-                        {{ $orders->links() }}
+                        <h6 class="font-bold text-sm text-neutral-800 m-0">Hồ sơ khách hàng & Quy mô hoạt động</h6>
+                        <span class="text-xs text-neutral-400">Thông tin liên hệ, thị trường, cơ sở vật chất và hợp tác</span>
                     </div>
                 </div>
+                @can('edit customer')
+                <button type="button" onclick="openEditCustomerModalFromBtn(this)" class="btn bg-primary-50 text-primary-700 hover:bg-primary-100 border border-primary-200 px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition">
+                    <iconify-icon icon="lucide:edit-2" class="text-sm"></iconify-icon>
+                    Cập nhật thông tin
+                </button>
+                @endcan
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+                <div class="bg-neutral-50/80 p-3.5 rounded-xl border border-neutral-200/70">
+                    <span class="text-neutral-400 block mb-1">Số điện thoại:</span>
+                    @if($customer->phone)
+                        <a href="tel:{{ $customer->phone }}" class="font-bold text-primary-600 hover:underline flex items-center gap-1">
+                            <iconify-icon icon="lucide:phone" class="text-sm"></iconify-icon>
+                            {{ $customer->phone }}
+                        </a>
+                    @else
+                        <span class="font-semibold text-neutral-400">—</span>
+                    @endif
+                </div>
+
+                <div class="bg-neutral-50/80 p-3.5 rounded-xl border border-neutral-200/70 lg:col-span-2">
+                    <span class="text-neutral-400 block mb-1">Địa chỉ xưởng / trụ sở:</span>
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="font-semibold text-neutral-800">{{ $fullAddress ?: ($customer->address ?: '—') }}</span>
+                        @if($customer->address || $fullAddress)
+                            <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($fullAddress ?: $customer->address) }}" target="_blank"
+                               class="text-primary-600 hover:text-primary-800 text-[11px] font-bold inline-flex items-center gap-1 shrink-0 bg-primary-50 px-2 py-0.5 rounded border border-primary-100">
+                                <iconify-icon icon="solar:map-point-wave-bold" class="text-rose-500"></iconify-icon>
+                                Google Maps
+                            </a>
+                        @endif
+                    </div>
+                </div>
+
+                <div class="bg-neutral-50/80 p-3.5 rounded-xl border border-neutral-200/70">
+                    <span class="text-neutral-400 block mb-1">Nhóm thị trường:</span>
+                    <span class="font-bold text-primary-700">
+                        {{ $customer->marketGroup ? $customer->marketGroup->name : 'Chưa phân nhóm' }}
+                    </span>
+                </div>
+
+                <div class="bg-neutral-50/80 p-3.5 rounded-xl border border-neutral-200/70">
+                    <span class="text-neutral-400 block mb-1">Nhân viên phụ trách:</span>
+                    <span class="font-semibold text-neutral-800">
+                        @if($customer->users && $customer->users->count() > 0)
+                            {{ $customer->users->pluck('name')->implode(', ') }}
+                        @else
+                            <span class="text-neutral-400">Chưa gán</span>
+                        @endif
+                    </span>
+                </div>
+
+                <div class="bg-neutral-50/80 p-3.5 rounded-xl border border-neutral-200/70">
+                    <span class="text-neutral-400 block mb-1">Quy mô xưởng:</span>
+                    <span class="font-medium text-neutral-800">{{ $customer->workshop_scale ?: '—' }}</span>
+                </div>
+
+                <div class="bg-neutral-50/80 p-3.5 rounded-xl border border-neutral-200/70">
+                    <span class="text-neutral-400 block mb-1">Tính cách khách hàng:</span>
+                    <span class="font-medium text-neutral-800">{{ $customer->personality ?: '—' }}</span>
+                </div>
+
+                <div class="bg-neutral-50/80 p-3.5 rounded-xl border border-neutral-200/70">
+                    <span class="text-neutral-400 block mb-1">Đối tác đối thủ đang hợp tác:</span>
+                    <span class="font-bold text-neutral-800">{{ $customer->partner_competitors ?: '—' }}</span>
+                </div>
+
+                <div class="bg-neutral-50/80 p-3.5 rounded-xl border border-neutral-200/70">
+                    <span class="text-neutral-400 block mb-1">Định mức công nợ:</span>
+                    <span class="font-bold text-neutral-800">
+                        {{ $customer->debt_limit ? number_format($customer->debt_limit, 0, ',', '.') . '₫' : '—' }}
+                    </span>
+                </div>
+
+                <div class="bg-neutral-50/80 p-3.5 rounded-xl border border-neutral-200/70 lg:col-span-2">
+                    <span class="text-neutral-400 block mb-1">Chính sách công nợ & chiết khấu:</span>
+                    <span class="font-medium text-neutral-800" title="{{ $customer->policy }}">{{ $customer->policy ?: '—' }}</span>
+                </div>
+
+                <div class="bg-neutral-50/80 p-3.5 rounded-xl border border-neutral-200/70">
+                    <span class="text-neutral-400 block mb-1">Tỷ lệ thanh toán đơn hàng:</span>
+                    <div class="flex items-center gap-2">
+                        <div class="flex-1 bg-neutral-200 rounded-full h-2 overflow-hidden">
+                            <div class="bg-emerald-500 h-full rounded-full" style="width: {{ $payPercent }}%"></div>
+                        </div>
+                        <span class="font-bold text-neutral-800 text-[11px]">{{ $payPercent }}%</span>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Proposals & Feedback --}}
+            <div class="border-t border-neutral-100 pt-5">
+                <h6 class="font-bold text-xs uppercase tracking-wider text-neutral-700 mb-3 flex items-center gap-2">
+                    <iconify-icon icon="solar:chat-round-line-bold" class="text-primary-600 text-base"></iconify-icon>
+                    Ý kiến phản hồi & Đề xuất thị trường
+                </h6>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                    <div class="bg-purple-50/60 p-4 rounded-xl border border-purple-200/80">
+                        <div class="flex items-center gap-1.5 text-primary-700 font-bold mb-2">
+                            <iconify-icon icon="solar:chat-round-line-bold" class="text-base"></iconify-icon>
+                            Phản ánh về Gervin:
+                        </div>
+                        <p class="text-neutral-700 m-0 whitespace-pre-line text-xs leading-relaxed">{{ $customer->feedback ?: 'Chưa có ghi nhận phản ánh' }}</p>
+                    </div>
+
+                    <div class="bg-emerald-50/60 p-4 rounded-xl border border-emerald-200/80">
+                        <div class="flex items-center gap-1.5 text-emerald-700 font-bold mb-2">
+                            <iconify-icon icon="solar:lightbulb-bold" class="text-base"></iconify-icon>
+                            Đề xuất của khách hàng:
+                        </div>
+                        <p class="text-neutral-700 m-0 whitespace-pre-line text-xs leading-relaxed">{{ $customer->customer_proposal ?: 'Chưa có đề xuất từ khách hàng' }}</p>
+                    </div>
+
+                    <div class="bg-amber-50/60 p-4 rounded-xl border border-amber-200/80">
+                        <div class="flex items-center gap-1.5 text-amber-700 font-bold mb-2">
+                            <iconify-icon icon="solar:user-speak-rounded-bold" class="text-base"></iconify-icon>
+                            Kế hoạch đề xuất của Sale:
+                        </div>
+                        <p class="text-neutral-700 m-0 whitespace-pre-line text-xs leading-relaxed">{{ $customer->sale_proposal ?: 'Chưa có kế hoạch đề xuất' }}</p>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Photos Gallery --}}
+            @if(!empty($customer->photos) && is_array($customer->photos) && count($customer->photos) > 0)
+            <div class="border-t border-neutral-100 pt-5">
+                <div class="text-xs font-bold text-neutral-800 mb-3 flex items-center justify-between">
+                    <span class="flex items-center gap-1.5 text-primary-700 text-sm">
+                        <iconify-icon icon="solar:camera-bold" class="text-base"></iconify-icon> Hình ảnh xưởng & biển bảng thực tế:
+                    </span>
+                    <span class="text-xs font-semibold text-neutral-500 bg-neutral-100 px-2.5 py-1 rounded-full">{{ count($customer->photos) }} hình ảnh</span>
+                </div>
+                <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
+                    @foreach($customer->photos as $idx => $photo)
+                        @php
+                            $photoUrl = (str_starts_with($photo, 'http') || str_starts_with($photo, '/')) ? $photo : '/' . $photo;
+                        @endphp
+                        <div class="relative group aspect-square rounded-xl overflow-hidden border border-neutral-300 shadow-xs bg-neutral-100 cursor-pointer"
+                             onclick="openImageLightbox('{{ $photoUrl }}', '{{ addslashes($customer->name) }} - Ảnh {{ $idx + 1 }}')">
+                            <img src="{{ $photoUrl }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" loading="lazy">
+                            <div class="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors"></div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+            @endif
+        </div>
+    </div>
+
+    {{-- ======================================================== --}}
+    {{-- TAB 2: ĐƠN HÀNG                                         --}}
+    {{-- ======================================================== --}}
+    <div id="tab-pane-orders" class="space-y-6 {{ $currTab === 'orders' ? '' : 'hidden' }}">
+        {{-- Order Status Distribution breakdown --}}
+        <div class="bg-white rounded-2xl p-4 border border-neutral-200/80 shadow-xs">
+            <div class="flex items-center justify-between mb-2.5 flex-wrap gap-2">
+                <div class="flex items-center gap-2 text-xs font-bold text-neutral-700 uppercase tracking-wide">
+                    <iconify-icon icon="solar:pie-chart-2-bold" class="text-primary-600 text-base"></iconify-icon>
+                    Phân bổ trạng thái đơn hàng (Bấm để lọc nhanh)
+                </div>
+                @if(request('status') && request('status') !== 'all')
+                    <a href="{{ request()->fullUrlWithQuery(['tab' => 'orders', 'status' => 'all', 'page' => 1]) }}" class="text-xs text-primary-600 hover:underline font-semibold flex items-center gap-1">
+                        <iconify-icon icon="lucide:x"></iconify-icon> Bỏ lọc trạng thái
+                    </a>
                 @endif
+            </div>
+            <div class="flex flex-wrap gap-2">
+                @foreach($statusLabels as $stKey => $stLabel)
+                    @php
+                        $cnt = $statusCounts[$stKey] ?? 0;
+                        $isActive = request('status') === $stKey;
+                        $stBadgeColor = $orderStatusColors[$stKey] ?? 'bg-neutral-100 text-neutral-600 border-neutral-200';
+                    @endphp
+                    <a href="{{ request()->fullUrlWithQuery(['tab' => 'orders', 'status' => $isActive ? 'all' : $stKey, 'page' => 1]) }}"
+                       class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border transition-all duration-150 {{ $stBadgeColor }} {{ $isActive ? 'ring-2 ring-primary-500 ring-offset-1 font-bold shadow-xs' : 'hover:opacity-85' }}">
+                        <span>{{ $stLabel }}</span>
+                        <span class="bg-white/80 px-1.5 py-0.2 rounded-full text-[11px] font-bold">{{ $cnt }}</span>
+                    </a>
+                @endforeach
             </div>
         </div>
 
-        {{-- RIGHT COLUMN: Payments History --}}
-        <div class="xl:col-span-4 space-y-4">
-            <div class="bg-white rounded-2xl border border-neutral-200/80 shadow-xs overflow-hidden">
-                {{-- Payments Header --}}
-                <div class="p-5 border-b border-neutral-200 flex items-center justify-between bg-neutral-50/50">
-                    <div class="flex items-center gap-2.5">
-                        <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg">
-                            <iconify-icon icon="solar:wallet-money-bold-duotone"></iconify-icon>
+        {{-- Orders Table Full Width Card --}}
+        <div class="bg-white rounded-2xl border border-neutral-200/80 shadow-xs overflow-hidden">
+            {{-- Header with title and count --}}
+            <div class="p-5 border-b border-neutral-200 flex flex-wrap items-center justify-between gap-3 bg-neutral-50/50">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-lg">
+                        <iconify-icon icon="solar:document-text-bold-duotone"></iconify-icon>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-neutral-800 m-0">Danh sách đơn hàng</h3>
+                        <span class="text-xs text-neutral-400">Tất cả đơn hàng của khách hàng này có bộ lọc & phân trang đầy đủ</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-primary-50 text-primary-700 border border-primary-200">
+                        {{ $orders->total() }} đơn hàng
+                    </span>
+                </div>
+            </div>
+
+            {{-- Filter Toolbar --}}
+            <div class="p-4 bg-white border-b border-neutral-200">
+                <form action="{{ route('customers.show', $customer) }}" method="GET" class="space-y-3">
+                    <input type="hidden" name="tab" value="orders">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                        {{-- Search input --}}
+                        <div class="col-span-1 sm:col-span-2 md:col-span-1">
+                            <label class="text-[11px] font-semibold text-neutral-600 mb-1 block">Tìm kiếm</label>
+                            <div class="relative">
+                                <input type="text" name="search" value="{{ request('search') }}"
+                                       placeholder="Mã đơn, tên CT..."
+                                       class="form-control rounded-xl text-xs py-2 pl-8 pr-2 w-full border border-neutral-200">
+                                <iconify-icon icon="lucide:search" class="absolute left-2.5 top-2.5 text-neutral-400 text-sm"></iconify-icon>
+                            </div>
                         </div>
+
+                        {{-- Status select --}}
                         <div>
-                            <h3 class="text-base font-bold text-neutral-800 m-0">Lịch sử thanh toán</h3>
-                            <span class="text-xs text-neutral-400">Các đợt thu tiền từ khách</span>
+                            <label class="text-[11px] font-semibold text-neutral-600 mb-1 block">Trạng thái</label>
+                            <select name="status" class="form-select rounded-xl text-xs py-2 px-3 w-full border border-neutral-200">
+                                <option value="all" {{ request('status', 'all') === 'all' ? 'selected' : '' }}>-- Tất cả trạng thái --</option>
+                                @foreach($statusLabels as $sKey => $sVal)
+                                    <option value="{{ $sKey }}" {{ request('status') === $sKey ? 'selected' : '' }}>{{ $sVal }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        {{-- Date range: From date --}}
+                        <div>
+                            <label class="text-[11px] font-semibold text-neutral-600 mb-1 block">Từ ngày</label>
+                            <input type="date" name="start_date" value="{{ request('start_date') }}"
+                                   class="form-control rounded-xl text-xs py-2 px-3 w-full border border-neutral-200">
+                        </div>
+
+                        {{-- Date range: To date --}}
+                        <div>
+                            <label class="text-[11px] font-semibold text-neutral-600 mb-1 block">Đến ngày</label>
+                            <input type="date" name="end_date" value="{{ request('end_date') }}"
+                                   class="form-control rounded-xl text-xs py-2 px-3 w-full border border-neutral-200">
                         </div>
                     </div>
+
+                    {{-- Lower Filter row: per_page & action buttons --}}
+                    <div class="flex items-center justify-between flex-wrap gap-2 pt-1 border-t border-neutral-100">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-neutral-500 font-medium">Hiển thị:</span>
+                            <select name="per_page" onchange="this.form.submit()" class="form-select rounded-lg text-xs py-1 px-2 border border-neutral-200 bg-white">
+                                <option value="10" {{ $perPage == 10 ? 'selected' : '' }}>10 đơn / trang</option>
+                                <option value="25" {{ $perPage == 25 ? 'selected' : '' }}>25 đơn / trang</option>
+                                <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>50 đơn / trang</option>
+                                <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>100 đơn / trang</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button type="submit" class="btn bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-xs font-semibold px-4 py-2 flex items-center gap-1.5 shadow-2xs">
+                                <iconify-icon icon="lucide:filter" class="text-sm"></iconify-icon> Áp dụng lọc
+                            </button>
+                            <a href="{{ route('customers.show', ['customer' => $customer, 'tab' => 'orders']) }}" class="btn bg-neutral-100 hover:bg-neutral-200 text-neutral-700 rounded-xl text-xs font-semibold px-3 py-2">
+                                Xóa lọc
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            {{-- Orders Table --}}
+            <div class="overflow-x-auto">
+                <table class="table bordered-table sm-table mb-0 w-full text-xs">
+                    <thead>
+                        <tr class="bg-neutral-50 text-neutral-700 border-b border-neutral-200">
+                            <th class="text-center w-12 py-3">STT</th>
+                            <th class="text-left py-3">Mã đơn</th>
+                            <th class="text-left py-3">Tên công trình</th>
+                            <th class="text-left py-3">Ngày đặt</th>
+                            <th class="text-center py-3 whitespace-nowrap">Số tấm</th>
+                            <th class="text-center py-3 whitespace-nowrap">Tổng số mét</th>
+                            <th class="text-right py-3">Giá trị đơn</th>
+                            <th class="text-right py-3">Đã TT</th>
+                            <th class="text-right py-3">Còn nợ</th>
+                            <th class="text-center py-3">Trạng thái</th>
+                            <th class="text-center py-3 w-16">Xem</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-neutral-100">
+                        @forelse($orders as $o)
+                        @php
+                            $stt = $orders->firstItem() + $loop->index;
+                            $badgeColor = $orderStatusColors[$o->status] ?? 'bg-neutral-100 text-neutral-600 border-neutral-200';
+                        @endphp
+                        <tr class="hover:bg-neutral-50/70 transition-colors">
+                            <td class="text-center text-neutral-400 font-mono">{{ $stt }}</td>
+                            <td>
+                                <a href="{{ route('orders.show', $o->id) }}" target="_blank"
+                                   class="font-bold text-primary-600 hover:text-primary-800 hover:underline flex items-center gap-1">
+                                    {{ $o->order_code ?: '—' }}
+                                    <iconify-icon icon="lucide:external-link" class="text-[10px] text-neutral-400"></iconify-icon>
+                                </a>
+                            </td>
+                            <td>
+                                <div class="font-semibold text-neutral-800 max-w-[220px] truncate" title="{{ $o->customer_name }}">
+                                    {{ $o->customer_name ?: '—' }}
+                                </div>
+                            </td>
+                            <td class="text-neutral-600 whitespace-nowrap">
+                                {{ $o->order_date ? \Carbon\Carbon::parse($o->order_date)->format('d/m/Y') : '—' }}
+                            </td>
+                            <td class="text-center whitespace-nowrap">
+                                @if($o->total_sheets > 0)
+                                    <span class="inline-flex items-center gap-1 font-semibold text-neutral-800 bg-neutral-100 px-2 py-0.5 rounded-md text-[11px]">
+                                        <iconify-icon icon="solar:layers-minimalistic-bold" class="text-neutral-500 text-xs"></iconify-icon>
+                                        {{ floatval($o->total_sheets) == intval($o->total_sheets) ? number_format($o->total_sheets, 0, ',', '.') : number_format($o->total_sheets, 1, ',', '.') }}
+                                    </span>
+                                @else
+                                    <span class="text-neutral-300">—</span>
+                                @endif
+                            </td>
+                            <td class="text-center whitespace-nowrap">
+                                @if($o->total_meters > 0)
+                                    <span class="inline-flex items-center gap-1 font-semibold text-primary-700 bg-primary-50 px-2 py-0.5 rounded-md text-[11px] border border-primary-100">
+                                        <iconify-icon icon="solar:ruler-angular-bold" class="text-primary-500 text-xs"></iconify-icon>
+                                        {{ floatval($o->total_meters) == intval($o->total_meters) ? number_format($o->total_meters, 0, ',', '.') : rtrim(rtrim(number_format($o->total_meters, 2, ',', '.'), '0'), ',') }} m
+                                    </span>
+                                @else
+                                    <span class="text-neutral-300">—</span>
+                                @endif
+                            </td>
+                            <td class="text-right font-bold text-neutral-900 whitespace-nowrap">
+                                {{ number_format(round($o->total_amount, -3), 0, ',', '.') }}₫
+                            </td>
+                            <td class="text-right font-semibold text-emerald-600 whitespace-nowrap">
+                                {{ number_format($o->paid, 0, ',', '.') }}₫
+                            </td>
+                            <td class="text-right font-bold {{ $o->debt > 0 ? 'text-rose-600' : 'text-neutral-400' }} whitespace-nowrap">
+                                {{ number_format($o->debt, 0, ',', '.') }}₫
+                            </td>
+                            <td class="text-center whitespace-nowrap">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border {{ $badgeColor }}">
+                                    {{ $statusLabels[$o->status] ?? $o->status }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <a href="{{ route('orders.show', $o->id) }}" target="_blank"
+                                   class="w-7 h-7 inline-flex items-center justify-center rounded-lg bg-neutral-100 hover:bg-primary-50 text-neutral-600 hover:text-primary-700 transition"
+                                   title="Xem chi tiết đơn hàng">
+                                    <iconify-icon icon="solar:eye-bold" class="text-sm"></iconify-icon>
+                                </a>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="11" class="text-center py-12 text-neutral-400">
+                                <div class="flex flex-col items-center justify-center gap-2">
+                                    <iconify-icon icon="solar:box-minimalistic-linear" class="text-4xl text-neutral-300"></iconify-icon>
+                                    <span class="text-xs">Không tìm thấy đơn hàng nào phù hợp với bộ lọc</span>
+                                    @if(request('search') || request('status') !== 'all' || request('start_date') || request('end_date'))
+                                        <a href="{{ route('customers.show', ['customer' => $customer, 'tab' => 'orders']) }}" class="text-primary-600 font-semibold text-xs hover:underline mt-1">
+                                            Đặt lại bộ lọc
+                                        </a>
+                                    @endif
+                                </div>
+                            </td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            {{-- Pagination summary & links --}}
+            @if($orders->hasPages() || $orders->total() > 0)
+            <div class="px-5 py-4 border-t border-neutral-200 bg-neutral-50/50 flex flex-wrap items-center justify-between gap-3 text-xs">
+                <span class="text-neutral-500 font-medium">
+                    Hiển thị <strong>{{ $orders->firstItem() ?? 0 }}</strong> đến <strong>{{ $orders->lastItem() ?? 0 }}</strong> trong tổng số <strong>{{ $orders->total() }}</strong> đơn hàng
+                </span>
+                <div>
+                    {{ $orders->appends(request()->query())->links() }}
+                </div>
+            </div>
+            @endif
+        </div>
+    </div>
+
+    {{-- ======================================================== --}}
+    {{-- TAB 3: LỊCH SỬ THANH TOÁN                                --}}
+    {{-- ======================================================== --}}
+    <div id="tab-pane-payments" class="space-y-6 {{ $currTab === 'payments' ? '' : 'hidden' }}">
+        <div class="bg-white rounded-2xl border border-neutral-200/80 shadow-xs overflow-hidden">
+            {{-- Payments Header --}}
+            <div class="p-5 border-b border-neutral-200 flex flex-wrap items-center justify-between gap-3 bg-neutral-50/50">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg">
+                        <iconify-icon icon="solar:wallet-money-bold-duotone"></iconify-icon>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-neutral-800 m-0">Lịch sử thanh toán</h3>
+                        <span class="text-xs text-neutral-400">Các đợt thu tiền từ khách hàng, phương thức và hóa đơn liên quan</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="hidden sm:flex items-center gap-2 text-xs">
+                        <span class="px-3 py-1 rounded-lg bg-emerald-50 text-emerald-700 font-bold border border-emerald-200">
+                            Đã thu: {{ number_format($totalPaid, 0, ',', '.') }}₫
+                        </span>
+                        <span class="px-3 py-1 rounded-lg {{ $totalDebt > 0 ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-neutral-100 text-neutral-700 border-neutral-200' }} font-bold border">
+                            Còn nợ: {{ number_format($totalDebt, 0, ',', '.') }}₫
+                        </span>
+                    </div>
                     <button type="button" onclick="openModal('add-payment-modal')"
-                        class="btn bg-primary-50 text-primary-700 hover:bg-primary-100 border border-primary-200 px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition">
+                        class="btn bg-primary-600 hover:bg-primary-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-2xs transition">
                         <iconify-icon icon="lucide:plus" class="text-sm"></iconify-icon>
-                        Thêm
+                        Ghi nhận thanh toán
                     </button>
                 </div>
+            </div>
 
-                {{-- Date filter for payments --}}
-                <div class="p-3 bg-white border-b border-neutral-200">
-                    <form action="{{ route('customers.show', $customer) }}" method="GET" class="flex items-center gap-2">
-                        @foreach(request()->except(['payment_date', 'payment_page']) as $k => $v)
-                            <input type="hidden" name="{{ $k }}" value="{{ $v }}">
-                        @endforeach
+            {{-- Date filter for payments --}}
+            <div class="p-4 bg-white border-b border-neutral-200">
+                <form action="{{ route('customers.show', $customer) }}" method="GET" class="flex items-center gap-3 flex-wrap">
+                    <input type="hidden" name="tab" value="payments">
+                    @foreach(request()->except(['payment_date', 'payment_page', 'tab']) as $k => $v)
+                        <input type="hidden" name="{{ $k }}" value="{{ $v }}">
+                    @endforeach
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-semibold text-neutral-600">Lọc theo ngày thanh toán:</span>
                         <input type="date" name="payment_date" value="{{ request('payment_date') }}"
-                               class="form-control rounded-lg text-xs py-1.5 px-2.5 border border-neutral-200 flex-1">
-                        <button type="submit" class="btn bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-xs font-semibold px-3 py-1.5">
-                            Lọc
-                        </button>
-                        @if(request('payment_date'))
-                            <a href="{{ request()->fullUrlWithQuery(['payment_date' => null, 'payment_page' => 1]) }}"
-                               class="btn bg-neutral-100 hover:bg-neutral-200 text-neutral-700 rounded-lg text-xs font-semibold px-2.5 py-1.5">
-                                Xóa
-                            </a>
-                        @endif
-                    </form>
-                </div>
+                               class="form-control rounded-xl text-xs py-1.5 px-3 border border-neutral-200 w-auto">
+                    </div>
+                    <button type="submit" class="btn bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-xs font-semibold px-3.5 py-1.5 flex items-center gap-1">
+                        <iconify-icon icon="lucide:filter" class="text-xs"></iconify-icon> Lọc
+                    </button>
+                    @if(request('payment_date'))
+                        <a href="{{ request()->fullUrlWithQuery(['tab' => 'payments', 'payment_date' => null, 'payment_page' => 1]) }}"
+                           class="btn bg-neutral-100 hover:bg-neutral-200 text-neutral-700 rounded-xl text-xs font-semibold px-3 py-1.5">
+                            Xóa lọc
+                        </a>
+                    @endif
+                </form>
+            </div>
 
-                {{-- Payments List --}}
-                <div class="p-4 space-y-3 max-h-[560px] overflow-y-auto">
-                    @forelse($payments as $p)
+            {{-- Payments Full-width Table --}}
+            <div class="overflow-x-auto">
+                <table class="table bordered-table sm-table mb-0 w-full text-xs">
+                    <thead>
+                        <tr class="bg-neutral-50 text-neutral-700 border-b border-neutral-200">
+                            <th class="text-center w-12 py-3">STT</th>
+                            <th class="text-left py-3 whitespace-nowrap">Ngày thanh toán</th>
+                            <th class="text-right py-3 whitespace-nowrap">Số tiền</th>
+                            <th class="text-center py-3 whitespace-nowrap">Phương thức</th>
+                            <th class="text-left py-3 whitespace-nowrap">Đơn hàng liên kết</th>
+                            <th class="text-left py-3">Ghi chú</th>
+                            <th class="text-left py-3 whitespace-nowrap">Người ghi nhận</th>
+                            <th class="text-center py-3 w-20">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-neutral-100">
+                        @forelse($payments as $p)
                         @php
+                            $stt = $payments->firstItem() + $loop->index;
                             $methodBadge = match($p->payment_method) {
                                 'cash'     => 'bg-amber-50 text-amber-700 border-amber-200',
                                 'transfer' => 'bg-blue-50 text-blue-700 border-blue-200',
@@ -578,41 +717,45 @@
                             };
                             $methodLabel = \App\Models\CustomerPayment::methodLabel($p->payment_method);
                         @endphp
-                        <div class="bg-neutral-50/70 border border-neutral-200/80 rounded-xl p-3 hover:border-neutral-300 transition">
-                            <div class="flex items-start justify-between gap-2">
-                                <div class="space-y-1 min-w-0 flex-1">
-                                    <div class="flex items-center gap-2 flex-wrap">
-                                        <span class="text-xs font-bold text-neutral-800">
-                                            {{ $p->payment_date ? \Carbon\Carbon::parse($p->payment_date)->format('d/m/Y') : '—' }}
-                                        </span>
-                                        <span class="px-1.5 py-0.5 rounded text-[10px] font-bold border {{ $methodBadge }}">
-                                            {{ $methodLabel }}
-                                        </span>
-                                    </div>
-                                    <div class="text-base font-bold text-emerald-600">
-                                        +{{ number_format($p->amount, 0, ',', '.') }}₫
-                                    </div>
-                                    @if($p->order)
-                                        <div class="text-[11px] text-primary-600 flex items-center gap-1">
-                                            <iconify-icon icon="solar:link-circle-bold"></iconify-icon>
-                                            Liên kết đơn: <a href="{{ route('orders.show', $p->order->id) }}" target="_blank" class="font-bold underline">{{ $p->order->order_code }}</a>
-                                        </div>
-                                    @endif
-                                    @if($p->note)
-                                        <p class="text-[11px] text-neutral-500 m-0 italic">{{ $p->note }}</p>
-                                    @endif
-                                    <div class="text-[10px] text-neutral-400">
-                                        Tạo bởi: {{ $p->creator->name ?? 'Hệ thống' }}
-                                    </div>
-                                </div>
-
-                                {{-- Action buttons: Edit & Delete --}}
-                                <div class="flex items-center gap-1 shrink-0">
+                        <tr class="hover:bg-neutral-50/70 transition-colors">
+                            <td class="text-center text-neutral-400 font-mono">{{ $stt }}</td>
+                            <td class="whitespace-nowrap font-semibold text-neutral-800">
+                                {{ $p->payment_date ? \Carbon\Carbon::parse($p->payment_date)->format('d/m/Y') : '—' }}
+                            </td>
+                            <td class="text-right whitespace-nowrap">
+                                <span class="text-sm font-bold text-emerald-600">
+                                    +{{ number_format($p->amount, 0, ',', '.') }}₫
+                                </span>
+                            </td>
+                            <td class="text-center whitespace-nowrap">
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold border {{ $methodBadge }}">
+                                    {{ $methodLabel }}
+                                </span>
+                            </td>
+                            <td class="whitespace-nowrap">
+                                @if($p->order)
+                                    <a href="{{ route('orders.show', $p->order->id) }}" target="_blank"
+                                       class="font-bold text-primary-600 hover:text-primary-800 hover:underline inline-flex items-center gap-1">
+                                        <iconify-icon icon="solar:link-circle-bold" class="text-xs"></iconify-icon>
+                                        {{ $p->order->order_code }}
+                                    </a>
+                                @else
+                                    <span class="text-neutral-400 italic">Thanh toán chung</span>
+                                @endif
+                            </td>
+                            <td>
+                                <span class="text-neutral-600">{{ $p->note ?: '—' }}</span>
+                            </td>
+                            <td class="whitespace-nowrap text-neutral-500">
+                                {{ $p->creator->name ?? 'Hệ thống' }}
+                            </td>
+                            <td class="text-center whitespace-nowrap">
+                                <div class="flex items-center justify-center gap-1">
                                     <button type="button"
                                         onclick="openEditCustPaymentModal({{ $p->id }}, '{{ $p->payment_date ? $p->payment_date->format('Y-m-d') : '' }}', {{ $p->amount }}, '{{ $p->payment_method }}', '{{ addslashes($p->note ?? '') }}', '{{ $p->order_id ?? '' }}')"
-                                        class="w-7 h-7 rounded-lg hover:bg-neutral-200 text-neutral-400 hover:text-primary-600 flex items-center justify-center transition"
+                                        class="w-7 h-7 rounded-lg hover:bg-neutral-100 text-neutral-500 hover:text-primary-600 flex items-center justify-center transition"
                                         title="Sửa đợt thanh toán">
-                                        <iconify-icon icon="lucide:edit-2" class="text-sm"></iconify-icon>
+                                        <iconify-icon icon="lucide:edit-2" class="text-xs"></iconify-icon>
                                     </button>
                                     <form method="POST" action="{{ route('customers.payments.destroy', [$customer->id, $p->id]) }}"
                                           onsubmit="return confirm('Bạn có chắc muốn xóa đợt thanh toán {{ number_format($p->amount, 0, ',', '.') }}₫ này?')">
@@ -621,27 +764,43 @@
                                         <button type="submit"
                                             class="w-7 h-7 rounded-lg hover:bg-rose-50 text-neutral-400 hover:text-rose-600 flex items-center justify-center transition"
                                             title="Xóa đợt thanh toán">
-                                            <iconify-icon icon="lucide:trash-2" class="text-sm"></iconify-icon>
+                                            <iconify-icon icon="lucide:trash-2" class="text-xs"></iconify-icon>
                                         </button>
                                     </form>
                                 </div>
-                            </div>
-                        </div>
-                    @empty
-                        <div class="text-center py-10 text-neutral-400">
-                            <iconify-icon icon="solar:wallet-money-linear" class="text-3xl text-neutral-300"></iconify-icon>
-                            <p class="text-xs m-0 mt-2">Chưa có giao dịch thanh toán nào</p>
-                        </div>
-                    @endforelse
-                </div>
-
-                {{-- Payments Pagination --}}
-                @if($payments->hasPages())
-                <div class="p-3 border-t border-neutral-200 bg-neutral-50/50 flex justify-center">
-                    {{ $payments->links() }}
-                </div>
-                @endif
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="8" class="text-center py-12 text-neutral-400">
+                                <div class="flex flex-col items-center justify-center gap-2">
+                                    <iconify-icon icon="solar:wallet-money-linear" class="text-4xl text-neutral-300"></iconify-icon>
+                                    <span class="text-xs">Chưa có giao dịch thanh toán nào</span>
+                                    @if(request('payment_date'))
+                                        <a href="{{ request()->fullUrlWithQuery(['tab' => 'payments', 'payment_date' => null, 'payment_page' => 1]) }}"
+                                           class="text-primary-600 font-semibold text-xs hover:underline mt-1">
+                                            Xóa lọc ngày
+                                        </a>
+                                    @endif
+                                </div>
+                            </td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
+
+            {{-- Payments Pagination --}}
+            @if($payments->hasPages() || $payments->total() > 0)
+            <div class="px-5 py-4 border-t border-neutral-200 bg-neutral-50/50 flex flex-wrap items-center justify-between gap-3 text-xs">
+                <span class="text-neutral-500 font-medium">
+                    Hiển thị <strong>{{ $payments->firstItem() ?? 0 }}</strong> đến <strong>{{ $payments->lastItem() ?? 0 }}</strong> trong tổng số <strong>{{ $payments->total() }}</strong> giao dịch
+                </span>
+                <div>
+                    {{ $payments->appends(request()->query())->links() }}
+                </div>
+            </div>
+            @endif
         </div>
     </div>
 </div>
@@ -959,6 +1118,39 @@
 
 @push('scripts')
 <script>
+function switchCustomerTab(tabName) {
+    const tabs = ['info', 'orders', 'payments'];
+    tabs.forEach(t => {
+        const pane = document.getElementById('tab-pane-' + t);
+        const btn = document.getElementById('tab-btn-' + t);
+        const badge = document.getElementById('tab-badge-' + t);
+        if (pane) {
+            if (t === tabName) {
+                pane.classList.remove('hidden');
+            } else {
+                pane.classList.add('hidden');
+            }
+        }
+        if (btn) {
+            if (t === tabName) {
+                btn.className = "flex items-center gap-2.5 px-5 py-3 rounded-xl font-bold text-xs sm:text-sm transition-all bg-primary-600 text-white shadow-sm shadow-primary-200";
+                if (badge) {
+                    badge.className = "px-2 py-0.5 rounded-full text-xs font-extrabold bg-white/20 text-white";
+                }
+            } else {
+                btn.className = "flex items-center gap-2.5 px-5 py-3 rounded-xl font-bold text-xs sm:text-sm transition-all bg-neutral-50 hover:bg-neutral-100 text-neutral-600";
+                if (badge) {
+                    badge.className = "px-2 py-0.5 rounded-full text-xs font-extrabold bg-neutral-200 text-neutral-700";
+                }
+            }
+        }
+    });
+
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', tabName);
+    window.history.replaceState({}, '', url);
+}
+
 function toggleDetailsSection() {
     const body = document.getElementById('details-section-body');
     const text = document.getElementById('toggle-details-text');

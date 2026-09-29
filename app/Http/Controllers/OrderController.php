@@ -39,7 +39,12 @@ class OrderController extends Controller
         $search  = $request->input('search', '');
 
         $user = auth()->user();
-        $query = Order::with('customer')
+        $query = Order::with([
+            'customer',
+            'supplies.items',
+            'supplies.minLateItems',
+            'supplies.glassItems'
+        ])
             ->withCount(['manufactureOrders' => function ($q) {
                 $q->whereIn('status', ['stamps_received', 'in_production', 'completed']);
             }])

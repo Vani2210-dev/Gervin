@@ -311,6 +311,15 @@ class CustomerController extends Controller
 
         $marketGroups = \App\Models\MarketGroup::orderBy('name')->get();
 
+        $activeTab = $request->input('tab', 'info');
+        if (!$request->has('tab')) {
+            if ($request->hasAny(['page', 'search', 'status', 'date_mode', 'date_val', 'start_date', 'end_date', 'per_page'])) {
+                $activeTab = 'orders';
+            } elseif ($request->hasAny(['payment_page', 'payment_date'])) {
+                $activeTab = 'payments';
+            }
+        }
+
         return view('customers.show', compact(
             'customer',
             'totalOrdersCount',
@@ -330,7 +339,8 @@ class CustomerController extends Controller
             'payments',
             'paymentDate',
             'customerOrders',
-            'marketGroups'
+            'marketGroups',
+            'activeTab'
         ));
     }
 

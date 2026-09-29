@@ -230,6 +230,8 @@
                                 <th scope="col">Số điện thoại</th>
                                 <th scope="col">Ngày tạo đơn</th>
                                 <th scope="col">Hạn đơn</th>
+                                <th scope="col" class="text-center whitespace-nowrap">Số tấm</th>
+                                <th scope="col" class="text-center whitespace-nowrap">Tổng số mét</th>
                                 <th scope="col">Tổng tiền</th>
                                 <th scope="col">Trạng thái</th>
                                 <th scope="col" class="text-center whitespace-nowrap" style="width: 100px; min-width: 100px;">Hành động</th>
@@ -346,6 +348,26 @@
                                 <td>
                                     <span class="text-base text-secondary-light">{{ $order->deadline ? $order->deadline->format('H:i d/m/Y') : '—' }}</span>
                                 </td>
+                                <td class="text-center whitespace-nowrap">
+                                    @if($order->total_sheets > 0)
+                                        <span class="inline-flex items-center gap-1 font-semibold text-neutral-800 bg-neutral-100 px-2 py-0.5 rounded-md text-xs">
+                                            <iconify-icon icon="solar:layers-minimalistic-bold" class="text-neutral-500 text-xs"></iconify-icon>
+                                            {{ floatval($order->total_sheets) == intval($order->total_sheets) ? number_format($order->total_sheets, 0, ',', '.') : number_format($order->total_sheets, 1, ',', '.') }}
+                                        </span>
+                                    @else
+                                        <span class="text-neutral-300">—</span>
+                                    @endif
+                                </td>
+                                <td class="text-center whitespace-nowrap">
+                                    @if($order->total_meters > 0)
+                                        <span class="inline-flex items-center gap-1 font-semibold text-primary-700 bg-primary-50 px-2 py-0.5 rounded-md text-xs border border-primary-100">
+                                            <iconify-icon icon="solar:ruler-angular-bold" class="text-primary-500 text-xs"></iconify-icon>
+                                            {{ floatval($order->total_meters) == intval($order->total_meters) ? number_format($order->total_meters, 0, ',', '.') : rtrim(rtrim(number_format($order->total_meters, 2, ',', '.'), '0'), ',') }} m
+                                        </span>
+                                    @else
+                                        <span class="text-neutral-300">—</span>
+                                    @endif
+                                </td>
                                 <td>
                                     <span class="text-base font-medium text-secondary-light">{{ number_format(round($order->total_amount, -3), 0, ',', '.') }}</span>
                                 </td>
@@ -402,7 +424,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="{{ $canBulkDeleteOrders ? 12 : 11 }}" class="text-center py-8">
+                                <td colspan="{{ $canBulkDeleteOrders ? 14 : 13 }}" class="text-center py-8">
                                     <p class="text-neutral-500">Chưa có đơn hàng nào</p>
                                 </td>
                             </tr>
