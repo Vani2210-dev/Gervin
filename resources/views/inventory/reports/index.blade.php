@@ -44,7 +44,7 @@
                             <input type="hidden" name="tab" value="summary">
                             <div class="flex items-center gap-1.5 text-xs text-neutral-600 font-medium whitespace-nowrap flex-shrink-0">
                                 <span class="whitespace-nowrap font-semibold">Kho:</span>
-                                <select name="warehouse_id" class="form-select rounded-lg px-2.5 py-2 border-neutral-200 text-xs font-semibold text-neutral-800">
+                                <select name="warehouse_id" onchange="this.form.submit()" class="form-select rounded-lg px-2.5 py-2 border-neutral-200 text-xs font-semibold text-neutral-800">
                                     <option value="">-- Tất cả các kho --</option>
                                     @foreach($warehouses as $wh)
                                         <option value="{{ $wh->id }}" {{ (string)$warehouseId === (string)$wh->id ? 'selected' : '' }}>{{ $wh->name }}</option>
@@ -53,15 +53,12 @@
                             </div>
                             <div class="flex items-center gap-1.5 text-xs text-neutral-600 font-medium whitespace-nowrap flex-shrink-0">
                                 <span class="whitespace-nowrap font-semibold">Từ:</span>
-                                <input type="date" name="start_date" value="{{ $startDate }}" class="form-control rounded-lg px-2 py-2 border-neutral-200 text-xs">
+                                <input type="date" name="start_date" value="{{ $startDate }}" onchange="this.form.submit()" class="form-control rounded-lg px-2 py-2 border-neutral-200 text-xs">
                             </div>
                             <div class="flex items-center gap-1.5 text-xs text-neutral-600 font-medium whitespace-nowrap flex-shrink-0">
                                 <span class="whitespace-nowrap font-semibold">Đến:</span>
-                                <input type="date" name="end_date" value="{{ $endDate }}" class="form-control rounded-lg px-2 py-2 border-neutral-200 text-xs">
+                                <input type="date" name="end_date" value="{{ $endDate }}" onchange="this.form.submit()" class="form-control rounded-lg px-2 py-2 border-neutral-200 text-xs">
                             </div>
-                            <button type="submit" class="btn btn-primary px-3.5 py-2 rounded-lg text-xs font-bold whitespace-nowrap flex-shrink-0 shadow-sm">
-                                Lọc
-                            </button>
                             <a href="{{ route('inventory.reports.export', array_filter(['start_date' => $startDate, 'end_date' => $endDate, 'warehouse_id' => $warehouseId])) }}" class="btn bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm whitespace-nowrap flex-shrink-0">
                                 <iconify-icon icon="solar:document-medicine-bold" class="text-base"></iconify-icon>
                                 <span>Xuất Excel</span>
