@@ -38,7 +38,7 @@
     <div class="px-6 py-4 border-b border-neutral-200 flex items-center justify-between text-white rounded-t-xl bg-gradient-to-r from-primary-600 to-primary-800">
         <div>
             <h5 class="font-bold text-base"><iconify-icon icon="solar:checklist-bold" class="inline-block align-middle me-1 text-lg"></iconify-icon> Ánh xạ cột Excel → Kho hàng</h5>
-            <p class="text-[10px] opacity-80 mt-0.5">Kéo các cột từ file Excel bên trái thả vào các trường dữ liệu tương ứng bên phải</p>
+            <p class="text-[10px] opacity-80 mt-1">Kéo các cột từ file Excel bên trái thả vào các trường dữ liệu tương ứng bên phải</p>
         </div>
         <button type="button" onclick="closeModal('warehouseMapperModal')" class="text-white hover:text-neutral-200 text-xl leading-none">&times;</button>
     </div>
@@ -98,7 +98,7 @@
         <div id="importStatus" class="text-xs font-bold text-neutral-500 flex items-center gap-1"></div>
         <div class="flex gap-2">
             <button type="button" class="btn bg-neutral-200 text-neutral-700 px-4 py-2 rounded-lg text-sm font-medium" onclick="closeModal('warehouseMapperModal')">Hủy</button>
-            <button type="button" class="btn btn-primary px-5 py-2 rounded-lg text-sm font-semibold shadow-sm flex items-center gap-1.5" id="confirmWarehouseImportBtn" onclick="executeWarehouseImport()">
+            <button type="button" class="btn btn-primary px-5 py-2 rounded-lg text-sm font-semibold shadow-sm flex items-center gap-2" id="confirmWarehouseImportBtn" onclick="executeWarehouseImport()">
                 <iconify-icon icon="solar:check-circle-outline" class="text-base"></iconify-icon> Xác nhận Nhập dữ liệu
             </button>
         </div>
@@ -258,7 +258,7 @@
             const div = document.createElement('div');
             div.className = colClass;
             div.innerHTML = `
-                <div class="relative p-2.5 border rounded-xl transition-all duration-200" 
+                <div class="relative p-3 border rounded-xl transition-all duration-200" 
                      style="background: ${f.color || '#fff'}; min-height: 72px; border-style: ${mappedHeader ? 'solid' : 'dashed'} !important; border-color: ${mappedHeader ? '#4e73df' : '#e5e7eb'}"
                      ondragover="event.preventDefault(); this.style.borderColor='#4e73df'; this.style.backgroundColor='#eff6ff';"
                      ondragleave="this.style.borderColor='${mappedHeader ? '#4e73df' : '#e5e7eb'}'; this.style.backgroundColor='${f.color || '#fff'}';"
@@ -266,9 +266,9 @@
                     <div class="text-[10px] font-bold text-neutral-500 mb-1 truncate" title="${f.label}">${f.label}</div>
                     <div class="slot-content">
                         ${mappedHeader ? `
-                            <div class="bg-primary-600 text-white rounded-lg px-2.5 py-1 text-center text-xs relative flex items-center justify-center font-medium shadow-sm" style="min-height: 28px;">
+                            <div class="bg-primary-600 text-white rounded-lg px-3 py-1 text-center text-xs relative flex items-center justify-center font-medium shadow-sm" style="min-height: 28px;">
                                 <span class="truncate pr-3">${mappedHeader.label}</span>
-                                <button type="button" class="absolute top-1/2 right-1.5 -translate-y-1/2 text-white hover:text-danger-300 font-bold" 
+                                <button type="button" class="absolute top-1/2 right-2 -translate-y-1/2 text-white hover:text-danger-300 font-bold" 
                                     onclick="unmapField('${f.key}')">&times;</button>
                             </div>
                         ` : `

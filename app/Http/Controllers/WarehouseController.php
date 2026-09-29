@@ -17,8 +17,8 @@ class WarehouseController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:view supply',   ['only' => ['index', 'show', 'exportTemplate', 'exportData', 'printRecordVoucher']]);
-        $this->middleware('permission:add supply',    ['only' => ['store', 'storeRecord', 'import', 'importJson']]);
+        $this->middleware('permission:view supply',   ['only' => ['index', 'show', 'exportTemplate', 'exportData', 'printRecordVoucher', 'exportMatrix']]);
+        $this->middleware('permission:add supply',    ['only' => ['store', 'storeRecord', 'import', 'importJson', 'importMatrix']]);
         $this->middleware('permission:edit supply',   ['only' => ['updateConfig', 'updateRecord']]);
         $this->middleware('permission:delete supply', ['only' => ['destroy', 'destroyRecord']]);
     }
@@ -43,7 +43,7 @@ class WarehouseController extends Controller
         return redirect()->route('warehouses.index')->with('success', 'Tạo kho mới thành công!');
     }
 
-    public function show(Warehouse $warehouse)
+    public function show(Warehouse $warehouse, Request $request)
     {
         $records = $warehouse->records()->orderBy('date', 'desc')->orderBy('id', 'desc')->get();
         $allSizes = $this->getWarehouseSizes($warehouse);
@@ -51,7 +51,23 @@ class WarehouseController extends Controller
         $lastVoucher = $warehouse->records()->orderBy('id', 'desc')->value('voucher_no');
         $nextVoucher = $this->generateNextVoucher($lastVoucher);
 
-        return view('warehouses.show', compact('warehouse', 'records', 'allSizes', 'nextVoucher'));
+        // Matrix Data Calculation
+        $selectedYear = $request->input('year');
+        $matrixData = $this->getMonthlyMatrixData($warehouse, $selectedYear);
+        $selectedYear = $matrixData['year'];
+        $availableYears = $matrixData['years'];
+        $currentTab = $request->input('tab', !empty($warehouse->sizes_config) ? 'matrix' : 'ledger'); // 'ledger' or 'matrix'
+
+        return view('warehouses.show', compact(
+            'warehouse', 
+            'records', 
+            'allSizes', 
+            'nextVoucher', 
+            'matrixData', 
+            'selectedYear', 
+            'availableYears', 
+            'currentTab'
+        ));
     }
 
     private function generateNextVoucher($lastVoucher)
@@ -729,5 +745,471 @@ class WarehouseController extends Controller
     private function getColLetter($colIdx)
     {
         return \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIdx);
+    }
+
+    public function getMonthlyMatrixData(Warehouse $warehouse, $year = null)
+    {
+        $allSizes = $this->getWarehouseSizes($warehouse);
+
+        // Find all available years from records
+        $years = $warehouse->records()
+            ->selectRaw('DISTINCT YEAR(date) as y')
+            ->whereNotNull('date')
+            ->orderByDesc('y')
+            ->pluck('y')
+            ->map(fn($v) => (int)$v)
+            ->filter(fn($v) => $v > 2000)
+            ->values()
+            ->toArray();
+
+        if (empty($years)) {
+            $years = [(int)date('Y')];
+        }
+
+        $selectedYear = $year ? (int)$year : (int)($years[0] ?? date('Y'));
+
+        // All records
+        $allRecords = $warehouse->records()->orderBy('date', 'asc')->orderBy('id', 'asc')->get();
+
+        // Previous year ending stock = Start of selected year stock
+        $lastRecordPrevYear = $allRecords->filter(fn($r) => date('Y', strtotime($r->date)) < $selectedYear)->last();
+        $startOfYearStock = $lastRecordPrevYear ? ($lastRecordPrevYear->stock_data ?? []) : [];
+
+        // Records for selected year
+        $yearRecords = $allRecords->filter(fn($r) => date('Y', strtotime($r->date)) == $selectedYear);
+
+        // Determine max month with data in this year
+        $maxMonth = 0;
+        foreach ($yearRecords as $r) {
+            $m = (int)date('n', strtotime($r->date));
+            if ($m > $maxMonth) $maxMonth = $m;
+        }
+
+        $matrixRows = [];
+        $colTotals = [
+            'start_stock' => 0,
+            'total_in' => 0,
+            'total_out' => 0,
+            'final_stock' => 0,
+            'months' => []
+        ];
+        for ($m = 1; $m <= 12; $m++) {
+            $colTotals['months'][$m] = ['in' => 0, 'out' => 0, 'stock' => 0];
+        }
+
+        $lowStockCount = 0;
+        $outOfStockCount = 0;
+
+        foreach ($allSizes as $idx => $s) {
+            $key = $s['key'];
+            $initStock = (float)($startOfYearStock[$key] ?? 0);
+            $runningStock = $initStock;
+
+            $rowMonths = [];
+            $totalYearIn = 0;
+            $totalYearOut = 0;
+
+            for ($m = 1; $m <= 12; $m++) {
+                $monthRecs = $yearRecords->filter(fn($r) => (int)date('n', strtotime($r->date)) == $m);
+                $mIn = (float)$monthRecs->sum(fn($r) => (float)($r->in_data[$key] ?? 0));
+                $mOut = (float)$monthRecs->sum(fn($r) => (float)($r->out_data[$key] ?? 0));
+
+                $totalYearIn += $mIn;
+                $totalYearOut += $mOut;
+
+                $hasData = ($m <= $maxMonth && $maxMonth > 0);
+                if ($hasData) {
+                    $runningStock = round($runningStock + $mIn - $mOut, 2);
+                }
+
+                $rowMonths[$m] = [
+                    'in' => $mIn,
+                    'out' => $mOut,
+                    'stock' => $runningStock,
+                    'has_data' => $hasData,
+                ];
+
+                $colTotals['months'][$m]['in'] += $mIn;
+                $colTotals['months'][$m]['out'] += $mOut;
+                if ($hasData) {
+                    $colTotals['months'][$m]['stock'] += $runningStock;
+                }
+            }
+
+            if ($runningStock <= 0 && $totalYearIn == 0 && $initStock == 0) {
+                // Not in stock
+                $stockStatus = 'empty';
+            } elseif ($runningStock <= 0) {
+                $outOfStockCount++;
+                $stockStatus = 'out_of_stock';
+            } elseif ($runningStock <= 50) {
+                $lowStockCount++;
+                $stockStatus = 'danger_low';
+            } elseif ($runningStock <= 150) {
+                $lowStockCount++;
+                $stockStatus = 'warning_low';
+            } else {
+                $stockStatus = 'normal';
+            }
+
+            $matrixRows[] = [
+                'stt' => $idx + 1,
+                'item' => $s,
+                'code' => $s['size'] ?: $s['group'],
+                'origin_code' => $s['size_code'] ?? '',
+                'group' => $s['group'],
+                'price' => $s['price'] ?? 0,
+                'start_stock' => $initStock,
+                'months' => $rowMonths,
+                'total_year_in' => $totalYearIn,
+                'total_year_out' => $totalYearOut,
+                'final_stock' => $runningStock,
+                'stock_status' => $stockStatus,
+            ];
+
+            $colTotals['start_stock'] += $initStock;
+            $colTotals['total_in'] += $totalYearIn;
+            $colTotals['total_out'] += $totalYearOut;
+            $colTotals['final_stock'] += $runningStock;
+        }
+
+        return [
+            'years' => $years,
+            'year' => $selectedYear,
+            'max_month' => $maxMonth,
+            'rows' => $matrixRows,
+            'col_totals' => $colTotals,
+            'kpis' => [
+                'total_items' => count($matrixRows),
+                'total_in' => $colTotals['total_in'],
+                'total_out' => $colTotals['total_out'],
+                'final_stock' => $colTotals['final_stock'],
+                'low_stock_count' => $lowStockCount,
+                'out_of_stock_count' => $outOfStockCount,
+            ]
+        ];
+    }
+
+    public function exportMatrix(Request $request, Warehouse $warehouse)
+    {
+        $year = (int)$request->input('year', date('Y'));
+        $data = $this->getMonthlyMatrixData($warehouse, $year);
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('TỒN_TIÊU_THỤ_' . $year);
+
+        $headerStyle = [
+            'font' => ['bold' => true],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]
+        ];
+
+        // Title
+        $sheet->setCellValue('A1', 'BÁO CÁO TỔNG HỢP TỒN KHO & TIÊU THỤ - NĂM ' . $year . ' - ' . strtoupper($warehouse->name));
+        $sheet->mergeCells('A1:AP1');
+        $sheet->getStyle('A1')->getFont()->setSize(14)->setBold(true);
+        $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+
+        // Fixed Headers
+        $fixedHeaders = [
+            'A' => 'STT',
+            'B' => 'MÃ GERVIN',
+            'C' => 'MÃ XUẤT XỨ',
+            'D' => 'NHÓM MÀU / PHÂN LOẠI',
+            'E' => 'TỒN ĐẦU NĂM'
+        ];
+        foreach ($fixedHeaders as $col => $title) {
+            $sheet->setCellValue($col . '2', $title);
+            $sheet->mergeCells($col . '2:' . $col . '3');
+            $sheet->getStyle($col . '2:' . $col . '3')->applyFromArray($headerStyle);
+        }
+
+        // Months 1..12
+        $currCol = 6;
+        for ($m = 1; $m <= 12; $m++) {
+            $cIn = $this->getColLetter($currCol);
+            $cOut = $this->getColLetter($currCol + 1);
+            $cStock = $this->getColLetter($currCol + 2);
+
+            $mTitle = sprintf('THÁNG %02d.%04d', $m, $year);
+            $sheet->setCellValue($cIn . '2', $mTitle);
+            $sheet->mergeCells($cIn . '2:' . $cStock . '2');
+            $sheet->getStyle($cIn . '2:' . $cStock . '2')->applyFromArray($headerStyle);
+
+            $sheet->setCellValue($cIn . '3', 'NHẬN');
+            $sheet->setCellValue($cOut . '3', 'TIÊU THỤ');
+            $sheet->setCellValue($cStock . '3', 'TỒN CUỐI');
+
+            $sheet->getStyle($cIn . '3')->applyFromArray($headerStyle)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('E2F3F1');
+            $sheet->getStyle($cOut . '3')->applyFromArray($headerStyle)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFE4E6');
+            $sheet->getStyle($cStock . '3')->applyFromArray($headerStyle)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FEF3C7');
+
+            $currCol += 3;
+        }
+
+        // Annual Totals
+        $cTotIn = $this->getColLetter($currCol);
+        $cTotOut = $this->getColLetter($currCol + 1);
+        $cTotStock = $this->getColLetter($currCol + 2);
+
+        $sheet->setCellValue($cTotIn . '2', 'TỔNG KẾT NĂM ' . $year);
+        $sheet->mergeCells($cTotIn . '2:' . $cTotStock . '2');
+        $sheet->getStyle($cTotIn . '2:' . $cTotStock . '2')->applyFromArray($headerStyle);
+
+        $sheet->setCellValue($cTotIn . '3', 'TỔNG NHẬN');
+        $sheet->setCellValue($cTotOut . '3', 'TỔNG TIÊU THỤ');
+        $sheet->setCellValue($cTotStock . '3', 'TỒN HIỆN TẠI');
+        $sheet->getStyle($cTotIn . '3:' . $cTotStock . '3')->applyFromArray($headerStyle);
+
+        // Data rows
+        $rowIdx = 4;
+        foreach ($data['rows'] as $r) {
+            $sheet->setCellValue('A' . $rowIdx, $r['stt']);
+            $sheet->setCellValue('B' . $rowIdx, $r['code']);
+            $sheet->setCellValue('C' . $rowIdx, $r['origin_code']);
+            $sheet->setCellValue('D' . $rowIdx, $r['group']);
+            $sheet->setCellValue('E' . $rowIdx, $r['start_stock']);
+
+            $col = 6;
+            for ($m = 1; $m <= 12; $m++) {
+                $cIn = $this->getColLetter($col);
+                $cOut = $this->getColLetter($col + 1);
+                $cStock = $this->getColLetter($col + 2);
+
+                $sheet->setCellValue($cIn . $rowIdx, $r['months'][$m]['in']);
+                $sheet->setCellValue($cOut . $rowIdx, $r['months'][$m]['out']);
+                $sheet->setCellValue($cStock . $rowIdx, $r['months'][$m]['has_data'] ? $r['months'][$m]['stock'] : 0);
+
+                $col += 3;
+            }
+
+            $cTotIn = $this->getColLetter($col);
+            $cTotOut = $this->getColLetter($col + 1);
+            $cTotStock = $this->getColLetter($col + 2);
+
+            $sheet->setCellValue($cTotIn . $rowIdx, $r['total_year_in']);
+            $sheet->setCellValue($cTotOut . $rowIdx, $r['total_year_out']);
+            $sheet->setCellValue($cTotStock . $rowIdx, $r['final_stock']);
+
+            $sheet->getStyle('A' . $rowIdx . ':' . $cTotStock . $rowIdx)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+            $sheet->getStyle('E' . $rowIdx . ':' . $cTotStock . $rowIdx)->getNumberFormat()->setFormatCode('#,##0.00');
+
+            $rowIdx++;
+        }
+
+        // Summary row (Total)
+        $sheet->setCellValue('A' . $rowIdx, 'TỔNG CỘNG');
+        $sheet->mergeCells('A' . $rowIdx . ':D' . $rowIdx);
+        $sheet->setCellValue('E' . $rowIdx, $data['col_totals']['start_stock']);
+
+        $col = 6;
+        for ($m = 1; $m <= 12; $m++) {
+            $cIn = $this->getColLetter($col);
+            $cOut = $this->getColLetter($col + 1);
+            $cStock = $this->getColLetter($col + 2);
+
+            $sheet->setCellValue($cIn . $rowIdx, $data['col_totals']['months'][$m]['in']);
+            $sheet->setCellValue($cOut . $rowIdx, $data['col_totals']['months'][$m]['out']);
+            $sheet->setCellValue($cStock . $rowIdx, $data['col_totals']['months'][$m]['stock']);
+
+            $col += 3;
+        }
+
+        $cTotIn = $this->getColLetter($col);
+        $cTotOut = $this->getColLetter($col + 1);
+        $cTotStock = $this->getColLetter($col + 2);
+
+        $sheet->setCellValue($cTotIn . $rowIdx, $data['col_totals']['total_in']);
+        $sheet->setCellValue($cTotOut . $rowIdx, $data['col_totals']['total_out']);
+        $sheet->setCellValue($cTotStock . $rowIdx, $data['col_totals']['final_stock']);
+
+        $sheet->getStyle('A' . $rowIdx . ':' . $cTotStock . $rowIdx)->applyFromArray([
+            'font' => ['bold' => true],
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]
+        ]);
+        $sheet->getStyle('E' . $rowIdx . ':' . $cTotStock . $rowIdx)->getNumberFormat()->setFormatCode('#,##0.00');
+
+        // Column widths
+        $sheet->getColumnDimension('A')->setWidth(6);
+        $sheet->getColumnDimension('B')->setWidth(16);
+        $sheet->getColumnDimension('C')->setWidth(14);
+        $sheet->getColumnDimension('D')->setWidth(26);
+        $sheet->getColumnDimension('E')->setWidth(14);
+        for ($c = 6; $c <= $currCol + 2; $c++) {
+            $sheet->getColumnDimension($this->getColLetter($c))->setWidth(12);
+        }
+
+        $writer = new Xlsx($spreadsheet);
+        $fileName = 'Bao_Cao_Tieu_Thu_' . $year . '_' . str_replace(' ', '_', $warehouse->name) . '.xlsx';
+
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment; filename="' . $fileName . '"');
+        $writer->save('php://output');
+        exit;
+    }
+
+    public function importMatrix(Request $request, Warehouse $warehouse)
+    {
+        $request->validate([
+            'matrix_file' => 'required|file|mimes:xlsx,xls'
+        ]);
+
+        try {
+            $file = $request->file('matrix_file');
+            $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($file->getRealPath());
+            $sheet = $spreadsheet->getActiveSheet();
+
+            $highestRow = $sheet->getHighestRow();
+            $highestCol = $sheet->getHighestColumn();
+            $highestColIdx = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($highestCol);
+
+            // 1. Parse items (row 5 onwards)
+            $groupedItems = [];
+            $itemsMap = [];
+            for ($r = 5; $r <= $highestRow; $r++) {
+                $codeGV = trim((string)$sheet->getCell("E$r")->getValue());
+                if (!$codeGV) continue;
+
+                $groupName = trim((string)$sheet->getCell("F$r")->getValue()) ?: 'Phôi Acrylic';
+                $originCode = trim((string)$sheet->getCell("C$r")->getValue());
+                $nameEn = trim((string)$sheet->getCell("D$r")->getValue());
+                $initStock = (float)$sheet->getCell("G$r")->getCalculatedValue();
+
+                if (!isset($groupedItems[$groupName])) {
+                    $groupedItems[$groupName] = [];
+                }
+
+                $groupedItems[$groupName][] = [
+                    'name' => $codeGV,
+                    'code' => $originCode,
+                    'price' => 0,
+                    'description' => $nameEn
+                ];
+
+                $itemsMap[$codeGV] = [
+                    'row' => $r,
+                    'group' => $groupName,
+                    'code' => $codeGV,
+                    'origin_code' => $originCode,
+                    'key' => $groupName . '_' . $codeGV,
+                    'initial_stock' => $initStock,
+                ];
+            }
+
+            if (empty($itemsMap)) {
+                return back()->withErrors(['matrix_file' => 'Không tìm thấy dữ liệu mặt hàng hợp lệ trong file Excel (Cột E từ dòng 5 trở đi).']);
+            }
+
+            // Update warehouse config if empty
+            if (empty($warehouse->sizes_config)) {
+                $sizesConfig = [];
+                foreach ($groupedItems as $gName => $sizes) {
+                    $sizesConfig[] = [
+                        'name' => $gName,
+                        'code' => '',
+                        'price' => 0,
+                        'sizes' => $sizes
+                    ];
+                }
+                $warehouse->update([
+                    'item_name' => $warehouse->item_name ?: 'Tấm Acrylic',
+                    'sizes_config' => $sizesConfig
+                ]);
+            }
+
+            // 2. Initial Stock Record
+            $initInData = [];
+            foreach ($itemsMap as $codeGV => $info) {
+                if ($info['initial_stock'] > 0) {
+                    $initInData[$info['key']] = $info['initial_stock'];
+                }
+            }
+
+            if (!empty($initInData) && !$warehouse->records()->where('voucher_no', 'DK-2023')->exists()) {
+                $warehouse->records()->create([
+                    'voucher_no' => 'DK-2023',
+                    'date' => '2023-12-31',
+                    'content' => 'Số dư tồn kho đầu kỳ từ file kế toán',
+                    'exporter' => 'Kế toán',
+                    'receiver' => $warehouse->name,
+                    'in_data' => $initInData,
+                    'out_data' => [],
+                    'stock_data' => []
+                ]);
+            }
+
+            // 3. Monthly records
+            $importedCount = 0;
+            for ($col = 8; $col <= $highestColIdx; $col += 3) {
+                $colLetterIn = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col);
+                $colLetterOut = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col + 1);
+
+                $title1 = trim((string)$sheet->getCell($colLetterIn . '1')->getValue());
+                if (!$title1 && $col <= $highestColIdx) {
+                    $prevCol = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col - 1);
+                    $title1 = trim((string)$sheet->getCell($prevCol . '1')->getValue());
+                }
+                if (!$title1) continue;
+
+                $year = null;
+                $month = null;
+                if (preg_match('/(\d{4})/', $title1, $yMatches)) {
+                    $year = (int)$yMatches[1];
+                }
+                if (preg_match('/(?:THÁNG\s*)(\d+)/i', $title1, $mMatches)) {
+                    $month = (int)$mMatches[1];
+                } elseif (preg_match('/(\d+)\s*THÁNG/i', $title1, $mMatches)) {
+                    $month = (int)$mMatches[1];
+                }
+
+                if (!$year || !$month) continue;
+
+                $day = 28;
+                if (preg_match('/^(\d+)\s*THÁNG/i', $title1, $dMatches)) {
+                    $day = (int)$dMatches[1];
+                }
+
+                $recordDate = sprintf('%04d-%02d-%02d', $year, $month, min($day, 28));
+                $isKiemKe = stripos($title1, 'kiểm kê') !== false;
+                $voucherPrefix = $isKiemKe ? 'KK' : 'TH';
+                $voucherNo = sprintf('%s-%04d%02d%s', $voucherPrefix, $year, $month, $isKiemKe ? '-K' : '');
+
+                $inData = [];
+                $outData = [];
+
+                foreach ($itemsMap as $codeGV => $info) {
+                    $r = $info['row'];
+                    $inVal = (float)$sheet->getCell($colLetterIn . $r)->getCalculatedValue();
+                    $outVal = (float)$sheet->getCell($colLetterOut . $r)->getCalculatedValue();
+
+                    if ($inVal > 0) $inData[$info['key']] = $inVal;
+                    if ($outVal > 0) $outData[$info['key']] = $outVal;
+                }
+
+                if (!empty($inData) || !empty($outData)) {
+                    $warehouse->records()->updateOrCreate(
+                        ['voucher_no' => $voucherNo],
+                        [
+                            'date' => $recordDate,
+                            'content' => "Tổng hợp {$title1}",
+                            'exporter' => 'Nhà máy / Kho',
+                            'receiver' => 'Xưởng sản xuất Gervin',
+                            'in_data' => $inData,
+                            'out_data' => $outData,
+                        ]
+                    );
+                    $importedCount++;
+                }
+            }
+
+            // Recalculate
+            $this->recalculateStock($warehouse);
+
+            return back()->with('success', "Đã nhập thành công dữ liệu ma trận từ file Excel ($importedCount kỳ)!");
+        } catch (\Exception $e) {
+            \Log::error('Import Matrix Error: ' . $e->getMessage());
+            return back()->withErrors(['matrix_file' => 'Lỗi khi đọc file Excel: ' . $e->getMessage()]);
+        }
     }
 }

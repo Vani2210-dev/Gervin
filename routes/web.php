@@ -252,6 +252,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('warehouses/{warehouse}/import', [WarehouseController::class, 'import'])->name('warehouses.import');
     Route::post('warehouses/{warehouse}/import-json', [WarehouseController::class, 'importJson'])->name('warehouses.import-json');
     Route::get('warehouses/{warehouse}/records/{record}/print', [WarehouseController::class, 'printRecordVoucher'])->name('warehouses.records.print');
+    Route::get('warehouses/{warehouse}/export-matrix', [WarehouseController::class, 'exportMatrix'])->name('warehouses.export-matrix');
+    Route::post('warehouses/{warehouse}/import-matrix', [WarehouseController::class, 'importMatrix'])->name('warehouses.import-matrix');
 });
 
 // Customers

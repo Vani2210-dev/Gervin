@@ -17,7 +17,7 @@
                         <p class="text-secondary-light text-sm">Quản lý nhập xuất tồn theo kích cỡ cho từng loại vật tư</p>
                     </div>
                     <button type="button" onclick="openModal('create-warehouse-modal')"
-                        class="btn btn-primary text-sm btn-sm px-4 py-2.5 rounded-lg flex items-center gap-2 font-medium shadow-sm transition-all hover:opacity-90">
+                        class="btn btn-primary text-sm btn-sm px-4 py-2 rounded-lg flex items-center gap-2 font-medium shadow-sm transition-all hover:opacity-90">
                         <iconify-icon icon="ic:baseline-plus" class="text-xl"></iconify-icon>
                         Thêm kho mới
                     </button>
@@ -51,8 +51,8 @@
                                 <iconify-icon icon="solar:warehouse-outline" class="text-2xl"></iconify-icon>
                             </div>
                             <div>
-                                <h5 class="text-base font-bold text-neutral-800 mb-0.5">{{ $warehouse->name }}</h5>
-                                <span class="bg-neutral-100 text-neutral-600 text-xs font-semibold px-2 py-0.5 rounded-full">
+                                <h5 class="text-base font-bold text-neutral-800 mb-1">{{ $warehouse->name }}</h5>
+                                <span class="bg-neutral-100 text-neutral-600 text-xs font-semibold px-2 py-1 rounded-full">
                                     {{ $warehouse->records_count }} phiếu
                                 </span>
                             </div>

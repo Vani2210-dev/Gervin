@@ -8,7 +8,7 @@
         @csrf
         <div class="p-6 overflow-y-auto max-h-[70vh]">
             <div class="mb-5">
-                <label class="form-label font-bold text-sm text-neutral-700 mb-1.5 block">Tên loại hàng hóa (Vd: "Tấm Gỗ Acrylic", "Kính Cường Lực")</label>
+                <label class="form-label font-bold text-sm text-neutral-700 mb-1 block">Tên loại hàng hóa (Vd: "Tấm Gỗ Acrylic", "Kính Cường Lực")</label>
                 <input type="text" name="item_name" value="{{ $warehouse->item_name }}"
                     class="form-control rounded-lg w-full border-neutral-200 px-3 py-2 text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500" required>
             </div>
@@ -24,19 +24,19 @@
                             <div class="md:col-span-4">
                                 <label class="form-label text-xs font-semibold text-neutral-600 mb-1 block">Tên nhóm</label>
                                 <input type="text" name="groups[{{ $gIdx }}][name]"
-                                    value="{{ $group['name'] }}" class="form-control rounded-lg w-full border-neutral-200 px-3 py-1.5 text-xs focus:ring-primary-500"
+                                    value="{{ $group['name'] }}" class="form-control rounded-lg w-full border-neutral-200 px-3 py-1 text-xs focus:ring-primary-500"
                                     placeholder="Vd: Chiều dày 18mm" required>
                             </div>
                             <div class="md:col-span-4">
                                 <label class="form-label text-xs font-semibold text-neutral-600 mb-1 block">Mã nhóm</label>
                                 <input type="text" name="groups[{{ $gIdx }}][code]"
-                                    value="{{ $group['code'] ?? '' }}" class="form-control rounded-lg w-full border-neutral-200 px-3 py-1.5 text-xs focus:ring-primary-500"
+                                    value="{{ $group['code'] ?? '' }}" class="form-control rounded-lg w-full border-neutral-200 px-3 py-1 text-xs focus:ring-primary-500"
                                     placeholder="Vd: TH18">
                             </div>
                             <div class="md:col-span-4">
                                 <label class="form-label text-xs font-semibold text-neutral-600 mb-1 block">Đơn giá nhóm (nếu có)</label>
                                 <input type="number" name="groups[{{ $gIdx }}][price]"
-                                    value="{{ $group['price'] ?? '' }}" class="form-control rounded-lg w-full border-neutral-200 px-3 py-1.5 text-xs focus:ring-primary-500"
+                                    value="{{ $group['price'] ?? '' }}" class="form-control rounded-lg w-full border-neutral-200 px-3 py-1 text-xs focus:ring-primary-500"
                                     placeholder="Vd: 1200000" min="0" step="1000">
                             </div>
                         </div>
@@ -61,7 +61,7 @@
                                     @endforeach
                                 @endif
                             </div>
-                            <button type="button" class="btn border border-neutral-300 text-neutral-700 hover:bg-neutral-100 px-2.5 py-1 rounded-md text-[11px] font-semibold mt-2 inline-flex items-center gap-1"
+                            <button type="button" class="btn border border-neutral-300 text-neutral-700 hover:bg-neutral-100 px-3 py-1 rounded-md text-[11px] font-semibold mt-2 inline-flex items-center gap-1"
                                 onclick="addSizeRow({{ $gIdx }})">
                                 <iconify-icon icon="ic:baseline-plus" class="text-sm"></iconify-icon> Thêm kích cỡ
                             </button>
@@ -73,7 +73,7 @@
                     </div>
                 @endforeach
             </div>
-            <button type="button" class="btn border border-primary-500 text-primary-600 hover:bg-primary-50 px-3 py-1.5 rounded-lg text-xs font-semibold mt-4 flex items-center gap-1.5"
+            <button type="button" class="btn border border-primary-500 text-primary-600 hover:bg-primary-50 px-3 py-1 rounded-lg text-xs font-semibold mt-4 flex items-center gap-2"
                 onclick="addSizeGroup()">
                 <iconify-icon icon="ic:baseline-plus" class="text-base"></iconify-icon> Thêm nhóm mới
             </button>
@@ -117,11 +117,11 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-neutral-100">
                 {{-- Nhập Column --}}
                 <div class="border-r border-neutral-100 pr-2">
-                    <h6 class="text-xs font-bold text-success-700 mb-3 px-3 py-2 bg-success-50 rounded-lg flex items-center gap-1.5"><iconify-icon icon="solar:arrow-down-outline" class="text-base"></iconify-icon> SỐ LƯỢNG NHẬP</h6>
+                    <h6 class="text-xs font-bold text-success-700 mb-3 px-3 py-2 bg-success-50 rounded-lg flex items-center gap-2"><iconify-icon icon="solar:arrow-down-outline" class="text-base"></iconify-icon> SỐ LƯỢNG NHẬP</h6>
                     <div class="grid grid-cols-2 gap-3 max-h-[250px] overflow-y-auto pr-1">
                         @foreach ($allSizes as $s)
-                            <div class="p-2.5 border border-neutral-200 rounded-xl bg-white flex flex-col justify-between">
-                                <div class="text-[10px] font-bold text-neutral-500 mb-0.5 truncate" title="{{ $s['group'] }}">{{ $s['group'] }}</div>
+                            <div class="p-3 border border-neutral-200 rounded-xl bg-white flex flex-col justify-between">
+                                <div class="text-[10px] font-bold text-neutral-500 mb-1 truncate" title="{{ $s['group'] }}">{{ $s['group'] }}</div>
                                 <div class="text-xs font-bold text-neutral-800 mb-1 flex items-center justify-between">
                                     <span>{{ $s['size'] ?: 'Mặc định' }}</span>
                                     @if(!empty($s['price']))
@@ -138,11 +138,11 @@
 
                 {{-- Xuất Column --}}
                 <div>
-                    <h6 class="text-xs font-bold text-danger-700 mb-3 px-3 py-2 bg-danger-50 rounded-lg flex items-center gap-1.5"><iconify-icon icon="solar:arrow-up-outline" class="text-base"></iconify-icon> SỐ LƯỢNG XUẤT</h6>
+                    <h6 class="text-xs font-bold text-danger-700 mb-3 px-3 py-2 bg-danger-50 rounded-lg flex items-center gap-2"><iconify-icon icon="solar:arrow-up-outline" class="text-base"></iconify-icon> SỐ LƯỢNG XUẤT</h6>
                     <div class="grid grid-cols-2 gap-3 max-h-[250px] overflow-y-auto pr-1">
                         @foreach ($allSizes as $s)
-                            <div class="p-2.5 border border-neutral-200 rounded-xl bg-white flex flex-col justify-between">
-                                <div class="text-[10px] font-bold text-neutral-500 mb-0.5 truncate" title="{{ $s['group'] }}">{{ $s['group'] }}</div>
+                            <div class="p-3 border border-neutral-200 rounded-xl bg-white flex flex-col justify-between">
+                                <div class="text-[10px] font-bold text-neutral-500 mb-1 truncate" title="{{ $s['group'] }}">{{ $s['group'] }}</div>
                                 <div class="text-xs font-bold text-neutral-800 mb-1 flex items-center justify-between">
                                     <span>{{ $s['size'] ?: 'Mặc định' }}</span>
                                     @if(!empty($s['price']))
@@ -171,7 +171,7 @@
         </div>
         <div class="px-6 py-4 border-t border-neutral-200 flex justify-end gap-3 rounded-b-xl">
             <button type="button" onclick="closeModal('addRecordModal')" class="btn bg-neutral-200 text-neutral-700 px-4 py-2 rounded-lg text-sm font-medium">Hủy</button>
-            <button type="submit" class="btn btn-primary px-5 py-2 rounded-lg text-sm font-medium shadow-sm flex items-center gap-1.5"><iconify-icon icon="solar:diskette-outline" class="text-base"></iconify-icon> Lưu phiếu</button>
+            <button type="submit" class="btn btn-primary px-5 py-2 rounded-lg text-sm font-medium shadow-sm flex items-center gap-2"><iconify-icon icon="solar:diskette-outline" class="text-base"></iconify-icon> Lưu phiếu</button>
         </div>
     </form>
 </x-modal>
@@ -205,11 +205,11 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-neutral-100">
                 {{-- Nhập Column --}}
                 <div class="border-r border-neutral-100 pr-2">
-                    <h6 class="text-xs font-bold text-success-700 mb-3 px-3 py-2 bg-success-50 rounded-lg flex items-center gap-1.5"><iconify-icon icon="solar:arrow-down-outline" class="text-base"></iconify-icon> SỐ LƯỢNG NHẬP</h6>
+                    <h6 class="text-xs font-bold text-success-700 mb-3 px-3 py-2 bg-success-50 rounded-lg flex items-center gap-2"><iconify-icon icon="solar:arrow-down-outline" class="text-base"></iconify-icon> SỐ LƯỢNG NHẬP</h6>
                     <div class="grid grid-cols-2 gap-3 max-h-[250px] overflow-y-auto pr-1">
                         @foreach ($allSizes as $s)
-                            <div class="p-2.5 border border-neutral-200 rounded-xl bg-white flex flex-col justify-between">
-                                <div class="text-[10px] font-bold text-neutral-500 mb-0.5 truncate" title="{{ $s['group'] }}">{{ $s['group'] }}</div>
+                            <div class="p-3 border border-neutral-200 rounded-xl bg-white flex flex-col justify-between">
+                                <div class="text-[10px] font-bold text-neutral-500 mb-1 truncate" title="{{ $s['group'] }}">{{ $s['group'] }}</div>
                                 <div class="text-xs font-bold text-neutral-800 mb-1 flex items-center justify-between">
                                     <span>{{ $s['size'] ?: 'Mặc định' }}</span>
                                     @if(!empty($s['price']))
@@ -226,11 +226,11 @@
 
                 {{-- Xuất Column --}}
                 <div>
-                    <h6 class="text-xs font-bold text-danger-700 mb-3 px-3 py-2 bg-danger-50 rounded-lg flex items-center gap-1.5"><iconify-icon icon="solar:arrow-up-outline" class="text-base"></iconify-icon> SỐ LƯỢNG XUẤT</h6>
+                    <h6 class="text-xs font-bold text-danger-700 mb-3 px-3 py-2 bg-danger-50 rounded-lg flex items-center gap-2"><iconify-icon icon="solar:arrow-up-outline" class="text-base"></iconify-icon> SỐ LƯỢNG XUẤT</h6>
                     <div class="grid grid-cols-2 gap-3 max-h-[250px] overflow-y-auto pr-1">
                         @foreach ($allSizes as $s)
-                            <div class="p-2.5 border border-neutral-200 rounded-xl bg-white flex flex-col justify-between">
-                                <div class="text-[10px] font-bold text-neutral-500 mb-0.5 truncate" title="{{ $s['group'] }}">{{ $s['group'] }}</div>
+                            <div class="p-3 border border-neutral-200 rounded-xl bg-white flex flex-col justify-between">
+                                <div class="text-[10px] font-bold text-neutral-500 mb-1 truncate" title="{{ $s['group'] }}">{{ $s['group'] }}</div>
                                 <div class="text-xs font-bold text-neutral-800 mb-1 flex items-center justify-between">
                                     <span>{{ $s['size'] ?: 'Mặc định' }}</span>
                                     @if(!empty($s['price']))
@@ -259,7 +259,7 @@
         </div>
         <div class="px-6 py-4 border-t border-neutral-200 flex justify-end gap-3 rounded-b-xl">
             <button type="button" onclick="closeModal('editRecordModal')" class="btn bg-neutral-200 text-neutral-700 px-4 py-2 rounded-lg text-sm font-medium">Hủy</button>
-            <button type="submit" class="btn btn-warning text-white px-5 py-2 rounded-lg text-sm font-semibold shadow-sm flex items-center gap-1.5"><iconify-icon icon="solar:diskette-outline" class="text-base"></iconify-icon> Cập nhật phiếu</button>
+            <button type="submit" class="btn btn-warning text-white px-5 py-2 rounded-lg text-sm font-semibold shadow-sm flex items-center gap-2"><iconify-icon icon="solar:diskette-outline" class="text-base"></iconify-icon> Cập nhật phiếu</button>
         </div>
     </form>
 </x-modal>
@@ -276,15 +276,15 @@
             <div class="grid grid-cols-1 md:grid-cols-12 gap-4 mb-3">
                 <div class="md:col-span-4">
                     <label class="form-label text-xs font-semibold text-neutral-600 mb-1 block">Tên nhóm</label>
-                    <input type="text" name="groups[${groupIndex}][name]" class="form-control rounded-lg w-full border-neutral-200 px-3 py-1.5 text-xs focus:ring-primary-500" placeholder="Vd: Chiều dày 18mm" required>
+                    <input type="text" name="groups[${groupIndex}][name]" class="form-control rounded-lg w-full border-neutral-200 px-3 py-1 text-xs focus:ring-primary-500" placeholder="Vd: Chiều dày 18mm" required>
                 </div>
                 <div class="md:col-span-4">
                     <label class="form-label text-xs font-semibold text-neutral-600 mb-1 block">Mã nhóm</label>
-                    <input type="text" name="groups[${groupIndex}][code]" class="form-control rounded-lg w-full border-neutral-200 px-3 py-1.5 text-xs focus:ring-primary-500" placeholder="Vd: TH18">
+                    <input type="text" name="groups[${groupIndex}][code]" class="form-control rounded-lg w-full border-neutral-200 px-3 py-1 text-xs focus:ring-primary-500" placeholder="Vd: TH18">
                 </div>
                 <div class="md:col-span-4">
                     <label class="form-label text-xs font-semibold text-neutral-600 mb-1 block">Đơn giá nhóm (nếu có)</label>
-                    <input type="number" name="groups[${groupIndex}][price]" class="form-control rounded-lg w-full border-neutral-200 px-3 py-1.5 text-xs focus:ring-primary-500" placeholder="Vd: 1200000" min="0" step="1000">
+                    <input type="number" name="groups[${groupIndex}][price]" class="form-control rounded-lg w-full border-neutral-200 px-3 py-1 text-xs focus:ring-primary-500" placeholder="Vd: 1200000" min="0" step="1000">
                 </div>
             </div>
 
@@ -293,7 +293,7 @@
                 <div id="sizesContainer_${groupIndex}" class="space-y-2">
                     <!-- Size rows go here -->
                 </div>
-                <button type="button" class="btn border border-neutral-300 text-neutral-700 hover:bg-neutral-100 px-2.5 py-1 rounded-md text-[11px] font-semibold mt-2 inline-flex items-center gap-1"
+                <button type="button" class="btn border border-neutral-300 text-neutral-700 hover:bg-neutral-100 px-3 py-1 rounded-md text-[11px] font-semibold mt-2 inline-flex items-center gap-1"
                     onclick="addSizeRow(${groupIndex})">
                     <iconify-icon icon="ic:baseline-plus" class="text-sm"></iconify-icon> Thêm kích cỡ
                 </button>
