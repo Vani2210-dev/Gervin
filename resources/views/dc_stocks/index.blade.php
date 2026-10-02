@@ -19,6 +19,27 @@
         <p class="text-sm text-neutral-500 dark:text-neutral-400">Quản lý tấm ván thừa sau cắt CNC. Tra cứu nhanh theo mã hàng, kích thước và vị trí kho.</p>
     </div>
 
+    {{-- Flash messages --}}
+    @if(session('success'))
+    <div class="mb-4 p-4 rounded-xl border border-success-200 bg-success-50 text-success-700 flex items-center justify-between text-xs font-semibold">
+        <div class="flex items-center gap-2">
+            <iconify-icon icon="lucide:check-circle" class="text-lg text-success-600"></iconify-icon>
+            <span>{{ session('success') }}</span>
+        </div>
+        <button type="button" onclick="this.parentElement.remove()" class="text-neutral-400 hover:text-neutral-600 text-lg">&times;</button>
+    </div>
+    @endif
+
+    @if(session('error'))
+    <div class="mb-4 p-4 rounded-xl border border-danger-200 bg-danger-50 text-danger-700 flex items-center justify-between text-xs font-semibold">
+        <div class="flex items-center gap-2">
+            <iconify-icon icon="lucide:alert-circle" class="text-lg text-danger-600"></iconify-icon>
+            <span>{{ session('error') }}</span>
+        </div>
+        <button type="button" onclick="this.parentElement.remove()" class="text-neutral-400 hover:text-neutral-600 text-lg">&times;</button>
+    </div>
+    @endif
+
     {{-- Stat Cards --}}
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <div class="card bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-sm p-5 flex items-center gap-4">
@@ -98,6 +119,22 @@
                         @endforeach
                     </select>
                 </form>
+
+                {{-- Export Button --}}
+                <a href="{{ route('dc-stocks.export', request()->query()) }}"
+                    class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors shadow-sm" title="Tải file Excel danh sách tấm dư">
+                    <iconify-icon icon="solar:document-medicine-bold" class="text-base"></iconify-icon>
+                    Xuất Excel
+                </a>
+
+                @can('add dc stock')
+                {{-- Import Button --}}
+                <button type="button" onclick="openModal('importDcModal')"
+                    class="px-3.5 py-1.5 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors shadow-sm" title="Nhập danh sách từ file Excel">
+                    <iconify-icon icon="solar:upload-track-2-bold" class="text-base"></iconify-icon>
+                    Nhập Excel
+                </button>
+                @endcan
 
                 {{-- Add Button --}}
                 <button type="button" onclick="openAddModal()"
@@ -297,6 +334,54 @@
                         class="px-6 py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-bold text-sm shadow-sm transition-colors flex items-center gap-2">
                     <iconify-icon icon="lucide:save" class="text-base"></iconify-icon>
                     <span id="saveBtnText">Lưu vào Kho DC</span>
+                </button>
+            </div>
+        </form>
+    </x-modal>
+
+    {{-- Import Excel Modal --}}
+    <x-modal name="importDcModal" maxWidth="md">
+        <div class="px-5 py-4 border-b border-neutral-100 dark:border-neutral-800 flex justify-between items-center bg-neutral-50 dark:bg-neutral-900/50 rounded-t-xl">
+            <span class="font-bold text-neutral-800 dark:text-neutral-100 flex items-center gap-2">
+                <iconify-icon icon="solar:upload-track-2-bold" class="text-sky-600 text-lg"></iconify-icon>
+                Nhập danh sách tấm dư từ file Excel
+            </span>
+            <button type="button" onclick="closeModal('importDcModal')" class="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 p-1 rounded-lg transition-colors">
+                <iconify-icon icon="lucide:x" class="text-xl"></iconify-icon>
+            </button>
+        </div>
+
+        <form action="{{ route('dc-stocks.import') }}" method="POST" enctype="multipart/form-data">
+            @csrf
+            <div class="p-6 flex flex-col gap-4">
+                <div class="p-3.5 bg-sky-50 dark:bg-sky-950/20 border border-sky-200 dark:border-sky-800/40 rounded-xl text-xs text-sky-800 dark:text-sky-300 space-y-1">
+                    <div class="font-bold flex items-center gap-1.5">
+                        <iconify-icon icon="lucide:info" class="text-sm"></iconify-icon> Hướng dẫn file Excel
+                    </div>
+                    <div>Hệ thống hỗ trợ file Excel (.xlsx, .xls) hoặc CSV. Bạn có thể sử dụng file đã xuất sẵn tại: <br><strong class="font-mono text-[11px] text-sky-900 dark:text-sky-200">c:\Code\Gervin\docs\DANH_SACH_TAM_DU_KHO_DC.xlsx</strong></div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-neutral-600 dark:text-neutral-400 uppercase mb-1.5">Chọn file Excel / CSV <span class="text-red-500">*</span></label>
+                    <input type="file" name="file" accept=".xlsx,.xls,.csv" required
+                           class="w-full text-xs text-neutral-600 border border-neutral-300 dark:border-neutral-700 rounded-xl file:mr-4 file:py-2.5 file:px-4 file:rounded-l-xl file:border-0 file:text-xs file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100 bg-neutral-50 dark:bg-neutral-800">
+                </div>
+
+                <div class="flex items-center gap-2 pt-1">
+                    <input type="checkbox" name="replace_existing" id="replace_existing" value="1" class="rounded border-neutral-300 text-orange-500 focus:ring-orange-500">
+                    <label for="replace_existing" class="text-xs text-neutral-700 dark:text-neutral-300 cursor-pointer select-none">
+                        Xóa toàn bộ dữ liệu cũ trong Kho DC trước khi nhập mới
+                    </label>
+                </div>
+            </div>
+
+            <div class="px-6 py-4 border-t border-neutral-100 dark:border-neutral-800 flex justify-end gap-3 bg-neutral-50/50 dark:bg-neutral-900/30 rounded-b-xl">
+                <button type="button" onclick="closeModal('importDcModal')" class="px-4 py-2 border border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 text-xs font-semibold rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-800">
+                    Hủy
+                </button>
+                <button type="submit" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded-xl shadow-sm flex items-center gap-1.5">
+                    <iconify-icon icon="solar:upload-track-2-bold" class="text-base"></iconify-icon>
+                    Bắt đầu nhập
                 </button>
             </div>
         </form>
