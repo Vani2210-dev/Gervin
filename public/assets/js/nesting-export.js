@@ -195,7 +195,7 @@ async function generateNestingWorkbook(orderData, suppliesData, filename) {
                     itemCust,                                                 // B Sản phẩm
                     itemOrder,                                                // C Đơn hàng
                     sttCode,                                                  // D STT
-                    item.notes || '',                                         // E Tên (Detail Name) - Lấy từ cột Ghi chú
+                    (item.notes && String(item.notes).trim() !== '') ? item.notes.trim() : '.', // E Tên (Detail Name) - Lấy từ Ghi chú (trống thì điền '.')
                     supply.supply_name || '',                                 // F Vật liệu
                     h,                                                        // G Dài
                     w,                                                        // H Rộng
