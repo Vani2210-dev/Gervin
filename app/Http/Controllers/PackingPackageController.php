@@ -16,7 +16,7 @@ class PackingPackageController extends Controller
     public function __construct()
     {
         $this->middleware('permission:view packing')->only(['index', 'show', 'print']);
-        $this->middleware('permission:add packing')->only(['store', 'storeItem']);
+        $this->middleware('permission:add packing')->only(['store', 'storeItem', 'update', 'reopen']);
         $this->middleware('permission:delete packing')->only(['destroyItem', 'destroy']);
         $this->middleware('permission:complete packing')->only(['complete']);
     }
@@ -36,19 +36,21 @@ class PackingPackageController extends Controller
         }
 
         // Phân trang danh sách đang đóng gói
-        $draftPackages = PackingPackage::with('packer')
+        $draftQuery = PackingPackage::with('packer')
             ->withCount('packagedItems as items_count')
             ->where('status', 'draft')
-            ->latest()
-            ->paginate($perPageDraft, ['*'], 'draft_page')
+            ->latest();
+        $this->applyDateFilter($draftQuery, null, 'created_at');
+        $draftPackages = $draftQuery->paginate($perPageDraft, ['*'], 'draft_page')
             ->withQueryString();
 
         // Phân trang danh sách đã hoàn tất
-        $completedPackages = PackingPackage::with('packer')
+        $completedQuery = PackingPackage::with('packer')
             ->withCount('packagedItems as items_count')
             ->where('status', 'completed')
-            ->latest()
-            ->paginate($perPageCompleted, ['*'], 'completed_page')
+            ->latest();
+        $this->applyDateFilter($completedQuery, null, 'created_at');
+        $completedPackages = $completedQuery->paginate($perPageCompleted, ['*'], 'completed_page')
             ->withQueryString();
 
         return view('packing.index', [
@@ -477,6 +479,36 @@ class PackingPackageController extends Controller
         return redirect()
             ->route('processes.packing')
             ->with('success', 'Hoàn tất đóng gói thành công.');
+    }
+
+    public function reopen(PackingPackage $package)
+    {
+        if ($package->dispatched_at) {
+            return back()->with('error', 'Kiện đã xuất xưởng, không thể mở lại.');
+        }
+
+        $package->update(['status' => 'draft']);
+
+        return redirect()
+            ->route('processes.packing.show', $package)
+            ->with('success', 'Đã mở lại kiện. Bạn có thể tiếp tục đóng gói hoặc chỉnh sửa linh kiện.');
+    }
+
+    public function update(Request $request, PackingPackage $package)
+    {
+        if ($package->dispatched_at) {
+            return back()->with('error', 'Kiện đã xuất xưởng, không thể chỉnh sửa.');
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+        ]);
+
+        $package->update([
+            'name' => $validated['name'],
+        ]);
+
+        return back()->with('success', 'Cập nhật tên kiện thành công.');
     }
 
     public function destroy(PackingPackage $package)

@@ -22,7 +22,10 @@
                     <h5 class="font-bold text-neutral-800 text-base mb-1">Danh sách Phiếu Nhập kho (PNK)</h5>
                     <p class="text-xs text-neutral-500 mb-0">Quản lý toàn bộ lịch sử nhập vật tư từ nhà cung cấp và nhập điều chỉnh.</p>
                 </div>
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-3 flex-wrap">
+                    {{-- Bộ lọc ngày tháng chung --}}
+                    <x-date-filter :action="route('inventory.receipts.index')" />
+
                     <form action="{{ route('inventory.receipts.index') }}" method="GET" class="relative">
                         <iconify-icon icon="ion:search-outline" class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400"></iconify-icon>
                         <input type="text" name="search" value="{{ request('search') }}" class="form-control rounded-lg pl-9 pr-4 py-2 border-neutral-200 text-xs w-64 focus:border-primary-500" placeholder="Tìm số phiếu, NCC...">

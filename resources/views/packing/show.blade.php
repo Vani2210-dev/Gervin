@@ -36,26 +36,79 @@
                 <iconify-icon icon="lucide:arrow-left" class="packing-package-page__back-icon packing-package-page__header-back-icon text-2xl"></iconify-icon>
             </a>
             <div class="packing-package-page__heading-text packing-package-page__header-text">
-                <h4 class="packing-package-page__name packing-package-page__header-name text-2xl font-bold text-neutral-900 mb-1">{{ $package->name }}</h4>
+                <div class="flex items-center gap-2">
+                    <h4 class="packing-package-page__name packing-package-page__header-name text-2xl font-bold text-neutral-900 mb-0">{{ $package->name }}</h4>
+                    @can('add packing')
+                        @if(!$package->dispatched_at)
+                            <button type="button" onclick="openModal('edit-package-name-modal')" class="text-neutral-400 hover:text-primary-600 transition-colors p-1" title="Sửa tên kiện">
+                                <iconify-icon icon="lucide:pencil" class="text-lg"></iconify-icon>
+                            </button>
+                        @endif
+                    @endcan
+                </div>
                 <p class="packing-package-page__status packing-package-page__header-status text-sm text-secondary-light mb-0">{{ $isCompleted ? 'Đã hoàn tất' : 'Đang đóng gói (Nháp)' }}</p>
             </div>
         </div>
 
         @if($isCompleted)
-            <a href="{{ route('processes.packing.print', $package) }}"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="packing-package-page__print-button packing-package-page__header-print-button btn bg-primary-600 hover:bg-primary-700 text-white px-5 py-3 rounded-lg font-semibold inline-flex items-center gap-2">
-                <iconify-icon icon="lucide:printer" class="packing-package-page__print-icon packing-package-page__header-print-icon text-lg"></iconify-icon>
-                In tem dán
-            </a>
-        @elseif($showCompleteButton)
-            <form method="POST" action="{{ route('processes.packing.complete', $package) }}" onsubmit="return confirm('Hoàn tất đóng gói kiện này?')" class="packing-package-page__complete-form packing-package-page__header-complete-form shrink-0">
-                @csrf
-                <button type="submit" class="packing-package-page__complete-button packing-package-page__header-complete-button btn bg-primary-600 hover:bg-primary-700 text-white px-5 py-3 rounded-lg font-semibold">
-                    Hoàn tất đóng gói
-                </button>
-            </form>
+            <div class="flex items-center flex-wrap gap-2">
+                @can('add packing')
+                    @if(!$package->dispatched_at)
+                        <form method="POST" action="{{ route('processes.packing.reopen', $package) }}" onsubmit="return confirm('Mở lại kiện để tiếp tục đóng gói hoặc chỉnh sửa?')">
+                            @csrf
+                            <button type="submit" class="btn bg-cyan-50 hover:bg-cyan-600 text-cyan-700 hover:text-white border border-cyan-200 px-4 py-2.5 rounded-lg font-semibold inline-flex items-center gap-2 transition-colors shadow-sm">
+                                <iconify-icon icon="lucide:rotate-ccw" class="text-lg"></iconify-icon>
+                                Mở lại kiện
+                            </button>
+                        </form>
+                    @endif
+                @endcan
+
+                @can('delete packing')
+                    @if(!$package->dispatched_at)
+                        <form method="POST" action="{{ route('processes.packing.destroy', $package) }}" onsubmit="return confirm('Bạn có chắc muốn xóa kiện này? Toàn bộ linh kiện trong kiện sẽ được giải phóng.')">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn bg-danger-50 hover:bg-danger-600 text-danger-600 hover:text-white border border-danger-200 px-4 py-2.5 rounded-lg font-semibold inline-flex items-center gap-2 transition-colors shadow-sm">
+                                <iconify-icon icon="lucide:trash-2" class="text-lg"></iconify-icon>
+                                Xóa kiện
+                            </button>
+                        </form>
+                    @endif
+                @endcan
+
+                <a href="{{ route('processes.packing.print', $package) }}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="packing-package-page__print-button packing-package-page__header-print-button btn bg-primary-600 hover:bg-primary-700 text-white px-5 py-2.5 rounded-lg font-semibold inline-flex items-center gap-2 shadow-sm">
+                    <iconify-icon icon="lucide:printer" class="packing-package-page__print-icon packing-package-page__header-print-icon text-lg"></iconify-icon>
+                    In tem dán
+                </a>
+            </div>
+        @else
+            <div class="flex items-center gap-2">
+                @can('delete packing')
+                    @if(!$package->dispatched_at)
+                        <form method="POST" action="{{ route('processes.packing.destroy', $package) }}" onsubmit="return confirm('Bạn có chắc muốn xóa kiện này?')">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn bg-danger-50 hover:bg-danger-600 text-danger-600 hover:text-white border border-danger-200 px-4 py-2.5 rounded-lg font-semibold inline-flex items-center gap-2 transition-colors shadow-sm">
+                                <iconify-icon icon="lucide:trash-2" class="text-lg"></iconify-icon>
+                                Xóa kiện
+                            </button>
+                        </form>
+                    @endif
+                @endcan
+
+                @if($showCompleteButton)
+                    <form method="POST" action="{{ route('processes.packing.complete', $package) }}" onsubmit="return confirm('Hoàn tất đóng gói kiện này?')" class="packing-package-page__complete-form packing-package-page__header-complete-form shrink-0">
+                        @csrf
+                        <button type="submit" class="packing-package-page__complete-button packing-package-page__header-complete-button btn bg-primary-600 hover:bg-primary-700 text-white px-5 py-2.5 rounded-lg font-semibold shadow-sm">
+                            Hoàn tất đóng gói
+                        </button>
+                    </form>
+                @endif
+            </div>
         @endif
     </div>
 
@@ -230,9 +283,42 @@
         </div>
     @endif
 
-    @if($showScanCard || $showDeleteColumn)
-        <div id="toastContainer" class="packing-package-page__toast-container fixed bottom-5 right-5 z-50 flex flex-col gap-2"></div>
-    @endif
+    @can('add packing')
+        <x-modal name="edit-package-name-modal" maxWidth="lg">
+            <form method="POST" action="{{ route('processes.packing.update', $package) }}">
+                @csrf
+                @method('PUT')
+                <div class="px-6 py-5 border-b border-neutral-200 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <span class="w-12 h-12 rounded-lg bg-amber-100 text-amber-600 border border-amber-200 flex items-center justify-center shadow-sm">
+                            <iconify-icon icon="lucide:pencil" class="text-2xl"></iconify-icon>
+                        </span>
+                        <h5 class="text-xl font-bold text-neutral-900 mb-0">Sửa tên kiện</h5>
+                    </div>
+                    <button type="button" onclick="closeModal('edit-package-name-modal')" class="text-secondary-light hover:text-neutral-900 text-2xl leading-none">
+                        <iconify-icon icon="lucide:x"></iconify-icon>
+                    </button>
+                </div>
+
+                <div class="px-6 py-5">
+                    <div class="mb-4">
+                        <label for="update_package_name" class="form-label font-semibold text-sm text-neutral-700">Tên kiện / Biển số</label>
+                        <input type="text" id="update_package_name" name="name" value="{{ $package->name }}" class="form-control rounded-lg" placeholder="Ví dụ: Kiện 1" required autofocus>
+                    </div>
+                </div>
+
+                <div class="px-6 py-5 border-t border-neutral-200 bg-neutral-50 flex justify-end gap-3">
+                    <button type="button" onclick="closeModal('edit-package-name-modal')" class="btn bg-neutral-100 hover:bg-neutral-200 text-neutral-700 px-5 py-2.5 rounded-lg font-semibold">Hủy bỏ</button>
+                    <button type="submit" class="btn bg-primary-600 hover:bg-primary-700 text-white px-5 py-2.5 rounded-lg font-semibold flex items-center gap-2">
+                        <iconify-icon icon="lucide:check" class="text-lg"></iconify-icon>
+                        <span>Lưu thay đổi</span>
+                    </button>
+                </div>
+            </form>
+        </x-modal>
+    @endcan
+
+    <div id="toastContainer" class="packing-package-page__toast-container fixed bottom-5 right-5 z-50 flex flex-col gap-2"></div>
 @endsection
 
 @php

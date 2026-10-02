@@ -28,10 +28,13 @@ class DispatchPackageController extends Controller
         $perPage = (int) $request->input('per_page', 15);
         $perPage = in_array($perPage, [15, 25, 50, 100], true) ? $perPage : 15;
 
-        $packages = PackingPackage::with(['packer', 'items.itemCode'])
+        $query = PackingPackage::with(['packer', 'items.itemCode'])
             ->whereNotNull('dispatched_at')
-            ->orderByDesc('dispatched_at')
-            ->get();
+            ->orderByDesc('dispatched_at');
+
+        $this->applyDateFilter($query, $request, 'dispatched_at');
+
+        $packages = $query->get();
 
         $historyRows = $this->buildHistoryRows($packages);
         $historyRows = $this->filterHistoryRows($historyRows, $range, $search);

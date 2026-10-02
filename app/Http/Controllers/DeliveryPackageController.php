@@ -33,10 +33,13 @@ class DeliveryPackageController extends Controller
         $perPage = in_array($perPage, [15, 25, 50, 100], true) ? $perPage : 15;
 
         // Chỉ lấy những kiện đã được giao hàng thành công
-        $packages = PackingPackage::with(['packer', 'items.itemCode'])
+        $query = PackingPackage::with(['packer', 'items.itemCode'])
             ->whereNotNull('delivered_at')
-            ->orderByDesc('delivered_at')
-            ->get();
+            ->orderByDesc('delivered_at');
+
+        $this->applyDateFilter($query, $request, 'delivered_at');
+
+        $packages = $query->get();
 
         $historyRows = $this->buildHistoryRows($packages);
         $historyRows = $this->filterHistoryRows($historyRows, $range, $search);

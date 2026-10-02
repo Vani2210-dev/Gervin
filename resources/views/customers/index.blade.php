@@ -121,8 +121,8 @@
                         </form>
                     </div>
 
-                    {{-- Bộ lọc Ngày / Tháng / Năm / Tất cả linh hoạt --}}
-                    <x-flexible-date-filter :dateMode="$dateMode" :dateVal="$dateVal" />
+                    {{-- Bộ lọc ngày tháng chung --}}
+                    <x-date-filter :action="route('customers.index')" />
                 </div>
 
                 <div class="flex items-center gap-2">

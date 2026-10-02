@@ -28,6 +28,8 @@ class RoleController extends Controller
             $query->where('name', 'like', "%{$request->filter_name}%");
         }
 
+        $this->applyDateFilter($query, $request, 'created_at');
+
         $perPage = (int) $request->input('per_page', 10);
         $roles   = $query->paginate($perPage)->withQueryString();
 

@@ -13,48 +13,17 @@ class MarketGroupController extends Controller
     {
         $search = $request->input('search', '');
 
-        // Date Filter Mode: day | month | year | all
-        $dateMode = $request->input('date_mode', 'month');
-        $dateVal = $request->input('date_val');
-
-        if (!$dateVal && $dateMode !== 'all') {
-            if ($dateMode === 'day') {
-                $dateVal = now()->toDateString();
-            } elseif ($dateMode === 'year') {
-                $dateVal = now()->format('Y');
-            } else { // month
-                $dateMode = 'month';
-                $dateVal = now()->format('Y-m');
-            }
+        // Date Filter
+        if (!$request->has('date_preset') && !$request->has('start_date') && !$request->has('end_date') && !$request->has('date_mode')) {
+            $request->merge(['date_preset' => 'this_month']);
         }
-
-        $startDate = null;
-        $endDate = null;
-        $dateLabel = 'Toàn thời gian';
-        $inputType = 'month';
-
-        if ($dateMode === 'day' && $dateVal) {
-            $startDate = $dateVal;
-            $endDate = $dateVal;
-            $dateLabel = 'Ngày ' . \Carbon\Carbon::parse($dateVal)->format('d/m/Y');
-            $inputType = 'date';
-        } elseif ($dateMode === 'month' && $dateVal) {
-            $cDate = \Carbon\Carbon::parse($dateVal . '-01');
-            $startDate = $cDate->copy()->startOfMonth()->toDateString();
-            $endDate = $cDate->copy()->endOfMonth()->toDateString();
-            $dateLabel = 'Tháng ' . $cDate->format('m/Y');
-            $inputType = 'month';
-        } elseif ($dateMode === 'year' && $dateVal) {
-            $startDate = $dateVal . '-01-01';
-            $endDate = $dateVal . '-12-31';
-            $dateLabel = 'Năm ' . $dateVal;
-            $inputType = 'number';
-        } else {
-            $dateMode = 'all';
-            $dateVal = '';
-            $dateLabel = 'Toàn bộ thời gian';
-            $inputType = 'text';
-        }
+        $dateFilter = $this->getDateFilterParams($request);
+        $startDate = $dateFilter['start_date'];
+        $endDate = $dateFilter['end_date'];
+        $dateLabel = $dateFilter['label'];
+        $dateMode = $dateFilter['preset'];
+        $dateVal = $request->input('date_val', '');
+        $inputType = 'date';
 
         $user = auth()->user();
         $groupsQuery = MarketGroup::with(['users' => function ($q) {

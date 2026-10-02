@@ -84,6 +84,9 @@
                     </select>
                 </form>
 
+                {{-- Bộ lọc ngày tháng chung --}}
+                <x-date-filter :action="route('dc-stocks.index')" />
+
                 {{-- Per page --}}
                 <form method="GET" action="{{ route('dc-stocks.index') }}" id="perPageForm">
                     <input type="hidden" name="search" value="{{ $search }}">

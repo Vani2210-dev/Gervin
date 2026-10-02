@@ -140,17 +140,22 @@
                 Lịch sử hoàn thành làm đẹp
             </h5>
             <div class="flex items-center flex-wrap gap-3">
+                {{-- Bộ lọc ngày tháng chung --}}
+                <x-date-filter :action="route('processes.finishing')" />
+
                 {{-- Per page --}}
-                <span class="text-sm font-medium text-secondary-light mb-0">Hiển thị</span>
-                <form method="GET" action="{{ route('processes.finishing') }}" id="perPageForm">
-                    <input type="hidden" name="search" value="{{ $search }}">
-                    <select name="per_page" class="form-select form-select-sm w-auto border border-neutral-200 dark:border-neutral-700 rounded-lg py-1 px-2 text-xs bg-transparent dark:text-neutral-300"
-                        onchange="document.getElementById('perPageForm').submit()">
-                        @foreach([15, 25, 50, 100] as $option)
-                        <option value="{{ $option }}" {{ $perPage == $option ? 'selected' : '' }}>{{ $option }}</option>
-                        @endforeach
-                    </select>
-                </form>
+                <div class="flex items-center gap-1.5">
+                    <span class="text-sm font-medium text-secondary-light mb-0">Hiển thị</span>
+                    <form method="GET" action="{{ route('processes.finishing') }}" id="perPageForm">
+                        <input type="hidden" name="search" value="{{ $search }}">
+                        <select name="per_page" class="form-select form-select-sm w-auto border border-neutral-200 dark:border-neutral-700 rounded-lg py-1 px-2 text-xs bg-transparent dark:text-neutral-300"
+                            onchange="document.getElementById('perPageForm').submit()">
+                            @foreach([15, 25, 50, 100] as $option)
+                            <option value="{{ $option }}" {{ $perPage == $option ? 'selected' : '' }}>{{ $option }}</option>
+                            @endforeach
+                        </select>
+                    </form>
+                </div>
 
                 {{-- Search bar --}}
                 <form method="GET" action="{{ route('processes.finishing') }}" class="relative w-48 sm:w-56">

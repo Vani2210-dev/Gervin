@@ -381,6 +381,8 @@ Route::middleware(['auth'])->prefix('processes')->name('processes.')->group(func
     Route::post('/packing/{package}/items', [PackingPackageController::class, 'storeItem'])->name('packing.items.store');
     Route::delete('/packing/{package}/items/{item}', [PackingPackageController::class, 'destroyItem'])->name('packing.items.destroy');
     Route::post('/packing/{package}/complete', [PackingPackageController::class, 'complete'])->name('packing.complete');
+    Route::post('/packing/{package}/reopen', [PackingPackageController::class, 'reopen'])->name('packing.reopen');
+    Route::put('/packing/{package}', [PackingPackageController::class, 'update'])->name('packing.update');
     Route::delete('/packing/{package}', [PackingPackageController::class, 'destroy'])->name('packing.destroy');
     Route::get('/dispatch', [DispatchPackageController::class, 'index'])->name('dispatch');
     Route::post('/dispatch/check', [DispatchPackageController::class, 'preview'])->name('dispatch.check');

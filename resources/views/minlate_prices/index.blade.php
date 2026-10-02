@@ -22,6 +22,9 @@
                         </div>
                     </form>
 
+                    {{-- Bộ lọc ngày tháng chung --}}
+                    <x-date-filter :action="route('minlate_prices.index')" />
+
                     {{-- Per page --}}
                     <div class="flex items-center gap-2">
                         <span class="text-base font-medium text-secondary-light mb-0">Hiển thị</span>

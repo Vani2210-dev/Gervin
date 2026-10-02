@@ -243,6 +243,7 @@ class QrScanController extends Controller
         $deviceFilter = $request->input('device_id', '');
 
         $query = QrScanLog::with('device.operator')->orderBy('id', 'desc');
+        $this->applyDateFilter($query, $request, 'created_at');
 
         if ($search) {
             $query->where(function($q) use ($search) {

@@ -39,8 +39,11 @@ class GlassPriceController extends Controller
             })
             ->when($filterCategory, function ($q) use ($filterCategory) {
                 $q->where('category_name', $filterCategory);
-            })
-            ->orderBy('id', 'asc')
+            });
+
+        $this->applyDateFilter($glassPrices, $request, 'created_at');
+
+        $glassPrices = $glassPrices->orderBy('id', 'asc')
             ->paginate($perPage)
             ->withQueryString();
 

@@ -88,8 +88,8 @@
                     <p class="text-xs text-neutral-500 mt-1">Phân quyền chăm sóc khách hàng, theo dõi công nợ và doanh số theo kỳ lọc</p>
                 </div>
                 <div class="flex items-center gap-3 flex-wrap">
-                    {{-- Bộ lọc Ngày / Tháng / Năm linh hoạt --}}
-                    <x-flexible-date-filter :dateMode="$dateMode" :dateVal="$dateVal" />
+                    {{-- Bộ lọc ngày tháng chung --}}
+                    <x-date-filter :action="route('market-groups.index')" />
 
                     <form method="GET" action="{{ route('market-groups.index') }}" class="flex items-center">
                         <input type="hidden" name="date_mode" value="{{ $dateMode }}">

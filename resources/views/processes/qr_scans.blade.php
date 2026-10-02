@@ -440,46 +440,50 @@
                 </div>
                 
                 {{-- Filter Forms --}}
-                <form method="GET" action="{{ route('processes.qr-scans') }}" class="flex items-center flex-wrap gap-2">
-                    <input type="hidden" name="tab" value="logs">
-                    <input type="hidden" name="per_page" value="{{ $perPage }}">
+                <div class="flex items-center flex-wrap gap-2">
+                    <x-date-filter :action="route('processes.qr-scans', ['tab' => 'logs'])" />
 
-                    {{-- Search --}}
-                    <div class="relative w-44 sm:w-56">
-                        <span class="absolute top-1/2 -translate-y-1/2 text-neutral-400 flex items-center justify-center pointer-events-none" style="left: 10px;">
-                            <iconify-icon icon="lucide:search" class="text-base"></iconify-icon>
-                        </span>
-                        <input type="text" name="search"
-                            class="w-full pr-3 py-1.5 border border-neutral-300 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 text-xs focus:outline-none focus:ring-2 focus:ring-primary-500"
-                            style="padding-left: 34px;"
-                            placeholder="Tìm mã sản phẩm..." value="{{ $search }}">
-                    </div>
+                    <form method="GET" action="{{ route('processes.qr-scans') }}" class="flex items-center flex-wrap gap-2">
+                        <input type="hidden" name="tab" value="logs">
+                        <input type="hidden" name="per_page" value="{{ $perPage }}">
 
-                    {{-- Status Filter --}}
-                    <select name="status" onchange="this.form.submit()"
-                            class="form-select form-select-sm w-auto border border-neutral-200 dark:border-neutral-700 rounded-lg py-1 px-2.5 text-xs bg-transparent dark:text-neutral-300">
-                        <option value="">-- Tất cả trạng thái --</option>
-                        <option value="success" {{ $statusFilter === 'success' ? 'selected' : '' }}>Thành công</option>
-                        <option value="failed" {{ $statusFilter === 'failed' ? 'selected' : '' }}>Thất bại</option>
-                        <option value="duplicate" {{ $statusFilter === 'duplicate' ? 'selected' : '' }}>Trùng lặp</option>
-                        <option value="unmapped" {{ $statusFilter === 'unmapped' ? 'selected' : '' }}>Chưa cấu hình</option>
-                    </select>
+                        {{-- Search --}}
+                        <div class="relative w-44 sm:w-56">
+                            <span class="absolute top-1/2 -translate-y-1/2 text-neutral-400 flex items-center justify-center pointer-events-none" style="left: 10px;">
+                                <iconify-icon icon="lucide:search" class="text-base"></iconify-icon>
+                            </span>
+                            <input type="text" name="search"
+                                class="w-full pr-3 py-1.5 border border-neutral-300 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 text-xs focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                style="padding-left: 34px;"
+                                placeholder="Tìm mã sản phẩm..." value="{{ $search }}">
+                        </div>
 
-                    {{-- Device Filter --}}
-                    <select name="device_id" onchange="this.form.submit()"
-                            class="form-select form-select-sm w-auto border border-neutral-200 dark:border-neutral-700 rounded-lg py-1 px-2.5 text-xs bg-transparent dark:text-neutral-300">
-                        <option value="">-- Tất cả máy quét --</option>
-                        @foreach($devices as $dev)
-                            <option value="{{ $dev->id }}" {{ $deviceFilter == $dev->id ? 'selected' : '' }}>{{ $dev->name }}</option>
-                        @endforeach
-                    </select>
+                        {{-- Status Filter --}}
+                        <select name="status" onchange="this.form.submit()"
+                                class="form-select form-select-sm w-auto border border-neutral-200 dark:border-neutral-700 rounded-lg py-1 px-2.5 text-xs bg-transparent dark:text-neutral-300">
+                            <option value="">-- Tất cả trạng thái --</option>
+                            <option value="success" {{ $statusFilter === 'success' ? 'selected' : '' }}>Thành công</option>
+                            <option value="failed" {{ $statusFilter === 'failed' ? 'selected' : '' }}>Thất bại</option>
+                            <option value="duplicate" {{ $statusFilter === 'duplicate' ? 'selected' : '' }}>Trùng lặp</option>
+                            <option value="unmapped" {{ $statusFilter === 'unmapped' ? 'selected' : '' }}>Chưa cấu hình</option>
+                        </select>
 
-                    @if($search || $statusFilter || $deviceFilter)
-                        <a href="{{ route('processes.qr-scans', ['tab' => 'logs']) }}" class="text-xs text-neutral-500 hover:text-red-600 px-2 py-1 rounded">
-                            Xóa lọc
-                        </a>
-                    @endif
-                </form>
+                        {{-- Device Filter --}}
+                        <select name="device_id" onchange="this.form.submit()"
+                                class="form-select form-select-sm w-auto border border-neutral-200 dark:border-neutral-700 rounded-lg py-1 px-2.5 text-xs bg-transparent dark:text-neutral-300">
+                            <option value="">-- Tất cả máy quét --</option>
+                            @foreach($devices as $dev)
+                                <option value="{{ $dev->id }}" {{ $deviceFilter == $dev->id ? 'selected' : '' }}>{{ $dev->name }}</option>
+                            @endforeach
+                        </select>
+
+                        @if($search || $statusFilter || $deviceFilter || request()->filled('start_date') || request()->filled('date_preset'))
+                            <a href="{{ route('processes.qr-scans', ['tab' => 'logs']) }}" class="text-xs text-neutral-500 hover:text-red-600 px-2 py-1 rounded">
+                                Xóa lọc
+                            </a>
+                        @endif
+                    </form>
+                </div>
             </div>
             
             <div class="card-body p-0">

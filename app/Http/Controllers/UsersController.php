@@ -51,6 +51,8 @@ class UsersController extends Controller
             $query->where('role_id', $request->filter_role_id);
         }
 
+        $this->applyDateFilter($query, $request, 'created_at');
+
         $perPage = (int) $request->input('per_page', 10);
         $users   = $query->latest()->paginate($perPage)->withQueryString();
 

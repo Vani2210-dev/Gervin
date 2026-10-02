@@ -32,7 +32,7 @@ class ManufactureController extends Controller
         $search  = $request->input('search', '');
         $status  = $request->input('status', '');
 
-        $manufactures = ManufactureOrder::with([
+        $query = ManufactureOrder::with([
             'creator',
             'orders.supplies.items.codes',
             'orders.supplies.minLateItems.codes',
@@ -45,8 +45,11 @@ class ManufactureController extends Controller
             ->when($status, function ($q) use ($status) {
                 $q->where('status', $status);
             })
-            ->orderBy('id', 'desc')
-            ->paginate($perPage)
+            ->orderBy('id', 'desc');
+
+        $this->applyDateFilter($query, $request, 'created_at');
+
+        $manufactures = $query->paginate($perPage)
             ->withQueryString();
 
         return view('manufactures.index', compact('manufactures', 'perPage', 'search', 'status'));
@@ -55,7 +58,7 @@ class ManufactureController extends Controller
     /**
      * Lấy dữ liệu tiến độ cho chức năng Sắp xếp đơn hàng, gom nhóm theo ngày.
      */
-    private function getSequenceData(?string $date = null, ?string $search = null, ?string $completionStatus = null)
+    private function getSequenceData(?string $date = null, ?string $search = null, ?string $completionStatus = null, ?string $startDate = null, ?string $endDate = null)
     {
         $user = auth()->user();
         // Chỉ lấy các Lệnh sản xuất đã được duyệt hoàn tất quy trình phê duyệt (đã nhận tem, đang sản xuất hoặc đã hoàn thành)
@@ -72,7 +75,13 @@ class ManufactureController extends Controller
             });
         }
 
-        if (!empty($date)) {
+        if (!empty($startDate) && !empty($endDate)) {
+            $query->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
+        } elseif (!empty($startDate)) {
+            $query->where('created_at', '>=', $startDate . ' 00:00:00');
+        } elseif (!empty($endDate)) {
+            $query->where('created_at', '<=', $endDate . ' 23:59:59');
+        } elseif (!empty($date)) {
             $query->whereDate('created_at', $date);
         }
 
@@ -244,10 +253,11 @@ class ManufactureController extends Controller
      */
     public function sequenceIndex(Request $request)
     {
+        $dateFilter = $this->getDateFilterParams($request);
         $date = $request->input('date', '');
         $search = $request->input('search', '');
         $completionStatus = $request->input('completion_status', '');
-        $groupedSupplies = $this->getSequenceData($date, $search, $completionStatus);
+        $groupedSupplies = $this->getSequenceData($date, $search, $completionStatus, $dateFilter['start_date'], $dateFilter['end_date']);
 
         return view('manufactures.sequence', compact('groupedSupplies', 'date', 'search', 'completionStatus'));
     }
@@ -257,10 +267,11 @@ class ManufactureController extends Controller
      */
     public function sequenceExport(Request $request)
     {
+        $dateFilter = $this->getDateFilterParams($request);
         $date = $request->input('date', '');
         $search = $request->input('search', '');
         $completionStatus = $request->input('completion_status', '');
-        $groupedSupplies = $this->getSequenceData($date, $search, $completionStatus);
+        $groupedSupplies = $this->getSequenceData($date, $search, $completionStatus, $dateFilter['start_date'], $dateFilter['end_date']);
 
         if ($groupedSupplies->isEmpty()) {
             return back()->with('error', 'Không có dữ liệu phù hợp với bộ lọc để xuất Excel.');

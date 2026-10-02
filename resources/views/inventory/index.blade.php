@@ -95,8 +95,8 @@
                             placeholder="Tìm mã SKU, tên, xuất xứ...">
                     </form>
 
-                    {{-- Bộ lọc Ngày / Tháng / Năm / Tất cả thông minh --}}
-                    <x-flexible-date-filter :dateMode="$dateMode" :dateVal="$dateVal" />
+                    {{-- Bộ lọc ngày tháng chung --}}
+                    <x-date-filter :action="route('inventory.index')" />
 
                     @if($dateMode !== 'all')
                         <span class="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-1 rounded-md bg-primary-50 text-primary-700 border border-primary-200">

@@ -44,8 +44,11 @@ class MinLatePriceController extends Controller
             })
             ->when($filterCategory, function ($q) use ($filterCategory) {
                 $q->where('category_name', $filterCategory);
-            })
-            ->orderBy('id', 'asc')
+            });
+
+        $this->applyDateFilter($minlatePrices, $request, 'created_at');
+
+        $minlatePrices = $minlatePrices->orderBy('id', 'asc')
             ->paginate($perPage)
             ->withQueryString();
 

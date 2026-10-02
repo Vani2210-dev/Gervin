@@ -518,6 +518,9 @@
                     </h5>
 
                     <div class="delivery-page__history-actions flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-end lg:flex-1">
+                        {{-- Bộ lọc ngày tháng chung --}}
+                        <x-date-filter :action="route('processes.delivery')" />
+
                         <div class="delivery-page__history-per-page-wrap flex items-center gap-2">
                             <span class="text-sm font-medium text-secondary-light whitespace-nowrap">Hiển thị</span>
                             <select id="historyPerPage"

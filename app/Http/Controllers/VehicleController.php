@@ -20,7 +20,15 @@ class VehicleController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Vehicle::query()->with('fuelLogs');
+        $dateFilter = $this->getDateFilterParams($request);
+        $hasDateFilter = !empty($dateFilter['start_date']) || !empty($dateFilter['end_date']);
+
+        $query = Vehicle::query()->with(['fuelLogs' => function ($q) use ($dateFilter, $hasDateFilter) {
+            if ($hasDateFilter) {
+                if ($dateFilter['start_date']) $q->where('date', '>=', $dateFilter['start_date']);
+                if ($dateFilter['end_date'])   $q->where('date', '<=', $dateFilter['end_date']);
+            }
+        }]);
 
         if ($request->filled('keyword')) {
             $kw = $request->keyword;

@@ -41,14 +41,23 @@
         </div>
     </div>
 
+    {{-- Bộ lọc thời gian tổng quan --}}
+    <div class="flex items-center justify-between flex-wrap gap-3 mb-6 bg-white p-4 rounded-2xl border border-neutral-200 shadow-2xs">
+        <div>
+            <h5 class="text-sm font-bold text-neutral-800 mb-0">Thống kê chỉ số vận hành</h5>
+            <p class="text-xs text-neutral-500 mb-0">Lọc dữ liệu doanh thu, tiến độ và năng suất theo mốc thời gian</p>
+        </div>
+        <x-date-filter :action="route('dashboard')" />
+    </div>
+
     {{-- KHỐI KPI CHỦ ĐẠO (4 THẺ LỚN) --}}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         
-        {{-- 1. Doanh thu tháng này --}}
+        {{-- 1. Doanh thu tháng này hoặc theo kỳ lọc --}}
         @if(auth()->user()->can('view revenue report') || auth()->user()->hasRole('Admin') || auth()->user()->can('view order'))
         <div class="card border border-neutral-200 rounded-2xl p-5 bg-white shadow-none hover:shadow-md transition-shadow relative overflow-hidden">
             <div class="flex items-center justify-between mb-3">
-                <span class="text-xs font-semibold text-neutral-500 uppercase tracking-wider">Doanh thu tháng {{ now()->month }}</span>
+                <span class="text-xs font-semibold text-neutral-500 uppercase tracking-wider">{{ !empty($dateFilter['label']) && ($dateFilter['preset'] ?? '') !== 'all' ? 'Doanh thu (' . $dateFilter['label'] . ')' : 'Doanh thu tháng ' . now()->month }}</span>
                 <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
                     <iconify-icon icon="solar:wallet-money-bold-duotone" class="text-2xl"></iconify-icon>
                 </div>

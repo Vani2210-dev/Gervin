@@ -44,6 +44,9 @@
                             </select>
                         </form>
                     </div>
+
+                    {{-- Bộ lọc ngày tháng chung --}}
+                    <x-date-filter :action="route('manufactures.index')" />
                 </div>
 
                 <div class="flex items-center gap-2">

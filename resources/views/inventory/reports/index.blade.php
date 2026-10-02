@@ -40,30 +40,31 @@
                 {{-- Action / Export Filter --}}
                 <div class="flex items-center gap-3 flex-wrap">
                     @if($tab === 'summary')
-                        <form action="{{ route('inventory.reports.index') }}" method="GET" class="flex flex-wrap items-center gap-2.5">
-                            <input type="hidden" name="tab" value="summary">
-                            <div class="flex items-center gap-1.5 text-xs text-neutral-600 font-medium whitespace-nowrap flex-shrink-0">
-                                <span class="whitespace-nowrap font-semibold">Kho:</span>
-                                <select name="warehouse_id" onchange="this.form.submit()" class="form-select rounded-lg px-2.5 py-2 border-neutral-200 text-xs font-semibold text-neutral-800">
-                                    <option value="">-- Tất cả các kho --</option>
-                                    @foreach($warehouses as $wh)
-                                        <option value="{{ $wh->id }}" {{ (string)$warehouseId === (string)$wh->id ? 'selected' : '' }}>{{ $wh->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="flex items-center gap-1.5 text-xs text-neutral-600 font-medium whitespace-nowrap flex-shrink-0">
-                                <span class="whitespace-nowrap font-semibold">Từ:</span>
-                                <input type="date" name="start_date" value="{{ $startDate }}" onchange="this.form.submit()" class="form-control rounded-lg px-2 py-2 border-neutral-200 text-xs">
-                            </div>
-                            <div class="flex items-center gap-1.5 text-xs text-neutral-600 font-medium whitespace-nowrap flex-shrink-0">
-                                <span class="whitespace-nowrap font-semibold">Đến:</span>
-                                <input type="date" name="end_date" value="{{ $endDate }}" onchange="this.form.submit()" class="form-control rounded-lg px-2 py-2 border-neutral-200 text-xs">
-                            </div>
-                            <a href="{{ route('inventory.reports.export', array_filter(['start_date' => $startDate, 'end_date' => $endDate, 'warehouse_id' => $warehouseId])) }}" class="btn bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm whitespace-nowrap flex-shrink-0">
+                        <div class="flex flex-wrap items-center gap-3">
+                            <form action="{{ route('inventory.reports.index') }}" method="GET" class="flex items-center gap-2">
+                                <input type="hidden" name="tab" value="summary">
+                                @if(request('date_preset')) <input type="hidden" name="date_preset" value="{{ request('date_preset') }}"> @endif
+                                @if(request('start_date')) <input type="hidden" name="start_date" value="{{ request('start_date') }}"> @endif
+                                @if(request('end_date')) <input type="hidden" name="end_date" value="{{ request('end_date') }}"> @endif
+                                <div class="flex items-center gap-1.5 text-xs text-neutral-600 font-medium whitespace-nowrap flex-shrink-0">
+                                    <span class="whitespace-nowrap font-semibold">Kho:</span>
+                                    <select name="warehouse_id" onchange="this.form.submit()" class="form-select rounded-lg px-2.5 py-2 border-neutral-200 text-xs font-semibold text-neutral-800">
+                                        <option value="">-- Tất cả các kho --</option>
+                                        @foreach($warehouses as $wh)
+                                            <option value="{{ $wh->id }}" {{ (string)$warehouseId === (string)$wh->id ? 'selected' : '' }}>{{ $wh->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </form>
+
+                            {{-- Bộ lọc ngày tháng chung --}}
+                            <x-date-filter :action="route('inventory.reports.index')" />
+
+                            <a href="{{ route('inventory.reports.export', array_filter(['date_preset' => request('date_preset'), 'start_date' => request('start_date', $startDate), 'end_date' => request('end_date', $endDate), 'warehouse_id' => $warehouseId])) }}" class="btn bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm whitespace-nowrap flex-shrink-0">
                                 <iconify-icon icon="solar:document-medicine-bold" class="text-base"></iconify-icon>
                                 <span>Xuất Excel</span>
                             </a>
-                        </form>
+                        </div>
                     @else
                         <form action="{{ route('inventory.reports.index') }}" method="GET" class="flex flex-wrap items-center gap-3">
                             <input type="hidden" name="tab" value="matrix">

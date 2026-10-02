@@ -7,10 +7,14 @@ use Illuminate\Http\Request;
 class DashboardController extends Controller
 {
 
-    public function index()
+    public function index(Request $request)
     {
         $user = auth()->user();
         $isAdmin = $user && $user->hasRole('Admin');
+        $dateFilter = $this->getDateFilterParams($request);
+        $hasCustomFilter = !empty($dateFilter['start_date']) || !empty($dateFilter['end_date']);
+        $filterStart = $dateFilter['start_date'];
+        $filterEnd = $dateFilter['end_date'];
 
         $orderQuery = \App\Models\Order::where('status', '!=', 'draft');
         $customerQuery = \App\Models\Customer::query();
@@ -39,15 +43,25 @@ class DashboardController extends Controller
         $targetRecord = \App\Models\RevenueTarget::where('year', $now->year)->where('month', $now->month)->first();
         $revenueTarget = $targetRecord ? (float) $targetRecord->target_amount : 500000000;
 
-        // Doanh thu tháng
-        $revenueMonth = (clone $orderQuery)->where('status', 'completed')
-            ->whereBetween('order_date', [$startOfMonth->toDateString(), $endOfMonth->toDateString()])
-            ->sum('total_amount');
+        // Doanh thu tháng hoặc theo kỳ lọc
+        $revenuePeriodQuery = (clone $orderQuery)->where('status', 'completed');
+        if ($hasCustomFilter) {
+            if ($filterStart) $revenuePeriodQuery->where('order_date', '>=', $filterStart . ' 00:00:00');
+            if ($filterEnd)   $revenuePeriodQuery->where('order_date', '<=', $filterEnd . ' 23:59:59');
+        } else {
+            $revenuePeriodQuery->whereBetween('order_date', [$startOfMonth->toDateString(), $endOfMonth->toDateString()]);
+        }
+        $revenueMonth = $revenuePeriodQuery->sum('total_amount');
         if ($revenueMonth <= 0) {
-            $revenueMonth = (clone $orderQuery)->where('status', 'completed')
-                ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
-                ->sum('total_amount');
-            if ($revenueMonth <= 0) {
+            $fallbackQuery = (clone $orderQuery)->where('status', 'completed');
+            if ($hasCustomFilter) {
+                if ($filterStart) $fallbackQuery->where('created_at', '>=', $filterStart . ' 00:00:00');
+                if ($filterEnd)   $fallbackQuery->where('created_at', '<=', $filterEnd . ' 23:59:59');
+            } else {
+                $fallbackQuery->whereBetween('created_at', [$startOfMonth, $endOfMonth]);
+            }
+            $revenueMonth = $fallbackQuery->sum('total_amount');
+            if ($revenueMonth <= 0 && !$hasCustomFilter) {
                 $revenueMonth = (clone $orderQuery)->where('status', 'completed')->sum('total_amount');
             }
         }
@@ -160,7 +174,8 @@ class DashboardController extends Controller
             'topCustomers',
             'chartDays',
             'chartOrderCounts',
-            'chartRevenues'
+            'chartRevenues',
+            'dateFilter'
         ));
     }
 

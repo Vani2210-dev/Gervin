@@ -305,20 +305,25 @@
     <!-- History list section -->
     <div class="mt-8 card bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-sm">
         <div class="card-body p-6">
-            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-                <h5 class="text-lg font-bold text-neutral-800 dark:text-neutral-100 flex items-center gap-2">
+            <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-6">
+                <h5 class="text-lg font-bold text-neutral-800 dark:text-neutral-100 flex items-center gap-2 mb-0">
                     Lịch sử kiểm soát chất lượng
                 </h5>
 
-                <!-- Search bar -->
-                <div class="relative w-48 sm:w-56">
-                    <span class="absolute top-1/2 -translate-y-1/2 text-neutral-400 flex items-center justify-center pointer-events-none" style="left: 10px;">
-                        <iconify-icon icon="lucide:search" class="text-base"></iconify-icon>
-                    </span>
-                    <input type="text" id="historySearch" oninput="filterHistoryTable()"
-                        class="w-full pr-3 py-1.5 border border-neutral-300 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 text-xs focus:outline-none focus:ring-2 focus:ring-sky-500"
-                        style="padding-left: 34px;"
-                        placeholder="Tìm kiếm lịch sử...">
+                <div class="flex items-center flex-wrap gap-3">
+                    {{-- Bộ lọc ngày tháng chung --}}
+                    <x-date-filter :action="route('processes.qc')" />
+
+                    <!-- Search bar -->
+                    <div class="relative w-48 sm:w-56">
+                        <span class="absolute top-1/2 -translate-y-1/2 text-neutral-400 flex items-center justify-center pointer-events-none" style="left: 10px;">
+                            <iconify-icon icon="lucide:search" class="text-base"></iconify-icon>
+                        </span>
+                        <input type="text" id="historySearch" oninput="filterHistoryTable()"
+                            class="w-full pr-3 py-1.5 border border-neutral-300 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 text-xs focus:outline-none focus:ring-2 focus:ring-sky-500"
+                            style="padding-left: 34px;"
+                            placeholder="Tìm kiếm lịch sử...">
+                    </div>
                 </div>
             </div>
 

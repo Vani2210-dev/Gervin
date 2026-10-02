@@ -32,6 +32,8 @@ class DcStockController extends Controller
             $query->where('status', $status);
         }
 
+        $this->applyDateFilter($query, $request, 'created_at');
+
         $stocks = $query->paginate($perPage)->withQueryString();
 
         // Lấy danh sách mã màu để gợi ý khi nhập

@@ -508,6 +508,9 @@
                             </select>
                         </div>
 
+                        {{-- Bộ lọc ngày tháng chung --}}
+                        <x-date-filter :action="route('processes.dispatch')" />
+
                         <div class="dispatch-page__history-search-wrap relative w-full sm:w-80">
                             <span class="dispatch-page__input-icon dispatch-page__history-search-icon">
                                 <iconify-icon icon="lucide:search"></iconify-icon>

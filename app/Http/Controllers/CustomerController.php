@@ -26,45 +26,13 @@ class CustomerController extends Controller
         $perPage = $request->input('per_page', 10);
         $search  = $request->input('search', '');
         
-        // Date Filter Mode: day | month | year | all | custom
-        $dateMode = $request->input('date_mode');
-        $dateVal = $request->input('date_val');
-        $filterStartDate = $request->input('filter_start_date');
-        $filterEndDate = $request->input('filter_end_date');
-
-        $startDate = null;
-        $endDate = null;
-        $dateLabel = 'Toàn thời gian';
-
-        if ($dateMode) {
-            if ($dateMode === 'day' && $dateVal) {
-                $startDate = $dateVal;
-                $endDate = $dateVal;
-                $dateLabel = 'Ngày ' . \Carbon\Carbon::parse($dateVal)->format('d/m/Y');
-            } elseif ($dateMode === 'month' && $dateVal) {
-                $cDate = \Carbon\Carbon::parse($dateVal . '-01');
-                $startDate = $cDate->copy()->startOfMonth()->toDateString();
-                $endDate = $cDate->copy()->endOfMonth()->toDateString();
-                $dateLabel = 'Tháng ' . $cDate->format('m/Y');
-            } elseif ($dateMode === 'year' && $dateVal) {
-                $startDate = $dateVal . '-01-01';
-                $endDate = $dateVal . '-12-31';
-                $dateLabel = 'Năm ' . $dateVal;
-            } elseif ($dateMode === 'all') {
-                $startDate = null;
-                $endDate = null;
-                $dateLabel = 'Toàn thời gian';
-            }
-        } elseif ($filterStartDate || $filterEndDate) {
-            $startDate = $filterStartDate;
-            $endDate = $filterEndDate;
-            $dateMode = 'custom';
-            $dateLabel = ($startDate ? 'Từ ' . \Carbon\Carbon::parse($startDate)->format('d/m/Y') : '') . ($endDate ? ' đến ' . \Carbon\Carbon::parse($endDate)->format('d/m/Y') : '');
-        } else {
-            $dateMode = 'all';
-            $dateVal = '';
-            $dateLabel = 'Toàn thời gian';
-        }
+        // Unified Date Filter
+        $dateFilter = $this->getDateFilterParams($request);
+        $startDate = $dateFilter['start_date'];
+        $endDate = $dateFilter['end_date'];
+        $dateLabel = $dateFilter['label'];
+        $dateMode = $dateFilter['preset'];
+        $dateVal = $request->input('date_val', '');
 
         $user = auth()->user();
         $query = Customer::query();

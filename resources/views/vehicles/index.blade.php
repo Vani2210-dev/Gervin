@@ -109,7 +109,10 @@
                 Lọc
             </button>
 
-            @if(request()->anyFilled(['keyword', 'status', 'fuel_type']))
+            {{-- Bộ lọc ngày tháng chung --}}
+            <x-date-filter :action="route('vehicles.index')" />
+
+            @if(request()->anyFilled(['keyword', 'status', 'fuel_type', 'date_preset', 'start_date', 'end_date']))
             <a href="{{ route('vehicles.index') }}" class="px-3 py-2 text-neutral-500 hover:text-neutral-700 text-sm font-medium inline-flex items-center gap-1">
                 <iconify-icon icon="lucide:rotate-ccw"></iconify-icon>
                 Đặt lại

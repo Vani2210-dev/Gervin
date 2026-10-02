@@ -212,18 +212,16 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                        <div>
-                            <label for="scan_notes" class="block text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-2">Ghi chú xác minh</label>
-                            <div class="relative flex items-center">
-                                <span class="absolute text-neutral-400 flex items-center justify-center pointer-events-none" style="left: 14px;">
-                                    <iconify-icon icon="lucide:file-text" class="text-lg"></iconify-icon>
-                                </span>
-                                <input type="text" id="scan_notes"
-                                    class="w-full pr-4 py-3.5 border border-neutral-300 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-base"
-                                    style="padding-left: 42px;"
-                                    placeholder="Nhiệt ép đạt chuẩn 180°C...">
-                            </div>
+                    <div class="mt-4">
+                        <label for="scan_notes" class="block text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-2">Ghi chú xác minh</label>
+                        <div class="relative flex items-center">
+                            <span class="absolute text-neutral-400 flex items-center justify-center pointer-events-none" style="left: 14px;">
+                                <iconify-icon icon="lucide:file-text" class="text-lg"></iconify-icon>
+                            </span>
+                            <input type="text" id="scan_notes"
+                                class="w-full pr-4 py-3.5 border border-neutral-300 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-base"
+                                style="padding-left: 42px;"
+                                placeholder="Nhiệt ép đạt chuẩn 180°C...">
                         </div>
                     </div>
 
@@ -326,16 +324,21 @@
             Lịch sử ép ván
         </h5>
         <div class="flex items-center flex-wrap gap-3">
-            <span class="text-sm font-medium text-secondary-light mb-0">Hiển thị</span>
-            <form method="GET" action="{{ route('processes.pressing') }}" id="perPageForm">
-                <input type="hidden" name="search" value="{{ $search }}">
-                <select name="per_page" class="form-select form-select-sm w-auto border border-neutral-200 dark:border-neutral-700 rounded-lg py-1 px-2 text-xs bg-transparent dark:text-neutral-300"
-                    onchange="document.getElementById('perPageForm').submit()">
-                    @foreach([15, 25, 50, 100] as $option)
-                    <option value="{{ $option }}" {{ $perPage == $option ? 'selected' : '' }}>{{ $option }}</option>
-                    @endforeach
-                </select>
-            </form>
+            {{-- Bộ lọc ngày tháng chung --}}
+            <x-date-filter :action="route('processes.pressing')" />
+
+            <div class="flex items-center gap-1.5">
+                <span class="text-sm font-medium text-secondary-light mb-0">Hiển thị</span>
+                <form method="GET" action="{{ route('processes.pressing') }}" id="perPageForm">
+                    <input type="hidden" name="search" value="{{ $search }}">
+                    <select name="per_page" class="form-select form-select-sm w-auto border border-neutral-200 dark:border-neutral-700 rounded-lg py-1 px-2 text-xs bg-transparent dark:text-neutral-300"
+                        onchange="document.getElementById('perPageForm').submit()">
+                        @foreach([15, 25, 50, 100] as $option)
+                        <option value="{{ $option }}" {{ $perPage == $option ? 'selected' : '' }}>{{ $option }}</option>
+                        @endforeach
+                    </select>
+                </form>
+            </div>
             <form method="GET" action="{{ route('processes.pressing') }}" class="relative w-48 sm:w-56">
                 <input type="hidden" name="per_page" value="{{ $perPage }}">
                 <span class="absolute top-1/2 -translate-y-1/2 text-neutral-400 flex items-center justify-center pointer-events-none" style="left: 10px;">

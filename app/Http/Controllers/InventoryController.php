@@ -68,43 +68,16 @@ class InventoryController extends Controller
         $stockFilter = $request->input('stock_filter', 'all'); // 'all', 'low_stock', 'out_of_stock', 'in_stock'
         $search = trim((string)$request->input('search'));
 
-        // Smart Date Filter handling
-        $dateMode = $request->input('date_mode', 'all');
-        $dateVal = $request->input('date_val', '');
-        $filterStartDate = $request->input('filter_start_date');
-        $filterEndDate = $request->input('filter_end_date');
-
-        $startDate = null;
-        $endDate = null;
-        $dateLabel = 'Toàn thời gian';
-
-        if ($dateMode && $dateMode !== 'all') {
-            if ($dateMode === 'day' && $dateVal) {
-                $startDate = $dateVal;
-                $endDate = $dateVal;
-                $dateLabel = 'Ngày ' . \Carbon\Carbon::parse($dateVal)->format('d/m/Y');
-            } elseif ($dateMode === 'month' && $dateVal) {
-                $cDate = \Carbon\Carbon::parse($dateVal . '-01');
-                $startDate = $cDate->copy()->startOfMonth()->toDateString();
-                $endDate = $cDate->copy()->endOfMonth()->toDateString();
-                $dateLabel = 'Tháng ' . $cDate->format('m/Y');
-            } elseif ($dateMode === 'year' && $dateVal) {
-                $startDate = $dateVal . '-01-01';
-                $endDate = $dateVal . '-12-31';
-                $dateLabel = 'Năm ' . $dateVal;
-            }
-        } elseif ($filterStartDate || $filterEndDate) {
-            $startDate = $filterStartDate;
-            $endDate = $filterEndDate;
-            $dateMode = 'custom';
-            $dateLabel = ($startDate ? 'Từ ' . \Carbon\Carbon::parse($startDate)->format('d/m/Y') : '') . ($endDate ? ' đến ' . \Carbon\Carbon::parse($endDate)->format('d/m/Y') : '');
-        } else {
-            $dateMode = 'all';
-            $dateVal = '';
-            $dateLabel = 'Toàn thời gian';
-        }
-
         $query = WoodBoard::with('warehouse');
+
+        // Smart Date Filter handling
+        $dateFilterData = [];
+        $this->applyDateFilter($query, $request, 'created_at', $dateFilterData);
+        $startDate = $dateFilterData['start_date'];
+        $endDate = $dateFilterData['end_date'];
+        $dateLabel = $dateFilterData['label'];
+        $dateMode = $request->input('date_mode', $dateFilterData['preset']);
+        $dateVal = $request->input('date_val', '');
 
         if ($selectedWarehouseId) {
             $query->where('warehouse_id', $selectedWarehouseId);
@@ -381,6 +354,7 @@ class InventoryController extends Controller
     public function receipts(Request $request)
     {
         $query = InventoryReceipt::with(['warehouse', 'creator'])->withCount('items');
+        $this->applyDateFilter($query, $request, 'date');
 
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
@@ -454,6 +428,7 @@ class InventoryController extends Controller
     public function issues(Request $request)
     {
         $query = InventoryIssue::with(['warehouse', 'creator'])->withCount('items');
+        $this->applyDateFilter($query, $request, 'date');
 
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
@@ -525,6 +500,7 @@ class InventoryController extends Controller
     public function stocktakes(Request $request)
     {
         $query = InventoryStocktake::with(['warehouse', 'balancedByUser'])->withCount('items');
+        $this->applyDateFilter($query, $request, 'date');
 
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
@@ -609,8 +585,14 @@ class InventoryController extends Controller
     public function reports(Request $request)
     {
         $tab = $request->input('tab', 'summary'); // 'summary' or 'matrix'
-        $startDate = $request->input('start_date', date('Y-01-01'));
-        $endDate = $request->input('end_date', date('Y-m-d'));
+        $dateFilter = $this->getDateFilterParams($request);
+        if ($request->has('date_preset') || $request->has('start_date') || $request->has('end_date') || $request->has('date_mode')) {
+            $startDate = $dateFilter['start_date'] ?? '2000-01-01';
+            $endDate = $dateFilter['end_date'] ?? date('Y-m-d');
+        } else {
+            $startDate = date('Y-01-01');
+            $endDate = date('Y-m-d');
+        }
         $year = (int)$request->input('year', date('Y'));
         $warehouseId = $request->input('warehouse_id');
 
@@ -769,8 +751,14 @@ class InventoryController extends Controller
      */
     public function exportReport(Request $request)
     {
-        $startDate = $request->input('start_date', date('Y-01-01'));
-        $endDate = $request->input('end_date', date('Y-m-d'));
+        $dateFilter = $this->getDateFilterParams($request);
+        if ($request->has('date_preset') || $request->has('start_date') || $request->has('end_date') || $request->has('date_mode')) {
+            $startDate = $dateFilter['start_date'] ?? '2000-01-01';
+            $endDate = $dateFilter['end_date'] ?? date('Y-m-d');
+        } else {
+            $startDate = date('Y-01-01');
+            $endDate = date('Y-m-d');
+        }
         $warehouseId = $request->input('warehouse_id');
 
         $materialsQuery = WoodBoard::with('warehouse')->orderBy('price_group')->orderBy('color_code');

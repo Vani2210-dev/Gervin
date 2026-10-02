@@ -125,14 +125,13 @@
                         placeholder="Tìm khách hàng, mã đơn, mã màu, lệnh..." value="{{ $search }}">
                 </div>
 
-                {{-- Chọn ngày trực tiếp --}}
-                <div class="flex items-center gap-2">
-                    <input type="date" name="date" value="{{ $date }}" class="form-control border-neutral-200 rounded-xl px-3 py-2 text-xs focus:border-primary-500" title="Chọn ngày sản xuất">
-                    <button type="submit" class="btn bg-primary-600 hover:bg-primary-700 text-white text-xs px-4 py-2 rounded-xl font-semibold transition">
-                        Tìm kiếm
-                    </button>
-                </div>
+                <button type="submit" class="btn bg-primary-600 hover:bg-primary-700 text-white text-xs px-4 py-2 rounded-xl font-semibold transition">
+                    Tìm kiếm
+                </button>
             </form>
+
+            {{-- Bộ lọc ngày tháng chung --}}
+            <x-date-filter :action="route('manufactures.sequence')" />
 
             {{-- Quick Filter Pills --}}
             <div class="flex items-center gap-1 bg-neutral-100 p-1 rounded-xl">

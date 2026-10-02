@@ -38,6 +38,37 @@ class ManufactureStepController extends Controller
         $search = $request->input('search', '');
         $page = $request->input('page', 1);
 
+        $dateParams = $this->getDateFilterParams($request);
+        $startDate = $dateParams['start_date'];
+        $endDate = $dateParams['end_date'];
+
+        if ($startDate || $endDate) {
+            $history = $history->filter(function ($item) use ($startDate, $endDate) {
+                $itemDate = null;
+                if (!empty($item->action_time)) {
+                    $itemDate = \Carbon\Carbon::parse($item->action_time)->toDateString();
+                } elseif (!empty($item->time)) {
+                    // Try parsing time if format is H:i:s d/m/Y or d/m/Y
+                    try {
+                        $itemDate = \Carbon\Carbon::parse($item->time)->toDateString();
+                    } catch (\Exception $e) {}
+                } elseif (!empty($item->created_at)) {
+                    $itemDate = \Carbon\Carbon::parse($item->created_at)->toDateString();
+                }
+
+                if (!$itemDate) return true;
+
+                if ($startDate && $endDate) {
+                    return $itemDate >= $startDate && $itemDate <= $endDate;
+                } elseif ($startDate) {
+                    return $itemDate >= $startDate;
+                } elseif ($endDate) {
+                    return $itemDate <= $endDate;
+                }
+                return true;
+            });
+        }
+
         if ($search) {
             $history = $history->filter(function ($item) use ($search) {
                 return str_contains(mb_strtolower($item->product_code ?? ''), mb_strtolower($search))
