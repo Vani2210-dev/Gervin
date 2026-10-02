@@ -53,12 +53,9 @@
                         <input type="hidden" name="search" value="{{ $search }}">
                         <select name="status" class="form-select form-select-sm border-neutral-200 rounded-lg manufacture-status-select text-xs font-medium" onchange="this.form.submit()">
                             <option value="">-- Tất cả trạng thái --</option>
-                            <option value="initialized" {{ $status == 'initialized' ? 'selected' : '' }}>Khởi tạo</option>
-                            <option value="tech_approved" {{ $status == 'tech_approved' ? 'selected' : '' }}>KT Duyệt</option>
-                            <option value="manager_approved" {{ $status == 'manager_approved' ? 'selected' : '' }}>QĐ Duyệt</option>
-                            <option value="stamps_received" {{ $status == 'stamps_received' ? 'selected' : '' }}>Nhận tem</option>
-                            <option value="in_production" {{ $status == 'in_production' ? 'selected' : '' }}>Sản xuất</option>
+                            <option value="in_production" {{ $status == 'in_production' ? 'selected' : '' }}>Đang sản xuất</option>
                             <option value="completed" {{ $status == 'completed' ? 'selected' : '' }}>Hoàn thành</option>
+                            <option value="initialized" {{ $status == 'initialized' ? 'selected' : '' }}>Khởi tạo (cũ)</option>
                         </select>
                     </form>
 
@@ -93,6 +90,7 @@
                                 <th scope="col">STT</th>
                                 <th scope="col">Mã lệnh</th>
                                 <th scope="col">Đơn hàng ghép</th>
+                                <th scope="col" class="text-center" style="min-width: 160px;">Tiến độ gia công</th>
                                 <th scope="col">Người tạo</th>
                                 <th scope="col">Ghi chú</th>
                                 <th scope="col">Trạng thái</th>
@@ -102,7 +100,10 @@
                         </thead>
                         <tbody>
                             @forelse($manufactures as $index => $m)
-                            @php $stt = $manufactures->firstItem() + $loop->index; @endphp
+                            @php
+                                $stt = $manufactures->firstItem() + $loop->index;
+                                $prog = $m->getProgress();
+                            @endphp
                             <tr>
                                 <td>{{ $stt }}</td>
                                 <td>
@@ -117,6 +118,20 @@
                                             {{ $o->order_code }} ({{ ucfirst($o->type) }})
                                         </span>
                                         @endforeach
+                                    </div>
+                                </td>
+                                <td class="align-middle">
+                                    <div class="w-full bg-neutral-100 rounded-full h-2.5 overflow-hidden mb-1 border border-neutral-200">
+                                        <div class="h-2.5 rounded-full transition-all duration-300 {{ $prog['is_all_completed'] ? 'bg-success-600' : ($prog['percentage'] > 0 ? 'bg-indigo-600' : 'bg-neutral-300') }}"
+                                             style="width: {{ $prog['percentage'] }}%;"></div>
+                                    </div>
+                                    <div class="flex items-center justify-between text-xs font-semibold">
+                                        <span class="{{ $prog['is_all_completed'] ? 'text-success-700' : 'text-neutral-700' }}">
+                                            {{ $prog['completed'] }}/{{ $prog['total'] }} tấm
+                                        </span>
+                                        <span class="{{ $prog['is_all_completed'] ? 'text-success-700' : 'text-indigo-600' }}">
+                                            {{ $prog['percentage'] }}%
+                                        </span>
                                     </div>
                                 </td>
                                 <td>
@@ -172,7 +187,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="8" class="text-center py-8">
+                                <td colspan="9" class="text-center py-8">
                                     <p class="text-neutral-500">Chưa có lệnh sản xuất nào</p>
                                 </td>
                             </tr>

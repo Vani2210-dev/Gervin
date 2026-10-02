@@ -90,7 +90,7 @@
                                             <a href="{{ route('inventory.receipts.print', $r) }}" target="_blank" class="p-1 text-info-600 hover:text-info-800 text-base" title="In phiếu">
                                                 <iconify-icon icon="solar:printer-outline"></iconify-icon>
                                             </a>
-                                            <form action="{{ route('inventory.receipts.destroy', $r) }}" method="POST" onsubmit="return confirm('Bạn có chắc muốn xóa phiếu nhập {{ $r->code }}?')">
+                                            <form action="{{ route('inventory.receipts.destroy', $r) }}" method="POST" onsubmit="return confirm('Bạn có chắc muốn xóa phiếu nhập {{ $r->code }}? Số lượng hàng hóa trong phiếu sẽ được tự động hoàn trả (trừ bớt) khỏi tồn kho!')">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="p-1 text-danger-600 hover:text-danger-800 text-base" title="Xóa">

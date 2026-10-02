@@ -869,8 +869,8 @@
                 </button>
                 @if($acrylicOrder->type === 'acrylic')
                     <button type="button" onclick="exportNestingFiles()"
-                        class="w-full justify-center flex items-center gap-2 py-3 rounded-xl font-semibold border border-emerald-200 text-emerald-700 hover:bg-emerald-50 transition-colors shadow-sm text-sm bg-white cursor-pointer">
-                        <iconify-icon icon="lucide:table-2" class="text-base"></iconify-icon> Xuất Nesting (.xlsx)
+                        class="w-full justify-center flex items-center gap-2 py-3 rounded-xl font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition-colors shadow-sm text-sm cursor-pointer">
+                        <iconify-icon icon="lucide:table-2" class="text-lg"></iconify-icon> Tải file xả tem Nesting (Kỹ thuật)
                     </button>
                 @endif
             </div>
@@ -891,17 +891,26 @@
         <script src="{{ asset('assets/js/nesting-export.js') }}"></script>
     @endif
     <script>
-        // Auto-export when accessed with ?export=1 (from orders index list button)
+        // Auto-export when accessed with ?export=1 or ?export_nesting=1
         (function () {
             const params = new URLSearchParams(window.location.search);
             if (params.get('export') === '1') {
                 window.addEventListener('load', function () {
-                    // Small delay to ensure exceljs + FileSaver are ready
                     setTimeout(function () {
                         if (typeof exportToExcel === 'function') {
                             exportToExcel();
                         }
-                        // Navigate back to orders list after triggering download
+                        setTimeout(function () {
+                            window.history.back();
+                        }, 800);
+                    }, 400);
+                });
+            } else if (params.get('export_nesting') === '1') {
+                window.addEventListener('load', function () {
+                    setTimeout(function () {
+                        if (typeof exportNestingFiles === 'function') {
+                            exportNestingFiles();
+                        }
                         setTimeout(function () {
                             window.history.back();
                         }, 800);

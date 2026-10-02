@@ -29,6 +29,13 @@
                     <a href="{{ route('inventory.issues.create') }}" class="btn bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 shadow-sm">
                         <iconify-icon icon="ic:baseline-plus" class="text-base"></iconify-icon> Tạo phiếu xuất mới
                     </a>
+                    <form action="{{ route('inventory.issues.destroy', $issue) }}" method="POST" onsubmit="return confirm('Bạn có chắc muốn xóa phiếu xuất {{ $issue->code }}? Số lượng hàng hóa trong phiếu sẽ được tự động hoàn trả (cộng lại) vào tồn kho!')" class="inline-block">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn border border-danger-300 text-danger-600 hover:bg-danger-50 px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2">
+                            <iconify-icon icon="fluent:delete-24-regular" class="text-base"></iconify-icon> Xóa phiếu
+                        </button>
+                    </form>
                 </div>
             </div>
 

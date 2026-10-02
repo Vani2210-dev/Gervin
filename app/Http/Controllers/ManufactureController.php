@@ -20,7 +20,7 @@ class ManufactureController extends Controller
     {
         $this->middleware('permission:view manufacture',   ['only' => ['index', 'show', 'printStamps']]);
         $this->middleware('permission:view sequence',      ['only' => ['sequenceIndex', 'sequenceExport']]);
-        $this->middleware('permission:add manufacture',    ['only' => ['create', 'store']]);
+        $this->middleware('permission:add manufacture',    ['only' => ['create', 'store', 'quickCreate']]);
         $this->middleware('permission:edit manufacture',   ['only' => ['edit', 'update']]);
         $this->middleware('permission:delete manufacture', ['only' => ['destroy']]);
         $this->middleware('permission:approve manufacture',['only' => ['approveStep']]);
@@ -32,7 +32,12 @@ class ManufactureController extends Controller
         $search  = $request->input('search', '');
         $status  = $request->input('status', '');
 
-        $manufactures = ManufactureOrder::with(['orders', 'creator'])
+        $manufactures = ManufactureOrder::with([
+            'creator',
+            'orders.supplies.items.codes',
+            'orders.supplies.minLateItems.codes',
+            'orders.supplies.glassItems.codes',
+        ])
             ->when($search, function ($q) use ($search) {
                 $q->where('code', 'like', "%{$search}%")
                   ->orWhere('notes', 'like', "%{$search}%");
@@ -499,14 +504,7 @@ class ManufactureController extends Controller
 
     public function create()
     {
-        $today = date('Ymd');
-        $lastMO = ManufactureOrder::where('code', 'like', "LSX-{$today}-%")->orderBy('id', 'desc')->first();
-        $nextNumber = 1;
-        if ($lastMO) {
-            $parts = explode('-', $lastMO->code);
-            $nextNumber = intval(end($parts)) + 1;
-        }
-        $nextCode = "LSX-{$today}-" . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+        $nextCode = ManufactureOrder::generateNextCode();
 
         // Get unlinked active orders (not cancelled)
         $orders = Order::whereNotIn('id', function($q) {
@@ -518,29 +516,148 @@ class ManufactureController extends Controller
 
     public function store(Request $request)
     {
+        $code = $request->code ?: ManufactureOrder::generateNextCode();
+
         $request->validate([
-            'code'      => 'required|string|unique:manufacture_orders,code',
+            'code'      => 'nullable|string|unique:manufacture_orders,code,' . ($request->id ?? 'NULL') . ',id',
             'notes'     => 'nullable|string',
             'order_ids' => 'required|array|min:1',
             'order_ids.*' => 'exists:orders,id',
         ]);
 
+        $now = now();
+        $userId = Auth::id();
+
         $manufacture = ManufactureOrder::create([
-            'code'       => $request->code,
-            'notes'      => $request->notes,
-            'status'     => 'initialized',
-            'created_by' => Auth::id(),
+            'code'                  => $code,
+            'notes'                 => $request->notes,
+            'status'                => 'in_production',
+            'tech_approved_by'      => $userId,
+            'tech_approved_at'      => $now,
+            'manager_approved_by'   => $userId,
+            'manager_approved_at'   => $now,
+            'stamps_received_by'    => $userId,
+            'stamps_received_at'    => $now,
+            'production_started_by' => $userId,
+            'production_started_at' => $now,
+            'created_by'            => $userId,
         ]);
 
         $manufacture->orders()->attach($request->order_ids);
+        $manufacture->orders()->update(['status' => 'in_production']);
 
-        return redirect()->route('manufactures.index')->with('success', 'Tạo lệnh sản xuất thành công.');
+        // Khởi tạo status "đã vào sản xuất" cho các tấm ván
+        $orderIds = $request->order_ids;
+        $supplyIds = \App\Models\OrderSupply::whereIn('order_id', $orderIds)->pluck('id')->toArray();
+        $newStatus = [
+            [
+                'time'        => $now->format('Y-m-d H:i:s'),
+                'notes'       => 'Khởi tạo theo Lệnh SX ' . $manufacture->code,
+                'action'      => 'đã nhận tem',
+                'operator'    => Auth::user()->name ?? 'Hệ thống',
+                'operator_id' => $userId,
+            ]
+        ];
+        $newStatusJson = json_encode($newStatus);
+
+        $acrylicItemIds = \App\Models\AcrylicOrderItem::whereIn('order_supply_id', $supplyIds)->pluck('id')->toArray();
+        \App\Models\AcrylicOrderItemCode::whereIn('acrylic_order_item_id', $acrylicItemIds)
+            ->where(function($q) { $q->whereNull('status')->orWhere('status', '[]')->orWhere('status', ''); })
+            ->update(['status' => $newStatusJson]);
+
+        $glassItemIds = \App\Models\GlassOrderItem::whereIn('order_supply_id', $supplyIds)->pluck('id')->toArray();
+        \App\Models\GlassOrderItemCode::whereIn('glass_order_item_id', $glassItemIds)
+            ->where(function($q) { $q->whereNull('status')->orWhere('status', '[]')->orWhere('status', ''); })
+            ->update(['status' => $newStatusJson]);
+
+        $minLateItemIds = \App\Models\MinLateOrderItem::whereIn('order_supply_id', $supplyIds)->pluck('id')->toArray();
+        \App\Models\MinLateOrderItemCode::whereIn('min_late_order_item_id', $minLateItemIds)
+            ->where(function($q) { $q->whereNull('status')->orWhere('status', '[]')->orWhere('status', ''); })
+            ->update(['status' => $newStatusJson]);
+
+        return redirect()->route('manufactures.show', $manufacture)->with('success', 'Tạo lệnh sản xuất ' . $manufacture->code . ' thành công! Đã tự động kích hoạt Đang sản xuất & quét QR.');
+    }
+
+    /**
+     * Tạo nhanh Lệnh sản xuất 1-chạm từ danh sách đơn hàng đã chọn
+     */
+    public function quickCreate(Request $request)
+    {
+        $request->validate([
+            'order_ids'   => 'required|array|min:1',
+            'order_ids.*' => 'exists:orders,id',
+            'notes'       => 'nullable|string',
+            'code'        => 'nullable|string|unique:manufacture_orders,code',
+        ]);
+
+        $code = $request->code ?: ManufactureOrder::generateNextCode();
+        $now = now();
+        $userId = Auth::id();
+
+        $manufacture = ManufactureOrder::create([
+            'code'                  => $code,
+            'notes'                 => $request->notes,
+            'status'                => 'in_production',
+            'tech_approved_by'      => $userId,
+            'tech_approved_at'      => $now,
+            'manager_approved_by'   => $userId,
+            'manager_approved_at'   => $now,
+            'stamps_received_by'    => $userId,
+            'stamps_received_at'    => $now,
+            'production_started_by' => $userId,
+            'production_started_at' => $now,
+            'created_by'            => $userId,
+        ]);
+
+        $manufacture->orders()->attach($request->order_ids);
+        $manufacture->orders()->update(['status' => 'in_production']);
+
+        // Khởi tạo status "đã vào sản xuất" cho các tấm ván
+        $orderIds = $request->order_ids;
+        $supplyIds = \App\Models\OrderSupply::whereIn('order_id', $orderIds)->pluck('id')->toArray();
+        $newStatus = [
+            [
+                'time'        => $now->format('Y-m-d H:i:s'),
+                'notes'       => 'Khởi tạo theo Lệnh SX ' . $manufacture->code,
+                'action'      => 'đã nhận tem',
+                'operator'    => Auth::user()->name ?? 'Hệ thống',
+                'operator_id' => $userId,
+            ]
+        ];
+        $newStatusJson = json_encode($newStatus);
+
+        $acrylicItemIds = \App\Models\AcrylicOrderItem::whereIn('order_supply_id', $supplyIds)->pluck('id')->toArray();
+        \App\Models\AcrylicOrderItemCode::whereIn('acrylic_order_item_id', $acrylicItemIds)
+            ->where(function($q) { $q->whereNull('status')->orWhere('status', '[]')->orWhere('status', ''); })
+            ->update(['status' => $newStatusJson]);
+
+        $glassItemIds = \App\Models\GlassOrderItem::whereIn('order_supply_id', $supplyIds)->pluck('id')->toArray();
+        \App\Models\GlassOrderItemCode::whereIn('glass_order_item_id', $glassItemIds)
+            ->where(function($q) { $q->whereNull('status')->orWhere('status', '[]')->orWhere('status', ''); })
+            ->update(['status' => $newStatusJson]);
+
+        $minLateItemIds = \App\Models\MinLateOrderItem::whereIn('order_supply_id', $supplyIds)->pluck('id')->toArray();
+        \App\Models\MinLateOrderItemCode::whereIn('min_late_order_item_id', $minLateItemIds)
+            ->where(function($q) { $q->whereNull('status')->orWhere('status', '[]')->orWhere('status', ''); })
+            ->update(['status' => $newStatusJson]);
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success'      => true,
+                'message'      => 'Đã tạo và kích hoạt Lệnh sản xuất ' . $manufacture->code . ' thành công!',
+                'redirect_url' => route('manufactures.show', $manufacture),
+            ]);
+        }
+
+        return redirect()->route('manufactures.show', $manufacture)->with('success', 'Đã gom ' . count($request->order_ids) . ' đơn vào Lệnh sản xuất ' . $manufacture->code . ' và kích hoạt sản xuất ngay!');
     }
 
     public function show(ManufactureOrder $manufacture)
     {
         $manufacture->load([
-            'orders.supplies',
+            'orders.supplies.items.codes',
+            'orders.supplies.minLateItems.codes',
+            'orders.supplies.glassItems.codes',
             'creator',
             'techApprover',
             'managerApprover',
@@ -552,6 +669,16 @@ class ManufactureController extends Controller
 
         $allItems = $manufacture->getAllItems();
         $totalItemsCount = $allItems->count();
+        $progress = $manufacture->getProgress();
+
+        // Chuẩn bị dữ liệu export nesting cho kỹ thuật nếu có đơn Acrylic
+        $acrylicOrdersExportData = [];
+        $orderController = app(\App\Http\Controllers\OrderController::class);
+        foreach ($manufacture->orders as $o) {
+            if ($o->type === 'acrylic') {
+                $acrylicOrdersExportData[] = $orderController->getExportData($o);
+            }
+        }
 
         $currentPage = \Illuminate\Pagination\LengthAwarePaginator::resolveCurrentPage();
         $perPage = intval(request()->input('per_page', 15));
@@ -574,7 +701,7 @@ class ManufactureController extends Controller
 
         $workers = \App\Models\User::orderBy('name')->get();
 
-        return view('manufactures.show', compact('manufacture', 'items', 'workers', 'totalItemsCount'));
+        return view('manufactures.show', compact('manufacture', 'items', 'workers', 'totalItemsCount', 'progress', 'acrylicOrdersExportData'));
     }
 
     public function edit(ManufactureOrder $manufacture)
@@ -693,18 +820,21 @@ class ManufactureController extends Controller
                 break;
 
             case 'start_production':
-                if ($manufacture->status !== 'stamps_received') {
-                    return back()->with('error', 'Trạng thái không hợp lệ để bắt đầu sản xuất.');
-                }
                 \Illuminate\Support\Facades\DB::transaction(function () use ($manufacture, $user, $now) {
                     $manufacture->update([
-                        'status' => 'in_production',
+                        'status'                => 'in_production',
+                        'tech_approved_by'      => $manufacture->tech_approved_by ?: $user->id,
+                        'tech_approved_at'      => $manufacture->tech_approved_at ?: $now,
+                        'manager_approved_by'   => $manufacture->manager_approved_by ?: $user->id,
+                        'manager_approved_at'   => $manufacture->manager_approved_at ?: $now,
+                        'stamps_received_by'    => $manufacture->stamps_received_by ?: $user->id,
+                        'stamps_received_at'    => $manufacture->stamps_received_at ?: $now,
                         'production_started_by' => $user->id,
                         'production_started_at' => $now,
                     ]);
                     $manufacture->orders()->update(['status' => 'in_production']);
                 });
-                $msg = 'Bắt đầu sản xuất thành công.';
+                $msg = 'Kích hoạt sản xuất thành công.';
                 break;
 
             case 'complete':

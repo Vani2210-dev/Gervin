@@ -51,208 +51,151 @@
     }
 </style>
 
-{{-- Stepper Progress Tracker --}}
-<div class="bg-white border border-neutral-200 rounded-xl mb-6 shadow-sm overflow-hidden">
-    <div class="px-6 py-8">
-        <div class="relative flex flex-col md:flex-row justify-between w-full gap-6 md:gap-0 manufacture-stepper">
-            
-            {{-- Desktop Line --}}
-            <div class="manufacture-desktop-line hidden md:block absolute left-[5%] right-[5%] top-[24px] h-[3px] bg-neutral-200 z-0 rounded-full">
-                <div class="h-full bg-primary-600 transition-all duration-500 rounded-full" style="width: {{ (($currentStepNum - 1) / 5) * 100 }}%"></div>
+{{-- Production Status Banner --}}
+<div class="bg-white border border-neutral-200 rounded-xl mb-6 shadow-sm p-6">
+    <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div class="flex items-center gap-4">
+            <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl font-bold shadow-sm flex-shrink-0
+                {{ $manufacture->status === 'completed' ? 'bg-success-50 text-success-600 border border-success-200' : 'bg-indigo-50 text-indigo-600 border border-indigo-200' }}">
+                @if($manufacture->status === 'completed')
+                    <iconify-icon icon="solar:check-circle-bold" class="text-3xl text-success-600"></iconify-icon>
+                @else
+                    <iconify-icon icon="solar:cog-bold-duotone" class="text-3xl text-indigo-600 animate-spin" style="animation-duration: 6s;"></iconify-icon>
+                @endif
             </div>
-
-            {{-- Mobile Line --}}
-            <div class="manufacture-mobile-line absolute left-[24px] top-[24px] bottom-[24px] w-[3px] bg-neutral-200 z-0 md:hidden rounded-full">
-                <div class="w-full bg-primary-600 transition-all duration-500 rounded-full" style="height: {{ (($currentStepNum - 1) / 5) * 100 }}%"></div>
-            </div>
-
-            {{-- Step 1: Khởi tạo --}}
-            @php
-                $isCompleted = $currentStepNum > 1;
-                $isActive = $currentStepNum == 1;
-            @endphp
-            <div class="flex flex-row md:flex-col items-center md:text-center relative z-10 md:w-[15%] group manufacture-step-item">
-                <div class="w-12 h-12 rounded-full flex items-center justify-center font-bold transition-all duration-300 flex-shrink-0
-                    {{ $isCompleted ? 'bg-success-500 text-white shadow-sm border border-success-500' : '' }}
-                    {{ $isActive ? 'bg-primary-600 text-white ring-4 ring-primary-50 shadow-sm border border-primary-600 animate-pulse' : '' }}
-                    {{ !$isCompleted && !$isActive ? 'bg-neutral-100 text-neutral-400 border border-neutral-200' : '' }}">
-                    @if($isCompleted)
-                        <iconify-icon icon="lucide:check" class="text-xl"></iconify-icon>
+            <div>
+                <div class="flex items-center gap-3 flex-wrap">
+                    <h4 class="font-black text-xl text-neutral-800 m-0">{{ $manufacture->code }}</h4>
+                    @if($manufacture->status === 'completed')
+                        <span class="px-3 py-1 rounded-full text-xs font-bold bg-success-100 text-success-700 border border-success-200 flex items-center gap-1">
+                            <iconify-icon icon="lucide:check-circle"></iconify-icon> Đã hoàn thành
+                        </span>
                     @else
-                        <iconify-icon icon="lucide:clock" class="text-xl"></iconify-icon>
+                        <span class="px-3 py-1 rounded-full text-xs font-bold bg-indigo-100 text-indigo-700 border border-indigo-200 flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-indigo-600 animate-ping"></span> Đang sản xuất
+                        </span>
                     @endif
                 </div>
-                <div class="ml-4 md:ml-0 md:mt-3 flex-1 text-left md:text-center manufacture-step-text">
-                    <span class="text-xs font-extrabold uppercase tracking-wider block
-                        {{ $isCompleted ? 'text-success-600' : '' }}
-                        {{ $isActive ? 'text-primary-600 font-bold' : '' }}
-                        {{ !$isCompleted && !$isActive ? 'text-neutral-400' : '' }}">
-                        Khởi tạo
-                    </span>
-                    <span class="block text-[10px] text-neutral-500 font-medium mt-0.5">{{ $manufacture->creator->name ?? 'Hệ thống' }}</span>
-                    <span class="block text-[9px] text-neutral-400">{{ $manufacture->created_at->format('d/m/Y H:i') }}</span>
+                <div class="flex flex-wrap items-center gap-3 mt-2 text-xs text-neutral-500">
+                    <span><strong class="text-neutral-700">Người tạo:</strong> {{ $manufacture->creator->name ?? 'Hệ thống' }}</span>
+                    <span>•</span>
+                    <span><strong class="text-neutral-700">Ngày tạo:</strong> {{ $manufacture->created_at->format('d/m/Y H:i') }}</span>
+                    <span>•</span>
+                    <span><strong class="text-neutral-700">Số đơn ghép:</strong> {{ $manufacture->orders->count() }} đơn</span>
+                    <span>•</span>
+                    <span><strong class="text-neutral-700">Tổng số tấm:</strong> {{ $totalItemsCount }} tấm</span>
                 </div>
             </div>
-
-            {{-- Step 2: KT DUYỆT --}}
-            @php
-                $isCompleted = $currentStepNum > 2;
-                $isActive = $currentStepNum == 2;
-            @endphp
-            <div class="flex flex-row md:flex-col items-center md:text-center relative z-10 md:w-[15%] group manufacture-step-item">
-                <div class="w-12 h-12 rounded-full flex items-center justify-center font-bold transition-all duration-300 flex-shrink-0
-                    {{ $isCompleted ? 'bg-success-500 text-white shadow-sm border border-success-500' : '' }}
-                    {{ $isActive ? 'bg-primary-600 text-white ring-4 ring-primary-50 shadow-sm border border-primary-600 animate-pulse' : '' }}
-                    {{ !$isCompleted && !$isActive ? 'bg-neutral-100 text-neutral-400 border border-neutral-200' : '' }}">
-                    @if($isCompleted)
-                        <iconify-icon icon="lucide:check" class="text-xl"></iconify-icon>
-                    @else
-                        <iconify-icon icon="lucide:shield-check" class="text-xl"></iconify-icon>
-                    @endif
-                </div>
-                <div class="ml-4 md:ml-0 md:mt-3 flex-1 text-left md:text-center manufacture-step-text">
-                    <span class="text-xs font-extrabold uppercase tracking-wider block
-                        {{ $isCompleted ? 'text-success-600' : '' }}
-                        {{ $isActive ? 'text-primary-600 font-bold' : '' }}
-                        {{ !$isCompleted && !$isActive ? 'text-neutral-400' : '' }}">
-                        KT Duyệt
-                    </span>
-                    @if($manufacture->techApprover)
-                        <span class="block text-[10px] text-neutral-500 font-medium mt-0.5">{{ $manufacture->techApprover->name }}</span>
-                        <span class="block text-[9px] text-neutral-400">{{ $manufacture->tech_approved_at->format('d/m/Y H:i') }}</span>
-                    @else
-                        <span class="block text-[10px] text-neutral-400 italic mt-0.5">Chờ duyệt</span>
-                    @endif
-                </div>
-            </div>
-
-            {{-- Step 3: QĐ DUYỆT --}}
-            @php
-                $isCompleted = $currentStepNum > 3;
-                $isActive = $currentStepNum == 3;
-            @endphp
-            <div class="flex flex-row md:flex-col items-center md:text-center relative z-10 md:w-[15%] group manufacture-step-item">
-                <div class="w-12 h-12 rounded-full flex items-center justify-center font-bold transition-all duration-300 flex-shrink-0
-                    {{ $isCompleted ? 'bg-success-500 text-white shadow-sm border border-success-500' : '' }}
-                    {{ $isActive ? 'bg-primary-600 text-white ring-4 ring-primary-50 shadow-sm border border-primary-600 animate-pulse' : '' }}
-                    {{ !$isCompleted && !$isActive ? 'bg-neutral-100 text-neutral-400 border border-neutral-200' : '' }}">
-                    @if($isCompleted)
-                        <iconify-icon icon="lucide:check" class="text-xl"></iconify-icon>
-                    @else
-                        <iconify-icon icon="lucide:user-check" class="text-xl"></iconify-icon>
-                    @endif
-                </div>
-                <div class="ml-4 md:ml-0 md:mt-3 flex-1 text-left md:text-center manufacture-step-text">
-                    <span class="text-xs font-extrabold uppercase tracking-wider block
-                        {{ $isCompleted ? 'text-success-600' : '' }}
-                        {{ $isActive ? 'text-primary-600 font-bold' : '' }}
-                        {{ !$isCompleted && !$isActive ? 'text-neutral-400' : '' }}">
-                        QĐ Duyệt
-                    </span>
-                    @if($manufacture->managerApprover)
-                        <span class="block text-[10px] text-neutral-500 font-medium mt-0.5">{{ $manufacture->managerApprover->name }}</span>
-                        <span class="block text-[9px] text-neutral-400">{{ $manufacture->manager_approved_at->format('d/m/Y H:i') }}</span>
-                    @else
-                        <span class="block text-[10px] text-neutral-400 italic mt-0.5">Chờ duyệt</span>
-                    @endif
-                </div>
-            </div>
-
-            {{-- Step 4: NHẬN TEM --}}
-            @php
-                $isCompleted = $currentStepNum > 4;
-                $isActive = $currentStepNum == 4;
-            @endphp
-            <div class="flex flex-row md:flex-col items-center md:text-center relative z-10 md:w-[15%] group manufacture-step-item">
-                <div class="w-12 h-12 rounded-full flex items-center justify-center font-bold transition-all duration-300 flex-shrink-0
-                    {{ $isCompleted ? 'bg-success-500 text-white shadow-sm border border-success-500' : '' }}
-                    {{ $isActive ? 'bg-primary-600 text-white ring-4 ring-primary-50 shadow-sm border border-primary-600 animate-pulse' : '' }}
-                    {{ !$isCompleted && !$isActive ? 'bg-neutral-100 text-neutral-400 border border-neutral-200' : '' }}">
-                    @if($isCompleted)
-                        <iconify-icon icon="lucide:check" class="text-xl"></iconify-icon>
-                    @else
-                        <iconify-icon icon="lucide:tag" class="text-xl"></iconify-icon>
-                    @endif
-                </div>
-                <div class="ml-4 md:ml-0 md:mt-3 flex-1 text-left md:text-center manufacture-step-text">
-                    <span class="text-xs font-extrabold uppercase tracking-wider block
-                        {{ $isCompleted ? 'text-success-600' : '' }}
-                        {{ $isActive ? 'text-primary-600 font-bold' : '' }}
-                        {{ !$isCompleted && !$isActive ? 'text-neutral-400' : '' }}">
-                        Nhận tem
-                    </span>
-                    @if($manufacture->stampsReceiver)
-                        <span class="block text-[10px] text-neutral-500 font-medium mt-0.5">{{ $manufacture->stampsReceiver->name }}</span>
-                        <span class="block text-[9px] text-neutral-400">{{ $manufacture->stamps_received_at->format('d/m/Y H:i') }}</span>
-                    @else
-                        <span class="block text-[10px] text-neutral-400 italic mt-0.5">Chưa nhận</span>
-                    @endif
-                </div>
-            </div>
-
-            {{-- Step 5: SẢN XUẤT --}}
-            @php
-                $isCompleted = $currentStepNum > 5;
-                $isActive = $currentStepNum == 5;
-            @endphp
-            <div class="flex flex-row md:flex-col items-center md:text-center relative z-10 md:w-[15%] group manufacture-step-item">
-                <div class="w-12 h-12 rounded-full flex items-center justify-center font-bold transition-all duration-300 flex-shrink-0
-                    {{ $isCompleted ? 'bg-success-500 text-white shadow-sm border border-success-500' : '' }}
-                    {{ $isActive ? 'bg-primary-600 text-white ring-4 ring-primary-50 shadow-sm border border-primary-600 animate-pulse' : '' }}
-                    {{ !$isCompleted && !$isActive ? 'bg-neutral-100 text-neutral-400 border border-neutral-200' : '' }}">
-                    @if($isCompleted)
-                        <iconify-icon icon="lucide:check" class="text-xl"></iconify-icon>
-                    @else
-                        <iconify-icon icon="lucide:cog" class="text-xl"></iconify-icon>
-                    @endif
-                </div>
-                <div class="ml-4 md:ml-0 md:mt-3 flex-1 text-left md:text-center manufacture-step-text">
-                    <span class="text-xs font-extrabold uppercase tracking-wider block
-                        {{ $isCompleted ? 'text-success-600' : '' }}
-                        {{ $isActive ? 'text-primary-600 font-bold' : '' }}
-                        {{ !$isCompleted && !$isActive ? 'text-neutral-400' : '' }}">
-                        Sản xuất
-                    </span>
-                    @if($manufacture->productionStarter)
-                        <span class="block text-[10px] text-neutral-500 font-medium mt-0.5">{{ $manufacture->productionStarter->name }}</span>
-                        <span class="block text-[9px] text-neutral-400">{{ $manufacture->production_started_at->format('d/m/Y H:i') }}</span>
-                    @else
-                        <span class="block text-[10px] text-neutral-400 italic mt-0.5">Chưa bắt đầu</span>
-                    @endif
-                </div>
-            </div>
-
-            {{-- Step 6: HOÀN THÀNH --}}
-            @php
-                $isCompleted = $currentStepNum > 6;
-                $isActive = $currentStepNum == 6;
-            @endphp
-            <div class="flex flex-row md:flex-col items-center md:text-center relative z-10 md:w-[15%] group manufacture-step-item">
-                <div class="w-12 h-12 rounded-full flex items-center justify-center font-bold transition-all duration-300 flex-shrink-0
-                    {{ $isCompleted ? 'bg-success-500 text-white shadow-sm border border-success-500' : '' }}
-                    {{ $isActive ? 'bg-primary-600 text-white ring-4 ring-primary-50 shadow-sm border border-primary-600 animate-pulse' : '' }}
-                    {{ !$isCompleted && !$isActive ? 'bg-neutral-100 text-neutral-400 border border-neutral-200' : '' }}">
-                    @if($currentStepNum == 6)
-                        <iconify-icon icon="lucide:check-circle" class="text-xl"></iconify-icon>
-                    @else
-                        <iconify-icon icon="lucide:flag" class="text-xl"></iconify-icon>
-                    @endif
-                </div>
-                <div class="ml-4 md:ml-0 md:mt-3 flex-1 text-left md:text-center manufacture-step-text">
-                    <span class="text-xs font-extrabold uppercase tracking-wider block
-                        {{ $currentStepNum == 6 ? 'text-success-600 font-bold' : 'text-neutral-400' }}">
-                        Hoàn thành
-                    </span>
-                    @if($manufacture->completer)
-                        <span class="block text-[10px] text-neutral-500 font-medium mt-0.5">{{ $manufacture->completer->name }}</span>
-                        <span class="block text-[9px] text-neutral-400">{{ $manufacture->completed_at->format('d/m/Y H:i') }}</span>
-                    @else
-                        <span class="block text-[10px] text-neutral-400 italic mt-0.5">Chưa hoàn thành</span>
-                    @endif
-                </div>
-            </div>
-
         </div>
+
+        <div class="flex items-center gap-2 self-stretch md:self-auto justify-end flex-wrap">
+            @if(count($acrylicOrdersExportData ?? []) > 0)
+                <button type="button" onclick="exportManufactureNestingFiles('{{ $manufacture->code }}', window.moOrdersExportData)"
+                    class="px-4 py-2.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-colors flex items-center gap-2 cursor-pointer"
+                    title="Tải file xả tem Nesting cho tất cả các tấm Acrylic trong lệnh này">
+                    <iconify-icon icon="lucide:table-2" class="text-base"></iconify-icon> Tải file xả tem Nesting
+                </button>
+            @endif
+            <a href="{{ route('manufactures.print-stamps', $manufacture) }}" target="_blank"
+                class="px-4 py-2.5 rounded-lg text-xs font-bold bg-neutral-100 hover:bg-neutral-200 text-neutral-800 transition-colors flex items-center gap-2">
+                <iconify-icon icon="lucide:printer" class="text-base text-neutral-600"></iconify-icon> In phiếu dán tem
+            </a>
+            @if($manufacture->status === 'in_production')
+                <form action="{{ route('manufactures.approve', [$manufacture, 'complete']) }}" method="POST" class="m-0" onsubmit="return confirm('Bạn có chắc muốn hoàn thành lệnh sản xuất này?')">
+                    @csrf
+                    <button type="submit" class="px-4 py-2.5 rounded-lg text-xs font-bold bg-success-600 hover:bg-success-700 text-white shadow-sm transition-colors flex items-center gap-2 cursor-pointer">
+                        <iconify-icon icon="lucide:check-circle" class="text-base"></iconify-icon> Hoàn thành lệnh SX
+                    </button>
+                </form>
+            @elseif($manufacture->status !== 'completed')
+                <form action="{{ route('manufactures.approve', [$manufacture, 'start_production']) }}" method="POST" class="m-0">
+                    @csrf
+                    <button type="submit" class="px-4 py-2.5 rounded-lg text-xs font-bold bg-primary-600 hover:bg-primary-700 text-white shadow-sm transition-colors flex items-center gap-2 cursor-pointer">
+                        <iconify-icon icon="lucide:play-circle" class="text-base"></iconify-icon> Kích hoạt sản xuất ngay
+                    </button>
+                </form>
+            @endif
+            <a href="{{ route('manufactures.index') }}" class="px-3.5 py-2.5 rounded-lg text-xs font-bold border border-neutral-300 hover:bg-neutral-50 text-neutral-600 transition-colors flex items-center gap-1.5">
+                <iconify-icon icon="lucide:arrow-left" class="text-base"></iconify-icon> Danh sách
+            </a>
+        </div>
+    </div>
+</div>
+
+{{-- Real-time Production Progress Card --}}
+<div class="bg-white border border-neutral-200 rounded-xl mb-6 shadow-sm p-5">
+    <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-4">
+        <div>
+            <h6 class="font-bold text-base text-neutral-800 m-0 flex items-center gap-2">
+                <iconify-icon icon="solar:chart-square-bold" class="text-xl text-primary-600"></iconify-icon>
+                Tiến độ gia công thực tế
+            </h6>
+            <p class="text-xs text-neutral-500 mb-0 mt-0.5">Cập nhật trực tiếp theo từng lượt quét mã QR các tấm tại xưởng</p>
+        </div>
+        <div class="flex items-center gap-4 text-xs font-semibold flex-wrap">
+            <span class="flex items-center gap-1.5 text-neutral-600">
+                <span class="w-3 h-3 rounded-full bg-neutral-300"></span> Chưa bắt đầu: <strong class="text-neutral-800">{{ max(0, ($progress['total'] ?? 0) - ($progress['completed'] ?? 0) - ($progress['in_progress'] ?? 0)) }}</strong>
+            </span>
+            <span class="flex items-center gap-1.5 text-indigo-600">
+                <span class="w-3 h-3 rounded-full bg-indigo-500"></span> Đang gia công: <strong class="text-indigo-800">{{ $progress['in_progress'] ?? 0 }}</strong>
+            </span>
+            <span class="flex items-center gap-1.5 text-success-600">
+                <span class="w-3 h-3 rounded-full bg-success-500"></span> Đã hoàn thành: <strong class="text-success-800">{{ $progress['completed'] ?? 0 }}/{{ $progress['total'] ?? 0 }}</strong>
+            </span>
+        </div>
+    </div>
+
+    {{-- Main Progress Bar --}}
+    <div class="w-full bg-neutral-100 rounded-full h-3.5 overflow-hidden mb-3 border border-neutral-200 p-0.5 flex">
+        <div class="h-full rounded-full transition-all duration-500 bg-success-500" style="width: {{ $progress['percentage'] ?? 0 }}%;"></div>
+        @php
+            $inProgPct = ($progress['total'] ?? 0) > 0 ? round((($progress['in_progress'] ?? 0) / $progress['total']) * 100) : 0;
+        @endphp
+        <div class="h-full rounded-full transition-all duration-500 bg-indigo-500" style="width: {{ $inProgPct }}%;"></div>
+    </div>
+
+    {{-- Breakdown by order --}}
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 pt-3 border-t border-neutral-100">
+        @foreach($manufacture->orders as $o)
+        @php
+            $orderTotal = 0;
+            $orderDone = 0;
+            foreach($o->supplies as $sup) {
+                $subItems = $o->type === 'glass' ? $sup->glassItems : ($o->type === 'min_late' ? $sup->minLateItems : $sup->items);
+                foreach($subItems as $subI) {
+                    foreach($subI->codes as $subC) {
+                        $orderTotal++;
+                        $logs = is_string($subC->status) ? json_decode($subC->status, true) : ($subC->status ?? []);
+                        foreach($logs as $l) {
+                            $act = mb_strtolower($l['action'] ?? '');
+                            if ($act === 'hoàn thành qc' || $act === 'hoàn thành làm đẹp') {
+                                $orderDone++;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            $orderPct = $orderTotal > 0 ? round(($orderDone / $orderTotal) * 100) : 0;
+        @endphp
+        <div class="p-2.5 rounded-lg border border-neutral-200 bg-neutral-50/50 flex flex-col justify-between">
+            <div class="flex items-center justify-between gap-1 mb-1.5">
+                <a href="{{ route('orders.show', $o) }}" class="text-xs font-bold text-neutral-800 hover:text-primary-600 transition-colors">
+                    {{ $o->order_code }}
+                </a>
+                <span class="text-[10px] px-1.5 py-0.5 rounded font-semibold {{ $orderDone == $orderTotal && $orderTotal > 0 ? 'bg-success-100 text-success-700' : 'bg-neutral-200 text-neutral-700' }}">
+                    {{ ucfirst($o->type) }}
+                </span>
+            </div>
+            <div class="w-full bg-neutral-200 rounded-full h-1.5 overflow-hidden mb-1">
+                <div class="h-1.5 rounded-full {{ $orderDone == $orderTotal && $orderTotal > 0 ? 'bg-success-500' : 'bg-indigo-600' }}" style="width: {{ $orderPct }}%;"></div>
+            </div>
+            <div class="flex items-center justify-between text-[11px] text-neutral-500 font-medium">
+                <span>{{ $orderDone }}/{{ $orderTotal }} tấm</span>
+                <span class="font-bold {{ $orderDone == $orderTotal && $orderTotal > 0 ? 'text-success-600' : 'text-neutral-700' }}">{{ $orderPct }}%</span>
+            </div>
+        </div>
+        @endforeach
     </div>
 </div>
 
@@ -373,48 +316,24 @@
         @if($manufacture->status !== 'completed')
         <div class="bg-white border border-neutral-200 rounded-xl p-5 shadow-sm">
             <h6 class="font-bold text-sm text-neutral-800 uppercase tracking-wider mb-4 flex items-center gap-2">
-                <iconify-icon icon="lucide:user-check" class="text-lg text-primary-600"></iconify-icon>
-                Thao tác phê duyệt
+                <iconify-icon icon="lucide:check-circle" class="text-lg text-primary-600"></iconify-icon>
+                Thao tác lệnh
             </h6>
             
-            @if($manufacture->status === 'initialized')
-                <form action="{{ route('manufactures.approve', [$manufacture, 'approve_tech']) }}" method="POST" class="m-0">
-                    @csrf
-                    <button type="submit" class="w-full py-2.5 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 bg-neutral-900 hover:bg-black text-white shadow-sm border border-transparent transition-colors duration-200 cursor-pointer">
-                        <iconify-icon icon="lucide:shield-check" class="text-lg"></iconify-icon>
-                        Duyệt kỹ thuật (KT DUYỆT)
-                    </button>
-                </form>
-            @elseif($manufacture->status === 'tech_approved')
-                <form action="{{ route('manufactures.approve', [$manufacture, 'approve_manager']) }}" method="POST" class="m-0">
-                    @csrf
-                    <button type="submit" class="w-full py-2.5 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 bg-neutral-900 hover:bg-black text-white shadow-sm border border-transparent transition-colors duration-200 cursor-pointer">
-                        <iconify-icon icon="lucide:user-check" class="text-lg"></iconify-icon>
-                        Quản đốc duyệt (QĐ DUYỆT)
-                    </button>
-                </form>
-            @elseif($manufacture->status === 'manager_approved')
-                <form action="{{ route('manufactures.approve', [$manufacture, 'receive_stamps']) }}" method="POST" class="m-0">
-                    @csrf
-                    <button type="submit" class="w-full py-2.5 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 bg-neutral-900 hover:bg-black text-white shadow-sm border border-transparent transition-colors duration-200 cursor-pointer">
-                        <iconify-icon icon="lucide:tag" class="text-lg"></iconify-icon>
-                        Nhận tem sản xuất (NHẬN TEM)
-                    </button>
-                </form>
-            @elseif($manufacture->status === 'stamps_received')
-                <form action="{{ route('manufactures.approve', [$manufacture, 'start_production']) }}" method="POST" class="m-0">
-                    @csrf
-                    <button type="submit" class="w-full py-2.5 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 bg-neutral-900 hover:bg-black text-white shadow-sm border border-transparent transition-colors duration-200 cursor-pointer">
-                        <iconify-icon icon="lucide:cog" class="text-lg animate-spin" style="animation-duration: 3s;"></iconify-icon>
-                        Bắt đầu sản xuất (SẢN XUẤT)
-                    </button>
-                </form>
-            @elseif($manufacture->status === 'in_production')
+            @if($manufacture->status === 'in_production')
                 <form action="{{ route('manufactures.approve', [$manufacture, 'complete']) }}" method="POST" class="m-0" onsubmit="return confirm('Bạn có chắc muốn hoàn thành lệnh sản xuất này?')">
                     @csrf
-                    <button type="submit" class="w-full py-2.5 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 bg-neutral-900 hover:bg-black text-white shadow-sm border border-transparent transition-colors duration-200 cursor-pointer">
+                    <button type="submit" class="w-full py-2.5 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 bg-success-600 hover:bg-success-700 text-white shadow-sm border border-transparent transition-colors duration-200 cursor-pointer">
                         <iconify-icon icon="lucide:check-circle" class="text-lg"></iconify-icon>
-                        Hoàn thành lệnh (HOÀN THÀNH)
+                        Hoàn thành lệnh sản xuất
+                    </button>
+                </form>
+            @else
+                <form action="{{ route('manufactures.approve', [$manufacture, 'start_production']) }}" method="POST" class="m-0">
+                    @csrf
+                    <button type="submit" class="w-full py-2.5 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white shadow-sm border border-transparent transition-colors duration-200 cursor-pointer">
+                        <iconify-icon icon="lucide:play-circle" class="text-lg"></iconify-icon>
+                        Kích hoạt Đang sản xuất ngay (1-Chạm)
                     </button>
                 </form>
             @endif
@@ -636,7 +555,12 @@
     </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<script src="{{ asset('assets/js/nesting-export.js') }}"></script>
 <script>
+window.moOrdersExportData = @json($acrylicOrdersExportData ?? []);
+
 function toggleDistributionList() {
     const list = document.getElementById('distribution-list-details');
     if (list) {

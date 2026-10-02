@@ -168,4 +168,89 @@ class ManufactureOrder extends Model
 
         return $items;
     }
+
+    /**
+     * Tự động sinh mã Lệnh sản xuất tiếp theo theo định dạng LSX-Ymd-xxxx
+     */
+    public static function generateNextCode(): string
+    {
+        $today = date('Ymd');
+        $lastMO = self::where('code', 'like', "LSX-{$today}-%")->orderBy('id', 'desc')->first();
+        $nextNumber = 1;
+        if ($lastMO) {
+            $parts = explode('-', $lastMO->code);
+            $nextNumber = intval(end($parts)) + 1;
+        }
+        return "LSX-{$today}-" . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Tính toán tiến độ gia công thực tế theo lượt quét QR của các tấm
+     */
+    public function getProgress(): array
+    {
+        $total = 0;
+        $completed = 0;
+        $inProgress = 0;
+
+        foreach ($this->orders as $order) {
+            $supplies = $order->relationLoaded('supplies') ? $order->supplies : $order->supplies()->with(['items.codes', 'minLateItems.codes', 'glassItems.codes'])->get();
+
+            foreach ($supplies as $supply) {
+                if ($order->type === 'glass') {
+                    $items = $supply->relationLoaded('glassItems') ? $supply->glassItems : $supply->glassItems()->with('codes')->get();
+                } elseif ($order->type === 'min_late') {
+                    $items = $supply->relationLoaded('minLateItems') ? $supply->minLateItems : $supply->minLateItems()->with('codes')->get();
+                } else {
+                    $items = $supply->relationLoaded('items') ? $supply->items : $supply->items()->with('codes')->get();
+                }
+
+                foreach ($items as $item) {
+                    $codes = $item->relationLoaded('codes') ? $item->codes : $item->codes;
+                    foreach ($codes as $code) {
+                        $total++;
+                        $statusLogs = $code->status ?? [];
+                        if (is_string($statusLogs)) {
+                            $statusLogs = json_decode($statusLogs, true) ?? [];
+                        }
+
+                        $isDone = false;
+                        $hasStarted = false;
+                        foreach ($statusLogs as $log) {
+                            $action = mb_strtolower($log['action'] ?? '');
+                            if ($action === 'hoàn thành qc' || $action === 'hoàn thành làm đẹp') {
+                                $isDone = true;
+                            }
+                            if (
+                                str_contains($action, 'ép') ||
+                                str_contains($action, 'cnc') ||
+                                str_contains($action, 'dán cạnh') ||
+                                str_contains($action, 'làm đẹp') ||
+                                str_contains($action, 'lỗi')
+                            ) {
+                                $hasStarted = true;
+                            }
+                        }
+
+                        if ($isDone) {
+                            $completed++;
+                        } elseif ($hasStarted) {
+                            $inProgress++;
+                        }
+                    }
+                }
+            }
+        }
+
+        $percentage = $total > 0 ? round(($completed / $total) * 100) : 0;
+
+        return [
+            'total'            => $total,
+            'completed'        => $completed,
+            'in_progress'      => $inProgress,
+            'remaining'        => max(0, $total - $completed),
+            'percentage'       => $percentage,
+            'is_all_completed' => $total > 0 && $completed === $total,
+        ];
+    }
 }

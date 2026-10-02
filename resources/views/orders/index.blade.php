@@ -19,8 +19,8 @@
     }
 </style>
 
-<div class="grid grid-cols-12 gap-y-6">
-    <div class="col-span-12">
+<div class="grid grid-cols-12 gap-y-6" style="row-gap: 24px;">
+    <div class="col-span-12 mb-6" style="margin-bottom: 24px;">
         {{-- Statistics Grid --}}
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             <!-- Card 1: Tổng đơn hàng -->
@@ -229,6 +229,12 @@
                         <iconify-icon icon="lucide:x" class="text-base"></iconify-icon>
                         Bỏ chọn
                     </button>
+                    @can('add manufacture')
+                    <button type="button" onclick="openBulkManufactureModal()" class="btn btn-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg px-3 py-2 flex items-center gap-1.5 shadow-sm font-semibold cursor-pointer">
+                        <iconify-icon icon="solar:box-minimalistic-bold" class="text-base"></iconify-icon>
+                        Gom Lệnh SX
+                    </button>
+                    @endcan
                     <button type="button" id="btnExportBulk" onclick="exportBulkOrders()" class="btn btn-sm bg-success-600 hover:bg-success-700 text-white rounded-lg px-3 py-2 flex items-center gap-2">
                         <iconify-icon icon="lucide:file-spreadsheet" class="text-base"></iconify-icon>
                         Xuất Excel
@@ -288,6 +294,9 @@
                                     <input type="checkbox"
                                         name="order_ids[]"
                                         value="{{ $order->id }}"
+                                        data-order-code="{{ $order->order_code }}"
+                                        data-type="{{ ucfirst($order->type) }}"
+                                        data-status="{{ $order->status }}"
                                         form="bulkDeleteForm"
                                         class="bulk-order-checkbox form-check-input rounded border-neutral-300 text-primary-600 focus:ring-primary-500">
                                 </td>
@@ -976,6 +985,148 @@
     }
 </script>
 
+<!-- Modal Gom Lệnh Sản Xuất Nhanh -->
+<div id="bulkManufactureModal" style="z-index: 99999 !important;" class="fixed inset-0 hidden flex items-center justify-center bg-neutral-900/50 backdrop-blur-sm transition-all duration-300 opacity-0 p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full transform scale-95 transition-all duration-300 overflow-hidden">
+        <!-- Header -->
+        <div class="px-6 py-4 border-b border-neutral-200 flex items-center justify-between bg-neutral-50/50">
+            <h5 class="text-base font-bold text-neutral-800 m-0 flex items-center gap-2">
+                <iconify-icon icon="solar:box-minimalistic-bold" class="text-indigo-600 text-xl"></iconify-icon>
+                Gom Đơn Vào Lệnh Sản Xuất
+            </h5>
+            <button type="button" onclick="closeBulkManufactureModal()" class="text-neutral-400 hover:text-danger-500 transition-colors cursor-pointer">
+                <iconify-icon icon="lucide:x" class="text-xl"></iconify-icon>
+            </button>
+        </div>
+
+        <!-- Body -->
+        <form id="quickManufactureForm" onsubmit="submitQuickManufacture(event)" class="p-6 space-y-4">
+            @csrf
+            <div>
+                <label class="block text-xs font-bold text-neutral-700 uppercase tracking-wider mb-1.5">Mã Lệnh Sản Xuất</label>
+                <input type="text" id="quickMoCode" name="code" value="{{ \App\Models\ManufactureOrder::generateNextCode() }}" required class="form-control rounded-lg border-neutral-300 text-sm font-semibold text-neutral-800 focus:border-indigo-500 focus:ring-indigo-500">
+                <p class="text-[11px] text-neutral-400 mt-1 mb-0">Mã tự động sinh theo ngày, bạn có thể chỉnh sửa nếu cần.</p>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-neutral-700 uppercase tracking-wider mb-1.5">Các đơn hàng được gom (<span id="modalSelectedCount">0</span> đơn)</label>
+                <div id="modalSelectedOrdersList" class="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto p-2.5 bg-neutral-50 border border-neutral-200 rounded-lg">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-neutral-700 uppercase tracking-wider mb-1.5">Ghi chú lệnh SX (Tùy chọn)</label>
+                <textarea id="quickMoNotes" name="notes" rows="2" class="form-control rounded-lg border-neutral-300 text-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="Ví dụ: Ưu tiên cắt ca sáng, chú ý màu sắc..."></textarea>
+            </div>
+
+            <div class="p-3 bg-indigo-50/70 border border-indigo-100 rounded-xl text-xs text-indigo-900 flex items-start gap-2.5">
+                <iconify-icon icon="lucide:zap" class="text-indigo-600 text-lg shrink-0 mt-0.5"></iconify-icon>
+                <span>Hệ thống sẽ <strong>tự động kích hoạt trạng thái Đang sản xuất</strong> và khởi tạo tem QR cho toàn bộ các tấm ván. Xưởng có thể quét QR gia công ngay!</span>
+            </div>
+
+            <!-- Footer -->
+            <div class="flex items-center justify-end gap-2.5 pt-3 border-t border-neutral-100">
+                <button type="button" onclick="closeBulkManufactureModal()" class="px-4 py-2.5 rounded-lg text-xs font-semibold text-neutral-600 hover:bg-neutral-100 transition-colors cursor-pointer">
+                    Hủy bỏ
+                </button>
+                <button type="submit" id="btnSubmitQuickMo" class="px-5 py-2.5 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm flex items-center gap-1.5 transition-colors cursor-pointer">
+                    <iconify-icon icon="lucide:check-circle" class="text-base"></iconify-icon>
+                    Tạo & Kích hoạt SX ngay
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openBulkManufactureModal() {
+    const checkedBoxes = Array.from(document.querySelectorAll('.bulk-order-checkbox:checked'));
+    if (checkedBoxes.length === 0) {
+        alert('Vui lòng chọn ít nhất 1 đơn hàng để gom vào Lệnh sản xuất.');
+        return;
+    }
+
+    const listContainer = document.getElementById('modalSelectedOrdersList');
+    listContainer.innerHTML = '';
+    document.getElementById('modalSelectedCount').textContent = checkedBoxes.length;
+
+    checkedBoxes.forEach(cb => {
+        const orderCode = cb.getAttribute('data-order-code') || ('DH #' + cb.value);
+        const orderType = cb.getAttribute('data-type') || '';
+        const tag = document.createElement('span');
+        tag.className = 'inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-white border border-neutral-200 text-neutral-800 shadow-2xs';
+        tag.innerHTML = `<iconify-icon icon="lucide:file-text" class="text-neutral-400"></iconify-icon> <strong>${orderCode}</strong> <span class="text-[10px] text-neutral-400">(${orderType})</span>`;
+        listContainer.appendChild(tag);
+    });
+
+    const modal = document.getElementById('bulkManufactureModal');
+    modal.classList.remove('hidden');
+    requestAnimationFrame(() => {
+        modal.classList.remove('opacity-0');
+        modal.querySelector('.transform').classList.remove('scale-95');
+    });
+}
+
+function closeBulkManufactureModal() {
+    const modal = document.getElementById('bulkManufactureModal');
+    modal.classList.add('opacity-0');
+    modal.querySelector('.transform').classList.add('scale-95');
+    setTimeout(() => {
+        modal.classList.add('hidden');
+    }, 200);
+}
+
+async function submitQuickManufacture(e) {
+    e.preventDefault();
+    const checkedBoxes = Array.from(document.querySelectorAll('.bulk-order-checkbox:checked'));
+    if (checkedBoxes.length === 0) {
+        alert('Vui lòng chọn ít nhất 1 đơn hàng.');
+        return;
+    }
+
+    const orderIds = checkedBoxes.map(cb => cb.value);
+    const code = document.getElementById('quickMoCode').value.trim();
+    const notes = document.getElementById('quickMoNotes').value.trim();
+    const btn = document.getElementById('btnSubmitQuickMo');
+    const originalText = btn.innerHTML;
+
+    btn.disabled = true;
+    btn.innerHTML = '<iconify-icon icon="lucide:loader" class="animate-spin text-base"></iconify-icon> Đang tạo lệnh...';
+
+    try {
+        const csrfToken = document.querySelector('input[name="_token"]')?.value || '{{ csrf_token() }}';
+        const response = await fetch('{{ route("manufactures.quick-create") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': csrfToken
+            },
+            body: JSON.stringify({
+                order_ids: orderIds,
+                code: code,
+                notes: notes
+            })
+        });
+
+        const data = await response.json();
+        if (response.ok && data.success) {
+            window.location.href = data.redirect_url;
+        } else {
+            alert(data.message || 'Có lỗi xảy ra khi tạo Lệnh sản xuất. Vui lòng kiểm tra lại.');
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Có lỗi kết nối đến máy chủ.');
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+}
+</script>
+
 {{-- Khung menu dropdown của danh sách đơn hàng (đặt ngoài table-responsive để không bị lỗi UI clip che khuất) --}}
 @foreach($orders as $order)
     <div id="dropdown-actions-{{ $order->id }}" class="z-50 hidden bg-white divide-y divide-neutral-100 rounded-xl shadow-lg border border-neutral-200 w-52 text-left">
@@ -990,9 +1141,19 @@
                 </a>
             </li>
 
+            @if($order->type === 'acrylic')
+            {{-- Tải file xả tem cho Kỹ thuật --}}
+            <li>
+                <a href="{{ route('orders.show', $order) }}?export_nesting=1" class="flex items-center gap-2 px-4 py-2 hover:bg-neutral-50 text-emerald-700 font-medium transition-colors">
+                    <iconify-icon icon="lucide:table-2" class="text-emerald-600 text-lg"></iconify-icon>
+                    <span>Tải file xả tem (Nesting)</span>
+                </a>
+            </li>
+            @endif
+
             {{-- Tiến độ sản xuất --}}
             <li>
-                @if($order->manufacture_orders_count > 0)
+                @if(!in_array($order->status, ['draft', 'cancelled']))
                     <button type="button" onclick="showProductionStats({{ $order->id }}, '{{ $order->order_code }}')" class="w-full flex items-center gap-2 px-4 py-2 hover:bg-neutral-50 text-neutral-700 text-left transition-colors">
                         <iconify-icon icon="lucide:pie-chart" class="text-info-500 text-lg"></iconify-icon>
                         <span>Tiến độ sản xuất</span>
@@ -1050,21 +1211,21 @@
 
             {{-- Chỉnh sửa đơn hàng --}}
             <li class="{{ in_array($order->status, ['draft', 'pending']) ? '' : 'border-t border-neutral-100 my-1 pt-1' }}">
-                @if(!in_array($order->status, ['in_production', 'cancelled']))
+                @if($order->status !== 'cancelled')
                     <a href="{{ route('orders.edit', $order) }}" class="flex items-center gap-2 px-4 py-2 hover:bg-neutral-50 text-neutral-700 transition-colors">
                         <iconify-icon icon="lucide:edit" class="text-primary-500 text-lg"></iconify-icon>
                         <span>Chỉnh sửa đơn</span>
                     </a>
                 @else
-                    <button type="button" disabled class="w-full flex items-center gap-2 px-4 py-2 text-neutral-300 text-left cursor-not-allowed" title="{{ $order->status === 'in_production' ? 'Đơn hàng đang sản xuất' : 'Đơn hàng đã bị hủy' }}">
+                    <button type="button" disabled class="w-full flex items-center gap-2 px-4 py-2 text-neutral-300 text-left cursor-not-allowed" title="Đơn hàng đã bị hủy">
                         <iconify-icon icon="lucide:edit" class="text-neutral-300 text-lg"></iconify-icon>
                         <span>Chỉnh sửa đơn</span>
                     </button>
                 @endif
             </li>
 
-            {{-- Hủy nhanh đơn --}}
-            @if($order->status !== 'cancelled')
+            {{-- Hủy nhanh đơn (Chỉ cho phép khi chưa hoàn thành và chưa bị hủy) --}}
+            @if(!in_array($order->status, ['cancelled', 'completed']))
             <li>
                 <form method="POST" action="{{ route('orders.update-status', $order) }}" onsubmit="return confirm('Bạn có chắc chắn muốn hủy đơn hàng này?')">
                     @csrf

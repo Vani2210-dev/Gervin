@@ -664,8 +664,8 @@ class OrderController extends Controller
             }
         }
 
-        if ($order->status === 'in_production') {
-            return redirect()->route('orders.index')->with('error', 'Đơn hàng đang trong quá trình sản xuất, không thể chỉnh sửa.');
+        if ($order->status === 'in_production' && !$user?->hasRole('Admin') && !$user?->can('edit order')) {
+            return redirect()->route('orders.index')->with('error', 'Đơn hàng đang trong quá trình sản xuất, chỉ Admin hoặc nhân viên có quyền sửa mới được điều chỉnh.');
         }
         if ($order->status === 'cancelled') {
             return redirect()->route('orders.index')->with('error', 'Đơn hàng đã bị hủy, không thể chỉnh sửa.');
@@ -818,6 +818,9 @@ class OrderController extends Controller
             if ($order->status === 'cancelled') {
                 return redirect()->back()->with('error', 'Đơn hàng đã bị hủy trước đó.');
             }
+            if ($order->status === 'completed') {
+                return redirect()->back()->with('error', 'Đơn hàng đã hoàn thành sản xuất, không thể hủy để đảm bảo đúng công nợ.');
+            }
             $order->status = 'cancelled';
             $order->save();
             return redirect()->back()->with('success', 'Hủy thành công đơn hàng ' . $order->order_code);
@@ -881,15 +884,11 @@ class OrderController extends Controller
 
     public function productionStats(Order $order)
     {
-        // Chỉ cho phép xem khi đơn đã có Lệnh sản xuất được duyệt hoàn tất quy trình phê duyệt
-        $hasApprovedMO = $order->manufactureOrders()
-            ->whereIn('status', ['stamps_received', 'in_production', 'completed'])
-            ->exists();
-
-        if (!$hasApprovedMO) {
+        // Cho phép xem tiến độ nếu đơn đã được chuyển sang sản xuất
+        if (in_array($order->status, ['draft', 'cancelled'])) {
             return response()->json([
                 'success' => false,
-                'message' => 'Đơn hàng chưa có Lệnh sản xuất được duyệt.',
+                'message' => 'Đơn hàng chưa chuyển sang sản xuất.',
                 'data' => []
             ]);
         }

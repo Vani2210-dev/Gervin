@@ -21,7 +21,7 @@ class MinLateOrderItem extends Model
         'straight_paste_length',
         'beveled_length',
         'vat_moi_length',
-        'ban_rong_40_59',
+        'ban_rong_40_59', 
         'ban_rong_17_39',
         'ban_rong_25_35',
         'beveled_handle',

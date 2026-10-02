@@ -39,11 +39,20 @@
                         </div>
                         @endif
 
+                        <div class="mb-4 p-3 bg-indigo-50 border border-indigo-200 rounded-xl flex items-center justify-between text-xs text-indigo-800">
+                            <div class="flex items-center gap-2">
+                                <iconify-icon icon="lucide:zap" class="text-base text-indigo-600"></iconify-icon>
+                                <span><strong>Cơ chế tự động:</strong> Lệnh sản xuất sau khi tạo sẽ tự động chuyển sang trạng thái <strong>Đang sản xuất</strong> và mở khóa quét QR ngay, không cần thao tác duyệt thủ công rườm rà.</span>
+                            </div>
+                        </div>
+
                         <div class="table-responsive border border-neutral-200 rounded-xl overflow-hidden scroll-sm">
                             <table class="table bordered-table sm-table mb-0">
                                 <thead class="bg-neutral-50">
                                     <tr>
-                                        <th scope="col" style="width: 50px;" class="text-center">Chọn</th>
+                                        <th scope="col" style="width: 50px;" class="text-center">
+                                            <input type="checkbox" id="selectAllOrders" onclick="toggleSelectAllOrders(this)" class="form-checkbox h-5 w-5 text-primary-600 border-neutral-300 rounded focus:ring-primary-500 cursor-pointer" title="Chọn tất cả">
+                                        </th>
                                         <th scope="col">Mã đơn hàng</th>
                                         <th scope="col">Loại đơn</th>
                                         <th scope="col">Khách hàng</th>
@@ -127,11 +136,21 @@
 
                 <div class="px-6 py-4 border-t border-neutral-200 bg-neutral-50/50 flex items-center justify-end gap-3">
                     <a href="{{ route('manufactures.index') }}" class="btn btn-outline-neutral px-5 py-2.5 rounded-lg text-sm font-semibold transition-all">Quay lại</a>
-                    <button type="submit" class="btn btn-primary px-6 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all">Lưu lệnh SX</button>
+                    <button type="submit" class="btn btn-primary px-6 py-2.5 rounded-lg text-sm font-bold shadow-sm transition-all flex items-center gap-2">
+                        <iconify-icon icon="lucide:play-circle" class="text-lg"></iconify-icon>
+                        Lưu & Kích Hoạt Sản Xuất Ngay
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+
+<script>
+    function toggleSelectAllOrders(source) {
+        const checkboxes = document.querySelectorAll('input[name="order_ids[]"]');
+        checkboxes.forEach(cb => cb.checked = source.checked);
+    }
+</script>
 
 @endsection

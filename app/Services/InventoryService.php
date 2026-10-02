@@ -301,6 +301,110 @@ class InventoryService
     }
 
     /**
+     * Delete Goods Receipt (PNK) and reverse/deduct stock
+     */
+    public function deleteReceipt(InventoryReceipt $receipt): void
+    {
+        DB::transaction(function () use ($receipt) {
+            $receipt->loadMissing('items');
+
+            // 1. Hoàn trả: Trừ lại số lượng tồn kho đã nhập trước đó
+            if ($receipt->status === 'completed') {
+                foreach ($receipt->items as $item) {
+                    $qty = (float)($item->quantity ?? 0);
+                    if ($qty <= 0 || !$item->wood_board_id) continue;
+
+                    $board = WoodBoard::find($item->wood_board_id);
+                    if ($board) {
+                        $board->current_stock = max(0, (float)$board->current_stock - $qty);
+                        $board->save();
+                    }
+                }
+            }
+
+            // 2. Xóa các bản ghi thẻ kho (InventoryTransaction) liên kết với phiếu nhập này
+            InventoryTransaction::where(function ($q) use ($receipt) {
+                $q->where('reference_type', InventoryReceipt::class)
+                  ->where('reference_id', $receipt->id);
+            })->orWhere('voucher_code', $receipt->code)
+              ->delete();
+
+            // 3. Xóa các chi tiết phiếu và bản thân phiếu
+            $receipt->items()->delete();
+            $receipt->delete();
+        });
+    }
+
+    /**
+     * Delete Goods Issue (PXK) and restore/add back stock
+     */
+    public function deleteIssue(InventoryIssue $issue): void
+    {
+        DB::transaction(function () use ($issue) {
+            $issue->loadMissing('items');
+
+            // 1. Hoàn trả: Cộng bù lại số lượng tồn kho đã xuất trước đó
+            if ($issue->status === 'completed') {
+                foreach ($issue->items as $item) {
+                    $qty = (float)($item->quantity ?? 0);
+                    if ($qty <= 0 || !$item->wood_board_id) continue;
+
+                    $board = WoodBoard::find($item->wood_board_id);
+                    if ($board) {
+                        $board->current_stock = (float)$board->current_stock + $qty;
+                        $board->save();
+                    }
+                }
+            }
+
+            // 2. Xóa các bản ghi thẻ kho (InventoryTransaction) liên kết với phiếu xuất này
+            InventoryTransaction::where(function ($q) use ($issue) {
+                $q->where('reference_type', InventoryIssue::class)
+                  ->where('reference_id', $issue->id);
+            })->orWhere('voucher_code', $issue->code)
+              ->delete();
+
+            // 3. Xóa các chi tiết phiếu và bản thân phiếu
+            $issue->items()->delete();
+            $issue->delete();
+        });
+    }
+
+    /**
+     * Delete Stocktake (PKK) and revert stock adjustment if already balanced
+     */
+    public function deleteStocktake(InventoryStocktake $stocktake): void
+    {
+        DB::transaction(function () use ($stocktake) {
+            $stocktake->loadMissing('items');
+
+            // Nếu phiếu đã cân bằng kho, đảo ngược chênh lệch đã điều chỉnh
+            if ($stocktake->status === 'balanced') {
+                foreach ($stocktake->items as $item) {
+                    $diff = (float)($item->difference ?? 0);
+                    if ($diff == 0 || !$item->wood_board_id) continue;
+
+                    $board = WoodBoard::find($item->wood_board_id);
+                    if ($board) {
+                        $board->current_stock = max(0, (float)$board->current_stock - $diff);
+                        $board->save();
+                    }
+                }
+            }
+
+            // Xóa thẻ kho liên quan
+            InventoryTransaction::where(function ($q) use ($stocktake) {
+                $q->where('reference_type', InventoryStocktake::class)
+                  ->where('reference_id', $stocktake->id);
+            })->orWhere('voucher_code', $stocktake->code)
+              ->delete();
+
+            $stocktake->items()->delete();
+            $stocktake->delete();
+        });
+    }
+
+    /**
      * Initialize Acrylic WoodBoards and historical data from Excel file
      */
     public function seedAcrylicFromExcel(string $filePath): Warehouse

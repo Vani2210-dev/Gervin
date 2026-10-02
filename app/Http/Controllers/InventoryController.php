@@ -444,8 +444,8 @@ class InventoryController extends Controller
     public function destroyReceipt(InventoryReceipt $receipt)
     {
         $code = $receipt->code;
-        $receipt->delete();
-        return redirect()->route('inventory.receipts.index')->with('success', 'Đã xóa phiếu nhập kho ' . $code . '!');
+        $this->inventoryService->deleteReceipt($receipt);
+        return redirect()->route('inventory.receipts.index')->with('success', 'Đã xóa phiếu nhập kho ' . $code . ' và hoàn trả (trừ lại) số lượng tồn kho thành công!');
     }
 
     /**
@@ -515,8 +515,8 @@ class InventoryController extends Controller
     public function destroyIssue(InventoryIssue $issue)
     {
         $code = $issue->code;
-        $issue->delete();
-        return redirect()->route('inventory.issues.index')->with('success', 'Đã xóa phiếu xuất kho ' . $code . '!');
+        $this->inventoryService->deleteIssue($issue);
+        return redirect()->route('inventory.issues.index')->with('success', 'Đã xóa phiếu xuất kho ' . $code . ' và hoàn trả (cộng lại) số lượng tồn kho thành công!');
     }
 
     /**
@@ -594,6 +594,13 @@ class InventoryController extends Controller
     {
         $this->inventoryService->balanceStocktake($stocktake, Auth::id());
         return redirect()->route('inventory.stocktakes.show', $stocktake)->with('success', 'Cân bằng tồn kho cho phiếu ' . $stocktake->code . ' thành công!');
+    }
+
+    public function destroyStocktake(InventoryStocktake $stocktake)
+    {
+        $code = $stocktake->code;
+        $this->inventoryService->deleteStocktake($stocktake);
+        return redirect()->route('inventory.stocktakes.index')->with('success', 'Đã xóa phiếu kiểm kê ' . $code . ' thành công!');
     }
 
     /**

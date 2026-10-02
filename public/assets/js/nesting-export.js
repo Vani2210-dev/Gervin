@@ -187,10 +187,13 @@ async function generateNestingWorkbook(orderData, suppliesData, filename) {
                 const row = ws.getRow(rowIdx++);
                 row.height = 18;
 
+                const itemCust = item.customer_name || supply.customer_name || custLabel;
+                const itemOrder = item.order_code || supply.order_code || orderLabel;
+
                 const vals = [
                     'V',                                                      // A Cắt
-                    custLabel,                                                // B Sản phẩm
-                    orderLabel,                                               // C Đơn hàng
+                    itemCust,                                                 // B Sản phẩm
+                    itemOrder,                                                // C Đơn hàng
                     sttCode,                                                  // D STT
                     item.product_name || '',                                  // E Tên
                     supply.supply_name || '',                                 // F Vật liệu
@@ -274,4 +277,54 @@ async function exportNestingFiles() {
     }
 }
 
+/**
+ * Xuất 2 file Nesting gộp cho toàn bộ Lệnh sản xuất (gồm nhiều đơn hàng Acrylic ghép lại)
+ */
+async function exportManufactureNestingFiles(moCode, ordersData) {
+    if (!ordersData || !ordersData.length) {
+        alert('Lệnh sản xuất này không có đơn hàng Acrylic nào để xuất Nesting.');
+        return;
+    }
+
+    const nestingSupplies = [];
+    const phaoSupplies = [];
+
+    ordersData.forEach(orderData => {
+        if (orderData.type !== 'acrylic' || !orderData.supplies) return;
+        orderData.supplies.forEach(supply => {
+            const allItems = supply.items || [];
+            // Gắn thông tin đơn hàng và khách hàng vào từng item/supply
+            const enrichedItems = allItems.map(item => ({
+                ...item,
+                order_code: orderData.order_code,
+                customer_name: orderData.customer_name
+            }));
+
+            const nestItems = enrichedItems.filter(i => (parseFloat(i.height) || 0) > 70 && (parseFloat(i.width) || 0) > 70);
+            const phaoItems = enrichedItems.filter(i => (parseFloat(i.height) || 0) <= 70 || (parseFloat(i.width) || 0) <= 70);
+
+            if (nestItems.length) nestingSupplies.push({ ...supply, order_code: orderData.order_code, customer_name: orderData.customer_name, items: nestItems });
+            if (phaoItems.length) phaoSupplies.push({ ...supply, order_code: orderData.order_code, customer_name: orderData.customer_name, items: phaoItems });
+        });
+    });
+
+    if (nestingSupplies.length === 0 && phaoSupplies.length === 0) {
+        alert('Không tìm thấy tấm Acrylic nào trong các đơn hàng của lệnh này.');
+        return;
+    }
+
+    const dummyOrder = ordersData[0] || {};
+    const code = moCode || 'LSX';
+    const nestingBlob = await generateNestingWorkbook(dummyOrder, nestingSupplies, `Nesting-${code}.xlsx`);
+    const phaoBlob = await generateNestingWorkbook(dummyOrder, phaoSupplies, `Nesting-Phao-${code}.xlsx`);
+
+    if (nestingBlob) {
+        saveAs(nestingBlob, `Nesting-${code}.xlsx`);
+    }
+    if (phaoBlob) {
+        saveAs(phaoBlob, `Nesting-Phao-${code}.xlsx`);
+    }
+}
+
 window.exportNestingFiles = exportNestingFiles;
+window.exportManufactureNestingFiles = exportManufactureNestingFiles;

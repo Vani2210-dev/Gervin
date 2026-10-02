@@ -29,6 +29,13 @@
                     <a href="{{ route('inventory.receipts.create') }}" class="btn btn-primary px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 shadow-sm">
                         <iconify-icon icon="ic:baseline-plus" class="text-base"></iconify-icon> Tạo phiếu nhập mới
                     </a>
+                    <form action="{{ route('inventory.receipts.destroy', $receipt) }}" method="POST" onsubmit="return confirm('Bạn có chắc muốn xóa phiếu nhập {{ $receipt->code }}? Số lượng hàng hóa trong phiếu sẽ được trừ trả lại khỏi tồn kho!')" class="inline-block">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn border border-danger-300 text-danger-600 hover:bg-danger-50 px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2">
+                            <iconify-icon icon="fluent:delete-24-regular" class="text-base"></iconify-icon> Xóa phiếu
+                        </button>
+                    </form>
                 </div>
             </div>
 

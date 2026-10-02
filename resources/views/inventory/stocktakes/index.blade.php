@@ -109,7 +109,7 @@
                                             <a href="{{ route('inventory.stocktakes.show', $s) }}" class="p-2 text-neutral-500 hover:text-primary-600 hover:bg-neutral-100 rounded-lg" title="Xem chi tiết">
                                                 <iconify-icon icon="solar:eye-bold" class="text-base"></iconify-icon>
                                             </a>
-                                            <form action="{{ route('inventory.stocktakes.destroy', $s) }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa phiếu kiểm kê {{ $s->code }} không?');" class="inline-block">
+                                            <form action="{{ route('inventory.stocktakes.destroy', $s) }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa phiếu kiểm kê {{ $s->code }} không?{{ $s->status === 'balanced' ? ' Tồn kho đã cân bằng sẽ được tự động hoàn tác lại!' : '' }}');" class="inline-block">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="p-2 text-neutral-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg" title="Xóa">

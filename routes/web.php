@@ -351,6 +351,7 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth'])->group(function () {
     Route::get('manufactures/sequence', [ManufactureController::class, 'sequenceIndex'])->name('manufactures.sequence');
     Route::get('manufactures/sequence/export', [ManufactureController::class, 'sequenceExport'])->name('manufactures.sequence.export');
+    Route::post('manufactures/quick-create', [ManufactureController::class, 'quickCreate'])->name('manufactures.quick-create');
     Route::resource('manufactures', ManufactureController::class)->names('manufactures');
     Route::post('manufactures/{manufacture}/approve/{step}', [ManufactureController::class, 'approveStep'])->name('manufactures.approve');
     Route::get('manufactures/{manufacture}/print-stamps', [ManufactureController::class, 'printStamps'])->name('manufactures.print-stamps');
