@@ -170,7 +170,7 @@ async function generateNestingWorkbook(orderData, suppliesData, filename) {
                     millDepth2:   item.mill_depth_2,
                 };
             } else {
-                const parsed = parseMullionMillingDetails(item.product_name || '');
+                const parsed = parseMullionMillingDetails(item.notes || item.product_name || '');
                 milling = {
                     ...parsed,
                     millLeft2: null, millRight2: null, millTop2: null,
@@ -195,7 +195,7 @@ async function generateNestingWorkbook(orderData, suppliesData, filename) {
                     itemCust,                                                 // B Sản phẩm
                     itemOrder,                                                // C Đơn hàng
                     sttCode,                                                  // D STT
-                    item.product_name || '',                                  // E Tên
+                    item.notes || '',                                         // E Tên (Detail Name) - Lấy từ cột Ghi chú
                     supply.supply_name || '',                                 // F Vật liệu
                     h,                                                        // G Dài
                     w,                                                        // H Rộng

@@ -618,7 +618,7 @@ async function exportToExcel() {
                     row.getCell(2).value = 'ACRILYC';                        // Đơn hàng
                     row.getCell(3).value = customerLabel;                    // Sản phẩm (tên KH)
                     row.getCell(4).value = item.product_code || '';          // STT / mã SP
-                    row.getCell(5).value = item.product_name || '';          // Tên chi tiết
+                    row.getCell(5).value = item.notes || '';                 // Tên chi tiết (Detail Name) - Lấy từ Ghi chú
                     row.getCell(6).value = supply.supply_name || '';         // Vật liệu
                     row.getCell(7).value = parseFloat((parseFloat(item.height) || 0).toFixed(2));    // Dài
                     row.getCell(8).value = parseFloat((parseFloat(item.width) || 0).toFixed(2));     // Rộng
