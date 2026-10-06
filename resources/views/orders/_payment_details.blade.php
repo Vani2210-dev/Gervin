@@ -1,6 +1,7 @@
 @php
-    $hasPaymentDetails = isset($acrylicOrder) && isset($acrylicOrder->paymentDetails) && $acrylicOrder->paymentDetails->count() > 0;
-    $isMinLateOrder = ($currentOrderType ?? '') === 'min_late';
+    $isWarranty = $isWarranty ?? (isset($acrylicOrder) && ($acrylicOrder->relation_type ?? null) === 'warranty');
+    $hasPaymentDetails = !$isWarranty && isset($acrylicOrder) && isset($acrylicOrder->paymentDetails) && $acrylicOrder->paymentDetails->count() > 0;
+    $isMinLateOrder = in_array($currentOrderType ?? '', ['min_late', 'Flywood', 'plywood']);
     $woodBoardPrices = $woodBoardPrices ?? \App\Models\WoodBoardPrice::orderBy('code', 'asc')->get();
     $glassPrices = $glassPrices ?? \App\Models\GlassPrice::orderBy('code', 'asc')->get();
     $minLatePrices = $minLatePrices ?? \App\Models\MinLatePrice::orderBy('category_name', 'asc')->orderBy('stt', 'asc')->get();
