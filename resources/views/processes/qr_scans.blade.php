@@ -881,7 +881,11 @@
         document.getElementById("modal_name").value = device.name;
         document.getElementById("modal_process_step").value = device.process_step || "";
         document.getElementById("modal_action_type").value = device.action_type || "";
-        document.getElementById("modal_operator").value = device.operator_user_id || "";
+        if (window.tsOperator) {
+            window.tsOperator.setValue(device.operator_user_id || "");
+        } else {
+            document.getElementById("modal_operator").value = device.operator_user_id || "";
+        }
         document.getElementById("modal_is_active").checked = !!device.is_active;
         document.getElementById("modal_notes").value = device.notes || "";
 
@@ -938,5 +942,16 @@
             });
         }
     }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        const opEl = document.getElementById("modal_operator");
+        if (opEl && typeof TomSelect !== "undefined" && !opEl.tomselect) {
+            window.tsOperator = new TomSelect(opEl, {
+                placeholder: "-- Mặc định (Hệ thống) --",
+                allowEmptyOption: true,
+                dropdownParent: "body"
+            });
+        }
+    });
 </script>
 @endpush

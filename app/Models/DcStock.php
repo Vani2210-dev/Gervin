@@ -13,6 +13,11 @@ class DcStock extends Model
 
     protected $fillable = [
         'color_code',
+        'board_type',
+        'board_code',
+        'thickness',
+        'wood_board_type_id',
+        'wood_board_id',
         'note',
         'height',
         'width',
@@ -32,6 +37,18 @@ class DcStock extends Model
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    // Quan hệ Bảng giá tấm
+    public function woodBoard()
+    {
+        return $this->belongsTo(WoodBoard::class, 'wood_board_id');
+    }
+
+    // Quan hệ Loại ván
+    public function boardTypeRel()
+    {
+        return $this->belongsTo(WoodBoardType::class, 'wood_board_type_id');
     }
 
     // Diện tích tấm (mm²)

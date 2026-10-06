@@ -126,7 +126,7 @@ class PressingService
                     $codeRecord = AcrylicOrderItemCode::find($itemObj->id);
                 } elseif ($itemObj->type === 'glass') {
                     $codeRecord = GlassOrderItemCode::find($itemObj->id);
-                } elseif ($itemObj->type === 'min_late') {
+                } elseif (in_array($itemObj->type, ['min_late', 'plywood'])) {
                     $codeRecord = MinLateOrderItemCode::find($itemObj->id);
                 }
 

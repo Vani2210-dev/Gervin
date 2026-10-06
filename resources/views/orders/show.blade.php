@@ -232,6 +232,51 @@
                 </div>
             </div>
 
+            {{-- Service Order or Payment Details section --}}
+            @if($acrylicOrder->paymentDetails && $acrylicOrder->paymentDetails->count() > 0)
+                <div class="card p-0 rounded-xl border-0 overflow-hidden shadow-sm bg-white border-l-4 border-l-purple-500 mb-6">
+                    <div class="card-header border-b border-neutral-200 bg-white py-4 px-6 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="p-1.5 bg-purple-50 rounded-lg text-purple-600 flex items-center justify-center">
+                                <iconify-icon icon="lucide:receipt" class="text-base"></iconify-icon>
+                            </div>
+                            <h6 class="font-bold text-base text-neutral-800 m-0">Chi tiết hóa đơn dịch vụ & Vật tư bổ sung</h6>
+                        </div>
+                        <span class="text-xs font-bold px-2.5 py-1 rounded-full bg-purple-100 text-purple-700">
+                            {{ $acrylicOrder->paymentDetails->count() }} hạng mục
+                        </span>
+                    </div>
+                    <div class="p-6">
+                        <div class="overflow-x-auto">
+                            <table class="table bordered-table sm-table mb-0 w-full">
+                                <thead>
+                                    <tr class="bg-neutral-50 text-center text-xs font-bold text-neutral-600 uppercase">
+                                        <th class="w-12 text-center">STT</th>
+                                        <th class="text-left">Tên nội dung / Dịch vụ / Vật tư</th>
+                                        <th class="w-24 text-center">Đơn vị</th>
+                                        <th class="w-24 text-center">Số lượng</th>
+                                        <th class="w-32 text-right">Đơn giá</th>
+                                        <th class="w-36 text-right">Thành tiền</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($acrylicOrder->paymentDetails as $pIndex => $pDetail)
+                                        <tr class="hover:bg-neutral-50/50">
+                                            <td class="text-center font-semibold text-neutral-500">{{ $pIndex + 1 }}</td>
+                                            <td class="font-semibold text-neutral-800">{{ $pDetail->name }}</td>
+                                            <td class="text-center text-neutral-600">{{ $pDetail->unit ?: '—' }}</td>
+                                            <td class="text-center font-bold text-neutral-700">{{ floatval($pDetail->quantity) == intval($pDetail->quantity) ? number_format($pDetail->quantity, 0, ',', '.') : number_format($pDetail->quantity, 2, ',', '.') }}</td>
+                                            <td class="text-right text-neutral-700 font-medium">{{ number_format($pDetail->price, 0, ',', '.') }} đ</td>
+                                            <td class="text-right font-bold text-primary-600">{{ number_format($pDetail->total, 0, ',', '.') }} đ</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
             {{-- Supplies & Items list --}}
             @foreach($acrylicOrder->supplies as $supply)
                 <div
@@ -254,7 +299,7 @@
 
                     <div class="p-6">
                         <div class="overflow-x-auto">
-                            @if($acrylicOrder->type === 'min_late')
+                            @if(in_array($acrylicOrder->type, ['min_late', 'plywood']))
                                 {{-- Min Late items - expand to individual sheets with status --}}
                                 <table class="table bordered-table sm-table mb-0 min-w-[1900px]">
                                     <thead>

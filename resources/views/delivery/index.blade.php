@@ -364,22 +364,50 @@
                                 <span class="delivery-page__scan-submit-label">{{ $initialProductCode === '' ? 'Nhập mã để kiểm tra' : 'Kiểm tra mã' }}</span>
                             </button>
                         </form>
+
+                        {{-- Tùy chọn Quét Nhanh Giao Hàng --}}
+                        <div class="mt-4 pt-4 border-t border-neutral-100">
+                            <div class="p-3 bg-emerald-50/80 border border-emerald-200/80 rounded-xl flex items-center justify-between gap-3">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                                        <iconify-icon icon="solar:bolt-circle-bold" class="text-xl"></iconify-icon>
+                                    </span>
+                                    <div>
+                                        <div class="text-xs font-bold text-emerald-900 leading-tight">Quét tự động giao hàng</div>
+                                        <div class="text-[11px] text-emerald-700 leading-tight">Quét mã là giao ngay (không cần click)</div>
+                                    </div>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer mb-0">
+                                    <input type="checkbox" id="fastScanToggle" class="sr-only peer" checked>
+                                    <div class="w-10 h-5 bg-neutral-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
+                                </label>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="delivery-page__summary-card rounded-3xl overflow-hidden shadow-lg bg-gradient-to-br from-emerald-700 via-teal-600 to-emerald-700 text-white">
-                    <div class="delivery-page__summary-body p-6">
-                        <div class="flex items-center justify-between gap-4 mb-6">
-                            <span class="delivery-page__summary-icon-wrap w-12 h-12 rounded-xl bg-white/15 flex items-center justify-center">
-                                <iconify-icon icon="lucide:navigation" class="delivery-page__summary-icon text-2xl text-white"></iconify-icon>
+                {{-- 2 Thẻ thống kê: Đang chờ giao & Đã giao hôm nay --}}
+                <div class="grid grid-cols-2 gap-4">
+                    <div onclick="switchDeliveryTab('pending')" class="cursor-pointer rounded-2xl p-4 bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-sm hover:shadow-md transition-all">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+                                <iconify-icon icon="lucide:truck" class="text-lg"></iconify-icon>
                             </span>
-                            <span class="delivery-page__summary-tag text-xs font-bold uppercase tracking-wide text-white/80">Hôm nay</span>
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-white/80">Chờ giao</span>
                         </div>
+                        <div id="statPendingCount" class="text-3xl font-black leading-none mb-1">{{ $pendingCount }}</div>
+                        <p class="text-xs font-medium text-white/90 mb-0">Kiện đang đi giao</p>
+                    </div>
 
-                        <div id="todayDeliveryCount" class="delivery-page__summary-count text-5xl font-black leading-none mb-3">
-                            {{ $todayDeliveryCount }}
+                    <div onclick="switchDeliveryTab('history')" class="cursor-pointer rounded-2xl p-4 bg-gradient-to-br from-emerald-700 via-teal-600 to-emerald-700 text-white shadow-sm hover:shadow-md transition-all">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+                                <iconify-icon icon="lucide:check-circle-2" class="text-lg"></iconify-icon>
+                            </span>
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-white/80">Hôm nay</span>
                         </div>
-                        <p class="delivery-page__summary-label text-white/90 font-medium mb-0">Kiện đã giao hàng</p>
+                        <div id="todayDeliveryCount" class="text-3xl font-black leading-none mb-1">{{ $todayDeliveryCount }}</div>
+                        <p class="text-xs font-medium text-white/90 mb-0">Kiện đã giao</p>
                     </div>
                 </div>
             </div>
@@ -510,21 +538,37 @@
                 </div>
             </div>
 
-            <div class="delivery-page__history-card card w-full lg:col-span-12 border-0 overflow-hidden shadow-sm relative">
-                <div class="delivery-page__history-card-header card-header bg-white border-b border-neutral-200 px-6 py-4 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between lg:flex-nowrap">
-                    <h5 class="delivery-page__history-title text-lg font-bold text-neutral-900 flex items-center gap-2 mb-0 shrink-0">
-                        <iconify-icon icon="lucide:history" class="text-2xl text-emerald-600"></iconify-icon>
-                        Lịch sử giao hàng
-                    </h5>
+            <div class="delivery-page__history-card card w-full lg:col-span-12 border-0 overflow-hidden shadow-sm relative rounded-2xl bg-white">
+                {{-- Thanh điều hướng 2 Tab --}}
+                <div class="border-b border-neutral-200 px-6 pt-3 bg-white flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <button type="button" onclick="switchDeliveryTab('pending')" id="tabBtnPending"
+                            class="delivery-tab-btn pb-3 px-2 font-bold text-sm border-b-2 border-emerald-600 text-emerald-600 flex items-center gap-2 transition-all">
+                            <iconify-icon icon="lucide:truck" class="text-lg"></iconify-icon>
+                            <span>Kiện chờ giao hàng</span>
+                            <span id="badgePendingCount" class="px-2 py-0.5 rounded-full text-xs font-extrabold bg-amber-100 text-amber-800">
+                                {{ $pendingCount }}
+                            </span>
+                        </button>
+                        <button type="button" onclick="switchDeliveryTab('history')" id="tabBtnHistory"
+                            class="delivery-tab-btn pb-3 px-2 font-semibold text-sm border-b-2 border-transparent text-neutral-500 hover:text-neutral-800 flex items-center gap-2 transition-all">
+                            <iconify-icon icon="lucide:history" class="text-lg"></iconify-icon>
+                            <span>Lịch sử đã giao hàng</span>
+                            <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-neutral-100 text-neutral-600">
+                                {{ $historyRows instanceof \Illuminate\Pagination\LengthAwarePaginator ? $historyRows->total() : count($historyRows) }}
+                            </span>
+                        </button>
+                    </div>
 
-                    <div class="delivery-page__history-actions flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-end lg:flex-1">
+                    {{-- Công cụ cho Tab Lịch sử (ẩn khi ở tab pending) --}}
+                    <div id="historyToolbar" class="hidden flex w-full md:w-auto flex-col sm:flex-row sm:items-center sm:justify-end gap-3 pb-3">
                         {{-- Bộ lọc ngày tháng chung --}}
                         <x-date-filter :action="route('processes.delivery')" />
 
                         <div class="delivery-page__history-per-page-wrap flex items-center gap-2">
-                            <span class="text-sm font-medium text-secondary-light whitespace-nowrap">Hiển thị</span>
+                            <span class="text-xs font-medium text-secondary-light whitespace-nowrap">Hiển thị</span>
                             <select id="historyPerPage"
-                                class="form-select form-select-sm w-auto border-neutral-200 rounded-lg py-2 px-3 text-xs"
+                                class="form-select form-select-sm w-auto border-neutral-200 rounded-lg py-1.5 px-2.5 text-xs"
                                 onchange="changeDeliveryHistoryPerPage(this.value)">
                                 @foreach([15, 25, 50, 100] as $option)
                                     <option value="{{ $option }}" {{ (int) ($perPage ?? 15) === $option ? 'selected' : '' }}>
@@ -534,34 +578,99 @@
                             </select>
                         </div>
 
-                        <div class="delivery-page__history-search-wrap relative w-full sm:w-80">
-                            <span class="delivery-page__input-icon delivery-page__history-search-icon">
+                        <div class="delivery-page__history-search-wrap relative w-full sm:w-64">
+                            <span class="dispatch-page__input-icon delivery-page__history-search-icon">
                                 <iconify-icon icon="lucide:search"></iconify-icon>
                             </span>
                             <input type="text" id="historySearch" value="{{ $search ?? '' }}" oninput="filterHistoryTable()"
-                                class="delivery-page__history-search form-control rounded-xl bg-neutral-50 border-neutral-200 pl-11 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                                placeholder="Tìm lịch sử...">
+                                class="delivery-page__history-search form-control rounded-xl bg-neutral-50 border-neutral-200 pl-10 pr-4 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                placeholder="Tìm trong lịch sử...">
                         </div>
+                    </div>
 
-                        <div class="relative {{ (($range ?? 'all') === 'all' && empty($search)) ? 'hidden' : '' }}" id="clearFilterWrapper">
-                            <a href="{{ route('processes.delivery') }}" id="clearFilterBtn"
-                                class="btn bg-danger-50 hover:bg-danger-100 text-danger-600 px-4 py-2.5 rounded-xl font-semibold border border-danger-100 inline-flex items-center gap-2">
-                                <iconify-icon icon="lucide:filter-x" class="text-lg"></iconify-icon>
-                                <span>Bỏ lọc</span>
-                            </a>
-                        </div>
-
-                        <div class="relative">
-                            <button type="button" id="filterToggleBtn"
-                                class="delivery-page__filter-button btn bg-white hover:bg-neutral-50 text-neutral-700 px-4 py-2.5 rounded-xl font-semibold border border-neutral-200 inline-flex items-center gap-2">
-                                <iconify-icon icon="lucide:filter" class="text-lg"></iconify-icon>
-                                <span>Lọc</span>
-                            </button>
-                        </div>
+                    {{-- Công cụ cho Tab Chờ giao (Bulk Action) --}}
+                    <div id="pendingToolbar" class="flex items-center gap-2 pb-3">
+                        <button type="button" id="btnBulkDelivery" onclick="bulkDeliverySelected()" disabled
+                            class="btn btn-sm bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg px-4 py-2 text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all opacity-50 cursor-not-allowed">
+                            <iconify-icon icon="lucide:check-circle" class="text-base"></iconify-icon>
+                            <span id="btnBulkDeliveryText">Xác nhận giao đã chọn</span>
+                        </button>
                     </div>
                 </div>
 
-                <div class="delivery-page__history-card-body card-body w-full">
+                {{-- NỘI DUNG TAB 1: KIỆN CHỜ GIAO HÀNG --}}
+                <div id="tabContentPending" class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table w-full basic-border-table mb-0" id="pendingTable">
+                            <thead>
+                                <tr class="bg-neutral-50/70 text-xs font-bold text-neutral-700">
+                                    <th class="w-10 text-center py-3">
+                                        <input type="checkbox" id="selectAllPending" onchange="toggleSelectAllPending(this)" class="rounded border-neutral-300 text-emerald-600 focus:ring-emerald-500">
+                                    </th>
+                                    <th class="py-3">Mã & Tên Kiện</th>
+                                    <th class="py-3">Đơn hàng</th>
+                                    <th class="py-3">Khách hàng</th>
+                                    <th class="py-3">Địa chỉ nhận hàng</th>
+                                    <th class="w-24 text-center py-3">SL Linh kiện</th>
+                                    <th class="py-3">Giờ xuất xưởng</th>
+                                    <th class="w-36 text-center py-3">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pendingTableBody">
+                                @forelse($pendingRows as $pRow)
+                                    <tr id="pending-row-{{ $pRow['package_id'] }}" class="hover:bg-neutral-50/60 transition-colors">
+                                        <td class="text-center">
+                                            <input type="checkbox" value="{{ $pRow['package_id'] }}" onchange="onPendingCheckboxChange()" class="pending-checkbox rounded border-neutral-300 text-emerald-600 focus:ring-emerald-500">
+                                        </td>
+                                        <td>
+                                            <div class="font-bold text-neutral-900 text-sm">{{ $pRow['package_name'] }}</div>
+                                            <span class="font-mono text-xs text-neutral-500">#{{ $pRow['package_code'] }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="font-bold text-emerald-600 text-sm">{{ $pRow['order_code'] }}</span>
+                                        </td>
+                                        <td>
+                                            <div class="font-semibold text-neutral-800 text-xs">{{ $pRow['customer_name'] }}</div>
+                                            @if($pRow['customer_phone'] !== '—')
+                                                <div class="text-[11px] text-neutral-400">{{ $pRow['customer_phone'] }}</div>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            <div class="text-xs text-neutral-600 line-clamp-2 max-w-xs" title="{{ $pRow['delivery_address'] }}">{{ $pRow['delivery_address'] }}</div>
+                                        </td>
+                                        <td class="text-center font-bold text-neutral-800">
+                                            <span class="px-2 py-0.5 rounded bg-neutral-100 text-neutral-700 text-xs">{{ $pRow['total_items'] }}</span>
+                                        </td>
+                                        <td class="text-xs text-neutral-500">{{ $pRow['dispatched_time'] }}</td>
+                                        <td class="text-center">
+                                            <div class="flex items-center justify-center gap-1.5">
+                                                <button type="button" onclick="deliverySinglePending({{ $pRow['package_id'] }}, '{{ addslashes($pRow['package_name']) }}')"
+                                                    class="btn btn-xs bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg px-2.5 py-1.5 font-bold text-xs flex items-center gap-1 shadow-xs" title="Giao thành công ngay">
+                                                    <iconify-icon icon="lucide:check" class="text-sm"></iconify-icon>
+                                                    <span>Đã giao</span>
+                                                </button>
+                                                <a href="{{ $pRow['view_url'] }}" target="_blank" class="btn btn-xs bg-neutral-100 hover:bg-neutral-200 text-neutral-600 rounded-lg p-1.5" title="Xem chi tiết kiện">
+                                                    <iconify-icon icon="lucide:eye" class="text-sm"></iconify-icon>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr id="noPendingRow">
+                                        <td colspan="8" class="py-12 text-center text-neutral-400">
+                                            <iconify-icon icon="lucide:check-circle" class="text-3xl text-emerald-500 mx-auto mb-2 block"></iconify-icon>
+                                            <div class="font-semibold text-neutral-600">Tuyệt vời! Không có kiện nào đang chờ giao hàng.</div>
+                                            <div class="text-xs text-neutral-400 mt-1">Các kiện sau khi xuất xưởng sẽ hiển thị tại đây để theo dõi giao hàng.</div>
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                {{-- NỘI DUNG TAB 2: LỊCH SỬ ĐÃ GIAO HÀNG --}}
+                <div id="tabContentHistory" class="card-body p-0 hidden">
                     <div class="delivery-page__history-table-wrap table-responsive">
                         <table class="delivery-page__history-table table w-full basic-border-table mb-0" id="historyTable">
                             <thead class="delivery-page__history-thead">
@@ -721,6 +830,7 @@
         let isSubmittingDelivery = false;
         const deliveryPreviewUrl = @json(route('processes.delivery.check'));
         const deliveryConfirmUrl = @json(route('processes.delivery.confirm'));
+        const deliveryBulkConfirmUrl = @json(route('processes.delivery.bulk-confirm'));
         const csrfToken = @json(csrf_token());
         
         // Trạng thái phân trang riêng cho bảng linh kiện trong kiện đang kiểm tra.
@@ -732,6 +842,208 @@
             meta: null,
             sizeMeta: null,
         };
+
+        function playSuccessBeep() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(880, ctx.currentTime);
+                gain.gain.setValueAtTime(0.2, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.15);
+            } catch (e) {}
+        }
+
+        function playErrorBeep() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(220, ctx.currentTime);
+                gain.gain.setValueAtTime(0.25, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.25);
+            } catch (e) {}
+        }
+
+        function switchDeliveryTab(tab) {
+            const btnPending = document.getElementById('tabBtnPending');
+            const btnHistory = document.getElementById('tabBtnHistory');
+            const contentPending = document.getElementById('tabContentPending');
+            const contentHistory = document.getElementById('tabContentHistory');
+            const pendingToolbar = document.getElementById('pendingToolbar');
+            const historyToolbar = document.getElementById('historyToolbar');
+
+            if (tab === 'pending') {
+                btnPending.className = 'delivery-tab-btn pb-3 px-2 font-bold text-sm border-b-2 border-emerald-600 text-emerald-600 flex items-center gap-2 transition-all';
+                btnHistory.className = 'delivery-tab-btn pb-3 px-2 font-semibold text-sm border-b-2 border-transparent text-neutral-500 hover:text-neutral-800 flex items-center gap-2 transition-all';
+                contentPending.classList.remove('hidden');
+                contentHistory.classList.add('hidden');
+                pendingToolbar?.classList.remove('hidden');
+                historyToolbar?.classList.add('hidden');
+            } else {
+                btnHistory.className = 'delivery-tab-btn pb-3 px-2 font-bold text-sm border-b-2 border-emerald-600 text-emerald-600 flex items-center gap-2 transition-all';
+                btnPending.className = 'delivery-tab-btn pb-3 px-2 font-semibold text-sm border-b-2 border-transparent text-neutral-500 hover:text-neutral-800 flex items-center gap-2 transition-all';
+                contentHistory.classList.remove('hidden');
+                contentPending.classList.add('hidden');
+                historyToolbar?.classList.remove('hidden');
+                pendingToolbar?.classList.add('hidden');
+            }
+        }
+
+        function removePendingPackageRow(packageId) {
+            const row = document.getElementById(`pending-row-${packageId}`);
+            if (row) {
+                row.remove();
+                const currentBadge = document.getElementById('badgePendingCount');
+                const statBadge = document.getElementById('statPendingCount');
+                const newCount = Math.max(0, (parseInt(currentBadge?.textContent || 0, 10)) - 1);
+                if (currentBadge) currentBadge.textContent = newCount;
+                if (statBadge) statBadge.textContent = newCount;
+
+                const remainingRows = document.querySelectorAll('#pendingTableBody tr[id^="pending-row-"]');
+                if (remainingRows.length === 0) {
+                    const tbody = document.getElementById('pendingTableBody');
+                    if (tbody) {
+                        tbody.innerHTML = `
+                            <tr id="noPendingRow">
+                                <td colspan="8" class="py-12 text-center text-neutral-400">
+                                    <iconify-icon icon="lucide:check-circle" class="text-3xl text-emerald-500 mx-auto mb-2 block"></iconify-icon>
+                                    <div class="font-semibold text-neutral-600">Tuyệt vời! Không có kiện nào đang chờ giao hàng.</div>
+                                    <div class="text-xs text-neutral-400 mt-1">Các kiện sau khi xuất xưởng sẽ hiển thị tại đây để theo dõi giao hàng.</div>
+                                </td>
+                            </tr>
+                        `;
+                    }
+                }
+                onPendingCheckboxChange();
+            }
+        }
+
+        function toggleSelectAllPending(master) {
+            const checkboxes = document.querySelectorAll('.pending-checkbox');
+            checkboxes.forEach(cb => cb.checked = master.checked);
+            onPendingCheckboxChange();
+        }
+
+        function onPendingCheckboxChange() {
+            const checked = document.querySelectorAll('.pending-checkbox:checked');
+            const btn = document.getElementById('btnBulkDelivery');
+            const btnText = document.getElementById('btnBulkDeliveryText');
+            const master = document.getElementById('selectAllPending');
+            const all = document.querySelectorAll('.pending-checkbox');
+
+            if (master && all.length > 0) {
+                master.checked = checked.length === all.length;
+            }
+
+            if (btn) {
+                if (checked.length > 0) {
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    if (btnText) btnText.textContent = `Xác nhận giao (${checked.length}) kiện`;
+                } else {
+                    btn.disabled = true;
+                    btn.classList.add('opacity-50', 'cursor-not-allowed');
+                    if (btnText) btnText.textContent = 'Xác nhận giao đã chọn';
+                }
+            }
+        }
+
+        async function bulkDeliverySelected() {
+            const checked = Array.from(document.querySelectorAll('.pending-checkbox:checked')).map(cb => parseInt(cb.value, 10));
+            if (checked.length === 0) return;
+
+            if (!confirm(`Xác nhận hoàn tất giao hàng cho ${checked.length} kiện hàng đã chọn?`)) {
+                return;
+            }
+
+            const btn = document.getElementById('btnBulkDelivery');
+            if (btn) btn.disabled = true;
+
+            try {
+                const response = await fetch(deliveryBulkConfirmUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        package_ids: checked,
+                    }),
+                });
+
+                const payload = await response.json();
+                if (!response.ok || !payload.success) {
+                    playErrorBeep();
+                    showToast(payload.message || 'Xác nhận giao hàng loạt thất bại.', 'error');
+                    return;
+                }
+
+                playSuccessBeep();
+                showToast(payload.message || `Đã giao ${checked.length} kiện thành công!`, 'success');
+                checked.forEach(id => removePendingPackageRow(id));
+                if (payload.today_count !== undefined) {
+                    const todayEl = document.getElementById('todayDeliveryCount');
+                    if (todayEl) todayEl.textContent = payload.today_count;
+                }
+            } catch (e) {
+                playErrorBeep();
+                showToast('Lỗi khi gửi yêu cầu giao hàng loạt.', 'error');
+            } finally {
+                if (btn) btn.disabled = false;
+                onPendingCheckboxChange();
+            }
+        }
+
+        async function deliverySinglePending(packageId, packageName) {
+            if (!confirm(`Xác nhận đã giao thành công kiện "${packageName}"?`)) return;
+
+            try {
+                const response = await fetch(deliveryConfirmUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        package_id: packageId,
+                    }),
+                });
+
+                const payload = await response.json();
+                if (!response.ok || !payload.success) {
+                    playErrorBeep();
+                    showToast(payload.message || 'Xác nhận giao hàng thất bại.', 'error');
+                    return;
+                }
+
+                playSuccessBeep();
+                showToast(payload.message || `Đã giao thành công kiện "${packageName}"!`, 'success');
+                removePendingPackageRow(packageId);
+                if (payload.data && Array.isArray(payload.data.rows) && payload.data.rows.length > 0) {
+                    prependHistoryRows(payload.data.rows);
+                }
+                if (payload.data && payload.data.today_count !== undefined) {
+                    const todayEl = document.getElementById('todayDeliveryCount');
+                    if (todayEl) todayEl.textContent = payload.data.today_count;
+                }
+            } catch (e) {
+                playErrorBeep();
+                showToast('Lỗi khi xác nhận giao hàng.', 'error');
+            }
+        }
 
         function escapeHtml(value) {
             return String(value ?? '')
@@ -1266,6 +1578,8 @@
                 submitLabel.textContent = 'Đang kiểm tra...';
             }
 
+            const isFastScan = document.getElementById('fastScanToggle')?.checked ?? true;
+
             try {
                 const response = await fetch(deliveryPreviewUrl, {
                     method: 'POST',
@@ -1276,6 +1590,7 @@
                     },
                     body: JSON.stringify({
                         product_code: productCode,
+                        auto_confirm: isFastScan,
                         per_page: deliveryPackageItemsState.perPage,
                         page: 1,
                     }),
@@ -1287,13 +1602,36 @@
                     : { success: false, message: await response.text() };
 
                 if (!response.ok || !payload.success) {
+                    playErrorBeep();
                     showToast(payload.message || 'Kiểm tra mã thất bại.', 'error');
                     return;
                 }
 
                 renderResultPanel(payload.data);
-                showToast(payload.message || 'Đã mở thông tin kiện ở bên phải.', 'success');
+
+                if (payload.auto_confirmed) {
+                    playSuccessBeep();
+                    showToast(payload.message || 'Đã giao hàng thành công!', 'success');
+                    if (Array.isArray(payload.data.rows) && payload.data.rows.length > 0) {
+                        prependHistoryRows(payload.data.rows);
+                    }
+                    if (payload.data.package_id) {
+                        removePendingPackageRow(payload.data.package_id);
+                    }
+                    if (payload.data.today_count !== undefined) {
+                        const todayEl = document.getElementById('todayDeliveryCount');
+                        if (todayEl) todayEl.textContent = payload.data.today_count;
+                    }
+                    const inp = document.getElementById('product_code');
+                    if (inp) {
+                        inp.value = '';
+                        inp.focus();
+                    }
+                } else {
+                    showToast(payload.message || 'Đã mở thông tin kiện ở bên phải.', 'success');
+                }
             } catch (error) {
+                playErrorBeep();
                 showToast('Không thể kiểm tra mã lúc này.', 'error');
             } finally {
                 isSubmittingDelivery = false;
@@ -1343,6 +1681,7 @@
                     : { success: false, message: await response.text() };
 
                 if (!response.ok || !payload.success) {
+                    playErrorBeep();
                     showToast(payload.message || 'Xác nhận giao hàng thất bại.', 'error');
                     confirmButton.disabled = false;
                     confirmButton.classList.remove('opacity-50', 'cursor-not-allowed');
@@ -1352,12 +1691,19 @@
                     return;
                 }
 
+                playSuccessBeep();
                 renderResultPanel(payload.data);
                 if (Array.isArray(payload.data.rows) && payload.data.rows.length > 0) {
                     prependHistoryRows(payload.data.rows);
                 }
+                removePendingPackageRow(packageId);
+                if (payload.data.today_count !== undefined) {
+                    const todayEl = document.getElementById('todayDeliveryCount');
+                    if (todayEl) todayEl.textContent = payload.data.today_count;
+                }
                 showToast(payload.message || 'Xác nhận giao hàng thành công.', 'success');
             } catch (error) {
+                playErrorBeep();
                 showToast('Không thể xác nhận giao hàng vào lúc này.', 'error');
                 confirmButton.disabled = false;
                 confirmButton.classList.remove('opacity-50', 'cursor-not-allowed');

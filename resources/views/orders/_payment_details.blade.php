@@ -98,7 +98,7 @@
 
 @if(!$isWarranty)
 {{-- Bảng chi tiết hóa đơn dịch vụ / mua tấm riêng / cắt kính --}}
-<div id="payment-details-section" class="order-supplies-popup bg-white border border-neutral-200 rounded-xl p-6 shadow-sm mt-6 relative pt-8" style="{{ $hasPaymentDetails ? '' : 'display: none;' }}" data-order-supplies-zoom-panel data-order-supplies-storage-key="min_late_payment" data-order-supplies-zoom="100" data-order-supplies-visible-rows-disabled="1">
+<div id="payment-details-section" class="order-supplies-popup bg-white border border-neutral-200 rounded-xl p-6 shadow-sm mt-6 relative pt-8" style="{{ ($hasPaymentDetails || ($currentOrderType ?? '') === 'service') ? '' : 'display: none;' }}" data-order-supplies-zoom-panel data-order-supplies-storage-key="min_late_payment" data-order-supplies-zoom="100" data-order-supplies-visible-rows-disabled="1">
     <div class="order-supplies-header flex items-center justify-between border-b border-neutral-100 pb-4 mb-5">
         <div class="absolute -top-3.5 left-6 bg-white px-3 flex items-center gap-2 z-10">
             <iconify-icon icon="lucide:receipt" class="text-xl text-primary-500"></iconify-icon>

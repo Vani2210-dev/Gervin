@@ -270,9 +270,9 @@ class RevenueReportController extends Controller
             $cGlass = (float) $cPeriodOrders->where('type', 'glass')->filter(fn($o) => $o->relation_type !== 'warranty' && $o->board_return_status !== 'returned')->sum('total_amount');
             $cMinLate = (float) $cPeriodOrders->where('type', 'min_late')->filter(fn($o) => $o->relation_type !== 'warranty' && $o->board_return_status !== 'returned')->sum('total_amount');
             
-            // Thương mại
+            // Thương mại & Plywood
             $cLaminateCommercial = 0;
-            $cPlywoodCommercial = 0;
+            $cPlywoodCommercial = (float) $cPeriodOrders->where('type', 'plywood')->filter(fn($o) => $o->relation_type !== 'warranty' && $o->board_return_status !== 'returned')->sum('total_amount');
 
             // Tiền về
             $cPaidInDay = (float) $cPeriodPayments->sum('amount');
@@ -780,7 +780,7 @@ class RevenueReportController extends Controller
             $sheet->setCellValue('O4', 'SO SÁNH VỚI CÔNG NỢ ĐỊNH MỨC');
             $sheet->getStyle('O4')->getFont()->setSize(8.5);
             $sheet->mergeCells('P4:P5')->setCellValue('P4', 'DOANH THU LAMINATE THƯƠNG MẠI');
-            $sheet->mergeCells('Q4:Q5')->setCellValue('Q4', 'DOANH THU PLYWOOD THƯƠNG MẠI');
+            $sheet->mergeCells('Q4:Q5')->setCellValue('Q4', 'DOANH THU PLYWOOD');
 
             $sheet->getStyle('F4:Q5')->applyFromArray($headerBaseStyle);
             $sheet->getStyle('F4:Q5')->applyFromArray($monthBlockBlueStyle);
@@ -816,7 +816,7 @@ class RevenueReportController extends Controller
                 $cMonthGlass = (float) $cPeriodOrders->where('type', 'glass')->filter(fn($o) => $o->relation_type !== 'warranty' && $o->board_return_status !== 'returned')->sum('total_amount');
                 $cMonthMinLate = (float) $cPeriodOrders->where('type', 'min_late')->filter(fn($o) => $o->relation_type !== 'warranty' && $o->board_return_status !== 'returned')->sum('total_amount');
                 $cMonthLaminateTM = 0;
-                $cMonthPlywoodTM = 0;
+                $cMonthPlywoodTM = (float) $cPeriodOrders->where('type', 'plywood')->filter(fn($o) => $o->relation_type !== 'warranty' && $o->board_return_status !== 'returned')->sum('total_amount');
                 $cMonthPaid = (float) $cPeriodPayments->sum('amount');
 
                 // Công nợ sau khoảng thời gian được chọn đến hiện tại
@@ -990,7 +990,7 @@ class RevenueReportController extends Controller
             $sheet->setCellValue("{$colO}4", "SO SÁNH VỚI CÔNG NỢ ĐỊNH MỨC");
             $sheet->getStyle("{$colO}4")->getFont()->setSize(8.5);
             $sheet->mergeCells("{$colP}4:{$colP}5")->setCellValue("{$colP}4", "DOANH THU LAMINATE THƯƠNG MẠI");
-            $sheet->mergeCells("{$colQ}4:{$colQ}5")->setCellValue("{$colQ}4", "DOANH THU PLYWOOD THƯƠNG MẠI");
+            $sheet->mergeCells("{$colQ}4:{$colQ}5")->setCellValue("{$colQ}4", "DOANH THU PLYWOOD");
 
             $sheet->getStyle("{$colF}4:{$colQ}5")->applyFromArray($headerBaseStyle);
             $sheet->getStyle("{$colF}4:{$colQ}5")->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
@@ -1069,7 +1069,7 @@ class RevenueReportController extends Controller
                 $cGla = (float) $cDayOrders->where('type', 'glass')->filter(fn($o) => $o->relation_type !== 'warranty' && $o->board_return_status !== 'returned')->sum('total_amount');
                 $cMin = (float) $cDayOrders->where('type', 'min_late')->filter(fn($o) => $o->relation_type !== 'warranty' && $o->board_return_status !== 'returned')->sum('total_amount');
                 $cLam = 0;
-                $cPly = 0;
+                $cPly = (float) $cDayOrders->where('type', 'plywood')->filter(fn($o) => $o->relation_type !== 'warranty' && $o->board_return_status !== 'returned')->sum('total_amount');
 
                 $cPaid = (float) $cDayPayments->sum('amount');
 

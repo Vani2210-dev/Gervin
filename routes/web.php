@@ -32,6 +32,7 @@ use App\Http\Controllers\CustomerPaymentController;
 use App\Http\Controllers\GlassPriceController;
 use App\Http\Controllers\MinLatePriceController;
 use App\Http\Controllers\MarketGroupController;
+use App\Http\Controllers\PressingOrderController;
 
 Route::middleware(['auth'])->group(function () {
     Route::controller(DashboardController::class)->group(function () {
@@ -217,6 +218,7 @@ Route::middleware(['auth'])->prefix('media')->name('media.')->group(function () 
 
 // Wood Boards
 Route::middleware(['auth'])->group(function () {
+    Route::get('wood-boards/board-info', [WoodBoardController::class, 'getBoardInfo'])->name('wood_boards.board_info');
     Route::post('wood-boards/import', [WoodBoardController::class, 'import'])->name('wood_boards.import');
     Route::resource('wood-boards', WoodBoardController::class)->names('wood_boards');
     Route::post('wood-board-types/batch', [WoodBoardController::class, 'batchUpdate'])->name('wood_board_types.batch_update');
@@ -365,6 +367,11 @@ Route::middleware(['auth'])->prefix('processes')->name('processes.')->group(func
     Route::post('/cnc/complete', [ManufactureStepController::class, 'completeCnc'])->name('cnc.complete');
     Route::get('/pressing', [ManufactureStepController::class, 'pressing'])->name('pressing');
     Route::post('/pressing/complete', [ManufactureStepController::class, 'completePressing'])->name('pressing.complete');
+    Route::get('/pressing/orders', [PressingOrderController::class, 'index'])->name('pressing.orders.index');
+    Route::post('/pressing/orders', [PressingOrderController::class, 'store'])->name('pressing.orders.store');
+    Route::get('/pressing/orders/{pressingOrder}', [PressingOrderController::class, 'show'])->name('pressing.orders.show');
+    Route::get('/pressing/orders/{pressingOrder}/print-labels', [PressingOrderController::class, 'printLabels'])->name('pressing.orders.print-labels');
+    Route::delete('/pressing/orders/{pressingOrder}', [PressingOrderController::class, 'destroy'])->name('pressing.orders.destroy');
     Route::get('/edge-banding', [ManufactureStepController::class, 'edgeBanding'])->name('edge-banding');
     Route::get('/edge-banding/product-status', [ManufactureStepController::class, 'getEdgeBandingProductStatus'])->name('edge-banding.product-status');
     Route::post('/edge-banding/complete', [ManufactureStepController::class, 'completeEdgeBanding'])->name('edge-banding.complete');
@@ -387,9 +394,11 @@ Route::middleware(['auth'])->prefix('processes')->name('processes.')->group(func
     Route::get('/dispatch', [DispatchPackageController::class, 'index'])->name('dispatch');
     Route::post('/dispatch/check', [DispatchPackageController::class, 'preview'])->name('dispatch.check');
     Route::post('/dispatch/confirm', [DispatchPackageController::class, 'confirm'])->name('dispatch.confirm');
+    Route::post('/dispatch/bulk-confirm', [DispatchPackageController::class, 'bulkConfirm'])->name('dispatch.bulk-confirm');
     Route::get('/delivery', [DeliveryPackageController::class, 'index'])->name('delivery');
     Route::post('/delivery/check', [DeliveryPackageController::class, 'preview'])->name('delivery.check');
     Route::post('/delivery/confirm', [DeliveryPackageController::class, 'confirm'])->name('delivery.confirm');
+    Route::post('/delivery/bulk-confirm', [DeliveryPackageController::class, 'bulkConfirm'])->name('delivery.bulk-confirm');
 
     // QR Devices Configuration & Log Dashboard
     Route::get('/qr-scans', [QrScanController::class, 'index'])->name('qr-scans');

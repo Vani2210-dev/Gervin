@@ -68,13 +68,66 @@
     .dark .status-processing { background: rgba(250,204,21,.1); color: #fde047; border-color: rgba(250,204,21,.3); }
     .dark .status-done       { background: rgba(74,222,128,.1); color: #4ade80; border-color: rgba(74,222,128,.3); }
     #pressOrdersBody tr { transition: background .15s; }
-    #material_type {
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-        background-repeat: no-repeat;
-        background-position: right 12px center;
-        background-size: 16px;
-        appearance: none;
-        padding-right: 40px;
+    /* TomSelect modern styling */
+    .ts-wrapper.single .ts-control {
+        border-radius: 0.75rem !important;
+        padding: 0.8rem 1rem !important;
+        font-size: 0.95rem !important;
+        border-color: #d1d5db !important;
+        background-color: #f9fafb !important;
+        box-shadow: none !important;
+        transition: all 0.2s ease;
+    }
+    .dark .ts-wrapper.single .ts-control {
+        background-color: #262626 !important;
+        border-color: #404040 !important;
+        color: #f5f5f5 !important;
+    }
+    .ts-wrapper.single.focus .ts-control {
+        border-color: #6366f1 !important;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2) !important;
+    }
+    .ts-dropdown {
+        z-index: 99999 !important;
+        border-radius: 0.75rem !important;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+        border: 1px solid #e5e7eb !important;
+        overflow: hidden !important;
+    }
+    .dark .ts-dropdown {
+        background-color: #1c1c1c !important;
+        border-color: #404040 !important;
+        color: #f5f5f5 !important;
+    }
+    .ts-dropdown .optgroup-header {
+        font-size: 11px !important;
+        font-weight: 800 !important;
+        letter-spacing: 0.05em !important;
+        padding: 6px 12px !important;
+        background: #f1f5f9 !important;
+        color: #4f46e5 !important;
+        border-bottom: 1px solid #e2e8f0 !important;
+    }
+    .dark .ts-dropdown .optgroup-header {
+        background: #262626 !important;
+        color: #818cf8 !important;
+        border-color: #383838 !important;
+    }
+    .ts-dropdown .option {
+        padding: 8px 14px !important;
+        font-size: 13px !important;
+        border-bottom: 1px solid rgba(0,0,0,0.03) !important;
+    }
+    .dark .ts-dropdown .option {
+        border-bottom: 1px solid rgba(255,255,255,0.05) !important;
+    }
+    .ts-dropdown .option.active, .ts-dropdown .option:hover {
+        background-color: #eef2ff !important;
+        color: #4338ca !important;
+    }
+    .dark .ts-dropdown .option.active, .dark .ts-dropdown .option:hover {
+        background-color: #312e81 !important;
+        color: #e0e7ff !important;
     }
 </style>
 
@@ -475,10 +528,11 @@ const CSRF_TOKEN     = '{{ csrf_token() }}';
 // ─────────────────────────────────────────
 // STATE
 // ─────────────────────────────────────────
-let currentPurpose = "order";          // "order" | "stock"
-let pressOrders    = [];               // in-memory list of pressing orders
-let activeOrderId  = null;             // currently selected order id for scanning
-let html5QrCode    = null;
+let currentPurpose    = "order";          // "order" | "stock"
+let pressOrders       = [];               // in-memory list of pressing orders
+let activeOrderId     = null;             // currently selected order id for scanning
+let html5QrCode       = null;
+let materialTomSelect = null;
 
 const STORAGE_KEY  = "press_orders_v2";
 
@@ -489,6 +543,30 @@ document.addEventListener("DOMContentLoaded", () => {
     loadFromStorage();
     renderOrdersTable();
     bindQrInput();
+
+    // Khởi tạo TomSelect thông minh cho chọn loại ván
+    if (typeof TomSelect !== "undefined") {
+        const matEl = document.getElementById("material_type");
+        if (matEl && !matEl.tomselect) {
+            materialTomSelect = new TomSelect(matEl, {
+                placeholder: "🔍 Gõ tìm mã ván (Vd: GV01, PARC, Melamine...) hoặc chọn danh mục...",
+                allowEmptyOption: true,
+                maxOptions: null,
+                lockOptgroupOrder: true,
+                searchField: ["text", "value"],
+                render: {
+                    optgroup_header: function(data, escape) {
+                        return '<div class="optgroup-header">' + escape(data.label) + '</div>';
+                    },
+                    option: function(data, escape) {
+                        return '<div class="option flex items-center justify-between">' +
+                               '<span class="font-medium">' + escape(data.text) + '</span>' +
+                               '</div>';
+                    }
+                }
+            });
+        }
+    }
 });
 
 // ─────────────────────────────────────────
@@ -507,7 +585,7 @@ function setPurpose(p) {
 // CREATE PRESSING ORDER
 // ─────────────────────────────────────────
 function createPressOrder() {
-    const material = document.getElementById("material_type").value.trim();
+    const material = (materialTomSelect ? materialTomSelect.getValue() : document.getElementById("material_type").value).trim();
     const qty      = parseInt(document.getElementById("qty_needed").value) || 1;
     const notes    = document.getElementById("order_notes").value.trim();
 
@@ -544,7 +622,11 @@ function createPressOrder() {
     renderOrdersTable();
 
     // reset form
-    document.getElementById("material_type").value   = "";
+    if (materialTomSelect) {
+        materialTomSelect.clear();
+    } else {
+        document.getElementById("material_type").value = "";
+    }
     document.getElementById("qty_needed").value       = "1";
     document.getElementById("order_notes").value      = "";
 

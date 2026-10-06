@@ -371,7 +371,7 @@
                 
                 <div class="form-group">
                     <label class="form-label text-xs font-semibold text-neutral-500 mb-1.5 block">Nhân viên nhận tem</label>
-                    <select name="worker_id" class="form-select rounded-lg border-neutral-300 text-sm py-2 px-3 focus:border-primary-500 focus:ring-primary-500 w-full" required>
+                    <select name="worker_id" id="worker_id_select" class="form-select rounded-lg border-neutral-300 text-sm py-2 px-3 focus:border-primary-500 focus:ring-primary-500 w-full" required>
                         <option value="">-- Chọn nhân viên --</option>
                         @foreach($workers as $worker)
                             <option value="{{ $worker->id }}">{{ $worker->name }}</option>
@@ -567,5 +567,18 @@ function toggleDistributionList() {
         list.classList.toggle('hidden');
     }
 }
+
+document.addEventListener("DOMContentLoaded", function() {
+    if (typeof TomSelect !== "undefined") {
+        const workerSelect = document.getElementById("worker_id_select");
+        if (workerSelect && !workerSelect.tomselect) {
+            new TomSelect(workerSelect, {
+                placeholder: "-- Chọn nhân viên --",
+                allowEmptyOption: true,
+                dropdownParent: "body"
+            });
+        }
+    }
+});
 </script>
 @endsection

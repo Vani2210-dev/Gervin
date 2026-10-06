@@ -358,7 +358,7 @@
                         </th>
                         <th class="w-28 border-r border-neutral-400">So sánh với<br>công nợ định mức</th>
                         <th rowspan="2" class="w-24 border-r border-neutral-400">Doanh thu<br>Laminate TM</th>
-                        <th rowspan="2" class="w-24">Doanh thu<br>Plywood TM</th>
+                        <th rowspan="2" class="w-24">Doanh thu<br>Plywood</th>
                     </tr>
 
                     <tr
@@ -1076,6 +1076,21 @@
             return true;
         }
         document.addEventListener('DOMContentLoaded', function () {
+            // Khởi tạo TomSelect cho chọn NVKD trong modal bộ lọc
+            if (typeof TomSelect !== 'undefined') {
+                const userFilterEl = document.getElementById('modal_filter_user_id');
+                if (userFilterEl && !userFilterEl.tomselect) {
+                    new TomSelect(userFilterEl, {
+                        placeholder: '👤 Tìm theo mã hoặc tên nhân viên...',
+                        allowEmptyOption: true,
+                        maxOptions: null,
+                        dropdownParent: 'body',
+                        plugins: ['clear_button'],
+                        searchField: ['text', 'value']
+                    });
+                }
+            }
+
             const monthSelect = document.getElementById('target_month');
             const yearInput = document.getElementById('target_year');
             const titleSpan = document.getElementById('modal-target-title');

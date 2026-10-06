@@ -618,4 +618,58 @@ class WoodBoardController extends Controller
         $cleaned = preg_replace('/[^0-9]/', '', $val);
         return floatval($cleaned);
     }
+
+    /**
+     * Tra cứu thông tin chi tiết bảng giá tấm theo mã màu và loại ván
+     */
+    public function getBoardInfo(Request $request)
+    {
+        $colorCode = trim((string)$request->input('color_code'));
+        $typeId = $request->input('wood_board_type_id');
+        $typeName = trim((string)$request->input('board_type'));
+
+        $board = null;
+        if ($colorCode !== '') {
+            $board = WoodBoard::with(['prices.type'])->where('color_code', $colorCode)->first();
+        }
+
+        $allTypes = WoodBoardType::orderBy('display_order')->get();
+
+        $selectedType = null;
+        if ($typeId) {
+            $selectedType = $allTypes->firstWhere('id', (int)$typeId);
+        } elseif ($typeName !== '') {
+            $selectedType = $allTypes->first(function ($t) use ($typeName) {
+                return mb_strtolower($t->name) === mb_strtolower($typeName)
+                    || mb_stripos($t->name, $typeName) !== false
+                    || mb_stripos($typeName, $t->name) !== false;
+            });
+        }
+
+        $priceRecord = null;
+        if ($board && $selectedType) {
+            $priceRecord = $board->prices->firstWhere('wood_board_type_id', $selectedType->id);
+        }
+
+        // Computed values
+        $prefix = $selectedType?->prefix ?? '';
+        $computedCode = $colorCode !== '' ? ($colorCode . $prefix) : '';
+        $computedThickness = $priceRecord?->thickness ?? '17mm';
+        $computedName = $priceRecord?->name ?? ($selectedType ? "Tấm {$selectedType->name} {$colorCode}" : "Tấm {$colorCode}");
+        $costPrice = $priceRecord?->price_board ?? 0;
+
+        return response()->json([
+            'success'            => true,
+            'color_code'         => $colorCode,
+            'board'              => $board,
+            'types'              => $allTypes,
+            'selected_type'      => $selectedType,
+            'price'              => $priceRecord,
+            'computed_code'      => $computedCode,
+            'computed_name'      => $computedName,
+            'computed_thickness' => $computedThickness,
+            'cost_price'         => $costPrice,
+            'price_group'        => $board?->price_group ?? '',
+        ]);
+    }
 }

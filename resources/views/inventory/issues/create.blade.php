@@ -35,7 +35,7 @@
                         </div>
                         <div>
                             <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Kho xuất <span class="text-danger-500">*</span></label>
-                            <select name="warehouse_id" class="form-select rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-rose-500" required>
+                            <select name="warehouse_id" id="select_warehouse" class="form-select rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-rose-500" required>
                                 @foreach($warehouses as $wh)
                                     <option value="{{ $wh->id }}">{{ $wh->name }}</option>
                                 @endforeach
@@ -348,6 +348,15 @@
 
     // Initialize 3 rows
     function initDefaultRows() {
+        if (typeof TomSelect !== "undefined") {
+            const whEl = document.getElementById("select_warehouse");
+            if (whEl && !whEl.tomselect) {
+                new TomSelect(whEl, {
+                    placeholder: "-- Chọn kho xuất --",
+                    allowEmptyOption: false
+                });
+            }
+        }
         addItemRow();
         addItemRow();
         addItemRow();

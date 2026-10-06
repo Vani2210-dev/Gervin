@@ -5,6 +5,8 @@
         'acrylic' => 'Acrylic',
         'glass' => 'Glass',
         'min_late' => 'Min Late',
+        'plywood' => 'Plywood',
+        'service' => 'Dịch vụ & Vật tư',
     ];
     $isEdit = isset($acrylicOrder) && !$isDraftCreate;
     $thisOrderId = $isEdit ? $acrylicOrder->id : null;
@@ -258,10 +260,12 @@
                 <div class="space-y-6">
                     @if($currentOrderType === 'acrylic')
                         @include('orders.acrylic')
-                    @elseif($currentOrderType === 'min_late')
+                    @elseif(in_array($currentOrderType, ['min_late', 'plywood']))
                         @include('orders.min_late')
                     @elseif($currentOrderType === 'glass')
                         @include('orders.glass')
+                    @elseif($currentOrderType === 'service')
+                        @include('orders.service')
                     @endif
                 </div>
             </div>

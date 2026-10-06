@@ -10,6 +10,7 @@ class PackingPackage extends Model
         'name',
         'status',
         'packed_by',
+        'vehicle_id',
         'dispatched_at',
         'dispatched_note',
         'delivered_at', // Thời điểm giao hàng thành công
@@ -24,6 +25,11 @@ class PackingPackage extends Model
     public function packer()
     {
         return $this->belongsTo(User::class, 'packed_by');
+    }
+
+    public function vehicle()
+    {
+        return $this->belongsTo(Vehicle::class, 'vehicle_id');
     }
 
     public function items()

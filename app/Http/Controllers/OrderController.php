@@ -12,25 +12,29 @@ use Illuminate\Support\Facades\Storage;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use App\Services\ServiceOrderService;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 class OrderController extends Controller
 {
-    private const ORDER_TYPES = ['acrylic', 'glass', 'min_late'];
+    private const ORDER_TYPES = ['acrylic', 'glass', 'min_late', 'plywood', 'service'];
 
     protected $acrylicOrderService;
     protected $minLateOrderService;
     protected $glassOrderService;
+    protected $serviceOrderService;
 
     public function __construct(
         AcrylicOrderService $acrylicOrderService,
         MinLateOrderService $minLateOrderService,
-        GlassOrderService $glassOrderService
+        GlassOrderService $glassOrderService,
+        ServiceOrderService $serviceOrderService
     ) {
         $this->acrylicOrderService = $acrylicOrderService;
         $this->minLateOrderService = $minLateOrderService;
         $this->glassOrderService = $glassOrderService;
+        $this->serviceOrderService = $serviceOrderService;
 
         $this->middleware('permission:view order',   ['only' => ['index', 'show', 'exportExcel']]);
         $this->middleware('permission:add order',    ['only' => ['create', 'createByType', 'store']]);
@@ -294,6 +298,8 @@ class OrderController extends Controller
             'acrylic'  => 'Acrylic',
             'min_late' => 'Min Late',
             'glass'    => 'Cánh kính',
+            'plywood'  => 'Plywood',
+            'service'  => 'Dịch vụ & Vật tư',
         ];
 
         $row = 5;
@@ -434,7 +440,7 @@ class OrderController extends Controller
             }),
             'supplies' => $acrylicOrder->supplies->map(function ($supply) use ($acrylicOrder) {
                 $items = [];
-                if ($acrylicOrder->type === 'min_late') {
+                if (in_array($acrylicOrder->type, ['min_late', 'plywood'])) {
                     $items = $supply->minLateItems->map(function ($item) {
                         $sizes = $item->size ?? [];
                         if (is_string($sizes)) {
@@ -616,7 +622,7 @@ class OrderController extends Controller
 
         $request->validate([
             'draft_order_id' => 'required|integer',
-            'type' => 'required|in:acrylic,glass,min_late',
+            'type' => 'required|in:acrylic,glass,min_late,plywood,service',
         ]);
 
         $draftOrder = Order::where('status', 'draft')->findOrFail($request->draft_order_id);
@@ -836,7 +842,7 @@ class OrderController extends Controller
                 $items = $supply->glassItems;
                 $totalCount = $items->sum('wing_quantity') ?: $items->sum('quantity');
                 $cncCount = $totalCount;
-            } elseif ($order->type === 'min_late') {
+            } elseif (in_array($order->type, ['min_late', 'plywood'])) {
                 $items = $supply->minLateItems;
                 $totalCount = $items->sum('quantity');
                 $cncCount = $items->where('cnc', 1)->sum('quantity');
@@ -985,8 +991,9 @@ class OrderController extends Controller
     private function serviceFor(?string $type)
     {
         return match ($type) {
-            'min_late' => $this->minLateOrderService,
+            'min_late', 'plywood' => $this->minLateOrderService,
             'glass' => $this->glassOrderService,
+            'service' => $this->serviceOrderService,
             default => $this->acrylicOrderService,
             'acrylic' => $this->acrylicOrderService,
         };
@@ -1196,7 +1203,7 @@ class OrderController extends Controller
                 $originalItem = null;
                 $originalSupply = null;
 
-                if ($order->type === 'min_late') {
+                if (in_array($order->type, ['min_late', 'plywood'])) {
                     $originalItem = \App\Models\MinLateOrderItem::find($itemId);
                 } elseif ($order->type === 'glass') {
                     $originalItem = \App\Models\GlassOrderItem::find($itemId);
@@ -1237,7 +1244,7 @@ class OrderController extends Controller
                 $cnc = 0;
                 $direction = null;
 
-                if ($order->type === 'min_late') {
+                if (in_array($order->type, ['min_late', 'plywood'])) {
                     $size = $originalItem->size ?? [];
                     if (is_string($size)) {
                         $size = json_decode($size, true) ?? [];
@@ -1458,7 +1465,7 @@ class OrderController extends Controller
                 $originalItem = null;
                 $originalSupply = null;
 
-                if ($order->type === 'min_late') {
+                if (in_array($order->type, ['min_late', 'plywood'])) {
                     $originalItem = \App\Models\MinLateOrderItem::find($itemId);
                 } elseif ($order->type === 'glass') {
                     $originalItem = \App\Models\GlassOrderItem::find($itemId);
@@ -1490,7 +1497,7 @@ class OrderController extends Controller
                 $origHeight = null;
                 $origWidth = null;
 
-                if ($order->type === 'min_late') {
+                if (in_array($order->type, ['min_late', 'plywood'])) {
                     $size = $originalItem->size ?? [];
                     if (is_string($size)) {
                         $size = json_decode($size, true) ?? [];
@@ -1505,7 +1512,7 @@ class OrderController extends Controller
                 $itemData['notes'] = $originalItem->notes ?? '';
                 $itemData['old_size'] = ($origHeight ?? '?') . ' x ' . ($origWidth ?? '?');
 
-                if ($order->type === 'min_late') {
+                if (in_array($order->type, ['min_late', 'plywood'])) {
                     \App\Models\MinLateOrderItem::create($itemData);
                 } elseif ($order->type === 'glass') {
                     \App\Models\GlassOrderItem::create($itemData);
@@ -1599,7 +1606,7 @@ class OrderController extends Controller
                 $originalItem = null;
                 $originalSupply = null;
 
-                if ($order->type === 'min_late') {
+                if (in_array($order->type, ['min_late', 'plywood'])) {
                     $originalItem = \App\Models\MinLateOrderItem::find($itemId);
                 } elseif ($order->type === 'glass') {
                     $originalItem = \App\Models\GlassOrderItem::find($itemId);
@@ -1628,7 +1635,7 @@ class OrderController extends Controller
                 unset($itemData['id']);
                 $itemData['order_supply_id'] = $newSupplyId;
 
-                if ($order->type === 'min_late') {
+                if (in_array($order->type, ['min_late', 'plywood'])) {
                     \App\Models\MinLateOrderItem::create($itemData);
                 } elseif ($order->type === 'glass') {
                     \App\Models\GlassOrderItem::create($itemData);

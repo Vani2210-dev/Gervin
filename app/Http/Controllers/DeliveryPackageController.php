@@ -8,6 +8,7 @@ use App\Models\MinLateOrderItemCode;
 use App\Models\Order;
 use App\Models\PackingPackage;
 use App\Models\PackingPackageItem;
+use App\Models\Vehicle;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -19,11 +20,11 @@ class DeliveryPackageController extends Controller
     {
         // Kiểm tra phân quyền truy cập cho trang giao hàng
         $this->middleware('permission:view delivery')->only(['index', 'preview']);
-        $this->middleware('permission:complete delivery')->only(['confirm']);
+        $this->middleware('permission:complete delivery')->only(['confirm', 'bulkConfirm']);
     }
 
     /**
-     * Hiển thị danh sách lịch sử giao hàng
+     * Hiển thị danh sách lịch sử giao hàng và kiện chờ giao
      */
     public function index(Request $request)
     {
@@ -32,8 +33,8 @@ class DeliveryPackageController extends Controller
         $perPage = (int) $request->input('per_page', 15);
         $perPage = in_array($perPage, [15, 25, 50, 100], true) ? $perPage : 15;
 
-        // Chỉ lấy những kiện đã được giao hàng thành công
-        $query = PackingPackage::with(['packer', 'items.itemCode'])
+        // 1. Lấy danh sách lịch sử giao hàng thành công
+        $query = PackingPackage::with(['packer', 'vehicle', 'items.itemCode'])
             ->whereNotNull('delivered_at')
             ->orderByDesc('delivered_at');
 
@@ -45,13 +46,28 @@ class DeliveryPackageController extends Controller
         $historyRows = $this->filterHistoryRows($historyRows, $range, $search);
         $historyRows = $this->paginateHistoryRows($historyRows, $perPage, $request);
 
+        // 2. Danh sách kiện ĐANG CHỜ GIAO HÀNG (đã xuất xưởng nhưng chưa giao xong)
+        $pendingPackages = PackingPackage::with(['packer', 'vehicle', 'items.itemCode'])
+            ->where('status', 'completed')
+            ->whereNotNull('dispatched_at')
+            ->whereNull('delivered_at')
+            ->orderByDesc('dispatched_at')
+            ->get();
+        $pendingRows = $this->buildPendingRows($pendingPackages);
+
+        // 3. Danh sách xe giao hàng
+        $vehicles = Vehicle::where('status', 'active')->orderBy('name')->get();
+
         return view('delivery.index', [
-            'historyRows' => $historyRows,
+            'historyRows'        => $historyRows,
+            'pendingRows'        => $pendingRows,
+            'pendingCount'       => $pendingPackages->count(),
+            'vehicles'           => $vehicles,
             'todayDeliveryCount' => $this->getTodayDeliveryCount(),
-            'range' => $range,
-            'search' => $search,
-            'perPage' => $perPage,
-            'currentUser' => Auth::user(),
+            'range'              => $range,
+            'search'             => $search,
+            'perPage'            => $perPage,
+            'currentUser'        => Auth::user(),
         ]);
     }
 
@@ -61,16 +77,18 @@ class DeliveryPackageController extends Controller
     public function preview(Request $request)
     {
         $validated = $request->validate([
-            'package_id' => 'nullable|integer',
-            'product_code' => 'nullable|string|max:255',
-            'per_page' => 'nullable|integer',
-            'page' => 'nullable|integer|min:1',
+            'package_id'     => 'nullable|integer',
+            'product_code'   => 'nullable|string|max:255',
+            'per_page'       => 'nullable|integer',
+            'page'           => 'nullable|integer|min:1',
+            'auto_confirm'   => 'nullable|boolean',
+            'delivered_note' => 'nullable|string|max:1000',
         ]);
 
         $package = null;
 
         if (! empty($validated['package_id'])) {
-            $package = PackingPackage::with(['packer', 'items.itemCode'])->find((int) $validated['package_id']);
+            $package = PackingPackage::with(['packer', 'vehicle', 'items.itemCode'])->find((int) $validated['package_id']);
         } elseif (! empty(trim((string) ($validated['product_code'] ?? '')))) {
             $resolved = $this->resolveDeliveryTarget(trim($validated['product_code']));
             $package = $resolved['package'] ?? null;
@@ -79,24 +97,55 @@ class DeliveryPackageController extends Controller
         if (! $package) {
             return response()->json([
                 'success' => false,
-                'message' => 'Không tìm thấy sản phẩm hoặc kiện tương ứng.',
+                'message' => 'Không tìm thấy kiện hoặc sản phẩm tương ứng với mã vừa quét.',
             ], 404);
         }
 
-
-        $package->load(['packer', 'items.itemCode']);
+        $package->load(['packer', 'vehicle', 'items.itemCode']);
         $this->loadMorphCodeRelations($package->items->map(fn ($item) => $item->itemCode)->filter());
 
         $perPage = (int) $request->input('per_page', 15);
         $perPage = in_array($perPage, [15, 25, 50, 100], true) ? $perPage : 15;
         $page = max((int) $request->input('page', 1), 1);
 
+        // Tự động xác nhận giao hàng nếu chế độ Fast Scan (auto_confirm) đang bật
+        $autoConfirm = $request->boolean('auto_confirm');
+        if ($autoConfirm && $package->status === 'completed' && $package->dispatched_at && ! $package->delivered_at) {
+            $now = now();
+            $package->update([
+                'delivered_at'   => $now,
+                'delivered_note' => $validated['delivered_note'] ?? null,
+            ]);
+
+            // Tự động kiểm tra và hoàn tất đơn hàng nếu tất cả các kiện đã giao
+            $this->checkAndCompleteOrder($package);
+
+            $package->load(['packer', 'vehicle', 'items.itemCode']);
+            $this->loadMorphCodeRelations($package->items->map(fn ($item) => $item->itemCode)->filter());
+            $historyRows = $this->buildHistoryRows(collect([$package]));
+
+            return response()->json([
+                'success'        => true,
+                'auto_confirmed' => true,
+                'message'        => "Đã tự động xác nhận giao hàng kiện {$package->name} thành công!",
+                'data'           => [
+                    ...$this->buildPreviewData($package, $perPage, $page),
+                    'status_label'   => 'Đã giao',
+                    'status_detail'  => 'Kiện đã được tự động xác nhận giao hàng.',
+                    'can_confirm'    => false,
+                    'confirmed_at'   => $now->format('H:i:s d/m/Y'),
+                    'today_count'    => $this->getTodayDeliveryCount(),
+                    'rows'           => $historyRows->values()->all(),
+                ],
+            ]);
+        }
+
         return response()->json([
             'success' => true,
             'message' => $package->delivered_at
                 ? 'Kiện này đã được giao hàng trước đó.'
-                : 'Đã kiểm tra mã thành công.',
-            'data' => $this->buildPreviewData($package, $perPage, $page),
+                : 'Đã tìm thấy thông tin kiện.',
+            'data'    => $this->buildPreviewData($package, $perPage, $page),
         ]);
     }
 
@@ -106,17 +155,18 @@ class DeliveryPackageController extends Controller
     public function confirm(Request $request)
     {
         $validated = $request->validate([
-            'package_id' => 'nullable|integer',
-            'product_code' => 'nullable|string|max:255',
+            'package_id'     => 'nullable|integer',
+            'product_code'   => 'nullable|string|max:255',
             'delivered_note' => 'nullable|string|max:1000',
-            'per_page' => 'nullable|integer',
-            'page' => 'nullable|integer|min:1',
+            'per_page'       => 'nullable|integer',
+            'page'           => 'nullable|integer|min:1',
         ]);
 
         $package = null;
+        $resolved = null;
 
         if (! empty($validated['package_id'])) {
-            $package = PackingPackage::with(['packer', 'items.itemCode'])->find((int) $validated['package_id']);
+            $package = PackingPackage::with(['packer', 'vehicle', 'items.itemCode'])->find((int) $validated['package_id']);
         } elseif (! empty($validated['product_code'])) {
             $resolved = $this->resolveDeliveryTarget(trim($validated['product_code']));
             $package = $resolved['package'] ?? null;
@@ -153,11 +203,14 @@ class DeliveryPackageController extends Controller
 
         $now = now();
         $package->update([
-            'delivered_at' => $now,
+            'delivered_at'   => $now,
             'delivered_note' => $validated['delivered_note'] ?? null,
         ]);
 
-        $package->load(['packer', 'items.itemCode']);
+        // Tự động kiểm tra và hoàn thành đơn hàng nếu đã giao đủ các kiện
+        $this->checkAndCompleteOrder($package);
+
+        $package->load(['packer', 'vehicle', 'items.itemCode']);
         $this->loadMorphCodeRelations($package->items->map(fn ($item) => $item->itemCode)->filter());
 
         $perPage = (int) ($validated['per_page'] ?? 15);
@@ -170,13 +223,57 @@ class DeliveryPackageController extends Controller
             'message' => 'Xác nhận giao hàng thành công.',
             'data' => [
                 ...$this->buildPreviewData($package, $perPage, $page),
-                'status_label' => 'Đã giao',
-                'status_detail' => 'Kiện đã được xác nhận giao hàng.',
-                'can_confirm' => false,
-                'confirmed_at' => $now->format('H:i:s d/m/Y'),
-                'today_count' => $this->getTodayDeliveryCount(),
-                'rows' => $historyRows->values()->all(),
+                'status_label'   => 'Đã giao',
+                'status_detail'  => 'Kiện đã được xác nhận giao hàng.',
+                'can_confirm'    => false,
+                'confirmed_at'   => $now->format('H:i:s d/m/Y'),
+                'today_count'    => $this->getTodayDeliveryCount(),
+                'rows'           => $historyRows->values()->all(),
             ],
+        ]);
+    }
+
+    /**
+     * Xác nhận giao hàng hàng loạt cho nhiều kiện cùng lúc
+     */
+    public function bulkConfirm(Request $request)
+    {
+        $validated = $request->validate([
+            'package_ids'    => 'required|array|min:1',
+            'package_ids.*'  => 'integer|exists:packing_packages,id',
+            'delivered_note' => 'nullable|string|max:1000',
+        ]);
+
+        $now = now();
+        $packages = PackingPackage::whereIn('id', $validated['package_ids'])
+            ->where('status', 'completed')
+            ->whereNotNull('dispatched_at')
+            ->whereNull('delivered_at')
+            ->get();
+
+        if ($packages->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không có kiện nào đủ điều kiện để xác nhận giao hàng.',
+            ], 422);
+        }
+
+        $count = 0;
+        foreach ($packages as $pkg) {
+            $pkg->update([
+                'delivered_at'   => $now,
+                'delivered_note' => $validated['delivered_note'] ?? null,
+            ]);
+            $count++;
+
+            $this->checkAndCompleteOrder($pkg);
+        }
+
+        return response()->json([
+            'success'         => true,
+            'message'         => "Đã xác nhận giao hàng thành công cho {$count} kiện hàng!",
+            'delivered_count' => $count,
+            'today_count'     => $this->getTodayDeliveryCount(),
         ]);
     }
 
@@ -185,31 +282,68 @@ class DeliveryPackageController extends Controller
      */
     private function resolveDeliveryTarget(string $code): ?array
     {
+        $code = trim($code);
         if ($code === '') {
             return null;
         }
 
-        if (ctype_digit($code)) {
-            $package = PackingPackage::with(['packer', 'items.itemCode'])->find((int) $code);
-
-            if (! $package) {
-                return null;
-            }
-
-            $this->loadMorphCodeRelations($package->items->map(fn ($item) => $item->itemCode)->filter());
-
-            $firstItem = $package->items->where('is_packaged', true)->first() ?? $package->items->first();
-            $firstItemData = $firstItem ? $this->formatDeliveryItem($package, $firstItem) : null;
-
-            return [
-                'package' => $package,
-                'row_product_code' => $firstItemData['product_code'] ?? (string) $package->id,
-                'row_product_name' => $firstItemData['product_name'] ?? $package->name,
-                'row_order_code' => $firstItemData['order_code'] ?? '—',
-                'row_notes' => $firstItemData['notes'] ?? '—',
-            ];
+        // 1. Kiểm tra ID hoặc mã dạng PK1, PK001
+        $idCandidate = $code;
+        if (preg_match('/^PK[-_]?(\d+)$/i', $code, $m)) {
+            $idCandidate = $m[1];
         }
 
+        if (ctype_digit((string) $idCandidate)) {
+            $package = PackingPackage::with(['packer', 'vehicle', 'items.itemCode'])->find((int) $idCandidate);
+            if ($package) {
+                return $this->formatResolvedPackage($package);
+            }
+        }
+
+        // 2. Tìm theo tên kiện (VD: 'Kiện 1', 'Kiện cánh tủ')
+        $package = PackingPackage::with(['packer', 'vehicle', 'items.itemCode'])
+            ->where('name', $code)
+            ->first();
+        if ($package) {
+            return $this->formatResolvedPackage($package);
+        }
+
+        // 3. Tìm theo Mã Đơn Hàng (VD: DA00003, MIN00001, PLY00001)
+        $order = Order::where('order_code', $code)->first();
+        if ($order) {
+            $orderPackageIds = PackingPackageItem::whereHasMorph('itemCode', [
+                AcrylicOrderItemCode::class,
+                GlassOrderItemCode::class,
+                MinLateOrderItemCode::class,
+            ], function ($q, $type) use ($order) {
+                if ($type === AcrylicOrderItemCode::class) {
+                    $q->whereHas('acrylicOrderItem.orderSupply', fn($sq) => $sq->where('order_id', $order->id));
+                } elseif ($type === GlassOrderItemCode::class) {
+                    $q->whereHas('glassOrderItem.orderSupply', fn($sq) => $sq->where('order_id', $order->id));
+                } elseif ($type === MinLateOrderItemCode::class) {
+                    $q->whereHas('minLateOrderItem.orderSupply', fn($sq) => $sq->where('order_id', $order->id));
+                }
+            })->pluck('packing_package_id')->unique();
+
+            if ($orderPackageIds->isNotEmpty()) {
+                // Ưu tiên kiện đã xuất xưởng nhưng chưa giao
+                $pkg = PackingPackage::with(['packer', 'vehicle', 'items.itemCode'])
+                    ->whereIn('id', $orderPackageIds)
+                    ->where('status', 'completed')
+                    ->whereNotNull('dispatched_at')
+                    ->whereNull('delivered_at')
+                    ->first()
+                    ?? PackingPackage::with(['packer', 'vehicle', 'items.itemCode'])
+                    ->whereIn('id', $orderPackageIds)
+                    ->first();
+
+                if ($pkg) {
+                    return $this->formatResolvedPackage($pkg);
+                }
+            }
+        }
+
+        // 4. Tìm theo mã linh kiện con bên trong kiện
         foreach ([
             [
                 'class' => AcrylicOrderItemCode::class,
@@ -241,21 +375,95 @@ class DeliveryPackageController extends Controller
                 continue;
             }
 
-            $package = $packageItem->package;
-            $this->loadMorphCodeRelations(collect([$packageItem->itemCode])->filter());
-
-            $itemData = $this->formatDeliveryItem($package, $packageItem);
-
-            return [
-                'package' => $package,
-                'row_product_code' => $itemData['product_code'],
-                'row_product_name' => $itemData['product_name'],
-                'row_order_code' => $itemData['order_code'],
-                'row_notes' => $itemData['notes'],
-            ];
+            return $this->formatResolvedPackage($packageItem->package, $packageItem);
         }
 
         return null;
+    }
+
+    private function formatResolvedPackage(PackingPackage $package, ?PackingPackageItem $packageItem = null): array
+    {
+        $this->loadMorphCodeRelations($package->items->map(fn ($item) => $item->itemCode)->filter());
+
+        if ($packageItem) {
+            $itemData = $this->formatDeliveryItem($package, $packageItem);
+        } else {
+            $firstItem = $package->items->where('is_packaged', true)->first() ?? $package->items->first();
+            $itemData = $firstItem ? $this->formatDeliveryItem($package, $firstItem) : null;
+        }
+
+        return [
+            'package'          => $package,
+            'row_product_code' => $itemData['product_code'] ?? (string) $package->id,
+            'row_product_name' => $itemData['product_name'] ?? $package->name,
+            'row_order_code'   => $itemData['order_code'] ?? '—',
+            'row_notes'        => $itemData['notes'] ?? '—',
+        ];
+    }
+
+    private function buildPendingRows(Collection $packages): Collection
+    {
+        return $packages->map(function (PackingPackage $package) {
+            $effectiveItems = $package->items->where('is_packaged', true);
+            if ($effectiveItems->isEmpty()) {
+                $effectiveItems = $package->items;
+            }
+            $packageOrder = $this->resolvePackageOrder($effectiveItems);
+
+            return [
+                'package_id'       => $package->id,
+                'package_code'     => (string) $package->id,
+                'package_name'     => $package->name,
+                'order_code'       => $packageOrder?->order_code ?? '—',
+                'customer_name'    => $packageOrder?->customer_name ?? '—',
+                'customer_phone'   => $packageOrder?->phone ?? '—',
+                'delivery_address' => $packageOrder?->address ?? '—',
+                'total_items'      => $effectiveItems->count(),
+                'operator'         => $package->packer?->name ?? '—',
+                'dispatched_time'  => $package->dispatched_at?->format('H:i d/m/Y') ?? '—',
+                'view_url'         => route('processes.packing.show', $package),
+            ];
+        });
+    }
+
+    /**
+     * Tự động kiểm tra và cập nhật trạng thái Đơn hàng sang Hoàn thành nếu tất cả các kiện đã giao
+     */
+    private function checkAndCompleteOrder(PackingPackage $package): void
+    {
+        $effectiveItems = $package->items->where('is_packaged', true);
+        if ($effectiveItems->isEmpty()) {
+            $effectiveItems = $package->items;
+        }
+
+        $packageOrder = $this->resolvePackageOrder($effectiveItems);
+        if (! $packageOrder) {
+            return;
+        }
+
+        $orderPackageIds = PackingPackageItem::whereHasMorph('itemCode', [
+            AcrylicOrderItemCode::class,
+            GlassOrderItemCode::class,
+            MinLateOrderItemCode::class,
+        ], function ($q, $type) use ($packageOrder) {
+            if ($type === AcrylicOrderItemCode::class) {
+                $q->whereHas('acrylicOrderItem.orderSupply', fn($sq) => $sq->where('order_id', $packageOrder->id));
+            } elseif ($type === GlassOrderItemCode::class) {
+                $q->whereHas('glassOrderItem.orderSupply', fn($sq) => $sq->where('order_id', $packageOrder->id));
+            } elseif ($type === MinLateOrderItemCode::class) {
+                $q->whereHas('minLateOrderItem.orderSupply', fn($sq) => $sq->where('order_id', $packageOrder->id));
+            }
+        })->pluck('packing_package_id')->unique();
+
+        if ($orderPackageIds->isNotEmpty()) {
+            $undeliveredCount = PackingPackage::whereIn('id', $orderPackageIds)
+                ->whereNull('delivered_at')
+                ->count();
+
+            if ($undeliveredCount === 0) {
+                $packageOrder->update(['status' => 'completed']);
+            }
+        }
     }
 
     /**
@@ -342,18 +550,18 @@ class DeliveryPackageController extends Controller
         $packageCode = (string) $package->id;
 
         return [
-            'package_id' => $package->id,
+            'package_id'   => $package->id,
             'package_code' => $packageCode,
             'package_name' => $package->name,
             'product_code' => $packageCode,
             'product_name' => $package->name,
-            'order_code' => $packageOrder?->order_code ?? '—',
-            'notes' => filled($package->delivered_note) ? $package->delivered_note : '—',
-            'operator' => $package->packer?->name ?? '—',
-            'time_raw' => $package->delivered_at,
-            'time' => $package->delivered_at?->format('H:i:s d/m/Y') ?? '—',
+            'order_code'   => $packageOrder?->order_code ?? '—',
+            'notes'        => filled($package->delivered_note) ? $package->delivered_note : '—',
+            'operator'     => $package->packer?->name ?? '—',
+            'time_raw'     => $package->delivered_at,
+            'time'         => $package->delivered_at?->format('H:i:s d/m/Y') ?? '—',
             'status_label' => 'Đã giao',
-            'view_url' => route('processes.packing.show', $package),
+            'view_url'     => route('processes.packing.show', $package),
         ];
     }
 
@@ -388,32 +596,32 @@ class DeliveryPackageController extends Controller
             : $this->resolvePackageItemSizeMeta(null);
 
         return [
-            'package_id' => $package->id,
-            'package_code' => $packageCode,
-            'package_name' => $package->name,
+            'package_id'     => $package->id,
+            'package_code'   => $packageCode,
+            'package_name'   => $package->name,
             'delivered_note' => $package->delivered_note ?? '',
-            'status_label' => $package->delivered_at
+            'status_label'   => $package->delivered_at
                 ? 'Đã giao'
                 : ($package->dispatched_at
                     ? 'Đã xuất xưởng (Chưa giao)'
                     : ($package->status === 'completed'
                         ? 'Đã hoàn tất đóng gói (Chưa xuất xưởng)'
                         : 'Đang đóng gói (Chưa xuất xưởng)')),
-            'status_detail' => $package->delivered_at
+            'status_detail'  => $package->delivered_at
                 ? 'Kiện này đã được xác nhận giao hàng thành công.'
                 : ($package->dispatched_at
                     ? 'Kiện đã xuất xưởng, sẵn sàng xác nhận giao hàng.'
                     : ($package->status === 'completed'
                         ? 'Kiện đã hoàn tất đóng gói nhưng chưa được xuất xưởng. Cần xuất xưởng trước khi giao hàng.'
                         : 'Kiện chưa hoàn tất đóng gói và chưa xuất xưởng. Chỉ xem thông tin, chưa thể giao hàng.')),
-            'can_confirm' => $canConfirm,
-            'order_info' => [
+            'can_confirm'    => $canConfirm,
+            'order_info'     => [
                 ['label' => 'Mã đơn', 'value' => $orderCode],
                 ['label' => 'Tên khách hàng', 'value' => $customerName],
                 ['label' => 'Số điện thoại', 'value' => $customerPhone],
                 ['label' => 'Địa chỉ giao hàng', 'value' => $deliveryAddress],
             ],
-            'package_info' => [
+            'package_info'   => [
                 ['label' => 'Mã kiện', 'value' => $packageCode],
                 ['label' => 'Người đóng gói', 'value' => $package->packer?->name ?? '—'],
                 ['label' => 'Tổng SL linh kiện', 'value' => (string) $totalItems],
@@ -423,15 +631,15 @@ class DeliveryPackageController extends Controller
                         ? 'Đã xuất xưởng'
                         : ($package->status === 'completed' ? 'Đã đóng gói hoàn tất' : 'Đang đóng gói'))],
             ],
-            'package_items' => $itemRows,
+            'package_items'  => $itemRows,
             'package_items_meta' => [
                 'current_page' => $paginatedItems->currentPage(),
-                'last_page' => $paginatedItems->lastPage(),
-                'per_page' => $paginatedItems->perPage(),
-                'total' => $paginatedItems->total(),
-                'first_item' => $paginatedItems->firstItem() ?? 0,
-                'last_item' => $paginatedItems->lastItem() ?? 0,
-                'size_meta' => $sizeMeta,
+                'last_page'    => $paginatedItems->lastPage(),
+                'per_page'     => $paginatedItems->perPage(),
+                'total'        => $paginatedItems->total(),
+                'first_item'   => $paginatedItems->firstItem() ?? 0,
+                'last_item'    => $paginatedItems->lastItem() ?? 0,
+                'size_meta'    => $sizeMeta,
             ],
         ];
     }
@@ -497,12 +705,12 @@ class DeliveryPackageController extends Controller
         }
 
         return [
-            'package_id' => $package->id,
+            'package_id'   => $package->id,
             'package_name' => $package->name,
             'product_code' => $code?->product_id ?? '—',
             'product_name' => $productName,
-            'order_code' => $orderCode,
-            'notes' => $notes,
+            'order_code'   => $orderCode,
+            'notes'        => $notes,
         ];
     }
 
@@ -531,8 +739,8 @@ class DeliveryPackageController extends Controller
         return [
             'product_code' => $code?->product_id ?? '—',
             'product_name' => $productName,
-            'type' => $type,
-            'size_title' => $sizeLabels['title'],
+            'type'         => $type,
+            'size_title'   => $sizeLabels['title'],
             'size_label_1' => $sizeLabels['label_1'],
             'size_label_2' => $sizeLabels['label_2'],
             'size_value_1' => $sizeValue1,
@@ -547,7 +755,7 @@ class DeliveryPackageController extends Controller
 
         if ($type instanceof GlassOrderItemCode) {
             return [
-                'title' => 'KÍCH THƯỚC CÁNH (MM)',
+                'title'   => 'KÍCH THƯỚC CÁNH (MM)',
                 'label_1' => 'DÀI (MM)',
                 'label_2' => 'RỘNG (MM)',
             ];
@@ -555,14 +763,14 @@ class DeliveryPackageController extends Controller
 
         if ($type instanceof MinLateOrderItemCode) {
             return [
-                'title' => 'KÍCH THƯỚC (MM)',
+                'title'   => 'KÍCH THƯỚC (MM)',
                 'label_1' => 'CAO (VÁN)',
                 'label_2' => 'RỘNG',
             ];
         }
 
         return [
-            'title' => 'KÍCH THƯỚC (MM)',
+            'title'   => 'KÍCH THƯỚC (MM)',
             'label_1' => 'CAO (CHIỀU VÁN)',
             'label_2' => 'RỘNG',
         ];

@@ -23,7 +23,7 @@ class MinLateOrderService
             'customer_name'  => 'required|string|max:255',
             'phone'          => 'nullable|string|max:20',
             'address'        => 'nullable|string',
-            'type'           => 'required|in:min_late',
+            'type'           => 'required|in:min_late,plywood',
             'order_date'     => 'nullable|date',
             'delivery_days'  => 'nullable|numeric|min:0',
             'deadline'       => 'nullable|date',
@@ -162,7 +162,7 @@ class MinLateOrderService
         }
 
         $updateData = [
-            'type'          => 'min_late',
+            'type'          => $request->input('type', $order->type ?? 'min_late'),
             'order_date'    => $request->order_date,
             'delivery_days' => $request->delivery_days,
             'customer_id'   => $customerId,

@@ -363,11 +363,15 @@
                                                 'acrylic' => 'bg-primary-100 text-primary-600 border border-primary-200',
                                                 'min_late' => 'bg-warning-100 text-warning-600 border border-warning-200',
                                                 'glass' => 'bg-info-100 text-info-600 border border-info-200',
+                                                'plywood' => 'bg-amber-100 text-amber-700 border border-amber-300',
+                                                'service' => 'bg-purple-100 text-purple-700 border border-purple-300',
                                             ];
                                             $typeLabels = [
                                                 'acrylic' => 'Acrylic',
                                                 'min_late' => 'Min Late',
                                                 'glass' => 'Glass',
+                                                'plywood' => 'Plywood',
+                                                'service' => 'Dịch vụ & Vật tư',
                                             ];
                                         @endphp
                                         <span class="px-2 py-0.5 rounded border text-xs font-semibold {{ $typeColors[$order->type] ?? 'bg-neutral-100 text-neutral-600' }}">
@@ -511,7 +515,7 @@
             <div class="form-group md:col-span-2">
                 <label class="form-label font-semibold text-sm text-neutral-600">Khách hàng</label>
                 <select name="filter_customer_id" id="filter_customer_id" class="rounded-lg w-full">
-                    <option value="">Tất cả</option>
+                    <option value="">-- Tất cả khách hàng --</option>
                     @foreach($customers as $c)
                         <option value="{{ $c->id }}" {{ request('filter_customer_id') == $c->id ? 'selected' : '' }}>
                             {{ $c->customer_code }} - {{ $c->name }}
@@ -538,6 +542,8 @@
                     <option value="acrylic" {{ request('filter_type') === 'acrylic' ? 'selected' : '' }}>Acrylic</option>
                     <option value="glass" {{ request('filter_type') === 'glass' ? 'selected' : '' }}>Kính</option>
                     <option value="min_late" {{ request('filter_type') === 'min_late' ? 'selected' : '' }}>Min Late</option>
+                    <option value="plywood" {{ request('filter_type') === 'plywood' ? 'selected' : '' }}>Plywood</option>
+                    <option value="service" {{ request('filter_type') === 'service' ? 'selected' : '' }}>Dịch vụ & Vật tư</option>
                 </select>
             </div>
             <div class="form-group md:col-span-2">
@@ -1260,3 +1266,17 @@ async function submitQuickManufacture(e) {
     </div>
 @endforeach
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        if (typeof TomSelect !== 'undefined' && document.getElementById('filter_customer_id')) {
+            new TomSelect('#filter_customer_id', {
+                allowEmptyOption: true,
+                placeholder: '-- Tất cả khách hàng --',
+                maxOptions: 500,
+            });
+        }
+    });
+</script>
+@endpush

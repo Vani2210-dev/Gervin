@@ -4,12 +4,16 @@
         'acrylic' => 'Đơn hàng Acrylic',
         'glass' => 'Đơn hàng gia công cánh kính',
         'min_late' => 'Đơn hàng gia công Min-late',
+        'plywood' => 'Đơn hàng gia công Plywood',
+        'service' => 'Đơn Dịch vụ & Vật tư',
     ];
 
     $typeDescriptions = [
         'acrylic' => 'Quy trình xử lý cho đơn hàng acrylic.',
         'glass' => 'Quy trình xử lý cho đơn hàng gia công cánh kính.',
         'min_late' => 'Quy trình xử lý cho đơn hàng gia công min-late.',
+        'plywood' => 'Quy trình xử lý cho đơn hàng gia công plywood.',
+        'service' => 'Bán ván mộc, vật tư bổ sung, phụ kiện hoặc dịch vụ gia công lẻ không cắt CNC.',
     ];
 @endphp
 
@@ -47,7 +51,7 @@
             $subTitle = 'Chọn loại đơn hàng';
         @endphp
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 items-stretch order-type-page__grid">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 items-stretch order-type-page__grid">
             @foreach($typeLabels as $type => $label)
                 @php
                     $cardMeta = [
@@ -77,6 +81,24 @@
                             'badge' => 'bg-success-100 text-success-600',
                             'button' => 'bg-success-600 hover:bg-success-700 text-white',
                             'reworkOutline' => 'border border-success-600 text-success-600 hover:bg-success-50 bg-transparent',
+                        ],
+                        'plywood' => [
+                            'icon' => 'solar:layers-minimalistic-bold',
+                            'iconBg' => 'bg-amber-100',
+                            'iconText' => 'text-amber-600',
+                            'linkText' => 'text-amber-600',
+                            'badge' => 'bg-amber-100 text-amber-600',
+                            'button' => 'bg-amber-600 hover:bg-amber-700 text-white',
+                            'reworkOutline' => 'border border-amber-600 text-amber-600 hover:bg-amber-50 bg-transparent',
+                        ],
+                        'service' => [
+                            'icon' => 'solar:bill-list-bold',
+                            'iconBg' => 'bg-purple-100',
+                            'iconText' => 'text-purple-600',
+                            'linkText' => 'text-purple-600',
+                            'badge' => 'bg-purple-100 text-purple-600',
+                            'button' => 'bg-purple-600 hover:bg-purple-700 text-white',
+                            'reworkOutline' => 'border border-purple-600 text-purple-600 hover:bg-purple-50 bg-transparent',
                         ],
                     ][$type];
                 @endphp

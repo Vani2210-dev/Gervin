@@ -371,7 +371,7 @@
                         </div>
                         <div>
                             <label class="form-label font-semibold text-xs text-neutral-700 mb-1.5 block">Nhóm thị trường</label>
-                            <select name="market_group_id" class="form-select rounded-xl text-sm py-2.5 px-3.5 w-full">
+                            <select name="market_group_id" id="create_market_group_id" class="form-select rounded-xl text-sm py-2.5 px-3.5 w-full">
                                 <option value="">-- Chọn nhóm --</option>
                                 @foreach($marketGroups as $mg)
                                     <option value="{{ $mg->id }}" {{ old('market_group_id') == $mg->id ? 'selected' : '' }}>
@@ -1071,7 +1071,11 @@ function openEditCustomerModalFromBtn(btn) {
     
     const mgSelect = document.getElementById('edit_market_group_id');
     if (mgSelect) {
-        mgSelect.value = marketGroupId;
+        if (mgSelect.tomselect) {
+            mgSelect.tomselect.setValue(marketGroupId || '');
+        } else {
+            mgSelect.value = marketGroupId || '';
+        }
     }
 
     // Reset and populate existing photos in edit modal
@@ -1313,7 +1317,7 @@ function previewCustomerPhotos(photos, custName) {
 
             <div class="form-group md:col-span-2">
                 <label class="form-label font-semibold text-sm text-neutral-600">Nhóm thị trường</label>
-                <select name="filter_market_group_id" class="form-select rounded-lg w-full">
+                <select name="filter_market_group_id" id="filter_market_group_id" class="form-select rounded-lg w-full">
                     <option value="">Tất cả nhóm thị trường</option>
                     @foreach($marketGroups as $mg)
                         <option value="{{ $mg->id }}" {{ request('filter_market_group_id') == $mg->id ? 'selected' : '' }}>
@@ -2001,13 +2005,6 @@ document.addEventListener('DOMContentLoaded', function () {
     if (overviewId) {
         window.location.href = `/customers/${overviewId}`;
     }
-
-    if (typeof TomSelect !== 'undefined' && document.getElementById('filter_customer_id')) {
-        new TomSelect('#filter_customer_id', {
-            allowEmptyOption: true,
-            placeholder: '-- Chọn khách hàng --',
-        });
-    }
 });
 
 function openCustomerHistoryModal(customerId, customerName, customerCode) {
@@ -2105,6 +2102,34 @@ function openCustomerHistoryModal(customerId, customerName, customerCode) {
             empty.innerHTML = `<div class="text-danger-500 text-xs font-semibold">Lỗi khi tải lịch sử: ${err.message}</div>`;
         });
 }
+
+// Khởi tạo TomSelect cho ô lọc khách hàng và nhóm thị trường
+document.addEventListener("DOMContentLoaded", function() {
+    if (typeof TomSelect !== "undefined") {
+        const filterCustomerEl = document.getElementById("filter_customer_id");
+        if (filterCustomerEl && !filterCustomerEl.tomselect) {
+            new TomSelect(filterCustomerEl, {
+                placeholder: "🔍 Tìm nhanh theo mã hoặc tên khách hàng...",
+                allowEmptyOption: true,
+                maxOptions: null,
+                dropdownParent: "body",
+                plugins: ["clear_button"],
+                searchField: ["text", "value"]
+            });
+        }
+
+        ['filter_market_group_id', 'create_market_group_id', 'edit_market_group_id'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el && !el.tomselect) {
+                new TomSelect(el, {
+                    placeholder: '-- Chọn nhóm thị trường --',
+                    allowEmptyOption: true,
+                    dropdownParent: "body"
+                });
+            }
+        });
+    }
+});
 </script>
 
 <style>

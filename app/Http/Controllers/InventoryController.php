@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Warehouse;
 use App\Models\WoodBoard;
+use App\Models\WoodBoardType;
+use App\Models\DcStock;
 use App\Models\InventoryReceipt;
 use App\Models\InventoryReceiptItem;
 use App\Models\InventoryIssue;
@@ -130,6 +132,11 @@ class InventoryController extends Controller
         if ($dateMode !== 'all' && !empty($dateMode)) $activeFilterCount++;
         $isFiltered = ($activeFilterCount > 0) || !empty($search);
 
+        $boardTypes = WoodBoardType::orderBy('display_order')->get();
+        $colorCodes = WoodBoard::select('color_code')->distinct()->orderBy('color_code')->pluck('color_code')
+            ->merge(DcStock::select('color_code')->distinct()->pluck('color_code'))
+            ->filter()->unique()->sort()->values();
+
         return view('inventory.index', compact(
             'materials',
             'warehouses',
@@ -142,6 +149,8 @@ class InventoryController extends Controller
             'totalStockValue',
             'lowStockCount',
             'categories',
+            'boardTypes',
+            'colorCodes',
             'dateMode',
             'dateVal',
             'startDate',

@@ -8,6 +8,7 @@ use App\Models\MinLateOrderItemCode;
 use App\Models\Order;
 use App\Models\PackingPackage;
 use App\Models\PackingPackageItem;
+use App\Models\Vehicle;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -18,7 +19,7 @@ class DispatchPackageController extends Controller
     public function __construct()
     {
         $this->middleware('permission:view dispatch')->only(['index', 'preview']);
-        $this->middleware('permission:complete dispatch')->only(['confirm']);
+        $this->middleware('permission:complete dispatch')->only(['confirm', 'bulkConfirm']);
     }
 
     public function index(Request $request)
@@ -28,41 +29,58 @@ class DispatchPackageController extends Controller
         $perPage = (int) $request->input('per_page', 15);
         $perPage = in_array($perPage, [15, 25, 50, 100], true) ? $perPage : 15;
 
-        $query = PackingPackage::with(['packer', 'items.itemCode'])
+        // 1. Lấy danh sách lịch sử đã xuất xưởng
+        $query = PackingPackage::with(['packer', 'vehicle', 'items.itemCode'])
             ->whereNotNull('dispatched_at')
             ->orderByDesc('dispatched_at');
 
         $this->applyDateFilter($query, $request, 'dispatched_at');
 
         $packages = $query->get();
-
         $historyRows = $this->buildHistoryRows($packages);
         $historyRows = $this->filterHistoryRows($historyRows, $range, $search);
         $historyRows = $this->paginateHistoryRows($historyRows, $perPage, $request);
 
+        // 2. Lấy danh sách kiện ĐANG CHỜ XUẤT XƯỞNG (đã đóng gói xong nhưng chưa xuất)
+        $pendingPackages = PackingPackage::with(['packer', 'items.itemCode'])
+            ->where('status', 'completed')
+            ->whereNull('dispatched_at')
+            ->orderByDesc('id')
+            ->get();
+        $pendingRows = $this->buildPendingRows($pendingPackages);
+
+        // 3. Danh sách xe giao hàng khả dụng
+        $vehicles = Vehicle::where('status', 'active')->orderBy('name')->get();
+
         return view('dispatch.index', [
-            'historyRows' => $historyRows,
+            'historyRows'        => $historyRows,
+            'pendingRows'        => $pendingRows,
+            'pendingCount'       => $pendingPackages->count(),
+            'vehicles'           => $vehicles,
             'todayDispatchCount' => $this->getTodayDispatchCount(),
-            'range' => $range,
-            'search' => $search,
-            'perPage' => $perPage,
-            'currentUser' => Auth::user(),
+            'range'              => $range,
+            'search'             => $search,
+            'perPage'            => $perPage,
+            'currentUser'        => Auth::user(),
         ]);
     }
 
     public function preview(Request $request)
     {
         $validated = $request->validate([
-            'package_id' => 'nullable|integer',
-            'product_code' => 'nullable|string|max:255',
-            'per_page' => 'nullable|integer',
-            'page' => 'nullable|integer|min:1',
+            'package_id'      => 'nullable|integer',
+            'product_code'    => 'nullable|string|max:255',
+            'per_page'        => 'nullable|integer',
+            'page'            => 'nullable|integer|min:1',
+            'auto_confirm'    => 'nullable|boolean',
+            'dispatched_note' => 'nullable|string|max:1000',
+            'vehicle_id'      => 'nullable|integer|exists:vehicles,id',
         ]);
 
         $package = null;
 
         if (! empty($validated['package_id'])) {
-            $package = PackingPackage::with(['packer', 'items.itemCode'])->find((int) $validated['package_id']);
+            $package = PackingPackage::with(['packer', 'vehicle', 'items.itemCode'])->find((int) $validated['package_id']);
         } elseif (! empty(trim((string) ($validated['product_code'] ?? '')))) {
             $resolved = $this->resolveDispatchTarget(trim($validated['product_code']));
             $package = $resolved['package'] ?? null;
@@ -71,41 +89,72 @@ class DispatchPackageController extends Controller
         if (! $package) {
             return response()->json([
                 'success' => false,
-                'message' => 'Không tìm thấy sản phẩm hoặc kiện tương ứng.',
+                'message' => 'Không tìm thấy kiện hoặc sản phẩm tương ứng với mã vừa quét.',
             ], 404);
         }
 
-        $package->load(['packer', 'items.itemCode']);
+        $package->load(['packer', 'vehicle', 'items.itemCode']);
         $this->loadMorphCodeRelations($package->items->map(fn ($item) => $item->itemCode)->filter());
 
         $perPage = (int) $request->input('per_page', 15);
         $perPage = in_array($perPage, [15, 25, 50, 100], true) ? $perPage : 15;
         $page = max((int) $request->input('page', 1), 1);
 
+        // Tự động xác nhận xuất xưởng nếu chế độ Fast Scan (auto_confirm) đang bật
+        $autoConfirm = $request->boolean('auto_confirm');
+        if ($autoConfirm && $package->status === 'completed' && ! $package->dispatched_at) {
+            $now = now();
+            $package->update([
+                'dispatched_at'   => $now,
+                'dispatched_note' => $validated['dispatched_note'] ?? null,
+                'vehicle_id'      => $validated['vehicle_id'] ?? null,
+            ]);
+
+            $package->load(['packer', 'vehicle', 'items.itemCode']);
+            $this->loadMorphCodeRelations($package->items->map(fn ($item) => $item->itemCode)->filter());
+            $historyRows = $this->buildHistoryRows(collect([$package]));
+
+            return response()->json([
+                'success'        => true,
+                'auto_confirmed' => true,
+                'message'        => "Đã tự động xuất xưởng kiện {$package->name} thành công!",
+                'data'           => [
+                    ...$this->buildPreviewData($package, $perPage, $page),
+                    'status_label'   => 'Đã xuất',
+                    'status_detail'  => 'Kiện đã được tự động xác nhận xuất xưởng.',
+                    'can_confirm'    => false,
+                    'confirmed_at'   => $now->format('H:i:s d/m/Y'),
+                    'today_count'    => $this->getTodayDispatchCount(),
+                    'rows'           => $historyRows->values()->all(),
+                ],
+            ]);
+        }
+
         return response()->json([
             'success' => true,
             'message' => $package->dispatched_at
                 ? 'Kiện này đã được xuất xưởng trước đó.'
-                : 'Đã kiểm tra mã thành công.',
-            'data' => $this->buildPreviewData($package, $perPage, $page),
+                : 'Đã tìm thấy thông tin kiện.',
+            'data'    => $this->buildPreviewData($package, $perPage, $page),
         ]);
     }
 
     public function confirm(Request $request)
     {
         $validated = $request->validate([
-            'package_id' => 'nullable|integer',
-            'product_code' => 'nullable|string|max:255',
+            'package_id'      => 'nullable|integer',
+            'product_code'    => 'nullable|string|max:255',
             'dispatched_note' => 'nullable|string|max:1000',
-            'per_page' => 'nullable|integer',
-            'page' => 'nullable|integer|min:1',
+            'vehicle_id'      => 'nullable|integer|exists:vehicles,id',
+            'per_page'        => 'nullable|integer',
+            'page'            => 'nullable|integer|min:1',
         ]);
 
         $package = null;
         $resolved = null;
 
         if (! empty($validated['package_id'])) {
-            $package = PackingPackage::with(['packer', 'items.itemCode'])->find((int) $validated['package_id']);
+            $package = PackingPackage::with(['packer', 'vehicle', 'items.itemCode'])->find((int) $validated['package_id']);
         } elseif (! empty($validated['product_code'])) {
             $resolved = $this->resolveDispatchTarget(trim($validated['product_code']));
             $package = $resolved['package'] ?? null;
@@ -135,11 +184,12 @@ class DispatchPackageController extends Controller
 
         $now = now();
         $package->update([
-            'dispatched_at' => $now,
+            'dispatched_at'   => $now,
             'dispatched_note' => $validated['dispatched_note'] ?? null,
+            'vehicle_id'      => $validated['vehicle_id'] ?? null,
         ]);
 
-        $package->load(['packer', 'items.itemCode']);
+        $package->load(['packer', 'vehicle', 'items.itemCode']);
         $this->loadMorphCodeRelations($package->items->map(fn ($item) => $item->itemCode)->filter());
 
         $perPage = (int) ($validated['per_page'] ?? 15);
@@ -162,33 +212,112 @@ class DispatchPackageController extends Controller
         ]);
     }
 
+    /**
+     * Xác nhận xuất xưởng hàng loạt cho nhiều kiện cùng lúc
+     */
+    public function bulkConfirm(Request $request)
+    {
+        $validated = $request->validate([
+            'package_ids'     => 'required|array|min:1',
+            'package_ids.*'   => 'integer|exists:packing_packages,id',
+            'dispatched_note' => 'nullable|string|max:1000',
+            'vehicle_id'      => 'nullable|integer|exists:vehicles,id',
+        ]);
+
+        $now = now();
+        $packages = PackingPackage::whereIn('id', $validated['package_ids'])
+            ->where('status', 'completed')
+            ->whereNull('dispatched_at')
+            ->get();
+
+        if ($packages->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không có kiện nào đủ điều kiện để xuất xưởng.',
+            ], 422);
+        }
+
+        $count = 0;
+        foreach ($packages as $pkg) {
+            $pkg->update([
+                'dispatched_at'   => $now,
+                'dispatched_note' => $validated['dispatched_note'] ?? null,
+                'vehicle_id'      => $validated['vehicle_id'] ?? null,
+            ]);
+            $count++;
+        }
+
+        return response()->json([
+            'success'          => true,
+            'message'          => "Đã xác nhận xuất xưởng thành công cho {$count} kiện hàng!",
+            'dispatched_count' => $count,
+            'today_count'      => $this->getTodayDispatchCount(),
+        ]);
+    }
+
     private function resolveDispatchTarget(string $code): ?array
     {
+        $code = trim($code);
         if ($code === '') {
             return null;
         }
 
-        if (ctype_digit($code)) {
-            $package = PackingPackage::with(['packer', 'items.itemCode'])->find((int) $code);
-
-            if (! $package) {
-                return null;
-            }
-
-            $this->loadMorphCodeRelations($package->items->map(fn ($item) => $item->itemCode)->filter());
-
-            $firstItem = $package->items->where('is_packaged', true)->first() ?? $package->items->first();
-            $firstItemData = $firstItem ? $this->formatDispatchItem($package, $firstItem) : null;
-
-            return [
-                'package' => $package,
-                'row_product_code' => $firstItemData['product_code'] ?? (string) $package->id,
-                'row_product_name' => $firstItemData['product_name'] ?? $package->name,
-                'row_order_code' => $firstItemData['order_code'] ?? '—',
-                'row_notes' => $firstItemData['notes'] ?? '—',
-            ];
+        // 1. Kiểm tra ID hoặc mã kiện dạng PK1, PK001
+        $idCandidate = $code;
+        if (preg_match('/^PK[-_]?(\d+)$/i', $code, $m)) {
+            $idCandidate = $m[1];
         }
 
+        if (ctype_digit((string) $idCandidate)) {
+            $package = PackingPackage::with(['packer', 'vehicle', 'items.itemCode'])->find((int) $idCandidate);
+            if ($package) {
+                return $this->formatResolvedPackage($package);
+            }
+        }
+
+        // 2. Tìm theo tên kiện (VD: 'Kiện 1', 'Kiện cánh tủ')
+        $package = PackingPackage::with(['packer', 'vehicle', 'items.itemCode'])
+            ->where('name', $code)
+            ->first();
+        if ($package) {
+            return $this->formatResolvedPackage($package);
+        }
+
+        // 3. Tìm theo Mã Đơn Hàng (VD: DA00003, MIN00001, PLY00001)
+        $order = Order::where('order_code', $code)->first();
+        if ($order) {
+            $orderPackageIds = PackingPackageItem::whereHasMorph('itemCode', [
+                AcrylicOrderItemCode::class,
+                GlassOrderItemCode::class,
+                MinLateOrderItemCode::class,
+            ], function ($q, $type) use ($order) {
+                if ($type === AcrylicOrderItemCode::class) {
+                    $q->whereHas('acrylicOrderItem.orderSupply', fn($sq) => $sq->where('order_id', $order->id));
+                } elseif ($type === GlassOrderItemCode::class) {
+                    $q->whereHas('glassOrderItem.orderSupply', fn($sq) => $sq->where('order_id', $order->id));
+                } elseif ($type === MinLateOrderItemCode::class) {
+                    $q->whereHas('minLateOrderItem.orderSupply', fn($sq) => $sq->where('order_id', $order->id));
+                }
+            })->pluck('packing_package_id')->unique();
+
+            if ($orderPackageIds->isNotEmpty()) {
+                // Ưu tiên kiện chưa xuất xưởng
+                $pkg = PackingPackage::with(['packer', 'vehicle', 'items.itemCode'])
+                    ->whereIn('id', $orderPackageIds)
+                    ->where('status', 'completed')
+                    ->whereNull('dispatched_at')
+                    ->first()
+                    ?? PackingPackage::with(['packer', 'vehicle', 'items.itemCode'])
+                    ->whereIn('id', $orderPackageIds)
+                    ->first();
+
+                if ($pkg) {
+                    return $this->formatResolvedPackage($pkg);
+                }
+            }
+        }
+
+        // 4. Tìm theo mã linh kiện con bên trong kiện
         foreach ([
             [
                 'class' => AcrylicOrderItemCode::class,
@@ -220,21 +349,55 @@ class DispatchPackageController extends Controller
                 continue;
             }
 
-            $package = $packageItem->package;
-            $this->loadMorphCodeRelations(collect([$packageItem->itemCode])->filter());
-
-            $itemData = $this->formatDispatchItem($package, $packageItem);
-
-            return [
-                'package' => $package,
-                'row_product_code' => $itemData['product_code'],
-                'row_product_name' => $itemData['product_name'],
-                'row_order_code' => $itemData['order_code'],
-                'row_notes' => $itemData['notes'],
-            ];
+            return $this->formatResolvedPackage($packageItem->package, $packageItem);
         }
 
         return null;
+    }
+
+    private function formatResolvedPackage(PackingPackage $package, ?PackingPackageItem $packageItem = null): array
+    {
+        $this->loadMorphCodeRelations($package->items->map(fn ($item) => $item->itemCode)->filter());
+
+        if ($packageItem) {
+            $itemData = $this->formatDispatchItem($package, $packageItem);
+        } else {
+            $firstItem = $package->items->where('is_packaged', true)->first() ?? $package->items->first();
+            $itemData = $firstItem ? $this->formatDispatchItem($package, $firstItem) : null;
+        }
+
+        return [
+            'package'          => $package,
+            'row_product_code' => $itemData['product_code'] ?? (string) $package->id,
+            'row_product_name' => $itemData['product_name'] ?? $package->name,
+            'row_order_code'   => $itemData['order_code'] ?? '—',
+            'row_notes'        => $itemData['notes'] ?? '—',
+        ];
+    }
+
+    private function buildPendingRows(Collection $packages): Collection
+    {
+        return $packages->map(function (PackingPackage $package) {
+            $effectiveItems = $package->items->where('is_packaged', true);
+            if ($effectiveItems->isEmpty()) {
+                $effectiveItems = $package->items;
+            }
+            $packageOrder = $this->resolvePackageOrder($effectiveItems);
+
+            return [
+                'package_id'       => $package->id,
+                'package_code'     => (string) $package->id,
+                'package_name'     => $package->name,
+                'order_code'       => $packageOrder?->order_code ?? '—',
+                'customer_name'    => $packageOrder?->customer_name ?? '—',
+                'customer_phone'   => $packageOrder?->phone ?? '—',
+                'delivery_address' => $packageOrder?->address ?? '—',
+                'total_items'      => $effectiveItems->count(),
+                'operator'         => $package->packer?->name ?? '—',
+                'packed_time'      => $package->updated_at?->format('H:i d/m/Y') ?? '—',
+                'view_url'         => route('processes.packing.show', $package),
+            ];
+        });
     }
 
     private function buildHistoryRows(Collection $packages): Collection

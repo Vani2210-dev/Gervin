@@ -280,10 +280,64 @@
     <form action="{{ route('inventory.materials.store') }}" method="POST">
         @csrf
         <div class="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+            {{-- CHỌN NHANH TỪ BẢNG GIÁ TẤM --}}
+            <div class="p-3.5 bg-orange-50/70 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800/40 rounded-xl space-y-2.5">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-orange-900 dark:text-orange-200 flex items-center gap-1.5">
+                        <iconify-icon icon="solar:magic-stick-3-bold" class="text-orange-600 text-sm"></iconify-icon>
+                        Lấy data từ Bảng giá tấm (Nhập mã màu & loại ván)
+                    </span>
+                    <span id="invBoardMatchPrice" class="text-xs font-bold text-emerald-700 dark:text-emerald-400"></span>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="form-label text-[11px] font-bold text-neutral-600 dark:text-neutral-300 mb-1 block">Mã màu ván</label>
+                        <input type="text" id="inv_lookup_color" list="invColorList" oninput="onInvBoardLookup()"
+                               class="form-control rounded-lg w-full border-neutral-300 px-3 py-1.5 text-xs font-mono font-bold uppercase focus:border-orange-500"
+                               placeholder="Vd: GV01, PARC 01...">
+                        <datalist id="invColorList">
+                            @foreach($colorCodes as $code)
+                                <option value="{{ $code }}"></option>
+                            @endforeach
+                        </datalist>
+                    </div>
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="form-label text-[11px] font-bold text-neutral-600 dark:text-neutral-300 block mb-0">Loại ván (Cốt ván)</label>
+                            <span class="text-[10px] text-neutral-400 font-semibold">Chọn nhanh:</span>
+                        </div>
+                        <div class="grid grid-cols-3 gap-1 mb-1.5">
+                            <button type="button" onclick="selectInvTypeShortcut(1)" id="btnInvType_1"
+                                    class="inv-type-btn px-1.5 py-1 rounded text-[11px] font-bold border transition-all bg-emerald-600 text-white border-emerald-600 shadow-xs">
+                                🪵 MDF 1M
+                            </button>
+                            <button type="button" onclick="selectInvTypeShortcut(2)" id="btnInvType_2"
+                                    class="inv-type-btn px-1.5 py-1 rounded text-[11px] font-bold border transition-all bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border-neutral-300 dark:border-neutral-700 hover:bg-neutral-50">
+                                🪵 MDF 2M
+                            </button>
+                            <button type="button" onclick="selectInvTypeShortcut(3)" id="btnInvType_3"
+                                    class="inv-type-btn px-1.5 py-1 rounded text-[11px] font-bold border transition-all bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border-neutral-300 dark:border-neutral-700 hover:bg-neutral-50">
+                                🧱 Nhựa PVC
+                            </button>
+                        </div>
+                        <select id="inv_lookup_type" onchange="onInvTypeSelectChange()"
+                                class="form-select rounded-lg w-full border-neutral-300 px-3 py-1.5 text-xs focus:border-orange-500 font-semibold">
+                            <option value="">-- Chọn loại ván --</option>
+                            @foreach($boardTypes as $bt)
+                                <option value="{{ $bt->id }}" data-prefix="{{ $bt->prefix }}" data-name="{{ $bt->name }}" {{ $bt->id == 1 ? 'selected' : '' }}>
+                                    {{ $bt->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                <div id="invBoardMatchNote" class="text-[11px] text-emerald-800 dark:text-emerald-300 font-medium hidden"></div>
+            </div>
+
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Mã SKU / Mã vật tư <span class="text-danger-500">*</span></label>
-                    <input type="text" name="code" class="form-control rounded-lg w-full border-neutral-200 px-3 py-2 text-xs font-bold focus:border-primary-500" placeholder="Vd: GV120" required>
+                    <input type="text" name="code" id="create_mat_code" class="form-control rounded-lg w-full border-neutral-200 px-3 py-2 text-xs font-bold focus:border-primary-500" placeholder="Vd: GV120" required>
                 </div>
                 <div>
                     <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Mã xuất xứ (NCC)</label>
@@ -293,13 +347,13 @@
 
             <div>
                 <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Tên vật tư / Quy cách <span class="text-danger-500">*</span></label>
-                <input type="text" name="name" class="form-control rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500" placeholder="Vd: Acrylic GV120 Nhũ chống xước" required>
+                <input type="text" name="name" id="create_mat_name" class="form-control rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500" placeholder="Vd: Acrylic GV120 Nhũ chống xước" required>
             </div>
 
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Nhóm hàng / Phân loại</label>
-                    <input type="text" name="category" list="categoryOptions" class="form-control rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500" placeholder="Vd: Acrylic TQ">
+                    <input type="text" name="category" id="create_mat_category" list="categoryOptions" class="form-control rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500" placeholder="Vd: Acrylic TQ">
                     <datalist id="categoryOptions">
                         @foreach($categories as $cat)
                             <option value="{{ $cat }}"></option>
@@ -308,14 +362,14 @@
                 </div>
                 <div>
                     <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Đơn vị tính <span class="text-danger-500">*</span></label>
-                    <input type="text" name="unit" value="Tấm" class="form-control rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500" required>
+                    <input type="text" name="unit" id="create_mat_unit" value="Tấm" class="form-control rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500" required>
                 </div>
             </div>
 
             <div class="grid grid-cols-3 gap-4">
                 <div>
                     <label class="form-label text-xs font-semibold text-neutral-700 mb-1 block">Giá vốn (đ)</label>
-                    <input type="number" name="cost_price" value="0" min="0" step="1000" class="form-control rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500">
+                    <input type="number" name="cost_price" id="create_mat_cost_price" value="0" min="0" step="1000" class="form-control rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500">
                 </div>
                 <div>
                     <label class="form-label text-xs font-semibold text-neutral-700 mb-1 block">Định mức tồn min</label>
@@ -570,6 +624,84 @@
         .catch(err => {
             container.innerHTML = `<div class="p-4 text-danger-600 text-xs">Lỗi khi tải thẻ kho: ${err}</div>`;
         });
+    let invLookupTimeout = null;
+    function onInvBoardLookup() {
+        clearTimeout(invLookupTimeout);
+        invLookupTimeout = setTimeout(async () => {
+            const color = (document.getElementById("inv_lookup_color")?.value || "").trim().toUpperCase();
+            const typeSelect = document.getElementById("inv_lookup_type");
+            const typeId = typeSelect ? typeSelect.value : "";
+            const selectedOpt = typeSelect ? typeSelect.selectedOptions[0] : null;
+            const prefix = selectedOpt ? (selectedOpt.getAttribute("data-prefix") || "") : "";
+            const typeName = selectedOpt ? (selectedOpt.getAttribute("data-name") || "") : "";
+
+            if (!color && !typeId) return;
+
+            const codeInput = document.getElementById("create_mat_code");
+            const nameInput = document.getElementById("create_mat_name");
+            const catInput = document.getElementById("create_mat_category");
+            const priceInput = document.getElementById("create_mat_cost_price");
+
+            if (color && codeInput) {
+                codeInput.value = color + prefix;
+                if (nameInput) {
+                    nameInput.value = typeName ? `Tấm ${typeName} ${color}` : `Tấm Acrylic ${color}`;
+                }
+            }
+
+            try {
+                const res = await fetch(`/wood-boards/board-info?color_code=${encodeURIComponent(color)}&wood_board_type_id=${typeId || ""}`);
+                const data = await res.json();
+                if (data.success) {
+                    if (data.computed_code && codeInput) codeInput.value = data.computed_code;
+                    if (data.computed_name && nameInput) nameInput.value = data.computed_name;
+                    if (data.price_group && catInput) catInput.value = data.price_group;
+                    if (data.cost_price > 0 && priceInput) {
+                        priceInput.value = data.cost_price;
+                        const matchPriceEl = document.getElementById("invBoardMatchPrice");
+                        if (matchPriceEl) {
+                            matchPriceEl.textContent = "Giá bảng: " + new Intl.NumberFormat("vi-VN").format(data.cost_price) + "đ";
+                        }
+                    }
+                    const noteEl = document.getElementById("invBoardMatchNote");
+                    if (noteEl) {
+                        if (data.board) {
+                            noteEl.textContent = `✓ Đã khớp Bảng giá tấm: Nhóm ${data.price_group || 'chuẩn'}, độ dày ${data.computed_thickness || '17mm'}`;
+                            noteEl.classList.remove("hidden");
+                        } else {
+                            noteEl.classList.add("hidden");
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error("Lookup board info error:", e);
+            }
+        }, 200);
+    }
+
+    function selectInvTypeShortcut(id) {
+        const sel = document.getElementById("inv_lookup_type");
+        if (sel) sel.value = id;
+        updateInvTypeButtonsUI(id);
+        onInvBoardLookup();
+    }
+
+    function onInvTypeSelectChange() {
+        const sel = document.getElementById("inv_lookup_type");
+        if (sel) updateInvTypeButtonsUI(sel.value);
+        onInvBoardLookup();
+    }
+
+    function updateInvTypeButtonsUI(activeId) {
+        document.querySelectorAll(".inv-type-btn").forEach(btn => {
+            btn.className = "inv-type-btn px-1.5 py-1 rounded text-[11px] font-bold border transition-all bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border-neutral-300 dark:border-neutral-700 hover:bg-neutral-50";
+        });
+        const btn = document.getElementById("btnInvType_" + activeId);
+        if (btn) {
+            if (activeId == 1) btn.className = "inv-type-btn px-1.5 py-1 rounded text-[11px] font-bold border transition-all bg-emerald-600 text-white border-emerald-600 shadow-xs";
+            else if (activeId == 2) btn.className = "inv-type-btn px-1.5 py-1 rounded text-[11px] font-bold border transition-all bg-purple-600 text-white border-purple-600 shadow-xs";
+            else btn.className = "inv-type-btn px-1.5 py-1 rounded text-[11px] font-bold border transition-all bg-amber-600 text-white border-amber-600 shadow-xs";
+        }
     }
 </script>
 

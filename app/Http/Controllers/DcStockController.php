@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\DcStock;
 use App\Models\WoodBoard;
+use App\Models\WoodBoardType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -23,14 +24,17 @@ class DcStockController extends Controller
 
         $search    = $request->input('search', '');
         $status    = $request->input('status', '');
+        $boardType = $request->input('board_type', '');
         $perPage   = (int) $request->input('per_page', 25);
 
-        $query = DcStock::with('creator')
+        $query = DcStock::with(['creator', 'boardTypeRel', 'woodBoard'])
             ->orderBy('created_at', 'desc');
 
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('color_code', 'like', "%{$search}%")
+                  ->orWhere('board_code', 'like', "%{$search}%")
+                  ->orWhere('board_type', 'like', "%{$search}%")
                   ->orWhere('note', 'like', "%{$search}%")
                   ->orWhere('location', 'like', "%{$search}%");
             });
@@ -40,12 +44,21 @@ class DcStockController extends Controller
             $query->where('status', $status);
         }
 
+        if ($boardType) {
+            $query->where('board_type', $boardType);
+        }
+
         $this->applyDateFilter($query, $request, 'created_at');
 
         $stocks = $query->paginate($perPage)->withQueryString();
 
+        // Lấy danh sách Loại ván
+        $boardTypes = WoodBoardType::orderBy('display_order')->get();
+
         // Lấy danh sách mã màu để gợi ý khi nhập
-        $colorCodes = WoodBoard::select('color_code')->distinct()->orderBy('color_code')->pluck('color_code');
+        $colorCodes = WoodBoard::select('color_code')->distinct()->orderBy('color_code')->pluck('color_code')
+            ->merge(DcStock::select('color_code')->distinct()->pluck('color_code'))
+            ->filter()->unique()->sort()->values();
 
         // Thống kê nhanh
         $totalAvailable = DcStock::where('status', 'available')->count();
@@ -53,7 +66,7 @@ class DcStockController extends Controller
         $totalReserved  = DcStock::where('status', 'reserved')->count();
 
         return view('dc_stocks.index', compact(
-            'stocks', 'colorCodes', 'search', 'status', 'perPage',
+            'stocks', 'colorCodes', 'boardTypes', 'search', 'status', 'boardType', 'perPage',
             'totalAvailable', 'totalUsed', 'totalReserved'
         ));
     }
@@ -63,14 +76,34 @@ class DcStockController extends Controller
         abort_unless(auth()->user()->can('add dc stock'), 403);
 
         $data = $request->validate([
-            'color_code' => 'required|string|max:50',
-            'note'       => 'nullable|string|max:100',
-            'height'     => 'required|integer|min:1',
-            'width'      => 'required|integer|min:1',
-            'quantity'   => 'required|integer|min:1',
-            'location'   => 'nullable|string|max:50',
-            'status'     => 'required|in:available,used,reserved',
+            'color_code'         => 'required|string|max:50',
+            'board_type'         => 'nullable|string|max:100',
+            'board_code'         => 'nullable|string|max:100',
+            'thickness'          => 'nullable|string|max:50',
+            'wood_board_type_id' => 'nullable|integer|exists:wood_board_types,id',
+            'note'               => 'nullable|string|max:100',
+            'height'             => 'required|integer|min:1',
+            'width'              => 'required|integer|min:1',
+            'quantity'           => 'required|integer|min:1',
+            'location'           => 'nullable|string|max:50',
+            'status'             => 'required|in:available,used,reserved',
         ]);
+
+        if (empty($data['board_code'])) {
+            $prefix = '';
+            if (!empty($data['wood_board_type_id'])) {
+                $bt = WoodBoardType::find($data['wood_board_type_id']);
+                $prefix = $bt?->prefix ?? '';
+                if (empty($data['board_type'])) {
+                    $data['board_type'] = $bt?->name;
+                }
+            }
+            $data['board_code'] = $data['color_code'] . $prefix;
+        }
+
+        if (empty($data['thickness'])) {
+            $data['thickness'] = '17mm';
+        }
 
         $data['created_by'] = Auth::id();
 
@@ -84,14 +117,34 @@ class DcStockController extends Controller
         abort_unless(auth()->user()->can('edit dc stock'), 403);
 
         $data = $request->validate([
-            'color_code' => 'required|string|max:50',
-            'note'       => 'nullable|string|max:100',
-            'height'     => 'required|integer|min:1',
-            'width'      => 'required|integer|min:1',
-            'quantity'   => 'required|integer|min:1',
-            'location'   => 'nullable|string|max:50',
-            'status'     => 'required|in:available,used,reserved',
+            'color_code'         => 'required|string|max:50',
+            'board_type'         => 'nullable|string|max:100',
+            'board_code'         => 'nullable|string|max:100',
+            'thickness'          => 'nullable|string|max:50',
+            'wood_board_type_id' => 'nullable|integer|exists:wood_board_types,id',
+            'note'               => 'nullable|string|max:100',
+            'height'             => 'required|integer|min:1',
+            'width'              => 'required|integer|min:1',
+            'quantity'           => 'required|integer|min:1',
+            'location'           => 'nullable|string|max:50',
+            'status'             => 'required|in:available,used,reserved',
         ]);
+
+        if (empty($data['board_code'])) {
+            $prefix = '';
+            if (!empty($data['wood_board_type_id'])) {
+                $bt = WoodBoardType::find($data['wood_board_type_id']);
+                $prefix = $bt?->prefix ?? '';
+                if (empty($data['board_type'])) {
+                    $data['board_type'] = $bt?->name;
+                }
+            }
+            $data['board_code'] = $data['color_code'] . $prefix;
+        }
+
+        if (empty($data['thickness'])) {
+            $data['thickness'] = '17mm';
+        }
 
         $dcStock->update($data);
 
@@ -286,48 +339,59 @@ class DcStockController extends Controller
         $sheet->setTitle('Kho_DC');
 
         $sheet->setCellValue('A1', 'DANH SÁCH TẤM VÁN DƯ KHO DC');
-        $sheet->mergeCells('A1:H1');
+        $sheet->mergeCells('A1:L1');
         $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->getColor()->setARGB('FFEA580C');
         $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
         $headers = [
             'A3' => 'STT',
-            'B3' => 'MÃ HÀNG',
-            'C3' => 'GHI CHÚ',
-            'D3' => 'CAO (mm)',
-            'E3' => 'RỘNG (mm)',
-            'F3' => 'SỐ LƯỢNG',
-            'G3' => 'VỊ TRÍ',
-            'H3' => 'TRẠNG THÁI'
+            'B3' => 'MÃ VÁN / SKU',
+            'C3' => 'MÃ MÀU',
+            'D3' => 'LOẠI VÁN',
+            'E3' => 'ĐỘ DÀY',
+            'F3' => 'CAO (mm)',
+            'G3' => 'RỘNG (mm)',
+            'H3' => 'DIỆN TÍCH (m²)',
+            'I3' => 'SỐ LƯỢNG',
+            'J3' => 'VỊ TRÍ',
+            'K3' => 'TRẠNG THÁI',
+            'L3' => 'GHI CHÚ'
         ];
         foreach ($headers as $cell => $val) {
             $sheet->setCellValue($cell, $val);
         }
-        $sheet->getStyle('A3:H3')->getFont()->setBold(true)->getColor()->setARGB('FFFFFFFF');
-        $sheet->getStyle('A3:H3')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFF97316');
-        $sheet->getStyle('A3:H3')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle('A3:L3')->getFont()->setBold(true)->getColor()->setARGB('FFFFFFFF');
+        $sheet->getStyle('A3:L3')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFF97316');
+        $sheet->getStyle('A3:L3')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
         $r = 4;
         $stt = 1;
         foreach ($stocks as $s) {
+            $areaM2 = round(($s->height * $s->width) / 1000000, 3);
             $sheet->setCellValue("A{$r}", $stt++);
-            $sheet->setCellValue("B{$r}", $s->color_code);
-            $sheet->setCellValue("C{$r}", $s->note);
-            $sheet->setCellValue("D{$r}", $s->height);
-            $sheet->setCellValue("E{$r}", $s->width);
-            $sheet->setCellValue("F{$r}", $s->quantity);
-            $sheet->setCellValue("G{$r}", $s->location);
-            $sheet->setCellValue("H{$r}", $s->status_label);
+            $sheet->setCellValue("B{$r}", $s->board_code ?: $s->color_code);
+            $sheet->setCellValue("C{$r}", $s->color_code);
+            $sheet->setCellValue("D{$r}", $s->board_type ?: ($s->boardTypeRel?->name ?: '—'));
+            $sheet->setCellValue("E{$r}", $s->thickness ?: '17mm');
+            $sheet->setCellValue("F{$r}", $s->height);
+            $sheet->setCellValue("G{$r}", $s->width);
+            $sheet->setCellValue("H{$r}", $areaM2);
+            $sheet->setCellValue("I{$r}", $s->quantity);
+            $sheet->setCellValue("J{$r}", $s->location);
+            $sheet->setCellValue("K{$r}", $s->status_label);
+            $sheet->setCellValue("L{$r}", $s->note);
             $r++;
         }
 
         $lastRow = $r - 1;
         if ($lastRow >= 4) {
-            $sheet->getStyle("A3:H{$lastRow}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
-            $sheet->getStyle("D4:F{$lastRow}")->getNumberFormat()->setFormatCode('#,##0');
+            $sheet->getStyle("A3:L{$lastRow}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+            $sheet->getStyle("F4:G{$lastRow}")->getNumberFormat()->setFormatCode('#,##0');
+            $sheet->getStyle("H4:H{$lastRow}")->getNumberFormat()->setFormatCode('0.000');
+            $sheet->getStyle("I4:I{$lastRow}")->getNumberFormat()->setFormatCode('#,##0');
         }
 
-        foreach (range('A', 'H') as $col) {
+        foreach (range('A', 'L') as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 

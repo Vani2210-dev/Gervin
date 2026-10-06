@@ -281,14 +281,14 @@ class QCService
         }
 
         $productName = $item->$nameField ?? '—';
-        $orderCode = $item->orderSupply->order->order_code ?? '—';
+        $orderCode = $item->orderSupply?->order?->order_code ?? '—';
         
         // Dimensions
         $height = 0;
         $width = 0;
         $thickness = 17; // default standard board thickness
 
-        if ($type === 'min_late') {
+        if (in_array($type, ['min_late', 'plywood'])) {
             $size = $item->size ?? [];
             if (is_string($size)) {
                 $size = json_decode($size, true) ?? [];

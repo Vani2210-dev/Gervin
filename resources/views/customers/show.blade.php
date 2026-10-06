@@ -671,7 +671,7 @@
                         <iconify-icon icon="solar:file-spreadsheet-bold" class="text-base"></iconify-icon>
                         Xuất Excel
                     </a>
-                    <button type="button" onclick="openModal('add-payment-modal')"
+                    <button type="button" onclick="openAddPaymentModal()"
                         class="btn bg-primary-600 hover:bg-primary-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-2xs transition">
                         <iconify-icon icon="lucide:plus" class="text-sm"></iconify-icon>
                         Ghi nhận thanh toán
@@ -852,7 +852,7 @@
         </div>
         <div>
             <label class="text-xs font-semibold text-neutral-700 mb-1 block">Liên kết đơn hàng (Tùy chọn)</label>
-            <select name="order_id" class="form-select rounded-xl text-xs py-2 px-3 w-full border border-neutral-300 bg-white">
+            <select id="apm-order" name="order_id" class="form-select rounded-xl text-xs py-2 px-3 w-full border border-neutral-300 bg-white">
                 <option value="">-- Không liên kết đơn cụ thể (Cấn trừ chung) --</option>
                 @foreach($customerOrders as $co)
                     <option value="{{ $co->id }}">{{ $co->order_code }} ({{ number_format(round($co->total_amount, -3), 0, ',', '.') }}₫)</option>
@@ -1179,6 +1179,17 @@ function toggleDetailsSection() {
     }
 }
 
+let apmOrderTomSelect = null;
+let epmOrderTomSelect = null;
+let editMarketGroupTomSelect = null;
+
+function openAddPaymentModal() {
+    if (apmOrderTomSelect) {
+        apmOrderTomSelect.clear();
+    }
+    openModal('add-payment-modal');
+}
+
 function openEditCustPaymentModal(id, date, amount, method, note, orderId) {
     const form = document.getElementById('edit-payment-form');
     form.action = '/customers/{{ $customer->id }}/payments/' + id;
@@ -1186,7 +1197,11 @@ function openEditCustPaymentModal(id, date, amount, method, note, orderId) {
     document.getElementById('epm-amount').value = amount;
     document.getElementById('epm-method').value = method;
     document.getElementById('epm-note').value = note || '';
-    document.getElementById('epm-order').value = orderId || '';
+    if (epmOrderTomSelect) {
+        epmOrderTomSelect.setValue(orderId ? String(orderId) : '');
+    } else {
+        document.getElementById('epm-order').value = orderId || '';
+    }
     openModal('edit-payment-modal');
 }
 
@@ -1309,6 +1324,43 @@ function openCustomerHistoryModal(customerId, customerName, customerCode) {
             empty.innerHTML = `<div class="text-danger-500 text-xs font-semibold">Lỗi khi tải lịch sử: ${err.message}</div>`;
         });
 }
+
+document.addEventListener('DOMContentLoaded', function () {
+    if (typeof TomSelect !== 'undefined') {
+        const apmEl = document.getElementById('apm-order');
+        if (apmEl && !apmEl.tomselect) {
+            apmOrderTomSelect = new TomSelect(apmEl, {
+                placeholder: '🔍 Gõ tìm theo mã đơn hàng...',
+                allowEmptyOption: true,
+                dropdownParent: 'body',
+                plugins: ['clear_button'],
+                maxOptions: null
+            });
+        }
+
+        const epmEl = document.getElementById('epm-order');
+        if (epmEl && !epmEl.tomselect) {
+            epmOrderTomSelect = new TomSelect(epmEl, {
+                placeholder: '🔍 Gõ tìm theo mã đơn hàng...',
+                allowEmptyOption: true,
+                dropdownParent: 'body',
+                plugins: ['clear_button'],
+                maxOptions: null
+            });
+        }
+
+        const emgEl = document.getElementById('edit_market_group_id');
+        if (emgEl && !emgEl.tomselect) {
+            editMarketGroupTomSelect = new TomSelect(emgEl, {
+                placeholder: '🌐 Chọn nhóm thị trường...',
+                allowEmptyOption: true,
+                dropdownParent: 'body',
+                plugins: ['clear_button'],
+                maxOptions: null
+            });
+        }
+    }
+});
 </script>
 @endpush
 
