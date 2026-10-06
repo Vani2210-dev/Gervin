@@ -639,10 +639,9 @@
     <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2"></div>
 @endsection
 
-@php
-$script = '
+@push('scripts')
 <script>
-    const CSRF = "' . csrf_token() . '";
+    const CSRF = "{{ csrf_token() }}";
 
     // ─── Toast ───────────────────────────────────────────
     function showToast(message, type = "success") {
@@ -1041,5 +1040,4 @@ $script = '
         }
     });
 </script>
-';
-@endphp
+@endpush
