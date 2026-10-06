@@ -45,7 +45,14 @@ class DcStockController extends Controller
         }
 
         if ($boardType) {
-            $query->where('board_type', $boardType);
+            if ($boardType === 'CỐT NHỰA PVC' || $boardType === 'PVC') {
+                $query->where(function ($q) {
+                    $q->where('board_type', 'like', '%NHỰA%')
+                      ->orWhere('board_type', 'like', '%PVC%');
+                });
+            } else {
+                $query->where('board_type', $boardType);
+            }
         }
 
         $this->applyDateFilter($query, $request, 'created_at');
@@ -270,17 +277,23 @@ class DcStockController extends Controller
                 elseif ($status === 'Đã dùng' || $status === 'da_dung') $status = 'used';
                 elseif ($status === 'Đã đặt' || $status === 'da_dat') $status = 'reserved';
 
+                $normalized = $this->resolveNormalizedStockInfo($note, $colorCode);
+
                 $recordsToInsert[] = [
-                    'color_code' => mb_strtoupper($colorCode),
-                    'note' => $note ?: null,
-                    'height' => $height,
-                    'width' => $width,
-                    'quantity' => $quantity > 0 ? $quantity : 1,
-                    'location' => $location ?: null,
-                    'status' => in_array($status, ['available', 'used', 'reserved']) ? $status : 'available',
-                    'created_by' => $userId,
-                    'created_at' => now(),
-                    'updated_at' => now(),
+                    'color_code'         => $normalized['color_code'],
+                    'board_code'         => $normalized['board_code'],
+                    'board_type'         => $normalized['board_type'],
+                    'wood_board_type_id' => $normalized['wood_board_type_id'],
+                    'thickness'          => '17mm',
+                    'note'               => $note ?: null,
+                    'height'             => $height,
+                    'width'              => $width,
+                    'quantity'           => $quantity > 0 ? $quantity : 1,
+                    'location'           => $location ?: null,
+                    'status'             => in_array($status, ['available', 'used', 'reserved']) ? $status : 'available',
+                    'created_by'         => $userId,
+                    'created_at'         => now(),
+                    'updated_at'         => now(),
                 ];
 
                 if (count($recordsToInsert) >= 200) {
@@ -403,5 +416,112 @@ class DcStockController extends Controller
         header('Cache-Control: max-age=0');
         $writer->save('php://output');
         exit;
+    }
+
+    /**
+     * Xác định thông tin Loại ván, Mã SKU chuẩn form dựa theo Ghi chú và Mã màu
+     */
+    private function resolveNormalizedStockInfo(?string $note, ?string $rawColor, ?string $rawBoardCode = null): array
+    {
+        $note = mb_strtolower(trim((string)$note));
+        $raw = $rawColor ?: $rawBoardCode ?: '';
+        $c = trim($raw);
+        $c = preg_replace('/\.TP\.(PVC|2M)(\.2M)?$/i', '', $c);
+        $c = preg_replace('/\s*[-_]?\s*(2M|1M|2\s*mặt|1\s*mặt|PVC)$/iu', '', $c);
+        $cleanColor = mb_strtoupper(trim($c));
+        if (empty($cleanColor)) {
+            $cleanColor = mb_strtoupper(trim($raw));
+        }
+
+        $typeMdf1 = WoodBoardType::where('name', 'like', '%MDF 1 MẶT%')->first() ?? WoodBoardType::find(1);
+        $typeMdf2 = WoodBoardType::where('name', 'like', '%MDF 2 MẶT%')->first() ?? WoodBoardType::find(2);
+        $typePvc1 = WoodBoardType::where('name', 'like', '%NHỰA 1 MẶT%')->orWhere('name', 'like', '%PVC 1%')->first() ?? WoodBoardType::find(3);
+        $typePvc2 = WoodBoardType::where('name', 'like', '%NHỰA 2 MẶT%')->orWhere('name', 'like', '%PVC 2%')->first();
+        if (!$typePvc2) {
+            $typePvc2 = WoodBoardType::firstOrCreate([
+                'name' => 'CỐT NHỰA 2 MẶT ACRYLIC'
+            ], [
+                'prefix' => '.TP.PVC.2M',
+                'display_order' => 4,
+            ]);
+        }
+
+        if ((str_contains($note, 'pvc') || str_contains($note, 'nhựa')) && (str_contains($note, '2 mặt') || str_contains($note, '2m'))) {
+            $boardType = 'CỐT NHỰA 2 MẶT ACRYLIC';
+            $typeId = $typePvc2 ? $typePvc2->id : 4;
+            $boardCode = $cleanColor . '.TP.PVC.2M';
+        } elseif (str_contains($note, 'pvc') || str_contains($note, 'nhựa')) {
+            $boardType = 'CỐT NHỰA 1 MẶT ACRYLIC';
+            $typeId = $typePvc1 ? $typePvc1->id : 3;
+            $boardCode = $cleanColor . '.TP.PVC';
+        } elseif (str_contains($note, '2 mặt') || str_contains($note, '2m') || str_contains($note, '2 măt') || str_contains($note, '2 mătt')) {
+            $boardType = 'MDF 2 MẶT ACRYLIC';
+            $typeId = $typeMdf2 ? $typeMdf2->id : 2;
+            $boardCode = $cleanColor . '.TP.2M';
+        } elseif (str_contains($note, '1 mặt') || str_contains($note, '1m') || str_contains($note, 'mdf')) {
+            $boardType = 'MDF 1 MẶT ACRYLIC';
+            $typeId = $typeMdf1 ? $typeMdf1->id : 1;
+            $boardCode = $cleanColor;
+        } else {
+            if (str_contains($cleanColor, 'PVC') || str_contains((string)$rawBoardCode, 'PVC')) {
+                $boardType = 'CỐT NHỰA 1 MẶT ACRYLIC';
+                $typeId = $typePvc1 ? $typePvc1->id : 3;
+                $boardCode = $cleanColor . '.TP.PVC';
+            } else {
+                $boardType = 'MDF 1 MẶT ACRYLIC';
+                $typeId = $typeMdf1 ? $typeMdf1->id : 1;
+                $boardCode = $cleanColor;
+            }
+        }
+
+        return [
+            'color_code'         => $cleanColor,
+            'board_code'         => $boardCode,
+            'board_type'         => $boardType,
+            'wood_board_type_id' => $typeId,
+        ];
+    }
+
+    /**
+     * Tự động chuẩn hóa Loại ván và Mã SKU theo Ghi chú
+     */
+    public function normalizeTypes(Request $request)
+    {
+        $user = auth()->user();
+        abort_unless($user && ($user->can('add dc stock') || $user->hasRole('Admin')), 403);
+
+        $stocks = DcStock::all();
+        $updatedCount = 0;
+
+        DB::beginTransaction();
+        try {
+            foreach ($stocks as $stock) {
+                $normalized = $this->resolveNormalizedStockInfo($stock->note, $stock->color_code, $stock->board_code);
+
+                $stock->color_code         = $normalized['color_code'];
+                $stock->board_code         = $normalized['board_code'];
+                $stock->board_type         = $normalized['board_type'];
+                $stock->wood_board_type_id = $normalized['wood_board_type_id'];
+                if (empty($stock->thickness)) {
+                    $stock->thickness = '17mm';
+                }
+                $stock->save();
+                $updatedCount++;
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success'       => true,
+                'message'       => "Đã chuyển đổi và chuẩn hóa thành công {$updatedCount} tấm ván trong Kho DC!",
+                'updated_count' => $updatedCount
+            ]);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi khi chuẩn hóa: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

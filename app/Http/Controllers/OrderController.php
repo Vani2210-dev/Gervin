@@ -544,7 +544,83 @@ class OrderController extends Controller
                     'price_only' => $detail->price_only,
                     'total' => $detail->total,
                 ];
-            }) : []
+            }) : [],
+            'dc_stock_matches' => call_user_func(function () use ($acrylicOrder) {
+                if ($acrylicOrder->type !== 'acrylic') {
+                    return [];
+                }
+                $dcStockMatches = [];
+                $seenStockIds = [];
+                foreach ($acrylicOrder->supplies as $supply) {
+                    $code = trim($supply->order_supply_code ?? '');
+                    $name = trim($supply->supply_name ?? '');
+
+                    // Lấy danh sách chiều vân từ các tấm chi tiết
+                    $grains = $supply->items->pluck('grain_direction')->filter(function ($g) {
+                        return $g !== null && $g !== '';
+                    })->unique()->values();
+
+                    $grainLabels = $grains->map(function ($g) {
+                        $gStr = (string)$g;
+                        if ($gStr === '0') return 'Không vân';
+                        if ($gStr === '1') return 'Vân ngang';
+                        if ($gStr === '2') return 'Vân dọc';
+                        return $gStr;
+                    })->implode(', ');
+
+                    if (empty($grainLabels)) {
+                        $grainLabels = '—';
+                    }
+
+                    if ($code !== '' || $name !== '') {
+                        $stocks = \App\Models\DcStock::where('status', 'available')
+                            ->where('quantity', '>', 0)
+                            ->where(function ($q) use ($code, $name) {
+                                $hasCond = false;
+                                if (!empty($code)) {
+                                    $q->where('board_code', $code)
+                                      ->orWhere('color_code', $code);
+                                    $hasCond = true;
+                                }
+                                if (!empty($name)) {
+                                    if ($hasCond) {
+                                        $q->orWhere('board_code', $name)
+                                          ->orWhere('color_code', $name);
+                                    } else {
+                                        $q->where('board_code', $name)
+                                          ->orWhere('color_code', $name);
+                                    }
+                                }
+                            })
+                            ->orderBy('board_code')
+                            ->orderBy('height', 'desc')
+                            ->orderBy('width', 'desc')
+                            ->get();
+
+                        foreach ($stocks as $stock) {
+                            if (in_array($stock->id, $seenStockIds, true)) {
+                                continue;
+                            }
+                            $seenStockIds[] = $stock->id;
+
+                            $dcStockMatches[] = [
+                                'supply_name' => $supply->supply_name ?: ($supply->order_supply_code ?: '—'),
+                                'supply_code' => $supply->order_supply_code ?: '',
+                                'grain_direction' => $grainLabels,
+                                'dc_board_code' => $stock->board_code ?: ($stock->color_code ?: '—'),
+                                'dc_color_code' => $stock->color_code ?: '—',
+                                'dc_height' => (int)$stock->height,
+                                'dc_width' => (int)$stock->width,
+                                'dc_quantity' => (int)$stock->quantity,
+                                'dc_location' => $stock->location ?: '—',
+                                'dc_thickness' => $stock->thickness ?: '—',
+                                'dc_note' => $stock->note ?: '',
+                            ];
+                        }
+                    }
+                }
+                return $dcStockMatches;
+            })
         ];
     }
 

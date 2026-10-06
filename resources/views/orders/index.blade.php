@@ -239,6 +239,10 @@
                         <iconify-icon icon="lucide:file-spreadsheet" class="text-base"></iconify-icon>
                         Xuất Excel
                     </button>
+                    <button type="button" id="btnExportBulkNesting" onclick="exportBulkNestingOrders()" class="btn btn-sm bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg px-3 py-2 flex items-center gap-2">
+                        <iconify-icon icon="lucide:table-2" class="text-base"></iconify-icon>
+                        Xuất Nesting
+                    </button>
                     <button type="submit" form="bulkDeleteForm" class="btn btn-sm bg-danger-600 hover:bg-danger-700 text-white rounded-lg px-3 py-2 flex items-center gap-2">
                         <iconify-icon icon="lucide:trash-2" class="text-base"></iconify-icon>
                         Xóa đã chọn
@@ -700,6 +704,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 <script src="{{ asset('assets/js/order-export.js') }}"></script>
+<script src="{{ asset('assets/js/nesting-export.js') }}"></script>
 <script>
     async function exportBulkOrders() {
         if (!window.showDirectoryPicker) {
@@ -711,9 +716,11 @@
         if (selectedIds.length === 0) return;
 
         const btn = document.getElementById('btnExportBulk');
-        const originalHtml = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = '<iconify-icon icon="lucide:loader" class="animate-spin text-base"></iconify-icon> Đang xử lý...';
+        const originalHtml = btn ? btn.innerHTML : '';
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<iconify-icon icon="lucide:loader" class="animate-spin text-base"></iconify-icon> Đang xử lý...';
+        }
 
         try {
             // Yêu cầu chọn thư mục
@@ -732,6 +739,7 @@
             if (!response.ok) throw new Error("Không thể lấy dữ liệu xuất Excel");
             const dataList = await response.json();
 
+            let totalFilesCount = 0;
             // Lưu từng file
             for (let data of dataList) {
                 if (typeof exportToExcel !== 'function') {
@@ -744,9 +752,24 @@
                 const writable = await fileHandle.createWritable();
                 await writable.write(blob);
                 await writable.close();
+                totalFilesCount++;
+
+                // Nếu là đơn Acrylic, tự động xuất luôn các file xả tem Nesting
+                if (data.type === 'acrylic' && typeof exportNestingFiles === 'function') {
+                    const nestingFiles = await exportNestingFiles(data, true);
+                    if (nestingFiles && nestingFiles.length > 0) {
+                        for (let nFile of nestingFiles) {
+                            const nHandle = await directoryHandle.getFileHandle(nFile.fileName, { create: true });
+                            const nWritable = await nHandle.createWritable();
+                            await nWritable.write(nFile.blob);
+                            await nWritable.close();
+                            totalFilesCount++;
+                        }
+                    }
+                }
             }
 
-            alert(`Đã xuất thành công ${dataList.length} file Excel!`);
+            alert(`Đã xuất thành công ${totalFilesCount} file Excel (gồm Báo giá và Nesting)!`);
             clearBulkOrderSelection();
         } catch (err) {
             console.error(err);
@@ -754,8 +777,78 @@
                 alert("Có lỗi xảy ra: " + err.message);
             }
         } finally {
-            btn.disabled = false;
-            btn.innerHTML = originalHtml;
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
+        }
+    }
+
+    async function exportBulkNestingOrders() {
+        if (!window.showDirectoryPicker) {
+            alert("Trình duyệt của bạn không hỗ trợ chọn thư mục lưu (chỉ hỗ trợ Chrome/Edge mới). Vui lòng cập nhật hoặc dùng trình duyệt khác.");
+            return;
+        }
+
+        const selectedIds = Array.from(document.querySelectorAll('.bulk-order-checkbox:checked')).map(cb => cb.value);
+        if (selectedIds.length === 0) return;
+
+        const btn = document.getElementById('btnExportBulkNesting');
+        const originalHtml = btn ? btn.innerHTML : '';
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<iconify-icon icon="lucide:loader" class="animate-spin text-base"></iconify-icon> Đang xuất Nesting...';
+        }
+
+        try {
+            // Yêu cầu chọn thư mục
+            const directoryHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+
+            // Lấy dữ liệu từ server
+            const response = await fetch('{{ route("orders.bulk-export-data") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('input[name="_token"]')?.value || ''
+                },
+                body: JSON.stringify({ order_ids: selectedIds })
+            });
+
+            if (!response.ok) throw new Error("Không thể lấy dữ liệu đơn hàng");
+            const dataList = await response.json();
+
+            let exportedCount = 0;
+            for (let data of dataList) {
+                if (data.type === 'acrylic' && typeof exportNestingFiles === 'function') {
+                    const nestingFiles = await exportNestingFiles(data, true);
+                    if (nestingFiles && nestingFiles.length > 0) {
+                        for (let nFile of nestingFiles) {
+                            const nHandle = await directoryHandle.getFileHandle(nFile.fileName, { create: true });
+                            const nWritable = await nHandle.createWritable();
+                            await nWritable.write(nFile.blob);
+                            await nWritable.close();
+                            exportedCount++;
+                        }
+                    }
+                }
+            }
+
+            if (exportedCount === 0) {
+                alert("Không có đơn hàng Acrylic nào có tấm cần xả tem Nesting trong các đơn đã chọn.");
+            } else {
+                alert(`Đã xuất thành công ${exportedCount} file xả tem Nesting!`);
+                clearBulkOrderSelection();
+            }
+        } catch (err) {
+            console.error(err);
+            if (err.name !== 'AbortError') {
+                alert("Có lỗi xảy ra: " + err.message);
+            }
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
         }
     }
 </script>

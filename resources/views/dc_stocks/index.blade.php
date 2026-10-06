@@ -145,6 +145,15 @@
                     <iconify-icon icon="solar:upload-track-2-bold" class="text-base"></iconify-icon>
                     Nhập Excel
                 </button>
+
+                {{-- Nút chuyển đổi chuẩn hóa đúng form theo ghi chú --}}
+                <button type="button" onclick="confirmNormalizeTypes()"
+                    id="btnNormalizeTypes"
+                    class="px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors shadow-sm cursor-pointer"
+                    title="Tự động chuẩn hóa Loại ván và Mã SKU theo Ghi chú (VD: PVC 1 mặt ➔ Cốt nhựa 1 mặt, MDF 2 mặt ➔ MDF 2 mặt)">
+                    <iconify-icon icon="solar:magic-stick-3-bold" class="text-base"></iconify-icon>
+                    <span>Chuyển đổi đúng form</span>
+                </button>
                 @endcan
 
                 {{-- Add Button with shortcut tooltip --}}
@@ -184,8 +193,8 @@
                 </a>
 
                 {{-- Cốt Nhựa PVC --}}
-                <a href="{{ route('dc-stocks.index', array_merge(request()->except(['board_type', 'page']), ['board_type' => 'CỐT NHỰA 1 MẶT ACRYLIC'])) }}"
-                   class="px-2.5 py-1 rounded-lg font-bold transition-all text-xs flex items-center gap-1 {{ ($boardType ?? '') === 'CỐT NHỰA 1 MẶT ACRYLIC' ? 'bg-amber-600 text-white shadow-sm' : 'bg-white dark:bg-neutral-800 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60 hover:bg-amber-50' }}">
+                <a href="{{ route('dc-stocks.index', array_merge(request()->except(['board_type', 'page']), ['board_type' => 'CỐT NHỰA PVC'])) }}"
+                   class="px-2.5 py-1 rounded-lg font-bold transition-all text-xs flex items-center gap-1 {{ in_array(($boardType ?? ''), ['CỐT NHỰA PVC', 'CỐT NHỰA 1 MẶT ACRYLIC', 'CỐT NHỰA 2 MẶT ACRYLIC', 'PVC']) ? 'bg-amber-600 text-white shadow-sm' : 'bg-white dark:bg-neutral-800 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60 hover:bg-amber-50' }}">
                    🧱 Cốt Nhựa PVC
                 </a>
 
@@ -243,10 +252,10 @@
                             $stt = $stocks->firstItem() + $index;
                             $bType = $item->board_type ?: ($item->boardTypeRel?->name ?: 'MDF 1 MẶT ACRYLIC');
                             $typeBadgeClass = 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/20 dark:border-emerald-800/40 dark:text-emerald-400';
-                            if (stripos($bType, '2 mặt') !== false || stripos($bType, '2M') !== false) {
-                                $typeBadgeClass = 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/20 dark:border-purple-800/40 dark:text-purple-400';
-                            } elseif (stripos($bType, 'nhựa') !== false || stripos($bType, 'pvc') !== false) {
+                            if (stripos($bType, 'nhựa') !== false || stripos($bType, 'pvc') !== false) {
                                 $typeBadgeClass = 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/20 dark:border-amber-800/40 dark:text-amber-400';
+                            } elseif (stripos($bType, '2 mặt') !== false || stripos($bType, '2M') !== false) {
+                                $typeBadgeClass = 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/20 dark:border-purple-800/40 dark:text-purple-400';
                             }
                             $areaM2 = round(($item->height * $item->width) / 1000000, 3);
                         @endphp
@@ -415,32 +424,58 @@
                             </label>
                             <span class="text-[10px] text-neutral-400 font-semibold">Chọn nhanh:</span>
                         </div>
+                        @php
+                            $typeMdf1 = $boardTypes->first(function($t) {
+                                $n = mb_strtolower($t->name);
+                                return (str_contains($n, '1') || str_contains($n, '1m')) && !str_contains($n, 'nhựa') && !str_contains($n, 'pvc') && !str_contains($n, 'foil');
+                            }) ?? $boardTypes->first();
+
+                            $typeMdf2 = $boardTypes->first(function($t) {
+                                $n = mb_strtolower($t->name);
+                                return (str_contains($n, '2') || str_contains($n, '2m')) && !str_contains($n, 'nhựa') && !str_contains($n, 'pvc');
+                            });
+
+                            $typePvc = $boardTypes->first(function($t) {
+                                $n = mb_strtolower($t->name);
+                                return str_contains($n, 'nhựa') || str_contains($n, 'pvc');
+                            });
+                            $defaultTypeId = $typeMdf1?->id ?? ($boardTypes->first()?->id ?? 1);
+                        @endphp
                         <div class="grid grid-cols-3 gap-1 mb-1.5">
-                            <button type="button" onclick="selectTypeShortcut(1, '', 'MDF 1 MẶT ACRYLIC')"
-                                    id="btnType_1"
+                            @if($typeMdf1)
+                            <button type="button" onclick="selectTypeShortcut({{ $typeMdf1->id }})"
+                                    id="btnType_{{ $typeMdf1->id }}"
+                                    data-type-id="{{ $typeMdf1->id }}"
                                     class="type-shortcut-btn px-1.5 py-1.5 rounded-lg border text-[11px] font-bold text-center transition-all bg-emerald-600 text-white border-emerald-600 shadow-xs">
                                 🪵 MDF 1M
                             </button>
-                            <button type="button" onclick="selectTypeShortcut(2, '.TP.2M', 'MDF 2 MẶT ACRYLIC')"
-                                    id="btnType_2"
+                            @endif
+                            @if($typeMdf2)
+                            <button type="button" onclick="selectTypeShortcut({{ $typeMdf2->id }})"
+                                    id="btnType_{{ $typeMdf2->id }}"
+                                    data-type-id="{{ $typeMdf2->id }}"
                                     class="type-shortcut-btn px-1.5 py-1.5 rounded-lg border text-[11px] font-bold text-center transition-all bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border-neutral-300 dark:border-neutral-700 hover:bg-neutral-50">
                                 🪵 MDF 2M
                             </button>
-                            <button type="button" onclick="selectTypeShortcut(3, '.TP.PVC', 'CỐT NHỰA 1 MẶT ACRYLIC')"
-                                    id="btnType_3"
+                            @endif
+                            @if($typePvc)
+                            <button type="button" onclick="selectTypeShortcut({{ $typePvc->id }})"
+                                    id="btnType_{{ $typePvc->id }}"
+                                    data-type-id="{{ $typePvc->id }}"
                                     class="type-shortcut-btn px-1.5 py-1.5 rounded-lg border text-[11px] font-bold text-center transition-all bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border-neutral-300 dark:border-neutral-700 hover:bg-neutral-50">
                                 🧱 Nhựa PVC
                             </button>
+                            @endif
                         </div>
                         <select id="f_wood_board_type_id" onchange="onTypeSelectChange()"
                                 class="w-full px-3 py-1.5 border border-neutral-300 dark:border-neutral-700 rounded-lg bg-neutral-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-orange-500 text-xs font-semibold">
                             @foreach($boardTypes as $bt)
-                                <option value="{{ $bt->id }}" data-prefix="{{ $bt->prefix }}" data-name="{{ $bt->name }}">
+                                <option value="{{ $bt->id }}" data-prefix="{{ $bt->prefix }}" data-name="{{ $bt->name }}" {{ $bt->id == $defaultTypeId ? 'selected' : '' }}>
                                     {{ $bt->name }}
                                 </option>
                             @endforeach
                         </select>
-                        <input type="hidden" id="f_board_type" value="MDF 1 MẶT ACRYLIC">
+                        <input type="hidden" id="f_board_type" value="{{ $typeMdf1?->name ?? 'MDF 1 MẶT ACRYLIC' }}">
                     </div>
                 </div>
 
@@ -720,13 +755,18 @@
         }
     }
 
+    const DEFAULT_TYPE_ID = {{ $defaultTypeId }};
+
     // ─── Type Shortcuts ──────────────────────────────────
-    function selectTypeShortcut(id, prefix, name) {
+    function selectTypeShortcut(id) {
         const typeSelect = document.getElementById("f_wood_board_type_id");
         if (typeSelect) {
             typeSelect.value = id;
+            const opt = typeSelect.selectedOptions[0];
+            if (opt) {
+                document.getElementById("f_board_type").value = opt.getAttribute("data-name") || "";
+            }
         }
-        document.getElementById("f_board_type").value = name;
         updateTypeButtonsUI(id);
         onColorCodeOrTypeChange();
     }
@@ -734,24 +774,23 @@
     function onTypeSelectChange() {
         const typeSelect = document.getElementById("f_wood_board_type_id");
         const val = typeSelect ? typeSelect.value : "";
+        const opt = typeSelect ? typeSelect.selectedOptions[0] : null;
+        if (opt) {
+            document.getElementById("f_board_type").value = opt.getAttribute("data-name") || "";
+        }
         updateTypeButtonsUI(val);
         onColorCodeOrTypeChange();
     }
 
     function updateTypeButtonsUI(activeId) {
         document.querySelectorAll(".type-shortcut-btn").forEach(btn => {
-            btn.className = "type-shortcut-btn px-1.5 py-1.5 rounded-lg border text-[11px] font-bold text-center transition-all bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border-neutral-300 dark:border-neutral-700 hover:bg-neutral-50";
-        });
-        const activeBtn = document.getElementById("btnType_" + activeId);
-        if (activeBtn) {
-            if (activeId == 1) {
-                activeBtn.className = "type-shortcut-btn px-1.5 py-1.5 rounded-lg border text-[11px] font-bold text-center transition-all bg-emerald-600 text-white border-emerald-600 shadow-xs";
-            } else if (activeId == 2) {
-                activeBtn.className = "type-shortcut-btn px-1.5 py-1.5 rounded-lg border text-[11px] font-bold text-center transition-all bg-purple-600 text-white border-purple-600 shadow-xs";
+            const tid = btn.getAttribute("data-type-id");
+            if (tid && String(tid) === String(activeId)) {
+                btn.className = "type-shortcut-btn px-1.5 py-1.5 rounded-lg border text-[11px] font-bold text-center transition-all bg-emerald-600 text-white border-emerald-600 shadow-xs";
             } else {
-                activeBtn.className = "type-shortcut-btn px-1.5 py-1.5 rounded-lg border text-[11px] font-bold text-center transition-all bg-amber-600 text-white border-amber-600 shadow-xs";
+                btn.className = "type-shortcut-btn px-1.5 py-1.5 rounded-lg border text-[11px] font-bold text-center transition-all bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border-neutral-300 dark:border-neutral-700 hover:bg-neutral-50";
             }
-        }
+        });
     }
 
     // ─── Size Presets & Swap ──────────────────────────────
@@ -877,7 +916,7 @@
         document.getElementById("saveBtnText").textContent = "Lưu vào Kho DC";
         document.getElementById("stockId").value = "";
         document.getElementById("f_color_code").value = "";
-        selectTypeShortcut(1, "", "MDF 1 MẶT ACRYLIC");
+        selectTypeShortcut(DEFAULT_TYPE_ID);
         document.getElementById("f_board_code").value = "";
         document.getElementById("f_thickness").value = "17mm";
         document.getElementById("f_note").value = "";
@@ -897,14 +936,20 @@
         document.getElementById("modalTitle").innerHTML = `<iconify-icon icon="solar:copy-bold" class="text-sky-500 text-lg"></iconify-icon> Nhân bản tấm dư (Tạo tương tự)`;
         document.getElementById("f_color_code").value = item.color_code || "";
 
-        let typeId = item.wood_board_type_id || 1;
-        let bType = item.board_type || "MDF 1 MẶT ACRYLIC";
-        let prefix = "";
-        if (typeId == 2 || bType.includes("2")) { typeId = 2; prefix = ".TP.2M"; }
-        else if (typeId == 3 || bType.includes("PVC") || bType.includes("NHỰA")) { typeId = 3; prefix = ".TP.PVC"; }
+        let targetTypeId = item.wood_board_type_id;
+        const typeSelect = document.getElementById("f_wood_board_type_id");
+        if (!targetTypeId && item.board_type && typeSelect) {
+            for (let i = 0; i < typeSelect.options.length; i++) {
+                const optName = typeSelect.options[i].getAttribute("data-name") || "";
+                if (optName.toLowerCase() === item.board_type.toLowerCase() || optName.includes(item.board_type) || item.board_type.includes(optName)) {
+                    targetTypeId = typeSelect.options[i].value;
+                    break;
+                }
+            }
+        }
+        selectTypeShortcut(targetTypeId || DEFAULT_TYPE_ID);
 
-        selectTypeShortcut(typeId, prefix, bType);
-        document.getElementById("f_board_code").value = item.board_code || (item.color_code + prefix);
+        document.getElementById("f_board_code").value = item.board_code || item.color_code;
         document.getElementById("f_thickness").value = item.thickness || "17mm";
         document.getElementById("f_height").value = item.height || "";
         document.getElementById("f_width").value = item.width || "";
@@ -924,14 +969,22 @@
         document.getElementById("stockId").value = item.id;
         document.getElementById("f_color_code").value = item.color_code;
 
-        let typeId = item.wood_board_type_id || 1;
-        let bType = item.board_type || "MDF 1 MẶT ACRYLIC";
-        let prefix = "";
-        if (typeId == 2 || bType.includes("2")) { typeId = 2; prefix = ".TP.2M"; }
-        else if (typeId == 3 || bType.includes("PVC") || bType.includes("NHỰA")) { typeId = 3; prefix = ".TP.PVC"; }
+        let targetTypeId = item.wood_board_type_id;
+        const typeSelect = document.getElementById("f_wood_board_type_id");
+        if (!targetTypeId && item.board_type && typeSelect) {
+            for (let i = 0; i < typeSelect.options.length; i++) {
+                const optName = typeSelect.options[i].getAttribute("data-name") || "";
+                if (optName.toLowerCase() === item.board_type.toLowerCase() || optName.includes(item.board_type) || item.board_type.includes(optName)) {
+                    targetTypeId = typeSelect.options[i].value;
+                    break;
+                }
+            }
+        }
+        selectTypeShortcut(targetTypeId || DEFAULT_TYPE_ID);
 
-        selectTypeShortcut(typeId, prefix, bType);
-        document.getElementById("f_board_type").value = item.board_type || "";
+        if (item.board_type) {
+            document.getElementById("f_board_type").value = item.board_type;
+        }
         document.getElementById("f_board_code").value = item.board_code || item.color_code;
         document.getElementById("f_thickness").value = item.thickness || "17mm";
 
@@ -1039,5 +1092,46 @@
             }
         }
     });
+
+    // ─── Chuẩn hóa loại ván và mã SKU theo ghi chú ──────────
+    async function confirmNormalizeTypes() {
+        if (!confirm("Hệ thống sẽ quét toàn bộ kho DC và tự động cập nhật LOẠI VÁN cùng MÃ VÁN / SKU chuẩn form dựa trên GHI CHÚ (ví dụ: 'PVC 1 mặt' ➔ Cốt nhựa 1 mặt, 'MDF 2 mặt' ➔ MDF 2 mặt).\n\nBạn có chắc chắn muốn thực hiện?")) {
+            return;
+        }
+
+        const btn = document.getElementById('btnNormalizeTypes');
+        const originalHtml = btn ? btn.innerHTML : '';
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<iconify-icon icon="lucide:loader" class="animate-spin text-base"></iconify-icon> <span>Đang xử lý...</span>';
+        }
+
+        try {
+            const response = await fetch('{{ route("dc-stocks.normalize-types") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': CSRF,
+                    'Accept': 'application/json'
+                }
+            });
+
+            const res = await response.json();
+            if (res.success) {
+                alert(res.message);
+                window.location.reload();
+            } else {
+                alert('Có lỗi xảy ra: ' + (res.message || 'Không xác định'));
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Lỗi kết nối máy chủ: ' + e.message);
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
+        }
+    }
 </script>
 @endpush

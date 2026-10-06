@@ -723,6 +723,148 @@ async function exportToExcel(customData = null, returnBlob = false) {
                 });
             });
 
+            // Sheet 3: Tấm dư Kho DC (cho đơn Acrylic)
+            const wsDc = workbook.addWorksheet('Tấm dư Kho DC', {
+                views: [{ showGridLines: true }]
+            });
+
+            // Column widths
+            const dcColWidths = [
+                { col: 'A', width: 8 },   // STT
+                { col: 'B', width: 34 },  // Tên vật tư (từ đơn)
+                { col: 'C', width: 22 },  // Mã ván / SKU (kho DC)
+                { col: 'D', width: 18 },  // Chiều vân (từ đơn)
+                { col: 'E', width: 15 },  // Cao (kho DC)
+                { col: 'F', width: 15 },  // Rộng (kho DC)
+                { col: 'G', width: 16 },  // Số lượng (kho DC)
+                { col: 'H', width: 16 },  // Vị trí (kho DC)
+                { col: 'I', width: 28 },  // Ghi chú (kho DC)
+            ];
+            dcColWidths.forEach(w => { wsDc.getColumn(w.col).width = w.width; });
+
+            // Banner Title
+            wsDc.getRow(1).height = 25;
+            wsDc.mergeCells('A1:I1');
+            const titleCell = wsDc.getCell('A1');
+            titleCell.value = `DANH SÁCH TẤM DƯ KHO DC PHÙ HỢP - ĐƠN HÀNG ${orderData.order_code}`;
+            titleCell.font = { name: 'Times New Roman', size: 14, bold: true, color: { argb: 'FF1E3A8A' } };
+            titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+
+            // Subtitle
+            wsDc.getRow(2).height = 18;
+            wsDc.mergeCells('A2:I2');
+            const subTitleCell = wsDc.getCell('A2');
+            subTitleCell.value = `Khách hàng: ${orderData.customer_name || '—'} | Ngày xuất: ${new Date().toLocaleDateString('vi-VN')}`;
+            subTitleCell.font = { name: 'Times New Roman', size: 10, italic: true };
+            subTitleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+
+            // Header row
+            const dcHeaders = [
+                'STT',
+                'Tên vật tư (từ đơn)',
+                'Mã ván / SKU (kho DC)',
+                'Chiều vân (từ đơn)',
+                'Cao (kho DC)',
+                'Rộng (kho DC)',
+                'Số lượng (kho DC)',
+                'Vị trí (kho DC)',
+                'Ghi chú (kho DC)'
+            ];
+            const dcHeaderRow = wsDc.getRow(3);
+            dcHeaderRow.height = 24;
+            dcHeaders.forEach((h, i) => {
+                const cell = dcHeaderRow.getCell(i + 1);
+                cell.value = h;
+                cell.font = { name: 'Times New Roman', size: 11, bold: true };
+                cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+                cell.fill = headerFill;
+                cell.border = thinBorder;
+            });
+
+            const dcMatches = orderData.dc_stock_matches || [];
+            let dcCurrentRow = 4;
+
+            if (dcMatches.length > 0) {
+                dcMatches.forEach((m, idx) => {
+                    const row = wsDc.getRow(dcCurrentRow);
+                    row.height = 20;
+
+                    row.getCell(1).value = idx + 1;
+                    row.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
+
+                    row.getCell(2).value = m.supply_name || '—';
+                    row.getCell(2).alignment = { horizontal: 'left', vertical: 'middle' };
+
+                    row.getCell(3).value = m.dc_board_code || m.supply_code || '—';
+                    row.getCell(3).alignment = { horizontal: 'center', vertical: 'middle' };
+
+                    row.getCell(4).value = m.grain_direction || '—';
+                    row.getCell(4).alignment = { horizontal: 'center', vertical: 'middle' };
+
+                    row.getCell(5).value = parseInt(m.dc_height) || 0;
+                    row.getCell(5).numFmt = '#,##0';
+                    row.getCell(5).alignment = { horizontal: 'right', vertical: 'middle' };
+
+                    row.getCell(6).value = parseInt(m.dc_width) || 0;
+                    row.getCell(6).numFmt = '#,##0';
+                    row.getCell(6).alignment = { horizontal: 'right', vertical: 'middle' };
+
+                    row.getCell(7).value = parseInt(m.dc_quantity) || 1;
+                    row.getCell(7).numFmt = '#,##0';
+                    row.getCell(7).alignment = { horizontal: 'center', vertical: 'middle' };
+
+                    row.getCell(8).value = m.dc_location || '—';
+                    row.getCell(8).font = { name: 'Times New Roman', size: 11, bold: true, color: { argb: 'FF0D9488' } };
+                    row.getCell(8).alignment = { horizontal: 'center', vertical: 'middle' };
+
+                    row.getCell(9).value = m.dc_note || '';
+                    row.getCell(9).alignment = { horizontal: 'left', vertical: 'middle' };
+
+                    for (let c = 1; c <= 9; c++) {
+                        const cell = row.getCell(c);
+                        if (c !== 8) {
+                            cell.font = { name: 'Times New Roman', size: 11 };
+                        }
+                        cell.border = thinBorder;
+                    }
+
+                    dcCurrentRow++;
+                });
+
+                // Summary row
+                const summaryRow = wsDc.getRow(dcCurrentRow);
+                summaryRow.height = 22;
+                wsDc.mergeCells(`A${dcCurrentRow}:F${dcCurrentRow}`);
+                summaryRow.getCell(1).value = 'TỔNG CỘNG SỐ TẤM DƯ TRONG KHO:';
+                summaryRow.getCell(1).font = { name: 'Times New Roman', size: 11, bold: true };
+                summaryRow.getCell(1).alignment = { horizontal: 'right', vertical: 'middle' };
+
+                const totalQty = dcMatches.reduce((sum, item) => sum + (parseInt(item.dc_quantity) || 0), 0);
+                summaryRow.getCell(7).value = totalQty;
+                summaryRow.getCell(7).font = { name: 'Times New Roman', size: 11, bold: true, color: { argb: 'FFDC2626' } };
+                summaryRow.getCell(7).numFmt = '#,##0';
+                summaryRow.getCell(7).alignment = { horizontal: 'center', vertical: 'middle' };
+
+                for (let c = 1; c <= 9; c++) {
+                    const cell = summaryRow.getCell(c);
+                    cell.border = {
+                        top: { style: 'thin', color: { argb: 'FF9CA3AF' } },
+                        bottom: { style: 'double', color: { argb: 'FF1F2937' } }
+                    };
+                }
+            } else {
+                const emptyRow = wsDc.getRow(dcCurrentRow);
+                emptyRow.height = 28;
+                wsDc.mergeCells(`A${dcCurrentRow}:I${dcCurrentRow}`);
+                const emptyCell = emptyRow.getCell(1);
+                emptyCell.value = 'Không tìm thấy tấm dư nào trong kho DC phù hợp với vật tư của đơn hàng.';
+                emptyCell.font = { name: 'Times New Roman', size: 11, italic: true, color: { argb: 'FF6B7280' } };
+                emptyCell.alignment = { horizontal: 'center', vertical: 'middle' };
+                for (let c = 1; c <= 9; c++) {
+                    emptyRow.getCell(c).border = thinBorder;
+                }
+            }
+
         } else if (orderData.type === 'glass') {
             // Column dimensions
             const colWidths = [

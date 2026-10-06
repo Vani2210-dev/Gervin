@@ -243,20 +243,25 @@ async function generateNestingWorkbook(orderData, suppliesData, filename) {
 
 /**
  * Export two nesting files for an acrylic order:
- *  - Nesting      : items where BOTH height > 200 AND width > 200
- *  - Nesting Phào : items where height <= 200 OR width <= 200
+ *  - Nesting      : items where BOTH height > 70 AND width > 70
+ *  - Nesting Phào : items where height <= 70 OR width <= 70
+ * 
+ * @param {Object} customData - Optional order data object. Defaults to window.orderExportData.
+ * @param {boolean} returnBlobs - If true, returns Array of { fileName, blob }. Defaults to false.
  */
-async function exportNestingFiles() {
-    const orderData = window.orderExportData;
+async function exportNestingFiles(customData = null, returnBlobs = false) {
+    const orderData = customData || window.orderExportData;
     if (!orderData || orderData.type !== 'acrylic') {
-        alert('Chức năng xuất nesting chỉ dành cho đơn acrylic.');
-        return;
+        if (!customData) {
+            alert('Chức năng xuất nesting chỉ dành cho đơn acrylic.');
+        }
+        return returnBlobs ? [] : null;
     }
 
     const nestingSupplies = [];
     const phaoSupplies = [];
 
-    orderData.supplies.forEach(supply => {
+    (orderData.supplies || []).forEach(supply => {
         const allItems = supply.items || [];
         const nestItems = allItems.filter(i => (parseFloat(i.height) || 0) > 70 && (parseFloat(i.width) || 0) > 70);
         const phaoItems = allItems.filter(i => (parseFloat(i.height) || 0) <= 70 || (parseFloat(i.width) || 0) <= 70);
@@ -266,14 +271,24 @@ async function exportNestingFiles() {
     });
 
     const code = orderData.order_code || 'DH';
-    const nestingBlob = await generateNestingWorkbook(orderData, nestingSupplies, `Nesting-${code}.xlsx`);
-    const phaoBlob = await generateNestingWorkbook(orderData, phaoSupplies, `Nesting-Phao-${code}.xlsx`);
+    const nestingFilename = `Nesting-${code}.xlsx`;
+    const phaoFilename = `Nesting-Phao-${code}.xlsx`;
+
+    const nestingBlob = await generateNestingWorkbook(orderData, nestingSupplies, nestingFilename);
+    const phaoBlob = await generateNestingWorkbook(orderData, phaoSupplies, phaoFilename);
+
+    if (returnBlobs) {
+        const files = [];
+        if (nestingBlob) files.push({ fileName: nestingFilename, blob: nestingBlob });
+        if (phaoBlob) files.push({ fileName: phaoFilename, blob: phaoBlob });
+        return files;
+    }
 
     if (nestingBlob) {
-        saveAs(nestingBlob, `Nesting-${code}.xlsx`);
+        saveAs(nestingBlob, nestingFilename);
     }
     if (phaoBlob) {
-        saveAs(phaoBlob, `Nesting-Phao-${code}.xlsx`);
+        saveAs(phaoBlob, phaoFilename);
     }
 }
 
@@ -326,5 +341,6 @@ async function exportManufactureNestingFiles(moCode, ordersData) {
     }
 }
 
+window.generateNestingWorkbook = generateNestingWorkbook;
 window.exportNestingFiles = exportNestingFiles;
 window.exportManufactureNestingFiles = exportManufactureNestingFiles;
