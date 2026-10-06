@@ -358,7 +358,7 @@
                         </th>
                         <th class="w-28 border-r border-neutral-400">So sánh với<br>công nợ định mức</th>
                         <th rowspan="2" class="w-24 border-r border-neutral-400">Doanh thu<br>Laminate TM</th>
-                        <th rowspan="2" class="w-24">Doanh thu<br>Plywood</th>
+                        <th rowspan="2" class="w-24">Doanh thu<br>Flywppd</th>
                     </tr>
 
                     <tr
@@ -423,7 +423,7 @@
                             {{ $displayLaminateCommercial > 0 ? number_format($displayLaminateCommercial, 0, ',', '.') : '-' }}
                         </td>
                         <td class="py-2 pr-2 text-right">
-                            {{ $displayPlywoodCommercial > 0 ? number_format($displayPlywoodCommercial, 0, ',', '.') : '-' }}
+                            {{ $displayFlywppdCommercial > 0 ? number_format($displayFlywppdCommercial, 0, ',', '.') : '-' }}
                         </td>
                     </tr>
                 </thead>
@@ -524,7 +524,7 @@
                                 {{ $row['laminate_commercial'] > 0 ? number_format($row['laminate_commercial'], 0, ',', '.') : '-' }}
                             </td>
                             <td class="py-1.5 pr-2 text-right text-neutral-400">
-                                {{ $row['plywood_commercial'] > 0 ? number_format($row['plywood_commercial'], 0, ',', '.') : '-' }}
+                                {{ $row['Flywppd_commercial'] > 0 ? number_format($row['Flywppd_commercial'], 0, ',', '.') : '-' }}
                             </td>
                         </tr>
                     @empty

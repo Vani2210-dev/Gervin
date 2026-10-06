@@ -181,7 +181,7 @@ class Order extends Model
         $sheets = 0;
         if ($this->relationLoaded('supplies')) {
             foreach ($this->supplies as $supply) {
-                if (in_array($this->type, ['min_late', 'plywood'])) {
+                if (in_array($this->type, ['min_late', 'Flywppd'])) {
                     if ($supply->relationLoaded('minLateItems')) {
                         $sheets += (float) $supply->minLateItems->sum('quantity');
                     }
@@ -199,7 +199,7 @@ class Order extends Model
                 $sheets = (float) $this->supplies->sum('quantity');
             }
         } else {
-            if (in_array($this->type, ['min_late', 'plywood'])) {
+            if (in_array($this->type, ['min_late', 'Flywppd'])) {
                 $sheets = (float) $this->minLateItems()->sum('min_late_order_items.quantity');
             } elseif ($this->type === 'glass') {
                 $sheets = (float) $this->glassItems()->sum('glass_order_items.wing_quantity');
@@ -223,7 +223,7 @@ class Order extends Model
         $meters = 0;
         if ($this->relationLoaded('supplies')) {
             foreach ($this->supplies as $supply) {
-                if (in_array($this->type, ['min_late', 'plywood']) && $supply->relationLoaded('minLateItems')) {
+                if (in_array($this->type, ['min_late', 'Flywppd']) && $supply->relationLoaded('minLateItems')) {
                     foreach ($supply->minLateItems as $item) {
                         $itemMeters = (float) ($item->straight_paste_length ?? 0)
                                     + (float) ($item->beveled_length ?? 0)
@@ -267,7 +267,7 @@ class Order extends Model
                 }
             }
         } else {
-            if (in_array($this->type, ['min_late', 'plywood'])) {
+            if (in_array($this->type, ['min_late', 'Flywppd'])) {
                 foreach ($this->minLateItems as $item) {
                     $itemMeters = (float) ($item->straight_paste_length ?? 0)
                                 + (float) ($item->beveled_length ?? 0)

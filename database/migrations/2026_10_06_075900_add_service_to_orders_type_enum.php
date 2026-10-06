@@ -10,7 +10,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        DB::statement("ALTER TABLE orders MODIFY COLUMN type ENUM('acrylic', 'min_late', 'glass', 'plywood', 'service') NULL;");
+        DB::statement("ALTER TABLE orders MODIFY COLUMN type ENUM('acrylic', 'min_late', 'glass', 'Flywppd', 'service') NULL;");
     }
 
     /**
@@ -18,6 +18,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::statement("ALTER TABLE orders MODIFY COLUMN type ENUM('acrylic', 'min_late', 'glass', 'plywood') NULL;");
+        DB::statement("ALTER TABLE orders MODIFY COLUMN type ENUM('acrylic', 'min_late', 'glass', 'Flywppd') NULL;");
     }
 };

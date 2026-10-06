@@ -288,7 +288,7 @@ class QCService
         $width = 0;
         $thickness = 17; // default standard board thickness
 
-        if (in_array($type, ['min_late', 'plywood'])) {
+        if (in_array($type, ['min_late', 'Flywppd'])) {
             $size = $item->size ?? [];
             if (is_string($size)) {
                 $size = json_decode($size, true) ?? [];

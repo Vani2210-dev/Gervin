@@ -363,14 +363,14 @@
                                                 'acrylic' => 'bg-primary-100 text-primary-600 border border-primary-200',
                                                 'min_late' => 'bg-warning-100 text-warning-600 border border-warning-200',
                                                 'glass' => 'bg-info-100 text-info-600 border border-info-200',
-                                                'plywood' => 'bg-amber-100 text-amber-700 border border-amber-300',
+                                                'Flywppd' => 'bg-amber-100 text-amber-700 border border-amber-300',
                                                 'service' => 'bg-purple-100 text-purple-700 border border-purple-300',
                                             ];
                                             $typeLabels = [
                                                 'acrylic' => 'Acrylic',
                                                 'min_late' => 'Min Late',
                                                 'glass' => 'Glass',
-                                                'plywood' => 'Plywood',
+                                                'Flywppd' => 'Flywppd',
                                                 'service' => 'Dịch vụ & Vật tư',
                                             ];
                                         @endphp
@@ -542,7 +542,7 @@
                     <option value="acrylic" {{ request('filter_type') === 'acrylic' ? 'selected' : '' }}>Acrylic</option>
                     <option value="glass" {{ request('filter_type') === 'glass' ? 'selected' : '' }}>Kính</option>
                     <option value="min_late" {{ request('filter_type') === 'min_late' ? 'selected' : '' }}>Min Late</option>
-                    <option value="plywood" {{ request('filter_type') === 'plywood' ? 'selected' : '' }}>Plywood</option>
+                    <option value="Flywppd" {{ request('filter_type') === 'Flywppd' ? 'selected' : '' }}>Flywppd</option>
                     <option value="service" {{ request('filter_type') === 'service' ? 'selected' : '' }}>Dịch vụ & Vật tư</option>
                 </select>
             </div>
