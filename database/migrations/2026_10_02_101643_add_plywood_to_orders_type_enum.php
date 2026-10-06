@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        \Illuminate\Support\Facades\DB::statement("ALTER TABLE orders MODIFY COLUMN type ENUM('acrylic', 'min_late', 'glass', 'Flywppd') NULL");
+        \Illuminate\Support\Facades\DB::statement("ALTER TABLE orders MODIFY COLUMN type ENUM('acrylic', 'min_late', 'glass', 'Flywood') NULL");
     }
 
     /**

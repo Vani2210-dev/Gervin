@@ -23,7 +23,7 @@ class MinLateOrderService
             'customer_name'  => 'required|string|max:255',
             'phone'          => 'nullable|string|max:20',
             'address'        => 'nullable|string',
-            'type'           => 'required|in:min_late,Flywppd',
+            'type'           => 'required|in:min_late,Flywood',
             'order_date'     => 'nullable|date',
             'delivery_days'  => 'nullable|numeric|min:0',
             'deadline'       => 'nullable|date',

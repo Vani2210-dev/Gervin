@@ -209,7 +209,7 @@ class RevenueReportController extends Controller
         $totalGlass = 0;
         $totalMinLate = 0;
         $totalLaminateCommercial = 0;
-        $totalFlywppdCommercial = 0;
+        $totalFlywoodCommercial = 0;
         $totalPaidInDay = 0;
         $totalEndDayDebt = 0;
         $totalDebtVsPolicy = 0;
@@ -270,9 +270,9 @@ class RevenueReportController extends Controller
             $cGlass = (float) $cPeriodOrders->where('type', 'glass')->filter(fn($o) => $o->relation_type !== 'warranty' && $o->board_return_status !== 'returned')->sum('total_amount');
             $cMinLate = (float) $cPeriodOrders->where('type', 'min_late')->filter(fn($o) => $o->relation_type !== 'warranty' && $o->board_return_status !== 'returned')->sum('total_amount');
             
-            // Thương mại & Flywppd
+            // Thương mại & Flywood
             $cLaminateCommercial = 0;
-            $cFlywppdCommercial = (float) $cPeriodOrders->where('type', 'Flywppd')->filter(fn($o) => $o->relation_type !== 'warranty' && $o->board_return_status !== 'returned')->sum('total_amount');
+            $cFlywoodCommercial = (float) $cPeriodOrders->where('type', 'Flywood')->filter(fn($o) => $o->relation_type !== 'warranty' && $o->board_return_status !== 'returned')->sum('total_amount');
 
             // Tiền về
             $cPaidInDay = (float) $cPeriodPayments->sum('amount');
@@ -324,7 +324,7 @@ class RevenueReportController extends Controller
                 'end_day_debt'         => $cEndDayDebt,
                 'debt_vs_policy'       => $cDebtVsPolicy,
                 'laminate_commercial'  => $cLaminateCommercial,
-                'Flywppd_commercial'   => $cFlywppdCommercial,
+                'Flywood_commercial'   => $cFlywoodCommercial,
                 'has_activity'         => ($cPeriodOrders->count() > 0 || $cPeriodPayments->count() > 0),
             ];
 
@@ -339,7 +339,7 @@ class RevenueReportController extends Controller
             $totalGlass += $cGlass;
             $totalMinLate += $cMinLate;
             $totalLaminateCommercial += $cLaminateCommercial;
-            $totalFlywppdCommercial += $cFlywppdCommercial;
+            $totalFlywoodCommercial += $cFlywoodCommercial;
             $totalPaidInDay += $cPaidInDay;
             $totalEndDayDebt += $cEndDayDebt;
             $totalDebtVsPolicy += $cDebtVsPolicy;
@@ -374,13 +374,13 @@ class RevenueReportController extends Controller
         $displayGlass = array_sum(array_column($displayRows, 'glass'));
         $displayMinLate = array_sum(array_column($displayRows, 'min_late'));
         $displayLaminateCommercial = array_sum(array_column($displayRows, 'laminate_commercial'));
-        $displayFlywppdCommercial = array_sum(array_column($displayRows, 'Flywppd_commercial'));
+        $displayFlywoodCommercial = array_sum(array_column($displayRows, 'Flywood_commercial'));
         $displayPaidInDay = array_sum(array_column($displayRows, 'paid_in_day'));
         $displayEndDayDebt = array_sum(array_column($displayRows, 'end_day_debt'));
         $displayDebtVsPolicy = array_sum(array_column($displayRows, 'debt_vs_policy'));
 
         // 7. Các chỉ số Khối KPI
-        $dayTotalRevenue = $totalAcrylicMain + $totalGlass + $totalMinLate + $totalLaminateCommercial + $totalFlywppdCommercial;
+        $dayTotalRevenue = $totalAcrylicMain + $totalGlass + $totalMinLate + $totalLaminateCommercial + $totalFlywoodCommercial;
         $compareTarget = ($viewMode === 'day') ? $targetDay : $targetMonth;
         $dayDiff = $dayTotalRevenue - $compareTarget;
         $dayPercent = $compareTarget > 0 ? ($dayTotalRevenue / $compareTarget) * 100 : 0;
@@ -434,7 +434,7 @@ class RevenueReportController extends Controller
             'displayStartMonthDebt', 'displayPolicyDebt', 'totalLostCust', 'totalNewCust', 'totalReturningCust',
             'displayAcrylicMain', 'displayAcrylicWarranty',
             'displayGlass', 'displayMinLate', 'displayPaidInDay', 'displayEndDayDebt',
-            'displayDebtVsPolicy', 'debtVsPolicyPercent', 'displayLaminateCommercial', 'displayFlywppdCommercial',
+            'displayDebtVsPolicy', 'debtVsPolicyPercent', 'displayLaminateCommercial', 'displayFlywoodCommercial',
             'staffUsers', 'filterUserId', 'selectedStaffUser', 'search',
             'dateMode', 'dateVal'
         ));
@@ -780,7 +780,7 @@ class RevenueReportController extends Controller
             $sheet->setCellValue('O4', 'SO SÁNH VỚI CÔNG NỢ ĐỊNH MỨC');
             $sheet->getStyle('O4')->getFont()->setSize(8.5);
             $sheet->mergeCells('P4:P5')->setCellValue('P4', 'DOANH THU LAMINATE THƯƠNG MẠI');
-            $sheet->mergeCells('Q4:Q5')->setCellValue('Q4', 'DOANH THU Flywppd');
+            $sheet->mergeCells('Q4:Q5')->setCellValue('Q4', 'DOANH THU Flywood');
 
             $sheet->getStyle('F4:Q5')->applyFromArray($headerBaseStyle);
             $sheet->getStyle('F4:Q5')->applyFromArray($monthBlockBlueStyle);
@@ -797,7 +797,7 @@ class RevenueReportController extends Controller
             $mTotalEndDebt = 0;
             $mTotalDebtVsPolicy = 0;
             $mTotalLaminateTM = 0;
-            $mTotalFlywppdTM = 0;
+            $mTotalFlywoodTM = 0;
 
             $cRowIdx = 7;
 
@@ -816,7 +816,7 @@ class RevenueReportController extends Controller
                 $cMonthGlass = (float) $cPeriodOrders->where('type', 'glass')->filter(fn($o) => $o->relation_type !== 'warranty' && $o->board_return_status !== 'returned')->sum('total_amount');
                 $cMonthMinLate = (float) $cPeriodOrders->where('type', 'min_late')->filter(fn($o) => $o->relation_type !== 'warranty' && $o->board_return_status !== 'returned')->sum('total_amount');
                 $cMonthLaminateTM = 0;
-                $cMonthFlywppdTM = (float) $cPeriodOrders->where('type', 'Flywppd')->filter(fn($o) => $o->relation_type !== 'warranty' && $o->board_return_status !== 'returned')->sum('total_amount');
+                $cMonthFlywoodTM = (float) $cPeriodOrders->where('type', 'Flywood')->filter(fn($o) => $o->relation_type !== 'warranty' && $o->board_return_status !== 'returned')->sum('total_amount');
                 $cMonthPaid = (float) $cPeriodPayments->sum('amount');
 
                 // Công nợ sau khoảng thời gian được chọn đến hiện tại
@@ -840,7 +840,7 @@ class RevenueReportController extends Controller
                     $sheet->getStyle("O{$cRowIdx}")->getFont()->getColor()->setRGB('DC2626');
                 }
                 $sheet->setCellValue("P{$cRowIdx}", $cMonthLaminateTM > 0 ? $cMonthLaminateTM : '-');
-                $sheet->setCellValue("Q{$cRowIdx}", $cMonthFlywppdTM > 0 ? $cMonthFlywppdTM : '-');
+                $sheet->setCellValue("Q{$cRowIdx}", $cMonthFlywoodTM > 0 ? $cMonthFlywoodTM : '-');
 
                 $mTotalAcrylicM += $cMonthAcrylicM;
                 $mTotalAcrylicW += $cMonthAcrylicW;
@@ -850,13 +850,13 @@ class RevenueReportController extends Controller
                 $mTotalEndDebt += $cMonthEndDebt;
                 $mTotalDebtVsPolicy += $cMonthDebtVsPolicy;
                 $mTotalLaminateTM += $cMonthLaminateTM;
-                $mTotalFlywppdTM += $cMonthFlywppdTM;
+                $mTotalFlywoodTM += $cMonthFlywoodTM;
 
                 $cRowIdx++;
             }
 
             // Dòng 2 & 3: Khối Cam KPI Tổng (12 cột F -> Q)
-            $mTotalActualRevenue = $mTotalAcrylicM + $mTotalGlass + $mTotalMinLate + $mTotalLaminateTM + $mTotalFlywppdTM;
+            $mTotalActualRevenue = $mTotalAcrylicM + $mTotalGlass + $mTotalMinLate + $mTotalLaminateTM + $mTotalFlywoodTM;
             $mDiff = $mTotalActualRevenue - $targetMonth;
             $mPercent = $targetMonth > 0 ? ($mTotalActualRevenue / $targetMonth) * 100 : 0;
 
@@ -914,7 +914,7 @@ class RevenueReportController extends Controller
                 $sheet->getStyle('O6')->getFont()->getColor()->setRGB('DC2626');
             }
             $sheet->setCellValue('P6', $mTotalLaminateTM);
-            $sheet->setCellValue('Q6', $mTotalFlywppdTM);
+            $sheet->setCellValue('Q6', $mTotalFlywoodTM);
 
             $monthDebtVsPolicyPercent = $totalPolicyDebtSum > 0 ? ($mTotalEndDebt / $totalPolicyDebtSum) * 100 : 0;
             $sheet->setCellValue('O5', number_format($monthDebtVsPolicyPercent, 0) . '%');
@@ -990,7 +990,7 @@ class RevenueReportController extends Controller
             $sheet->setCellValue("{$colO}4", "SO SÁNH VỚI CÔNG NỢ ĐỊNH MỨC");
             $sheet->getStyle("{$colO}4")->getFont()->setSize(8.5);
             $sheet->mergeCells("{$colP}4:{$colP}5")->setCellValue("{$colP}4", "DOANH THU LAMINATE THƯƠNG MẠI");
-            $sheet->mergeCells("{$colQ}4:{$colQ}5")->setCellValue("{$colQ}4", "DOANH THU Flywppd");
+            $sheet->mergeCells("{$colQ}4:{$colQ}5")->setCellValue("{$colQ}4", "DOANH THU Flywood");
 
             $sheet->getStyle("{$colF}4:{$colQ}5")->applyFromArray($headerBaseStyle);
             $sheet->getStyle("{$colF}4:{$colQ}5")->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
@@ -1027,7 +1027,7 @@ class RevenueReportController extends Controller
             $dEndDayDebt = 0;
             $dDebtVsPolicy = 0;
             $dLaminateTM = 0;
-            $dFlywppdTM = 0;
+            $dFlywoodTM = 0;
 
             $cRowIdx = 7;
             foreach ($activeCustomers as $item) {
@@ -1069,7 +1069,7 @@ class RevenueReportController extends Controller
                 $cGla = (float) $cDayOrders->where('type', 'glass')->filter(fn($o) => $o->relation_type !== 'warranty' && $o->board_return_status !== 'returned')->sum('total_amount');
                 $cMin = (float) $cDayOrders->where('type', 'min_late')->filter(fn($o) => $o->relation_type !== 'warranty' && $o->board_return_status !== 'returned')->sum('total_amount');
                 $cLam = 0;
-                $cPly = (float) $cDayOrders->where('type', 'Flywppd')->filter(fn($o) => $o->relation_type !== 'warranty' && $o->board_return_status !== 'returned')->sum('total_amount');
+                $cPly = (float) $cDayOrders->where('type', 'Flywood')->filter(fn($o) => $o->relation_type !== 'warranty' && $o->board_return_status !== 'returned')->sum('total_amount');
 
                 $cPaid = (float) $cDayPayments->sum('amount');
 
@@ -1108,13 +1108,13 @@ class RevenueReportController extends Controller
                 $dEndDayDebt += $cEndDebt;
                 $dDebtVsPolicy += $cDebtVsPol;
                 $dLaminateTM += $cLam;
-                $dFlywppdTM += $cPly;
+                $dFlywoodTM += $cPly;
 
                 $cRowIdx++;
             }
 
             // Dòng 2 & 3: Khối Cam KPI Ngày
-            $dayRevenue = $dAcrylicMain + $dGlass + $dMinLate + $dLaminateTM + $dFlywppdTM;
+            $dayRevenue = $dAcrylicMain + $dGlass + $dMinLate + $dLaminateTM + $dFlywoodTM;
             $dayDiff = $dayRevenue - $targetDay;
             $dayPercent = $targetDay > 0 ? ($dayRevenue / $targetDay) * 100 : 0;
             $dayOrdersCount = $monthOrders->filter(fn($o) => Carbon::parse($o->order_date)->toDateString() === $curDateStr)->count();
@@ -1167,7 +1167,7 @@ class RevenueReportController extends Controller
                 $sheet->getStyle("{$colO}6")->getFont()->getColor()->setRGB('DC2626');
             }
             $sheet->setCellValue("{$colP}6", $dLaminateTM);
-            $sheet->setCellValue("{$colQ}6", $dFlywppdTM);
+            $sheet->setCellValue("{$colQ}6", $dFlywoodTM);
 
             $debtVsPolicyPercent = $totalPolicyDebtSum > 0 ? ($dEndDayDebt / $totalPolicyDebtSum) * 100 : 0;
             $sheet->setCellValue("{$colO}5", number_format($debtVsPolicyPercent, 0) . '%');

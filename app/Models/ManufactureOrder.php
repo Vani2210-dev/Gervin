@@ -83,7 +83,7 @@ class ManufactureOrder extends Model
 
         foreach ($this->orders as $order) {
             // Load items based on order type
-            if (in_array($order->type, ['min_late', 'Flywppd'])) {
+            if (in_array($order->type, ['min_late', 'Flywood'])) {
                 $order->load('supplies.minLateItems.codes');
                 foreach ($order->supplies as $supply) {
                     foreach ($supply->minLateItems as $item) {
@@ -199,7 +199,7 @@ class ManufactureOrder extends Model
             foreach ($supplies as $supply) {
                 if ($order->type === 'glass') {
                     $items = $supply->relationLoaded('glassItems') ? $supply->glassItems : $supply->glassItems()->with('codes')->get();
-                } elseif (in_array($order->type, ['min_late', 'Flywppd'])) {
+                } elseif (in_array($order->type, ['min_late', 'Flywood'])) {
                     $items = $supply->relationLoaded('minLateItems') ? $supply->minLateItems : $supply->minLateItems()->with('codes')->get();
                 } else {
                     $items = $supply->relationLoaded('items') ? $supply->items : $supply->items()->with('codes')->get();

@@ -4,7 +4,7 @@
         'acrylic' => 'Đơn hàng Acrylic',
         'glass' => 'Đơn hàng gia công cánh kính',
         'min_late' => 'Đơn hàng gia công Min-late',
-        'Flywppd' => 'Đơn hàng gia công Flywppd',
+        'Flywood' => 'Đơn hàng gia công Flywood',
         'service' => 'Đơn Dịch vụ & Vật tư',
     ];
 
@@ -12,7 +12,7 @@
         'acrylic' => 'Quy trình xử lý cho đơn hàng acrylic.',
         'glass' => 'Quy trình xử lý cho đơn hàng gia công cánh kính.',
         'min_late' => 'Quy trình xử lý cho đơn hàng gia công min-late.',
-        'Flywppd' => 'Quy trình xử lý cho đơn hàng gia công Flywppd.',
+        'Flywood' => 'Quy trình xử lý cho đơn hàng gia công Flywood.',
         'service' => 'Bán ván mộc, vật tư bổ sung, phụ kiện hoặc dịch vụ gia công lẻ không cắt CNC.',
     ];
 @endphp
@@ -82,7 +82,7 @@
                             'button' => 'bg-success-600 hover:bg-success-700 text-white',
                             'reworkOutline' => 'border border-success-600 text-success-600 hover:bg-success-50 bg-transparent',
                         ],
-                        'Flywppd' => [
+                        'Flywood' => [
                             'icon' => 'solar:layers-minimalistic-bold',
                             'iconBg' => 'bg-amber-100',
                             'iconText' => 'text-amber-600',

@@ -299,7 +299,7 @@
 
                     <div class="p-6">
                         <div class="overflow-x-auto">
-                            @if(in_array($acrylicOrder->type, ['min_late', 'Flywppd']))
+                            @if(in_array($acrylicOrder->type, ['min_late', 'Flywood']))
                                 {{-- Min Late items - expand to individual sheets with status --}}
                                 <table class="table bordered-table sm-table mb-0 min-w-[1900px]">
                                     <thead>
