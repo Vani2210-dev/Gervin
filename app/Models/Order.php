@@ -110,6 +110,7 @@ class Order extends Model
         'total_amount',
         'status',
         'attachments',
+        'edit_reason',
     ];
 
     protected $casts = [

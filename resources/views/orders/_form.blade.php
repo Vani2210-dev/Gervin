@@ -40,6 +40,20 @@
         <input type="hidden" name="supplies_json" id="supplies-json-input">
         <input type="hidden" name="action" id="order-form-action" value="save">
         <div class="p-4">
+            @if(isset($acrylicOrder) && !empty($acrylicOrder->edit_reason))
+                <div class="mb-4 p-4 rounded-xl border border-amber-300 bg-amber-50 text-amber-900 shadow-sm flex items-start gap-3">
+                    <iconify-icon icon="lucide:alert-triangle" class="text-2xl text-amber-600 mt-0.5 flex-shrink-0"></iconify-icon>
+                    <div class="flex-1">
+                        <div class="flex items-center justify-between gap-2 flex-wrap">
+                            <span class="font-bold text-base text-amber-950">Đơn hàng đang có yêu cầu sửa</span>
+                            <span class="px-2.5 py-0.5 rounded text-xs font-semibold bg-amber-200 text-amber-800">Cần điều chỉnh</span>
+                        </div>
+                        <div class="text-sm mt-1.5 whitespace-pre-line text-neutral-800 font-medium bg-white p-3 rounded-lg border border-amber-200 shadow-2xs">
+                            <strong class="text-amber-900">Lý do yêu cầu sửa:</strong> {{ $acrylicOrder->edit_reason }}
+                        </div>
+                    </div>
+                </div>
+            @endif
             @if ($errors->any())
                 <div class="mb-4 p-4 rounded-xl border border-danger-200 bg-danger-50 text-danger-600 shadow-sm">
                     <div class="flex items-center gap-2 mb-2 font-bold text-danger-800">
@@ -288,7 +302,7 @@
                 <button type="submit" name="status" value="cancelled" class="btn bg-danger-50 text-danger-600 hover:bg-danger-100 border border-danger-200 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all" onclick="return confirm('Bạn có chắc chắn muốn hủy đơn hàng này?')">Hủy đơn</button>
                 @endif
                 @if($acrylicOrder->status === 'pending')
-                <button type="submit" name="status" value="transferred" class="btn bg-violet-50 text-violet-600 hover:bg-violet-100 border border-violet-200 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all" onclick="return confirm('Xác nhận chuyển đơn hàng sang sản xuất?')">Chuyển Sản xuất</button>
+                <button type="submit" name="status" value="transferred" class="btn bg-violet-50 text-violet-600 hover:bg-violet-100 border border-violet-200 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all" onclick="return confirm('Xác nhận chuyển đơn hàng sang sản xuất?')">{{ !empty($acrylicOrder->edit_reason) ? 'Chuyển SX lại' : 'Chuyển Sản xuất' }}</button>
                 @endif
             @endif
             <button type="submit" name="action" value="save" class="btn btn-primary px-6 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all flex items-center gap-1.5" onclick="document.getElementById('order-form-action').value = 'save'">

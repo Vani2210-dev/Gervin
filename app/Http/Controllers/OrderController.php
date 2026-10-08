@@ -82,7 +82,11 @@ class OrderController extends Controller
                 $q->where('customer_id', $request->filter_customer_id);
             })
             ->when($request->filled('filter_status'), function ($q) use ($request) {
-                $q->where('status', $request->filter_status);
+                if ($request->filter_status === 'edit_requested') {
+                    $q->whereNotNull('edit_reason')->where('edit_reason', '!=', '');
+                } else {
+                    $q->where('status', $request->filter_status);
+                }
             })
             ->when($request->filled('filter_type'), function ($q) use ($request) {
                 $q->where('type', $request->filter_type);
@@ -796,16 +800,33 @@ class OrderController extends Controller
     public function updateStatus(Request $request, Order $order)
     {
         $request->validate([
-            'status' => 'required|string|in:transferred,cancelled',
+            'status' => 'required|string|in:transferred,cancelled,request_edit',
+            'edit_reason' => 'required_if:status,request_edit|nullable|string|max:1000',
         ]);
 
         $status = $request->status;
+
+        if ($status === 'request_edit') {
+            if (in_array($order->status, ['in_production', 'completed', 'cancelled'])) {
+                return redirect()->back()->with('error', 'Không thể yêu cầu sửa đơn hàng đang sản xuất, đã hoàn thành hoặc đã hủy.');
+            }
+            $reason = trim($request->edit_reason ?? '');
+            if (empty($reason)) {
+                return redirect()->back()->with('error', 'Vui lòng nhập lý do yêu cầu sửa đơn hàng.');
+            }
+
+            $order->status = 'pending';
+            $order->edit_reason = $reason;
+            $order->save();
+            return redirect()->back()->with('success', 'Đã gửi yêu cầu sửa đơn hàng ' . $order->order_code . ' thành công.');
+        }
 
         if ($status === 'transferred') {
             if (!in_array($order->status, ['pending', 'draft'])) {
                 return redirect()->back()->with('error', 'Trạng thái đơn hàng không hợp lệ để chuyển sản xuất.');
             }
             $order->status = 'transferred';
+            $order->edit_reason = null;
             $order->save();
             return redirect()->back()->with('success', 'Chuyển sản xuất thành công đơn hàng ' . $order->order_code);
         }
@@ -1018,15 +1039,18 @@ class OrderController extends Controller
     private function generateOrderCode(): string
     {
         $dateStr = now()->format('dmy');
-        $prefix = $dateStr . '_';
+        $prefix = $dateStr . '.';
 
-        $orders = Order::where('order_code', 'like', $prefix . '%')
+        $orders = Order::where(function ($q) use ($dateStr) {
+                $q->where('order_code', 'like', $dateStr . '.%')
+                  ->orWhere('order_code', 'like', $dateStr . '_%');
+            })
             ->lockForUpdate()
             ->pluck('order_code');
 
         $maxNumber = 0;
         foreach ($orders as $code) {
-            $parts = explode('_', $code);
+            $parts = preg_split('/[._]/', $code);
             if (isset($parts[1]) && is_numeric($parts[1])) {
                 $num = intval($parts[1]);
                 if ($num > $maxNumber) {

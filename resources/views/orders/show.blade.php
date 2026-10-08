@@ -98,6 +98,12 @@
                             class="px-3 py-1 rounded-full text-xs font-semibold {{ $statusColors[$acrylicOrder->status] ?? 'bg-neutral-100 text-neutral-600' }}">
                             {{ $statusLabels[$acrylicOrder->status] ?? $acrylicOrder->status }}
                         </span>
+                        @if(!empty($acrylicOrder->edit_reason))
+                            <span class="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-1" title="Lý do: {{ $acrylicOrder->edit_reason }}">
+                                <iconify-icon icon="lucide:alert-circle" class="text-xs text-amber-600"></iconify-icon>
+                                <span>Có yêu cầu sửa</span>
+                            </span>
+                        @endif
                         @can('edit order')
                             @if(in_array($acrylicOrder->status, ['draft', 'pending']))
                                 <form method="POST" action="{{ route('orders.update-status', $acrylicOrder) }}" onsubmit="return confirm('Xác nhận chuyển đơn hàng {{ $acrylicOrder->order_code }} sang sản xuất?')" class="m-0 inline-block">
@@ -105,15 +111,36 @@
                                     <input type="hidden" name="status" value="transferred">
                                     <button type="submit" class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-violet-600 hover:bg-violet-700 text-white transition-all shadow-xs flex items-center gap-1.5 cursor-pointer">
                                         <iconify-icon icon="lucide:factory" class="text-sm"></iconify-icon>
-                                        <span>Chuyển sản xuất</span>
+                                        <span>{{ !empty($acrylicOrder->edit_reason) ? 'Chuyển SX lại' : 'Chuyển sản xuất' }}</span>
                                     </button>
                                 </form>
+                            @endif
+                            @if(in_array($acrylicOrder->status, ['draft', 'pending', 'transferred']))
+                                <button type="button" onclick="openRequestEditModal('{{ route('orders.update-status', $acrylicOrder) }}', '{{ $acrylicOrder->order_code }}')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white transition-all shadow-xs flex items-center gap-1.5 cursor-pointer">
+                                    <iconify-icon icon="lucide:alert-circle" class="text-sm"></iconify-icon>
+                                    <span>Yêu cầu sửa đơn</span>
+                                </button>
                             @endif
                         @endcan
                     </div>
                 </div>
 
                 <div class="p-6">
+                    {{-- Thông báo yêu cầu sửa đơn (nếu có) --}}
+                    @if(!empty($acrylicOrder->edit_reason))
+                        <div class="mb-5 p-4 bg-amber-50 border border-amber-300 rounded-xl flex items-start gap-3 text-amber-900 shadow-xs">
+                            <iconify-icon icon="lucide:alert-triangle" class="text-2xl text-amber-600 mt-0.5 flex-shrink-0"></iconify-icon>
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between gap-2 flex-wrap">
+                                    <span class="font-bold text-base text-amber-950">Đơn hàng đang có yêu cầu sửa</span>
+                                    <span class="px-2.5 py-0.5 rounded text-xs font-semibold bg-amber-200 text-amber-800">Cần điều chỉnh</span>
+                                </div>
+                                <div class="text-sm mt-2 whitespace-pre-line text-neutral-800 font-medium bg-white p-3 rounded-lg border border-amber-200 shadow-2xs">
+                                    <strong class="text-amber-900">Lý do yêu cầu sửa:</strong> {{ $acrylicOrder->edit_reason }}
+                                </div>
+                            </div>
+                        </div>
+                    @endif
                     {{-- Liên kết đơn cha - con cho đơn sửa tấm/bổ sung/bảo hành --}}
                     @if($acrylicOrder->parent)
                         <div class="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-2 text-sm text-amber-800">
@@ -863,9 +890,15 @@
                             <input type="hidden" name="status" value="transferred">
                             <button type="submit"
                                 class="w-full justify-center flex items-center gap-2 py-3 rounded-xl font-semibold bg-violet-600 hover:bg-violet-700 text-white shadow-sm text-sm transition-colors cursor-pointer">
-                                <iconify-icon icon="lucide:factory" class="text-base"></iconify-icon> Chuyển sản xuất
+                                <iconify-icon icon="lucide:factory" class="text-base"></iconify-icon> {{ !empty($acrylicOrder->edit_reason) ? 'Chuyển SX lại' : 'Chuyển sản xuất' }}
                             </button>
                         </form>
+                    @endif
+                    @if(in_array($acrylicOrder->status, ['draft', 'pending', 'transferred']))
+                        <button type="button" onclick="openRequestEditModal('{{ route('orders.update-status', $acrylicOrder) }}', '{{ $acrylicOrder->order_code }}')"
+                            class="w-full justify-center flex items-center gap-2 py-3 rounded-xl font-semibold bg-amber-500 hover:bg-amber-600 text-white shadow-sm text-sm transition-colors cursor-pointer">
+                            <iconify-icon icon="lucide:alert-circle" class="text-base"></iconify-icon> Yêu cầu sửa đơn
+                        </button>
                     @endif
                     @if(!in_array($acrylicOrder->status, ['in_production', 'cancelled']))
                         <a href="{{ route('orders.edit', $acrylicOrder) }}"
@@ -1504,4 +1537,5 @@
             });
         }
     </script>
+    @include('orders._request_edit_modal')
 @endsection

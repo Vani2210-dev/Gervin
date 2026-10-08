@@ -449,7 +449,26 @@
                                             'cancelled' => 'Đã hủy',
                                         ];
                                     @endphp
-                                    @if($order->status === 'pending' && auth()->user()?->can('edit order'))
+                                    @if(!empty($order->edit_reason))
+                                        <div class="inline-flex flex-col gap-1 items-start">
+                                            <span class="px-2.5 py-1 rounded font-semibold text-xs bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-1 cursor-help" title="Lý do: {{ $order->edit_reason }}">
+                                                <iconify-icon icon="lucide:alert-circle" class="text-xs text-amber-600"></iconify-icon>
+                                                <span>Yêu cầu sửa đơn</span>
+                                            </span>
+                                            <span class="text-[11px] text-amber-700 font-medium italic max-w-[200px] truncate block" title="{{ $order->edit_reason }}">
+                                                "{{ $order->edit_reason }}"
+                                            </span>
+                                            @if($order->status === 'pending' && auth()->user()?->can('edit order'))
+                                                <form method="POST" action="{{ route('orders.update-status', $order) }}" style="display:inline;" onsubmit="return confirm('Xác nhận chuyển đơn hàng sang sản xuất?')">
+                                                    @csrf
+                                                    <input type="hidden" name="status" value="transferred">
+                                                    <button type="submit" class="px-2 py-0.5 rounded text-[11px] font-semibold bg-violet-50 text-violet-700 hover:bg-violet-100 border border-violet-200 transition-colors" title="Bấm để chuyển sản xuất lại">
+                                                        Chuyển SX lại
+                                                    </button>
+                                                </form>
+                                            @endif
+                                        </div>
+                                    @elseif($order->status === 'pending' && auth()->user()?->can('edit order'))
                                         <form method="POST" action="{{ route('orders.update-status', $order) }}" style="display:inline;" onsubmit="return confirm('Xác nhận chuyển đơn hàng sang sản xuất?')">
                                             @csrf
                                             <input type="hidden" name="status" value="transferred">
@@ -533,6 +552,7 @@
                     <option value="">Tất cả</option>
                     <option value="draft" {{ request('filter_status') === 'draft' ? 'selected' : '' }}>Nháp</option>
                     <option value="pending" {{ request('filter_status') === 'pending' ? 'selected' : '' }}>Chờ xử lý</option>
+                    <option value="edit_requested" {{ request('filter_status') === 'edit_requested' ? 'selected' : '' }}>Yêu cầu sửa đơn</option>
                     <option value="transferred" {{ request('filter_status') === 'transferred' ? 'selected' : '' }}>Chuyển sản xuất</option>
                     <option value="in_production" {{ request('filter_status') === 'in_production' ? 'selected' : '' }}>Đang sản xuất</option>
                     <option value="completed" {{ request('filter_status') === 'completed' ? 'selected' : '' }}>Hoàn thành</option>
@@ -1302,9 +1322,19 @@ async function submitQuickManufacture(e) {
                     <input type="hidden" name="status" value="transferred">
                     <button type="submit" class="w-full flex items-center gap-2 px-4 py-2 hover:bg-violet-50 text-violet-700 text-left transition-colors font-medium">
                         <iconify-icon icon="lucide:factory" class="text-violet-600 text-lg"></iconify-icon>
-                        <span>Chuyển sản xuất</span>
+                        <span>{{ !empty($order->edit_reason) ? 'Chuyển SX lại' : 'Chuyển sản xuất' }}</span>
                     </button>
                 </form>
+            </li>
+            @endif
+
+            {{-- Yêu cầu sửa đơn --}}
+            @if(in_array($order->status, ['draft', 'pending', 'transferred']))
+            <li class="{{ in_array($order->status, ['draft', 'pending']) ? '' : 'border-t border-neutral-100 my-1 pt-1' }}">
+                <button type="button" onclick="openRequestEditModal('{{ route('orders.update-status', $order) }}', '{{ $order->order_code }}')" class="w-full flex items-center gap-2 px-4 py-2 hover:bg-amber-50 text-amber-700 text-left transition-colors font-medium">
+                    <iconify-icon icon="lucide:alert-circle" class="text-amber-600 text-lg"></iconify-icon>
+                    <span>Yêu cầu sửa đơn</span>
+                </button>
             </li>
             @endif
 
@@ -1358,6 +1388,7 @@ async function submitQuickManufacture(e) {
         </ul>
     </div>
 @endforeach
+@include('orders._request_edit_modal')
 @endsection
 
 @push('scripts')
