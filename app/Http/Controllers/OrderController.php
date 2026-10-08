@@ -555,22 +555,12 @@ class OrderController extends Controller
                     $code = trim($supply->order_supply_code ?? '');
                     $name = trim($supply->supply_name ?? '');
 
-                    // Lấy danh sách chiều vân từ các tấm chi tiết
-                    $grains = $supply->items->pluck('grain_direction')->filter(function ($g) {
-                        return $g !== null && $g !== '';
-                    })->unique()->values();
-
-                    $grainLabels = $grains->map(function ($g) {
-                        $gStr = (string)$g;
-                        if ($gStr === '0') return 'Không vân';
-                        if ($gStr === '1') return 'Vân ngang';
-                        if ($gStr === '2') return 'Vân dọc';
-                        return $gStr;
-                    })->implode(', ');
-
-                    if (empty($grainLabels)) {
-                        $grainLabels = '—';
-                    }
+                    // Chiều vân: 0 hoặc 2
+                    $hasGrain = $supply->items->contains(function ($i) {
+                        $g = trim((string)($i->grain_direction ?? ''));
+                        return $g !== '0' && $g !== '' && $g !== 'Không vân';
+                    });
+                    $grainVal = $hasGrain ? 2 : 0;
 
                     if ($code !== '' || $name !== '') {
                         $stocks = \App\Models\DcStock::where('status', 'available')
@@ -606,7 +596,7 @@ class OrderController extends Controller
                             $dcStockMatches[] = [
                                 'supply_name' => $supply->supply_name ?: ($supply->order_supply_code ?: '—'),
                                 'supply_code' => $supply->order_supply_code ?: '',
-                                'grain_direction' => $grainLabels,
+                                'grain_direction' => $grainVal,
                                 'dc_board_code' => $stock->board_code ?: ($stock->color_code ?: '—'),
                                 'dc_color_code' => $stock->color_code ?: '—',
                                 'dc_height' => (int)$stock->height,
