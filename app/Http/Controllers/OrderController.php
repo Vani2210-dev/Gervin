@@ -52,7 +52,10 @@ class OrderController extends Controller
             'customer',
             'supplies.items',
             'supplies.minLateItems',
-            'supplies.glassItems'
+            'supplies.glassItems',
+            'accountantApprover',
+            'technicalApprover',
+            'rejecter',
         ])
             ->withCount(['manufactureOrders' => function ($q) {
                 $q->whereIn('status', ['stamps_received', 'in_production', 'completed']);
@@ -196,7 +199,7 @@ class OrderController extends Controller
             }
         }
 
-        $order->load(['supplies.items.codes', 'supplies.minLateItems.codes', 'supplies.glassItems.codes', 'paymentDetails', 'orderPayments.creator']);
+        $order->load(['supplies.items.codes', 'supplies.minLateItems.codes', 'supplies.glassItems.codes', 'paymentDetails', 'orderPayments.creator', 'accountantApprover', 'technicalApprover', 'rejecter']);
         $acrylicOrder = $order;
         $exportData = $this->getExportData($order);
         return view('orders.show', compact('acrylicOrder', 'exportData'));
@@ -790,6 +793,30 @@ class OrderController extends Controller
         $request->validate($rules);
         $service->update($request, $order);
 
+        if ($request->status === 'transferred') {
+            if (!$order->accountant_approved_by) {
+                $order->accountant_approved_by = auth()->id();
+                $order->accountant_approved_at = now();
+            }
+            $order->technical_approved_by = auth()->id();
+            $order->technical_approved_at = now();
+            $order->edit_reason = null;
+            $order->rejected_by = null;
+            $order->rejected_at = null;
+            $order->rejected_step = null;
+            $order->save();
+        } elseif ($request->status === 'accountant_approve') {
+            $order->accountant_approved_by = auth()->id();
+            $order->accountant_approved_at = now();
+            if ($order->rejected_step === 'accountant') {
+                $order->rejected_by = null;
+                $order->rejected_at = null;
+                $order->rejected_step = null;
+                $order->edit_reason = null;
+            }
+            $order->save();
+        }
+
         if ($isDraftSave) {
             return redirect()->route('orders.index', ['filter_status' => 'draft'])->with('success', 'Đã lưu đơn nháp thành công.');
         }
@@ -800,11 +827,39 @@ class OrderController extends Controller
     public function updateStatus(Request $request, Order $order)
     {
         $request->validate([
-            'status' => 'required|string|in:transferred,cancelled,request_edit',
+            'status' => 'required|string|in:transferred,cancelled,request_edit,accountant_approve,accountant_unapprove',
             'edit_reason' => 'required_if:status,request_edit|nullable|string|max:1000',
+            'step' => 'nullable|string|in:accountant,technical',
         ]);
 
         $status = $request->status;
+
+        if ($status === 'accountant_approve') {
+            if (in_array($order->status, ['in_production', 'completed', 'cancelled'])) {
+                return redirect()->back()->with('error', 'Trạng thái đơn hàng không hợp lệ để kế toán duyệt.');
+            }
+            $order->accountant_approved_by = auth()->id();
+            $order->accountant_approved_at = now();
+            // Nếu trước đó có yêu cầu sửa ở bước kế toán thì xoá vết từ chối đó
+            if ($order->rejected_step === 'accountant') {
+                $order->rejected_by = null;
+                $order->rejected_at = null;
+                $order->rejected_step = null;
+                $order->edit_reason = null;
+            }
+            $order->save();
+            return redirect()->back()->with('success', 'Kế toán đã duyệt đơn hàng ' . $order->order_code);
+        }
+
+        if ($status === 'accountant_unapprove') {
+            if ($order->status === 'transferred' || in_array($order->status, ['in_production', 'completed'])) {
+                return redirect()->back()->with('error', 'Đơn hàng đã chuyển sản xuất, không thể huỷ duyệt kế toán.');
+            }
+            $order->accountant_approved_by = null;
+            $order->accountant_approved_at = null;
+            $order->save();
+            return redirect()->back()->with('success', 'Đã huỷ duyệt kế toán cho đơn hàng ' . $order->order_code);
+        }
 
         if ($status === 'request_edit') {
             if (in_array($order->status, ['in_production', 'completed', 'cancelled'])) {
@@ -815,20 +870,47 @@ class OrderController extends Controller
                 return redirect()->back()->with('error', 'Vui lòng nhập lý do yêu cầu sửa đơn hàng.');
             }
 
+            $step = $request->input('step', 'accountant');
             $order->status = 'pending';
             $order->edit_reason = $reason;
+            $order->rejected_by = auth()->id();
+            $order->rejected_at = now();
+            $order->rejected_step = $step;
+
+            if ($step === 'technical') {
+                $order->technical_approved_by = null;
+                $order->technical_approved_at = null;
+            } else {
+                $order->accountant_approved_by = null;
+                $order->accountant_approved_at = null;
+                $order->technical_approved_by = null;
+                $order->technical_approved_at = null;
+            }
+
             $order->save();
-            return redirect()->back()->with('success', 'Đã gửi yêu cầu sửa đơn hàng ' . $order->order_code . ' thành công.');
+            $stepLabel = $step === 'technical' ? 'Kỹ thuật' : 'Kế toán';
+            return redirect()->back()->with('success', "[$stepLabel] Đã gửi yêu cầu sửa đơn hàng {$order->order_code} thành công.");
         }
 
         if ($status === 'transferred') {
             if (!in_array($order->status, ['pending', 'draft'])) {
                 return redirect()->back()->with('error', 'Trạng thái đơn hàng không hợp lệ để chuyển sản xuất.');
             }
+            // Kỹ thuật duyệt & Chuyển sản xuất
+            if (!$order->accountant_approved_by) {
+                // Tự động gán duyệt kế toán nếu chưa có
+                $order->accountant_approved_by = auth()->id();
+                $order->accountant_approved_at = now();
+            }
+            $order->technical_approved_by = auth()->id();
+            $order->technical_approved_at = now();
             $order->status = 'transferred';
             $order->edit_reason = null;
+            $order->rejected_by = null;
+            $order->rejected_at = null;
+            $order->rejected_step = null;
             $order->save();
-            return redirect()->back()->with('success', 'Chuyển sản xuất thành công đơn hàng ' . $order->order_code);
+            return redirect()->back()->with('success', 'Kỹ thuật đã duyệt & Chuyển sản xuất thành công đơn hàng ' . $order->order_code);
         }
 
         if ($status === 'cancelled') {

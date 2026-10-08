@@ -236,11 +236,10 @@ async function generateNestingWorkbook(orderData, suppliesData, filename) {
         });
     });
 
-    // Sheet 2: Kho DC (sheet DC phía sau, chỉ thêm vào file Nesting chính, không thêm vào Nesting Phào)
-    if (!filename.toLowerCase().includes('phao')) {
-        const wsDc = wb.addWorksheet('Kho DC', {
-            views: [{ showGridLines: true }]
-        });
+    // Sheet 2: Kho DC (sheet DC phía sau, luôn vào chung trong file nesting)
+    const wsDc = wb.addWorksheet('Kho DC', {
+        views: [{ showGridLines: true }]
+    });
 
         // 8 cột cơ bản (không có cột ID/STT)
         const dcCols = [
@@ -366,7 +365,6 @@ async function generateNestingWorkbook(orderData, suppliesData, filename) {
                 emptyRow.getCell(c).border = thinBorder;
             }
         }
-    }
 
     const buf = await wb.xlsx.writeBuffer();
     const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
@@ -487,6 +485,119 @@ async function exportManufactureNestingFiles(moCode, ordersData) {
     }
 }
 
+/**
+ * Xuất Nesting khi chọn nhiều đơn:
+ *  - Mỗi đơn xuất 1 file Nesting riêng (tấm > 70x70) kèm Sheet Kho DC của đơn đó
+ *  - Toàn bộ tấm phào (<= 70) của TẤT CẢ các đơn được GỘP CHUNG VÀO 1 ĐƠN (1 file Nesting Phào duy nhất) kèm Sheet Kho DC tổng hợp
+ *
+ * @param {Array} ordersData - Danh sách data các đơn hàng
+ * @param {boolean} returnBlobs - Nếu true, trả về mảng các { fileName, blob }
+ */
+async function exportBulkNestingFiles(ordersData, returnBlobs = false) {
+    if (!ordersData || !ordersData.length) {
+        return returnBlobs ? [] : null;
+    }
+
+    const acrylicOrders = ordersData.filter(o => o.type === 'acrylic');
+    if (!acrylicOrders.length) {
+        if (!returnBlobs) alert('Không có đơn hàng Acrylic nào trong các đơn đã chọn.');
+        return returnBlobs ? [] : null;
+    }
+
+    const files = [];
+
+    // 1. Xuất file Nesting chính (> 70x70) cho từng đơn hàng
+    for (const orderData of acrylicOrders) {
+        const nestSupplies = [];
+        (orderData.supplies || []).forEach(supply => {
+            const nestItems = (supply.items || []).filter(i => (parseFloat(i.height) || 0) > 70 && (parseFloat(i.width) || 0) > 70);
+            if (nestItems.length > 0) {
+                nestSupplies.push({ ...supply, items: nestItems });
+            }
+        });
+
+        if (nestSupplies.length > 0) {
+            const code = orderData.order_code || 'DH';
+            const fileName = `Nesting-${code}.xlsx`;
+            const blob = await generateNestingWorkbook(orderData, nestSupplies, fileName);
+            if (blob) {
+                files.push({ fileName, blob });
+            }
+        }
+    }
+
+    // 2. Gộp TOÀN BỘ tấm phào (<= 70) của TẤT CẢ các đơn vào 1 đơn / 1 file Nesting Phào duy nhất
+    const allPhaoSupplies = [];
+    const allDcMatches = [];
+    const seenDcKeys = new Set();
+
+    acrylicOrders.forEach(orderData => {
+        // Thu thập Kho DC
+        (orderData.dc_stock_matches || []).forEach(m => {
+            const key = `${m.supply_name}_${m.dc_board_code}_${m.dc_height}_${m.dc_width}_${m.dc_location}`;
+            if (!seenDcKeys.has(key)) {
+                seenDcKeys.add(key);
+                allDcMatches.push(m);
+            }
+        });
+
+        // Thu thập các tấm phào
+        (orderData.supplies || []).forEach(supply => {
+            const allItems = supply.items || [];
+            const phaoItems = allItems.filter(i => (parseFloat(i.height) || 0) <= 70 || (parseFloat(i.width) || 0) <= 70);
+            if (phaoItems.length > 0) {
+                // Gắn mã đơn và tên khách hàng vào từng tấm phào
+                const enrichedPhaoItems = phaoItems.map(item => ({
+                    ...item,
+                    order_code: orderData.order_code,
+                    customer_name: orderData.customer_name
+                }));
+                allPhaoSupplies.push({
+                    ...supply,
+                    order_code: orderData.order_code,
+                    customer_name: orderData.customer_name,
+                    items: enrichedPhaoItems
+                });
+            }
+        });
+    });
+
+    if (allPhaoSupplies.length > 0) {
+        const dummyOrder = {
+            order_code: acrylicOrders.length === 1 ? (acrylicOrders[0].order_code || 'DH') : 'GOP-PHAO',
+            customer_name: acrylicOrders.length === 1 ? (acrylicOrders[0].customer_name || '') : 'Nhiều khách hàng',
+            dc_stock_matches: allDcMatches
+        };
+
+        let phaoFilename = '';
+        if (acrylicOrders.length === 1) {
+            phaoFilename = `Nesting-Phao-${acrylicOrders[0].order_code}.xlsx`;
+        } else if (acrylicOrders.length <= 3) {
+            const codesStr = acrylicOrders.map(o => o.order_code).filter(Boolean).join('_');
+            phaoFilename = `Nesting-Phao-Gop-${codesStr}.xlsx`;
+        } else {
+            const firstCode = acrylicOrders[0].order_code || 'DH';
+            const lastCode = acrylicOrders[acrylicOrders.length - 1].order_code || 'DH';
+            phaoFilename = `Nesting-Phao-Gop-${firstCode}_den_${lastCode}.xlsx`;
+        }
+
+        const phaoBlob = await generateNestingWorkbook(dummyOrder, allPhaoSupplies, phaoFilename);
+        if (phaoBlob) {
+            files.push({ fileName: phaoFilename, blob: phaoBlob });
+        }
+    }
+
+    if (returnBlobs) {
+        return files;
+    }
+
+    for (const f of files) {
+        saveAs(f.blob, f.fileName);
+    }
+    return files;
+}
+
 window.generateNestingWorkbook = generateNestingWorkbook;
 window.exportNestingFiles = exportNestingFiles;
+window.exportBulkNestingFiles = exportBulkNestingFiles;
 window.exportManufactureNestingFiles = exportManufactureNestingFiles;

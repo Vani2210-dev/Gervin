@@ -277,15 +277,16 @@
                                 <th scope="col" class="text-center px-3" style="width: 50px;">STT</th>
                                 <th scope="col" class="px-3" style="min-width: 120px;">Mã đơn</th>
                                 <th scope="col" class="px-3" style="min-width: 90px;">Loại đơn</th>
-                                <th scope="col" class="px-3" style="min-width: 140px;">Khách hàng</th>
+                                <th scope="col" class="px-3" style="min-width: 110px;">Trạng thái</th>
                                 <th scope="col" class="px-3" style="min-width: 130px;">Tên công trình</th>
-                                <th scope="col" class="px-3" style="min-width: 110px;">Số điện thoại</th>
-                                <th scope="col" class="whitespace-nowrap px-3" style="min-width: 130px;">Ngày tạo đơn</th>
-                                <th scope="col" class="whitespace-nowrap px-3" style="min-width: 130px;">Hạn đơn</th>
+                                <th scope="col" class="px-3" style="min-width: 140px;">Tên khách hàng</th>
                                 <th scope="col" class="text-center whitespace-nowrap px-3" style="min-width: 95px;">Số tấm</th>
                                 <th scope="col" class="text-center whitespace-nowrap px-3" style="min-width: 115px;">Tổng số mét</th>
                                 <th scope="col" class="text-end whitespace-nowrap px-3" style="min-width: 115px;">Tổng tiền</th>
-                                <th scope="col" class="px-3" style="min-width: 130px;">Trạng thái</th>
+                                <th scope="col" class="px-3" style="min-width: 230px;">Tiến trình duyệt</th>
+                                <th scope="col" class="px-3" style="min-width: 110px;">Số điện thoại</th>
+                                <th scope="col" class="whitespace-nowrap px-3" style="min-width: 130px;">Ngày tạo đơn</th>
+                                <th scope="col" class="whitespace-nowrap px-3" style="min-width: 130px;">Hạn đơn</th>
                                 <th scope="col" class="text-center whitespace-nowrap px-3" style="width: 100px; min-width: 100px;">Hành động</th>
                             </tr>
                         </thead>
@@ -385,6 +386,40 @@
                                         <span class="text-neutral-400 text-xs">—</span>
                                     @endif
                                 </td>
+                                <td class="px-3 whitespace-nowrap">
+                                    @php
+                                        $statusColors = [
+                                            'draft' => 'bg-neutral-100 text-neutral-600',
+                                            'pending' => 'bg-warning-100 text-warning-700',
+                                            'transferred' => 'bg-info-100 text-info-700',
+                                            'in_production' => 'bg-indigo-100 text-indigo-700 border border-indigo-200',
+                                            'completed' => 'bg-success-100 text-success-700',
+                                            'cancelled' => 'bg-danger-100 text-danger-700',
+                                        ];
+                                        $statusLabels = [
+                                            'draft' => 'Nháp',
+                                            'pending' => 'Chờ xử lý',
+                                            'transferred' => 'Chuyển sản xuất',
+                                            'in_production' => 'Đang sản xuất',
+                                            'completed' => 'Hoàn thành',
+                                            'cancelled' => 'Đã hủy',
+                                        ];
+                                    @endphp
+                                    <div class="flex flex-col gap-1 items-start">
+                                        <span class="px-2.5 py-1 rounded-full font-semibold text-xs {{ $statusColors[$order->status] ?? 'bg-neutral-100 text-neutral-600' }}">
+                                            {{ $statusLabels[$order->status] ?? $order->status }}
+                                        </span>
+                                        @if(!empty($order->edit_reason))
+                                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-1" title="Lý do: {{ $order->edit_reason }}">
+                                                <iconify-icon icon="lucide:alert-circle" class="text-xs text-amber-600"></iconify-icon>
+                                                <span>Yêu cầu sửa</span>
+                                            </span>
+                                        @endif
+                                    </div>
+                                </td>
+                                <td class="px-3">
+                                    <span class="text-base font-medium text-secondary-light">{{ $order->customer_name ?: '—' }}</span>
+                                </td>
                                 <td class="px-3">
                                     @if($order->customer)
                                         <a href="{{ route('customers.index', ['overview_id' => $order->customer->id]) }}" class="font-semibold text-neutral-800 hover:text-primary-600 block leading-tight">
@@ -394,18 +429,6 @@
                                     @else
                                         <span class="text-neutral-400">—</span>
                                     @endif
-                                </td>
-                                <td class="px-3">
-                                    <span class="text-base font-medium text-secondary-light">{{ $order->customer_name ?: '—' }}</span>
-                                </td>
-                                <td class="px-3">
-                                    <span class="text-base text-secondary-light">{{ $order->phone ?? '—' }}</span>
-                                </td>
-                                <td class="whitespace-nowrap px-3">
-                                    <span class="text-base text-secondary-light">{{ $order->order_date ? $order->order_date->format('H:i d/m/Y') : '—' }}</span>
-                                </td>
-                                <td class="whitespace-nowrap px-3">
-                                    <span class="text-base text-secondary-light">{{ $order->deadline ? $order->deadline->format('H:i d/m/Y') : '—' }}</span>
                                 </td>
                                 <td class="text-center whitespace-nowrap px-3">
                                     @if($order->total_sheets > 0)
@@ -430,57 +453,103 @@
                                 <td class="text-end whitespace-nowrap px-3">
                                     <span class="text-base font-semibold text-neutral-800">{{ number_format(round($order->total_amount, -3), 0, ',', '.') }}₫</span>
                                 </td>
-                                <td class="px-3">
-                                    @php
-                                        $statusColors = [
-                                            'draft' => 'bg-neutral-100 text-neutral-600',
-                                            'pending' => 'bg-warning-100 text-warning-600 hover:bg-warning-200 cursor-pointer',
-                                            'transferred' => 'bg-info-100 text-info-600',
-                                            'in_production' => 'bg-indigo-100 text-indigo-600 border border-indigo-200',
-                                            'completed' => 'bg-success-100 text-success-600',
-                                            'cancelled' => 'bg-danger-100 text-danger-600',
-                                        ];
-                                        $statusLabels = [
-                                            'draft' => 'Nháp',
-                                            'pending' => 'Chờ xử lý (Click chuyển SX)',
-                                            'transferred' => 'Chuyển sản xuất',
-                                            'in_production' => 'Đang sản xuất',
-                                            'completed' => 'Hoàn thành',
-                                            'cancelled' => 'Đã hủy',
-                                        ];
-                                    @endphp
-                                    @if(!empty($order->edit_reason))
-                                        <div class="inline-flex flex-col gap-1 items-start">
-                                            <span class="px-2.5 py-1 rounded font-semibold text-xs bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-1 cursor-help" title="Lý do: {{ $order->edit_reason }}">
-                                                <iconify-icon icon="lucide:alert-circle" class="text-xs text-amber-600"></iconify-icon>
-                                                <span>Yêu cầu sửa đơn</span>
-                                            </span>
-                                            <span class="text-[11px] text-amber-700 font-medium italic max-w-[200px] truncate block" title="{{ $order->edit_reason }}">
-                                                "{{ $order->edit_reason }}"
-                                            </span>
-                                            @if($order->status === 'pending' && auth()->user()?->can('edit order'))
-                                                <form method="POST" action="{{ route('orders.update-status', $order) }}" style="display:inline;" onsubmit="return confirm('Xác nhận chuyển đơn hàng sang sản xuất?')">
-                                                    @csrf
-                                                    <input type="hidden" name="status" value="transferred">
-                                                    <button type="submit" class="px-2 py-0.5 rounded text-[11px] font-semibold bg-violet-50 text-violet-700 hover:bg-violet-100 border border-violet-200 transition-colors" title="Bấm để chuyển sản xuất lại">
-                                                        Chuyển SX lại
-                                                    </button>
-                                                </form>
-                                            @endif
+                                <td class="px-3 py-2 text-xs" style="min-width: 230px;">
+                                    <div class="flex flex-col gap-1.5">
+                                        {{-- BƯỚC 1: KẾ TOÁN DUYỆT --}}
+                                        <div class="flex items-center justify-between gap-1.5 p-1 rounded bg-neutral-50 border border-neutral-200">
+                                            <div class="flex items-center gap-1 min-w-0">
+                                                <span class="font-bold text-[11px] text-neutral-600 shrink-0">1. Kế toán:</span>
+                                                @if($order->accountant_approved_by)
+                                                    <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 truncate" title="Kế toán duyệt: {{ $order->accountantApprover?->name }} lúc {{ $order->accountant_approved_at?->format('H:i d/m/Y') }}">
+                                                        <iconify-icon icon="lucide:check-circle-2" class="text-emerald-600 shrink-0"></iconify-icon>
+                                                        <span class="truncate">{{ $order->accountantApprover?->name ?? 'Đã duyệt' }}</span>
+                                                        <span class="text-[10px] text-emerald-600 font-normal shrink-0">{{ $order->accountant_approved_at?->format('H:i d/m') }}</span>
+                                                    </span>
+                                                @else
+                                                    <span class="text-[11px] text-neutral-400 italic">Chưa duyệt</span>
+                                                @endif
+                                            </div>
+
+                                            @can('edit order')
+                                                @if(!$order->accountant_approved_by && in_array($order->status, ['draft', 'pending']))
+                                                    <div class="flex items-center gap-1 shrink-0">
+                                                        <form method="POST" action="{{ route('orders.update-status', $order) }}" class="m-0" onsubmit="return confirm('Kế toán xác nhận duyệt đơn {{ $order->order_code }}?')">
+                                                            @csrf
+                                                            <input type="hidden" name="status" value="accountant_approve">
+                                                            <button type="submit" class="px-1.5 py-0.5 rounded text-[11px] font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition-colors shadow-2xs" title="Kế toán duyệt đơn">
+                                                                Duyệt
+                                                            </button>
+                                                        </form>
+                                                        <button type="button" onclick="openRequestEditModal('{{ route('orders.update-status', $order) }}', '{{ $order->order_code }}', 'accountant')" class="px-1 py-0.5 rounded text-[11px] font-semibold bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-300 transition-colors" title="Kế toán yêu cầu sửa đơn">
+                                                            Sửa
+                                                        </button>
+                                                    </div>
+                                                @endif
+                                            @endcan
                                         </div>
-                                    @elseif($order->status === 'pending' && auth()->user()?->can('edit order'))
-                                        <form method="POST" action="{{ route('orders.update-status', $order) }}" style="display:inline;" onsubmit="return confirm('Xác nhận chuyển đơn hàng sang sản xuất?')">
-                                            @csrf
-                                            <input type="hidden" name="status" value="transferred">
-                                            <button type="submit" class="px-3 py-1 rounded font-medium text-xs {{ $statusColors[$order->status] }} border-0 align-baseline" title="Bấm để chuyển sản xuất">
-                                                {{ $statusLabels[$order->status] }}
-                                            </button>
-                                        </form>
-                                    @else
-                                        <span class="px-3 py-1 rounded font-medium text-xs {{ $statusColors[$order->status] ?? 'bg-neutral-100 text-neutral-600' }}">
-                                            {{ $statusLabels[$order->status] ?? $order->status }}
-                                        </span>
-                                    @endif
+
+                                        {{-- BƯỚC 2: KỸ THUẬT DUYỆT (CHUYỂN SX) --}}
+                                        <div class="flex items-center justify-between gap-1.5 p-1 rounded bg-neutral-50 border border-neutral-200">
+                                            <div class="flex items-center gap-1 min-w-0">
+                                                <span class="font-bold text-[11px] text-neutral-600 shrink-0">2. Kỹ thuật:</span>
+                                                @if($order->technical_approved_by || $order->status === 'transferred')
+                                                    <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200 truncate" title="Kỹ thuật duyệt: {{ $order->technicalApprover?->name }} lúc {{ $order->technical_approved_at?->format('H:i d/m/Y') }}">
+                                                        <iconify-icon icon="lucide:check-check" class="text-blue-600 shrink-0"></iconify-icon>
+                                                        <span class="truncate">{{ $order->technicalApprover?->name ?? 'Đã duyệt' }}</span>
+                                                        <span class="text-[10px] text-blue-600 font-normal shrink-0">{{ $order->technical_approved_at?->format('H:i d/m') }}</span>
+                                                    </span>
+                                                @else
+                                                    <span class="text-[11px] text-neutral-400 italic">Chưa duyệt</span>
+                                                @endif
+                                            </div>
+
+                                            @can('edit order')
+                                                @if(!in_array($order->status, ['transferred', 'in_production', 'completed', 'cancelled']))
+                                                    <div class="flex items-center gap-1 shrink-0">
+                                                        <form method="POST" action="{{ route('orders.update-status', $order) }}" class="m-0" onsubmit="return confirm('Kỹ thuật xác nhận duyệt & Chuyển sản xuất đơn {{ $order->order_code }}?')">
+                                                            @csrf
+                                                            <input type="hidden" name="status" value="transferred">
+                                                            <button type="submit" class="px-1.5 py-0.5 rounded text-[11px] font-bold bg-violet-600 hover:bg-violet-700 text-white transition-colors shadow-2xs" title="{{ $order->accountant_approved_by ? 'Kỹ thuật duyệt & Chuyển SX' : 'Duyệt & Chuyển SX (Kế toán chưa duyệt)' }}">
+                                                                {{ !empty($order->edit_reason) ? 'Chuyển lại' : 'Chuyển SX' }}
+                                                            </button>
+                                                        </form>
+                                                        @if($order->accountant_approved_by)
+                                                            <button type="button" onclick="openRequestEditModal('{{ route('orders.update-status', $order) }}', '{{ $order->order_code }}', 'technical')" class="px-1 py-0.5 rounded text-[11px] font-semibold bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-300 transition-colors" title="Kỹ thuật yêu cầu sửa đơn">
+                                                                Sửa
+                                                            </button>
+                                                        @endif
+                                                    </div>
+                                                @endif
+                                            @endcan
+                                        </div>
+
+                                        {{-- THÔNG TIN TỪ CHỐI / YÊU CẦU SỬA (NẾU CÓ) --}}
+                                        @if(!empty($order->edit_reason))
+                                            <div class="p-1.5 rounded bg-amber-50/90 border border-amber-300 text-amber-900 text-[11px] leading-tight">
+                                                <div class="flex items-center justify-between gap-1 font-semibold text-amber-950">
+                                                    <span class="flex items-center gap-1 truncate">
+                                                        <iconify-icon icon="lucide:alert-triangle" class="text-amber-600 shrink-0"></iconify-icon>
+                                                        <span class="truncate">Sửa: {{ $order->rejecter?->name ?? 'Người kiểm tra' }} ({{ $order->rejected_step === 'technical' ? 'Kỹ thuật' : 'Kế toán' }})</span>
+                                                    </span>
+                                                    @if($order->rejected_at)
+                                                        <span class="text-[10px] text-amber-700 font-normal shrink-0">{{ $order->rejected_at->format('H:i d/m') }}</span>
+                                                    @endif
+                                                </div>
+                                                <div class="mt-0.5 italic text-amber-800 line-clamp-2" title="{{ $order->edit_reason }}">
+                                                    "{{ $order->edit_reason }}"
+                                                </div>
+                                            </div>
+                                        @endif
+                                    </div>
+                                </td>
+                                <td class="px-3">
+                                    <span class="text-base text-secondary-light">{{ $order->phone ?? '—' }}</span>
+                                </td>
+                                <td class="whitespace-nowrap px-3">
+                                    <span class="text-base text-secondary-light">{{ $order->order_date ? $order->order_date->format('H:i d/m/Y') : '—' }}</span>
+                                </td>
+                                <td class="whitespace-nowrap px-3">
+                                    <span class="text-base text-secondary-light">{{ $order->deadline ? $order->deadline->format('H:i d/m/Y') : '—' }}</span>
                                 </td>
                                 <td class="text-center whitespace-nowrap px-3">
                                     <div class="flex items-center gap-2 justify-center">
@@ -502,7 +571,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="{{ $canBulkDeleteOrders ? 14 : 13 }}" class="text-center py-8">
+                                <td colspan="{{ $canBulkDeleteOrders ? 15 : 14 }}" class="text-center py-8">
                                     <p class="text-neutral-500">Chưa có đơn hàng nào</p>
                                 </td>
                             </tr>
@@ -773,36 +842,37 @@
                 await writable.write(blob);
                 await writable.close();
                 totalFilesCount++;
+            }
 
-                // Nếu là đơn Acrylic, tự động xuất luôn các file xả tem Nesting
-                if (data.type === 'acrylic' && typeof exportNestingFiles === 'function') {
-                    const nestingFiles = await exportNestingFiles(data, true);
-                    if (nestingFiles && nestingFiles.length > 0) {
-                        for (let nFile of nestingFiles) {
-                            const nHandle = await directoryHandle.getFileHandle(nFile.fileName, { create: true });
-                            const nWritable = await nHandle.createWritable();
-                            await nWritable.write(nFile.blob);
-                            await nWritable.close();
-                            totalFilesCount++;
-                        }
+            // 2. Xuất các file Nesting (Nesting từng đơn + 1 file Phào gộp chung cho tất cả các đơn)
+            if (typeof exportBulkNestingFiles === 'function') {
+                const nestingFiles = await exportBulkNestingFiles(dataList, true);
+                if (nestingFiles && nestingFiles.length > 0) {
+                    for (let nFile of nestingFiles) {
+                        const nHandle = await directoryHandle.getFileHandle(nFile.fileName, { create: true });
+                        const nWritable = await nHandle.createWritable();
+                        await nWritable.write(nFile.blob);
+                        await nWritable.close();
+                        totalFilesCount++;
                     }
                 }
             }
+        }
 
-            alert(`Đã xuất thành công ${totalFilesCount} file Excel (gồm Báo giá và Nesting)!`);
-            clearBulkOrderSelection();
-        } catch (err) {
-            console.error(err);
-            if (err.name !== 'AbortError') {
-                alert("Có lỗi xảy ra: " + err.message);
-            }
-        } finally {
-            if (btn) {
-                btn.disabled = false;
-                btn.innerHTML = originalHtml;
-            }
+        alert(`Đã xuất thành công ${totalFilesCount} file Excel (gồm Báo giá và Nesting)!`);
+        clearBulkOrderSelection();
+    } catch (err) {
+        console.error(err);
+        if (err.name !== 'AbortError') {
+            alert("Có lỗi xảy ra: " + err.message);
+        }
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
         }
     }
+}
 
     async function exportBulkNestingOrders() {
         if (!window.showDirectoryPicker) {
@@ -838,17 +908,15 @@
             const dataList = await response.json();
 
             let exportedCount = 0;
-            for (let data of dataList) {
-                if (data.type === 'acrylic' && typeof exportNestingFiles === 'function') {
-                    const nestingFiles = await exportNestingFiles(data, true);
-                    if (nestingFiles && nestingFiles.length > 0) {
-                        for (let nFile of nestingFiles) {
-                            const nHandle = await directoryHandle.getFileHandle(nFile.fileName, { create: true });
-                            const nWritable = await nHandle.createWritable();
-                            await nWritable.write(nFile.blob);
-                            await nWritable.close();
-                            exportedCount++;
-                        }
+            if (typeof exportBulkNestingFiles === 'function') {
+                const nestingFiles = await exportBulkNestingFiles(dataList, true);
+                if (nestingFiles && nestingFiles.length > 0) {
+                    for (let nFile of nestingFiles) {
+                        const nHandle = await directoryHandle.getFileHandle(nFile.fileName, { create: true });
+                        const nWritable = await nHandle.createWritable();
+                        await nWritable.write(nFile.blob);
+                        await nWritable.close();
+                        exportedCount++;
                     }
                 }
             }
@@ -1314,9 +1382,23 @@ async function submitQuickManufacture(e) {
             @endcan
 
             @can('edit order')
-            {{-- Chuyển sản xuất --}}
-            @if(in_array($order->status, ['draft', 'pending']))
+            {{-- Kế toán duyệt --}}
+            @if(!$order->accountant_approved_by && in_array($order->status, ['draft', 'pending']))
             <li class="border-t border-neutral-100 my-1 pt-1">
+                <form method="POST" action="{{ route('orders.update-status', $order) }}" onsubmit="return confirm('Kế toán xác nhận duyệt đơn hàng {{ $order->order_code }}?')">
+                    @csrf
+                    <input type="hidden" name="status" value="accountant_approve">
+                    <button type="submit" class="w-full flex items-center gap-2 px-4 py-2 hover:bg-emerald-50 text-emerald-700 text-left transition-colors font-medium">
+                        <iconify-icon icon="lucide:check-circle" class="text-emerald-600 text-lg"></iconify-icon>
+                        <span>Kế toán duyệt</span>
+                    </button>
+                </form>
+            </li>
+            @endif
+
+            {{-- Chuyển sản xuất (Kỹ thuật duyệt) --}}
+            @if(in_array($order->status, ['draft', 'pending']))
+            <li class="{{ !$order->accountant_approved_by ? '' : 'border-t border-neutral-100 my-1 pt-1' }}">
                 <form method="POST" action="{{ route('orders.update-status', $order) }}" onsubmit="return confirm('Xác nhận chuyển đơn hàng {{ $order->order_code }} sang sản xuất?')">
                     @csrf
                     <input type="hidden" name="status" value="transferred">
@@ -1331,7 +1413,7 @@ async function submitQuickManufacture(e) {
             {{-- Yêu cầu sửa đơn --}}
             @if(in_array($order->status, ['draft', 'pending', 'transferred']))
             <li class="{{ in_array($order->status, ['draft', 'pending']) ? '' : 'border-t border-neutral-100 my-1 pt-1' }}">
-                <button type="button" onclick="openRequestEditModal('{{ route('orders.update-status', $order) }}', '{{ $order->order_code }}')" class="w-full flex items-center gap-2 px-4 py-2 hover:bg-amber-50 text-amber-700 text-left transition-colors font-medium">
+                <button type="button" onclick="openRequestEditModal('{{ route('orders.update-status', $order) }}', '{{ $order->order_code }}', '{{ $order->accountant_approved_by ? 'technical' : 'accountant' }}')" class="w-full flex items-center gap-2 px-4 py-2 hover:bg-amber-50 text-amber-700 text-left transition-colors font-medium">
                     <iconify-icon icon="lucide:alert-circle" class="text-amber-600 text-lg"></iconify-icon>
                     <span>Yêu cầu sửa đơn</span>
                 </button>

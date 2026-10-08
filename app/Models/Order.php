@@ -111,6 +111,13 @@ class Order extends Model
         'status',
         'attachments',
         'edit_reason',
+        'accountant_approved_by',
+        'accountant_approved_at',
+        'technical_approved_by',
+        'technical_approved_at',
+        'rejected_by',
+        'rejected_at',
+        'rejected_step',
     ];
 
     protected $casts = [
@@ -118,7 +125,25 @@ class Order extends Model
         'order_date' => 'datetime',
         'delivery_days' => 'float',
         'total_amount' => 'float',
+        'accountant_approved_at' => 'datetime',
+        'technical_approved_at' => 'datetime',
+        'rejected_at' => 'datetime',
     ];
+
+    public function accountantApprover()
+    {
+        return $this->belongsTo(User::class, 'accountant_approved_by');
+    }
+
+    public function technicalApprover()
+    {
+        return $this->belongsTo(User::class, 'technical_approved_by');
+    }
+
+    public function rejecter()
+    {
+        return $this->belongsTo(User::class, 'rejected_by');
+    }
 
     public function customer()
     {
