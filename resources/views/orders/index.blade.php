@@ -774,7 +774,6 @@
                 totalFilesCount++;
             }
 
-            // 2. Xuất các file Nesting (Nesting từng đơn + 1 file Phào gộp chung cho tất cả các đơn)
             if (typeof exportBulkNestingFiles === 'function') {
                 const nestingFiles = await exportBulkNestingFiles(dataList, true);
                 if (nestingFiles && nestingFiles.length > 0) {
@@ -787,11 +786,10 @@
                     }
                 }
             }
-        }
 
-        alert(`Đã xuất thành công ${totalFilesCount} file Excel (gồm Báo giá và Nesting)!`);
-        clearBulkOrderSelection();
-    } catch (err) {
+            alert(`Đã xuất thành công ${totalFilesCount} file Excel (gồm Báo giá và Nesting)!`);
+            clearBulkOrderSelection();
+        } catch (err) {
         console.error(err);
         if (err.name !== 'AbortError') {
             alert("Có lỗi xảy ra: " + err.message);
@@ -1548,8 +1546,9 @@ async function submitQuickManufacture(e) {
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        if (typeof TomSelect !== 'undefined' && document.getElementById('filter_customer_id')) {
-            new TomSelect('#filter_customer_id', {
+        const filterCustomer = document.getElementById('filter_customer_id');
+        if (typeof TomSelect !== 'undefined' && filterCustomer && !filterCustomer.tomselect) {
+            new TomSelect(filterCustomer, {
                 allowEmptyOption: true,
                 placeholder: '-- Tất cả khách hàng --',
                 maxOptions: 500,
