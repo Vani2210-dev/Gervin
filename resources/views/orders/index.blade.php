@@ -274,20 +274,20 @@
                                     <input type="checkbox" id="bulkSelectAllOrders" class="form-check-input rounded border-neutral-300 text-primary-600 focus:ring-primary-500">
                                 </th>
                                 @endif
-                                <th scope="col" class="text-center px-3" style="width: 50px;">STT</th>
-                                <th scope="col" class="px-3" style="min-width: 120px;">Mã đơn</th>
-                                <th scope="col" class="px-3" style="min-width: 90px;">Loại đơn</th>
-                                <th scope="col" class="px-3" style="min-width: 110px;">Trạng thái</th>
-                                <th scope="col" class="px-3" style="min-width: 130px;">Tên công trình</th>
-                                <th scope="col" class="px-3" style="min-width: 140px;">Tên khách hàng</th>
-                                <th scope="col" class="text-center whitespace-nowrap px-3" style="min-width: 95px;">Số tấm</th>
-                                <th scope="col" class="text-center whitespace-nowrap px-3" style="min-width: 115px;">Tổng số mét</th>
-                                <th scope="col" class="text-end whitespace-nowrap px-3" style="min-width: 115px;">Tổng tiền</th>
-                                <th scope="col" class="px-3" style="min-width: 230px;">Tiến trình duyệt</th>
-                                <th scope="col" class="px-3" style="min-width: 110px;">Số điện thoại</th>
-                                <th scope="col" class="whitespace-nowrap px-3" style="min-width: 130px;">Ngày tạo đơn</th>
-                                <th scope="col" class="whitespace-nowrap px-3" style="min-width: 130px;">Hạn đơn</th>
-                                <th scope="col" class="text-center whitespace-nowrap px-3" style="width: 100px; min-width: 100px;">Hành động</th>
+                                <th scope="col" class="text-center px-3 whitespace-nowrap" style="width: 50px;">STT</th>
+                                <th scope="col" class="px-3 whitespace-nowrap" style="min-width: 120px;">Mã đơn</th>
+                                <th scope="col" class="px-3 whitespace-nowrap" style="min-width: 90px;">Loại đơn</th>
+                                <th scope="col" class="px-3 whitespace-nowrap" style="min-width: 110px;">Trạng thái</th>
+                                <th scope="col" class="px-3 whitespace-nowrap" style="min-width: 130px;">Tên công trình</th>
+                                <th scope="col" class="px-3 whitespace-nowrap" style="min-width: 140px;">Tên khách hàng</th>
+                                <th scope="col" class="text-center whitespace-nowrap px-3" style="min-width: 85px;">Số tấm</th>
+                                <th scope="col" class="text-center whitespace-nowrap px-3" style="min-width: 105px;">Tổng số mét</th>
+                                <th scope="col" class="text-end whitespace-nowrap px-3" style="min-width: 110px;">Tổng tiền</th>
+                                <th scope="col" class="text-center whitespace-nowrap px-3" style="min-width: 140px;">Tiến trình duyệt</th>
+                                <th scope="col" class="px-3 whitespace-nowrap" style="min-width: 105px;">Số điện thoại</th>
+                                <th scope="col" class="whitespace-nowrap px-3" style="min-width: 125px;">Ngày tạo đơn</th>
+                                <th scope="col" class="whitespace-nowrap px-3" style="min-width: 115px;">Hạn đơn</th>
+                                <th scope="col" class="text-center whitespace-nowrap px-3" style="width: 90px; min-width: 90px;">Hành động</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -295,7 +295,7 @@
                             @php $stt = $orders->firstItem() + $loop->index; @endphp
                             <tr>
                                 @if($canBulkDeleteOrders)
-                                <td class="bulk-order-select-col text-center align-middle">
+                                <td class="bulk-order-select-col text-center align-middle whitespace-nowrap">
                                     <input type="checkbox"
                                         name="order_ids[]"
                                         value="{{ $order->id }}"
@@ -306,8 +306,8 @@
                                         class="bulk-order-checkbox form-check-input rounded border-neutral-300 text-primary-600 focus:ring-primary-500">
                                 </td>
                                 @endif
-                                <td class="text-center px-3">{{ $stt }}</td>
-                                <td class="px-3">
+                                <td class="text-center px-3 align-middle whitespace-nowrap">{{ $stt }}</td>
+                                <td class="px-3 align-middle whitespace-nowrap">
                                     @php
                                         // Đọc mốc cảnh báo từ cache, mặc định 0 ngày
                                         $deadlineThreshold = \Illuminate\Support\Facades\Cache::get('deadline_warning_days', 0);
@@ -317,51 +317,38 @@
                                             $deadlineDate = \Carbon\Carbon::parse($order->deadline);
                                             $orderDate = \Carbon\Carbon::parse($order->order_date);
                                             $now = \Carbon\Carbon::now();
-                                            // Đếm số ngày nguyên để hiển thị ra màn hình (không có số thập phân)
                                             $daysLeft = (int) $now->diffInDays($deadlineDate, false);
-                                            // Đếm số giờ để so sánh cảnh báo chuẩn xác 100%
                                             $hoursLeft = $now->diffInHours($deadlineDate, false);
                                             
-                                            // Không cảnh báo nếu ngày chốt đơn là ở tương lai (đơn đặt trước)
                                             $isFutureOrder = $orderDate->isFuture();
                                             $showWarning = !$isFutureOrder && $deadlineThreshold > 0 && $hoursLeft <= ($deadlineThreshold * 24);
                                         }
                                     @endphp
-                                    <div class="flex flex-col items-start justify-center gap-1">
-                                        <div class="flex items-center gap-2">
-                                            <span class="text-base font-medium {{ $showWarning ? 'text-danger-600' : 'text-secondary-light' }}">{{ $order->order_code }}</span>
-                                            @if($order->relation_type === 'rework')
-                                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">Sửa tấm</span>
-                                            @elseif($order->relation_type === 'warranty')
-                                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-200">Bảo hành</span>
-                                            @elseif($order->relation_type === 'additional')
-                                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-success-100 text-success-800 border border-success-200">Bổ sung</span>
-                                                @if($order->board_return_status === 'pending')
-                                                    <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300" title="Khách đang giữ ván chưa trả (Tạm tính công nợ)">Chờ trả ván</span>
-                                                @elseif($order->board_return_status === 'returned')
-                                                    <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-100 text-sky-800 border border-sky-200" title="Đã xác nhận trả ván (Đã cấn trừ công nợ)">Đã trả ván</span>
-                                                @endif
-                                            @elseif($order->relation_type === 'reuse')
-                                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200">Tận dụng tấm</span>
+                                    <div class="inline-flex items-center gap-1.5 whitespace-nowrap">
+                                        <span class="text-sm font-semibold {{ $showWarning ? 'text-danger-600' : 'text-neutral-900' }}">{{ $order->order_code }}</span>
+                                        @if($order->relation_type === 'rework')
+                                            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">Sửa tấm</span>
+                                        @elseif($order->relation_type === 'warranty')
+                                            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-200">Bảo hành</span>
+                                        @elseif($order->relation_type === 'additional')
+                                            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-success-100 text-success-800 border border-success-200">Bổ sung</span>
+                                            @if($order->board_return_status === 'pending')
+                                                <span class="px-1 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300" title="Khách đang giữ ván chưa trả">Chờ trả ván</span>
+                                            @elseif($order->board_return_status === 'returned')
+                                                <span class="px-1 py-0.5 rounded text-[10px] font-bold bg-sky-100 text-sky-800 border border-sky-200" title="Đã xác nhận trả ván">Đã trả ván</span>
                                             @endif
-                                        </div>
+                                        @elseif($order->relation_type === 'reuse')
+                                            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200">Tận dụng</span>
+                                        @endif
+
                                         @if($showWarning)
-                                            <div class="flex items-center gap-1 text-danger-500">
+                                            <span class="inline-flex items-center text-danger-500" title="{{ $daysLeft < 0 ? 'Quá hạn ' . abs($daysLeft) . ' ngày' : ($daysLeft == 0 ? 'Hôm nay là hạn cuối' : 'Còn ' . $daysLeft . ' ngày') }}">
                                                 <iconify-icon icon="lucide:alert-triangle" class="text-xs"></iconify-icon>
-                                                <span class="text-xs font-semibold">
-                                                    @if($daysLeft < 0)
-                                                        Quá hạn {{ abs($daysLeft) }} ngày
-                                                    @elseif($daysLeft == 0)
-                                                        Hôm nay là hạn cuối
-                                                    @else
-                                                        Còn {{ $daysLeft }} ngày
-                                                    @endif
-                                                </span>
-                                            </div>
+                                            </span>
                                         @endif
                                     </div>
                                 </td>
-                                <td class="px-3">
+                                <td class="px-3 align-middle whitespace-nowrap">
                                     @if($order->type)
                                         @php
                                             $typeColors = [
@@ -386,7 +373,7 @@
                                         <span class="text-neutral-400 text-xs">—</span>
                                     @endif
                                 </td>
-                                <td class="px-3 whitespace-nowrap">
+                                <td class="px-3 align-middle whitespace-nowrap">
                                     @php
                                         $statusColors = [
                                             'draft' => 'bg-neutral-100 text-neutral-600',
@@ -405,34 +392,33 @@
                                             'cancelled' => 'Đã hủy',
                                         ];
                                     @endphp
-                                    <div class="flex flex-col gap-1 items-start">
+                                    @if(!empty($order->edit_reason))
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-bold text-xs bg-amber-100 text-amber-800 border border-amber-300" title="Yêu cầu sửa: {{ $order->edit_reason }}">
+                                            <iconify-icon icon="lucide:alert-circle" class="text-xs text-amber-600"></iconify-icon>
+                                            <span>Yêu cầu sửa</span>
+                                        </span>
+                                    @else
                                         <span class="px-2.5 py-1 rounded-full font-semibold text-xs {{ $statusColors[$order->status] ?? 'bg-neutral-100 text-neutral-600' }}">
                                             {{ $statusLabels[$order->status] ?? $order->status }}
                                         </span>
-                                        @if(!empty($order->edit_reason))
-                                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-1" title="Lý do: {{ $order->edit_reason }}">
-                                                <iconify-icon icon="lucide:alert-circle" class="text-xs text-amber-600"></iconify-icon>
-                                                <span>Yêu cầu sửa</span>
-                                            </span>
-                                        @endif
-                                    </div>
-                                </td>
-                                <td class="px-3">
-                                    <span class="text-base font-medium text-secondary-light">{{ $order->customer_name ?: '—' }}</span>
-                                </td>
-                                <td class="px-3">
-                                    @if($order->customer)
-                                        <a href="{{ route('customers.index', ['overview_id' => $order->customer->id]) }}" class="font-semibold text-neutral-800 hover:text-primary-600 block leading-tight">
-                                            {{ $order->customer->name }}
-                                        </a>
-                                        <span class="text-xs text-neutral-400 block mt-0.5">{{ $order->customer->customer_code }}</span>
-                                    @else
-                                        <span class="text-neutral-400">—</span>
                                     @endif
                                 </td>
-                                <td class="text-center whitespace-nowrap px-3">
+                                <td class="px-3 align-middle whitespace-nowrap">
+                                    <span class="text-sm font-semibold text-neutral-900 truncate max-w-[200px] inline-block" title="{{ $order->customer_name }}">{{ $order->customer_name ?: '—' }}</span>
+                                </td>
+                                <td class="px-3 align-middle whitespace-nowrap">
+                                    @if($order->customer)
+                                        <a href="{{ route('customers.index', ['overview_id' => $order->customer->id]) }}" class="text-sm font-semibold text-neutral-900 hover:text-primary-600 inline-flex items-center gap-1.5" title="{{ $order->customer->name }} ({{ $order->customer->customer_code }})">
+                                            <span>{{ $order->customer->name }}</span>
+                                            <span class="text-xs text-neutral-400 font-normal">({{ $order->customer->customer_code }})</span>
+                                        </a>
+                                    @else
+                                        <span class="text-neutral-400 text-sm">—</span>
+                                    @endif
+                                </td>
+                                <td class="text-center align-middle whitespace-nowrap px-3">
                                     @if($order->total_sheets > 0)
-                                        <span class="inline-flex items-center justify-center gap-1.5 font-semibold text-neutral-800 bg-neutral-100 px-2.5 py-1 rounded-md text-xs">
+                                        <span class="inline-flex items-center justify-center gap-1.5 font-semibold text-neutral-800 bg-neutral-100 px-2 py-0.5 rounded-md text-xs">
                                             <iconify-icon icon="solar:layers-minimalistic-bold" class="text-neutral-500 text-sm"></iconify-icon>
                                             {{ floatval($order->total_sheets) == intval($order->total_sheets) ? number_format($order->total_sheets, 0, ',', '.') : number_format($order->total_sheets, 1, ',', '.') }}
                                         </span>
@@ -440,9 +426,9 @@
                                         <span class="text-neutral-300">—</span>
                                     @endif
                                 </td>
-                                <td class="text-center whitespace-nowrap px-3">
+                                <td class="text-center align-middle whitespace-nowrap px-3">
                                     @if($order->total_meters > 0)
-                                        <span class="inline-flex items-center justify-center gap-1.5 font-semibold text-primary-700 bg-primary-50 px-2.5 py-1 rounded-md text-xs border border-primary-100">
+                                        <span class="inline-flex items-center justify-center gap-1.5 font-semibold text-primary-700 bg-primary-50 px-2 py-0.5 rounded-md text-xs border border-primary-100">
                                             <iconify-icon icon="solar:ruler-angular-bold" class="text-primary-500 text-sm"></iconify-icon>
                                             {{ floatval($order->total_meters) == intval($order->total_meters) ? number_format($order->total_meters, 0, ',', '.') : rtrim(rtrim(number_format($order->total_meters, 2, ',', '.'), '0'), ',') }} m
                                         </span>
@@ -450,108 +436,52 @@
                                         <span class="text-neutral-300">—</span>
                                     @endif
                                 </td>
-                                <td class="text-end whitespace-nowrap px-3">
-                                    <span class="text-base font-semibold text-neutral-800">{{ number_format(round($order->total_amount, -3), 0, ',', '.') }}₫</span>
+                                <td class="text-end align-middle whitespace-nowrap px-3">
+                                    <span class="text-sm font-bold text-neutral-900">{{ number_format(round($order->total_amount, -3), 0, ',', '.') }}₫</span>
                                 </td>
-                                <td class="px-3 py-2 text-xs" style="min-width: 230px;">
-                                    <div class="flex flex-col gap-1.5">
-                                        {{-- BƯỚC 1: KẾ TOÁN DUYỆT --}}
-                                        <div class="flex items-center justify-between gap-1.5 p-1 rounded bg-neutral-50 border border-neutral-200">
-                                            <div class="flex items-center gap-1 min-w-0">
-                                                <span class="font-bold text-[11px] text-neutral-600 shrink-0">1. Kế toán:</span>
-                                                @if($order->accountant_approved_by)
-                                                    <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 truncate" title="Kế toán duyệt: {{ $order->accountantApprover?->name }} lúc {{ $order->accountant_approved_at?->format('H:i d/m/Y') }}">
-                                                        <iconify-icon icon="lucide:check-circle-2" class="text-emerald-600 shrink-0"></iconify-icon>
-                                                        <span class="truncate">{{ $order->accountantApprover?->name ?? 'Đã duyệt' }}</span>
-                                                        <span class="text-[10px] text-emerald-600 font-normal shrink-0">{{ $order->accountant_approved_at?->format('H:i d/m') }}</span>
-                                                    </span>
-                                                @else
-                                                    <span class="text-[11px] text-neutral-400 italic">Chưa duyệt</span>
-                                                @endif
-                                            </div>
+                                <td class="px-3 align-middle whitespace-nowrap text-center">
+                                    @php
+                                        $hasEditReq = !empty($order->edit_reason);
+                                        $isFullyApproved = ($order->technical_approved_by || in_array($order->status, ['transferred', 'in_production', 'completed']));
+                                        $isAccountantApproved = (bool)$order->accountant_approved_by;
+                                    @endphp
 
-                                            @can('edit order')
-                                                @if(!$order->accountant_approved_by && in_array($order->status, ['draft', 'pending']))
-                                                    <div class="flex items-center gap-1 shrink-0">
-                                                        <form method="POST" action="{{ route('orders.update-status', $order) }}" class="m-0" onsubmit="return confirm('Kế toán xác nhận duyệt đơn {{ $order->order_code }}?')">
-                                                            @csrf
-                                                            <input type="hidden" name="status" value="accountant_approve">
-                                                            <button type="submit" class="px-1.5 py-0.5 rounded text-[11px] font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition-colors shadow-2xs" title="Kế toán duyệt đơn">
-                                                                Duyệt
-                                                            </button>
-                                                        </form>
-                                                        <button type="button" onclick="openRequestEditModal('{{ route('orders.update-status', $order) }}', '{{ $order->order_code }}', 'accountant')" class="px-1 py-0.5 rounded text-[11px] font-semibold bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-300 transition-colors" title="Kế toán yêu cầu sửa đơn">
-                                                            Sửa
-                                                        </button>
-                                                    </div>
-                                                @endif
-                                            @endcan
-                                        </div>
-
-                                        {{-- BƯỚC 2: KỸ THUẬT DUYỆT (CHUYỂN SX) --}}
-                                        <div class="flex items-center justify-between gap-1.5 p-1 rounded bg-neutral-50 border border-neutral-200">
-                                            <div class="flex items-center gap-1 min-w-0">
-                                                <span class="font-bold text-[11px] text-neutral-600 shrink-0">2. Kỹ thuật:</span>
-                                                @if($order->technical_approved_by || $order->status === 'transferred')
-                                                    <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200 truncate" title="Kỹ thuật duyệt: {{ $order->technicalApprover?->name }} lúc {{ $order->technical_approved_at?->format('H:i d/m/Y') }}">
-                                                        <iconify-icon icon="lucide:check-check" class="text-blue-600 shrink-0"></iconify-icon>
-                                                        <span class="truncate">{{ $order->technicalApprover?->name ?? 'Đã duyệt' }}</span>
-                                                        <span class="text-[10px] text-blue-600 font-normal shrink-0">{{ $order->technical_approved_at?->format('H:i d/m') }}</span>
-                                                    </span>
-                                                @else
-                                                    <span class="text-[11px] text-neutral-400 italic">Chưa duyệt</span>
-                                                @endif
-                                            </div>
-
-                                            @can('edit order')
-                                                @if(!in_array($order->status, ['transferred', 'in_production', 'completed', 'cancelled']))
-                                                    <div class="flex items-center gap-1 shrink-0">
-                                                        <form method="POST" action="{{ route('orders.update-status', $order) }}" class="m-0" onsubmit="return confirm('Kỹ thuật xác nhận duyệt & Chuyển sản xuất đơn {{ $order->order_code }}?')">
-                                                            @csrf
-                                                            <input type="hidden" name="status" value="transferred">
-                                                            <button type="submit" class="px-1.5 py-0.5 rounded text-[11px] font-bold bg-violet-600 hover:bg-violet-700 text-white transition-colors shadow-2xs" title="{{ $order->accountant_approved_by ? 'Kỹ thuật duyệt & Chuyển SX' : 'Duyệt & Chuyển SX (Kế toán chưa duyệt)' }}">
-                                                                {{ !empty($order->edit_reason) ? 'Chuyển lại' : 'Chuyển SX' }}
-                                                            </button>
-                                                        </form>
-                                                        @if($order->accountant_approved_by)
-                                                            <button type="button" onclick="openRequestEditModal('{{ route('orders.update-status', $order) }}', '{{ $order->order_code }}', 'technical')" class="px-1 py-0.5 rounded text-[11px] font-semibold bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-300 transition-colors" title="Kỹ thuật yêu cầu sửa đơn">
-                                                                Sửa
-                                                            </button>
-                                                        @endif
-                                                    </div>
-                                                @endif
-                                            @endcan
-                                        </div>
-
-                                        {{-- THÔNG TIN TỪ CHỐI / YÊU CẦU SỬA (NẾU CÓ) --}}
-                                        @if(!empty($order->edit_reason))
-                                            <div class="p-1.5 rounded bg-amber-50/90 border border-amber-300 text-amber-900 text-[11px] leading-tight">
-                                                <div class="flex items-center justify-between gap-1 font-semibold text-amber-950">
-                                                    <span class="flex items-center gap-1 truncate">
-                                                        <iconify-icon icon="lucide:alert-triangle" class="text-amber-600 shrink-0"></iconify-icon>
-                                                        <span class="truncate">Sửa: {{ $order->rejecter?->name ?? 'Người kiểm tra' }} ({{ $order->rejected_step === 'technical' ? 'Kỹ thuật' : 'Kế toán' }})</span>
-                                                    </span>
-                                                    @if($order->rejected_at)
-                                                        <span class="text-[10px] text-amber-700 font-normal shrink-0">{{ $order->rejected_at->format('H:i d/m') }}</span>
-                                                    @endif
-                                                </div>
-                                                <div class="mt-0.5 italic text-amber-800 line-clamp-2" title="{{ $order->edit_reason }}">
-                                                    "{{ $order->edit_reason }}"
-                                                </div>
-                                            </div>
-                                        @endif
-                                    </div>
+                                    @if($hasEditReq)
+                                        <button id="btn-approval-{{ $order->id }}" data-dropdown-toggle="dropdown-approval-{{ $order->id }}" data-dropdown-placement="bottom" type="button" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 transition-colors shadow-2xs" title="Bấm xem chi tiết yêu cầu sửa">
+                                            <iconify-icon icon="lucide:alert-triangle" class="text-xs text-amber-700"></iconify-icon>
+                                            <span>Cần sửa đơn</span>
+                                            <iconify-icon icon="lucide:chevron-down" class="text-xs text-amber-600"></iconify-icon>
+                                        </button>
+                                    @elseif($isFullyApproved)
+                                        <button id="btn-approval-{{ $order->id }}" data-dropdown-toggle="dropdown-approval-{{ $order->id }}" data-dropdown-placement="bottom" type="button" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 transition-colors shadow-2xs" title="Bấm xem chi tiết phê duyệt">
+                                            <iconify-icon icon="lucide:check-check" class="text-xs text-emerald-600"></iconify-icon>
+                                            <span>Đã duyệt (2/2)</span>
+                                            <iconify-icon icon="lucide:chevron-down" class="text-xs text-emerald-500"></iconify-icon>
+                                        </button>
+                                    @elseif($isAccountantApproved)
+                                        <button id="btn-approval-{{ $order->id }}" data-dropdown-toggle="dropdown-approval-{{ $order->id }}" data-dropdown-placement="bottom" type="button" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-300 transition-colors shadow-2xs" title="Bấm xem chi tiết phê duyệt">
+                                            <iconify-icon icon="lucide:check" class="text-xs text-blue-600"></iconify-icon>
+                                            <span>KT đã duyệt (1/2)</span>
+                                            <iconify-icon icon="lucide:chevron-down" class="text-xs text-blue-500"></iconify-icon>
+                                        </button>
+                                    @else
+                                        <button id="btn-approval-{{ $order->id }}" data-dropdown-toggle="dropdown-approval-{{ $order->id }}" data-dropdown-placement="bottom" type="button" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-neutral-100 hover:bg-neutral-200 text-neutral-700 border border-neutral-300 transition-colors shadow-2xs" title="Bấm xem chi tiết & duyệt đơn">
+                                            <iconify-icon icon="lucide:clock" class="text-xs text-neutral-500"></iconify-icon>
+                                            <span>Chờ duyệt (0/2)</span>
+                                            <iconify-icon icon="lucide:chevron-down" class="text-xs text-neutral-400"></iconify-icon>
+                                        </button>
+                                    @endif
                                 </td>
-                                <td class="px-3">
-                                    <span class="text-base text-secondary-light">{{ $order->phone ?? '—' }}</span>
+                                <td class="px-3 align-middle whitespace-nowrap">
+                                    <span class="text-sm text-neutral-700 font-medium">{{ $order->phone ?? '—' }}</span>
                                 </td>
-                                <td class="whitespace-nowrap px-3">
-                                    <span class="text-base text-secondary-light">{{ $order->order_date ? $order->order_date->format('H:i d/m/Y') : '—' }}</span>
+                                <td class="whitespace-nowrap px-3 align-middle">
+                                    <span class="text-sm text-neutral-700 font-medium">{{ $order->order_date ? $order->order_date->format('H:i d/m/Y') : '—' }}</span>
                                 </td>
-                                <td class="whitespace-nowrap px-3">
-                                    <span class="text-base text-secondary-light">{{ $order->deadline ? $order->deadline->format('H:i d/m/Y') : '—' }}</span>
+                                <td class="whitespace-nowrap px-3 align-middle">
+                                    <span class="text-sm text-neutral-700 font-medium">{{ $order->deadline ? $order->deadline->format('H:i d/m/Y') : '—' }}</span>
                                 </td>
-                                <td class="text-center whitespace-nowrap px-3">
+                                <td class="text-center whitespace-nowrap px-3 align-middle">
                                     <div class="flex items-center gap-2 justify-center">
                                         @can('view order')
                                         {{-- Xem chi tiết (luôn hiển thị ngoài) --}}
@@ -1468,6 +1398,148 @@ async function submitQuickManufacture(e) {
             </li>
             @endcan
         </ul>
+    </div>
+
+    {{-- Popup Chi tiết Tiến trình duyệt đơn hàng (Hiển thị nổi, không làm vỡ bố cục 1 dòng của bảng) --}}
+    <div id="dropdown-approval-{{ $order->id }}" class="z-50 hidden bg-white rounded-2xl shadow-2xl border border-neutral-200 w-96 p-4 text-left">
+        {{-- Header popup --}}
+        <div class="flex items-center justify-between pb-3 mb-3 border-b border-neutral-100">
+            <div>
+                <div class="flex items-center gap-2">
+                    <span class="font-bold text-sm text-neutral-900">#{{ $order->order_code }}</span>
+                    <span class="text-xs font-semibold text-neutral-600 truncate max-w-[150px]">{{ $order->customer?->name }}</span>
+                </div>
+                <div class="text-[11px] text-neutral-400 mt-0.5">Chi tiết tiến trình xét duyệt</div>
+            </div>
+            @php
+                $statusBadgeColors = [
+                    'draft' => 'bg-neutral-100 text-neutral-600',
+                    'pending' => 'bg-warning-100 text-warning-700',
+                    'transferred' => 'bg-info-100 text-info-700',
+                    'in_production' => 'bg-indigo-100 text-indigo-700 border border-indigo-200',
+                    'completed' => 'bg-success-100 text-success-700',
+                    'cancelled' => 'bg-danger-100 text-danger-700',
+                ];
+                $statusBadgeLabels = [
+                    'draft' => 'Nháp',
+                    'pending' => 'Chờ xử lý',
+                    'transferred' => 'Chuyển SX',
+                    'in_production' => 'Đang SX',
+                    'completed' => 'Hoàn thành',
+                    'cancelled' => 'Đã hủy',
+                ];
+            @endphp
+            <span class="px-2 py-0.5 rounded-full text-[11px] font-bold {{ $statusBadgeColors[$order->status] ?? 'bg-neutral-100 text-neutral-700' }}">
+                {{ $statusBadgeLabels[$order->status] ?? $order->status }}
+            </span>
+        </div>
+
+        {{-- THÔNG TIN TỪ CHỐI / YÊU CẦU SỬA (NẾU CÓ) --}}
+        @if(!empty($order->edit_reason))
+            <div class="p-3 mb-3 rounded-xl bg-amber-50 border border-amber-300 text-amber-950 text-xs shadow-2xs">
+                <div class="flex items-center justify-between gap-1 font-bold text-amber-900 mb-1.5">
+                    <span class="flex items-center gap-1.5">
+                        <iconify-icon icon="lucide:alert-triangle" class="text-amber-600 text-base shrink-0"></iconify-icon>
+                        <span>Yêu cầu sửa ({{ $order->rejected_step === 'technical' ? 'Kỹ thuật' : 'Kế toán' }})</span>
+                    </span>
+                    @if($order->rejected_at)
+                        <span class="text-[11px] font-medium text-amber-700">{{ $order->rejected_at->format('H:i d/m') }}</span>
+                    @endif
+                </div>
+                <div class="text-neutral-700 text-[11px] mb-1.5">
+                    Người yêu cầu: <strong class="text-neutral-900">{{ $order->rejecter?->name ?? 'Người kiểm tra' }}</strong>
+                </div>
+                <div class="p-2.5 bg-white/90 rounded-lg border border-amber-200 text-amber-900 italic text-[11px] leading-relaxed shadow-2xs">
+                    "{{ $order->edit_reason }}"
+                </div>
+            </div>
+        @endif
+
+        {{-- BƯỚC 1: KẾ TOÁN DUYỆT --}}
+        <div class="p-3 rounded-xl border {{ $order->accountant_approved_by ? 'bg-emerald-50/60 border-emerald-200' : 'bg-neutral-50 border-neutral-200' }} mb-2.5">
+            <div class="flex items-center justify-between gap-2 mb-1.5">
+                <div class="flex items-center gap-1.5">
+                    <span class="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold {{ $order->accountant_approved_by ? 'bg-emerald-600 text-white' : 'bg-neutral-300 text-neutral-700' }}">1</span>
+                    <span class="font-bold text-xs text-neutral-800">Kế toán duyệt</span>
+                </div>
+                @if($order->accountant_approved_by)
+                    <span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                        <iconify-icon icon="lucide:check" class="text-xs"></iconify-icon>
+                        Đã duyệt
+                    </span>
+                @else
+                    <span class="text-[11px] font-semibold text-neutral-400 italic">Chờ duyệt</span>
+                @endif
+            </div>
+
+            @if($order->accountant_approved_by)
+                <div class="text-[11px] text-neutral-600 pl-6.5 flex items-center justify-between mt-1">
+                    <span>Người duyệt: <strong class="text-neutral-800">{{ $order->accountantApprover?->name }}</strong></span>
+                    <span class="text-neutral-400 font-medium">{{ $order->accountant_approved_at?->format('H:i d/m/Y') }}</span>
+                </div>
+            @else
+                @can('edit order')
+                    @if(in_array($order->status, ['draft', 'pending']))
+                        <div class="flex items-center gap-2 mt-2 pt-2 border-t border-neutral-200/60 justify-end">
+                            <button type="button" onclick="openRequestEditModal('{{ route('orders.update-status', $order) }}', '{{ $order->order_code }}', 'accountant')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-300 transition-colors">
+                                Yêu cầu sửa
+                            </button>
+                            <form method="POST" action="{{ route('orders.update-status', $order) }}" class="m-0" onsubmit="return confirm('Kế toán xác nhận duyệt đơn {{ $order->order_code }}?')">
+                                @csrf
+                                <input type="hidden" name="status" value="accountant_approve">
+                                <button type="submit" class="px-3 py-1 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition-colors shadow-2xs">
+                                    Duyệt đơn
+                                </button>
+                            </form>
+                        </div>
+                    @endif
+                @endcan
+            @endif
+        </div>
+
+        {{-- BƯỚC 2: KỸ THUẬT DUYỆT (CHUYỂN SX) --}}
+        <div class="p-3 rounded-xl border {{ ($order->technical_approved_by || in_array($order->status, ['transferred', 'in_production', 'completed'])) ? 'bg-blue-50/60 border-blue-200' : 'bg-neutral-50 border-neutral-200' }}">
+            <div class="flex items-center justify-between gap-2 mb-1.5">
+                <div class="flex items-center gap-1.5">
+                    <span class="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold {{ ($order->technical_approved_by || in_array($order->status, ['transferred', 'in_production', 'completed'])) ? 'bg-blue-600 text-white' : 'bg-neutral-300 text-neutral-700' }}">2</span>
+                    <span class="font-bold text-xs text-neutral-800">Kỹ thuật duyệt (Chuyển SX)</span>
+                </div>
+                @if($order->technical_approved_by || in_array($order->status, ['transferred', 'in_production', 'completed']))
+                    <span class="inline-flex items-center gap-1 text-[11px] font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">
+                        <iconify-icon icon="lucide:check-check" class="text-xs"></iconify-icon>
+                        Đã duyệt
+                    </span>
+                @else
+                    <span class="text-[11px] font-semibold text-neutral-400 italic">Chờ duyệt</span>
+                @endif
+            </div>
+
+            @if($order->technical_approved_by || in_array($order->status, ['transferred', 'in_production', 'completed']))
+                <div class="text-[11px] text-neutral-600 pl-6.5 flex items-center justify-between mt-1">
+                    <span>Người duyệt: <strong class="text-neutral-800">{{ $order->technicalApprover?->name ?? 'Kỹ thuật' }}</strong></span>
+                    <span class="text-neutral-400 font-medium">{{ $order->technical_approved_at?->format('H:i d/m/Y') }}</span>
+                </div>
+            @else
+                @can('edit order')
+                    @if(!in_array($order->status, ['cancelled', 'completed']))
+                        <div class="flex items-center gap-2 mt-2 pt-2 border-t border-neutral-200/60 justify-end">
+                            @if($order->accountant_approved_by)
+                                <button type="button" onclick="openRequestEditModal('{{ route('orders.update-status', $order) }}', '{{ $order->order_code }}', 'technical')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-300 transition-colors">
+                                    Yêu cầu sửa
+                                </button>
+                            @endif
+                            <form method="POST" action="{{ route('orders.update-status', $order) }}" class="m-0" onsubmit="return confirm('Kỹ thuật xác nhận duyệt & Chuyển sản xuất đơn {{ $order->order_code }}?')">
+                                @csrf
+                                <input type="hidden" name="status" value="transferred">
+                                <button type="submit" class="px-3 py-1 rounded-lg text-xs font-bold bg-violet-600 hover:bg-violet-700 text-white transition-colors shadow-2xs">
+                                    {{ !empty($order->edit_reason) ? 'Chuyển lại SX' : 'Duyệt & Chuyển SX' }}
+                                </button>
+                            </form>
+                        </div>
+                    @endif
+                @endcan
+            @endif
+        </div>
     </div>
 @endforeach
 @include('orders._request_edit_modal')
