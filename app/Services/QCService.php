@@ -98,6 +98,9 @@ class QCService
     public function completeOrRollback(array $data): array
     {
         $codeStr = trim($data['product_code']);
+        if (str_contains($codeStr, '_')) {
+            $codeStr = explode('_', $codeStr)[0];
+        }
         $notes = $data['notes'] ?? null;
         $actionType = $data['action_type'] ?? 'complete';
 
@@ -243,6 +246,9 @@ class QCService
     public function getProductInfo(string $productCode): array
     {
         $codeStr = trim($productCode);
+        if (str_contains($codeStr, '_')) {
+            $codeStr = explode('_', $codeStr)[0];
+        }
         
         // Search in Acrylic
         $codeRecord = AcrylicOrderItemCode::where('product_id', $codeStr)->first();

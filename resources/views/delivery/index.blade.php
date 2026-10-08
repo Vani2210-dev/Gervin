@@ -1079,6 +1079,15 @@
             }, 3200);
         }
 
+        function sanitizeProductCode(code) {
+            if (!code) return '';
+            code = code.trim();
+            if (code.includes('_') && !/^PK[-_]?\d+$/i.test(code)) {
+                code = code.split('_')[0].trim();
+            }
+            return code;
+        }
+
         function toggleSubmitButton() {
             const productCodeInput = document.getElementById('product_code');
             const submitButton = document.getElementById('deliverySubmitBtn');
@@ -1563,7 +1572,8 @@
                 return;
             }
 
-            const productCode = (code || document.getElementById('product_code').value).trim();
+            let productCode = sanitizeProductCode(code || document.getElementById('product_code').value);
+            document.getElementById('product_code').value = productCode;
             if (!productCode) {
                 toggleSubmitButton();
                 return;
@@ -1730,10 +1740,11 @@
                     { facingMode: 'environment' },
                     { fps: 10, qrbox: { width: 250, height: 250 } },
                     async (decodedText) => {
-                        document.getElementById('product_code').value = decodedText;
+                        const cleaned = sanitizeProductCode(decodedText);
+                        document.getElementById('product_code').value = cleaned;
                         toggleSubmitButton();
                         await stopScanning();
-                        await submitDeliveryForm(decodedText);
+                        await submitDeliveryForm(cleaned);
                     }
                 );
             } catch (error) {

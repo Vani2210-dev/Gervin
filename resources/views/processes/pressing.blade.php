@@ -657,12 +657,24 @@ function clearActiveOrder() {
     document.getElementById("activeOrderLabel").textContent = "";
 }
 
+function sanitizeProductCode(code) {
+    if (!code) return "";
+    code = code.trim();
+    if (code.includes("_")) {
+        code = code.split("_")[0].trim();
+    }
+    return code;
+}
+
 // ─────────────────────────────────────────
 // QR INPUT BINDING
 // ─────────────────────────────────────────
 function bindQrInput() {
     const inp = document.getElementById("qr_input");
     inp.addEventListener("input", () => {
+        const val = inp.value;
+        const clean = sanitizeProductCode(val);
+        if (val !== clean) inp.value = clean;
         const has = inp.value.trim().length > 0;
         document.getElementById("confirmScanBtn").disabled = !has;
     });
@@ -681,7 +693,9 @@ function fillQr(code) {
 // SUBMIT SCAN → API
 // ─────────────────────────────────────────
 async function submitScan() {
-    const code  = document.getElementById("qr_input").value.trim();
+    const inp   = document.getElementById("qr_input");
+    const code  = sanitizeProductCode(inp.value);
+    inp.value   = code;
     const notes = document.getElementById("scan_notes").value.trim();
 
     if (!code) {
@@ -960,7 +974,7 @@ function startScanning() {
         { facingMode: "environment" },
         { fps: 10, qrbox: { width: 250, height: 250 } },
         (decoded) => {
-            document.getElementById("qr_input").value = decoded;
+            document.getElementById("qr_input").value = sanitizeProductCode(decoded);
             document.getElementById("confirmScanBtn").disabled = false;
             stopScanning();
             try {

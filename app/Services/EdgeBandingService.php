@@ -98,6 +98,9 @@ class EdgeBandingService
     public function getProductStatus(string $codeStr): array
     {
         $codeStr = trim($codeStr);
+        if (str_contains($codeStr, '_')) {
+            $codeStr = explode('_', $codeStr)[0];
+        }
 
         $codeRecord = AcrylicOrderItemCode::where('product_id', $codeStr)->first();
         $item = null;
@@ -145,6 +148,9 @@ class EdgeBandingService
     public function completeOrRollback(array $data): array
     {
         $codeStr = trim($data['product_code']);
+        if (str_contains($codeStr, '_')) {
+            $codeStr = explode('_', $codeStr)[0];
+        }
         $notes = $data['notes'] ?? null;
         $length = $data['edge_banding_length'] ?? null;
         $actionType = $data['action_type'] ?? 'complete';

@@ -71,6 +71,12 @@ class QrScanController extends Controller
                 continue;
             }
 
+            // Chuẩn hóa mã tấm: nếu phần mềm nesting Wood xuất mã kèm hậu tố _ (VD: 5213.GV40.TP.016_16) -> chỉ lấy mã tấm trước dấu _
+            $barcode = trim((string) $barcode);
+            if (str_contains($barcode, '_')) {
+                $barcode = explode('_', $barcode)[0];
+            }
+
             $receivedCount++;
 
             // Chuẩn hóa định dạng thời gian

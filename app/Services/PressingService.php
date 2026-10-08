@@ -100,6 +100,9 @@ class PressingService
     public function completeOrRollback(array $data): array
     {
         $codeStr = trim($data['product_code']);
+        if (str_contains($codeStr, '_')) {
+            $codeStr = explode('_', $codeStr)[0];
+        }
         $notes = $data['notes'] ?? null;
         $actionType = $data['action_type'];
         $logTime = now()->toDateTimeString();

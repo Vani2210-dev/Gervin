@@ -296,6 +296,15 @@
     <script>
         let html5QrCode = null;
 
+        function sanitizeProductCode(code) {
+            if (!code) return "";
+            code = code.trim();
+            if (code.includes("_")) {
+                code = code.split("_")[0].trim();
+            }
+            return code;
+        }
+
         function fillTestCode(code) {
             const productCodeInput = document.getElementById("product_code");
             if (productCodeInput) {
@@ -347,6 +356,15 @@
                 
                 toggleSubmitButton();
             });
+
+            // Tự động chuẩn hóa mã khi quét bằng súng quét mã vạch hoặc nhập tay
+            $("#product_code").on("input change blur", function() {
+                const val = $(this).val();
+                const sanitized = sanitizeProductCode(val);
+                if (val !== sanitized) {
+                    $(this).val(sanitized);
+                }
+            });
         });
 
         function startScanning() {
@@ -359,7 +377,7 @@
                     qrbox: { width: 250, height: 250 }
                 },
                 (decodedText, decodedResult) => {
-                    document.getElementById("product_code").value = decodedText;
+                    document.getElementById("product_code").value = sanitizeProductCode(decodedText);
                     toggleSubmitButton();
                     stopScanning();
                     // Play a beep sound on success
@@ -437,7 +455,9 @@
             e.preventDefault();
             
             const submitBtn = document.getElementById("submitBtn");
-            const code = document.getElementById("product_code").value.trim();
+            const codeInput = document.getElementById("product_code");
+            const code = sanitizeProductCode(codeInput.value);
+            codeInput.value = code;
             const notesValue = document.getElementById("notes").value.trim();
             const actionType = document.getElementById("action_type").value;
             

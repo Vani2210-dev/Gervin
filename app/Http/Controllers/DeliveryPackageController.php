@@ -287,6 +287,11 @@ class DeliveryPackageController extends Controller
             return null;
         }
 
+        // Nếu mã quét có đuôi _... từ phần mềm nesting Wood (VD: 5213.GV40.TP.016_16) -> chỉ lấy mã tấm trước dấu _
+        if (str_contains($code, '_') && !preg_match('/^PK[-_]?\d+$/i', $code)) {
+            $code = explode('_', $code)[0];
+        }
+
         // 1. Kiểm tra ID hoặc mã dạng PK1, PK001
         $idCandidate = $code;
         if (preg_match('/^PK[-_]?(\d+)$/i', $code, $m)) {

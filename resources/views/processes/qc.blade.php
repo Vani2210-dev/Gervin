@@ -432,6 +432,25 @@
     <script>
         let html5QrCode = null;
 
+        function sanitizeProductCode(code) {
+            if (!code) return "";
+            code = code.trim();
+            if (code.includes("_")) {
+                code = code.split("_")[0].trim();
+            }
+            return code;
+        }
+
+        $(document).ready(function() {
+            $("#product_code").on("input change blur", function() {
+                const val = $(this).val();
+                const sanitized = sanitizeProductCode(val);
+                if (val !== sanitized) {
+                    $(this).val(sanitized);
+                }
+            });
+        });
+
         function fillTestCode(code) {
             const productCodeInput = document.getElementById("product_code");
             if (productCodeInput) {
@@ -452,10 +471,11 @@
                     qrbox: { width: 250, height: 250 }
                 },
                 (decodedText, decodedResult) => {
-                    document.getElementById("product_code").value = decodedText;
+                    const cleaned = sanitizeProductCode(decodedText);
+                    document.getElementById("product_code").value = cleaned;
                     toggleSubmitButton();
                     stopScanning();
-                    fetchProductInfo(decodedText);
+                    fetchProductInfo(cleaned);
                     try {
                         let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                         let osc = audioCtx.createOscillator();
@@ -528,7 +548,10 @@
 
         // Fetch product information by code
         function fetchProductInfo(code) {
+            code = sanitizeProductCode(code);
             if (!code) return;
+            const productCodeInput = document.getElementById("product_code");
+            if (productCodeInput) productCodeInput.value = code;
             
             const submitBtn = document.getElementById("submitBtn");
             const originalBtnContent = submitBtn.innerHTML;
@@ -668,7 +691,9 @@
 
         // Submit QC Result
         function submitQCResult() {
-            const code = document.getElementById("product_code").value.trim();
+            const codeInput = document.getElementById("product_code");
+            const code = sanitizeProductCode(codeInput.value);
+            codeInput.value = code;
             const outcome = document.getElementById("selectedOutcome").value;
             const notesInput = document.getElementById("qcNotes").value.trim();
             const saveBtn = document.getElementById("saveQCBtn");
@@ -837,7 +862,9 @@
 
         document.getElementById("qcForm").addEventListener("submit", function (e) {
             e.preventDefault();
-            const code = document.getElementById("product_code").value.trim();
+            const codeInput = document.getElementById("product_code");
+            const code = sanitizeProductCode(codeInput.value);
+            codeInput.value = code;
             if (code) {
                 fetchProductInfo(code);
             }

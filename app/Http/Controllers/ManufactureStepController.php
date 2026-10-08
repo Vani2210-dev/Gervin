@@ -105,7 +105,10 @@ class ManufactureStepController extends Controller
             'cnc_machine' => 'nullable|string',
         ]);
 
-        $res = $this->cncService->completeOrRollback($request->all());
+        $data = $request->all();
+        $data['product_code'] = $this->sanitizeProductCode($data['product_code']);
+
+        $res = $this->cncService->completeOrRollback($data);
 
         return response()->json([
             'success' => $res['success'],
@@ -121,7 +124,8 @@ class ManufactureStepController extends Controller
             'product_code' => 'required|string',
         ]);
 
-        $res = $this->cncService->getProductStatus($request->product_code);
+        $code = $this->sanitizeProductCode($request->product_code);
+        $res = $this->cncService->getProductStatus($code);
 
         return response()->json($res, $res['status_code'] ?? 200);
     }
@@ -150,7 +154,10 @@ class ManufactureStepController extends Controller
             'action_type' => 'required|string|in:làm lệnh ép,xuất kho ván,ép đơn,ép dự trữ,rollback',
         ]);
 
-        $res = $this->pressingService->completeOrRollback($request->all());
+        $data = $request->all();
+        $data['product_code'] = $this->sanitizeProductCode($data['product_code']);
+
+        $res = $this->pressingService->completeOrRollback($data);
 
         return response()->json([
             'success' => $res['success'],
@@ -177,7 +184,10 @@ class ManufactureStepController extends Controller
             'action_type' => 'nullable|string|in:complete,rollback',
         ]);
 
-        $res = $this->edgeBandingService->completeOrRollback($request->all());
+        $data = $request->all();
+        $data['product_code'] = $this->sanitizeProductCode($data['product_code']);
+
+        $res = $this->edgeBandingService->completeOrRollback($data);
 
         return response()->json([
             'success' => $res['success'],
@@ -190,7 +200,8 @@ class ManufactureStepController extends Controller
     public function getEdgeBandingProductStatus(Request $request)
     {
         $request->validate(['product_code' => 'required|string']);
-        $res = $this->edgeBandingService->getProductStatus($request->product_code);
+        $code = $this->sanitizeProductCode($request->product_code);
+        $res = $this->edgeBandingService->getProductStatus($code);
         return response()->json($res, $res['status_code'] ?? 200);
     }
 
@@ -210,7 +221,10 @@ class ManufactureStepController extends Controller
             'action_type' => 'nullable|string|in:complete,rollback',
         ]);
 
-        $res = $this->finishingService->completeOrRollback($request->all());
+        $data = $request->all();
+        $data['product_code'] = $this->sanitizeProductCode($data['product_code']);
+
+        $res = $this->finishingService->completeOrRollback($data);
 
         return response()->json([
             'success' => $res['success'],
@@ -223,7 +237,8 @@ class ManufactureStepController extends Controller
     public function getFinishingProductStatus(Request $request)
     {
         $request->validate(['product_code' => 'required|string']);
-        $res = $this->finishingService->getProductStatus($request->product_code);
+        $code = $this->sanitizeProductCode($request->product_code);
+        $res = $this->finishingService->getProductStatus($code);
         return response()->json($res, $res['status_code'] ?? 200);
     }
 
@@ -244,7 +259,10 @@ class ManufactureStepController extends Controller
             'error_type' => 'nullable|string',
         ]);
 
-        $res = $this->qcService->completeOrRollback($request->all());
+        $data = $request->all();
+        $data['product_code'] = $this->sanitizeProductCode($data['product_code']);
+
+        $res = $this->qcService->completeOrRollback($data);
 
         return response()->json([
             'success' => $res['success'],
@@ -260,7 +278,8 @@ class ManufactureStepController extends Controller
             'product_code' => 'required|string',
         ]);
 
-        $res = $this->qcService->getProductInfo($request->product_code);
+        $code = $this->sanitizeProductCode($request->product_code);
+        $res = $this->qcService->getProductInfo($code);
 
         return response()->json($res, $res['status_code'] ?? 200);
     }
@@ -268,5 +287,18 @@ class ManufactureStepController extends Controller
     public function packing()
     {
         return view('processes.packing');
+    }
+
+    /**
+     * Chuẩn hóa mã tấm: loại bỏ dấu _ và các ký tự sau dấu _ do phần mềm nesting Wood xuất ra
+     * Ví dụ: 5213.GV40.TP.016_16 -> 5213.GV40.TP.016
+     */
+    private function sanitizeProductCode(?string $code): string
+    {
+        $code = trim((string) $code);
+        if (str_contains($code, '_')) {
+            $code = explode('_', $code)[0];
+        }
+        return trim($code);
     }
 }
