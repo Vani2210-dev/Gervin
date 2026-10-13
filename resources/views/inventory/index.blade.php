@@ -190,8 +190,18 @@
                                     </td>
                                     <td class="py-3 px-4">
                                         <div class="font-bold text-neutral-800">{{ $m->name }}</div>
+                                        @if($m->prices->isNotEmpty())
+                                            <div class="flex flex-wrap gap-1 mt-1.5">
+                                                @foreach($m->prices as $p)
+                                                    <span class="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded border {{ $p->stock > 0 ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-neutral-50 text-neutral-400 border-neutral-200' }}" title="{{ $p->code }} - Tồn: {{ number_format($p->stock) }} tấm">
+                                                        <span class="font-semibold text-neutral-600">{{ $p->type?->name ?? $p->code }}:</span>
+                                                        <span class="font-black {{ $p->stock > 0 ? 'text-emerald-700' : 'text-neutral-400' }}">{{ fmod($p->stock, 1) == 0 ? number_format($p->stock, 0, ',', '.') : number_format($p->stock, 2, ',', '.') }}</span>
+                                                    </span>
+                                                @endforeach
+                                            </div>
+                                        @endif
                                         @if($m->notes)
-                                            <div class="text-[11px] text-neutral-400 truncate max-w-xs">{{ $m->notes }}</div>
+                                            <div class="text-[11px] text-neutral-400 truncate max-w-xs mt-1">{{ $m->notes }}</div>
                                         @endif
                                     </td>
                                     <td class="py-3 px-4 text-center text-neutral-600">
@@ -209,18 +219,20 @@
                                         {{ $m->cost_price > 0 ? number_format($m->cost_price, 0, ',', '.') . 'đ' : '-' }}
                                     </td>
                                     <td class="py-3 px-4 text-right">
-                                        <div class="font-black text-sm {{ $m->current_stock <= 0 ? 'text-danger-600' : ($m->current_stock <= $m->min_stock ? 'text-warning-600' : 'text-neutral-900') }}">
-                                            {{ fmod($m->current_stock, 1) == 0 ? number_format($m->current_stock, 0, ',', '.') : number_format($m->current_stock, 2, ',', '.') }}
+                                        @php $totStock = $m->total_stock; @endphp
+                                        <div class="font-black text-sm {{ $totStock <= 0 ? 'text-danger-600' : ($totStock <= $m->min_stock ? 'text-warning-600' : 'text-emerald-700') }}">
+                                            {{ fmod($totStock, 1) == 0 ? number_format($totStock, 0, ',', '.') : number_format($totStock, 2, ',', '.') }}
                                         </div>
-                                        <div class="text-[10px] text-neutral-400">Định mức: {{ number_format($m->min_stock, 0) }}</div>
+                                        <div class="text-[10px] text-neutral-400">Tổng các loại ván</div>
                                     </td>
                                     <td class="py-3 px-4 text-right font-semibold text-neutral-800">
                                         {{ $lineValue > 0 ? number_format($lineValue, 0, ',', '.') . 'đ' : '-' }}
                                     </td>
                                     <td class="py-3 px-4 text-center">
-                                        @if($m->current_stock <= 0)
+                                        @php $totStock = $m->total_stock; @endphp
+                                        @if($totStock <= 0)
                                             <span class="bg-danger-100 text-danger-700 text-[10px] px-2 py-1 rounded-full font-bold inline-block">Hết hàng</span>
-                                        @elseif($m->current_stock <= $m->min_stock)
+                                        @elseif($totStock <= $m->min_stock)
                                             <span class="bg-warning-100 text-warning-800 text-[10px] px-2 py-1 rounded-full font-bold inline-block">Dưới định mức</span>
                                         @else
                                             <span class="bg-success-100 text-success-700 text-[10px] px-2 py-1 rounded-full font-bold inline-block">Còn hàng</span>
@@ -228,6 +240,11 @@
                                     </td>
                                     <td class="py-3 px-4 text-center">
                                         <div class="flex items-center justify-center gap-2">
+                                            <a href="{{ route('wood_boards.index', ['search' => $m->color_code]) }}" 
+                                               class="p-1 text-info-600 hover:text-info-800 text-base" 
+                                               title="Xem trên Bảng giá tấm">
+                                                <iconify-icon icon="solar:grid-bold"></iconify-icon>
+                                            </a>
                                             <button type="button" onclick="openStockCardModal({{ $m->id }})" class="p-1 text-primary-600 hover:text-primary-800 text-base" title="Xem thẻ kho">
                                                 <iconify-icon icon="solar:history-bold"></iconify-icon>
                                             </button>

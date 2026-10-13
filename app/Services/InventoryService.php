@@ -182,44 +182,76 @@ class InventoryService
             $totalAmount = 0;
 
             foreach ($items as $item) {
+                $priceId = $item['wood_board_price_id'] ?? null;
                 $boardId = $item['wood_board_id'] ?? $item['material_id'] ?? null;
-                if (!$boardId) continue;
+
+                $boardPrice = null;
+                if ($priceId) {
+                    $boardPrice = \App\Models\WoodBoardPrice::find($priceId);
+                } elseif ($boardId) {
+                    $maybePrice = \App\Models\WoodBoardPrice::find($boardId);
+                    if ($maybePrice) {
+                        $boardPrice = $maybePrice;
+                        $boardId = $maybePrice->wood_board_id;
+                    }
+                }
+
+                if ($boardPrice) {
+                    $boardId = $boardPrice->wood_board_id;
+                }
+
+                if (!$boardId && !$boardPrice) continue;
 
                 $qty = (float)($item['quantity'] ?? 0);
                 if ($qty <= 0) continue;
 
-                $board = WoodBoard::findOrFail($boardId);
-                $price = (float)($item['unit_price'] ?? $board->cost_price);
+                $board = WoodBoard::find($boardId);
+                $price = (float)($item['unit_price'] ?? ($boardPrice?->price_board ?? $board?->cost_price ?? 0));
                 $lineTotal = $qty * $price;
 
                 InventoryIssueItem::create([
-                    'issue_id' => $issue->id,
-                    'wood_board_id' => $boardId,
-                    'quantity' => $qty,
-                    'unit_price' => $price,
-                    'total_price' => $lineTotal,
-                    'notes' => $item['notes'] ?? null,
+                    'issue_id'            => $issue->id,
+                    'wood_board_id'       => $boardId,
+                    'wood_board_price_id' => $boardPrice?->id,
+                    'quantity'            => $qty,
+                    'unit_price'          => $price,
+                    'total_price'         => $lineTotal,
+                    'notes'               => $item['notes'] ?? null,
                 ]);
 
+                // Update WoodBoardPrice stock
+                $stockAfter = 0;
+                if ($boardPrice) {
+                    $boardPrice->stock = max(0, $boardPrice->stock - $qty);
+                    $boardPrice->save();
+                    $stockAfter = $boardPrice->stock;
+                }
+
                 // Update WoodBoard stock
-                $board->current_stock -= $qty;
-                $board->save();
+                if ($board) {
+                    $board->current_stock = $board->prices()->sum('stock') ?: max(0, $board->current_stock - $qty);
+                    $board->save();
+                    if (!$boardPrice) {
+                        $stockAfter = $board->current_stock;
+                    }
+                }
 
                 // Create stock transaction
                 InventoryTransaction::create([
-                    'warehouse_id' => $warehouse->id,
-                    'wood_board_id' => $board->id,
-                    'date' => $date,
-                    'type' => 'issue',
-                    'voucher_code' => $code,
-                    'reference_id' => $issue->id,
-                    'reference_type' => InventoryIssue::class,
-                    'in_qty' => 0,
-                    'out_qty' => $qty,
-                    'stock_after' => $board->current_stock,
-                    'unit_price' => $price,
-                    'notes' => $data['notes'] ?? ('Xuất kho theo phiếu ' . $code),
-                    'created_by' => $userId,
+                    'warehouse_id'        => $warehouse->id,
+                    'wood_board_id'       => $boardId,
+                    'wood_board_price_id' => $boardPrice?->id,
+                    'date'                => $date,
+                    'type'                => 'issue',
+                    'voucher_code'        => $code,
+                    'reference_id'        => $issue->id,
+                    'reference_type'      => InventoryIssue::class,
+                    'in_qty'              => 0,
+                    'out_qty'             => $qty,
+                    'stock_after'         => $stockAfter,
+                    'unit_price'          => $price,
+                    'notes'               => $data['notes'] ?? ('Xuất kho theo phiếu ' . $code),
+                    'created_by'          => $userId,
                 ]);
 
                 $totalQty += $qty;
@@ -261,20 +293,38 @@ class InventoryService
             $totalDiff = 0;
 
             foreach ($items as $item) {
+                $priceId = $item['wood_board_price_id'] ?? null;
                 $boardId = $item['wood_board_id'] ?? $item['material_id'] ?? null;
-                if (!$boardId) continue;
 
-                $bookQty = (float)($item['book_quantity'] ?? 0);
+                $boardPrice = null;
+                if ($priceId) {
+                    $boardPrice = \App\Models\WoodBoardPrice::find($priceId);
+                } elseif ($boardId) {
+                    $maybePrice = \App\Models\WoodBoardPrice::find($boardId);
+                    if ($maybePrice) {
+                        $boardPrice = $maybePrice;
+                        $boardId = $maybePrice->wood_board_id;
+                    }
+                }
+
+                if ($boardPrice) {
+                    $boardId = $boardPrice->wood_board_id;
+                }
+
+                if (!$boardId && !$boardPrice) continue;
+
+                $bookQty = (float)($item['book_quantity'] ?? ($boardPrice?->stock ?? 0));
                 $actualQty = (float)($item['actual_quantity'] ?? $bookQty);
                 $diff = $actualQty - $bookQty;
 
                 InventoryStocktakeItem::create([
-                    'stocktake_id' => $stocktake->id,
-                    'wood_board_id' => $boardId,
-                    'book_quantity' => $bookQty,
-                    'actual_quantity' => $actualQty,
-                    'difference' => $diff,
-                    'reason' => $item['reason'] ?? null,
+                    'stocktake_id'        => $stocktake->id,
+                    'wood_board_id'       => $boardId,
+                    'wood_board_price_id' => $boardPrice?->id,
+                    'book_quantity'       => $bookQty,
+                    'actual_quantity'     => $actualQty,
+                    'difference'          => $diff,
+                    'reason'              => $item['reason'] ?? ($item['notes'] ?? null),
                 ]);
 
                 $totalBook += $bookQty;
@@ -302,27 +352,41 @@ class InventoryService
         DB::transaction(function () use ($stocktake, $userId) {
             foreach ($stocktake->items as $item) {
                 $board = $item->woodBoard;
-                if (!$board) continue;
+                $boardPrice = $item->wood_board_price_id ? \App\Models\WoodBoardPrice::find($item->wood_board_price_id) : null;
+                if (!$board && !$boardPrice) continue;
 
                 $diff = $item->difference;
                 if ($diff != 0) {
-                    $board->current_stock = $item->actual_quantity;
-                    $board->save();
+                    $stockAfter = 0;
+                    if ($boardPrice) {
+                        $boardPrice->stock = $item->actual_quantity;
+                        $boardPrice->save();
+                        $stockAfter = $boardPrice->stock;
+                    }
+
+                    if ($board) {
+                        $board->current_stock = $board->prices()->sum('stock') ?: $item->actual_quantity;
+                        $board->save();
+                        if (!$boardPrice) {
+                            $stockAfter = $board->current_stock;
+                        }
+                    }
 
                     InventoryTransaction::create([
-                        'warehouse_id' => $stocktake->warehouse_id,
-                        'wood_board_id' => $board->id,
-                        'date' => $stocktake->date,
-                        'type' => 'stocktake',
-                        'voucher_code' => $stocktake->code,
-                        'reference_id' => $stocktake->id,
-                        'reference_type' => InventoryStocktake::class,
-                        'in_qty' => $diff > 0 ? $diff : 0,
-                        'out_qty' => $diff < 0 ? abs($diff) : 0,
-                        'stock_after' => $board->current_stock,
-                        'unit_price' => $board->cost_price,
-                        'notes' => 'Cân bằng kho sau kiểm kê ' . $stocktake->code . ($item->reason ? (' (' . $item->reason . ')') : ''),
-                        'created_by' => $userId,
+                        'warehouse_id'        => $stocktake->warehouse_id,
+                        'wood_board_id'       => $board?->id ?? $boardPrice?->wood_board_id,
+                        'wood_board_price_id' => $boardPrice?->id,
+                        'date'                => $stocktake->date,
+                        'type'                => 'stocktake',
+                        'voucher_code'        => $stocktake->code,
+                        'reference_id'        => $stocktake->id,
+                        'reference_type'      => InventoryStocktake::class,
+                        'in_qty'              => $diff > 0 ? $diff : 0,
+                        'out_qty'             => $diff < 0 ? abs($diff) : 0,
+                        'stock_after'         => $stockAfter,
+                        'unit_price'          => $boardPrice?->price_board ?? $board?->cost_price ?? 0,
+                        'notes'               => 'Cân bằng kho sau kiểm kê ' . $stocktake->code . ($item->reason ? (' (' . $item->reason . ')') : ''),
+                        'created_by'          => $userId,
                     ]);
                 }
             }
@@ -347,12 +411,22 @@ class InventoryService
             if ($receipt->status === 'completed') {
                 foreach ($receipt->items as $item) {
                     $qty = (float)($item->quantity ?? 0);
-                    if ($qty <= 0 || !$item->wood_board_id) continue;
+                    if ($qty <= 0) continue;
 
-                    $board = WoodBoard::find($item->wood_board_id);
-                    if ($board) {
-                        $board->current_stock = max(0, (float)$board->current_stock - $qty);
-                        $board->save();
+                    if ($item->wood_board_price_id) {
+                        $boardPrice = \App\Models\WoodBoardPrice::find($item->wood_board_price_id);
+                        if ($boardPrice) {
+                            $boardPrice->stock = max(0, (float)$boardPrice->stock - $qty);
+                            $boardPrice->save();
+                        }
+                    }
+
+                    if ($item->wood_board_id) {
+                        $board = WoodBoard::find($item->wood_board_id);
+                        if ($board) {
+                            $board->current_stock = $board->prices()->sum('stock') ?: max(0, (float)$board->current_stock - $qty);
+                            $board->save();
+                        }
                     }
                 }
             }
@@ -382,12 +456,22 @@ class InventoryService
             if ($issue->status === 'completed') {
                 foreach ($issue->items as $item) {
                     $qty = (float)($item->quantity ?? 0);
-                    if ($qty <= 0 || !$item->wood_board_id) continue;
+                    if ($qty <= 0) continue;
 
-                    $board = WoodBoard::find($item->wood_board_id);
-                    if ($board) {
-                        $board->current_stock = (float)$board->current_stock + $qty;
-                        $board->save();
+                    if ($item->wood_board_price_id) {
+                        $boardPrice = \App\Models\WoodBoardPrice::find($item->wood_board_price_id);
+                        if ($boardPrice) {
+                            $boardPrice->stock = (float)$boardPrice->stock + $qty;
+                            $boardPrice->save();
+                        }
+                    }
+
+                    if ($item->wood_board_id) {
+                        $board = WoodBoard::find($item->wood_board_id);
+                        if ($board) {
+                            $board->current_stock = $board->prices()->sum('stock') ?: ((float)$board->current_stock + $qty);
+                            $board->save();
+                        }
                     }
                 }
             }
@@ -671,11 +755,36 @@ class InventoryService
                 }
             }
 
-            // Save final running stock to each board
+            // Save final running stock to each board and ensure wood_board_prices exist
+            $boardTypes = \App\Models\WoodBoardType::orderBy('display_order')->get();
+            $primaryType = $boardTypes->first();
+
             foreach ($items as $code => $info) {
                 $b = $info['board'];
                 $b->current_stock = $info['running_stock'];
                 $b->save();
+
+                foreach ($boardTypes as $bt) {
+                    $computedCode = $b->color_code . ($bt->prefix ?? '');
+                    $p = \App\Models\WoodBoardPrice::firstOrCreate(
+                        [
+                            'wood_board_id'      => $b->id,
+                            'wood_board_type_id' => $bt->id,
+                        ],
+                        [
+                            'code'        => $computedCode,
+                            'name'        => $bt->name,
+                            'thickness'   => '17mm',
+                            'price_board' => 0,
+                            'price_m2'    => 0,
+                            'stock'       => ($bt->id === $primaryType?->id) ? $info['running_stock'] : 0,
+                        ]
+                    );
+
+                    if ($bt->id === $primaryType?->id && $p->stock == 0 && $info['running_stock'] > 0) {
+                        $p->update(['stock' => $info['running_stock']]);
+                    }
+                }
             }
 
             return $warehouse;

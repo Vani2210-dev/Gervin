@@ -70,7 +70,7 @@ class InventoryController extends Controller
         $stockFilter = $request->input('stock_filter', 'all'); // 'all', 'low_stock', 'out_of_stock', 'in_stock'
         $search = trim((string)$request->input('search'));
 
-        $query = WoodBoard::with('warehouse');
+        $query = WoodBoard::with(['warehouse', 'prices.type']);
 
         // Smart Date Filter handling
         $dateFilterData = [];
@@ -109,7 +109,11 @@ class InventoryController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('color_code', 'like', "%{$search}%")
                   ->orWhere('origin_code', 'like', "%{$search}%")
-                  ->orWhere('price_group', 'like', "%{$search}%");
+                  ->orWhere('price_group', 'like', "%{$search}%")
+                  ->orWhereHas('prices', function ($subQ) use ($search) {
+                      $subQ->where('code', 'like', "%{$search}%")
+                           ->orWhere('name', 'like', "%{$search}%");
+                  });
             });
         }
 
@@ -117,8 +121,9 @@ class InventoryController extends Controller
 
         // Summary KPIs
         $totalItems = WoodBoard::count();
-        $totalStockQty = WoodBoard::sum('current_stock');
-        $totalStockValue = WoodBoard::selectRaw('SUM(current_stock * cost_price) as val')->value('val') ?? 0;
+        $totalStockQty = (float)(\App\Models\WoodBoardPrice::sum('stock') ?: WoodBoard::sum('current_stock'));
+        $totalStockValue = (float)(\App\Models\WoodBoardPrice::selectRaw('SUM(stock * price_board) as val')->value('val')
+            ?: WoodBoard::selectRaw('SUM(current_stock * cost_price) as val')->value('val') ?? 0);
         $lowStockCount = WoodBoard::where(function ($q) {
             $q->whereColumn('current_stock', '<=', 'min_stock')->orWhere('current_stock', '<=', 0);
         })->count();
@@ -383,7 +388,7 @@ class InventoryController extends Controller
     public function createReceipt(Request $request)
     {
         $warehouses = Warehouse::orderBy('name')->get();
-        $materials = WoodBoard::where('status', 'active')->orderBy('price_group')->orderBy('color_code')->get();
+        $materials = $this->getSelectableMaterials();
         $nextCode = $this->inventoryService->generateCode('PNK', 'inventory_receipts');
 
         return view('inventory.receipts.create', compact('warehouses', 'materials', 'nextCode'));
@@ -392,12 +397,12 @@ class InventoryController extends Controller
     public function storeReceipt(Request $request)
     {
         $request->validate([
-            'warehouse_id' => 'required|exists:warehouses,id',
-            'date' => 'required|date',
-            'items' => 'required|array|min:1',
-            'items.*.material_id' => 'required|exists:wood_boards,id',
-            'items.*.quantity' => 'required|numeric|min:0.01',
-            'items.*.unit_price' => 'nullable|numeric|min:0',
+            'warehouse_id'        => 'required|exists:warehouses,id',
+            'date'                => 'required|date',
+            'items'               => 'required|array|min:1',
+            'items.*.material_id' => 'required',
+            'items.*.quantity'    => 'required|numeric|min:0.01',
+            'items.*.unit_price'  => 'nullable|numeric|min:0',
         ]);
 
         $warehouse = Warehouse::findOrFail($request->warehouse_id);
@@ -414,13 +419,13 @@ class InventoryController extends Controller
 
     public function showReceipt(InventoryReceipt $receipt)
     {
-        $receipt->load(['warehouse', 'creator', 'items.woodBoard']);
+        $receipt->load(['warehouse', 'creator', 'items.woodBoard', 'items.boardPrice.type']);
         return view('inventory.receipts.show', compact('receipt'));
     }
 
     public function printReceipt(InventoryReceipt $receipt)
     {
-        $receipt->load(['warehouse', 'creator', 'items.woodBoard']);
+        $receipt->load(['warehouse', 'creator', 'items.woodBoard', 'items.boardPrice.type']);
         return view('inventory.receipts.print', compact('receipt'));
     }
 
@@ -456,7 +461,7 @@ class InventoryController extends Controller
     public function createIssue(Request $request)
     {
         $warehouses = Warehouse::orderBy('name')->get();
-        $materials = WoodBoard::where('status', 'active')->orderBy('price_group')->orderBy('color_code')->get();
+        $materials = $this->getSelectableMaterials();
         $nextCode = $this->inventoryService->generateCode('PXK', 'inventory_issues');
 
         return view('inventory.issues.create', compact('warehouses', 'materials', 'nextCode'));
@@ -465,11 +470,11 @@ class InventoryController extends Controller
     public function storeIssue(Request $request)
     {
         $request->validate([
-            'warehouse_id' => 'required|exists:warehouses,id',
-            'date' => 'required|date',
-            'items' => 'required|array|min:1',
-            'items.*.material_id' => 'required|exists:wood_boards,id',
-            'items.*.quantity' => 'required|numeric|min:0.01',
+            'warehouse_id'        => 'required|exists:warehouses,id',
+            'date'                => 'required|date',
+            'items'               => 'required|array|min:1',
+            'items.*.material_id' => 'required',
+            'items.*.quantity'    => 'required|numeric|min:0.01',
         ]);
 
         $warehouse = Warehouse::findOrFail($request->warehouse_id);
@@ -486,13 +491,13 @@ class InventoryController extends Controller
 
     public function showIssue(InventoryIssue $issue)
     {
-        $issue->load(['warehouse', 'creator', 'items.woodBoard']);
+        $issue->load(['warehouse', 'creator', 'items.woodBoard', 'items.boardPrice.type']);
         return view('inventory.issues.show', compact('issue'));
     }
 
     public function printIssue(InventoryIssue $issue)
     {
-        $issue->load(['warehouse', 'creator', 'items.woodBoard']);
+        $issue->load(['warehouse', 'creator', 'items.woodBoard', 'items.boardPrice.type']);
         return view('inventory.issues.print', compact('issue'));
     }
 
@@ -531,11 +536,7 @@ class InventoryController extends Controller
             $warehouse = Warehouse::create(['name' => 'Kho Chính', 'code' => 'KHO-CHINH']);
         }
 
-        $materials = WoodBoard::where('status', 'active')
-            ->orderBy('price_group')
-            ->orderBy('color_code')
-            ->get();
-
+        $materials = $this->getSelectableMaterials();
         $nextCode = $this->inventoryService->generateCode('PKK', 'inventory_stocktakes');
 
         return view('inventory.stocktakes.create', compact('warehouse', 'materials', 'nextCode'));
@@ -544,11 +545,11 @@ class InventoryController extends Controller
     public function storeStocktake(Request $request)
     {
         $request->validate([
-            'warehouse_id' => 'required|exists:warehouses,id',
-            'date' => 'required|date',
-            'items' => 'required|array|min:1',
-            'items.*.material_id' => 'required|exists:wood_boards,id',
-            'items.*.book_quantity' => 'required|numeric',
+            'warehouse_id'            => 'required|exists:warehouses,id',
+            'date'                    => 'required|date',
+            'items'                   => 'required|array|min:1',
+            'items.*.material_id'     => 'required',
+            'items.*.book_quantity'   => 'required|numeric',
             'items.*.actual_quantity' => 'required|numeric|min:0',
         ]);
 
@@ -571,8 +572,42 @@ class InventoryController extends Controller
 
     public function showStocktake(InventoryStocktake $stocktake)
     {
-        $stocktake->load(['warehouse', 'balancedByUser', 'items.woodBoard']);
+        $stocktake->load(['warehouse', 'balancedByUser', 'items.woodBoard', 'items.boardPrice.type']);
         return view('inventory.stocktakes.show', compact('stocktake'));
+    }
+
+    /**
+     * Lấy danh sách mặt hàng có thể chọn (WoodBoardPrice kết hợp WoodBoard)
+     */
+    private function getSelectableMaterials()
+    {
+        $prices = \App\Models\WoodBoardPrice::with(['board', 'type'])
+            ->whereHas('board', function($q) { $q->where('status', 'active'); })
+            ->orderBy('code')
+            ->get();
+
+        if ($prices->isEmpty()) {
+            return WoodBoard::where('status', 'active')->orderBy('price_group')->orderBy('color_code')->get();
+        }
+
+        return $prices->map(function ($p) {
+            $typeName = $p->type?->name ?? '';
+            $color = $p->board?->color_code ?? '';
+            $group = $p->board?->price_group ?? '';
+            return (object)[
+                'id'                  => $p->id,
+                'wood_board_id'       => $p->wood_board_id,
+                'wood_board_price_id' => $p->id,
+                'code'                => $p->code,
+                'name'                => ($p->name ?: $typeName) . ($color ? " (Màu {$color})" : ''),
+                'origin_code'         => $p->board?->origin_code ?? '',
+                'category'            => $group ?: $typeName,
+                'unit'                => 'Tấm',
+                'cost_price'          => (float)($p->price_board ?: 0),
+                'current_stock'       => (float)($p->stock ?: 0),
+                'thickness'           => $p->thickness ?: '17mm',
+            ];
+        });
     }
 
     public function balanceStocktake(InventoryStocktake $stocktake)
