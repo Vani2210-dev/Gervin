@@ -363,44 +363,20 @@
                         <div class="overflow-x-auto">
                             @if(in_array($acrylicOrder->type, ['min_late', 'Flywood']))
                                 {{-- Min Late items - expand to individual sheets with status --}}
-                                <table class="table bordered-table sm-table mb-0 min-w-[1900px]">
+                                <table class="table bordered-table sm-table mb-0 w-full text-xs">
                                     <thead>
                                         <tr>
-                                            <th scope="col" class="w-10 text-center">STT</th>
-                                            <th scope="col" class="w-32">Mã tấm</th>
-                                            <th scope="col" class="w-64">Tên SP</th>
-                                            <th scope="col" class="w-20">Độ dày</th>
-                                            <th scope="col" class="w-20">Cao</th>
-                                            <th scope="col" class="w-20">Rộng</th>
-                                            <th scope="col" class="w-20">SL</th>
-                                            <th scope="col" class="w-24">Vát</th>
-                                            <th scope="col" class="w-28">Dán cạnh</th>
-                                            <th scope="col" class="w-24">Dán thẳng</th>
-                                            <th scope="col" class="w-24">Dán vát</th>
-                                            <th scope="col" class="w-24">Vát mòi</th>
-                                            <th scope="col" class="w-28">Bản rộng 40-59</th>
-                                            <th scope="col" class="w-28">Bản rộng 17-39</th>
-                                            <th scope="col" class="w-28">Bản rộng 25-35</th>
-                                            <th scope="col" class="w-28">Tay nắm vát</th>
-                                            <th scope="col" class="w-20 text-center">CNC</th>
-                                            <th scope="col" class="w-24">Chiều vân</th>
-                                            <th scope="col" class="w-36">Giai đoạn</th>
-                                            <th scope="col" class="w-28">Người thực hiện</th>
-                                            <th scope="col" class="w-44">Ghi chú</th>
+                                            <th scope="col" class="w-14 text-center">STT</th>
+                                            <th scope="col" class="w-60 text-left">Mã tấm</th>
+                                            <th scope="col" class="w-44 text-center">Giai đoạn</th>
+                                            <th scope="col" class="w-48 text-left">Người thực hiện</th>
+                                            <th scope="col" class="text-left">Ghi chú</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @php $globalMinLateIndex = 0; @endphp
                                         @forelse($supply->minLateItems as $item)
                                             @php
-                                                $sizes = $item->size ?? [];
-                                                if (is_string($sizes)) {
-                                                    $sizes = json_decode($sizes, true) ?? [];
-                                                }
-                                                $edgeGluing = $item->edge_gluing ?? [];
-                                                if (is_string($edgeGluing)) {
-                                                    $edgeGluing = json_decode($edgeGluing, true) ?? [];
-                                                }
                                                 $codes = $item->codes;
                                                 $hasAnyCode = $codes->count() > 0;
                                                 $rowCount = $hasAnyCode ? $codes->count() : 1;
@@ -423,59 +399,29 @@
                                                     ];
                                                     $actionColor = $actionColors[mb_strtolower($currentAction)] ?? 'bg-primary-50 text-primary-600';
                                                 @endphp
-                                                <tr class="{{ $sheetIdx === 0 ? 'border-t-2 border-neutral-200' : '' }}">
+                                                <tr>
                                                     <td class="text-center font-semibold text-neutral-500">{{ $globalMinLateIndex }}</td>
-                                                    <td><span class="text-neutral-500 text-xs font-mono">{{ $productId }}</span></td>
-                                                    @if($sheetIdx === 0)
-                                                        <td rowspan="{{ $rowCount }}" class="font-medium text-neutral-800 align-top pt-3">{{ $item->name }}</td>
-                                                        <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->thickness ?? '—' }}</td>
-                                                        <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $sizes['height'] ?? '—' }}</td>
-                                                        <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $sizes['width'] ?? '—' }}</td>
-                                                        <td rowspan="{{ $rowCount }}" class="align-top pt-3 font-medium">{{ $item->quantity }}</td>
-                                                        <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->bevel ?? '—' }}</td>
-                                                        <td rowspan="{{ $rowCount }}" class="align-top pt-3">
-                                                            @if(!empty($edgeGluing))
-                                                                <span class="text-xs bg-neutral-100 px-2 py-0.5 rounded text-neutral-600">{{ implode(', ', $edgeGluing) }}</span>
-                                                            @else
-                                                                —
-                                                            @endif
-                                                        </td>
-                                                        <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->straight_paste_length ?? '—' }}</td>
-                                                        <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->beveled_length ?? '—' }}</td>
-                                                        <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->vat_moi_length ?? '—' }}</td>
-                                                        <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->ban_rong_40_59 ?? '—' }}</td>
-                                                        <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->call_rong_17_39 ?? $item->ban_rong_17_39 ?? '—' }}</td>
-                                                        <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->ban_rong_25_35 ?? '—' }}</td>
-                                                        <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->beveled_handle ?? '—' }}</td>
-                                                        <td rowspan="{{ $rowCount }}" class="text-center align-top pt-3">
-                                                            @if($item->cnc)
-                                                                <iconify-icon icon="lucide:check-circle" class="text-success-500 text-lg"></iconify-icon>
-                                                            @else
-                                                                —
-                                                            @endif
-                                                        </td>
-                                                        <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->direction ?? '—' }}</td>
-                                                    @endif
-                                                    <td>
+                                                    <td><span class="text-neutral-700 text-xs font-mono font-medium">{{ $productId }}</span></td>
+                                                    <td class="text-center">
                                                         @if($currentAction !== '—')
-                                                            <span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold {{ $actionColor }}">
+                                                            <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold {{ $actionColor }}">
                                                                 {{ $currentAction }}
                                                             </span>
                                                         @else
                                                             <span class="text-neutral-400 text-xs">—</span>
                                                         @endif
                                                     </td>
-                                                    <td>
-                                                        <span class="text-neutral-600 text-xs">{{ $currentOperator }}</span>
+                                                    <td class="text-xs text-neutral-600">
+                                                        {{ $currentOperator !== '—' ? $currentOperator : '—' }}
                                                     </td>
-                                                    @if($sheetIdx === 0)
-                                                        <td rowspan="{{ $rowCount }}" class="align-top pt-3"><span class="text-neutral-500 text-xs">{{ $item->notes ?? '—' }}</span></td>
-                                                    @endif
+                                                    <td class="text-xs text-neutral-500">
+                                                        {{ $item->notes ?? '—' }}
+                                                    </td>
                                                 </tr>
                                             @endfor
                                         @empty
                                             <tr>
-                                                <td colspan="21" class="text-center text-neutral-400 py-4">Chưa có sản phẩm nào</td>
+                                                <td colspan="5" class="text-center text-neutral-400 py-4">Chưa có sản phẩm nào</td>
                                             </tr>
                                         @endforelse
                                     </tbody>
@@ -520,26 +466,14 @@
                                     </table>
                                 @else
                                     {{-- Glass items - expand to individual sheets with status --}}
-                                    <table class="table bordered-table sm-table mb-0 min-w-[1800px]">
+                                    <table class="table bordered-table sm-table mb-0 w-full text-xs">
                                         <thead>
                                             <tr>
-                                                <th scope="col" class="w-10 text-center">STT</th>
-                                                <th scope="col" class="w-32">Mã cánh</th>
-                                                <th scope="col" class="w-64">Tên SP</th>
-                                                <th scope="col" class="w-20">Độ dày</th>
-                                                <th scope="col" class="w-28">Chiều mở cánh</th>
-                                                <th scope="col" class="w-28">Màu nhôm</th>
-                                                <th scope="col" class="w-28">Màu kính</th>
-                                                <th scope="col" class="w-20">Dài</th>
-                                                <th scope="col" class="w-20">Rộng</th>
-                                                <th scope="col" class="w-20">Đơn vị</th>
-                                                <th scope="col" class="w-24">SL cánh</th>
-                                                <th scope="col" class="w-28">Khối lượng (m2)</th>
-                                                <th scope="col" class="w-28 text-end">Đơn giá</th>
-                                                <th scope="col" class="w-28 text-end">Thành tiền</th>
-                                                <th scope="col" class="w-36">Giai đoạn</th>
-                                                <th scope="col" class="w-28">Người thực hiện</th>
-                                                <th scope="col" class="w-44">Ghi chú</th>
+                                                <th scope="col" class="w-14 text-center">STT</th>
+                                                <th scope="col" class="w-60 text-left">Mã cánh</th>
+                                                <th scope="col" class="w-44 text-center">Giai đoạn</th>
+                                                <th scope="col" class="w-48 text-left">Người thực hiện</th>
+                                                <th scope="col" class="text-left">Ghi chú</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -568,45 +502,29 @@
                                                         ];
                                                         $actionColor = $actionColors[mb_strtolower($currentAction)] ?? 'bg-primary-50 text-primary-600';
                                                     @endphp
-                                                    <tr class="{{ $sheetIdx === 0 ? 'border-t-2 border-neutral-200' : '' }}">
+                                                    <tr>
                                                         <td class="text-center font-semibold text-neutral-500">{{ $globalGlassIndex }}</td>
-                                                        <td><span class="text-neutral-500 text-xs font-mono">{{ $productId }}</span></td>
-                                                        @if($sheetIdx === 0)
-                                                            <td rowspan="{{ $rowCount }}" class="font-medium text-neutral-800 align-top pt-3">{{ $item->product_name }}</td>
-                                                            <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->thickness ?? '—' }}</td>
-                                                            <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->wing_opening_direction ?? '—' }}</td>
-                                                            <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->aluminum_color ?? '—' }}</td>
-                                                            <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->glass_color ?? '—' }}</td>
-                                                            <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->height ?? '—' }}</td>
-                                                            <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->width ?? '—' }}</td>
-                                                            <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->unit ?? 'Bộ' }}</td>
-                                                            <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->wing_quantity }}</td>
-                                                            <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->area_m2 ?? '—' }}</td>
-                                                            <td rowspan="{{ $rowCount }}" class="text-end font-medium text-neutral-600 align-top pt-3">
-                                                                {{ number_format($item->unit_price, 0, ',', '.') }}</td>
-                                                            <td rowspan="{{ $rowCount }}" class="text-end font-semibold text-neutral-800 align-top pt-3">
-                                                                {{ number_format($item->total_price, 0, ',', '.') }}</td>
-                                                        @endif
-                                                        <td>
+                                                        <td><span class="text-neutral-700 text-xs font-mono font-medium">{{ $productId }}</span></td>
+                                                        <td class="text-center">
                                                             @if($currentAction !== '—')
-                                                                <span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold {{ $actionColor }}">
+                                                                <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold {{ $actionColor }}">
                                                                     {{ $currentAction }}
                                                                 </span>
                                                             @else
                                                                 <span class="text-neutral-400 text-xs">—</span>
                                                             @endif
                                                         </td>
-                                                        <td>
-                                                            <span class="text-neutral-600 text-xs">{{ $currentOperator }}</span>
+                                                        <td class="text-xs text-neutral-600">
+                                                            {{ $currentOperator !== '—' ? $currentOperator : '—' }}
                                                         </td>
-                                                        @if($sheetIdx === 0)
-                                                            <td rowspan="{{ $rowCount }}" class="align-top pt-3"><span class="text-neutral-500 text-xs">{{ $item->notes ?? '—' }}</span></td>
-                                                        @endif
+                                                        <td class="text-xs text-neutral-500">
+                                                            {{ $item->notes ?? '—' }}
+                                                        </td>
                                                     </tr>
                                                 @endfor
                                             @empty
                                                 <tr>
-                                                    <td colspan="17" class="text-center text-neutral-400 py-4">Chưa có sản phẩm nào</td>
+                                                    <td colspan="5" class="text-center text-neutral-400 py-4">Chưa có sản phẩm nào</td>
                                                 </tr>
                                             @endforelse
                                         </tbody>
@@ -614,27 +532,14 @@
                                 @endif
                             @else
                                 {{-- Acrylic items - expand to individual sheets with status --}}
-                                <table class="table bordered-table sm-table mb-0 min-w-[1700px]">
+                                <table class="table bordered-table sm-table mb-0 w-full text-xs">
                                     <thead>
                                         <tr>
-                                            <th scope="col" class="w-10 text-center">STT</th>
-                                            <th scope="col" class="w-32">Mã tấm</th>
-                                            <th scope="col" class="w-64">Tên SP</th>
-                                            <th scope="col" class="w-20">Độ dày</th>
-                                            <th scope="col" class="w-20">Cao</th>
-                                            <th scope="col" class="w-20">Rộng</th>
-                                            <th scope="col" class="w-20">SL</th>
-                                            <th scope="col" class="w-24">Vát</th>
-                                            <th scope="col" class="w-24">Chiều vân</th>
-                                            <th scope="col" class="w-24">Cánh (m2)</th>
-                                            <th scope="col" class="w-24">Phào (m)</th>
-                                            <th scope="col" class="w-24">Cạnh Vát</th>
-                                            <th scope="col" class="w-28">Vân dọc CNC</th>
-                                            <th scope="col" class="w-28 text-end">Đơn giá</th>
-                                            <th scope="col" class="w-28 text-end">Thành tiền</th>
-                                            <th scope="col" class="w-36">Giai đoạn</th>
-                                            <th scope="col" class="w-28">Người thực hiện</th>
-                                            <th scope="col" class="w-44">Ghi chú</th>
+                                            <th scope="col" class="w-14 text-center">STT</th>
+                                            <th scope="col" class="w-60 text-left">Mã tấm</th>
+                                            <th scope="col" class="w-44 text-center">Giai đoạn</th>
+                                            <th scope="col" class="w-48 text-left">Người thực hiện</th>
+                                            <th scope="col" class="text-left">Ghi chú</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -663,53 +568,29 @@
                                                     ];
                                                     $actionColor = $actionColors[mb_strtolower($currentAction)] ?? 'bg-primary-50 text-primary-600';
                                                 @endphp
-                                                <tr class="{{ $sheetIdx === 0 ? 'border-t-2 border-neutral-200' : '' }}">
+                                                <tr>
                                                     <td class="text-center font-semibold text-neutral-500">{{ $globalSheetIndex }}</td>
-                                                    <td><span class="text-neutral-500 text-xs font-mono">{{ $productId }}</span></td>
-                                                    @if($sheetIdx === 0)
-                                                        <td rowspan="{{ $rowCount }}" class="font-medium text-neutral-800 align-top pt-3">
-                                                            {{ $item->product_name }}</td>
-                                                        <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->thickness ?? '—' }}</td>
-                                                        <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->height ?? '—' }}</td>
-                                                        <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->width ?? '—' }}</td>
-                                                        <td rowspan="{{ $rowCount }}" class="align-top pt-3 font-medium">{{ floatval($item->quantity) == intval($item->quantity) ? number_format($item->quantity, 0, ',', '.') : number_format($item->quantity, 2, ',', '.') }}</td>
-                                                        <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->bevel ?? '—' }}</td>
-                                                        <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->grain_direction ?? '0' }}
-                                                        </td>
-                                                        <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->wing_area ?? '—' }}</td>
-                                                        <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->molding_length ?? '—' }}
-                                                        </td>
-                                                        <td rowspan="{{ $rowCount }}" class="align-top pt-3">{{ $item->edge_bevel ?? '—' }}</td>
-                                                        <td rowspan="{{ $rowCount }}" class="align-top pt-3">
-                                                            {{ $item->vertical_grain_cnc ?? '—' }}</td>
-                                                        <td rowspan="{{ $rowCount }}"
-                                                            class="text-end font-medium text-neutral-600 align-top pt-3">
-                                                            {{ number_format($item->unit_price, 0, ',', '.') }}</td>
-                                                        <td rowspan="{{ $rowCount }}"
-                                                            class="text-end font-semibold text-neutral-800 align-top pt-3">
-                                                            {{ number_format($item->total_price, 0, ',', '.') }}</td>
-                                                    @endif
-                                                    <td>
+                                                    <td><span class="text-neutral-700 text-xs font-mono font-medium">{{ $productId }}</span></td>
+                                                    <td class="text-center">
                                                         @if($currentAction !== '—')
-                                                            <span
-                                                                class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold {{ $actionColor }}">
+                                                            <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold {{ $actionColor }}">
                                                                 {{ $currentAction }}
                                                             </span>
                                                         @else
-                                                            <span class="text-neutral-300 text-xs">—</span>
+                                                            <span class="text-neutral-400 text-xs">—</span>
                                                         @endif
                                                     </td>
+                                                    <td class="text-xs text-neutral-600">
+                                                        {{ $currentOperator !== '—' ? $currentOperator : '—' }}
+                                                    </td>
                                                     <td class="text-xs text-neutral-500">
-                                                        {{ $currentOperator !== '—' ? $currentOperator : '' }}</td>
-                                                    @if($sheetIdx === 0)
-                                                        <td rowspan="{{ $rowCount }}" class="align-top pt-3"><span
-                                                                class="text-neutral-500 text-xs">{{ $item->notes ?? '—' }}</span></td>
-                                                    @endif
+                                                        {{ $item->notes ?? '—' }}
+                                                    </td>
                                                 </tr>
                                             @endfor
                                         @empty
                                             <tr>
-                                                <td colspan="17" class="text-center text-neutral-400 py-4">Chưa có sản phẩm nào</td>
+                                                <td colspan="5" class="text-center text-neutral-400 py-4">Chưa có sản phẩm nào</td>
                                             </tr>
                                         @endforelse
                                     </tbody>

@@ -248,14 +248,29 @@
                                             <button type="button" onclick="openStockCardModal({{ $m->id }})" class="p-1 text-primary-600 hover:text-primary-800 text-base" title="Xem thẻ kho">
                                                 <iconify-icon icon="solar:history-bold"></iconify-icon>
                                             </button>
+                                            @php
+                                                $matPayload = [
+                                                    'id'           => $m->id,
+                                                    'code'         => $m->color_code,
+                                                    'name'         => $m->name,
+                                                    'origin_code'  => $m->origin_code,
+                                                    'category'     => $m->price_group,
+                                                    'unit'         => $m->unit,
+                                                    'cost_price'   => (float)$m->cost_price,
+                                                    'min_stock'    => (float)$m->min_stock,
+                                                    'warehouse_id' => $m->warehouse_id,
+                                                    'status'       => $m->status,
+                                                    'notes'        => $m->notes,
+                                                ];
+                                            @endphp
                                             <button type="button" 
-                                                    data-material="{{ htmlspecialchars(json_encode($m), ENT_QUOTES, 'UTF-8') }}"
+                                                    data-material="{{ htmlspecialchars(json_encode($matPayload), ENT_QUOTES, 'UTF-8') }}"
                                                     onclick="editMaterial(this)" 
                                                     class="p-1 text-warning-600 hover:text-warning-800 text-base transition-colors cursor-pointer" 
                                                     title="Chỉnh sửa vật tư">
                                                 <iconify-icon icon="lucide:edit"></iconify-icon>
                                             </button>
-                                            <form action="{{ route('inventory.materials.destroy', $m) }}" method="POST" onsubmit="return confirm('Bạn có chắc muốn xóa vật tư {{ $m->code }}? Dữ liệu giao dịch liên quan sẽ bị xóa.')">
+                                            <form action="{{ route('inventory.materials.destroy', $m->id) }}" method="POST" onsubmit="return confirm('Bạn có chắc muốn xóa vật tư {{ addslashes($m->color_code) }}? Dữ liệu giao dịch liên quan sẽ bị xóa.')" class="inline-block m-0">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="p-1 text-danger-600 hover:text-danger-800 text-base" title="Xóa">
@@ -592,7 +607,27 @@
     </form>
 </x-modal>
 
+@push('scripts')
 <script>
+    if (typeof window.openModal !== 'function') {
+        window.openModal = function(id) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.style.display = 'block';
+                document.body.style.overflow = 'hidden';
+            }
+        };
+    }
+    if (typeof window.closeModal !== 'function') {
+        window.closeModal = function(id) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.style.display = 'none';
+                document.body.style.overflow = '';
+            }
+        };
+    }
+
     function editMaterial(btnOrObj) {
         let item = btnOrObj;
         if (btnOrObj instanceof HTMLElement) {
@@ -605,30 +640,43 @@
         }
         if (!item) return;
 
-        document.getElementById('editMaterialForm').action = `/warehouses/materials/${item.id}`;
-        document.getElementById('edit_code_label').textContent = item.code || item.color_code || '';
-        document.getElementById('edit_code').value = item.code || item.color_code || '';
-        document.getElementById('edit_name').value = item.name || ('Tấm ' + (item.color_code || ''));
-        document.getElementById('edit_origin_code').value = item.origin_code || '';
-        document.getElementById('edit_category').value = item.category || item.price_group || '';
-        document.getElementById('edit_unit').value = item.unit || 'Tấm';
-        document.getElementById('edit_cost_price').value = item.cost_price || 0;
-        document.getElementById('edit_min_stock').value = item.min_stock || 50;
-        document.getElementById('edit_warehouse_id').value = item.warehouse_id || '';
-        document.getElementById('edit_status').value = item.status || 'active';
-        document.getElementById('edit_notes').value = item.notes || '';
+        const editForm = document.getElementById('editMaterialForm');
+        if (editForm) editForm.action = `/warehouses/materials/${item.id}`;
+        
+        const setVal = (id, val) => {
+            const el = document.getElementById(id);
+            if (el) el.value = val !== null && val !== undefined ? val : '';
+        };
+        const setText = (id, val) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = val !== null && val !== undefined ? val : '';
+        };
+
+        setText('edit_code_label', item.code || item.color_code || '');
+        setVal('edit_code', item.code || item.color_code || '');
+        setVal('edit_name', item.name || ('Tấm ' + (item.code || item.color_code || '')));
+        setVal('edit_origin_code', item.origin_code || '');
+        setVal('edit_category', item.category || item.price_group || '');
+        setVal('edit_unit', item.unit || 'Tấm');
+        setVal('edit_cost_price', item.cost_price || 0);
+        setVal('edit_min_stock', item.min_stock || 50);
+        setVal('edit_warehouse_id', item.warehouse_id || '');
+        setVal('edit_status', item.status || 'active');
+        setVal('edit_notes', item.notes || '');
 
         openModal('editMaterialModal');
     }
 
     function openStockCardModal(materialId) {
         const container = document.getElementById('stockCardModalContent');
-        container.innerHTML = `
-            <div class="text-center py-8 text-neutral-400">
-                <iconify-icon icon="line-md:loading-loop" class="text-3xl animate-spin mb-2"></iconify-icon>
-                <p class="text-xs">Đang tải lịch sử thẻ kho...</p>
-            </div>
-        `;
+        if (container) {
+            container.innerHTML = `
+                <div class="text-center py-8 text-neutral-400">
+                    <iconify-icon icon="line-md:loading-loop" class="text-3xl animate-spin mb-2"></iconify-icon>
+                    <p class="text-xs">Đang tải lịch sử thẻ kho...</p>
+                </div>
+            `;
+        }
         openModal('stockCardModal');
 
         fetch(`/warehouses/materials/${materialId}/stock-card`, {
@@ -636,11 +684,13 @@
         })
         .then(res => res.text())
         .then(html => {
-            container.innerHTML = html;
+            if (container) container.innerHTML = html;
         })
         .catch(err => {
-            container.innerHTML = `<div class="p-4 text-danger-600 text-xs">Lỗi khi tải thẻ kho: ${err}</div>`;
+            if (container) container.innerHTML = `<div class="p-4 text-danger-600 text-xs">Lỗi khi tải thẻ kho: ${err}</div>`;
         });
+    }
+
     let invLookupTimeout = null;
     function onInvBoardLookup() {
         clearTimeout(invLookupTimeout);
@@ -721,5 +771,6 @@
         }
     }
 </script>
+@endpush
 
 @endsection
