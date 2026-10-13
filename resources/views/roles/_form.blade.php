@@ -11,6 +11,7 @@
         'supply'        => 'Vật tư',
         'customer'      => 'Khách hàng',
         'order'         => 'Đơn hàng',
+        'market group'  => 'Nhóm thị trường',
         'manufacture'   => 'Lệnh sản xuất',
         'warehouse'     => 'Kho vật tư',
         'pressing'      => 'Ép ván',
@@ -35,9 +36,16 @@
         'complete' => 'Hoàn thành',
         'assign'   => 'Phân công',
     ];
+    $customPermissionLabels = [
+        'view all market groups' => 'Xem tất cả (Không bị lọc theo nhóm thị trường)',
+    ];
 
     $grouped = [];
     foreach ($permissions as $permission) {
+        if ($permission->name === 'view all market groups') {
+            $grouped['market group'][] = $permission;
+            continue;
+        }
         $parts = explode(' ', $permission->name, 2);
         $action_ = $parts[0] ?? '';
         $module  = $parts[1] ?? 'other';
@@ -98,7 +106,7 @@
                                     data-module="{{ $moduleId }}"
                                     {{ in_array($permission->name, $selectedPermissions) ? 'checked' : '' }}>
                                 <label class="form-check-label" for="perm-{{ $permission->id }}">
-                                    {{ $actionLabels[$actionKey] ?? ucfirst($actionKey) }}
+                                    {{ $customPermissionLabels[$permission->name] ?? ($actionLabels[$actionKey] ?? ucfirst($actionKey)) }}
                                 </label>
                             </div>
                             @endforeach

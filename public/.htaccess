@@ -9,10 +9,10 @@
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
-    # ✅ Cho phép /scan qua HTTP (không redirect HTTPS) — dành cho thiết bị quét QR (ESP32)
-    # ESP32 không đủ RAM xử lý SSL, cần HTTP thuần
+    # 🔒 Chuyển hướng toàn bộ các trang khác sang HTTPS để bảo mật (ngoại trừ /scan cho máy quét ESP32)
     RewriteCond %{HTTPS} off
-    RewriteRule ^scan$ - [L]
+    RewriteCond %{REQUEST_URI} !^/scan
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
     # Redirect Trailing Slashes If Not A Folder...
     RewriteCond %{REQUEST_FILENAME} !-d

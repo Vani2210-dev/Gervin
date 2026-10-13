@@ -411,7 +411,7 @@ Route::middleware(['auth'])->prefix('processes')->name('processes.')->group(func
 });
 
 // Public API Endpoint for physical QR/barcode scanner devices
-Route::post('/scan', [QrScanController::class, 'receiveScan'])->name('qr-scans.receive');
+Route::match(['get', 'post'], '/scan', [QrScanController::class, 'receiveScan'])->name('qr-scans.receive');
 
 // DC Stock (Kho tấm dư sau cắt CNC)
 use App\Http\Controllers\DcStockController;

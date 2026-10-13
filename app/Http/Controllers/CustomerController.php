@@ -37,7 +37,7 @@ class CustomerController extends Controller
         $user = auth()->user();
         $query = Customer::query();
 
-        if ($user && !$user->hasRole('Admin')) {
+        if ($user && !$user->canViewAllMarketGroups()) {
             $userMarketGroupIds = $user->marketGroups()->pluck('market_groups.id');
             $query->whereIn('market_group_id', $userMarketGroupIds);
         }
@@ -127,7 +127,7 @@ class CustomerController extends Controller
         $totalPeriodPaidSum = $allPaidQuery->sum('amount');
 
         $baseScopedQuery = Customer::query();
-        if ($user && !$user->hasRole('Admin')) {
+        if ($user && !$user->canViewAllMarketGroups()) {
             $userMarketGroupIds = $user->marketGroups()->pluck('market_groups.id');
             $baseScopedQuery->whereIn('market_group_id', $userMarketGroupIds);
         }
@@ -159,7 +159,7 @@ class CustomerController extends Controller
 
         // Get allowed customers for select dropdown filter
         $filterQuery = Customer::query();
-        if ($user && !$user->hasRole('Admin')) {
+        if ($user && !$user->canViewAllMarketGroups()) {
             $userMarketGroupIds = $user->marketGroups()->pluck('market_groups.id');
             $filterQuery->whereIn('market_group_id', $userMarketGroupIds);
             $marketGroups = \App\Models\MarketGroup::whereIn('id', $userMarketGroupIds)->orderBy('name')->get();
@@ -324,7 +324,7 @@ class CustomerController extends Controller
 
         $query = Customer::query()->with(['marketGroup', 'users']);
 
-        if ($user && !$user->hasRole('Admin')) {
+        if ($user && !$user->canViewAllMarketGroups()) {
             $userMarketGroupIds = $user->marketGroups()->pluck('market_groups.id');
             $query->whereIn('market_group_id', $userMarketGroupIds);
         }
@@ -792,7 +792,7 @@ class CustomerController extends Controller
         $photos = $this->processCustomerPhotos($request);
 
         $user = auth()->user();
-        $userMarketGroupIds = ($user && !$user->hasRole('Admin')) ? $user->marketGroups()->pluck('market_groups.id') : null;
+        $userMarketGroupIds = ($user && !$user->canViewAllMarketGroups()) ? $user->marketGroups()->pluck('market_groups.id') : null;
 
         $targetMarketGroupId = $request->market_group_id;
         if ($userMarketGroupIds !== null) {
@@ -888,7 +888,7 @@ class CustomerController extends Controller
         $user = auth()->user();
         abort_unless($customer->isAccessibleBy($user), 403, 'Bạn không có quyền cập nhật khách hàng này.');
 
-        if ($user && !$user->hasRole('Admin') && $request->filled('market_group_id')) {
+        if ($user && !$user->canViewAllMarketGroups() && $request->filled('market_group_id')) {
             $userMarketGroupIds = $user->marketGroups()->pluck('market_groups.id');
             if (!$userMarketGroupIds->contains($request->market_group_id)) {
                 abort(403, 'Bạn không thể chuyển khách sang nhóm thị trường khác nhóm của mình.');

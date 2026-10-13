@@ -17,7 +17,7 @@ class RevenueReportController extends Controller
     {
         $this->middleware(function ($request, $next) {
             $user = auth()->user();
-            if (!$user || (!$user->can('view revenue report') && !$user->hasRole('Admin') && !$user->can('view order'))) {
+            if (!$user || (!$user->can('view revenue report') && !$user->canViewAllMarketGroups() && !$user->can('view order'))) {
                 abort(403, 'Bạn không có quyền truy cập Báo cáo doanh thu.');
             }
             return $next($request);
@@ -30,6 +30,7 @@ class RevenueReportController extends Controller
     public function index(Request $request)
     {
         $currentUser = auth()->user();
+        $canViewAll = $currentUser && $currentUser->canViewAllMarketGroups();
         $isAdmin = $currentUser && $currentUser->hasRole('Admin');
 
         // 1. Chế độ xem: 'day' (theo từng ngày), 'range' (khoảng ngày từ... đến...), hoặc 'month' (tổng của tháng)
@@ -131,7 +132,7 @@ class RevenueReportController extends Controller
         $customerQuery = Customer::with('users')->orderBy('customer_code');
 
         $filterUserId = null;
-        if ($isAdmin) {
+        if ($canViewAll) {
             $filterUserId = $request->input('user_id');
             if (!empty($filterUserId)) {
                 $customerQuery->whereHas('users', function ($q) use ($filterUserId) {
@@ -446,6 +447,7 @@ class RevenueReportController extends Controller
     public function export(Request $request)
     {
         $currentUser = auth()->user();
+        $canViewAll = $currentUser && $currentUser->canViewAllMarketGroups();
         $isAdmin = $currentUser && $currentUser->hasRole('Admin');
 
         $todayDate = now()->toDateString();
@@ -513,7 +515,7 @@ class RevenueReportController extends Controller
         // 2. Query danh sách Khách hàng theo bộ lọc
         $customerQuery = Customer::with('users')->orderBy('customer_code');
         $filterUserId = null;
-        if ($isAdmin) {
+        if ($canViewAll) {
             $filterUserId = $request->input('user_id');
             if (!empty($filterUserId)) {
                 $customerQuery->whereHas('users', fn($q) => $q->where('users.id', $filterUserId));

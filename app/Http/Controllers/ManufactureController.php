@@ -69,7 +69,7 @@ class ManufactureController extends Controller
             'orders.supplies.glassItems.codes'
         ])->whereIn('status', ['stamps_received', 'in_production', 'completed']);
         
-        if ($user && !$user->hasRole('Admin')) {
+        if ($user && !$user->canViewAllMarketGroups()) {
             $query->whereHas('orders.customer.users', function ($uq) use ($user) {
                 $uq->where('users.id', $user->id);
             });
@@ -104,7 +104,7 @@ class ManufactureController extends Controller
             $day2Date = date('Y-m-d', strtotime($dateStr));
 
             foreach ($mo->orders as $order) {
-                if ($user && !$user->hasRole('Admin')) {
+                if ($user && !$user->canViewAllMarketGroups()) {
                     if (!$order->customer || !$order->customer->isAccessibleBy($user)) {
                         continue;
                     }

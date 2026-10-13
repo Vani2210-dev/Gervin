@@ -46,6 +46,13 @@ class QrScanController extends Controller
      */
     public function receiveScan(Request $request)
     {
+        if ($request->isMethod('get') || $request->isMethod('head')) {
+            return response()->json([
+                'status' => 'online',
+                'message' => 'QR Scan Service is ready'
+            ]);
+        }
+
         $payload = $request->json()->all();
 
         if (empty($payload)) {

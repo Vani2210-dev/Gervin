@@ -53,8 +53,13 @@
 
                         <div class="col-span-12 md:col-span-3">
                             <label class="block text-xs font-bold text-neutral-700 mb-1">Kho kiểm kê <span class="text-rose-500">*</span></label>
-                            <input type="hidden" name="warehouse_id" value="{{ $warehouse->id }}">
-                            <input type="text" value="{{ $warehouse->name }} ({{ $warehouse->code }})" class="form-control rounded-lg px-3 py-2 border-neutral-200 text-xs w-full bg-neutral-100 text-neutral-600 cursor-not-allowed font-medium" readonly>
+                            <select name="warehouse_id" onchange="window.location.href = '{{ route('inventory.stocktakes.create') }}?warehouse_id=' + this.value" class="form-select rounded-lg px-3 py-2 border-neutral-200 text-xs w-full font-bold text-neutral-800 focus:border-amber-500" required>
+                                @foreach($warehouses as $wh)
+                                    <option value="{{ $wh->id }}" {{ $warehouse->id == $wh->id ? 'selected' : '' }}>
+                                        {{ $wh->name }} ({{ $wh->code }})
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
 
                         <div class="col-span-12 md:col-span-3">

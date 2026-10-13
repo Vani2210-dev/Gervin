@@ -22,13 +22,22 @@ class WoodBoard extends Model
         'warehouse_id',
         'status',
         'notes',
+        'edge_band_unit',
+        'edge_band_current_stock',
+        'edge_band_min_stock',
+        'edge_band_cost_price',
+        'edge_band_initial_stock',
     ];
 
     protected $casts = [
-        'cost_price'    => 'double',
-        'min_stock'     => 'double',
-        'initial_stock' => 'double',
-        'current_stock' => 'double',
+        'cost_price'              => 'double',
+        'min_stock'               => 'double',
+        'initial_stock'           => 'double',
+        'current_stock'           => 'double',
+        'edge_band_current_stock' => 'double',
+        'edge_band_min_stock'     => 'double',
+        'edge_band_cost_price'    => 'double',
+        'edge_band_initial_stock' => 'double',
     ];
 
     protected $appends = [
@@ -36,7 +45,19 @@ class WoodBoard extends Model
         'name',
         'category',
         'total_stock',
+        'edge_band_code',
+        'edge_band_name',
     ];
+
+    public function getEdgeBandCodeAttribute(): string
+    {
+        return 'CHI-' . (string)($this->color_code ?? '');
+    }
+
+    public function getEdgeBandNameAttribute(): string
+    {
+        return 'Chỉ dán viền ' . (string)($this->color_code ?? '');
+    }
 
     public function getTotalStockAttribute(): float
     {

@@ -9,6 +9,7 @@ class InventoryTransaction extends Model
 {
     protected $fillable = [
         'warehouse_id',
+        'item_type',
         'wood_board_id',
         'wood_board_price_id',
         'date',
@@ -50,5 +51,37 @@ class InventoryTransaction extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function getItemSkuAttribute(): string
+    {
+        if ($this->item_type === 'edge_band') {
+            return $this->woodBoard?->edge_band_code ?? ('CHI-' . ($this->woodBoard?->color_code ?? ''));
+        }
+        return $this->boardPrice?->code ?? $this->woodBoard?->code ?? '-';
+    }
+
+    public function getItemNameAttribute(): string
+    {
+        if ($this->item_type === 'edge_band') {
+            return $this->woodBoard?->edge_band_name ?? ('Chỉ dán viền ' . ($this->woodBoard?->color_code ?? ''));
+        }
+        return $this->boardPrice?->name ?? $this->woodBoard?->name ?? '-';
+    }
+
+    public function getItemUnitAttribute(): string
+    {
+        if ($this->item_type === 'edge_band') {
+            return $this->woodBoard?->edge_band_unit ?? 'm';
+        }
+        return $this->woodBoard?->unit ?? 'Tấm';
+    }
+
+    public function getItemCategoryAttribute(): string
+    {
+        if ($this->item_type === 'edge_band') {
+            return 'Chỉ dán viền (' . ($this->woodBoard?->price_group ?? 'Tiêu chuẩn') . ')';
+        }
+        return $this->woodBoard?->category ?? 'Tấm ván';
     }
 }

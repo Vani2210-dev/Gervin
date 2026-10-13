@@ -1754,8 +1754,6 @@ function handleExcelFile(file) {
                     const bNumMatch = rawBevel.match(/\d+(\.\d+)?/);
                     if (bNumMatch && parseFloat(bNumMatch[0]) > 0) {
                         bevel = bNumMatch[0];
-                    } else if (/v[aá]t/i.test(rawBevel)) {
-                        bevel = (width !== '' && width > 0) ? String(width) : 'Vát';
                     } else {
                         bevel = rawBevel;
                     }
@@ -1965,26 +1963,22 @@ function confirmExcelImport() {
             setVal('input[name*="[unit_price]"]',    item.unit_price);
             setVal('input[name*="[notes]"]',         item.notes);
             const bevelIn = newRow.querySelector('.product-bevel-input') || newRow.querySelector('input[name*="[bevel]"]:not([name*="[edge_bevel]"])');
-            if (item.bevel !== '' && item.bevel !== null && item.bevel !== undefined && item.bevel !== '0' && item.bevel !== 0) {
-                if (bevelIn) {
+            if (bevelIn) {
+                if (item.bevel !== '' && item.bevel !== null && item.bevel !== undefined && item.bevel !== '0' && item.bevel !== 0) {
                     bevelIn.value = item.bevel;
-                    if (item.width && String(item.bevel) === String(item.width)) {
-                        bevelIn.setAttribute('data-auto-sync', 'width');
-                    } else if (item.height && String(item.bevel) === String(item.height)) {
-                        bevelIn.setAttribute('data-auto-sync', 'height');
-                    } else {
-                        bevelIn.setAttribute('data-auto-sync', 'none');
-                    }
-                }
-            } else {
-                if (bevelIn) {
+                } else {
                     bevelIn.value = '';
-                    bevelIn.setAttribute('data-auto-sync', 'none');
                 }
+                // Khi nhập Excel: tuyệt đối không tự động gán hay sync theo chiều rộng
+                bevelIn.setAttribute('data-auto-sync', 'none');
             }
             const edgeBevelIn = newRow.querySelector('.product-edge-bevel-input') || newRow.querySelector('input[name*="[edge_bevel]"]');
             if (edgeBevelIn) {
-                edgeBevelIn.value = item.edge_bevel || (item.bevel ? 'Vát ' + item.bevel : '');
+                if (item.bevel) {
+                    edgeBevelIn.value = /^vát/i.test(item.bevel) ? item.bevel : ('Vát ' + item.bevel);
+                } else {
+                    edgeBevelIn.value = '';
+                }
             }
 
             const grainInput = newRow.querySelector('input[name*="[grain_direction]"], select[name*="[grain_direction]"]');
@@ -2021,8 +2015,9 @@ function confirmExcelImport() {
                 }
             }
 
-            bindAcrylicRowEvents(newRow);
-            initBevelField(newRow);
+            // Cập nhật kiểu hiển thị của ô Vát sau khi gán từ Excel (giữ data-auto-sync="none")
+            updateBevelFieldStyle(newRow);
+            updateEdgeBevel(newRow);
         });
     });
 

@@ -487,8 +487,9 @@ async function exportManufactureNestingFiles(moCode, ordersData) {
 
 /**
  * Xuất Nesting khi chọn nhiều đơn:
- *  - Mỗi đơn xuất 1 file Nesting riêng (tấm > 70x70) kèm Sheet Kho DC của đơn đó
- *  - Toàn bộ tấm phào (<= 70) của TẤT CẢ các đơn được GỘP CHUNG VÀO 1 ĐƠN (1 file Nesting Phào duy nhất) kèm Sheet Kho DC tổng hợp
+ *  - GỘP TOÀN BỘ tấm Nesting (> 70x70) của TẤT CẢ các đơn vào 1 file Nesting duy nhất (hoặc theo mã đơn nếu chỉ chọn 1 đơn)
+ *  - GỘP TOÀN BỘ tấm phào (<= 70) của TẤT CẢ các đơn vào 1 file Nesting Phào duy nhất
+ *  - Sheet Kho DC tổng hợp toàn bộ các đơn
  *
  * @param {Array} ordersData - Danh sách data các đơn hàng
  * @param {boolean} returnBlobs - Nếu true, trả về mảng các { fileName, blob }
@@ -506,27 +507,7 @@ async function exportBulkNestingFiles(ordersData, returnBlobs = false) {
 
     const files = [];
 
-    // 1. Xuất file Nesting chính (> 70x70) cho từng đơn hàng
-    for (const orderData of acrylicOrders) {
-        const nestSupplies = [];
-        (orderData.supplies || []).forEach(supply => {
-            const nestItems = (supply.items || []).filter(i => (parseFloat(i.height) || 0) > 70 && (parseFloat(i.width) || 0) > 70);
-            if (nestItems.length > 0) {
-                nestSupplies.push({ ...supply, items: nestItems });
-            }
-        });
-
-        if (nestSupplies.length > 0) {
-            const code = orderData.order_code || 'DH';
-            const fileName = `Nesting-${code}.xlsx`;
-            const blob = await generateNestingWorkbook(orderData, nestSupplies, fileName);
-            if (blob) {
-                files.push({ fileName, blob });
-            }
-        }
-    }
-
-    // 2. Gộp TOÀN BỘ tấm phào (<= 70) của TẤT CẢ các đơn vào 1 đơn / 1 file Nesting Phào duy nhất
+    const allNestingSupplies = [];
     const allPhaoSupplies = [];
     const allDcMatches = [];
     const seenDcKeys = new Set();
@@ -541,28 +522,87 @@ async function exportBulkNestingFiles(ordersData, returnBlobs = false) {
             }
         });
 
-        // Thu thập các tấm phào
+        // Thu thập vật tư và các tấm
         (orderData.supplies || []).forEach(supply => {
             const allItems = supply.items || [];
-            const phaoItems = allItems.filter(i => (parseFloat(i.height) || 0) <= 70 || (parseFloat(i.width) || 0) <= 70);
-            if (phaoItems.length > 0) {
-                // Gắn mã đơn và tên khách hàng vào từng tấm phào
-                const enrichedPhaoItems = phaoItems.map(item => ({
-                    ...item,
+            // Gắn thông tin đơn hàng và khách hàng vào từng item
+            const enrichedItems = allItems.map(item => ({
+                ...item,
+                order_code: orderData.order_code,
+                customer_name: orderData.customer_name
+            }));
+
+            const nestItems = enrichedItems.filter(i => (parseFloat(i.height) || 0) > 70 && (parseFloat(i.width) || 0) > 70);
+            const phaoItems = enrichedItems.filter(i => (parseFloat(i.height) || 0) <= 70 || (parseFloat(i.width) || 0) <= 70);
+
+            if (nestItems.length > 0) {
+                allNestingSupplies.push({
+                    ...supply,
                     order_code: orderData.order_code,
-                    customer_name: orderData.customer_name
-                }));
+                    customer_name: orderData.customer_name,
+                    items: nestItems
+                });
+            }
+
+            if (phaoItems.length > 0) {
                 allPhaoSupplies.push({
                     ...supply,
                     order_code: orderData.order_code,
                     customer_name: orderData.customer_name,
-                    items: enrichedPhaoItems
+                    items: phaoItems
                 });
             }
         });
     });
 
-    if (allPhaoSupplies.length > 0) {
+    // Gom các nhóm vật tư cùng tên/mã vật liệu lại với nhau để khi xuất Excel ra cùng 1 block vật liệu
+    const groupSuppliesByMaterial = (suppliesList) => {
+        const grouped = [];
+        const map = new Map();
+        suppliesList.forEach(s => {
+            const key = (s.supply_name || s.order_supply_code || 'VatTu').trim().toLowerCase();
+            if (!map.has(key)) {
+                const cloned = { ...s, items: [...s.items] };
+                map.set(key, cloned);
+                grouped.push(cloned);
+            } else {
+                map.get(key).items.push(...s.items);
+            }
+        });
+        return grouped;
+    };
+
+    const finalNestingSupplies = groupSuppliesByMaterial(allNestingSupplies);
+    const finalPhaoSupplies = groupSuppliesByMaterial(allPhaoSupplies);
+
+    // 1. Gộp TOÀN BỘ tấm Nesting chính (> 70x70) của TẤT CẢ các đơn vào 1 file Nesting duy nhất
+    if (finalNestingSupplies.length > 0) {
+        const dummyOrder = {
+            order_code: acrylicOrders.length === 1 ? (acrylicOrders[0].order_code || 'DH') : 'GOP',
+            customer_name: acrylicOrders.length === 1 ? (acrylicOrders[0].customer_name || '') : 'Nhiều khách hàng',
+            dc_stock_matches: allDcMatches
+        };
+
+        let nestingFilename = '';
+        if (acrylicOrders.length === 1) {
+            nestingFilename = `Nesting-${acrylicOrders[0].order_code || 'DH'}.xlsx`;
+        } else if (acrylicOrders.length <= 3) {
+            const codesStr = acrylicOrders.map(o => o.order_code).filter(Boolean).join('_');
+            nestingFilename = `Nesting-Gop-${codesStr}.xlsx`;
+        } else {
+            const firstCode = acrylicOrders[0].order_code || 'DH';
+            const lastCode = acrylicOrders[acrylicOrders.length - 1].order_code || 'DH';
+            nestingFilename = `Nesting-Gop-${firstCode}_den_${lastCode}.xlsx`;
+        }
+
+        const nestingBlob = await generateNestingWorkbook(dummyOrder, finalNestingSupplies, nestingFilename);
+        if (nestingBlob) {
+            files.push({ fileName: nestingFilename, blob: nestingBlob });
+        }
+    }
+
+    // 2. Gộp TOÀN BỘ tấm phào (<= 70) của TẤT CẢ các đơn vào 1 file Nesting Phào duy nhất
+    if (finalPhaoSupplies.length > 0) {
         const dummyOrder = {
             order_code: acrylicOrders.length === 1 ? (acrylicOrders[0].order_code || 'DH') : 'GOP-PHAO',
             customer_name: acrylicOrders.length === 1 ? (acrylicOrders[0].customer_name || '') : 'Nhiều khách hàng',
@@ -571,7 +611,7 @@ async function exportBulkNestingFiles(ordersData, returnBlobs = false) {
 
         let phaoFilename = '';
         if (acrylicOrders.length === 1) {
-            phaoFilename = `Nesting-Phao-${acrylicOrders[0].order_code}.xlsx`;
+            phaoFilename = `Nesting-Phao-${acrylicOrders[0].order_code || 'DH'}.xlsx`;
         } else if (acrylicOrders.length <= 3) {
             const codesStr = acrylicOrders.map(o => o.order_code).filter(Boolean).join('_');
             phaoFilename = `Nesting-Phao-Gop-${codesStr}.xlsx`;
@@ -581,7 +621,7 @@ async function exportBulkNestingFiles(ordersData, returnBlobs = false) {
             phaoFilename = `Nesting-Phao-Gop-${firstCode}_den_${lastCode}.xlsx`;
         }
 
-        const phaoBlob = await generateNestingWorkbook(dummyOrder, allPhaoSupplies, phaoFilename);
+        const phaoBlob = await generateNestingWorkbook(dummyOrder, finalPhaoSupplies, phaoFilename);
         if (phaoBlob) {
             files.push({ fileName: phaoFilename, blob: phaoBlob });
         }

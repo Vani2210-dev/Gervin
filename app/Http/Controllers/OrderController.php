@@ -60,7 +60,7 @@ class OrderController extends Controller
             ->withCount(['manufactureOrders' => function ($q) {
                 $q->whereIn('status', ['stamps_received', 'in_production', 'completed']);
             }])
-            ->when($user && !$user->hasRole('Admin'), function ($q) use ($user) {
+            ->when($user && !$user->canViewAllMarketGroups(), function ($q) use ($user) {
                 $userMarketGroupIds = $user->marketGroups()->pluck('market_groups.id');
                 $q->whereHas('customer', function ($cq) use ($userMarketGroupIds) {
                     $cq->whereIn('market_group_id', $userMarketGroupIds);
@@ -154,7 +154,7 @@ class OrderController extends Controller
             ->paginate($perPage)
             ->withQueryString();
 
-        if ($user && !$user->hasRole('Admin')) {
+        if ($user && !$user->canViewAllMarketGroups()) {
             $userMarketGroupIds = $user->marketGroups()->pluck('market_groups.id');
             $customers = \App\Models\Customer::whereIn('market_group_id', $userMarketGroupIds)->orderBy('name')->get();
         } else {
@@ -162,7 +162,7 @@ class OrderController extends Controller
         }
 
         $draftOrdersCount = Order::where('status', 'draft')
-            ->when($user && !$user->hasRole('Admin'), function ($q) use ($user) {
+            ->when($user && !$user->canViewAllMarketGroups(), function ($q) use ($user) {
                 $userMarketGroupIds = $user->marketGroups()->pluck('market_groups.id');
                 $q->whereHas('customer', function ($cq) use ($userMarketGroupIds) {
                     $cq->whereIn('market_group_id', $userMarketGroupIds);
@@ -193,7 +193,7 @@ class OrderController extends Controller
     public function show(Order $order)
     {
         $user = auth()->user();
-        if ($user && !$user->hasRole('Admin')) {
+        if ($user && !$user->canViewAllMarketGroups()) {
             if (!$order->customer || !$order->customer->isAccessibleBy($user)) {
                 abort(403, 'Bạn không có quyền truy cập đơn hàng này.');
             }
@@ -216,7 +216,7 @@ class OrderController extends Controller
             'supplies.minLateItems',
             'supplies.glassItems'
         ])
-            ->when($user && !$user->hasRole('Admin'), function ($q) use ($user) {
+            ->when($user && !$user->canViewAllMarketGroups(), function ($q) use ($user) {
                 $userMarketGroupIds = $user->marketGroups()->pluck('market_groups.id');
                 $q->whereHas('customer', function ($cq) use ($userMarketGroupIds) {
                     $cq->whereIn('market_group_id', $userMarketGroupIds);
@@ -661,7 +661,7 @@ class OrderController extends Controller
     public function edit(Order $order)
     {
         $user = auth()->user();
-        if ($user && !$user->hasRole('Admin')) {
+        if ($user && !$user->canViewAllMarketGroups()) {
             if (!$order->customer || !$order->customer->isAccessibleBy($user)) {
                 abort(403, 'Bạn không có quyền truy cập đơn hàng này.');
             }
@@ -701,7 +701,7 @@ class OrderController extends Controller
         $draftOrder = Order::where('status', 'draft')->findOrFail($request->draft_order_id);
 
         $user = auth()->user();
-        if ($user && !$user->hasRole('Admin') && $request->filled('customer_id')) {
+        if ($user && !$user->canViewAllMarketGroups() && $request->filled('customer_id')) {
             $cust = \App\Models\Customer::find($request->customer_id);
             if ($cust && !$cust->isAccessibleBy($user)) {
                 abort(403, 'Bạn chỉ có thể tạo đơn cho khách hàng thuộc nhóm thị trường của mình.');
@@ -744,7 +744,7 @@ class OrderController extends Controller
     public function update(Request $request, Order $order)
     {
         $user = auth()->user();
-        if ($user && !$user->hasRole('Admin')) {
+        if ($user && !$user->canViewAllMarketGroups()) {
             if (!$order->customer || !$order->customer->isAccessibleBy($user)) {
                 abort(403, 'Bạn không có quyền truy cập đơn hàng này.');
             }
@@ -931,7 +931,7 @@ class OrderController extends Controller
     public function destroy(Request $request, Order $order)
     {
         $user = auth()->user();
-        if ($user && !$user->hasRole('Admin')) {
+        if ($user && !$user->canViewAllMarketGroups()) {
             if (!$order->customer || !$order->customer->isAccessibleBy($user)) {
                 abort(403, 'Bạn không có quyền truy cập đơn hàng này.');
             }

@@ -723,7 +723,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 <script src="{{ asset('assets/js/order-export.js') }}"></script>
-<script src="{{ asset('assets/js/nesting-export.js') }}"></script>
+<script src="{{ asset('assets/js/nesting-export.js') }}?v={{ file_exists(public_path('assets/js/nesting-export.js')) ? filemtime(public_path('assets/js/nesting-export.js')) : time() }}"></script>
 <script>
     async function exportBulkOrders() {
         if (!window.showDirectoryPicker) {
@@ -803,11 +803,6 @@
 }
 
     async function exportBulkNestingOrders() {
-        if (!window.showDirectoryPicker) {
-            alert("Trình duyệt của bạn không hỗ trợ chọn thư mục lưu (chỉ hỗ trợ Chrome/Edge mới). Vui lòng cập nhật hoặc dùng trình duyệt khác.");
-            return;
-        }
-
         const selectedIds = Array.from(document.querySelectorAll('.bulk-order-checkbox:checked')).map(cb => cb.value);
         if (selectedIds.length === 0) return;
 
@@ -819,8 +814,18 @@
         }
 
         try {
-            // Yêu cầu chọn thư mục
-            const directoryHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+            // Yêu cầu chọn thư mục (nếu trình duyệt hỗ trợ)
+            let directoryHandle = null;
+            if (window.showDirectoryPicker) {
+                try {
+                    directoryHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+                } catch (pickerErr) {
+                    if (pickerErr.name === 'AbortError') {
+                        return; // Người dùng ấn Hủy chọn thư mục
+                    }
+                    console.warn("showDirectoryPicker error, falling back to download:", pickerErr);
+                }
+            }
 
             // Lấy dữ liệu từ server
             const response = await fetch('{{ route("orders.bulk-export-data") }}', {
@@ -840,10 +845,14 @@
                 const nestingFiles = await exportBulkNestingFiles(dataList, true);
                 if (nestingFiles && nestingFiles.length > 0) {
                     for (let nFile of nestingFiles) {
-                        const nHandle = await directoryHandle.getFileHandle(nFile.fileName, { create: true });
-                        const nWritable = await nHandle.createWritable();
-                        await nWritable.write(nFile.blob);
-                        await nWritable.close();
+                        if (directoryHandle) {
+                            const nHandle = await directoryHandle.getFileHandle(nFile.fileName, { create: true });
+                            const nWritable = await nHandle.createWritable();
+                            await nWritable.write(nFile.blob);
+                            await nWritable.close();
+                        } else {
+                            saveAs(nFile.blob, nFile.fileName);
+                        }
                         exportedCount++;
                     }
                 }
@@ -852,7 +861,7 @@
             if (exportedCount === 0) {
                 alert("Không có đơn hàng Acrylic nào có tấm cần xả tem Nesting trong các đơn đã chọn.");
             } else {
-                alert(`Đã xuất thành công ${exportedCount} file xả tem Nesting!`);
+                alert(`Đã xuất thành công ${exportedCount} file xả tem Nesting gộp!`);
                 clearBulkOrderSelection();
             }
         } catch (err) {

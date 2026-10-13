@@ -79,4 +79,10 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(MarketGroup::class, 'market_group_user');
     }
+
+    public function canViewAllMarketGroups(): bool
+    {
+        return $this->hasRole('Admin') || $this->can('view all market groups');
+    }
 }
+

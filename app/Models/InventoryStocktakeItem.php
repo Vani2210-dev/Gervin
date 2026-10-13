@@ -9,6 +9,7 @@ class InventoryStocktakeItem extends Model
 {
     protected $fillable = [
         'stocktake_id',
+        'item_type',
         'wood_board_id',
         'wood_board_price_id',
         'book_quantity',
@@ -41,8 +42,40 @@ class InventoryStocktakeItem extends Model
     /**
      * Backward-compatible alias for existing views
      */
-    public function material(): BelongsTo
+     public function material(): BelongsTo
+     {
+         return $this->woodBoard();
+     }
+
+    public function getItemSkuAttribute(): string
     {
-        return $this->woodBoard();
+        if ($this->item_type === 'edge_band') {
+            return $this->woodBoard?->edge_band_code ?? ('CHI-' . ($this->woodBoard?->color_code ?? ''));
+        }
+        return $this->boardPrice?->code ?? $this->woodBoard?->code ?? '-';
+    }
+
+    public function getItemNameAttribute(): string
+    {
+        if ($this->item_type === 'edge_band') {
+            return $this->woodBoard?->edge_band_name ?? ('Chỉ dán viền ' . ($this->woodBoard?->color_code ?? ''));
+        }
+        return $this->boardPrice?->name ?? $this->woodBoard?->name ?? '-';
+    }
+
+    public function getItemUnitAttribute(): string
+    {
+        if ($this->item_type === 'edge_band') {
+            return $this->woodBoard?->edge_band_unit ?? 'm';
+        }
+        return $this->woodBoard?->unit ?? 'Tấm';
+    }
+
+    public function getItemCategoryAttribute(): string
+    {
+        if ($this->item_type === 'edge_band') {
+            return 'Chỉ dán viền (' . ($this->woodBoard?->price_group ?? 'Tiêu chuẩn') . ')';
+        }
+        return $this->woodBoard?->category ?? 'Tấm ván';
     }
 }

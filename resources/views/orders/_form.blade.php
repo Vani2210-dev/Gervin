@@ -85,7 +85,7 @@
                                 <label class="form-label font-semibold text-xs text-neutral-500 uppercase tracking-wider mb-2 block">Khách hàng</label>
                                 @php
                                     $currentUser = auth()->user();
-                                    if ($currentUser && !$currentUser->hasRole('Admin')) {
+                                    if ($currentUser && !$currentUser->canViewAllMarketGroups()) {
                                         $userMarketGroupIds = $currentUser->marketGroups()->pluck('market_groups.id');
                                         $allowedCustomers = \App\Models\Customer::whereIn('market_group_id', $userMarketGroupIds)->orderBy('name')->get();
                                     } else {
@@ -93,7 +93,7 @@
                                     }
 
                                     if (isset($acrylicOrder) && $acrylicOrder->customer && !$allowedCustomers->contains('id', $acrylicOrder->customer_id)) {
-                                        if ($currentUser && ($currentUser->hasRole('Admin') || $acrylicOrder->customer->isAccessibleBy($currentUser))) {
+                                        if ($currentUser && ($currentUser->canViewAllMarketGroups() || $acrylicOrder->customer->isAccessibleBy($currentUser))) {
                                             $allowedCustomers->push($acrylicOrder->customer);
                                         }
                                     }

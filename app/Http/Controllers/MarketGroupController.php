@@ -30,7 +30,7 @@ class MarketGroupController extends Controller
             $q->orderBy('name');
         }])
         ->withCount(['users', 'customers'])
-        ->when($user && !$user->hasRole('Admin'), function ($q) use ($user) {
+        ->when($user && !$user->canViewAllMarketGroups(), function ($q) use ($user) {
             $q->whereHas('users', function ($uq) use ($user) {
                 $uq->where('users.id', $user->id);
             });
@@ -163,7 +163,7 @@ class MarketGroupController extends Controller
     public function show(Request $request, MarketGroup $marketGroup)
     {
         $user = auth()->user();
-        if ($user && !$user->hasRole('Admin')) {
+        if ($user && !$user->canViewAllMarketGroups()) {
             if (!$marketGroup->users()->where('users.id', $user->id)->exists()) {
                 abort(403, 'Bạn không thuộc nhóm thị trường này.');
             }
@@ -313,7 +313,7 @@ class MarketGroupController extends Controller
         }
         $totalCareVisits = $totalCustomerUpdates; // For backward compatibility
 
-        if ($user && !$user->hasRole('Admin')) {
+        if ($user && !$user->canViewAllMarketGroups()) {
             $userMarketGroupIds = $user->marketGroups()->pluck('market_groups.id');
             $allCustomers = Customer::whereIn('market_group_id', $userMarketGroupIds)->orderBy('name')->get();
             $marketGroups = MarketGroup::whereIn('id', $userMarketGroupIds)->orderBy('name')->get();

@@ -127,6 +127,26 @@
                         </a>
                     @endif
 
+                    {{-- Warehouse Pills --}}
+                    <div class="bg-neutral-100 p-1 rounded-xl flex items-center gap-1 text-xs font-semibold">
+                        <a href="{{ route('inventory.index', array_merge(request()->query(), ['warehouse_id' => ''])) }}"
+                           class="px-3 py-1 rounded-lg transition-all {{ empty($selectedWarehouseId) ? 'bg-white text-neutral-900 shadow-2xs font-bold' : 'text-neutral-500 hover:text-neutral-900' }}">
+                            Tất cả kho
+                        </a>
+                        @foreach($warehouses as $wh)
+                            <a href="{{ route('inventory.index', array_merge(request()->query(), ['warehouse_id' => $wh->id])) }}"
+                               class="px-3 py-1 rounded-lg transition-all {{ (string)$selectedWarehouseId === (string)$wh->id ? ($wh->code === 'KHO-CHI' ? 'bg-amber-600 text-white shadow-2xs font-bold' : 'bg-primary-600 text-white shadow-2xs font-bold') : 'text-neutral-600 hover:text-neutral-900' }}">
+                                @if($wh->code === 'KHO-CHI')
+                                    🎗️ {{ $wh->name }}
+                                @elseif($wh->code === 'KHO-VAN')
+                                    🪵 {{ $wh->name }}
+                                @else
+                                    📦 {{ $wh->name }}
+                                @endif
+                            </a>
+                        @endforeach
+                    </div>
+
                     {{-- Status Pills (All / Low stock / Out of stock) --}}
                     <div class="bg-neutral-100 p-1 rounded-xl flex items-center gap-1 text-xs font-semibold">
                         <a href="{{ route('inventory.index', array_merge(request()->query(), ['stock_filter' => 'all'])) }}"
@@ -177,27 +197,59 @@
                         <tbody class="divide-y divide-neutral-100 bg-white">
                             @forelse($materials as $index => $m)
                                 @php
-                                    $lineValue = $m->current_stock * $m->cost_price;
+                                    if ($isEdgeBandWarehouse) {
+                                        $displaySku = $m->edge_band_code;
+                                        $displayName = $m->edge_band_name;
+                                        $displayUnit = $m->edge_band_unit ?: 'm';
+                                        $displayCostPrice = (float)$m->edge_band_cost_price;
+                                        $displayStock = (float)$m->edge_band_current_stock;
+                                        $displayMinStock = (float)$m->edge_band_min_stock;
+                                        $lineValue = $displayStock * $displayCostPrice;
+                                    } else {
+                                        $displaySku = $m->code;
+                                        $displayName = $m->name;
+                                        $displayUnit = $m->unit;
+                                        $displayCostPrice = (float)$m->cost_price;
+                                        $displayStock = (float)$m->total_stock;
+                                        $displayMinStock = (float)$m->min_stock;
+                                        $lineValue = $m->current_stock * $m->cost_price;
+                                    }
                                 @endphp
                                 <tr class="hover:bg-primary-50 hover:bg-opacity-40 transition-colors">
                                     <td class="py-3 px-4 text-center text-neutral-500 font-medium">
                                         {{ $materials->firstItem() + $index }}
                                     </td>
                                     <td class="py-3 px-4 font-bold text-neutral-900">
-                                        <a href="javascript:void(0)" onclick="openStockCardModal({{ $m->id }})" class="hover:text-primary-600 hover:underline">
-                                            {{ $m->code }}
+                                        <a href="javascript:void(0)" onclick="openStockCardModal({{ $m->id }})" class="hover:text-primary-600 hover:underline flex items-center gap-1.5">
+                                            @if($isEdgeBandWarehouse)
+                                                <span class="text-amber-600">🎗️</span>
+                                            @endif
+                                            <span>{{ $displaySku }}</span>
                                         </a>
                                     </td>
                                     <td class="py-3 px-4">
-                                        <div class="font-bold text-neutral-800">{{ $m->name }}</div>
-                                        @if($m->prices->isNotEmpty())
-                                            <div class="flex flex-wrap gap-1 mt-1.5">
-                                                @foreach($m->prices as $p)
-                                                    <span class="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded border {{ $p->stock > 0 ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-neutral-50 text-neutral-400 border-neutral-200' }}" title="{{ $p->code }} - Tồn: {{ number_format($p->stock) }} tấm">
-                                                        <span class="font-semibold text-neutral-600">{{ $p->type?->name ?? $p->code }}:</span>
-                                                        <span class="font-black {{ $p->stock > 0 ? 'text-emerald-700' : 'text-neutral-400' }}">{{ fmod($p->stock, 1) == 0 ? number_format($p->stock, 0, ',', '.') : number_format($p->stock, 2, ',', '.') }}</span>
-                                                    </span>
-                                                @endforeach
+                                        <div class="font-bold text-neutral-800">{{ $displayName }}</div>
+                                        @if(!$isEdgeBandWarehouse)
+                                            @if($m->prices->isNotEmpty())
+                                                <div class="flex flex-wrap gap-1 mt-1.5">
+                                                    @foreach($m->prices as $p)
+                                                        <span class="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded border {{ $p->stock > 0 ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-neutral-50 text-neutral-400 border-neutral-200' }}" title="{{ $p->code }} - Tồn: {{ number_format($p->stock) }} tấm">
+                                                            <span class="font-semibold text-neutral-600">{{ $p->type?->name ?? $p->code }}:</span>
+                                                            <span class="font-black {{ $p->stock > 0 ? 'text-emerald-700' : 'text-neutral-400' }}">{{ fmod($p->stock, 1) == 0 ? number_format($p->stock, 0, ',', '.') : number_format($p->stock, 2, ',', '.') }}</span>
+                                                        </span>
+                                                    @endforeach
+                                                </div>
+                                            @endif
+                                            {{-- Badge Kho Dán Chỉ hiển thị song song cho mỗi tấm --}}
+                                            <div class="mt-1.5 flex items-center gap-1.5">
+                                                <span class="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 font-semibold" title="Kho Dán Chỉ: {{ $m->edge_band_code }}">
+                                                    <iconify-icon icon="solar:ruler-angular-bold" class="text-amber-600 text-xs"></iconify-icon>
+                                                    Chỉ dán viền: <strong class="font-black text-amber-900">{{ fmod($m->edge_band_current_stock, 1) == 0 ? number_format($m->edge_band_current_stock, 0, ',', '.') : number_format($m->edge_band_current_stock, 2, ',', '.') }} {{ $m->edge_band_unit ?: 'm' }}</strong>
+                                                </span>
+                                            </div>
+                                        @else
+                                            <div class="text-[11px] text-amber-700 mt-0.5">
+                                                Đồng bộ theo mã tấm: <strong>{{ $m->color_code }}</strong>
                                             </div>
                                         @endif
                                         @if($m->notes)
@@ -209,30 +261,30 @@
                                     </td>
                                     <td class="py-3 px-4 text-neutral-700">
                                         <span class="bg-neutral-100 text-neutral-700 px-2 py-1 rounded text-[11px] font-medium">
-                                            {{ $m->category ?: 'Vật tư chung' }}
+                                            {{ $isEdgeBandWarehouse ? 'Chỉ dán viền' : ($m->category ?: 'Vật tư chung') }}
                                         </span>
                                     </td>
                                     <td class="py-3 px-4 text-center font-medium text-neutral-600">
-                                        {{ $m->unit }}
+                                        {{ $displayUnit }}
                                     </td>
                                     <td class="py-3 px-4 text-right font-medium text-neutral-700">
-                                        {{ $m->cost_price > 0 ? number_format($m->cost_price, 0, ',', '.') . 'đ' : '-' }}
+                                        {{ $displayCostPrice > 0 ? number_format($displayCostPrice, 0, ',', '.') . 'đ' : '-' }}
                                     </td>
                                     <td class="py-3 px-4 text-right">
-                                        @php $totStock = $m->total_stock; @endphp
-                                        <div class="font-black text-sm {{ $totStock <= 0 ? 'text-danger-600' : ($totStock <= $m->min_stock ? 'text-warning-600' : 'text-emerald-700') }}">
-                                            {{ fmod($totStock, 1) == 0 ? number_format($totStock, 0, ',', '.') : number_format($totStock, 2, ',', '.') }}
+                                        <div class="font-black text-sm {{ $displayStock <= 0 ? 'text-danger-600' : ($displayStock <= $displayMinStock ? 'text-warning-600' : 'text-emerald-700') }}">
+                                            {{ fmod($displayStock, 1) == 0 ? number_format($displayStock, 0, ',', '.') : number_format($displayStock, 2, ',', '.') }}
                                         </div>
-                                        <div class="text-[10px] text-neutral-400">Tổng các loại ván</div>
+                                        <div class="text-[10px] text-neutral-400">
+                                            {{ $isEdgeBandWarehouse ? 'Mét chỉ tồn kho' : 'Tổng các loại ván' }}
+                                        </div>
                                     </td>
                                     <td class="py-3 px-4 text-right font-semibold text-neutral-800">
                                         {{ $lineValue > 0 ? number_format($lineValue, 0, ',', '.') . 'đ' : '-' }}
                                     </td>
                                     <td class="py-3 px-4 text-center">
-                                        @php $totStock = $m->total_stock; @endphp
-                                        @if($totStock <= 0)
+                                        @if($displayStock <= 0)
                                             <span class="bg-danger-100 text-danger-700 text-[10px] px-2 py-1 rounded-full font-bold inline-block">Hết hàng</span>
-                                        @elseif($totStock <= $m->min_stock)
+                                        @elseif($displayStock <= $displayMinStock)
                                             <span class="bg-warning-100 text-warning-800 text-[10px] px-2 py-1 rounded-full font-bold inline-block">Dưới định mức</span>
                                         @else
                                             <span class="bg-success-100 text-success-700 text-[10px] px-2 py-1 rounded-full font-bold inline-block">Còn hàng</span>
@@ -250,24 +302,28 @@
                                             </button>
                                             @php
                                                 $matPayload = [
-                                                    'id'           => $m->id,
-                                                    'code'         => $m->color_code,
-                                                    'name'         => $m->name,
-                                                    'origin_code'  => $m->origin_code,
-                                                    'category'     => $m->price_group,
-                                                    'unit'         => $m->unit,
-                                                    'cost_price'   => (float)$m->cost_price,
-                                                    'min_stock'    => (float)$m->min_stock,
-                                                    'warehouse_id' => $m->warehouse_id,
-                                                    'status'       => $m->status,
-                                                    'notes'        => $m->notes,
+                                                    'id'                      => $m->id,
+                                                    'code'                    => $m->color_code,
+                                                    'name'                    => $m->name,
+                                                    'origin_code'             => $m->origin_code,
+                                                    'category'                => $m->price_group,
+                                                    'unit'                    => $m->unit,
+                                                    'cost_price'              => (float)$m->cost_price,
+                                                    'min_stock'               => (float)$m->min_stock,
+                                                    'warehouse_id'            => $m->warehouse_id,
+                                                    'status'                  => $m->status,
+                                                    'notes'                   => $m->notes,
+                                                    'edge_band_unit'          => $m->edge_band_unit ?: 'm',
+                                                    'edge_band_current_stock' => (float)$m->edge_band_current_stock,
+                                                    'edge_band_cost_price'    => (float)$m->edge_band_cost_price,
+                                                    'edge_band_min_stock'     => (float)$m->edge_band_min_stock,
                                                 ];
                                             @endphp
                                             <button type="button" 
                                                     data-material="{{ htmlspecialchars(json_encode($matPayload), ENT_QUOTES, 'UTF-8') }}"
                                                     onclick="editMaterial(this)" 
                                                     class="p-1 text-warning-600 hover:text-warning-800 text-base transition-colors cursor-pointer" 
-                                                    title="Chỉnh sửa vật tư">
+                                                    title="Chỉnh sửa vật tư & chỉ dán">
                                                 <iconify-icon icon="lucide:edit"></iconify-icon>
                                             </button>
                                             <form action="{{ route('inventory.materials.destroy', $m->id) }}" method="POST" onsubmit="return confirm('Bạn có chắc muốn xóa vật tư {{ addslashes($m->color_code) }}? Dữ liệu giao dịch liên quan sẽ bị xóa.')" class="inline-block m-0">
@@ -400,21 +456,46 @@
 
             <div class="grid grid-cols-3 gap-4">
                 <div>
-                    <label class="form-label text-xs font-semibold text-neutral-700 mb-1 block">Giá vốn (đ)</label>
+                    <label class="form-label text-xs font-semibold text-neutral-700 mb-1 block">Giá vốn ván (đ)</label>
                     <input type="number" name="cost_price" id="create_mat_cost_price" value="0" min="0" step="1000" class="form-control rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500">
                 </div>
                 <div>
-                    <label class="form-label text-xs font-semibold text-neutral-700 mb-1 block">Định mức tồn min</label>
+                    <label class="form-label text-xs font-semibold text-neutral-700 mb-1 block">Định mức tồn min ván</label>
                     <input type="number" name="min_stock" value="50" min="0" class="form-control rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500">
                 </div>
                 <div>
-                    <label class="form-label text-xs font-semibold text-neutral-700 mb-1 block">Tồn kho ban đầu</label>
+                    <label class="form-label text-xs font-semibold text-neutral-700 mb-1 block">Tồn ván ban đầu (Tấm)</label>
                     <input type="number" name="initial_stock" value="0" min="0" step="0.01" class="form-control rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500">
                 </div>
             </div>
 
+            {{-- Thông số chỉ dán viền đi kèm --}}
+            <div class="p-3 bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800/40 rounded-xl space-y-2">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-purple-900 dark:text-purple-300 flex items-center gap-1.5">
+                        <iconify-icon icon="solar:ruler-angular-bold" class="text-base text-purple-600"></iconify-icon>
+                        Chỉ dán viền tương ứng (Tự động quản lý tại Kho Dán Chỉ)
+                    </span>
+                    <span class="text-[11px] text-purple-600 dark:text-purple-400 font-semibold">SKU: CHI-[Mã tấm]</span>
+                </div>
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label class="form-label text-[11px] font-semibold text-neutral-700 dark:text-neutral-300 mb-1 block">Tồn chỉ ban đầu (m)</label>
+                        <input type="number" name="edge_band_initial_stock" value="0" min="0" step="0.1" class="form-control rounded-lg w-full border-purple-200 px-3 py-1.5 text-xs focus:border-purple-500">
+                    </div>
+                    <div>
+                        <label class="form-label text-[11px] font-semibold text-neutral-700 dark:text-neutral-300 mb-1 block">Giá vốn chỉ (đ/m)</label>
+                        <input type="number" name="edge_band_cost_price" value="0" min="0" step="100" class="form-control rounded-lg w-full border-purple-200 px-3 py-1.5 text-xs focus:border-purple-500">
+                    </div>
+                    <div>
+                        <label class="form-label text-[11px] font-semibold text-neutral-700 dark:text-neutral-300 mb-1 block">Tồn tối thiểu chỉ (m)</label>
+                        <input type="number" name="edge_band_min_stock" value="100" min="0" class="form-control rounded-lg w-full border-purple-200 px-3 py-1.5 text-xs focus:border-purple-500">
+                    </div>
+                </div>
+            </div>
+
             <div>
-                <label class="form-label text-xs font-semibold text-neutral-700 mb-1 block">Kho mặc định</label>
+                <label class="form-label text-xs font-semibold text-neutral-700 mb-1 block">Kho tấm ván mặc định</label>
                 <select name="warehouse_id" class="form-select rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500">
                     @foreach($warehouses as $wh)
                         <option value="{{ $wh->id }}">{{ $wh->name }}</option>
@@ -484,7 +565,7 @@
 
             <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <label class="form-label text-xs font-semibold text-neutral-700 mb-1 block">Kho hàng</label>
+                    <label class="form-label text-xs font-semibold text-neutral-700 mb-1 block">Kho hàng ván</label>
                     <select name="warehouse_id" id="edit_warehouse_id" class="form-select rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500">
                         @foreach($warehouses as $wh)
                             <option value="{{ $wh->id }}">{{ $wh->name }}</option>
@@ -497,6 +578,31 @@
                         <option value="active">Đang kinh doanh</option>
                         <option value="inactive">Ngừng kinh doanh</option>
                     </select>
+                </div>
+            </div>
+
+            {{-- Thông số chỉ dán viền đi kèm tại Kho Dán Chỉ --}}
+            <div class="p-3 bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800/40 rounded-xl space-y-2">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-purple-900 dark:text-purple-300 flex items-center gap-1.5">
+                        <iconify-icon icon="solar:ruler-angular-bold" class="text-base text-purple-600"></iconify-icon>
+                        Chỉ Dán Viền đi kèm (Kho Dán Chỉ)
+                    </span>
+                    <span class="text-[11px] text-purple-600 dark:text-purple-400 font-semibold" id="edit_edge_band_code_label">CHI-...</span>
+                </div>
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label class="form-label text-[11px] font-semibold text-neutral-700 dark:text-neutral-300 mb-1 block">Tồn hiện tại (m)</label>
+                        <input type="number" name="edge_band_current_stock" id="edit_edge_band_current_stock" min="0" step="0.1" class="form-control rounded-lg w-full border-purple-200 px-3 py-1.5 text-xs focus:border-purple-500">
+                    </div>
+                    <div>
+                        <label class="form-label text-[11px] font-semibold text-neutral-700 dark:text-neutral-300 mb-1 block">Giá vốn chỉ (đ/m)</label>
+                        <input type="number" name="edge_band_cost_price" id="edit_edge_band_cost_price" min="0" step="100" class="form-control rounded-lg w-full border-purple-200 px-3 py-1.5 text-xs focus:border-purple-500">
+                    </div>
+                    <div>
+                        <label class="form-label text-[11px] font-semibold text-neutral-700 dark:text-neutral-300 mb-1 block">Tồn tối thiểu (m)</label>
+                        <input type="number" name="edge_band_min_stock" id="edit_edge_band_min_stock" min="0" class="form-control rounded-lg w-full border-purple-200 px-3 py-1.5 text-xs focus:border-purple-500">
+                    </div>
                 </div>
             </div>
 
@@ -663,6 +769,11 @@
         setVal('edit_warehouse_id', item.warehouse_id || '');
         setVal('edit_status', item.status || 'active');
         setVal('edit_notes', item.notes || '');
+
+        setText('edit_edge_band_code_label', 'CHI-' + (item.code || item.color_code || ''));
+        setVal('edit_edge_band_current_stock', item.edge_band_current_stock || 0);
+        setVal('edit_edge_band_cost_price', item.edge_band_cost_price || 0);
+        setVal('edit_edge_band_min_stock', item.edge_band_min_stock || 100);
 
         openModal('editMaterialModal');
     }

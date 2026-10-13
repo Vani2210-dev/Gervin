@@ -1,0 +1,298 @@
+THÔNG TIN CHUNG VỀ 
+THIẾT BỊ QUÉT MÃ QR CÔNG NGHIỆP
+Thiết bị đọc mã QR
+ với
+ kích thước 25mm từ khoảng cách 1m và gửi về server. Đã tìm được thiết bị đọc mã QR là Rakinda RK80ER, thiết bị đọc và sẽ gửi mã đọc được qua UART. 
+Phần cứng
+Bộ vi điều khiển trung tâm:
+ ESP32 
+(ưu tiên dùng mạch sẵn có có màn hình)
+. Dùng mạch TTGO T-display. 
+Xem chi tiết: 
+https://github.com/xinyuan-lilygo/ttgo-t-display
+Cảm biến quét:
+ Rakinda RK80ER
+: kết nối qua TTL 
+5V
+.
+Hiển thị:
+ Màn hình OLED (I2C) hoặc LCD (SPI) để hiển thị nội dung mã QR và trạng thái kết nối.
+Nguồn cấp:
+ 
+5V 2A 
+qua cổng USB 
+để cấp cho ESP32 và cảm biến quét RK80ER. Thiết bị này kết nối qua TTL 
+5V
+Sơ đồ:
+Đóng hộp cần phải:
+- Để chữ nhật nhìn thấy màn hình
+ của mạch TTGO T-Display
+- Một khe để cắm USB-C vào mạch TTGO T-Display
+- Có phương án Đấu nối từ header của 
+mạch TTGO T-Display 
+với dây nối của RK80ER để sao cho chắc chắn
+- Có phương án đấu nối chân pin GPIO trên header của 
+mạch TTGO T-Display 
+tới nút nằm trên vỏ hộp sao cho chắc chắn
+P
+hần mềm
+Chạy thông thường:
+Đọc dữ liệu quét từ
+ RK80ER
+ (
+Xem file pdf cấu trúc dữ liệu của Rakinda RK08ER
+)
+Khi đọc được
+: 
+Trích xuất nội dung mã QR
+, 
+Hiển thị lên màn hìn
+h
+.
+ 
+Gửi dữ liệu lên server.
+Thiết bị sẽ tự ngủ sau khoảng 1 phút (mặc định, có thể cấu hình lại qua công cụ cấu hình ở dưới)
+Công tắc: 01 công tắc bật/
+tắt
+ chế độ quét. 
+Cho thiết bị vào chế độ quét (khi ngủ) hoặc tắt chế độ quét đi.
+Cấu hình:
+Dùng kết nối USB (COM) cổng nạp để cấu hình dạng dòng lệnh 
+từ máy tính 
+(gửi lệnh qua serial để đặt/xem cấu hình)
+HƯỚNG DẪN 
+NỐI PHẦN CỨNG
+HƯỚNG DẪN CẤU HÌNH
+Cấu hình qua giao diện CLI (Serial Command Line)
+Thiết bị cung cấp một giao diện dòng lệnh (CLI) thông qua cổng Serial (Baudrate mặc định: 115200). Bạn có thể sử dụng các phần mềm Serial Terminal (như Putty, Termite, Arduino Serial Monitor, hoặc VS Code Serial Monitor) để nhập lệnh.
+Lệnh Trợ Giúp (help)
+Hiển thị danh sách tất cả các lệnh cấu hình được hỗ trợ kèm theo mô tả ngắn.
+Cú pháp:
+ help
+Kết quả phản hồi ví dụ:
+  Available commands:
+    wifi -ssid <SSID> -pass <PASSWORD> : Set WiFi configuration
+    rk [-tx <pin>] [-rx <pin>] [-baud <baud>] [-pause <ms>]: Set RK80ER configurations
+    rk_reset                           : Reset RK80ER scanner to factory defaults
+    rk_save                            : Save current RK80ER settings
+    rk_set_prefix -prefix <prefix>     : Set Prefix for All Symbologies
+    esp_reset -id <Device_ID>          : Factory reset ESP32 configurations
+    screen -timeout <seconds>          : Set screen off timeout (0 to disable)
+    server [-url <URL>] [-dup <1/0>] [-history <size>] [-queue <size>]: Set Server configurations
+    show                               : Show current configuration
+    
+button [-btn1 <pin>] [-btn2 <pin>] : Set button 1 and button 2 GPIO pins
+help                               : Show this help menu
+Xem Cấu Hình Hiện Tại (show)
+Hiển thị toàn bộ thông tin cấu hình đang được lưu trữ trên thiết bị.
+Cú pháp:
+ show
+Kết quả phản hồi ví dụ:
+  Current saved WiFi config:
+    SSID: MyHomeWiFi
+    Pass: 12345678
+  Current saved RK80ER config:
+    TX Pin: 26
+    RX Pin: 27
+    Baudrate: 9600
+    Scan Pause: 300 ms
+  Current screen off timeout:
+    Timeout: 30 seconds
+  Current saved Server config:
+    URL: http://192.168.1.100:8000/scan
+    Check Duplicate: true
+    Scan History Size: 20
+    Scan Queue Size: 20
+Cấu Hình WiFi (wifi)
+Cài đặt mạng WiFi cho thiết bị kết nối. Sau khi thiết lập thành công, thiết bị sẽ tự động khởi động lại sau 1 giây để áp dụng cấu hình mới.
+Cú pháp:
+ wifi -ssid <tên_wifi> -pass <mật_khẩu>
+Lưu ý:
+ Tham số -pass là tùy chọn (để trống nếu WiFi không có mật khẩu).
+Ví dụ:
+ wifi -ssid "MyHomeWiFi" -pass "12345678"
+Cấu Hình Phần Cứng Máy Quét RK80ER (rk)
+Thiết lập các chân kết nối Serial, tốc độ Baudrate kết nối với đầu đọc RK80ER và khoảng thời gian tạm dừng (delay) giữa hai lần quét thành công liên tiếp.
+Cú pháp:
+ rk [-tx <chân_TX>] [-rx <chân_RX>] [-baud <baudrate>] [-pause <miligiay>]
+Tham số:
+-tx: Chân GPIO truyền dữ liệu từ ESP32 đến đầu quét (mặc định là 26).
+-rx: Chân GPIO nhận dữ liệu từ đầu quét về ESP32 (mặc định là 27).
+-baud: Tốc độ truyền thông Serial với đầu quét (thông thường là 9600 hoặc 115200).
+-pause: Khoảng thời gian tạm nghỉ giữa các lần quét thành công (tính bằng mili giây, mặc định là 300).
+Lưu ý:
+Nếu bạn thay đổi chân tx, rx, hoặc baud, ESP32 sẽ tự động khởi động lại để cấu hình phần cứng mới.
+Nếu chỉ thay đổi -pause, cấu hình sẽ được áp dụng ngay lập tức mà không cần khởi động lại.
+Ví dụ:
+ rk -pause 1000 (đặt độ trễ quét là 1 giây) hoặc rk -baud 9600 (đổi baudrate).
+Lưu Cấu Hình Vào Bộ Nhớ Máy Quét RK80ER (rk_save)
+Gửi lệnh yêu cầu mô-đun RK80ER lưu cấu hình hiện tại vào bộ nhớ Flash không bay hơi của nó.
+Cú pháp:
+ rk_save
+Khôi Phục Cài Đặt Gốc Máy Quét (rk_reset)
+Gửi lệnh khôi phục cấu hình mặc định của nhà sản xuất cho mô-đun quét RK80ER.
+Cú pháp:
+ rk_reset
+Khôi Phục Cài Đặt Gốc ESP32 (esp_reset)
+Khôi phục toàn bộ dữ liệu cấu hình lưu trữ trên ESP32 về mặc định (xoá sạch cấu hình wifi, cấu hình rk, cấu hình nút nhấn, screen timeout và cấu hình server). Thiết bị yêu cầu xác nhận ID thiết bị để đảm bảo an toàn.
+Cú pháp:
+ esp_reset -id <Device_ID>
+Lưu ý:
+ Bạn có thể lấy Device ID bằng cách nhập lệnh show trên Serial. Thiết bị sẽ khởi động lại ngay sau khi reset thành công.
+Ví dụ:
+ esp_reset -id 2767955374
+Cấu Hình Thời Gian Tắt Màn Hình (screen)
+Thiết lập thời gian chờ tắt màn hình để tiết kiệm điện năng.
+Cú pháp:
+ screen -timeout <số_giây>
+Lưu ý:
+ Đặt <số_giây> là 0 để màn hình luôn sáng.
+Ví dụ:
+ screen -timeout 60 (tắt màn hình sau 1 phút không có hoạt động).
+Cấu Hình Máy Chủ Gửi Dữ Liệu (server)
+Cài đặt URL máy chủ nhận kết quả quét, chế độ kiểm tra trùng lặp (Duplicate Check) và kích thước hàng đợi lưu trữ tạm thời khi mất kết nối mạng.
+Cú pháp:
+ server [-url <URL_nhan_tin>] [-dup <1/0>] [-history <kích_thước_lịch_sử>] [-queue <kích_thước_hàng_đợi>]
+Tham số:
+-url: Địa chỉ API Endpoint để ESP32 gửi dữ liệu quét qua HTTP POST dưới dạng JSON.
+-dup: Thiết lập kiểm tra trùng mã quét (1 là Bật, 0 là Tắt).
+-history: Số lượng mã đã quét được lưu trữ để so sánh loại trừ trùng lặp (ví dụ: 20).
+-queue: Số lượng gói tin tối đa được lưu trữ ngoại tuyến (offline queue) và tự động thử lại khi mất mạng.
+Ví dụ:
+ server -url "http://192.168.1.50:5000/scan" -dup 1 -history 30 -queue 50
+Cấu Hình Nút Nhấn (`button`)
+Thiết lập chân GPIO cho các nút nhấn vật lý của thiết bị. Sau khi lưu cấu hình thành công, thiết bị sẽ tự động khởi động lại sau 1 giây để khởi tạo lại phần cứng.
+- 
+Cú pháp:
+ `button [-btn1 <chân_Button_1>] [-btn2 <chân_Button_2>]`
+- 
+Tham số:
+  - `-btn1`: Chân GPIO cho nút nhấn 1 là `35`.
+ - `-btn2`: Chân GPIO cho nút nhấn 2 mặc định `0`).
+- 
+Ví dụ:
+ `button -btn1 35 -btn2 0`
+Cấu hình nhanh qua Mã QR (QR Config)
+Để đơn giản hóa quá trình vận hành mà không cần cắm cáp USB vào máy tính để gõ lệnh CLI, thiết bị hỗ trợ tính năng 
+Cấu hình bằng cách quét mã QR
+.
+Cơ chế hoạt động
+Khi thiết bị đang hoạt động bình thường, nếu bạn đưa một mã QR chứa cú pháp lệnh cấu hình đặc biệt vào trước mắt camera quét:
+Đầu quét RK80ER nhận dạng dữ liệu mã QR.
+ESP32 kiểm tra dữ liệu: Nếu dữ liệu bắt đầu bằng tiền tố <cmd>, nó sẽ trích xuất phần lệnh phía sau và truyền thẳng vào trình thông dịch CLI nội bộ để thực thi.
+Kết quả thực thi (Thành công hoặc Lỗi) sẽ được hiển thị trực tiếp lên màn hình LCD của thiết bị để người vận hành kiểm soát.
+Cú pháp tạo mã QR cấu hình
+Nội dung mã QR cần được mã hóa theo định dạng:
+<cmd><Lệnh_CLI_ở_phần_1>
+Một số mã QR thông dụng có thể tạo và in ra để quét nhanh:
+Mục đích cấu hình
+Chuỗi văn bản để tạo mã QR
+Cấu hình WiFi nhanh
+<cmd>wifi -ssid "NhaXuongGo" -pass "88888888"
+Cài đặt Server API
+<cmd>server -url "http://192.168.1.12:8000/scan" -dup 1
+Độ trễ quét 1.5 giây
+<cmd>rk -pause 1500
+Đặt tắt màn hình sau 10s
+<cmd>screen -timeout 10
+Khôi phục cài đặt gốc ESP32
+<cmd>esp_reset -id 
+12345678
+Xem cấu hình trên màn hình
+<cmd>show
+Lưu cấu hình máy quét
+<cmd>rk_save
+Khôi phục cài đặt gốc đầu quét
+<cmd>rk_reset
+Tạo mã QR trực tuyến
+C
+ó thể sử dụng bất kỳ công cụ tạo mã QR trực tuyến miễn phí nào (như _qr-code-generator.com_, _qrickit.com_, hay các thư viện Python/NodeJS) để dán chuỗi văn bản ở bảng trên và xuất thành hình ảnh QR để mang đi cấu hình thiết bị.
+HƯỚNG DẪN KẾT NỐI SERVER, API ENDPOINT & CẤU TRÚC DỮ LIỆU
+Cơ Chế Giao Tiếp & Đồng Bộ Dữ Liệu
+Khi thiết bị ESP32 quét được mã vạch hoặc mã QR từ đầu đọc Rakinda RK80ER, dữ liệu không được gửi trực tiếp lên server ngay lập tức mà trải qua các bước xử lý và lưu đệm như sau:
+Bộ lọc trùng (Duplicate Filter):
+ Nếu tính năng Check Duplicate được bật, ESP32 sẽ đối chiếu mã vừa quét với lịch sử quét gần đây (Scan History). Nếu mã đã tồn tại trong lịch sử, thiết bị sẽ bỏ qua (trả về trạng thái trùng lặp và phát âm báo/hiển thị cảnh báo).
+Hàng đợi ngoại tuyến (Offline Queue):
+ Nếu mã hợp lệ, ESP32 tạo một gói dữ liệu (ScanPacket) bao gồm mốc thời gian (timestamp), ID thiết bị (Device ID) và nội dung mã quét (result), sau đó đẩy vào hàng đợi dữ liệu (Scan Queue).
+Tiến trình đồng bộ chạy ngầm (Background Sync Loop):
+Một tác vụ ngầm liên tục kiểm tra kết nối WiFi và trạng thái hàng đợi dữ liệu.
+Khi có kết nối mạng và hàng đợi không trống, ESP32 sẽ đóng gói toàn bộ (hoặc một phần tùy kích thước) hàng đợi thành một mảng JSON và gửi một yêu cầu 
+HTTP POST
+ tới địa chỉ URL của Server được cấu hình.
+Nếu Server phản hồi mã trạng thái thành công (HTTP status code 200 - 299), ESP32 sẽ xóa các bản ghi tương ứng khỏi hàng đợi.
+Nếu mất kết nối mạng hoặc Server phản hồi lỗi (ví dụ: HTTP 500, 404, hoặc không thể kết nối), dữ liệu vẫn sẽ được 
+giữ lại an toàn trong hàng đợi
+ trên RAM của ESP32 và tự động thử lại ở chu kỳ tiếp theo.
+Cấu Hình Endpoint Trên Thiết Bị
+Bạn có thể cấu hình URL của Server nhận dữ liệu bằng hai cách chính (xem chi tiết tại 
+mục Hướng dẫn cấu hình)
+Qua Serial CLI:
+  server -url "http://<dia_chi_ip_server>:<port>/api/sync" -dup 1 -history 20 -queue 20
+Qua Quét Mã QR Cấu Hình:
+ Tạo mã QR có nội dung:
+  <cmd>server -url "http://<dia_chi_ip_server>:<port>/api/sync" -dup 1
+Cấu Trúc Gói Dữ Liệu Gửi Về Server (JSON Payload)
+Dữ liệu được gửi qua giao thức 
+HTTP POST
+ với tiêu đề (Header):
+Content-Type: application/json
+Định Dạng Payload (Request Body)
+Payload gửi đi luôn ở dạng một 
+Mảng JSON (JSON Array)
+ chứa các đối tượng quét, ngay cả khi chỉ có 1 mã quét được đồng bộ. Điều này tối ưu hóa băng thông khi cần đồng bộ hàng loạt mã quét ngoại tuyến tích lũy trước đó.
+Mỗi phần tử trong mảng có cấu trúc như sau:
+Tên Trường
+Kiểu Dữ Liệu
+Mô Tả
+Ví Dụ
+time
+String
+Thời gian thực hiện quét (định dạng DD-MM-YYYY HH:MM:SS.mmm) lấy từ NTP của ESP32.
+"09-06-2026 11:45:12.354"
+device_id
+Integer
+ID duy nhất của thiết bị ESP32 (sinh ra từ địa chỉ MAC).
+2767955374
+result
+String
+Nội dung chuỗi dữ liệu chứa trong mã vạch / QR Code đã quét.
+"SP-WOOD-00912"
+Ví dụ Raw JSON Payload gửi từ ESP32
+[
+  {
+    "time": "09-06-2026 11:45:12.354",
+    "device_id": 2767955374,
+    "result": "SP-WOOD-00912"
+  },
+  {
+    "time": "09-06-2026 11:45:18.102",
+    "device_id": 2767955374,
+    "result": "SP-WOOD-00913"
+  }
+]
+Đặc Tả Endpoint & Phản Hồi Từ Server
+Server nhận dữ liệu quét từ ESP32 cần xử lý mảng JSON payload và phản hồi lại cho thiết bị.
+Để ESP32 xác định việc đồng bộ đã thành công và xóa hàng đợi, Server cần trả về mã HTTP Status nằm trong khoảng 
+200 - 299
+ (khuyến nghị là 200 OK).
+Định dạng phản hồi khuyến nghị dạng JSON:
+Khi đồng bộ thành công:
+HTTP Status:
+ 200 OK
+Body:
+    {
+      "status": "success",
+      "received": 2
+    }
+Khi gặp lỗi xử lý phía Server:
+HTTP Status:
+ 400 Bad Request hoặc 500 Internal Server Error
+Body:
+    {
+      "status": "error",
+      "message": "Chi tiết mô tả lỗi từ server"
+    }
+Nếu Server trả về mã HTTP khác ngoài khoảng 200-299 (ví dụ: 404 Not Found, 500 Server Error, hoặc kết nối timeout), ESP32 sẽ 
+không
+ xóa dữ liệu trong hàng đợi mà sẽ lưu lại để tiếp tục gửi lại ở chu kỳ tiếp theo. Điều này có thể dẫn đến việc trùng lặp dữ liệu trên Server nếu Server xử lý ghi nhận thành công nhưng phản hồi lỗi hoặc gặp sự cố mạng lúc phản hồi. Vì vậy, hệ thống Server nên thiết kế cơ chế ghi nhận idempotent (tránh ghi trùng bản ghi dựa trên sự kết hợp giữa device_id, time, và result).
+ 

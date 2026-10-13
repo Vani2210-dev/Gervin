@@ -53,7 +53,7 @@ class Customer extends Model
         if (!$user) {
             return false;
         }
-        if ($user->hasRole('Admin')) {
+        if ($user->canViewAllMarketGroups()) {
             return true;
         }
         if (!$this->market_group_id) {

@@ -66,41 +66,65 @@ class InventoryController extends Controller
 
         $warehouses = Warehouse::orderBy('name')->get();
         $selectedWarehouseId = $request->input('warehouse_id');
+        $selectedWarehouse = $selectedWarehouseId ? Warehouse::find($selectedWarehouseId) : null;
+        $isEdgeBandWarehouse = $selectedWarehouse && ($selectedWarehouse->code === 'KHO-CHI' || str_contains(mb_strtolower($selectedWarehouse->name), 'chỉ'));
         $selectedCategory = $request->input('category');
         $stockFilter = $request->input('stock_filter', 'all'); // 'all', 'low_stock', 'out_of_stock', 'in_stock'
         $search = trim((string)$request->input('search'));
 
         $query = WoodBoard::with(['warehouse', 'prices.type']);
 
-        // Smart Date Filter handling
-        $dateFilterData = [];
-        $this->applyDateFilter($query, $request, 'created_at', $dateFilterData);
+        // Smart Date Filter handling (dùng params để hiển thị UI và chỉ lọc giao dịch khi người dùng chọn khoảng ngày cụ thể)
+        $dateFilterData = $this->getDateFilterParams($request);
         $startDate = $dateFilterData['start_date'];
         $endDate = $dateFilterData['end_date'];
         $dateLabel = $dateFilterData['label'];
         $dateMode = $request->input('date_mode', $dateFilterData['preset']);
         $dateVal = $request->input('date_val', '');
 
-        if ($selectedWarehouseId) {
-            $query->where('warehouse_id', $selectedWarehouseId);
-        }
-
         if ($selectedCategory) {
             $query->where('price_group', $selectedCategory);
         }
 
-        if ($stockFilter === 'low_stock') {
-            $query->whereColumn('current_stock', '<=', 'min_stock')->where('current_stock', '>', 0);
-        } elseif ($stockFilter === 'out_of_stock') {
-            $query->where('current_stock', '<=', 0);
-        } elseif ($stockFilter === 'in_stock') {
-            $query->where('current_stock', '>', 0);
+        if ($isEdgeBandWarehouse) {
+            // Khi xem Kho Dán Chỉ (KHO-CHI): Theo quy tắc "hàng hóa có tấm nào thì có kho tồn dán chỉ cho tấm đó"
+            // Hiển thị tất cả các mã chỉ dán viền tương ứng với từng tấm
+            if ($stockFilter === 'low_stock') {
+                $query->whereColumn('edge_band_current_stock', '<=', 'edge_band_min_stock')->where('edge_band_current_stock', '>', 0);
+            } elseif ($stockFilter === 'out_of_stock') {
+                $query->where('edge_band_current_stock', '<=', 0);
+            } elseif ($stockFilter === 'in_stock') {
+                $query->where('edge_band_current_stock', '>', 0);
+            }
+        } else {
+            if ($selectedWarehouseId) {
+                // Khi chọn Kho Tấm Ván: Lọc theo warehouse_id, và nếu là Kho Tấm Ván (ID 1 hoặc KHO-VAN) thì bao gồm cả các tấm chưa gán warehouse_id
+                $query->where(function ($q) use ($selectedWarehouseId, $selectedWarehouse) {
+                    $q->where('warehouse_id', $selectedWarehouseId);
+                    if (($selectedWarehouse && $selectedWarehouse->code === 'KHO-VAN') || $selectedWarehouseId == 1) {
+                        $q->orWhereNull('warehouse_id');
+                    }
+                });
+            }
+            if ($stockFilter === 'low_stock') {
+                $query->whereColumn('current_stock', '<=', 'min_stock')->where('current_stock', '>', 0);
+            } elseif ($stockFilter === 'out_of_stock') {
+                $query->where('current_stock', '<=', 0);
+            } elseif ($stockFilter === 'in_stock') {
+                $query->where('current_stock', '>', 0);
+            }
         }
 
-        if ($startDate && $endDate) {
-            $query->where(function ($q) use ($startDate, $endDate) {
-                $q->whereHas('transactions', function ($t) use ($startDate, $endDate) {
+        if ($startDate && $endDate && $dateMode !== 'all') {
+            $query->where(function ($q) use ($startDate, $endDate, $isEdgeBandWarehouse, $selectedWarehouseId) {
+                $q->whereHas('transactions', function ($t) use ($startDate, $endDate, $isEdgeBandWarehouse, $selectedWarehouseId) {
                     $t->whereBetween('date', [$startDate, $endDate]);
+                    if ($selectedWarehouseId) {
+                        $t->where('warehouse_id', $selectedWarehouseId);
+                    }
+                    if ($isEdgeBandWarehouse) {
+                        $t->where('item_type', 'edge_band');
+                    }
                 })->orWhereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
             });
         }
@@ -121,12 +145,20 @@ class InventoryController extends Controller
 
         // Summary KPIs
         $totalItems = WoodBoard::count();
-        $totalStockQty = (float)(\App\Models\WoodBoardPrice::sum('stock') ?: WoodBoard::sum('current_stock'));
-        $totalStockValue = (float)(\App\Models\WoodBoardPrice::selectRaw('SUM(stock * price_board) as val')->value('val')
-            ?: WoodBoard::selectRaw('SUM(current_stock * cost_price) as val')->value('val') ?? 0);
-        $lowStockCount = WoodBoard::where(function ($q) {
-            $q->whereColumn('current_stock', '<=', 'min_stock')->orWhere('current_stock', '<=', 0);
-        })->count();
+        if ($isEdgeBandWarehouse) {
+            $totalStockQty = (float)WoodBoard::sum('edge_band_current_stock');
+            $totalStockValue = (float)(WoodBoard::selectRaw('SUM(edge_band_current_stock * edge_band_cost_price) as val')->value('val') ?? 0);
+            $lowStockCount = WoodBoard::where(function ($q) {
+                $q->whereColumn('edge_band_current_stock', '<=', 'edge_band_min_stock')->orWhere('edge_band_current_stock', '<=', 0);
+            })->count();
+        } else {
+            $totalStockQty = (float)(\App\Models\WoodBoardPrice::sum('stock') ?: WoodBoard::sum('current_stock'));
+            $totalStockValue = (float)(\App\Models\WoodBoardPrice::selectRaw('SUM(stock * price_board) as val')->value('val')
+                ?: WoodBoard::selectRaw('SUM(current_stock * cost_price) as val')->value('val') ?? 0);
+            $lowStockCount = WoodBoard::where(function ($q) {
+                $q->whereColumn('current_stock', '<=', 'min_stock')->orWhere('current_stock', '<=', 0);
+            })->count();
+        }
 
         $categories = WoodBoard::select('price_group as category')->whereNotNull('price_group')->distinct()->pluck('category');
 
@@ -146,6 +178,8 @@ class InventoryController extends Controller
             'materials',
             'warehouses',
             'selectedWarehouseId',
+            'selectedWarehouse',
+            'isEdgeBandWarehouse',
             'selectedCategory',
             'stockFilter',
             'search',
@@ -184,6 +218,11 @@ class InventoryController extends Controller
             'initial_stock' => 'nullable|numeric|min:0',
             'warehouse_id' => 'nullable|exists:warehouses,id',
             'notes' => 'nullable|string',
+            'edge_band_unit' => 'nullable|string|max:50',
+            'edge_band_current_stock' => 'nullable|numeric|min:0',
+            'edge_band_initial_stock' => 'nullable|numeric|min:0',
+            'edge_band_cost_price' => 'nullable|numeric|min:0',
+            'edge_band_min_stock' => 'nullable|numeric|min:0',
         ]);
 
         if (!$code) {
@@ -195,6 +234,7 @@ class InventoryController extends Controller
         }
 
         $initStock = (float)($request->initial_stock ?? 0);
+        $edgeInitStock = (float)($request->edge_band_initial_stock ?? $request->edge_band_current_stock ?? 0);
 
         $board = WoodBoard::create([
             'color_code' => $code,
@@ -208,11 +248,18 @@ class InventoryController extends Controller
             'warehouse_id' => $request->warehouse_id,
             'status' => 'active',
             'notes' => $request->notes,
+            'edge_band_unit' => trim($request->edge_band_unit) ?: 'm',
+            'edge_band_cost_price' => (float)($request->edge_band_cost_price ?? 0),
+            'edge_band_min_stock' => (float)($request->edge_band_min_stock ?? 100),
+            'edge_band_initial_stock' => $edgeInitStock,
+            'edge_band_current_stock' => $edgeInitStock,
         ]);
 
         if ($initStock > 0) {
+            $vanWarehouse = Warehouse::where('code', 'KHO-VAN')->first() ?? Warehouse::first();
             InventoryTransaction::create([
-                'warehouse_id' => $board->warehouse_id ?? Warehouse::first()->id,
+                'warehouse_id' => $board->warehouse_id ?? $vanWarehouse->id,
+                'item_type' => 'board',
                 'wood_board_id' => $board->id,
                 'date' => date('Y-m-d'),
                 'type' => 'initial',
@@ -220,12 +267,29 @@ class InventoryController extends Controller
                 'in_qty' => $initStock,
                 'out_qty' => 0,
                 'stock_after' => $initStock,
-                'notes' => 'Số dư tồn kho ban đầu',
+                'notes' => 'Số dư tồn kho tấm ban đầu',
                 'created_by' => Auth::id(),
             ]);
         }
 
-        return back()->with('success', 'Thêm mới tấm ván ' . $board->color_code . ' thành công!');
+        if ($edgeInitStock > 0) {
+            $chiWarehouse = Warehouse::where('code', 'KHO-CHI')->first() ?? $board->warehouse_id;
+            InventoryTransaction::create([
+                'warehouse_id' => $chiWarehouse->id,
+                'item_type' => 'edge_band',
+                'wood_board_id' => $board->id,
+                'date' => date('Y-m-d'),
+                'type' => 'initial',
+                'voucher_code' => 'DK-CHI-' . date('Y'),
+                'in_qty' => $edgeInitStock,
+                'out_qty' => 0,
+                'stock_after' => $edgeInitStock,
+                'notes' => 'Số dư tồn kho chỉ ban đầu',
+                'created_by' => Auth::id(),
+            ]);
+        }
+
+        return back()->with('success', 'Thêm mới tấm ván & chỉ dán ' . $board->color_code . ' thành công!');
     }
 
     /**
@@ -245,11 +309,15 @@ class InventoryController extends Controller
             'warehouse_id' => 'nullable|exists:warehouses,id',
             'status' => 'nullable|in:active,inactive',
             'notes' => 'nullable|string',
+            'edge_band_unit' => 'nullable|string|max:50',
+            'edge_band_current_stock' => 'nullable|numeric|min:0',
+            'edge_band_cost_price' => 'nullable|numeric|min:0',
+            'edge_band_min_stock' => 'nullable|numeric|min:0',
         ]);
 
         $group = trim($request->price_group ?: $request->category);
 
-        $material->update([
+        $updateData = [
             'origin_code' => trim($request->origin_code),
             'price_group' => $group ?: $material->price_group,
             'unit' => trim($request->unit) ?: $material->unit,
@@ -258,9 +326,24 @@ class InventoryController extends Controller
             'warehouse_id' => $request->warehouse_id,
             'status' => $request->status ?: $material->status,
             'notes' => $request->notes,
-        ]);
+        ];
 
-        return back()->with('success', 'Cập nhật thông tin tấm ' . $material->color_code . ' thành công!');
+        if ($request->has('edge_band_unit') && $request->filled('edge_band_unit')) {
+            $updateData['edge_band_unit'] = trim($request->edge_band_unit);
+        }
+        if ($request->has('edge_band_current_stock') && $request->filled('edge_band_current_stock')) {
+            $updateData['edge_band_current_stock'] = (float)$request->edge_band_current_stock;
+        }
+        if ($request->has('edge_band_cost_price') && $request->filled('edge_band_cost_price')) {
+            $updateData['edge_band_cost_price'] = (float)$request->edge_band_cost_price;
+        }
+        if ($request->has('edge_band_min_stock') && $request->filled('edge_band_min_stock')) {
+            $updateData['edge_band_min_stock'] = (float)$request->edge_band_min_stock;
+        }
+
+        $material->update($updateData);
+
+        return back()->with('success', 'Cập nhật thông tin tấm & chỉ dán ' . $material->color_code . ' thành công!');
     }
 
     /**
@@ -531,15 +614,17 @@ class InventoryController extends Controller
 
     public function createStocktake(Request $request)
     {
-        $warehouse = Warehouse::first();
+        $warehouseId = $request->input('warehouse_id');
+        $warehouse = $warehouseId ? Warehouse::find($warehouseId) : Warehouse::first();
         if (!$warehouse) {
-            $warehouse = Warehouse::create(['name' => 'Kho Chính', 'code' => 'KHO-CHINH']);
+            $warehouse = Warehouse::create(['name' => 'Kho Tấm Ván', 'code' => 'KHO-VAN']);
         }
 
-        $materials = $this->getSelectableMaterials();
+        $warehouses = Warehouse::orderBy('name')->get();
+        $materials = $this->getSelectableMaterials($warehouse->id);
         $nextCode = $this->inventoryService->generateCode('PKK', 'inventory_stocktakes');
 
-        return view('inventory.stocktakes.create', compact('warehouse', 'materials', 'nextCode'));
+        return view('inventory.stocktakes.create', compact('warehouse', 'warehouses', 'materials', 'nextCode'));
     }
 
     public function storeStocktake(Request $request)
@@ -577,37 +662,95 @@ class InventoryController extends Controller
     }
 
     /**
-     * Lấy danh sách mặt hàng có thể chọn (WoodBoardPrice kết hợp WoodBoard)
+     * Lấy danh sách mặt hàng có thể chọn (WoodBoardPrice kết hợp WoodBoard & Chỉ dán viền)
      */
-    private function getSelectableMaterials()
+    private function getSelectableMaterials($warehouseId = null)
     {
-        $prices = \App\Models\WoodBoardPrice::with(['board', 'type'])
-            ->whereHas('board', function($q) { $q->where('status', 'active'); })
-            ->orderBy('code')
-            ->get();
+        $selectedWh = $warehouseId ? Warehouse::find($warehouseId) : null;
+        $isEdgeBand = $selectedWh && ($selectedWh->code === 'KHO-CHI' || str_contains(mb_strtolower($selectedWh->name), 'chỉ'));
+        $isBoardOnly = $selectedWh && ($selectedWh->code === 'KHO-VAN' || str_contains(mb_strtolower($selectedWh->name), 'ván'));
 
-        if ($prices->isEmpty()) {
-            return WoodBoard::where('status', 'active')->orderBy('price_group')->orderBy('color_code')->get();
+        $result = collect();
+
+        // 1. Wood Board items (cho Kho Tấm Ván hoặc tất cả)
+        if (!$isEdgeBand) {
+            $prices = \App\Models\WoodBoardPrice::with(['board', 'type'])
+                ->whereHas('board', function($q) { $q->where('status', 'active'); })
+                ->orderBy('code')
+                ->get();
+
+            if ($prices->isNotEmpty()) {
+                $boardItems = $prices->map(function ($p) {
+                    $typeName = $p->type?->name ?? '';
+                    $color = $p->board?->color_code ?? '';
+                    $group = $p->board?->price_group ?? '';
+                    return (object)[
+                        'id'                  => 'board_' . $p->id,
+                        'raw_id'              => $p->id,
+                        'wood_board_id'       => $p->wood_board_id,
+                        'wood_board_price_id' => $p->id,
+                        'item_type'           => 'board',
+                        'warehouse_code'      => 'KHO-VAN',
+                        'code'                => $p->code,
+                        'name'                => ($p->name ?: $typeName) . ($color ? " (Màu {$color})" : ''),
+                        'origin_code'         => $p->board?->origin_code ?? '',
+                        'category'            => $group ?: $typeName,
+                        'unit'                => 'Tấm',
+                        'cost_price'          => (float)($p->price_board ?: 0),
+                        'current_stock'       => (float)($p->stock ?: 0),
+                        'thickness'           => $p->thickness ?: '17mm',
+                    ];
+                });
+                $result = $result->merge($boardItems);
+            } else {
+                $boards = WoodBoard::where('status', 'active')->orderBy('price_group')->orderBy('color_code')->get();
+                $boardItems = $boards->map(function ($b) {
+                    return (object)[
+                        'id'                  => 'board_' . $b->id,
+                        'raw_id'              => $b->id,
+                        'wood_board_id'       => $b->id,
+                        'wood_board_price_id' => null,
+                        'item_type'           => 'board',
+                        'warehouse_code'      => 'KHO-VAN',
+                        'code'                => $b->color_code,
+                        'name'                => 'Tấm ' . $b->color_code,
+                        'origin_code'         => $b->origin_code ?? '',
+                        'category'            => $b->price_group ?: 'Tấm cốt gỗ',
+                        'unit'                => $b->unit ?: 'Tấm',
+                        'cost_price'          => (float)($b->cost_price ?: 0),
+                        'current_stock'       => (float)($b->current_stock ?: 0),
+                        'thickness'           => '17mm',
+                    ];
+                });
+                $result = $result->merge($boardItems);
+            }
         }
 
-        return $prices->map(function ($p) {
-            $typeName = $p->type?->name ?? '';
-            $color = $p->board?->color_code ?? '';
-            $group = $p->board?->price_group ?? '';
-            return (object)[
-                'id'                  => $p->id,
-                'wood_board_id'       => $p->wood_board_id,
-                'wood_board_price_id' => $p->id,
-                'code'                => $p->code,
-                'name'                => ($p->name ?: $typeName) . ($color ? " (Màu {$color})" : ''),
-                'origin_code'         => $p->board?->origin_code ?? '',
-                'category'            => $group ?: $typeName,
-                'unit'                => 'Tấm',
-                'cost_price'          => (float)($p->price_board ?: 0),
-                'current_stock'       => (float)($p->stock ?: 0),
-                'thickness'           => $p->thickness ?: '17mm',
-            ];
-        });
+        // 2. Edge Band items (Mỗi tấm ván trong hệ thống đều có chỉ dán viền tương ứng trong Kho Dán Chỉ!)
+        if (!$isBoardOnly) {
+            $boards = WoodBoard::where('status', 'active')->orderBy('color_code')->get();
+            $edgeItems = $boards->map(function ($b) {
+                return (object)[
+                    'id'                  => 'edge_' . $b->id,
+                    'raw_id'              => $b->id,
+                    'wood_board_id'       => $b->id,
+                    'wood_board_price_id' => null,
+                    'item_type'           => 'edge_band',
+                    'warehouse_code'      => 'KHO-CHI',
+                    'code'                => $b->edge_band_code,
+                    'name'                => $b->edge_band_name,
+                    'origin_code'         => $b->origin_code ?? '',
+                    'category'            => 'Chỉ dán viền (' . ($b->price_group ?: 'Tiêu chuẩn') . ')',
+                    'unit'                => $b->edge_band_unit ?: 'm',
+                    'cost_price'          => (float)($b->edge_band_cost_price ?: 0),
+                    'current_stock'       => (float)($b->edge_band_current_stock ?: 0),
+                    'thickness'           => '',
+                ];
+            });
+            $result = $result->merge($edgeItems);
+        }
+
+        return $result;
     }
 
     public function balanceStocktake(InventoryStocktake $stocktake)
@@ -624,7 +767,7 @@ class InventoryController extends Controller
     }
 
     /**
-     * 5. Báo cáo Xuất - Nhập - Tồn & Báo cáo Ma trận 12 Tháng Kế toán
+     * 5. Báo cáo Xuất - Nhập - Tồn & Báo cáo Ma trận 12 Tháng Kế toán theo từng kho
      */
     public function reports(Request $request)
     {
@@ -641,28 +784,32 @@ class InventoryController extends Controller
         $warehouseId = $request->input('warehouse_id');
 
         $warehouses = Warehouse::orderBy('name')->get();
+        $selectedWarehouse = $warehouseId ? Warehouse::find($warehouseId) : null;
+        $isEdgeBand = $selectedWarehouse && ($selectedWarehouse->code === 'KHO-CHI' || str_contains(mb_strtolower($selectedWarehouse->name), 'chỉ'));
 
-        // Query materials filtered by warehouse if specified
-        $materialsQuery = WoodBoard::with('warehouse')->orderBy('price_group')->orderBy('color_code');
-        if ($warehouseId) {
-            $materialsQuery->where(function($q) use ($warehouseId) {
-                $q->where('warehouse_id', $warehouseId)
-                  ->orWhereHas('transactions', function($t) use ($warehouseId) {
-                      $t->where('warehouse_id', $warehouseId);
-                  });
-            });
-        }
-        $materials = $materialsQuery->get();
+        // Query wood boards (nguồn chuẩn: wood_boards)
+        $materials = WoodBoard::with('warehouse')->orderBy('price_group')->orderBy('color_code')->get();
 
         // Tab 1: Xuất Nhập Tồn tổng hợp
         $reportData = [];
 
         foreach ($materials as $m) {
+            $sku = $isEdgeBand ? $m->edge_band_code : $m->color_code;
+            $name = $isEdgeBand ? $m->edge_band_name : ('Tấm ' . $m->color_code);
+            $unit = $isEdgeBand ? ($m->edge_band_unit ?: 'm') : $m->unit;
+
             $inQuery = InventoryTransaction::where('wood_board_id', $m->id)
                 ->whereBetween('date', [$startDate, $endDate])
                 ->where('in_qty', '>', 0);
             if ($warehouseId) {
                 $inQuery->where('warehouse_id', $warehouseId);
+            }
+            if ($isEdgeBand) {
+                $inQuery->where('item_type', 'edge_band');
+            } else {
+                $inQuery->where(function($q) {
+                    $q->where('item_type', 'board')->orWhereNull('item_type');
+                });
             }
             $inQty = (float)$inQuery->sum('in_qty');
 
@@ -672,6 +819,13 @@ class InventoryController extends Controller
             if ($warehouseId) {
                 $outQuery->where('warehouse_id', $warehouseId);
             }
+            if ($isEdgeBand) {
+                $outQuery->where('item_type', 'edge_band');
+            } else {
+                $outQuery->where(function($q) {
+                    $q->where('item_type', 'board')->orWhereNull('item_type');
+                });
+            }
             $outQty = (float)$outQuery->sum('out_qty');
 
             $startQuery = InventoryTransaction::where('wood_board_id', $m->id)
@@ -679,16 +833,27 @@ class InventoryController extends Controller
             if ($warehouseId) {
                 $startQuery->where('warehouse_id', $warehouseId);
             }
+            if ($isEdgeBand) {
+                $startQuery->where('item_type', 'edge_band');
+            } else {
+                $startQuery->where(function($q) {
+                    $q->where('item_type', 'board')->orWhereNull('item_type');
+                });
+            }
             $startStock = (float)$startQuery->sum(DB::raw('in_qty - out_qty'));
 
             $endStock = $startStock + $inQty - $outQty;
 
             $reportData[] = [
-                'material' => $m,
+                'material'    => $m,
+                'sku'         => $sku,
+                'name'        => $name,
+                'unit'        => $unit,
+                'is_edge_band'=> $isEdgeBand,
                 'start_stock' => $startStock,
-                'in_qty' => $inQty,
-                'out_qty' => $outQty,
-                'end_stock' => $endStock,
+                'in_qty'      => $inQty,
+                'out_qty'     => $outQty,
+                'end_stock'   => $endStock,
             ];
         }
 
@@ -706,10 +871,21 @@ class InventoryController extends Controller
         }
 
         foreach ($materials as $idx => $m) {
+            $sku = $isEdgeBand ? $m->edge_band_code : $m->color_code;
+            $name = $isEdgeBand ? $m->edge_band_name : ('Tấm ' . $m->color_code);
+            $unit = $isEdgeBand ? ($m->edge_band_unit ?: 'm') : $m->unit;
+
             $initYearQuery = InventoryTransaction::where('wood_board_id', $m->id)
                 ->where('date', '<', $year . '-01-01');
             if ($warehouseId) {
                 $initYearQuery->where('warehouse_id', $warehouseId);
+            }
+            if ($isEdgeBand) {
+                $initYearQuery->where('item_type', 'edge_band');
+            } else {
+                $initYearQuery->where(function($q) {
+                    $q->where('item_type', 'board')->orWhereNull('item_type');
+                });
             }
             $initYearStock = (float)$initYearQuery->sum(DB::raw('in_qty - out_qty'));
 
@@ -727,12 +903,26 @@ class InventoryController extends Controller
                 if ($warehouseId) {
                     $mInQuery->where('warehouse_id', $warehouseId);
                 }
+                if ($isEdgeBand) {
+                    $mInQuery->where('item_type', 'edge_band');
+                } else {
+                    $mInQuery->where(function($q) {
+                        $q->where('item_type', 'board')->orWhereNull('item_type');
+                    });
+                }
                 $mIn = (float)$mInQuery->sum('in_qty');
 
                 $mOutQuery = InventoryTransaction::where('wood_board_id', $m->id)
                     ->whereBetween('date', [$mStart, $mEnd]);
                 if ($warehouseId) {
                     $mOutQuery->where('warehouse_id', $warehouseId);
+                }
+                if ($isEdgeBand) {
+                    $mOutQuery->where('item_type', 'edge_band');
+                } else {
+                    $mOutQuery->where(function($q) {
+                        $q->where('item_type', 'board')->orWhereNull('item_type');
+                    });
                 }
                 $mOut = (float)$mOutQuery->sum('out_qty');
 
@@ -748,17 +938,19 @@ class InventoryController extends Controller
             }
 
             $matrixRows[] = [
-                'stt' => $idx + 1,
-                'code' => $m->color_code,
-                'name' => 'Tấm ' . $m->color_code,
-                'origin_code' => $m->origin_code,
-                'category' => $m->price_group,
-                'start_stock' => $initYearStock,
-                'months' => $rowMonths,
+                'stt'           => $idx + 1,
+                'code'          => $sku,
+                'name'          => $name,
+                'unit'          => $unit,
+                'is_edge_band'  => $isEdgeBand,
+                'origin_code'   => $m->origin_code,
+                'category'      => $m->price_group,
+                'start_stock'   => $initYearStock,
+                'months'        => $rowMonths,
                 'total_year_in' => $totalYearIn,
-                'total_year_out' => $totalYearOut,
-                'final_stock' => $running,
-                'stock_status' => $m->stock_status,
+                'total_year_out'=> $totalYearOut,
+                'final_stock'   => $running,
+                'stock_status'  => $m->stock_status,
             ];
 
             $colTotals['start_stock'] += $initYearStock;
@@ -782,6 +974,8 @@ class InventoryController extends Controller
             'endDate',
             'year',
             'warehouseId',
+            'selectedWarehouse',
+            'isEdgeBand',
             'warehouses',
             'reportData',
             'matrixRows',
@@ -804,27 +998,20 @@ class InventoryController extends Controller
             $endDate = date('Y-m-d');
         }
         $warehouseId = $request->input('warehouse_id');
+        $selectedWarehouse = $warehouseId ? Warehouse::find($warehouseId) : null;
+        $isEdgeBand = $selectedWarehouse && ($selectedWarehouse->code === 'KHO-CHI' || str_contains(mb_strtolower($selectedWarehouse->name), 'chỉ'));
 
-        $materialsQuery = WoodBoard::with('warehouse')->orderBy('price_group')->orderBy('color_code');
-        if ($warehouseId) {
-            $materialsQuery->where(function($q) use ($warehouseId) {
-                $q->where('warehouse_id', $warehouseId)
-                  ->orWhereHas('transactions', function($t) use ($warehouseId) {
-                      $t->where('warehouse_id', $warehouseId);
-                  });
-            });
-        }
-        $materials = $materialsQuery->get();
+        $materials = WoodBoard::with('warehouse')->orderBy('price_group')->orderBy('color_code')->get();
 
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Xuat_Nhap_Ton');
 
-        $sheet->setCellValue('A1', 'BÁO CÁO TỔNG HỢP XUẤT - NHẬP - TỒN');
+        $sheetTitle = 'BÁO CÁO TỔNG HỢP XUẤT - NHẬP - TỒN' . ($isEdgeBand ? ' (KHO DÁN CHỈ)' : ($warehouseId ? ' (KHO TẤM VÁN)' : ''));
+        $sheet->setCellValue('A1', $sheetTitle);
         $subTitle = 'Từ ngày: ' . date('d/m/Y', strtotime($startDate)) . ' đến ngày: ' . date('d/m/Y', strtotime($endDate));
-        if ($warehouseId) {
-            $wh = Warehouse::find($warehouseId);
-            if ($wh) $subTitle .= ' | Kho: ' . $wh->name;
+        if ($selectedWarehouse) {
+            $subTitle .= ' | Kho: ' . $selectedWarehouse->name;
         }
         $sheet->setCellValue('A2', $subTitle);
         $sheet->mergeCells('A1:I1');
@@ -832,7 +1019,7 @@ class InventoryController extends Controller
         $sheet->getStyle('A1')->getFont()->setSize(14)->setBold(true);
         $sheet->getStyle('A2')->getFont()->setSize(11)->setItalic(true);
 
-        $headers = ['STT', 'Mã màu ván', 'Mã gốc TQ', 'Tên mặt hàng', 'ĐVT', 'Tồn đầu kỳ', 'Nhập trong kỳ', 'Xuất trong kỳ', 'Tồn cuối kỳ'];
+        $headers = ['STT', $isEdgeBand ? 'Mã chỉ dán' : 'Mã màu ván', 'Mã gốc TQ', 'Tên mặt hàng', 'ĐVT', 'Tồn đầu kỳ', 'Nhập trong kỳ', 'Xuất trong kỳ', 'Tồn cuối kỳ'];
         $cols = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
         foreach ($headers as $idx => $h) {
             $sheet->setCellValue($cols[$idx] . '4', $h);
@@ -847,11 +1034,22 @@ class InventoryController extends Controller
 
         $row = 5;
         foreach ($materials as $idx => $m) {
+            $sku = $isEdgeBand ? $m->edge_band_code : $m->color_code;
+            $name = $isEdgeBand ? $m->edge_band_name : ('Tấm ' . $m->color_code);
+            $unit = $isEdgeBand ? ($m->edge_band_unit ?: 'm') : $m->unit;
+
             $inQuery = InventoryTransaction::where('wood_board_id', $m->id)
                 ->whereBetween('date', [$startDate, $endDate])
                 ->where('in_qty', '>', 0);
             if ($warehouseId) {
                 $inQuery->where('warehouse_id', $warehouseId);
+            }
+            if ($isEdgeBand) {
+                $inQuery->where('item_type', 'edge_band');
+            } else {
+                $inQuery->where(function($q) {
+                    $q->where('item_type', 'board')->orWhereNull('item_type');
+                });
             }
             $inQty = (float)$inQuery->sum('in_qty');
 
@@ -861,6 +1059,13 @@ class InventoryController extends Controller
             if ($warehouseId) {
                 $outQuery->where('warehouse_id', $warehouseId);
             }
+            if ($isEdgeBand) {
+                $outQuery->where('item_type', 'edge_band');
+            } else {
+                $outQuery->where(function($q) {
+                    $q->where('item_type', 'board')->orWhereNull('item_type');
+                });
+            }
             $outQty = (float)$outQuery->sum('out_qty');
 
             $startQuery = InventoryTransaction::where('wood_board_id', $m->id)
@@ -868,15 +1073,22 @@ class InventoryController extends Controller
             if ($warehouseId) {
                 $startQuery->where('warehouse_id', $warehouseId);
             }
+            if ($isEdgeBand) {
+                $startQuery->where('item_type', 'edge_band');
+            } else {
+                $startQuery->where(function($q) {
+                    $q->where('item_type', 'board')->orWhereNull('item_type');
+                });
+            }
             $startStock = (float)$startQuery->sum(DB::raw('in_qty - out_qty'));
 
             $endStock = $startStock + $inQty - $outQty;
 
             $sheet->setCellValue('A' . $row, $idx + 1);
-            $sheet->setCellValue('B' . $row, $m->color_code);
+            $sheet->setCellValue('B' . $row, $sku);
             $sheet->setCellValue('C' . $row, $m->origin_code ?: '-');
-            $sheet->setCellValue('D' . $row, 'Tấm ' . $m->color_code);
-            $sheet->setCellValue('E' . $row, $m->unit);
+            $sheet->setCellValue('D' . $row, $name);
+            $sheet->setCellValue('E' . $row, $unit);
             $sheet->setCellValue('F' . $row, $startStock);
             $sheet->setCellValue('G' . $row, $inQty);
             $sheet->setCellValue('H' . $row, $outQty);
@@ -901,7 +1113,7 @@ class InventoryController extends Controller
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 
-        $fileName = 'Bao_Cao_XNT_' . date('Ymd_His') . '.xlsx';
+        $fileName = 'Bao_Cao_XNT_' . ($isEdgeBand ? 'Kho_Chi_' : 'Kho_Van_') . date('Ymd_His') . '.xlsx';
         $writer = new Xlsx($spreadsheet);
 
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
@@ -912,32 +1124,24 @@ class InventoryController extends Controller
     }
 
     /**
-     * Xuất Excel Ma trận Tiêu thụ 12 tháng chuẩn kế toán
+     * Xuất Excel Ma trận Tiêu thụ 12 tháng chuẩn kế toán theo từng kho
      */
     public function exportMatrixReport(Request $request)
     {
         $year = (int)$request->input('year', date('Y'));
         $warehouseId = $request->input('warehouse_id');
+        $selectedWarehouse = $warehouseId ? Warehouse::find($warehouseId) : null;
+        $isEdgeBand = $selectedWarehouse && ($selectedWarehouse->code === 'KHO-CHI' || str_contains(mb_strtolower($selectedWarehouse->name), 'chỉ'));
 
-        $materialsQuery = WoodBoard::with('warehouse')->orderBy('price_group')->orderBy('color_code');
-        if ($warehouseId) {
-            $materialsQuery->where(function($q) use ($warehouseId) {
-                $q->where('warehouse_id', $warehouseId)
-                  ->orWhereHas('transactions', function($t) use ($warehouseId) {
-                      $t->where('warehouse_id', $warehouseId);
-                  });
-            });
-        }
-        $materials = $materialsQuery->get();
+        $materials = WoodBoard::with('warehouse')->orderBy('price_group')->orderBy('color_code')->get();
 
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Ma_Tran_Tieu_Thu_' . $year);
 
         $title = "BÁO CÁO MA TRẬN NHẬP - XUẤT - TỒN 12 THÁNG NĂM {$year}";
-        if ($warehouseId) {
-            $wh = Warehouse::find($warehouseId);
-            if ($wh) $title .= ' - KHO: ' . mb_strtoupper($wh->name);
+        if ($selectedWarehouse) {
+            $title .= ' - KHO: ' . mb_strtoupper($selectedWarehouse->name);
         }
         $sheet->setCellValue('A1', $title);
         $sheet->getStyle('A1')->getFont()->setSize(14)->setBold(true);
@@ -945,7 +1149,7 @@ class InventoryController extends Controller
         // Header Rows (Row 3 & 4)
         $sheet->setCellValue('A3', 'STT');
         $sheet->mergeCells('A3:A4');
-        $sheet->setCellValue('B3', 'Mã màu ván');
+        $sheet->setCellValue('B3', $isEdgeBand ? 'Mã chỉ dán' : 'Mã màu ván');
         $sheet->mergeCells('B3:B4');
         $sheet->setCellValue('C3', 'Mã TQ');
         $sheet->mergeCells('C3:C4');
@@ -987,15 +1191,25 @@ class InventoryController extends Controller
 
         $row = 5;
         foreach ($materials as $idx => $m) {
+            $sku = $isEdgeBand ? $m->edge_band_code : $m->color_code;
+            $name = $isEdgeBand ? $m->edge_band_name : ('Tấm ' . $m->color_code);
+
             $sheet->setCellValue('A' . $row, $idx + 1);
-            $sheet->setCellValue('B' . $row, $m->color_code);
+            $sheet->setCellValue('B' . $row, $sku);
             $sheet->setCellValue('C' . $row, $m->origin_code ?: '-');
-            $sheet->setCellValue('D' . $row, 'Tấm ' . $m->color_code);
+            $sheet->setCellValue('D' . $row, $name);
 
             $initYearQuery = InventoryTransaction::where('wood_board_id', $m->id)
                 ->where('date', '<', $year . '-01-01');
             if ($warehouseId) {
                 $initYearQuery->where('warehouse_id', $warehouseId);
+            }
+            if ($isEdgeBand) {
+                $initYearQuery->where('item_type', 'edge_band');
+            } else {
+                $initYearQuery->where(function($q) {
+                    $q->where('item_type', 'board')->orWhereNull('item_type');
+                });
             }
             $initYearStock = (float)$initYearQuery->sum(DB::raw('in_qty - out_qty'));
             $sheet->setCellValue('E' . $row, $initYearStock);
@@ -1014,6 +1228,13 @@ class InventoryController extends Controller
                 if ($warehouseId) {
                     $mInQuery->where('warehouse_id', $warehouseId);
                 }
+                if ($isEdgeBand) {
+                    $mInQuery->where('item_type', 'edge_band');
+                } else {
+                    $mInQuery->where(function($q) {
+                        $q->where('item_type', 'board')->orWhereNull('item_type');
+                    });
+                }
                 $mIn = (float)$mInQuery->sum('in_qty');
 
                 $mOutQuery = InventoryTransaction::where('wood_board_id', $m->id)
@@ -1021,14 +1242,21 @@ class InventoryController extends Controller
                 if ($warehouseId) {
                     $mOutQuery->where('warehouse_id', $warehouseId);
                 }
+                if ($isEdgeBand) {
+                    $mOutQuery->where('item_type', 'edge_band');
+                } else {
+                    $mOutQuery->where(function($q) {
+                        $q->where('item_type', 'board')->orWhereNull('item_type');
+                    });
+                }
                 $mOut = (float)$mOutQuery->sum('out_qty');
 
                 $running = $running + $mIn - $mOut;
                 $yearIn += $mIn;
                 $yearOut += $mOut;
 
-                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($cIdx) . $row, $mIn ?: '');
-                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($cIdx + 1) . $row, $mOut ?: '');
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($cIdx) . $row, $mIn > 0 ? $mIn : '');
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($cIdx + 1) . $row, $mOut > 0 ? $mOut : '');
                 $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($cIdx + 2) . $row, $running);
                 $cIdx += 3;
             }
@@ -1065,7 +1293,7 @@ class InventoryController extends Controller
             $sheet->getColumnDimension(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c))->setWidth(10);
         }
 
-        $fileName = "Ma_Tran_Tieu_Thu_Acrylic_{$year}_" . date('Ymd_His') . '.xlsx';
+        $fileName = "Ma_Tran_Tieu_Thu_" . ($isEdgeBand ? 'Kho_Chi_' : 'Kho_Van_') . "{$year}_" . date('Ymd_His') . '.xlsx';
         $writer = new Xlsx($spreadsheet);
 
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');

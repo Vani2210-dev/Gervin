@@ -94,17 +94,41 @@
                 </div>
             </div>
 
-            @if($warehouseId && ($currentWarehouse = $warehouses->firstWhere('id', $warehouseId)))
-                <div class="px-6 pt-4 pb-0 flex items-center gap-2">
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-primary-50 text-primary-700 border border-primary-200">
-                        <iconify-icon icon="solar:box-minimalistic-bold" class="text-sm"></iconify-icon>
-                        Đang lọc theo kho: {{ $currentWarehouse->name }}
-                        <a href="{{ route('inventory.reports.index', array_filter(['tab' => $tab, 'start_date' => $startDate, 'end_date' => $endDate, 'year' => $year])) }}" class="ml-1 text-neutral-400 hover:text-rose-600" title="Bỏ lọc kho">
-                            <iconify-icon icon="solar:close-circle-bold" class="text-sm"></iconify-icon>
-                        </a>
+            {{-- Thanh chuyển nhanh kho hàng (Kho Tấm Ván vs Kho Dán Chỉ) --}}
+            <div class="px-6 py-2.5 bg-neutral-50/80 border-b border-neutral-200/80 flex items-center justify-between flex-wrap gap-2">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class="text-xs font-bold text-neutral-500 mr-1 flex items-center gap-1">
+                        <iconify-icon icon="solar:box-minimalistic-bold" class="text-neutral-400"></iconify-icon> Kho hàng:
                     </span>
+                    <a href="{{ route('inventory.reports.index', array_filter(['tab' => $tab, 'date_preset' => request('date_preset'), 'start_date' => $startDate, 'end_date' => $endDate, 'year' => $year])) }}" 
+                       class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all {{ empty($warehouseId) ? 'bg-neutral-800 text-white shadow-xs' : 'bg-white text-neutral-600 border border-neutral-200 hover:bg-neutral-100' }}">
+                        Tất cả kho
+                    </a>
+                    @foreach($warehouses as $wh)
+                        @php
+                            $isEdge = in_array(strtoupper($wh->code), ['KHO-CHI', 'EDGE_BAND', 'CHI']);
+                            $isActive = (string)$warehouseId === (string)$wh->id;
+                        @endphp
+                        <a href="{{ route('inventory.reports.index', array_filter(['tab' => $tab, 'warehouse_id' => $wh->id, 'date_preset' => request('date_preset'), 'start_date' => $startDate, 'end_date' => $endDate, 'year' => $year])) }}"
+                           class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 {{ $isActive ? ($isEdge ? 'bg-purple-600 text-white shadow-xs' : 'bg-primary-600 text-white shadow-xs') : ($isEdge ? 'bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100' : 'bg-white text-neutral-700 border border-neutral-200 hover:bg-neutral-100') }}">
+                            <iconify-icon icon="{{ $isEdge ? 'solar:ruler-angular-bold' : 'solar:box-minimalistic-bold' }}" class="text-sm"></iconify-icon>
+                            <span>{{ $wh->name }}</span>
+                            @if($isEdge)
+                                <span class="text-[10px] px-1 py-0.2 rounded {{ $isActive ? 'bg-purple-500 text-white' : 'bg-purple-200 text-purple-800' }} font-bold">m</span>
+                            @else
+                                <span class="text-[10px] px-1 py-0.2 rounded {{ $isActive ? 'bg-primary-500 text-white' : 'bg-neutral-200 text-neutral-700' }} font-bold">Tấm</span>
+                            @endif
+                        </a>
+                    @endforeach
                 </div>
-            @endif
+
+                @if($isEdgeBand)
+                    <span class="text-xs font-semibold text-purple-700 bg-purple-100/90 px-2.5 py-1 rounded-md border border-purple-200 flex items-center gap-1">
+                        <iconify-icon icon="solar:info-circle-bold"></iconify-icon>
+                        Đang xem số liệu Nhận, Tiêu thụ & Tồn theo Mét (m) Kho Dán Chỉ
+                    </span>
+                @endif
+            </div>
 
             {{-- Tab 1 Content: Báo cáo Tổng hợp Xuất - Nhập - Tồn --}}
             @if($tab === 'summary')
@@ -114,29 +138,38 @@
                         <div class="col-span-12 sm:col-span-6 md:col-span-3">
                             <div class="p-4 rounded-xl bg-neutral-50 border border-neutral-200">
                                 <span class="text-xs text-neutral-500 block mb-1">Tổng Tồn đầu kỳ</span>
-                                <span class="text-xl font-black text-neutral-800 block">
-                                    {{ fmod($sumStartStock, 1) == 0 ? number_format($sumStartStock, 0, ',', '.') : number_format($sumStartStock, 2, ',', '.') }}
-                                </span>
+                                <div class="flex items-baseline gap-1.5">
+                                    <span class="text-xl font-black text-neutral-800">
+                                        {{ fmod($sumStartStock, 1) == 0 ? number_format($sumStartStock, 0, ',', '.') : number_format($sumStartStock, 2, ',', '.') }}
+                                    </span>
+                                    <span class="text-xs font-bold text-neutral-500">{{ $isEdgeBand ? 'm' : ($warehouseId ? 'Tấm' : '') }}</span>
+                                </div>
                                 <span class="text-[11px] text-neutral-400">Thời điểm trước {{ date('d/m/Y', strtotime($startDate)) }}</span>
                             </div>
                         </div>
 
                         <div class="col-span-12 sm:col-span-6 md:col-span-3">
                             <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200">
-                                <span class="text-xs text-emerald-700 block mb-1">Tổng Nhập trong kỳ</span>
-                                <span class="text-xl font-black text-emerald-800 block">
-                                    +{{ fmod($sumInQty, 1) == 0 ? number_format($sumInQty, 0, ',', '.') : number_format($sumInQty, 2, ',', '.') }}
-                                </span>
+                                <span class="text-xs text-emerald-700 block mb-1">Tổng Nhận trong kỳ (Nhập)</span>
+                                <div class="flex items-baseline gap-1.5">
+                                    <span class="text-xl font-black text-emerald-800">
+                                        +{{ fmod($sumInQty, 1) == 0 ? number_format($sumInQty, 0, ',', '.') : number_format($sumInQty, 2, ',', '.') }}
+                                    </span>
+                                    <span class="text-xs font-bold text-emerald-600">{{ $isEdgeBand ? 'm' : ($warehouseId ? 'Tấm' : '') }}</span>
+                                </div>
                                 <span class="text-[11px] text-emerald-600">Từ {{ date('d/m/Y', strtotime($startDate)) }} - {{ date('d/m/Y', strtotime($endDate)) }}</span>
                             </div>
                         </div>
 
                         <div class="col-span-12 sm:col-span-6 md:col-span-3">
                             <div class="p-4 rounded-xl bg-rose-50 border border-rose-200">
-                                <span class="text-xs text-rose-700 block mb-1">Tổng Xuất trong kỳ</span>
-                                <span class="text-xl font-black text-rose-800 block">
-                                    -{{ fmod($sumOutQty, 1) == 0 ? number_format($sumOutQty, 0, ',', '.') : number_format($sumOutQty, 2, ',', '.') }}
-                                </span>
+                                <span class="text-xs text-rose-700 block mb-1">Tổng Tiêu thụ trong kỳ (Xuất)</span>
+                                <div class="flex items-baseline gap-1.5">
+                                    <span class="text-xl font-black text-rose-800">
+                                        -{{ fmod($sumOutQty, 1) == 0 ? number_format($sumOutQty, 0, ',', '.') : number_format($sumOutQty, 2, ',', '.') }}
+                                    </span>
+                                    <span class="text-xs font-bold text-rose-600">{{ $isEdgeBand ? 'm' : ($warehouseId ? 'Tấm' : '') }}</span>
+                                </div>
                                 <span class="text-[11px] text-rose-600">Tiêu thụ cho sản xuất</span>
                             </div>
                         </div>
@@ -144,9 +177,12 @@
                         <div class="col-span-12 sm:col-span-6 md:col-span-3">
                             <div class="p-4 rounded-xl bg-primary-50 border border-primary-200">
                                 <span class="text-xs text-primary-700 block mb-1">Tổng Tồn cuối kỳ</span>
-                                <span class="text-xl font-black text-primary-800 block">
-                                    {{ fmod($sumEndStock, 1) == 0 ? number_format($sumEndStock, 0, ',', '.') : number_format($sumEndStock, 2, ',', '.') }}
-                                </span>
+                                <div class="flex items-baseline gap-1.5">
+                                    <span class="text-xl font-black text-primary-800">
+                                        {{ fmod($sumEndStock, 1) == 0 ? number_format($sumEndStock, 0, ',', '.') : number_format($sumEndStock, 2, ',', '.') }}
+                                    </span>
+                                    <span class="text-xs font-bold text-primary-600">{{ $isEdgeBand ? 'm' : ($warehouseId ? 'Tấm' : '') }}</span>
+                                </div>
                                 <span class="text-[11px] text-primary-600">Thời điểm {{ date('d/m/Y', strtotime($endDate)) }}</span>
                             </div>
                         </div>
@@ -164,8 +200,8 @@
                                         <th class="py-3 px-4 min-w-[200px]">Tên vật tư / Quy cách</th>
                                         <th class="py-3 px-3 w-20 text-center">ĐVT</th>
                                         <th class="py-3 px-3 w-32 text-right">Tồn đầu kỳ</th>
-                                        <th class="py-3 px-3 w-32 text-right text-emerald-700">Nhập trong kỳ</th>
-                                        <th class="py-3 px-3 w-32 text-right text-rose-700">Xuất trong kỳ</th>
+                                        <th class="py-3 px-3 w-32 text-right text-emerald-700">Nhận trong kỳ</th>
+                                        <th class="py-3 px-3 w-32 text-right text-rose-700">Tiêu thụ trong kỳ</th>
                                         <th class="py-3 px-3 w-32 text-right text-primary-700">Tồn cuối kỳ</th>
                                         <th class="py-3 px-3 w-24 text-center">Thẻ kho</th>
                                     </tr>
@@ -177,19 +213,21 @@
                                                 {{ $idx + 1 }}
                                             </td>
                                             <td class="py-3 px-3 font-bold text-neutral-900">
-                                                {{ $r['material']->code }}
+                                                {{ $r['sku'] ?? $r['material']->code }}
                                             </td>
                                             <td class="py-3 px-3 font-medium text-neutral-600">
                                                 {{ $r['material']->origin_code ?: '-' }}
                                             </td>
                                             <td class="py-3 px-4 text-neutral-800 font-semibold">
-                                                {{ $r['material']->name }}
+                                                {{ $r['name'] ?? $r['material']->name }}
                                                 @if($r['material']->category)
                                                     <span class="block text-[10px] text-neutral-400 font-normal">{{ $r['material']->category }}</span>
                                                 @endif
                                             </td>
                                             <td class="py-3 px-3 text-center text-neutral-600 font-medium">
-                                                {{ $r['material']->unit }}
+                                                <span class="px-2 py-0.5 rounded text-[11px] font-bold {{ ($r['unit'] ?? $r['material']->unit) === 'm' ? 'bg-purple-100 text-purple-700 border border-purple-200' : 'bg-neutral-100 text-neutral-700' }}">
+                                                    {{ $r['unit'] ?? $r['material']->unit }}
+                                                </span>
                                             </td>
                                             <td class="py-3 px-3 text-right font-medium text-neutral-600">
                                                 {{ fmod($r['start_stock'], 1) == 0 ? number_format($r['start_stock'], 0, ',', '.') : number_format($r['start_stock'], 2, ',', '.') }}

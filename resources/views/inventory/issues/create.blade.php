@@ -78,7 +78,7 @@
                                 <thead class="bg-neutral-50 text-neutral-700 font-bold border-b border-neutral-200">
                                     <tr>
                                         <th class="py-2 px-3 w-12 text-center">STT</th>
-                                        <th class="py-2 px-3 min-w-[340px]">Mặt hàng vật tư (Mã ván) <span class="text-danger-500">*</span></th>
+                                        <th class="py-2 px-3 min-w-[340px]" id="thMaterialCol">Mặt hàng vật tư (Mã ván / Chỉ dán) <span class="text-danger-500">*</span></th>
                                         <th class="py-2 px-3 w-20 text-center">ĐVT</th>
                                         <th class="py-2 px-3 w-28 text-right bg-amber-50 text-amber-900">Tồn hiện tại</th>
                                         <th class="py-2 px-3 w-32 text-right">Số lượng xuất <span class="text-danger-500">*</span></th>
@@ -161,16 +161,70 @@
 
 @push('scripts')
 <script>
+    const WAREHOUSES = @json($warehouses);
     const MATERIALS = @json($materials);
-    const MATERIAL_OPTIONS = MATERIALS.map(m => ({
-        value: String(m.id),
-        code: m.code || '',
-        name: m.name || '',
-        origin_code: m.origin_code || '',
-        category: m.category || '',
-        unit: m.unit || 'Tấm',
-        stock: m.current_stock || 0
-    }));
+
+    function getCurrentWarehouse() {
+        const whSelect = document.getElementById('select_warehouse');
+        const whId = whSelect ? whSelect.value : '';
+        return WAREHOUSES.find(w => String(w.id) === String(whId)) || null;
+    }
+
+    function isEdgeBandWarehouse() {
+        const wh = getCurrentWarehouse();
+        if (!wh) return false;
+        const code = (wh.code || '').toUpperCase();
+        return code === 'KHO-CHI' || code.includes('CHI') || wh.name.toLowerCase().includes('chỉ');
+    }
+
+    function getFilteredMaterialOptions() {
+        const isEdge = isEdgeBandWarehouse();
+        return MATERIALS.filter(m => {
+            if (isEdge) return m.item_type === 'edge_band';
+            return m.item_type !== 'edge_band';
+        }).map(m => ({
+            value: String(m.id),
+            code: m.code || '',
+            name: m.name || '',
+            origin_code: m.origin_code || '',
+            category: m.category || '',
+            unit: m.unit || (m.item_type === 'edge_band' ? 'm' : 'Tấm'),
+            stock: m.current_stock || 0,
+            item_type: m.item_type
+        }));
+    }
+
+    function onWarehouseChange() {
+        const isEdge = isEdgeBandWarehouse();
+        const thCol = document.getElementById('thMaterialCol');
+        if (thCol) {
+            thCol.innerHTML = isEdge 
+                ? 'Mặt hàng Chỉ Dán Viền (Mã CHI-...) <span class="text-danger-500">*</span>' 
+                : 'Mặt hàng Tấm Ván (Mã SKU) <span class="text-danger-500">*</span>';
+        }
+
+        const filtered = getFilteredMaterialOptions();
+        const rows = document.querySelectorAll('#itemsTableBody tr');
+        rows.forEach(r => {
+            const selectEl = r.querySelector('.material-tom-select');
+            if (selectEl && selectEl._tomSelect) {
+                const ts = selectEl._tomSelect;
+                const curVal = ts.getValue();
+                ts.clear();
+                ts.clearOptions();
+                ts.addOptions(filtered);
+                ts.refreshOptions(false);
+                if (filtered.some(opt => opt.value === curVal)) {
+                    ts.setValue(curVal, true);
+                } else {
+                    r.querySelector('.unit-cell').textContent = isEdge ? 'm' : 'Tấm';
+                    r.querySelector('.stock-cell').textContent = '-';
+                    r.removeAttribute('data-max-stock');
+                }
+            }
+        });
+        calcTotals();
+    }
 
     let rowCount = 0;
 
@@ -178,6 +232,7 @@
         const tbody = document.getElementById('itemsTableBody');
         const tr = document.createElement('tr');
         const thisRowIdx = rowCount;
+        const isEdge = isEdgeBandWarehouse();
         tr.id = `row_${thisRowIdx}`;
         tr.className = 'hover:bg-neutral-50 transition-colors';
 
@@ -185,10 +240,10 @@
             <td class="py-2 px-3 text-center text-neutral-400 font-medium row-stt">${tbody.children.length + 1}</td>
             <td class="py-2 px-3">
                 <select id="select_mat_${thisRowIdx}" name="items[${thisRowIdx}][material_id]" class="material-tom-select w-full" required>
-                    <option value="">-- Chọn / tìm mã ván xuất kho... --</option>
+                    <option value="">-- Chọn / tìm ${isEdge ? 'mã chỉ dán xuất kho...' : 'mã ván xuất kho...'} --</option>
                 </select>
             </td>
-            <td class="py-2 px-3 text-center text-neutral-600 unit-cell">Tấm</td>
+            <td class="py-2 px-3 text-center text-neutral-600 unit-cell">${isEdge ? 'm' : 'Tấm'}</td>
             <td class="py-2 px-3 text-right font-bold text-amber-900 bg-amber-50 bg-opacity-40 stock-cell">-</td>
             <td class="py-2 px-3 text-right">
                 <input type="number" name="items[${thisRowIdx}][quantity]" value="${qty}" step="0.01" min="0.01" class="form-control rounded-lg w-full border-neutral-200 px-2 py-1 text-right text-xs font-bold text-rose-700 focus:border-rose-500 qty-input" required oninput="calcTotals()">
@@ -214,15 +269,18 @@
         const selectEl = document.getElementById(`select_mat_${rowIdx}`);
         if (!selectEl) return;
 
+        const isEdge = isEdgeBandWarehouse();
+        const options = getFilteredMaterialOptions();
+
         if (typeof TomSelect !== 'undefined') {
             const ts = new TomSelect(selectEl, {
-                options: MATERIAL_OPTIONS,
+                options: options,
                 valueField: 'value',
                 labelField: 'code',
                 searchField: ['code', 'origin_code', 'name', 'category'],
                 create: false,
                 maxItems: 1,
-                placeholder: '-- Tìm kiếm mã ván, tên màu... --',
+                placeholder: isEdge ? '-- Tìm kiếm mã chỉ dán CHI-... --' : '-- Tìm kiếm mã ván, tên màu... --',
                 allowEmptyOption: true,
                 dropdownParent: 'body',
                 wrapperClass: 'ts-wrapper issue-ts-wrapper',
@@ -348,15 +406,19 @@
 
     // Initialize 3 rows
     function initDefaultRows() {
-        if (typeof TomSelect !== "undefined") {
-            const whEl = document.getElementById("select_warehouse");
-            if (whEl && !whEl.tomselect) {
-                new TomSelect(whEl, {
+        const whEl = document.getElementById("select_warehouse");
+        if (whEl) {
+            if (typeof TomSelect !== "undefined" && !whEl.tomselect) {
+                const whTs = new TomSelect(whEl, {
                     placeholder: "-- Chọn kho xuất --",
                     allowEmptyOption: false
                 });
+                whTs.on('change', onWarehouseChange);
+            } else {
+                whEl.addEventListener('change', onWarehouseChange);
             }
         }
+        onWarehouseChange();
         addItemRow();
         addItemRow();
         addItemRow();
