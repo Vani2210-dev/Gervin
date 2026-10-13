@@ -117,8 +117,8 @@
             <div class="card-body">
                 <div class="table-responsive scroll-sm overflow-x-auto">
                     @php
-                        // Estimate table width based on number of columns (5 sub-columns per type now)
-                        $minWidth = 350 + (count($boardTypes) * 530);
+                        // Estimate table width based on number of columns (6 sub-columns per type now)
+                        $minWidth = 350 + (count($boardTypes) * 600);
                     @endphp
                     <table class="table bordered-table sm-table mb-0 border-collapse border border-neutral-200 text-xs" style="min-width: {{ $minWidth }}px;">
                         <thead class="bg-neutral-50 font-semibold text-neutral-700 text-center uppercase tracking-wider">
@@ -130,7 +130,7 @@
                                 {{-- Dynamic Headers --}}
                                 @foreach($boardTypes as $idx => $type)
                                     @php $scheme = $colorSchemes[$idx % count($colorSchemes)]; @endphp
-                                    <th colspan="5" class="text-center {{ $scheme['bg'] }} {{ $scheme['text'] }} border border-neutral-200">
+                                    <th colspan="6" class="text-center {{ $scheme['bg'] }} {{ $scheme['text'] }} border border-neutral-200">
                                         {{ $type->name }}
                                     </th>
                                 @endforeach
@@ -143,7 +143,8 @@
                                     @php $scheme = $colorSchemes[$idx % count($colorSchemes)]; @endphp
                                     <th class="{{ $scheme['bg_sub'] }} {{ $scheme['text_sub'] }} border border-neutral-200 w-28">Mã số</th>
                                     <th class="{{ $scheme['bg_sub'] }} {{ $scheme['text_sub'] }} border border-neutral-200">Tên hàng</th>
-                                    <th class="{{ $scheme['bg_sub'] }} {{ $scheme['text_sub'] }} border border-neutral-200 w-20">Độ dày</th>
+                                    <th class="{{ $scheme['bg_sub'] }} {{ $scheme['text_sub'] }} border border-neutral-200 w-16">Độ dày</th>
+                                    <th class="{{ $scheme['bg_sub'] }} {{ $scheme['text_sub'] }} text-center border border-neutral-200 w-20">Tồn kho</th>
                                     <th class="{{ $scheme['bg_sub'] }} {{ $scheme['text_sub'] }} text-end border border-neutral-200 w-24">Giá tấm</th>
                                     <th class="{{ $scheme['bg_sub'] }} {{ $scheme['text_sub'] }} text-end border border-neutral-200 w-24">Giá m2</th>
                                 @endforeach
@@ -157,12 +158,13 @@
                                 <td class="text-center font-medium border border-neutral-200">{{ $board->price_group ?? '—' }}</td>
                                 <td class="text-center border border-neutral-200">
                                     <span class="font-bold text-neutral-800 block">{{ $board->color_code }}</span>
-                                    @if($board->current_stock > 0)
+                                    @php $totStock = $board->total_stock; @endphp
+                                    @if($totStock > 0)
                                         <a href="{{ route('inventory.index', ['search' => $board->color_code]) }}" 
-                                           class="inline-flex items-center gap-1 mt-1 px-2 py-1 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-100" 
-                                           title="Xem thẻ kho & tồn chi tiết">
-                                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                                            Tồn: {{ fmod($board->current_stock, 1) == 0 ? number_format($board->current_stock, 0, ',', '.') : number_format($board->current_stock, 2, ',', '.') }}
+                                           class="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200" 
+                                           title="Tổng tồn của mã màu này qua tất cả loại ván">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                            Tổng: {{ fmod($totStock, 1) == 0 ? number_format($totStock, 0, ',', '.') : number_format($totStock, 2, ',', '.') }}
                                         </a>
                                     @endif
                                 </td>
@@ -176,6 +178,19 @@
                                     <td class="border border-neutral-200"><span class="text-neutral-500 font-medium">{{ $price->code ?? '—' }}</span></td>
                                     <td class="border border-neutral-200"><span class="text-neutral-600">{{ $price->name ?? '—' }}</span></td>
                                     <td class="border border-neutral-200"><span class="text-neutral-600 font-medium">{{ $price->thickness ?? '—' }}</span></td>
+                                    <td class="text-center border border-neutral-200">
+                                        @if($price)
+                                            <button type="button" 
+                                                    onclick="openQuickStockModal({{ $price->id }}, '{{ $price->code }}', {{ $price->stock ?? 0 }}, '{{ addslashes($price->name ?: $type->name) }} [Màu {{ addslashes($board->color_code) }}]')"
+                                                    class="group inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold transition-all {{ ($price->stock ?? 0) > 0 ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200' : 'bg-neutral-50 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700' }}"
+                                                    title="Bấm để cập nhật nhanh số lượng tồn kho">
+                                                <span id="stock_badge_{{ $price->id }}">{{ fmod($price->stock ?? 0, 1) == 0 ? number_format($price->stock ?? 0, 0, ',', '.') : number_format($price->stock ?? 0, 2, ',', '.') }}</span>
+                                                <iconify-icon icon="lucide:edit-3" class="text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></iconify-icon>
+                                            </button>
+                                        @else
+                                            <span class="text-neutral-300">—</span>
+                                        @endif
+                                    </td>
                                     <td class="text-end font-semibold {{ $scheme['border'] }} border border-neutral-200">
                                         {{ $price && $price->price_board > 0 ? number_format($price->price_board, 0, ',', '.') . 'đ' : '—' }}
                                     </td>
@@ -283,9 +298,13 @@
                             <label class="form-label font-semibold text-xs {{ $scheme['text_sub'] }} mb-1 block">Giá tấm</label>
                             <input type="number" name="prices[{{ $type->id }}][price_board]" class="form-control form-control-sm rounded-lg" style="width: 100%;" placeholder="0" min="0">
                         </div>
-                        <div style="flex: 1; min-width: 100px;">
+                        <div style="flex: 1; min-width: 90px;">
                             <label class="form-label font-semibold text-xs {{ $scheme['text_sub'] }} mb-1 block">Giá m2</label>
                             <input type="number" name="prices[{{ $type->id }}][price_m2]" class="form-control form-control-sm rounded-lg" style="width: 100%;" placeholder="0" min="0">
+                        </div>
+                        <div style="width: 90px;">
+                            <label class="form-label font-semibold text-xs {{ $scheme['text_sub'] }} mb-1 block">Tồn kho</label>
+                            <input type="number" name="prices[{{ $type->id }}][stock]" class="form-control form-control-sm rounded-lg font-bold text-emerald-700" style="width: 100%;" placeholder="0" min="0" step="any" value="0">
                         </div>
                         <div style="width: 100%; margin-top: 4px;">
                             <span class="text-xs text-neutral-400 font-medium">Mã số tự động: <strong class="text-neutral-600">[Mã màu]{{ $type->prefix }}</strong></span>

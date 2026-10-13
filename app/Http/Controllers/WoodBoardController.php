@@ -15,7 +15,7 @@ class WoodBoardController extends Controller
     {
         $this->middleware('permission:view supply',   ['only' => ['index']]);
         $this->middleware('permission:add supply',    ['only' => ['store', 'storeType', 'batchUpdate', 'batchUpdatePriceGroups', 'import']]);
-        $this->middleware('permission:edit supply',   ['only' => ['update', 'updateType']]);
+        $this->middleware('permission:edit supply',   ['only' => ['update', 'updateType', 'quickUpdateStock']]);
         $this->middleware('permission:delete supply', ['only' => ['destroy', 'destroyType']]);
     }
 
@@ -87,9 +87,13 @@ class WoodBoardController extends Controller
                     'thickness'          => $typeData['thickness'] ?? null,
                     'price_board'        => floatval($typeData['price_board'] ?? 0),
                     'price_m2'           => floatval($typeData['price_m2'] ?? 0),
+                    'stock'              => floatval($typeData['stock'] ?? 0),
                 ]);
             }
         }
+
+        // Sync total stock to board
+        $board->update(['current_stock' => $board->prices()->sum('stock')]);
 
         return redirect()->route('wood_boards.index')->with('success', 'Thêm dòng bảng giá thành công.');
     }
@@ -126,10 +130,14 @@ class WoodBoardController extends Controller
                         'thickness'          => $typeData['thickness'] ?? null,
                         'price_board'        => floatval($typeData['price_board'] ?? 0),
                         'price_m2'           => floatval($typeData['price_m2'] ?? 0),
+                        'stock'              => floatval($typeData['stock'] ?? 0),
                     ]
                 );
             }
         }
+
+        // Sync total stock to board
+        $woodBoard->update(['current_stock' => $woodBoard->prices()->sum('stock')]);
 
         return redirect()->route('wood_boards.index')->with('success', 'Cập nhật dòng bảng giá thành công.');
     }
@@ -669,7 +677,40 @@ class WoodBoardController extends Controller
             'computed_name'      => $computedName,
             'computed_thickness' => $computedThickness,
             'cost_price'         => $costPrice,
+            'stock'              => floatval($priceRecord?->stock ?? 0),
             'price_group'        => $board?->price_group ?? '',
+        ]);
+    }
+
+    /**
+     * Cập nhật nhanh số lượng tồn kho trực tiếp từ bảng giá
+     */
+    public function quickUpdateStock(Request $request)
+    {
+        $request->validate([
+            'price_id' => 'required|integer|exists:wood_board_prices,id',
+            'stock'    => 'required|numeric|min:0',
+        ]);
+
+        $price = WoodBoardPrice::with(['board', 'type'])->findOrFail($request->price_id);
+        $newStock = floatval($request->stock);
+        $price->update(['stock' => $newStock]);
+
+        // Keep wood_boards.current_stock in sync
+        $board = $price->board;
+        $totalStock = 0;
+        if ($board) {
+            $totalStock = $board->prices()->sum('stock');
+            $board->update(['current_stock' => $totalStock]);
+        }
+
+        return response()->json([
+            'success'     => true,
+            'message'     => "Đã cập nhật tồn kho cho {$price->code}: {$newStock} tấm",
+            'price_id'    => $price->id,
+            'code'        => $price->code,
+            'stock'       => $newStock,
+            'total_stock' => $totalStock,
         ]);
     }
 }

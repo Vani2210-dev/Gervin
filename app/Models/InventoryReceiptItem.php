@@ -10,6 +10,7 @@ class InventoryReceiptItem extends Model
     protected $fillable = [
         'receipt_id',
         'wood_board_id',
+        'wood_board_price_id',
         'quantity',
         'unit_price',
         'total_price',
@@ -30,6 +31,11 @@ class InventoryReceiptItem extends Model
     public function woodBoard(): BelongsTo
     {
         return $this->belongsTo(WoodBoard::class, 'wood_board_id');
+    }
+
+    public function boardPrice(): BelongsTo
+    {
+        return $this->belongsTo(WoodBoardPrice::class, 'wood_board_price_id');
     }
 
     /**

@@ -35,7 +35,14 @@ class WoodBoard extends Model
         'code',
         'name',
         'category',
+        'total_stock',
     ];
+
+    public function getTotalStockAttribute(): float
+    {
+        $pricesSum = $this->relationLoaded('prices') ? $this->prices->sum('stock') : $this->prices()->sum('stock');
+        return $pricesSum > 0 ? (float)$pricesSum : (float)($this->attributes['current_stock'] ?? 0);
+    }
 
     public function getCodeAttribute(): string
     {
