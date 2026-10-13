@@ -372,9 +372,13 @@
                             <label class="form-label font-semibold text-xs {{ $scheme['text_sub'] }} mb-1 block">Giá tấm</label>
                             <input type="number" id="edit_price_board_{{ $type->id }}" name="prices[{{ $type->id }}][price_board]" class="form-control form-control-sm rounded-lg" style="width: 100%;" min="0">
                         </div>
-                        <div style="flex: 1; min-width: 100px;">
+                        <div style="flex: 1; min-width: 90px;">
                             <label class="form-label font-semibold text-xs {{ $scheme['text_sub'] }} mb-1 block">Giá m2</label>
                             <input type="number" id="edit_price_m2_{{ $type->id }}" name="prices[{{ $type->id }}][price_m2]" class="form-control form-control-sm rounded-lg" style="width: 100%;" min="0">
+                        </div>
+                        <div style="width: 90px;">
+                            <label class="form-label font-semibold text-xs {{ $scheme['text_sub'] }} mb-1 block">Tồn kho</label>
+                            <input type="number" id="edit_price_stock_{{ $type->id }}" name="prices[{{ $type->id }}][stock]" class="form-control form-control-sm rounded-lg font-bold text-emerald-700" style="width: 100%;" min="0" step="any" placeholder="0">
                         </div>
                         <div style="width: 100%; margin-top: 4px;">
                             <span class="text-xs text-neutral-400 font-medium">Mã số tự động: <strong class="text-neutral-600">[Mã màu]{{ $type->prefix }}</strong></span>
@@ -402,6 +406,7 @@ function openEditModal(id, priceGroup, colorCode, prices) {
         if(document.getElementById('edit_price_thickness_{{ $type->id }}')) document.getElementById('edit_price_thickness_{{ $type->id }}').value = '';
         if(document.getElementById('edit_price_board_{{ $type->id }}')) document.getElementById('edit_price_board_{{ $type->id }}').value = '';
         if(document.getElementById('edit_price_m2_{{ $type->id }}')) document.getElementById('edit_price_m2_{{ $type->id }}').value = '';
+        if(document.getElementById('edit_price_stock_{{ $type->id }}')) document.getElementById('edit_price_stock_{{ $type->id }}').value = '0';
     @endforeach
 
     // Populate existing prices
@@ -410,11 +415,13 @@ function openEditModal(id, priceGroup, colorCode, prices) {
         let thicknessEl = document.getElementById('edit_price_thickness_' + p.wood_board_type_id);
         let boardEl     = document.getElementById('edit_price_board_' + p.wood_board_type_id);
         let m2El        = document.getElementById('edit_price_m2_' + p.wood_board_type_id);
+        let stockEl     = document.getElementById('edit_price_stock_' + p.wood_board_type_id);
 
         if (nameEl)      nameEl.value      = p.name || '';
         if (thicknessEl) thicknessEl.value = p.thickness || '';
         if (boardEl)     boardEl.value     = p.price_board ? parseInt(p.price_board) : '';
         if (m2El)        m2El.value        = p.price_m2 ? parseInt(p.price_m2) : '';
+        if (stockEl)     stockEl.value     = (p.stock !== null && p.stock !== undefined) ? p.stock : 0;
     });
 
     openModal('edit-board-modal');
@@ -772,5 +779,104 @@ function submitImportForm() {
 }
 </script>
 @endcan
+
+{{-- Modal Cập nhật nhanh Tồn kho --}}
+<x-modal name="quick-stock-modal" maxWidth="md">
+    <div class="px-6 py-4 border-b border-neutral-200 flex items-center justify-between">
+        <h5 class="font-bold text-base text-neutral-800 flex items-center gap-2">
+            <iconify-icon icon="solar:box-minimalistic-bold" class="text-primary-600 text-lg"></iconify-icon>
+            Cập nhật Tồn kho
+        </h5>
+        <button type="button" onclick="closeModal('quick-stock-modal')" class="text-secondary-light hover:text-neutral-700 text-xl leading-none">&times;</button>
+    </div>
+    <form id="quick-stock-form" onsubmit="submitQuickStock(event)">
+        <input type="hidden" id="quick_stock_price_id" name="price_id">
+        <div class="p-6 space-y-4">
+            <div>
+                <label class="form-label font-semibold text-xs text-neutral-500 mb-1 block">Mặt hàng ván</label>
+                <div id="quick_stock_title" class="text-xs font-bold text-neutral-800 bg-neutral-50 p-2.5 rounded-lg border border-neutral-200"></div>
+            </div>
+            <div>
+                <label class="form-label font-semibold text-xs text-neutral-700 mb-1 block">Số lượng tồn kho (tấm) <span class="text-danger-500">*</span></label>
+                <input type="number" id="quick_stock_input" name="stock" class="form-control rounded-lg font-black text-emerald-700 text-lg" min="0" step="any" required autofocus>
+                <span class="text-[11px] text-neutral-400 mt-1 block">Số lượng sẽ được đồng bộ trực tiếp vào hệ thống kho.</span>
+            </div>
+        </div>
+        <div class="px-6 py-4 border-t border-neutral-200 flex gap-2 justify-end">
+            <button type="button" onclick="closeModal('quick-stock-modal')" class="btn btn-neutral px-4 py-2 rounded-lg text-xs">Hủy</button>
+            <button type="submit" id="quick_stock_submit_btn" class="btn btn-primary px-5 py-2 rounded-lg text-xs font-bold flex items-center gap-1">
+                <iconify-icon icon="solar:check-circle-bold" class="text-base"></iconify-icon> Lưu tồn kho
+            </button>
+        </div>
+    </form>
+</x-modal>
+
+<script>
+function openQuickStockModal(priceId, code, currentStock, title) {
+    document.getElementById('quick_stock_price_id').value = priceId;
+    document.getElementById('quick_stock_title').textContent = code + ' - ' + title;
+    document.getElementById('quick_stock_input').value = currentStock || 0;
+    openModal('quick-stock-modal');
+    setTimeout(() => {
+        const inp = document.getElementById('quick_stock_input');
+        if (inp) {
+            inp.focus();
+            inp.select();
+        }
+    }, 150);
+}
+
+function submitQuickStock(e) {
+    e.preventDefault();
+    const priceId = document.getElementById('quick_stock_price_id').value;
+    const stock = document.getElementById('quick_stock_input').value;
+    const btn = document.getElementById('quick_stock_submit_btn');
+
+    btn.disabled = true;
+    btn.innerHTML = `<iconify-icon icon="line-md:loading-loop" class="text-base animate-spin"></iconify-icon> Đang lưu...`;
+
+    fetch('{{ route('wood_boards.quick_update_stock') }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({ price_id: priceId, stock: stock })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            const badge = document.getElementById('stock_badge_' + priceId);
+            if (badge) {
+                const formatted = Number(data.stock).toLocaleString('vi-VN');
+                badge.textContent = formatted;
+                const parentBtn = badge.closest('button');
+                if (parentBtn) {
+                    if (Number(data.stock) > 0) {
+                        parentBtn.className = "group inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold transition-all bg-emerald-100 text-emerald-800 border border-emerald-300 ring-2 ring-emerald-400";
+                        setTimeout(() => {
+                            parentBtn.className = "group inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold transition-all bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200";
+                        }, 1200);
+                    } else {
+                        parentBtn.className = "group inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold transition-all bg-neutral-50 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700";
+                    }
+                }
+            }
+            closeModal('quick-stock-modal');
+        } else {
+            alert(data.message || 'Có lỗi xảy ra');
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert('Lỗi kết nối máy chủ!');
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = `<iconify-icon icon="solar:check-circle-bold" class="text-base"></iconify-icon> Lưu tồn kho`;
+    });
+}
+</script>
 
 @endsection

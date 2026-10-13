@@ -64,47 +64,82 @@ class InventoryService
             $totalAmount = 0;
 
             foreach ($items as $item) {
+                $priceId = $item['wood_board_price_id'] ?? null;
                 $boardId = $item['wood_board_id'] ?? $item['material_id'] ?? null;
-                if (!$boardId) continue;
+
+                $boardPrice = null;
+                if ($priceId) {
+                    $boardPrice = \App\Models\WoodBoardPrice::find($priceId);
+                } elseif ($boardId) {
+                    $maybePrice = \App\Models\WoodBoardPrice::find($boardId);
+                    if ($maybePrice) {
+                        $boardPrice = $maybePrice;
+                        $boardId = $maybePrice->wood_board_id;
+                    }
+                }
+
+                if ($boardPrice) {
+                    $boardId = $boardPrice->wood_board_id;
+                }
+
+                if (!$boardId && !$boardPrice) continue;
 
                 $qty = (float)($item['quantity'] ?? 0);
                 if ($qty <= 0) continue;
 
-                $price = (float)($item['unit_price'] ?? 0);
+                $price = (float)($item['unit_price'] ?? ($boardPrice?->price_board ?? 0));
                 $lineTotal = $qty * $price;
 
                 $receiptItem = InventoryReceiptItem::create([
-                    'receipt_id' => $receipt->id,
-                    'wood_board_id' => $boardId,
-                    'quantity' => $qty,
-                    'unit_price' => $price,
-                    'total_price' => $lineTotal,
-                    'notes' => $item['notes'] ?? null,
+                    'receipt_id'          => $receipt->id,
+                    'wood_board_id'       => $boardId,
+                    'wood_board_price_id' => $boardPrice?->id,
+                    'quantity'            => $qty,
+                    'unit_price'          => $price,
+                    'total_price'         => $lineTotal,
+                    'notes'               => $item['notes'] ?? null,
                 ]);
 
-                // Update WoodBoard stock
-                $board = WoodBoard::findOrFail($boardId);
-                $board->current_stock += $qty;
-                if ($price > 0) {
-                    $board->cost_price = $price;
+                // Update WoodBoardPrice stock
+                $stockAfter = 0;
+                if ($boardPrice) {
+                    $boardPrice->stock += $qty;
+                    if ($price > 0) {
+                        $boardPrice->price_board = $price;
+                    }
+                    $boardPrice->save();
+                    $stockAfter = $boardPrice->stock;
                 }
-                $board->save();
+
+                // Update WoodBoard stock
+                $board = WoodBoard::find($boardId);
+                if ($board) {
+                    $board->current_stock = $board->prices()->sum('stock') ?: ($board->current_stock + $qty);
+                    if ($price > 0 && !$boardPrice) {
+                        $board->cost_price = $price;
+                    }
+                    $board->save();
+                    if (!$boardPrice) {
+                        $stockAfter = $board->current_stock;
+                    }
+                }
 
                 // Create stock transaction
                 InventoryTransaction::create([
-                    'warehouse_id' => $warehouse->id,
-                    'wood_board_id' => $board->id,
-                    'date' => $date,
-                    'type' => 'receipt',
-                    'voucher_code' => $code,
-                    'reference_id' => $receipt->id,
-                    'reference_type' => InventoryReceipt::class,
-                    'in_qty' => $qty,
-                    'out_qty' => 0,
-                    'stock_after' => $board->current_stock,
-                    'unit_price' => $price,
-                    'notes' => $data['notes'] ?? ('Nhập kho theo phiếu ' . $code),
-                    'created_by' => $userId,
+                    'warehouse_id'        => $warehouse->id,
+                    'wood_board_id'       => $boardId,
+                    'wood_board_price_id' => $boardPrice?->id,
+                    'date'                => $date,
+                    'type'                => 'receipt',
+                    'voucher_code'        => $code,
+                    'reference_id'        => $receipt->id,
+                    'reference_type'      => InventoryReceipt::class,
+                    'in_qty'              => $qty,
+                    'out_qty'             => 0,
+                    'stock_after'         => $stockAfter,
+                    'unit_price'          => $price,
+                    'notes'               => $data['notes'] ?? ('Nhập kho theo phiếu ' . $code),
+                    'created_by'          => $userId,
                 ]);
 
                 $totalQty += $qty;
