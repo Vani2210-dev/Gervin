@@ -82,14 +82,22 @@
                                 <input type="text" id="order-code-input" class="form-control rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-600" readonly value="{{ isset($acrylicOrder) ? $acrylicOrder->order_code : ($nextOrderCode ?? '') }}">
                             </div>
                             <div class="form-group">
-                                <label class="form-label font-semibold text-xs text-neutral-500 uppercase tracking-wider mb-2 block">Khách hàng</label>
+                                <div class="flex items-center justify-between mb-2">
+                                    <label class="form-label font-semibold text-xs text-neutral-500 uppercase tracking-wider block m-0">Khách hàng <span class="text-danger-500">*</span></label>
+                                    <button type="button" onclick="openModal('quickCreateCustomerModal')" class="text-primary-600 hover:text-primary-700 text-xs font-semibold inline-flex items-center gap-1 transition">
+                                        <iconify-icon icon="lucide:user-plus" class="text-sm"></iconify-icon>
+                                        + Thêm khách
+                                    </button>
+                                </div>
                                 @php
                                     $currentUser = auth()->user();
                                     if ($currentUser && !$currentUser->canViewAllMarketGroups()) {
                                         $userMarketGroupIds = $currentUser->marketGroups()->pluck('market_groups.id');
-                                        $allowedCustomers = \App\Models\Customer::whereIn('market_group_id', $userMarketGroupIds)->orderBy('name')->get();
+                                        $allowedCustomers = \App\Models\Customer::with('marketGroup')->whereIn('market_group_id', $userMarketGroupIds)->orderBy('name')->get();
+                                        $availableMarketGroups = $currentUser->marketGroups()->orderBy('name')->get();
                                     } else {
-                                        $allowedCustomers = \App\Models\Customer::orderBy('name')->get();
+                                        $allowedCustomers = \App\Models\Customer::with('marketGroup')->orderBy('name')->get();
+                                        $availableMarketGroups = \App\Models\MarketGroup::orderBy('name')->get();
                                     }
 
                                     if (isset($acrylicOrder) && $acrylicOrder->customer && !$allowedCustomers->contains('id', $acrylicOrder->customer_id)) {
@@ -101,13 +109,26 @@
                                 <select name="customer_id" id="customer-select" class="" onchange="fillCustomerInfo(this.value)">
                                     <option value="">-- Chọn khách hàng --</option>
                                     @foreach($allowedCustomers as $customer)
-                                    <option value="{{ $customer->id }}" {{ isset($acrylicOrder) && $acrylicOrder?->customer_id == $customer->id ? 'selected' : '' }}>{{ $customer->customer_code }} - {{ $customer->name }}</option>
+                                    <option value="{{ $customer->id }}" data-market-group-id="{{ $customer->market_group_id }}" {{ isset($acrylicOrder) && $acrylicOrder?->customer_id == $customer->id ? 'selected' : '' }}>
+                                        {{ $customer->customer_code }} - {{ $customer->name }} {{ $customer->marketGroup ? '('.$customer->marketGroup->name.')' : '' }}
+                                    </option>
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="form-group md:col-span-2">
+                            <div class="form-group">
+                                <label class="form-label font-semibold text-xs text-neutral-500 uppercase tracking-wider mb-2 block">Nhóm thị trường</label>
+                                <select name="market_group_id" id="market_group_select" class="form-select rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 w-full text-sm">
+                                    <option value="">-- Chưa phân nhóm --</option>
+                                    @foreach($availableMarketGroups as $mg)
+                                        <option value="{{ $mg->id }}" {{ (isset($acrylicOrder) && $acrylicOrder->customer?->market_group_id == $mg->id) ? 'selected' : '' }}>
+                                            {{ $mg->name }} ({{ $mg->code }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="form-group md:col-span-1">
                                 <label class="form-label font-semibold text-xs text-neutral-500 uppercase tracking-wider mb-2 block">Tên công trình <span class="text-danger-500">*</span></label>
-                                <input type="text" name="customer_name" class="form-control rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Nhập tên công trình" required value="{{ old('customer_name', $acrylicOrder?->customer_name ?? '') }}">
+                                <input type="text" name="customer_name" class="form-control rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Nhập tên công trình / dự án" required value="{{ old('customer_name', $acrylicOrder?->customer_name ?? '') }}">
                             </div>
                             <input type="hidden" name="type" value="{{ $currentOrderType }}">
                             <div class="form-group">
@@ -410,12 +431,22 @@ function fetchCustomerDebt(customerId) {
         .catch(e => console.error(e));
 }
 
+window.allAllowedCustomers = @json($allowedCustomers ?? \App\Models\Customer::all());
+
 function fillCustomerInfo(customerId) {
     @if(auth()->check())
-    const customers = @json($allowedCustomers ?? \App\Models\Customer::all());
+    const customers = window.allAllowedCustomers || @json($allowedCustomers ?? \App\Models\Customer::all());
     const customer = customers.find(c => c.id == customerId);
+    const cNameInput = document.querySelector('input[name="customer_name"]');
+    const mgSelect = document.getElementById('market_group_select');
+
     if (customer) {
-        document.querySelector('input[name="customer_name"]').value = customer.name;
+        if (cNameInput && !cNameInput.value.trim()) {
+            cNameInput.value = customer.name;
+        }
+        if (mgSelect) {
+            mgSelect.value = customer.market_group_id || '';
+        }
         document.querySelector('input[name="phone"]').value = customer.phone || '';
         document.querySelector('textarea[name="address"]').value = customer.address || '';
         const policyEl = document.querySelector('textarea[name="customer_policy"]');
@@ -423,7 +454,12 @@ function fillCustomerInfo(customerId) {
             policyEl.value = customer.policy || '';
         }
     } else if (customerId && !/^\d+$/.test(customerId)) {
-        document.querySelector('input[name="customer_name"]').value = customerId;
+        if (cNameInput && !cNameInput.value.trim()) {
+            cNameInput.value = customerId;
+        }
+        if (mgSelect) {
+            mgSelect.value = '';
+        }
         document.querySelector('input[name="phone"]').value = '';
         document.querySelector('textarea[name="address"]').value = '';
         const policyEl = document.querySelector('textarea[name="customer_policy"]');
@@ -432,7 +468,9 @@ function fillCustomerInfo(customerId) {
         }
     } else {
         // Clear fields if select is cleared
-        document.querySelector('input[name="customer_name"]').value = '';
+        if (mgSelect) {
+            mgSelect.value = '';
+        }
         document.querySelector('input[name="phone"]').value = '';
         document.querySelector('textarea[name="address"]').value = '';
         const policyEl = document.querySelector('textarea[name="customer_policy"]');
@@ -3415,6 +3453,173 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
     </div>
 </x-modal>
+
+{{-- Modal Thêm Nhanh Khách Hàng --}}
+<x-modal name="quickCreateCustomerModal" maxWidth="lg" :hasBackdrop="true" :transparent="false">
+    <div class="p-6">
+        <div class="flex items-center justify-between border-b border-neutral-100 pb-3 mb-4">
+            <h5 class="font-bold text-base text-neutral-800 flex items-center gap-2 m-0">
+                <iconify-icon icon="lucide:user-plus" class="text-primary-600 text-lg"></iconify-icon>
+                Thêm khách hàng mới
+            </h5>
+            <button type="button" onclick="closeModal('quickCreateCustomerModal')" class="w-8 h-8 rounded-lg hover:bg-neutral-100 flex items-center justify-center text-neutral-400 hover:text-danger-500 transition">
+                <iconify-icon icon="lucide:x" class="text-lg"></iconify-icon>
+            </button>
+        </div>
+
+        <form id="quickCreateCustomerForm" onsubmit="submitQuickCreateCustomer(event)" class="space-y-4">
+            <div>
+                <label class="block text-xs font-bold text-neutral-700 uppercase mb-1">Tên khách hàng <span class="text-danger-500">*</span></label>
+                <input type="text" name="qc_name" id="qc_name" required class="form-control rounded-lg w-full text-sm" placeholder="VD: Anh Nam, Cty Nội Thất ABC...">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-neutral-700 uppercase mb-1">Nhóm thị trường</label>
+                <select name="qc_market_group_id" id="qc_market_group_id" class="form-select rounded-lg w-full text-sm border-neutral-300">
+                    <option value="">-- Chọn nhóm thị trường --</option>
+                    @foreach($availableMarketGroups as $mg)
+                        <option value="{{ $mg->id }}">{{ $mg->name }} ({{ $mg->code }})</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-bold text-neutral-700 uppercase mb-1">Số điện thoại</label>
+                    <input type="text" name="qc_phone" id="qc_phone" class="form-control rounded-lg w-full text-sm" placeholder="09xxxxxxxxx">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-neutral-700 uppercase mb-1">Nợ ban đầu (nếu có)</label>
+                    <input type="number" name="qc_debt" id="qc_debt" class="form-control rounded-lg w-full text-sm" placeholder="0" min="0">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-neutral-700 uppercase mb-1">Địa chỉ</label>
+                <textarea name="qc_address" id="qc_address" rows="2" class="form-control rounded-lg w-full text-sm" placeholder="Địa chỉ xưởng / công ty khách..."></textarea>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-neutral-700 uppercase mb-1">Chính sách khách hàng</label>
+                <textarea name="qc_policy" id="qc_policy" rows="2" class="form-control rounded-lg w-full text-sm" placeholder="Ghi chú chiết khấu, chính sách riêng..."></textarea>
+            </div>
+
+            <div id="qc_error_msg" class="text-xs text-danger-600 hidden font-semibold"></div>
+
+            <div class="flex justify-end gap-2 pt-3 border-t border-neutral-100">
+                <button type="button" onclick="closeModal('quickCreateCustomerModal')" class="btn btn-neutral px-4 py-2 text-sm rounded-lg">
+                    Hủy
+                </button>
+                <button type="submit" id="qc_submit_btn" class="btn btn-primary px-5 py-2 text-sm rounded-lg flex items-center gap-1.5 font-semibold">
+                    <iconify-icon icon="lucide:check" class="text-base"></iconify-icon>
+                    Lưu & Chọn khách
+                </button>
+            </div>
+        </form>
+    </div>
+</x-modal>
+
+<script>
+function submitQuickCreateCustomer(e) {
+    e.preventDefault();
+    const btn = document.getElementById('qc_submit_btn');
+    const errEl = document.getElementById('qc_error_msg');
+    errEl.classList.add('hidden');
+    errEl.textContent = '';
+
+    const name = document.getElementById('qc_name').value.trim();
+    const marketGroupId = document.getElementById('qc_market_group_id').value;
+    const phone = document.getElementById('qc_phone').value.trim();
+    const address = document.getElementById('qc_address').value.trim();
+    const debt = document.getElementById('qc_debt').value;
+    const policy = document.getElementById('qc_policy').value.trim();
+
+    if (!name) {
+        errEl.textContent = 'Vui lòng nhập tên khách hàng';
+        errEl.classList.remove('hidden');
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<iconify-icon icon="lucide:loader-2" class="animate-spin"></iconify-icon> Đang lưu...';
+
+    fetch('{{ route("customers.quick-create") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+            name: name,
+            market_group_id: marketGroupId || null,
+            phone: phone,
+            address: address,
+            debt: debt || 0,
+            policy: policy,
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        btn.disabled = false;
+        btn.innerHTML = '<iconify-icon icon="lucide:check" class="text-base"></iconify-icon> Lưu & Chọn khách';
+
+        if (data.success && data.customer) {
+            const cust = data.customer;
+            if (typeof window.allAllowedCustomers !== 'undefined') {
+                window.allAllowedCustomers.push(cust);
+            }
+
+            const custSelect = document.getElementById('customer-select');
+            const mgName = cust.market_group ? ' (' + cust.market_group.name + ')' : '';
+            const labelText = cust.customer_code + ' - ' + cust.name + mgName;
+
+            if (custSelect && custSelect.tomselect) {
+                const ts = custSelect.tomselect;
+                ts.addOption({
+                    value: cust.id,
+                    text: labelText
+                });
+                ts.setValue(cust.id);
+            } else if (custSelect) {
+                const opt = new Option(labelText, cust.id, true, true);
+                custSelect.appendChild(opt);
+            }
+
+            fillCustomerInfo(cust.id);
+
+            // Cập nhật market_group_select
+            const mgSelect = document.getElementById('market_group_select');
+            if (mgSelect && cust.market_group_id) {
+                mgSelect.value = cust.market_group_id;
+            }
+
+            document.getElementById('quickCreateCustomerForm').reset();
+            closeModal('quickCreateCustomerModal');
+
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: 'Đã thêm khách hàng: ' + cust.name,
+                    showConfirmButton: false,
+                    timer: 2500
+                });
+            }
+        } else {
+            errEl.textContent = data.message || 'Có lỗi xảy ra khi lưu khách hàng.';
+            errEl.classList.remove('hidden');
+        }
+    })
+    .catch(err => {
+        btn.disabled = false;
+        btn.innerHTML = '<iconify-icon icon="lucide:check" class="text-base"></iconify-icon> Lưu & Chọn khách';
+        errEl.textContent = 'Lỗi kết nối máy chủ.';
+        errEl.classList.remove('hidden');
+    });
+}
+</script>
 
 <style>
     .order-row-height-resize-handle:hover {

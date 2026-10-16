@@ -1078,10 +1078,13 @@ class CustomerController extends Controller
     public function quickCreate(Request $request)
     {
         $request->validate([
-            'name'          => 'required|string|max:255',
-            'customer_code' => 'nullable|string|max:100|unique:customers,customer_code',
-            'phone'         => 'nullable|string|max:20',
-            'address'       => 'nullable|string',
+            'name'            => 'required|string|max:255',
+            'customer_code'   => 'nullable|string|max:100|unique:customers,customer_code',
+            'phone'           => 'nullable|string|max:20',
+            'address'         => 'nullable|string',
+            'market_group_id' => 'nullable|exists:market_groups,id',
+            'debt'            => 'nullable|numeric|min:0',
+            'policy'          => 'nullable|string',
         ]);
 
         if ($request->filled('customer_code')) {
@@ -1093,10 +1096,13 @@ class CustomerController extends Controller
         }
 
         $customer = Customer::create([
-            'customer_code' => $customerCode,
-            'name'          => $request->name,
-            'phone'         => $request->phone,
-            'address'       => $request->address,
+            'customer_code'   => $customerCode,
+            'name'            => trim($request->name),
+            'phone'           => $request->phone,
+            'address'         => $request->address,
+            'market_group_id' => $request->market_group_id ?: null,
+            'debt'            => $request->debt ?? 0,
+            'policy'          => $request->policy,
         ]);
 
         $user = auth()->user();
@@ -1106,10 +1112,13 @@ class CustomerController extends Controller
             }
         }
 
+        $customer->load('marketGroup');
+
         return response()->json([
-            'success'  => true,
-            'customer' => $customer,
-            'label'    => $customer->customer_code . ' - ' . $customer->name,
+            'success'           => true,
+            'customer'          => $customer,
+            'label'             => $customer->customer_code . ' - ' . $customer->name,
+            'market_group_name' => $customer->marketGroup?->name ?? 'Chưa phân nhóm',
         ]);
     }
 

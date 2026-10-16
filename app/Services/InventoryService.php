@@ -42,6 +42,8 @@ class InventoryService
      */
     public function createReceipt(Warehouse $warehouse, array $data, array $items, $userId = null): InventoryReceipt
     {
+        $this->ensureSchemaUpdated();
+
         return DB::transaction(function () use ($warehouse, $data, $items, $userId) {
             $code = !empty($data['code']) ? $data['code'] : $this->generateCode('PNK', 'inventory_receipts');
             $date = !empty($data['date']) ? $data['date'] : date('Y-m-d');
@@ -90,7 +92,7 @@ class InventoryService
                     $price = (float)($item['unit_price'] ?? ($board->edge_band_cost_price ?? 0));
                     $lineTotal = $qty * $price;
 
-                    InventoryReceiptItem::create([
+                    InventoryReceiptItem::create($this->sanitizeItemData('inventory_receipt_items', [
                         'receipt_id'          => $receipt->id,
                         'item_type'           => 'edge_band',
                         'wood_board_id'       => $board->id,
@@ -99,7 +101,7 @@ class InventoryService
                         'unit_price'          => $price,
                         'total_price'         => $lineTotal,
                         'notes'               => $item['notes'] ?? null,
-                    ]);
+                    ]));
 
                     $board->edge_band_current_stock = (float)$board->edge_band_current_stock + $qty;
                     if ($price > 0) {
@@ -108,7 +110,7 @@ class InventoryService
                     $board->save();
                     $stockAfter = $board->edge_band_current_stock;
 
-                    InventoryTransaction::create([
+                    InventoryTransaction::create($this->sanitizeItemData('inventory_transactions', [
                         'warehouse_id'        => $warehouse->id,
                         'item_type'           => 'edge_band',
                         'wood_board_id'       => $board->id,
@@ -124,7 +126,7 @@ class InventoryService
                         'unit_price'          => $price,
                         'notes'               => $data['notes'] ?? ('Nhập kho chỉ theo phiếu ' . $code),
                         'created_by'          => $userId,
-                    ]);
+                    ]));
 
                     $totalQty += $qty;
                     $totalAmount += $lineTotal;
@@ -155,7 +157,7 @@ class InventoryService
                     $price = (float)($item['unit_price'] ?? ($boardPrice?->price_board ?? 0));
                     $lineTotal = $qty * $price;
 
-                    InventoryReceiptItem::create([
+                    InventoryReceiptItem::create($this->sanitizeItemData('inventory_receipt_items', [
                         'receipt_id'          => $receipt->id,
                         'item_type'           => 'board',
                         'wood_board_id'       => $boardId,
@@ -164,7 +166,7 @@ class InventoryService
                         'unit_price'          => $price,
                         'total_price'         => $lineTotal,
                         'notes'               => $item['notes'] ?? null,
-                    ]);
+                    ]));
 
                     // Update WoodBoardPrice stock
                     $stockAfter = 0;
@@ -191,7 +193,7 @@ class InventoryService
                     }
 
                     // Create stock transaction
-                    InventoryTransaction::create([
+                    InventoryTransaction::create($this->sanitizeItemData('inventory_transactions', [
                         'warehouse_id'        => $warehouse->id,
                         'item_type'           => 'board',
                         'wood_board_id'       => $boardId,
@@ -207,7 +209,7 @@ class InventoryService
                         'unit_price'          => $price,
                         'notes'               => $data['notes'] ?? ('Nhập kho theo phiếu ' . $code),
                         'created_by'          => $userId,
-                    ]);
+                    ]));
 
                     $totalQty += $qty;
                     $totalAmount += $lineTotal;
@@ -228,6 +230,8 @@ class InventoryService
      */
     public function createIssue(Warehouse $warehouse, array $data, array $items, $userId = null): InventoryIssue
     {
+        $this->ensureSchemaUpdated();
+
         return DB::transaction(function () use ($warehouse, $data, $items, $userId) {
             $code = !empty($data['code']) ? $data['code'] : $this->generateCode('PXK', 'inventory_issues');
             $date = !empty($data['date']) ? $data['date'] : date('Y-m-d');
@@ -276,7 +280,7 @@ class InventoryService
                     $price = (float)($item['unit_price'] ?? ($board->edge_band_cost_price ?? 0));
                     $lineTotal = $qty * $price;
 
-                    InventoryIssueItem::create([
+                    InventoryIssueItem::create($this->sanitizeItemData('inventory_issue_items', [
                         'issue_id'            => $issue->id,
                         'item_type'           => 'edge_band',
                         'wood_board_id'       => $board->id,
@@ -285,13 +289,13 @@ class InventoryService
                         'unit_price'          => $price,
                         'total_price'         => $lineTotal,
                         'notes'               => $item['notes'] ?? null,
-                    ]);
+                    ]));
 
                     $board->edge_band_current_stock = max(0, (float)$board->edge_band_current_stock - $qty);
                     $board->save();
                     $stockAfter = $board->edge_band_current_stock;
 
-                    InventoryTransaction::create([
+                    InventoryTransaction::create($this->sanitizeItemData('inventory_transactions', [
                         'warehouse_id'        => $warehouse->id,
                         'item_type'           => 'edge_band',
                         'wood_board_id'       => $board->id,
@@ -307,7 +311,7 @@ class InventoryService
                         'unit_price'          => $price,
                         'notes'               => $data['notes'] ?? ('Xuất kho chỉ theo phiếu ' . $code),
                         'created_by'          => $userId,
-                    ]);
+                    ]));
 
                     $totalQty += $qty;
                     $totalAmount += $lineTotal;
@@ -339,7 +343,7 @@ class InventoryService
                     $price = (float)($item['unit_price'] ?? ($boardPrice?->price_board ?? $board?->cost_price ?? 0));
                     $lineTotal = $qty * $price;
 
-                    InventoryIssueItem::create([
+                    InventoryIssueItem::create($this->sanitizeItemData('inventory_issue_items', [
                         'issue_id'            => $issue->id,
                         'item_type'           => 'board',
                         'wood_board_id'       => $boardId,
@@ -348,7 +352,7 @@ class InventoryService
                         'unit_price'          => $price,
                         'total_price'         => $lineTotal,
                         'notes'               => $item['notes'] ?? null,
-                    ]);
+                    ]));
 
                     // Update WoodBoardPrice stock
                     $stockAfter = 0;
@@ -368,7 +372,7 @@ class InventoryService
                     }
 
                     // Create stock transaction
-                    InventoryTransaction::create([
+                    InventoryTransaction::create($this->sanitizeItemData('inventory_transactions', [
                         'warehouse_id'        => $warehouse->id,
                         'item_type'           => 'board',
                         'wood_board_id'       => $boardId,
@@ -384,7 +388,7 @@ class InventoryService
                         'unit_price'          => $price,
                         'notes'               => $data['notes'] ?? ('Xuất kho theo phiếu ' . $code),
                         'created_by'          => $userId,
-                    ]);
+                    ]));
 
                     $totalQty += $qty;
                     $totalAmount += $lineTotal;
@@ -405,6 +409,8 @@ class InventoryService
      */
     public function createStocktake(Warehouse $warehouse, array $data, array $items, $userId = null): InventoryStocktake
     {
+        $this->ensureSchemaUpdated();
+
         return DB::transaction(function () use ($warehouse, $data, $items, $userId) {
             $code = !empty($data['code']) ? $data['code'] : $this->generateCode('PKK', 'inventory_stocktakes');
             $date = !empty($data['date']) ? $data['date'] : date('Y-m-d');
@@ -450,7 +456,7 @@ class InventoryService
                     $actualQty = (float)($item['actual_quantity'] ?? $bookQty);
                     $diff = $actualQty - $bookQty;
 
-                    InventoryStocktakeItem::create([
+                    InventoryStocktakeItem::create($this->sanitizeItemData('inventory_stocktake_items', [
                         'stocktake_id'        => $stocktake->id,
                         'item_type'           => 'edge_band',
                         'wood_board_id'       => $board->id,
@@ -459,7 +465,7 @@ class InventoryService
                         'actual_quantity'     => $actualQty,
                         'difference'          => $diff,
                         'reason'              => $item['reason'] ?? ($item['notes'] ?? null),
-                    ]);
+                    ]));
 
                     $totalBook += $bookQty;
                     $totalActual += $actualQty;
@@ -489,7 +495,7 @@ class InventoryService
                     $actualQty = (float)($item['actual_quantity'] ?? $bookQty);
                     $diff = $actualQty - $bookQty;
 
-                    InventoryStocktakeItem::create([
+                    InventoryStocktakeItem::create($this->sanitizeItemData('inventory_stocktake_items', [
                         'stocktake_id'        => $stocktake->id,
                         'item_type'           => 'board',
                         'wood_board_id'       => $boardId,
@@ -498,7 +504,7 @@ class InventoryService
                         'actual_quantity'     => $actualQty,
                         'difference'          => $diff,
                         'reason'              => $item['reason'] ?? ($item['notes'] ?? null),
-                    ]);
+                    ]));
 
                     $totalBook += $bookQty;
                     $totalActual += $actualQty;
@@ -523,6 +529,8 @@ class InventoryService
     {
         if ($stocktake->status === 'balanced') return;
 
+        $this->ensureSchemaUpdated();
+
         DB::transaction(function () use ($stocktake, $userId) {
             foreach ($stocktake->items as $item) {
                 if ($item->item_type === 'edge_band') {
@@ -534,7 +542,7 @@ class InventoryService
                         $board->save();
                         $stockAfter = $board->edge_band_current_stock;
 
-                        InventoryTransaction::create([
+                        InventoryTransaction::create($this->sanitizeItemData('inventory_transactions', [
                             'warehouse_id'        => $stocktake->warehouse_id,
                             'item_type'           => 'edge_band',
                             'wood_board_id'       => $board->id,
@@ -550,7 +558,7 @@ class InventoryService
                             'unit_price'          => $board->edge_band_cost_price ?: 0,
                             'notes'               => 'Cân bằng kho chỉ sau kiểm kê ' . $stocktake->code . ($item->reason ? (' (' . $item->reason . ')') : ''),
                             'created_by'          => $userId,
-                        ]);
+                        ]));
                     }
                 } else {
                     $board = $item->woodBoard;
@@ -574,7 +582,7 @@ class InventoryService
                             }
                         }
 
-                        InventoryTransaction::create([
+                        InventoryTransaction::create($this->sanitizeItemData('inventory_transactions', [
                             'warehouse_id'        => $stocktake->warehouse_id,
                             'item_type'           => 'board',
                             'wood_board_id'       => $board?->id ?? $boardPrice?->wood_board_id,
@@ -590,7 +598,7 @@ class InventoryService
                             'unit_price'          => $boardPrice?->price_board ?? $board?->cost_price ?? 0,
                             'notes'               => 'Cân bằng kho sau kiểm kê ' . $stocktake->code . ($item->reason ? (' (' . $item->reason . ')') : ''),
                             'created_by'          => $userId,
-                        ]);
+                        ]));
                     }
                 }
             }
@@ -1009,5 +1017,41 @@ class InventoryService
 
             return $warehouse;
         });
+    }
+
+    /**
+     * Tự động chạy migration nếu bảng thiếu cột item_type (đảm bảo không bị lỗi Unknown column)
+     */
+    protected function ensureSchemaUpdated(): void
+    {
+        static $checked = false;
+        if ($checked) return;
+        $checked = true;
+
+        try {
+            $needsMigrate = false;
+            foreach (['inventory_receipt_items', 'inventory_issue_items', 'inventory_transactions'] as $tbl) {
+                if (\Illuminate\Support\Facades\Schema::hasTable($tbl) && !\Illuminate\Support\Facades\Schema::hasColumn($tbl, 'item_type')) {
+                    $needsMigrate = true;
+                    break;
+                }
+            }
+            if ($needsMigrate) {
+                \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Auto-migrate failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Lọc bỏ cột item_type nếu bảng chưa có cột này để tránh lỗi SQL 1054
+     */
+    protected function sanitizeItemData(string $table, array $data): array
+    {
+        if (!\Illuminate\Support\Facades\Schema::hasColumn($table, 'item_type')) {
+            unset($data['item_type']);
+        }
+        return $data;
     }
 }

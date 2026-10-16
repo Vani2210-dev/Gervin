@@ -444,4 +444,15 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('vehicles/{vehicle}/fuel-logs/{fuelLog}', [VehicleController::class, 'destroyFuelLog'])->name('vehicles.fuel-logs.destroy');
 });
 
+// Tiện ích chạy migration trực tiếp từ web (hỗ trợ cập nhật database server)
+Route::get('/run-migrate', function () {
+    try {
+        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+        $output = \Illuminate\Support\Facades\Artisan::output();
+        return response('<pre style="background:#1e1e2e;color:#a6e3a1;padding:20px;border-radius:8px;font-family:monospace;font-size:14px;"><strong>[MIGRATION SUCCESS]</strong><br>' . htmlspecialchars($output ?: 'Database is up to date. No pending migrations.') . '</pre>');
+    } catch (\Throwable $e) {
+        return response('<pre style="background:#1e1e2e;color:#f38ba8;padding:20px;border-radius:8px;font-family:monospace;font-size:14px;"><strong>[MIGRATION ERROR]</strong><br>' . htmlspecialchars($e->getMessage()) . '</pre>', 500);
+    }
+});
+
 require __DIR__.'/auth.php';

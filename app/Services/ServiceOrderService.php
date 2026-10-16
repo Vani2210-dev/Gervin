@@ -18,6 +18,7 @@ class ServiceOrderService
     {
         return [
             'customer_id'       => 'nullable|exists:customers,id',
+            'market_group_id'   => 'nullable|integer',
             'customer_name'     => 'required|string|max:255',
             'phone'             => 'nullable|string|max:20',
             'address'           => 'nullable|string',
@@ -86,16 +87,20 @@ class ServiceOrderService
                 if ($request->has('customer_initial_debt')) {
                     $existing->update(['debt' => $request->input('customer_initial_debt', 0)]);
                 }
+                if ($request->filled('market_group_id') && !$existing->market_group_id) {
+                    $existing->update(['market_group_id' => $request->market_group_id]);
+                }
             } else {
                 $lastCustomer = Customer::orderBy('id', 'desc')->first();
                 $nextNumber   = $lastCustomer ? intval(substr($lastCustomer->customer_code, 2)) + 1 : 1;
                 $customerCode = 'KH' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
                 $newCustomer = Customer::create([
-                    'customer_code' => $customerCode,
-                    'name'          => trim($request->customer_name),
-                    'phone'         => $request->phone,
-                    'address'       => $request->address,
-                    'debt'          => $request->input('customer_initial_debt', 0),
+                    'customer_code'   => $customerCode,
+                    'name'            => trim($request->customer_name),
+                    'phone'           => $request->phone,
+                    'address'         => $request->address,
+                    'debt'            => $request->input('customer_initial_debt', 0),
+                    'market_group_id' => $request->market_group_id ?: null,
                 ]);
                 if ($authUser = auth()->user()) {
                     if (!$authUser->hasRole('Admin')) {

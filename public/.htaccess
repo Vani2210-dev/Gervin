@@ -10,9 +10,10 @@
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
     # 🔒 Chuyển hướng toàn bộ các trang khác sang HTTPS để bảo mật (ngoại trừ /scan cho máy quét ESP32)
+    RewriteCond %{ENV:REDIRECT_STATUS} ^$
     RewriteCond %{HTTPS} off
-    RewriteCond %{REQUEST_URI} !^/scan
-    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+    RewriteCond %{THE_REQUEST} !^[A-Z]{3,}\s+/scan [NC]
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
     # Redirect Trailing Slashes If Not A Folder...
     RewriteCond %{REQUEST_FILENAME} !-d
