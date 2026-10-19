@@ -14,6 +14,7 @@
                             <span id="requestEditModalStepBadge" class="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-200 text-amber-900">Kế toán yêu cầu</span>
                         </div>
                     </div>
+                </div>
                 <button type="button" onclick="closeRequestEditModal()" class="text-neutral-400 hover:text-neutral-600 p-1.5 rounded-lg hover:bg-neutral-100 transition-colors">
                     <iconify-icon icon="lucide:x" class="text-xl"></iconify-icon>
                 </button>

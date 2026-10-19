@@ -46,40 +46,124 @@ class QrScanController extends Controller
      */
     public function receiveScan(Request $request)
     {
+        // Kiểm tra nếu là GET ping kiểm tra kết nối từ browser / thiết bị
         if ($request->isMethod('get') || $request->isMethod('head')) {
-            return response()->json([
-                'status' => 'online',
-                'message' => 'QR Scan Service is ready'
-            ]);
+            // Nếu có tham số barcode/result trong query URL thì tiếp tục xử lý
+            if (!$request->has('result') && !$request->has('barcode') && !$request->has('data') && !$request->has('code')) {
+                return response()->json([
+                    'status' => 'online',
+                    'message' => 'QR Scan Service is ready'
+                ]);
+            }
         }
 
+        // 1. Trích xuất payload từ JSON body
         $payload = $request->json()->all();
 
+        // 2. Nếu rỗng, thử parse từ Raw content (rất nhiều đầu đọc gửi header text/plain)
+        if (empty($payload)) {
+            $rawContent = trim($request->getContent());
+            if (!empty($rawContent)) {
+                $decoded = json_decode($rawContent, true);
+                if (is_array($decoded)) {
+                    $payload = $decoded;
+                }
+            }
+        }
+
+        // 3. Nếu vẫn rỗng, lấy từ form-data hoặc query params ($request->all())
+        if (empty($payload)) {
+            $all = $request->all();
+            if (!empty($all)) {
+                $payload = $all;
+            }
+        }
+
+        // 4. Nếu vẫn rỗng nhưng có raw content dạng text thuần (máy quét gửi trực tiếp chuỗi barcode)
+        if (empty($payload)) {
+            $rawText = trim($request->getContent());
+            if (!empty($rawText)) {
+                $payload = [
+                    'device_id' => 1,
+                    'result'    => $rawText,
+                ];
+            }
+        }
+
+        // Nếu hoàn toàn không có dữ liệu: trả về 200 để máy quét xóa gói lỗi khỏi bộ nhớ đệm (tránh kẹt queue liên tục lỗi 400)
         if (empty($payload)) {
             return response()->json([
-                'status' => 'error',
-                'message' => 'Empty payload'
-            ], 400);
+                'status'   => 'success',
+                'message'  => 'Empty payload acknowledged',
+                'received' => 0
+            ], 200);
         }
 
         // Chuẩn hóa payload thành mảng nếu thiết bị chỉ gửi 1 đối tượng đơn lẻ
-        if (isset($payload['device_id'])) {
+        if (!is_array($payload)) {
+            $payload = [];
+        } elseif (
+            isset($payload['device_id']) || 
+            isset($payload['deviceId']) || 
+            isset($payload['result']) || 
+            isset($payload['barcode']) || 
+            isset($payload['data']) || 
+            isset($payload['code'])
+        ) {
             $payload = [$payload];
         }
 
         $receivedCount = 0;
 
         foreach ($payload as $packet) {
-            $deviceId = $packet['device_id'] ?? null;
-            $timeRaw = $packet['time'] ?? null;
-            $barcode = $packet['result'] ?? null;
+            if (!is_array($packet)) {
+                if (is_string($packet) && !empty(trim($packet))) {
+                    $packet = ['result' => trim($packet)];
+                } else {
+                    continue;
+                }
+            }
 
-            if (!$deviceId || !$barcode) {
+            $rawDeviceId = $packet['device_id'] 
+                ?? $packet['deviceId'] 
+                ?? $packet['id'] 
+                ?? $packet['device'] 
+                ?? $packet['sn'] 
+                ?? $packet['mac'] 
+                ?? null;
+
+            // Chuẩn hóa deviceId thành số nguyên dương hợp lệ cho cột unsignedBigInteger trong database
+            if ($rawDeviceId !== null && is_numeric($rawDeviceId)) {
+                $deviceId = (int) $rawDeviceId;
+            } elseif (!empty($rawDeviceId)) {
+                $deviceId = sprintf('%u', crc32((string) $rawDeviceId));
+            } else {
+                // Nếu máy quét không gửi device_id, sử dụng ID mặc định dựa theo IP thiết bị
+                $deviceId = sprintf('%u', crc32($request->ip() ?: '1'));
+            }
+            if ($deviceId <= 0) {
+                $deviceId = 1;
+            }
+
+            $timeRaw = $packet['time'] ?? $packet['timestamp'] ?? $packet['scanned_at'] ?? null;
+            $barcode = $packet['result'] 
+                ?? $packet['barcode'] 
+                ?? $packet['data'] 
+                ?? $packet['code'] 
+                ?? $packet['qr'] 
+                ?? null;
+
+            if (!$barcode) {
+                continue;
+            }
+
+            // Bỏ qua nếu quét nhầm mã cấu hình máy quét
+            $barcode = trim((string) $barcode);
+            if (str_starts_with($barcode, '<cmd>') || str_starts_with($barcode, 'cmd:')) {
                 continue;
             }
 
             // Chuẩn hóa mã tấm: nếu phần mềm nesting Wood xuất mã kèm hậu tố _ (VD: 5213.GV40.TP.016_16) -> chỉ lấy mã tấm trước dấu _
-            $barcode = trim((string) $barcode);
             if (str_contains($barcode, '_')) {
                 $barcode = explode('_', $barcode)[0];
             }

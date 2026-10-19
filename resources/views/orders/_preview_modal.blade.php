@@ -566,14 +566,17 @@
 
 <script>
     window.currentPreviewOrder = {
-        orderCode: '{{ $acrylicOrder->order_code }}',
-        customerName: '{{ addslashes($acrylicOrder->customer_name ?: ($acrylicOrder->customer?->name ?? "")) }}',
-        phone: '{{ $acrylicOrder->phone ?: ($acrylicOrder->customer?->phone ?? "") }}'
+        orderCode: {!! json_encode($acrylicOrder->order_code ?? '') !!},
+        customerName: {!! json_encode($acrylicOrder->customer_name ?: ($acrylicOrder->customer?->name ?? '')) !!},
+        phone: {!! json_encode($acrylicOrder->phone ?: ($acrylicOrder->customer?->phone ?? '')) !!}
     };
 
     function previewOrder() {
-        const modal = document.getElementById('preview-order-modal');
+        let modal = document.getElementById('preview-order-modal');
         if (modal) {
+            if (modal.parentElement !== document.body) {
+                document.body.appendChild(modal);
+            }
             modal.style.display = 'flex';
             document.body.style.overflow = 'hidden';
         }
