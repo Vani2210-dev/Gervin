@@ -60,37 +60,55 @@ class QrScanController extends Controller
         // 1. Trích xuất payload từ JSON body
         $payload = $request->json()->all();
 
-        // 2. Nếu rỗng, thử parse từ Raw content (rất nhiều đầu đọc gửi header text/plain)
+        // 2. Làm sạch raw content (loại bỏ UTF-8 BOM, ép UTF-8 hợp lệ, trim khoảng trắng)
+        $rawContent = (string) $request->getContent();
+        if (!empty($rawContent)) {
+            $rawContentClean = preg_replace('/^[\xEF\xBB\xBF\xFE\xFF\xFF\xFE]+/', '', $rawContent);
+            $rawContentClean = mb_convert_encoding($rawContentClean, 'UTF-8', 'UTF-8');
+            $rawContentClean = trim($rawContentClean, " \t\n\r\0\x0B");
+        } else {
+            $rawContentClean = '';
+        }
+
+        // 3. Nếu payload rỗng, thử decode từ raw content đã làm sạch
+        if (empty($payload) && !empty($rawContentClean)) {
+            $decoded = json_decode($rawContentClean, true);
+            if (is_array($decoded)) {
+                $payload = $decoded;
+            }
+        }
+
+        // 4. Nếu vẫn rỗng, kiểm tra form-data ($request->all()) - phòng trường hợp thiết bị gửi form urlencoded
         if (empty($payload)) {
-            $rawContent = trim($request->getContent());
-            if (!empty($rawContent)) {
-                $decoded = json_decode($rawContent, true);
-                if (is_array($decoded)) {
-                    $payload = $decoded;
+            $all = $request->all();
+            if (!empty($all)) {
+                // Kiểm tra nếu key của form-data chính là chuỗi JSON
+                foreach ($all as $k => $v) {
+                    if (is_string($k) && (str_starts_with(trim($k), '[') || str_starts_with(trim($k), '{'))) {
+                        $kClean = preg_replace('/^[\xEF\xBB\xBF\xFE\xFF\xFF\xFE]+/', '', $k);
+                        $kClean = mb_convert_encoding($kClean, 'UTF-8', 'UTF-8');
+                        $decoded = json_decode(trim($kClean), true);
+                        if (is_array($decoded)) {
+                            $payload = $decoded;
+                            break;
+                        }
+                    }
+                }
+
+                if (empty($payload)) {
+                    $payload = $all;
                 }
             }
         }
 
-        // 3. Nếu vẫn rỗng, lấy từ form-data hoặc query params ($request->all())
-        if (empty($payload)) {
-            $all = $request->all();
-            if (!empty($all)) {
-                $payload = $all;
-            }
+        // 5. Nếu vẫn rỗng nhưng có raw content text thuần (máy quét gửi trực tiếp chuỗi barcode đơn giản)
+        if (empty($payload) && !empty($rawContentClean)) {
+            $payload = [
+                'result' => $rawContentClean,
+            ];
         }
 
-        // 4. Nếu vẫn rỗng nhưng có raw content dạng text thuần (máy quét gửi trực tiếp chuỗi barcode)
-        if (empty($payload)) {
-            $rawText = trim($request->getContent());
-            if (!empty($rawText)) {
-                $payload = [
-                    'device_id' => 1,
-                    'result'    => $rawText,
-                ];
-            }
-        }
-
-        // Nếu hoàn toàn không có dữ liệu: trả về 200 để máy quét xóa gói lỗi khỏi bộ nhớ đệm (tránh kẹt queue liên tục lỗi 400)
+        // Nếu hoàn toàn không có dữ liệu: trả về 200 để máy quét xóa gói lỗi khỏi bộ nhớ đệm
         if (empty($payload)) {
             return response()->json([
                 'status'   => 'success',
@@ -99,7 +117,7 @@ class QrScanController extends Controller
             ], 200);
         }
 
-        // Chuẩn hóa payload thành mảng nếu thiết bị chỉ gửi 1 đối tượng đơn lẻ
+        // Chuẩn hóa payload thành mảng
         if (!is_array($payload)) {
             $payload = [];
         } elseif (
@@ -112,6 +130,53 @@ class QrScanController extends Controller
         ) {
             $payload = [$payload];
         }
+
+        // Giải nén các packet nếu trường result/barcode thực chất chứa chuỗi JSON lồng nhau
+        $flattenedPayload = [];
+        foreach ($payload as $p) {
+            if (is_array($p)) {
+                $innerStr = $p['result'] ?? $p['barcode'] ?? null;
+                if (is_string($innerStr) && (str_starts_with(trim($innerStr), '[') || str_starts_with(trim($innerStr), '{'))) {
+                    $cleanInner = preg_replace('/^[\xEF\xBB\xBF\xFE\xFF\xFF\xFE]+/', '', $innerStr);
+                    $cleanInner = mb_convert_encoding($cleanInner, 'UTF-8', 'UTF-8');
+                    $subDecoded = json_decode(trim($cleanInner), true);
+                    if (is_array($subDecoded)) {
+                        if (isset($subDecoded[0]) && is_array($subDecoded[0])) {
+                            foreach ($subDecoded as $subItem) {
+                                if (is_array($subItem)) {
+                                    $flattenedPayload[] = $subItem;
+                                }
+                            }
+                        } else {
+                            $flattenedPayload[] = $subDecoded;
+                        }
+                        continue;
+                    }
+                }
+                $flattenedPayload[] = $p;
+            } elseif (is_string($p)) {
+                $pClean = trim($p);
+                if (str_starts_with($pClean, '[') || str_starts_with($pClean, '{')) {
+                    $cleanInner = preg_replace('/^[\xEF\xBB\xBF\xFE\xFF\xFF\xFE]+/', '', $pClean);
+                    $cleanInner = mb_convert_encoding($cleanInner, 'UTF-8', 'UTF-8');
+                    $subDecoded = json_decode($cleanInner, true);
+                    if (is_array($subDecoded)) {
+                        if (isset($subDecoded[0]) && is_array($subDecoded[0])) {
+                            foreach ($subDecoded as $subItem) {
+                                if (is_array($subItem)) {
+                                    $flattenedPayload[] = $subItem;
+                                }
+                            }
+                        } else {
+                            $flattenedPayload[] = $subDecoded;
+                        }
+                        continue;
+                    }
+                }
+                $flattenedPayload[] = ['result' => $pClean];
+            }
+        }
+        $payload = $flattenedPayload;
 
         $receivedCount = 0;
 
