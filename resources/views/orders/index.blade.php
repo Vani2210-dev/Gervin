@@ -442,8 +442,9 @@
                                 <td class="px-3 align-middle whitespace-nowrap text-center">
                                     @php
                                         $hasEditReq = !empty($order->edit_reason);
-                                        $isFullyApproved = ($order->technical_approved_by || in_array($order->status, ['transferred', 'in_production', 'completed']));
                                         $isAccountantApproved = (bool)$order->accountant_approved_by;
+                                        $isTechnicalApproved = (bool)$order->technical_approved_by;
+                                        $isFullyApproved = $isAccountantApproved && $isTechnicalApproved;
                                     @endphp
 
                                     @if($hasEditReq)
@@ -1333,15 +1334,15 @@ async function submitQuickManufacture(e) {
             </li>
             @endif
 
-            {{-- Chuyển sản xuất (Kỹ thuật duyệt) --}}
-            @if(in_array($order->status, ['draft', 'pending']))
-            <li class="{{ !$order->accountant_approved_by ? '' : 'border-t border-neutral-100 my-1 pt-1' }}">
-                <form method="POST" action="{{ route('orders.update-status', $order) }}" onsubmit="return confirm('Xác nhận chuyển đơn hàng {{ $order->order_code }} sang sản xuất?')">
+            {{-- Chuyển sản xuất (Kỹ thuật duyệt) - Chỉ hiển thị khi Kế toán ĐÃ duyệt và Kỹ thuật CHƯA duyệt --}}
+            @if($order->accountant_approved_by && !$order->technical_approved_by && in_array($order->status, ['draft', 'pending']))
+            <li class="border-t border-neutral-100 my-1 pt-1">
+                <form method="POST" action="{{ route('orders.update-status', $order) }}" onsubmit="return confirm('Kỹ thuật xác nhận duyệt & Chuyển đơn hàng {{ $order->order_code }} sang sản xuất?')">
                     @csrf
                     <input type="hidden" name="status" value="transferred">
                     <button type="submit" class="w-full flex items-center gap-2 px-4 py-2 hover:bg-violet-50 text-violet-700 text-left transition-colors font-medium">
                         <iconify-icon icon="lucide:factory" class="text-violet-600 text-lg"></iconify-icon>
-                        <span>{{ !empty($order->edit_reason) ? 'Chuyển SX lại' : 'Chuyển sản xuất' }}</span>
+                        <span>{{ !empty($order->edit_reason) ? 'Chuyển SX lại' : 'Kỹ thuật duyệt (Chuyển SX)' }}</span>
                     </button>
                 </form>
             </li>
@@ -1505,13 +1506,13 @@ async function submitQuickManufacture(e) {
         </div>
 
         {{-- BƯỚC 2: KỸ THUẬT DUYỆT (CHUYỂN SX) --}}
-        <div class="p-3 rounded-xl border {{ ($order->technical_approved_by || in_array($order->status, ['transferred', 'in_production', 'completed'])) ? 'bg-blue-50/60 border-blue-200' : 'bg-neutral-50 border-neutral-200' }}">
+        <div class="p-3 rounded-xl border {{ $order->technical_approved_by ? 'bg-blue-50/60 border-blue-200' : 'bg-neutral-50 border-neutral-200' }}">
             <div class="flex items-center justify-between gap-2 mb-1.5">
                 <div class="flex items-center gap-1.5">
-                    <span class="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold {{ ($order->technical_approved_by || in_array($order->status, ['transferred', 'in_production', 'completed'])) ? 'bg-blue-600 text-white' : 'bg-neutral-300 text-neutral-700' }}">2</span>
+                    <span class="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold {{ $order->technical_approved_by ? 'bg-blue-600 text-white' : 'bg-neutral-300 text-neutral-700' }}">2</span>
                     <span class="font-bold text-xs text-neutral-800">Kỹ thuật duyệt (Chuyển SX)</span>
                 </div>
-                @if($order->technical_approved_by || in_array($order->status, ['transferred', 'in_production', 'completed']))
+                @if($order->technical_approved_by)
                     <span class="inline-flex items-center gap-1 text-[11px] font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">
                         <iconify-icon icon="lucide:check-check" class="text-xs"></iconify-icon>
                         Đã duyệt
@@ -1521,7 +1522,7 @@ async function submitQuickManufacture(e) {
                 @endif
             </div>
 
-            @if($order->technical_approved_by || in_array($order->status, ['transferred', 'in_production', 'completed']))
+            @if($order->technical_approved_by)
                 <div class="text-[11px] text-neutral-600 pl-6.5 flex items-center justify-between mt-1">
                     <span>Người duyệt: <strong class="text-neutral-800">{{ $order->technicalApprover?->name ?? 'Kỹ thuật' }}</strong></span>
                     <span class="text-neutral-400 font-medium">{{ $order->technical_approved_at?->format('H:i d/m/Y') }}</span>
@@ -1529,20 +1530,24 @@ async function submitQuickManufacture(e) {
             @else
                 @can('edit order')
                     @if(!in_array($order->status, ['cancelled', 'completed']))
-                        <div class="flex items-center gap-2 mt-2 pt-2 border-t border-neutral-200/60 justify-end">
-                            @if($order->accountant_approved_by)
+                        @if($order->accountant_approved_by)
+                            <div class="flex items-center gap-2 mt-2 pt-2 border-t border-neutral-200/60 justify-end">
                                 <button type="button" onclick="openRequestEditModal('{{ route('orders.update-status', $order) }}', '{{ $order->order_code }}', 'technical')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-300 transition-colors">
                                     Yêu cầu sửa
                                 </button>
-                            @endif
-                            <form method="POST" action="{{ route('orders.update-status', $order) }}" class="m-0" onsubmit="return confirm('Kỹ thuật xác nhận duyệt & Chuyển sản xuất đơn {{ $order->order_code }}?')">
-                                @csrf
-                                <input type="hidden" name="status" value="transferred">
-                                <button type="submit" class="px-3 py-1 rounded-lg text-xs font-bold bg-violet-600 hover:bg-violet-700 text-white transition-colors shadow-2xs">
-                                    {{ !empty($order->edit_reason) ? 'Chuyển lại SX' : 'Duyệt & Chuyển SX' }}
-                                </button>
-                            </form>
-                        </div>
+                                <form method="POST" action="{{ route('orders.update-status', $order) }}" class="m-0" onsubmit="return confirm('Kỹ thuật xác nhận duyệt & Chuyển sản xuất đơn {{ $order->order_code }}?')">
+                                    @csrf
+                                    <input type="hidden" name="status" value="transferred">
+                                    <button type="submit" class="px-3 py-1 rounded-lg text-xs font-bold bg-violet-600 hover:bg-violet-700 text-white transition-colors shadow-2xs">
+                                        {{ !empty($order->edit_reason) ? 'Chuyển lại SX' : 'Duyệt & Chuyển SX' }}
+                                    </button>
+                                </form>
+                            </div>
+                        @else
+                            <div class="mt-2 pt-2 border-t border-neutral-200/60 text-right">
+                                <span class="text-[11px] text-neutral-400 italic">Cần Kế toán duyệt trước</span>
+                            </div>
+                        @endif
                     @endif
                 @endcan
             @endif

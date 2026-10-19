@@ -795,11 +795,11 @@ class OrderController extends Controller
 
         if ($request->status === 'transferred') {
             if (!$order->accountant_approved_by) {
-                $order->accountant_approved_by = auth()->id();
-                $order->accountant_approved_at = now();
+                return redirect()->back()->with('error', 'Đơn hàng cần được Kế toán duyệt trước khi Kỹ thuật duyệt chuyển sản xuất.');
             }
             $order->technical_approved_by = auth()->id();
             $order->technical_approved_at = now();
+            $order->status = 'transferred';
             $order->edit_reason = null;
             $order->rejected_by = null;
             $order->rejected_at = null;
@@ -813,6 +813,9 @@ class OrderController extends Controller
                 $order->rejected_at = null;
                 $order->rejected_step = null;
                 $order->edit_reason = null;
+            }
+            if (!$order->technical_approved_by && $order->status === 'transferred') {
+                $order->status = 'pending';
             }
             $order->save();
         }
@@ -846,6 +849,10 @@ class OrderController extends Controller
                 $order->rejected_at = null;
                 $order->rejected_step = null;
                 $order->edit_reason = null;
+            }
+            // Đảm bảo không bị tự động xác nhận kỹ thuật và status chưa chuyển sản xuất
+            if (!$order->technical_approved_by && $order->status === 'transferred') {
+                $order->status = 'pending';
             }
             $order->save();
             return redirect()->back()->with('success', 'Kế toán đã duyệt đơn hàng ' . $order->order_code);
@@ -896,11 +903,9 @@ class OrderController extends Controller
             if (!in_array($order->status, ['pending', 'draft'])) {
                 return redirect()->back()->with('error', 'Trạng thái đơn hàng không hợp lệ để chuyển sản xuất.');
             }
-            // Kỹ thuật duyệt & Chuyển sản xuất
+            // Kỹ thuật duyệt & Chuyển sản xuất: Bắt buộc Kế toán phải duyệt trước
             if (!$order->accountant_approved_by) {
-                // Tự động gán duyệt kế toán nếu chưa có
-                $order->accountant_approved_by = auth()->id();
-                $order->accountant_approved_at = now();
+                return redirect()->back()->with('error', 'Đơn hàng cần được Kế toán duyệt trước khi Kỹ thuật duyệt chuyển sản xuất.');
             }
             $order->technical_approved_by = auth()->id();
             $order->technical_approved_at = now();

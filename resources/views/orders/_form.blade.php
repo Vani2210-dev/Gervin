@@ -322,8 +322,8 @@
                 @if($acrylicOrder->status !== 'cancelled')
                 <button type="submit" name="status" value="cancelled" class="btn bg-danger-50 text-danger-600 hover:bg-danger-100 border border-danger-200 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all" onclick="return confirm('Bạn có chắc chắn muốn hủy đơn hàng này?')">Hủy đơn</button>
                 @endif
-                @if($acrylicOrder->status === 'pending')
-                <button type="submit" name="status" value="transferred" class="btn bg-violet-50 text-violet-600 hover:bg-violet-100 border border-violet-200 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all" onclick="return confirm('Xác nhận chuyển đơn hàng sang sản xuất?')">{{ !empty($acrylicOrder->edit_reason) ? 'Chuyển SX lại' : 'Chuyển Sản xuất' }}</button>
+                @if($acrylicOrder->status === 'pending' && $acrylicOrder->accountant_approved_by)
+                <button type="submit" name="status" value="transferred" class="btn bg-violet-50 text-violet-600 hover:bg-violet-100 border border-violet-200 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all" onclick="return confirm('Kỹ thuật xác nhận duyệt & chuyển đơn hàng sang sản xuất?')">{{ !empty($acrylicOrder->edit_reason) ? 'Chuyển SX lại' : 'Kỹ thuật duyệt & Chuyển SX' }}</button>
                 @endif
             @endif
             <button type="submit" name="action" value="save" class="btn btn-primary px-6 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all flex items-center gap-1.5" onclick="document.getElementById('order-form-action').value = 'save'">
@@ -619,6 +619,7 @@ function previewOrder() {
                 let align = 'center';
                 let isBold = false;
                 let textColor = '#0f172a';
+                let bgColor = '';
 
                 if (col.index === 0) {
                     // STT
@@ -770,13 +771,25 @@ function previewOrder() {
                         else if (cellVal === '1') cellVal = 'Vân dọc';
                         else if (cellVal === '2') cellVal = 'Vân ngang';
                     }
+                    // Rộng (chiều rộng): dưới 55mm cảnh báo đỏ giống như trên form bình thường
+                    else if (titleLower === 'rộng' || titleLower === 'bản rộng' || titleLower.startsWith('rộng')) {
+                        const num = parseFloat(cellVal);
+                        const productNameInput = row.querySelector('input[name*="[product_name]"]') || row.querySelector('input[name*="[name]"]');
+                        const prodName = productNameInput ? productNameInput.value.trim() : '';
+                        const isLabor = row.hasAttribute('data-is-labor') || row.classList.contains('bg-amber-50/60') || prodName === 'Công giả dày';
+                        if (!isNaN(num) && num > 0 && num < 55 && !isLabor) {
+                            textColor = '#ef4444';
+                            bgColor = '#fef2f2';
+                            isBold = true;
+                        }
+                    }
                     // Ghi chú
                     else if (titleLower.includes('ghi chú')) {
                         align = 'left';
                     }
                 }
 
-                rowHTML += `<td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: ${align}; color: ${textColor}; font-weight: ${isBold ? '600' : 'normal'}; font-size: 13px; white-space: nowrap;">${cellVal || '—'}</td>`;
+                rowHTML += `<td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: ${align}; color: ${textColor}; font-weight: ${isBold ? '700' : 'normal'}; font-size: 13px; white-space: nowrap; ${bgColor ? `background-color: ${bgColor};` : ''}">${cellVal || '—'}</td>`;
             });
             rowHTML += '</tr>';
             itemsHTML += rowHTML;
