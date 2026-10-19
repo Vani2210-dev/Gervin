@@ -112,53 +112,70 @@
         <!-- Left column: Production Control (col-span-8) -->
         <div class="lg:col-span-8 flex flex-col gap-6">
             <div class="card bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-sm">
-                <div class="card-body p-6 flex flex-col gap-6">
+                <div class="card-body p-4 sm:p-6 flex flex-col gap-5 sm:gap-6">
                     <!-- Header of card -->
-                    <div class="flex items-center justify-between border-b border-neutral-100 dark:border-neutral-800 pb-4">
+                    <div class="flex items-center justify-between border-b border-neutral-100 dark:border-neutral-800 pb-3 sm:pb-4">
                         <div class="flex items-center gap-2">
                             <iconify-icon icon="lucide:shield-check" class="text-xl text-sky-600"></iconify-icon>
-                            <span class="font-bold text-neutral-800 dark:text-neutral-100">Quét sản phẩm kiểm tra</span>
+                            <span class="font-bold text-neutral-800 dark:text-neutral-100 text-base sm:text-lg">Kiểm soát chất lượng (QC)</span>
                         </div>
+                        <span id="badgeCurrentMode" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                            <iconify-icon icon="lucide:zap" class="text-emerald-600 dark:text-emerald-400"></iconify-icon>
+                            Quét là tự động xong
+                        </span>
                     </div>
 
+                    <!-- Mode Selector Tab -->
+                    <div class="flex p-1 bg-neutral-100 dark:bg-neutral-800 rounded-xl gap-1">
+                        <button type="button" id="tabModePass" onclick="setQcMode('pass')" 
+                            class="flex-1 py-2 px-3 rounded-lg font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all bg-emerald-600 text-white shadow-sm">
+                            <iconify-icon icon="lucide:zap" class="text-base"></iconify-icon>
+                            <span>Quét Tự Động ĐẠT (Mặc định)</span>
+                        </button>
+                        <button type="button" id="tabModeDefect" onclick="setQcMode('defect')" 
+                            class="flex-1 py-2 px-3 rounded-lg font-semibold text-xs sm:text-sm text-neutral-600 dark:text-neutral-400 flex items-center justify-center gap-1.5 transition-all hover:text-neutral-900 dark:hover:text-neutral-100">
+                            <iconify-icon icon="lucide:alert-triangle" class="text-base text-amber-500"></iconify-icon>
+                            <span>Quét Báo LỖI</span>
+                        </button>
+                    </div>
 
                     <!-- Input Form -->
-                    <form id="qcForm" class="flex flex-col gap-5">
+                    <form id="qcForm" class="flex flex-col gap-4 sm:gap-5">
                         @csrf
                         <div>
-                            <label for="product_code" class="block text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-2">Mã định danh sản phẩm (QR)</label>
-                            <div class="flex items-center gap-3">
+                            <label for="product_code" id="labelProductCode" class="block text-xs sm:text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-2">Mã định danh sản phẩm (QR)</label>
+                            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
                                 <input type="text" id="product_code" name="product_code" required autofocus
-                                    class="flex-grow pl-4 pr-4 py-3.5 border border-neutral-300 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-sky-500 text-base"
-                                    placeholder="Quét mã để KIỂM TRA...">
+                                    class="w-full pl-4 pr-4 py-3.5 sm:py-4 border border-neutral-300 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-sky-500 text-base sm:text-lg font-mono font-bold"
+                                    placeholder="Quét mã để HOÀN THÀNH QC...">
 
                                 <button type="button" onclick="startScanning()"
-                                    class="px-5 py-3.5 text-white rounded-xl flex items-center gap-2 font-semibold text-sm transition-all duration-200 hover:opacity-90 active:scale-95 whitespace-nowrap shadow-sm"
+                                    class="w-full sm:w-auto px-5 py-3.5 sm:py-4 text-white rounded-xl flex items-center justify-center gap-2 font-bold text-sm sm:text-base transition-all duration-200 hover:opacity-90 active:scale-95 whitespace-nowrap shadow-md"
                                     style="background-color: rgb(2, 100, 155);">
-                                    <iconify-icon icon="lucide:camera" class="text-base"></iconify-icon>
-                                    Quét Camera
+                                    <iconify-icon icon="lucide:camera" class="text-xl"></iconify-icon>
+                                    <span>Quét Camera</span>
                                 </button>
                             </div>
 
                             <!-- Test Codes Badges -->
-                            <div class="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-neutral-500">
-                                <span>Mã nhập thử:</span>
+                            <div class="mt-2.5 flex flex-wrap items-center gap-1.5 text-xs text-neutral-500">
+                                <span>Mã nhập thử (bấm là tự nhận):</span>
                                 <div class="flex flex-wrap gap-1.5 items-center">
-                                    <button type="button" onclick="fillTestCode('LSX01-001')" class="px-2 py-0.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 rounded border border-neutral-200 dark:border-neutral-700 font-mono text-[10px]">LSX01-001</button>
-                                    <button type="button" onclick="fillTestCode('LSX01-002')" class="px-2 py-0.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 rounded border border-neutral-200 dark:border-neutral-700 font-mono text-[10px]">LSX01-002</button>
-                                    <button type="button" onclick="fillTestCode('LSX01-003')" class="px-2 py-0.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 rounded border border-neutral-200 dark:border-neutral-700 font-mono text-[10px]">LSX01-003</button>
-                                    <button type="button" onclick="fillTestCode('LSX01-004')" class="px-2 py-0.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 rounded border border-neutral-200 dark:border-neutral-700 font-mono text-[10px]">LSX01-004</button>
-                                    <button type="button" onclick="fillTestCode('LSX01-005')" class="px-2 py-0.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 rounded border border-neutral-200 dark:border-neutral-700 font-mono text-[10px]">LSX01-005</button>
-                                    <button type="button" onclick="fillTestCode('QR-PBS-003')" class="px-2 py-0.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 rounded border border-neutral-200 dark:border-neutral-700 font-mono text-[10px]">QR-PBS-003</button>
+                                    <button type="button" onclick="fillTestCode('LSX01-001')" class="px-2 py-0.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 rounded border border-neutral-200 dark:border-neutral-700 font-mono text-[11px]">LSX01-001</button>
+                                    <button type="button" onclick="fillTestCode('LSX01-002')" class="px-2 py-0.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 rounded border border-neutral-200 dark:border-neutral-700 font-mono text-[11px]">LSX01-002</button>
+                                    <button type="button" onclick="fillTestCode('LSX01-003')" class="px-2 py-0.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 rounded border border-neutral-200 dark:border-neutral-700 font-mono text-[11px]">LSX01-003</button>
+                                    <button type="button" onclick="fillTestCode('LSX01-004')" class="px-2 py-0.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 rounded border border-neutral-200 dark:border-neutral-700 font-mono text-[11px]">LSX01-004</button>
+                                    <button type="button" onclick="fillTestCode('LSX01-005')" class="px-2 py-0.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 rounded border border-neutral-200 dark:border-neutral-700 font-mono text-[11px]">LSX01-005</button>
+                                    <button type="button" onclick="fillTestCode('QR-PBS-003')" class="px-2 py-0.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 rounded border border-neutral-200 dark:border-neutral-700 font-mono text-[11px]">QR-PBS-003</button>
                                 </div>
                             </div>
                         </div>
 
                         <button type="submit" id="submitBtn" disabled
-                            class="w-full py-4 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all transform hover:-translate-y-0.5 opacity-50 cursor-not-allowed pointer-events-none"
+                            class="w-full py-3.5 sm:py-4 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all transform hover:-translate-y-0.5 opacity-50 cursor-not-allowed pointer-events-none text-sm sm:text-base"
                             style="background-color: rgb(2, 100, 155);">
-                            <iconify-icon icon="lucide:search" class="text-xl" id="submitBtnIcon"></iconify-icon>
-                            <span id="submitBtnText">Kiểm tra thông tin mã</span>
+                            <iconify-icon icon="lucide:check-circle" class="text-xl" id="submitBtnIcon"></iconify-icon>
+                            <span id="submitBtnText">Xác nhận QC ĐẠT (hoặc quét mã)</span>
                         </button>
                     </form>
                 </div>
@@ -167,17 +184,39 @@
 
         <!-- Right column: Operation Manual (col-span-4) -->
         <div class="lg:col-span-4">
-            <div class="text-white rounded-2xl p-6 shadow-md flex flex-col justify-between h-full min-h-[380px]" style="background-color: rgb(2, 100, 155);">
+            {{-- Collapsible on mobile --}}
+            <details class="lg:hidden bg-sky-700 text-white rounded-2xl p-4 shadow-sm mb-2">
+                <summary class="font-bold flex items-center justify-between cursor-pointer list-none">
+                    <span class="flex items-center gap-2 text-sm"><iconify-icon icon="lucide:help-circle" class="text-lg"></iconify-icon> Hướng dẫn quy trình QC</span>
+                    <iconify-icon icon="lucide:chevron-down" class="text-lg transition-transform duration-200"></iconify-icon>
+                </summary>
+                <div class="mt-3 pt-3 border-t border-sky-600/50 text-xs text-sky-100 space-y-2">
+                    <p>• <strong>Quét Đạt (Mặc định)</strong>: Đưa mã QR vào camera hoặc bấm máy quét — hệ thống tự động hoàn thành QC ngay.</p>
+                    <p>• <strong>Báo Lỗi</strong>: Bấm tab "Quét Báo LỖI" để kiểm tra thông tin và chọn công đoạn bị lỗi (Cắt CNC, Dán cạnh...).</p>
+                </div>
+            </details>
+
+            {{-- Desktop card --}}
+            <div class="hidden lg:flex text-white rounded-2xl p-6 shadow-md flex-col justify-between h-full min-h-[380px]" style="background-color: rgb(2, 100, 155);">
                 <div>
                     <h5 class="text-lg font-bold mb-4 flex items-center gap-2 text-white">
                         <iconify-icon icon="lucide:clipboard-list"></iconify-icon>
                         Quy trình QC
                     </h5>
                     <ol class="space-y-4 text-sm text-sky-100 list-decimal list-inside pl-1">
-                        <li>Quét mã QR định danh từ tem Bazix.</li>
-                        <li>Đối chiếu kích thước thực tế với thông số trên hệ thống.</li>
-                        <li>Kiểm tra đầy đủ các hạng mục gia công (Dán cạnh, Khoan...).</li>
+                        <li><strong>Chế độ Quét Đạt (Mặc định)</strong>: Quét mã QR là tự động ghi nhận Hoàn thành QC.</li>
+                        <li><strong>Chế độ Báo Lỗi</strong>: Chuyển tab khi phát hiện tấm lỗi để chọn nguyên nhân và hoàn trả công đoạn.</li>
+                        <li>Đối chiếu kích thước thực tế với tem và thông số kỹ thuật.</li>
                     </ol>
+                </div>
+                <div class="mt-6 pt-4 border-t border-sky-600/50 flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-sky-800 border border-sky-400 flex items-center justify-center text-white text-base font-bold">
+                        {{ strtoupper(substr(Auth::user()->name ?? 'Q', 0, 2)) }}
+                    </div>
+                    <div>
+                        <span class="text-[10px] text-sky-200 block font-bold leading-none mb-1">NGƯỜI KIỂM SOÁT</span>
+                        <span class="text-sm font-bold block leading-none text-white">{{ Auth::user()->name ?? 'Hệ thống' }}</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -423,7 +462,7 @@
     </div>
 
     <!-- Toast Container -->
-    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2"></div>
+    <div id="toastContainer" class="fixed top-4 left-1/2 -translate-x-1/2 sm:left-auto sm:right-5 sm:translate-x-0 sm:bottom-5 sm:top-auto z-50 flex flex-col gap-2 w-[92vw] sm:w-auto max-w-md pointer-events-none"></div>
 @endsection
 
 @php
@@ -431,6 +470,7 @@
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script>
         let html5QrCode = null;
+        let currentQcMode = 'pass'; // 'pass' | 'defect'
 
         function sanitizeProductCode(code) {
             if (!code) return "";
@@ -439,6 +479,70 @@
                 code = code.split("_")[0].trim();
             }
             return code;
+        }
+
+        function setQcMode(mode) {
+            currentQcMode = mode;
+            const tabPass = document.getElementById("tabModePass");
+            const tabDefect = document.getElementById("tabModeDefect");
+            const badge = document.getElementById("badgeCurrentMode");
+            const submitBtnText = document.getElementById("submitBtnText");
+            const submitBtnIcon = document.getElementById("submitBtnIcon");
+            const input = document.getElementById("product_code");
+
+            if (mode === 'pass') {
+                tabPass.className = "flex-1 py-2 px-3 rounded-lg font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all bg-emerald-600 text-white shadow-sm";
+                tabDefect.className = "flex-1 py-2 px-3 rounded-lg font-semibold text-xs sm:text-sm text-neutral-600 dark:text-neutral-400 flex items-center justify-center gap-1.5 transition-all hover:text-neutral-900 dark:hover:text-neutral-100";
+                if (badge) {
+                    badge.innerHTML = '<iconify-icon icon="lucide:zap" class="text-emerald-600 dark:text-emerald-400"></iconify-icon> Quét là tự động xong';
+                    badge.className = "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800";
+                }
+                if (input) input.placeholder = "Quét mã để HOÀN THÀNH QC...";
+                if (submitBtnText) submitBtnText.textContent = "Xác nhận QC ĐẠT (hoặc quét mã)";
+                if (submitBtnIcon) submitBtnIcon.setAttribute("icon", "lucide:check-circle");
+            } else {
+                tabPass.className = "flex-1 py-2 px-3 rounded-lg font-semibold text-xs sm:text-sm text-neutral-600 dark:text-neutral-400 flex items-center justify-center gap-1.5 transition-all hover:text-neutral-900 dark:hover:text-neutral-100";
+                tabDefect.className = "flex-1 py-2 px-3 rounded-lg font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all bg-amber-500 text-white shadow-sm";
+                if (badge) {
+                    badge.innerHTML = '<iconify-icon icon="lucide:alert-triangle" class="text-amber-500"></iconify-icon> Chế độ Báo Lỗi';
+                    badge.className = "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800";
+                }
+                if (input) input.placeholder = "Quét mã để BÁO LỖI...";
+                if (submitBtnText) submitBtnText.textContent = "Kiểm tra thông tin & Chọn lỗi";
+                if (submitBtnIcon) submitBtnIcon.setAttribute("icon", "lucide:search");
+            }
+            if (input) input.focus();
+        }
+
+        // Audio feedback
+        function playBeep(isSuccess = true) {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                if (isSuccess) {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = "sine";
+                    osc.frequency.setValueAtTime(880, ctx.currentTime);
+                    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.12);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.12);
+                } else {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = "sawtooth";
+                    osc.frequency.setValueAtTime(300, ctx.currentTime);
+                    osc.frequency.setValueAtTime(200, ctx.currentTime + 0.1);
+                    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.25);
+                }
+            } catch(e) {}
         }
 
         $(document).ready(function() {
@@ -456,8 +560,11 @@
             if (productCodeInput) {
                 productCodeInput.value = code;
                 toggleSubmitButton();
-                productCodeInput.focus();
-                fetchProductInfo(code);
+                if (currentQcMode === 'pass') {
+                    submitDirectQC(code, 'complete');
+                } else {
+                    fetchProductInfo(code);
+                }
             }
         }
 
@@ -475,16 +582,11 @@
                     document.getElementById("product_code").value = cleaned;
                     toggleSubmitButton();
                     stopScanning();
-                    fetchProductInfo(cleaned);
-                    try {
-                        let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                        let osc = audioCtx.createOscillator();
-                        osc.type = "sine";
-                        osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-                        osc.connect(audioCtx.destination);
-                        osc.start();
-                        osc.stop(audioCtx.currentTime + 0.1);
-                    } catch(e) {}
+                    if (currentQcMode === 'pass') {
+                        submitDirectQC(cleaned, 'complete');
+                    } else {
+                        fetchProductInfo(cleaned);
+                    }
                 },
                 (errorMessage) => {
                     // Ignore parse errors
@@ -546,7 +648,80 @@
             }, 3500);
         }
 
-        // Fetch product information by code
+        // Direct Submit for Mode Pass (Auto-Confirm)
+        function submitDirectQC(code, outcome = 'complete', notes = '') {
+            code = sanitizeProductCode(code);
+            if (!code) {
+                playBeep(false);
+                showToast("Mã sản phẩm trống!", "error");
+                return;
+            }
+
+            const submitBtn = document.getElementById("submitBtn");
+            const originalBtnContent = submitBtn ? submitBtn.innerHTML : "";
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = `
+                    <iconify-icon icon="lucide:loader-2" class="text-xl animate-spin"></iconify-icon>
+                    Đang ghi nhận QC...
+                `;
+            }
+
+            let actionType = "complete";
+            if (outcome !== "complete") {
+                actionType = "lỗi " + outcome;
+            }
+
+            fetch("' . route("processes.qc.complete") . '", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": "' . csrf_token() . '"
+                },
+                body: JSON.stringify({
+                    product_code: code,
+                    notes: notes,
+                    action_type: actionType,
+                    error_type: outcome !== "complete" ? outcome : null
+                })
+            })
+            .then(response => response.json())
+            .then(res => {
+                if (submitBtn) {
+                    submitBtn.innerHTML = originalBtnContent;
+                    submitBtn.disabled = false;
+                }
+
+                if (res.success) {
+                    playBeep(true);
+                    const toastType = res.action_type === "rollback" ? "error" : "success";
+                    showToast(res.message, toastType);
+
+                    // Clear inputs and hide details section
+                    document.getElementById("product_code").value = "";
+                    toggleSubmitButton();
+                    document.getElementById("productDetailsSection").classList.add("hidden");
+                    document.getElementById("product_code").focus();
+
+                    // Prepend or update history table
+                    prependHistoryTable(res);
+                } else {
+                    playBeep(false);
+                    showToast(res.message || "Có lỗi xảy ra!", "error");
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                playBeep(false);
+                showToast("Không thể kết nối đến máy chủ!", "error");
+                if (submitBtn) {
+                    submitBtn.innerHTML = originalBtnContent;
+                    submitBtn.disabled = false;
+                }
+            });
+        }
+
+        // Fetch product information by code (for Defect mode)
         function fetchProductInfo(code) {
             code = sanitizeProductCode(code);
             if (!code) return;
@@ -569,6 +744,7 @@
                     toggleSubmitButton();
                     
                     if (res.success) {
+                        playBeep(true);
                         // Populate details
                         document.getElementById("infoProductCode").textContent = "Mã: " + res.data.product_code;
                         document.getElementById("infoProductName").textContent = res.data.product_name;
@@ -675,12 +851,14 @@
                             if (saveQCBtn) saveQCBtn.classList.remove("hidden");
                         }
                     } else {
+                        playBeep(false);
                         showToast(res.message || "Không tìm thấy thông tin sản phẩm!", "error");
                         document.getElementById("productDetailsSection").classList.add("hidden");
                     }
                 })
                 .catch(err => {
                     console.error(err);
+                    playBeep(false);
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = originalBtnContent;
                     toggleSubmitButton();
@@ -689,7 +867,7 @@
                 });
         }
 
-        // Submit QC Result
+        // Submit QC Result from Details Panel
         function submitQCResult() {
             const codeInput = document.getElementById("product_code");
             const code = sanitizeProductCode(codeInput.value);
@@ -699,6 +877,7 @@
             const saveBtn = document.getElementById("saveQCBtn");
 
             if (!code) {
+                playBeep(false);
                 showToast("Mã sản phẩm trống!", "error");
                 return;
             }
@@ -740,6 +919,7 @@
                 saveBtn.classList.remove("opacity-50", "cursor-not-allowed");
 
                 if (res.success) {
+                    playBeep(res.action_type !== "rollback");
                     const toastType = res.action_type === "rollback" ? "error" : "success";
                     showToast(res.message, toastType);
                     
@@ -749,82 +929,91 @@
                     document.getElementById("productDetailsSection").classList.add("hidden");
                     document.getElementById("product_code").focus();
 
-                    // Remove existing row for this product code from the history table
-                    const rows = document.querySelectorAll("#historyTableBody tr");
-                    rows.forEach(row => {
-                        const codeCell = row.querySelector("td.font-mono");
-                        if (codeCell && codeCell.textContent.trim() === res.data.product_code) {
-                            row.remove();
-                        }
-                    });
-
-                    // Add new row to top of table
-                    const tbody = document.getElementById("historyTableBody");
-                    const noHistoryRow = document.getElementById("noHistoryRow");
-                    if (noHistoryRow) noHistoryRow.remove();
-
-                    const errorLabel = (res.data && res.data.action) ? res.data.action.toUpperCase() : "LOI";
-                    const actionBadge = res.action_type === "rollback"
-                        ? `<span class="text-xs px-2.5 py-1 rounded-full font-semibold inline-flex items-center gap-1" style="background-color: rgba(239, 68, 68, 0.1); color: rgb(185, 28, 28); border: 1px solid rgba(239, 68, 68, 0.4);">
-                                <iconify-icon icon="lucide:alert-circle" class="text-xs"></iconify-icon>
-                                ${errorLabel}
-                           </span>`
-                        : `<span class="text-xs px-2.5 py-1 rounded-full font-semibold inline-flex items-center gap-1" style="background-color: rgba(16, 185, 129, 0.1); color: rgb(5, 150, 105); border: 1px solid rgba(16, 185, 129, 0.3);">
-                                <iconify-icon icon="lucide:shield-check" class="text-xs"></iconify-icon>
-                                HOÀN THÀNH
-                           </span>`;
-
-                    const tr = document.createElement("tr");
-                    tr.className = "hover:bg-neutral-50/50 dark:hover:bg-neutral-800/10 transition-colors";
-                    tr.innerHTML = `
-                        <td class="py-3 px-4 font-mono text-xs">
-                            <span class="bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-700 px-2.5 py-1 rounded">
-                                ${res.data.product_code}
-                            </span>
-                        </td>
-                        <td class="py-3 px-4">
-                            ${actionBadge}
-                        </td>
-                        <td class="py-3 px-4 text-neutral-800 dark:text-neutral-200 font-medium">
-                            ${res.data.product_name}
-                        </td>
-                        <td class="py-3 px-4 text-neutral-600 dark:text-neutral-400">
-                            ${res.data.notes || "—"}
-                        </td>
-                        <td class="py-3 px-4">
-                            <div class="flex items-center gap-2">
-                                <div class="w-7 h-7 rounded-full bg-sky-100 dark:bg-sky-950/30 text-sky-700 dark:text-sky-400 flex items-center justify-center font-bold text-xs uppercase">
-                                    ${res.data.operator.substring(0, 1)}
-                                </div>
-                                <div>
-                                    <span class="block font-medium text-neutral-800 dark:text-neutral-200 leading-none mb-1">${res.data.operator}</span>
-                                    <span class="block text-[10px] text-neutral-400 leading-none">${res.data.time}</span>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="py-3 px-4 text-right">
-                            <div class="flex items-center justify-end gap-2 text-neutral-400">
-                                <button type="button" class="p-1 hover:text-sky-600" onclick="alert(\'Tính năng chỉnh sửa sẽ được phát triển sau.\')">
-                                    <iconify-icon icon="lucide:edit-2" class="text-base"></iconify-icon>
-                                </button>
-                                <button type="button" class="p-1 hover:text-danger-600" onclick="alert(\'Tính năng xóa lịch sử sẽ được phát triển sau.\')">
-                                    <iconify-icon icon="lucide:trash-2" class="text-base"></iconify-icon>
-                                </button>
-                            </div>
-                        </td>
-                    `;
-                    tbody.insertBefore(tr, tbody.firstChild);
+                    // Prepend or update history table
+                    prependHistoryTable(res);
                 } else {
+                    playBeep(false);
                     showToast(res.message || "Có lỗi xảy ra!", "error");
                 }
             })
             .catch(err => {
                 console.error(err);
+                playBeep(false);
                 showToast("Không thể kết nối đến máy chủ!", "error");
                 saveBtn.innerHTML = originalBtnContent;
                 saveBtn.disabled = false;
                 saveBtn.classList.remove("opacity-50", "cursor-not-allowed");
             });
+        }
+
+        function prependHistoryTable(res) {
+            if (!res || !res.data) return;
+
+            // Remove existing row for this product code from the history table
+            const rows = document.querySelectorAll("#historyTableBody tr");
+            rows.forEach(row => {
+                const codeCell = row.querySelector("td.font-mono");
+                if (codeCell && codeCell.textContent.trim() === res.data.product_code) {
+                    row.remove();
+                }
+            });
+
+            // Add new row to top of table
+            const tbody = document.getElementById("historyTableBody");
+            const noHistoryRow = document.getElementById("noHistoryRow");
+            if (noHistoryRow) noHistoryRow.remove();
+
+            const errorLabel = (res.data && res.data.action) ? res.data.action.toUpperCase() : "LỖI";
+            const actionBadge = res.action_type === "rollback"
+                ? `<span class="text-xs px-2.5 py-1 rounded-full font-semibold inline-flex items-center gap-1" style="background-color: rgba(239, 68, 68, 0.1); color: rgb(185, 28, 28); border: 1px solid rgba(239, 68, 68, 0.4);">
+                        <iconify-icon icon="lucide:alert-circle" class="text-xs"></iconify-icon>
+                        ${errorLabel}
+                   </span>`
+                : `<span class="text-xs px-2.5 py-1 rounded-full font-semibold inline-flex items-center gap-1" style="background-color: rgba(16, 185, 129, 0.1); color: rgb(5, 150, 105); border: 1px solid rgba(16, 185, 129, 0.3);">
+                        <iconify-icon icon="lucide:shield-check" class="text-xs"></iconify-icon>
+                        HOÀN THÀNH
+                   </span>`;
+
+            const tr = document.createElement("tr");
+            tr.className = "hover:bg-neutral-50/50 dark:hover:bg-neutral-800/10 transition-colors";
+            tr.innerHTML = `
+                <td class="py-3 px-4 font-mono text-xs">
+                    <span class="bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-700 px-2.5 py-1 rounded">
+                        ${res.data.product_code}
+                    </span>
+                </td>
+                <td class="py-3 px-4">
+                    ${actionBadge}
+                </td>
+                <td class="py-3 px-4 text-neutral-800 dark:text-neutral-200 font-medium">
+                    ${res.data.product_name}
+                </td>
+                <td class="py-3 px-4 text-neutral-600 dark:text-neutral-400">
+                    ${res.data.notes || "—"}
+                </td>
+                <td class="py-3 px-4">
+                    <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 rounded-full bg-sky-100 dark:bg-sky-950/30 text-sky-700 dark:text-sky-400 flex items-center justify-center font-bold text-xs uppercase">
+                            ${(res.data.operator || "Q").substring(0, 1)}
+                        </div>
+                        <div>
+                            <span class="block font-medium text-neutral-800 dark:text-neutral-200 leading-none mb-1">${res.data.operator}</span>
+                            <span class="block text-[10px] text-neutral-400 leading-none">${res.data.time}</span>
+                        </div>
+                    </div>
+                </td>
+                <td class="py-3 px-4 text-right">
+                    <div class="flex items-center justify-end gap-2 text-neutral-400">
+                        <button type="button" class="p-1 hover:text-sky-600" onclick="alert('Tính năng chỉnh sửa sẽ được phát triển sau.')">
+                            <iconify-icon icon="lucide:edit-2" class="text-base"></iconify-icon>
+                        </button>
+                        <button type="button" class="p-1 hover:text-danger-600" onclick="alert('Tính năng xóa lịch sử sẽ được phát triển sau.')">
+                            <iconify-icon icon="lucide:trash-2" class="text-base"></iconify-icon>
+                        </button>
+                    </div>
+                </td>
+            `;
+            tbody.insertBefore(tr, tbody.firstChild);
         }
 
         function resetQCFormDetails() {
@@ -866,7 +1055,11 @@
             const code = sanitizeProductCode(codeInput.value);
             codeInput.value = code;
             if (code) {
-                fetchProductInfo(code);
+                if (currentQcMode === 'pass') {
+                    submitDirectQC(code, 'complete');
+                } else {
+                    fetchProductInfo(code);
+                }
             }
         });
 

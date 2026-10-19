@@ -139,13 +139,13 @@
     {{-- Left column: Control Card (col-span-8) --}}
     <div class="lg:col-span-8 flex flex-col gap-6">
         <div class="card bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-sm">
-            <div class="card-body p-6 flex flex-col gap-6">
+            <div class="card-body p-4 sm:p-6 flex flex-col gap-5 sm:gap-6">
 
                 {{-- Header --}}
-                <div class="flex items-center justify-between border-b border-neutral-100 dark:border-neutral-800 pb-4">
+                <div class="flex items-center justify-between border-b border-neutral-100 dark:border-neutral-800 pb-3 sm:pb-4">
                     <div class="flex items-center gap-2">
                         <iconify-icon icon="lucide:layers" class="text-xl text-indigo-600"></iconify-icon>
-                        <span class="font-bold text-neutral-800 dark:text-neutral-100">Kiểm soát ép ván dán mặt</span>
+                        <span class="font-bold text-neutral-800 dark:text-neutral-100 text-base sm:text-lg">Kiểm soát ép ván dán mặt</span>
                     </div>
                 </div>
 
@@ -157,24 +157,24 @@
                     </p>
 
                     {{-- Toggle purpose --}}
-                    <div class="flex gap-4 mb-4">
+                    <div class="flex gap-2 sm:gap-4 mb-4">
                         <button type="button" id="btnPurposeOrder" onclick="setPurpose('order')"
-                            class="purpose-btn active-order">
-                            <iconify-icon icon="lucide:clipboard-check" class="text-lg"></iconify-icon>
-                            Ép Theo Đơn Hàng
+                            class="purpose-btn active-order text-xs sm:text-sm py-2.5 sm:py-3">
+                            <iconify-icon icon="lucide:clipboard-check" class="text-base sm:text-lg"></iconify-icon>
+                            Ép Đơn Hàng
                         </button>
                         <button type="button" id="btnPurposeStock" onclick="setPurpose('stock')"
-                            class="purpose-btn">
-                            <iconify-icon icon="lucide:archive" class="text-lg"></iconify-icon>
+                            class="purpose-btn text-xs sm:text-sm py-2.5 sm:py-3">
+                            <iconify-icon icon="lucide:archive" class="text-base sm:text-lg"></iconify-icon>
                             Ép Dự Trữ Kho
                         </button>
                     </div>
 
                     {{-- Material --}}
                     <div>
-                        <label for="material_type" class="block text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-2">Loại ván dán mặt Acrylic / Laminate</label>
+                        <label for="material_type" class="block text-xs sm:text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-2">Loại ván dán mặt Acrylic / Laminate</label>
                         <select id="material_type"
-                            class="w-full pl-4 py-3.5 border border-neutral-300 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            class="w-full pl-4 py-3 sm:py-3.5 border border-neutral-300 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-indigo-500">
                             <option value="">-- Chọn loại ván --</option>
                             @foreach($woodBoardPrices as $typeName => $prices)
                                 <optgroup label="{{ $typeName }}">
@@ -189,20 +189,20 @@
                         </select>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mt-3 sm:mt-4">
                         <div>
-                            <label for="qty_needed" class="block text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-2">Số lượng tấm cần ép</label>
+                            <label for="qty_needed" class="block text-xs sm:text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-2">Số lượng tấm cần ép</label>
                             <input type="number" id="qty_needed" min="1" value="1"
-                                class="w-full px-4 py-3.5 border border-neutral-300 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                class="w-full px-4 py-3 sm:py-3.5 border border-neutral-300 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         </div>
                         <div>
-                            <label for="order_notes" class="block text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-2">Ghi chú lệnh</label>
+                            <label for="order_notes" class="block text-xs sm:text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-2">Ghi chú lệnh</label>
                             <div class="relative flex items-center">
                                 <span class="absolute text-neutral-400 flex items-center justify-center pointer-events-none" style="left: 14px;">
                                     <iconify-icon icon="lucide:file-text" class="text-lg"></iconify-icon>
                                 </span>
                                 <input type="text" id="order_notes"
-                                    class="w-full pr-4 py-3.5 border border-neutral-300 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    class="w-full pr-4 py-3 sm:py-3.5 border border-neutral-300 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                     style="padding-left: 42px;"
                                     placeholder="Cốt MDF thái xanh, dán keo PUR...">
                             </div>
@@ -210,9 +210,9 @@
                     </div>
 
                     <button type="button" id="createOrderBtn" onclick="createPressOrder()"
-                        class="mt-4 w-full py-4 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all transform hover:-translate-y-0.5"
+                        class="mt-4 w-full py-3.5 sm:py-4 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all transform hover:-translate-y-0.5 active:scale-[0.99] text-sm sm:text-base"
                         style="background-color: rgb(79, 70, 229);">
-                        <iconify-icon icon="lucide:plus-circle" class="text-xl"></iconify-icon>
+                        <iconify-icon icon="lucide:plus-circle" class="text-lg sm:text-xl"></iconify-icon>
                         <span>Xác Nhận Tạo Lệnh Sản Xuất</span>
                     </button>
                 </div>
@@ -222,10 +222,16 @@
 
                 {{-- Step 2: Quét QR --}}
                 <div>
-                    <p class="text-xs font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                        <span class="w-4 h-4 rounded-full bg-indigo-600 text-white flex items-center justify-center font-black text-[9px]">2</span>
-                        Quét mã QR tấm ván để ghi nhận
-                    </p>
+                    <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
+                        <p class="text-xs font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider flex items-center gap-1.5 mb-0">
+                            <span class="w-4 h-4 rounded-full bg-indigo-600 text-white flex items-center justify-center font-black text-[9px]">2</span>
+                            Quét mã QR tấm ván để ghi nhận
+                        </p>
+                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                            <iconify-icon icon="lucide:zap" class="text-emerald-600 dark:text-emerald-400"></iconify-icon>
+                            Quét là tự động xong
+                        </span>
+                    </div>
 
                     {{-- Active order badge --}}
                     <div id="activeOrderBadge" class="hidden mb-4">
@@ -243,43 +249,44 @@
 
                     {{-- QR input --}}
                     <div>
-                        <label for="qr_input" class="block text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-2">Mã định danh tấm ván / Lệnh sản xuất (QR)</label>
-                        <div class="flex items-center gap-3">
+                        <label for="qr_input" class="block text-xs sm:text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-2">Mã định danh tấm ván / Lệnh sản xuất (QR)</label>
+                        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
                             <div class="flex-grow">
                                 <input type="text" id="qr_input"
-                                    class="w-full pl-4 pr-4 py-3.5 border border-neutral-300 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-base font-mono"
+                                    class="w-full pl-4 pr-4 py-3.5 sm:py-4 border border-neutral-300 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-base sm:text-lg font-mono font-bold"
                                     placeholder="Quét mã tấm ván (VD: LLE-202610-01-01)...">
                             </div>
                             <button type="button" onclick="startScanning()"
-                                class="px-5 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl flex items-center gap-2 font-semibold text-sm transition-colors whitespace-nowrap shadow-sm">
-                                <iconify-icon icon="lucide:camera" class="text-base"></iconify-icon>
+                                class="w-full sm:w-auto px-5 py-3.5 sm:py-4 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-xl flex items-center justify-center gap-2 font-bold text-sm sm:text-base transition-all whitespace-nowrap shadow-md">
+                                <iconify-icon icon="lucide:camera" class="text-xl"></iconify-icon>
+                                <span>Quét Camera</span>
                             </button>
                         </div>
 
                         {{-- Test codes --}}
-                        <div class="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-neutral-500">
-                            <span>Mã nhập thử:</span>
-                            <button type="button" onclick="fillQr('LLE-202610-01-01')" class="px-2 py-0.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 rounded border border-neutral-200 dark:border-neutral-700 font-mono text-[10px]">LLE-202610-01-01</button>
-                            <button type="button" onclick="fillQr('LLE-202610-01-02')" class="px-2 py-0.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 rounded border border-neutral-200 dark:border-neutral-700 font-mono text-[10px]">LLE-202610-01-02</button>
-                            <button type="button" onclick="fillQr('LLE-202610-01')" class="px-2 py-0.5 bg-indigo-100 hover:bg-indigo-200 dark:bg-indigo-950/30 dark:hover:bg-indigo-900/40 rounded border border-indigo-200 dark:border-indigo-800/50 font-mono text-[10px] text-indigo-600 dark:text-indigo-400">LLE-202610-01 (lô)</button>
+                        <div class="mt-2.5 flex flex-wrap items-center gap-1.5 text-xs text-neutral-500">
+                            <span>Mã nhập thử (bấm là tự nhận):</span>
+                            <button type="button" onclick="fillQr('LLE-202610-01-01')" class="px-2 py-0.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 rounded border border-neutral-200 dark:border-neutral-700 font-mono text-[11px]">LLE-202610-01-01</button>
+                            <button type="button" onclick="fillQr('LLE-202610-01-02')" class="px-2 py-0.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 rounded border border-neutral-200 dark:border-neutral-700 font-mono text-[11px]">LLE-202610-01-02</button>
+                            <button type="button" onclick="fillQr('LLE-202610-01')" class="px-2 py-0.5 bg-indigo-100 hover:bg-indigo-200 dark:bg-indigo-950/30 dark:hover:bg-indigo-900/40 rounded border border-indigo-200 dark:border-indigo-800/50 font-mono text-[11px] text-indigo-600 dark:text-indigo-400">LLE-202610-01 (lô)</button>
                         </div>
                     </div>
 
-                    <div class="mt-4">
-                        <label for="scan_notes" class="block text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-2">Ghi chú xác minh</label>
+                    <div class="mt-3 sm:mt-4">
+                        <label for="scan_notes" class="block text-xs sm:text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-2">Ghi chú xác minh</label>
                         <div class="relative flex items-center">
                             <span class="absolute text-neutral-400 flex items-center justify-center pointer-events-none" style="left: 14px;">
                                 <iconify-icon icon="lucide:file-text" class="text-lg"></iconify-icon>
                             </span>
                             <input type="text" id="scan_notes"
-                                class="w-full pr-4 py-3.5 border border-neutral-300 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-base"
+                                class="w-full pr-4 py-3 sm:py-3.5 border border-neutral-300 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm sm:text-base"
                                 style="padding-left: 42px;"
                                 placeholder="Nhiệt ép đạt chuẩn 180°C...">
                         </div>
                     </div>
 
                     <button type="button" id="confirmScanBtn" onclick="submitScan()" disabled
-                        class="mt-4 w-full py-4 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all transform hover:-translate-y-0.5 opacity-50 cursor-not-allowed pointer-events-none"
+                        class="mt-4 w-full py-3.5 sm:py-4 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all transform hover:-translate-y-0.5 opacity-50 cursor-not-allowed pointer-events-none text-sm sm:text-base"
                         style="background-color: rgb(79, 70, 229);">
                         <iconify-icon icon="lucide:check-circle" class="text-xl" id="confirmBtnIcon"></iconify-icon>
                         <span id="confirmBtnText">Ghi nhận quy trình dán ép hoàn tất</span>
@@ -292,7 +299,22 @@
 
     {{-- Right column: Guide Card (col-span-4) --}}
     <div class="lg:col-span-4">
-        <div class="text-white rounded-2xl p-6 shadow-md flex flex-col justify-between h-full min-h-[380px]" style="background-color: rgb(79, 70, 229);">
+        {{-- Collapsible Guide on mobile --}}
+        <details class="lg:hidden bg-indigo-600 text-white rounded-2xl p-4 shadow-sm mb-2">
+            <summary class="font-bold flex items-center justify-between cursor-pointer list-none">
+                <span class="flex items-center gap-2 text-sm"><iconify-icon icon="lucide:help-circle" class="text-lg"></iconify-icon> Xem hướng dẫn thao tác</span>
+                <iconify-icon icon="lucide:chevron-down" class="text-lg transition-transform duration-200"></iconify-icon>
+            </summary>
+            <div class="mt-3 pt-3 border-t border-indigo-500/50 text-xs text-indigo-100 space-y-2">
+                <p>1. Chọn mục đích ép: <strong>Theo đơn hàng</strong> hoặc <strong>Dự trữ kho</strong>.</p>
+                <p>2. Chọn loại ván, số lượng và bấm <strong>"Xác nhận tạo lệnh"</strong>.</p>
+                <p>3. Chọn lệnh đang xử lý trong danh sách bên dưới.</p>
+                <p>4. <strong>Quét mã QR</strong> từng tấm — hệ thống tự động ghi nhận không cần bấm nút.</p>
+            </div>
+        </details>
+
+        {{-- Desktop Guide Card --}}
+        <div class="hidden lg:flex text-white rounded-2xl p-6 shadow-md flex-col justify-between h-full min-h-[380px]" style="background-color: rgb(79, 70, 229);">
             <div>
                 <h5 class="text-lg font-bold mb-4 flex items-center gap-2 text-white">
                     <iconify-icon icon="lucide:help-circle"></iconify-icon>
@@ -303,14 +325,14 @@
                     <li>Chọn loại ván, nhập số lượng và ghi chú lệnh.</li>
                     <li>Bấm <strong>"Xác nhận tạo lệnh"</strong>.</li>
                     <li>Click vào dòng lệnh bên dưới để chọn làm lệnh đang xử lý.</li>
-                    <li>Quét mã QR từng tấm để ghi nhận tiến độ ép.</li>
+                    <li><strong>Quét mã QR</strong> từng tấm — tự động ghi nhận ngay lập tức.</li>
                 </ol>
 
                 <div class="mt-6 pt-5 border-t border-indigo-500/50">
                     <span class="text-xs text-indigo-200 block font-bold uppercase tracking-wider mb-2">Quy trình chuẩn:</span>
                     <ul class="space-y-2 text-sm text-indigo-100 list-disc list-inside pl-1">
                         <li>Tạo lệnh ép (chọn loại ván)</li>
-                        <li>Quét mã từng tấm sau khi ép xong</li>
+                        <li>Quét mã từng tấm sau khi ép xong (tự động nhận)</li>
                         <li>Lệnh tự hoàn tất khi đủ số lượng</li>
                     </ul>
                 </div>
@@ -518,7 +540,7 @@
 </div>
 
 {{-- Toast Container --}}
-<div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2"></div>
+<div id="toastContainer" class="fixed top-4 left-1/2 -translate-x-1/2 sm:left-auto sm:right-5 sm:translate-x-0 sm:bottom-5 sm:top-auto z-50 flex flex-col gap-2 w-[92vw] sm:w-auto max-w-md pointer-events-none"></div>
 
 <script src="https://unpkg.com/html5-qrcode"></script>
 <script>
@@ -679,14 +701,50 @@ function bindQrInput() {
         document.getElementById("confirmScanBtn").disabled = !has;
     });
     inp.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" && inp.value.trim()) submitScan();
+        if (e.key === "Enter" && inp.value.trim()) {
+            e.preventDefault();
+            submitScan();
+        }
     });
 }
 
 function fillQr(code) {
     document.getElementById("qr_input").value = code;
     document.getElementById("confirmScanBtn").disabled = false;
-    document.getElementById("qr_input").focus();
+    submitScan();
+}
+
+// ─────────────────────────────────────────
+// AUDIO FEEDBACK
+// ─────────────────────────────────────────
+function playBeep(isSuccess = true) {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        if (isSuccess) {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = "sine";
+            osc.frequency.setValueAtTime(880, ctx.currentTime);
+            gain.gain.setValueAtTime(0.3, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.12);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.12);
+        } else {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = "sawtooth";
+            osc.frequency.setValueAtTime(300, ctx.currentTime);
+            osc.frequency.setValueAtTime(200, ctx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.3, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.25);
+        }
+    } catch(e) {}
 }
 
 // ─────────────────────────────────────────
@@ -699,6 +757,7 @@ async function submitScan() {
     const notes = document.getElementById("scan_notes").value.trim();
 
     if (!code) {
+        playBeep(false);
         showToast("Vui lòng nhập hoặc quét mã QR!", "error");
         return;
     }
@@ -733,6 +792,7 @@ async function submitScan() {
         btn.innerHTML = savedHTML;
 
         if (res.success) {
+            playBeep(true);
             showToast(res.message, "success");
 
             // Update active order progress
@@ -759,10 +819,12 @@ async function submitScan() {
             prependHistoryRow(res.data);
 
         } else {
+            playBeep(false);
             showToast(res.message || "Có lỗi xảy ra!", "error");
             btn.disabled = false;
         }
     } catch (err) {
+        playBeep(false);
         btn.innerHTML = savedHTML;
         btn.disabled  = false;
         showToast("Không thể kết nối máy chủ!", "error");
@@ -974,17 +1036,12 @@ function startScanning() {
         { facingMode: "environment" },
         { fps: 10, qrbox: { width: 250, height: 250 } },
         (decoded) => {
-            document.getElementById("qr_input").value = sanitizeProductCode(decoded);
+            const code = sanitizeProductCode(decoded);
+            document.getElementById("qr_input").value = code;
             document.getElementById("confirmScanBtn").disabled = false;
             stopScanning();
-            try {
-                let ctx = new (window.AudioContext || window.webkitAudioContext)();
-                let osc = ctx.createOscillator();
-                osc.type = "sine";
-                osc.frequency.setValueAtTime(880, ctx.currentTime);
-                osc.connect(ctx.destination);
-                osc.start(); osc.stop(ctx.currentTime + 0.08);
-            } catch(e) {}
+            playBeep(true);
+            submitScan();
         },
         () => {}
     ).catch(err => {
