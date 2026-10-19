@@ -153,12 +153,16 @@ class QrScanController extends Controller
                 ?? $packet['qr'] 
                 ?? null;
 
-            if (!$barcode) {
+            // Chuẩn hóa và làm sạch chuỗi barcode (loại bỏ ký tự điều khiển ẩn và ép UTF-8 hợp lệ)
+            $barcode = (string) $barcode;
+            $barcode = mb_convert_encoding($barcode, 'UTF-8', 'UTF-8');
+            $barcode = trim(preg_replace('/[\x00-\x1F\x7F]/', '', $barcode));
+
+            if ($barcode === '') {
                 continue;
             }
 
             // Bỏ qua nếu quét nhầm mã cấu hình máy quét
-            $barcode = trim((string) $barcode);
             if (str_starts_with($barcode, '<cmd>') || str_starts_with($barcode, 'cmd:')) {
                 continue;
             }
@@ -213,29 +217,37 @@ class QrScanController extends Controller
 
             // Nếu thiết bị chưa được kích hoạt
             if (!$device->is_active) {
-                QrScanLog::create([
-                    'device_id'      => $deviceId,
-                    'barcode'        => $barcode,
-                    'scanned_at'     => $scannedAt,
-                    'scanned_at_raw' => $timeRaw,
-                    'status'         => 'unmapped',
-                    'message'        => 'Thiết bị chưa được kích hoạt hoạt động.',
-                    'payload'        => $packet,
-                ]);
+                try {
+                    QrScanLog::create([
+                        'device_id'      => $deviceId,
+                        'barcode'        => $barcode,
+                        'scanned_at'     => $scannedAt,
+                        'scanned_at_raw' => $timeRaw,
+                        'status'         => 'unmapped',
+                        'message'        => 'Thiết bị chưa được kích hoạt hoạt động.',
+                        'payload'        => $packet,
+                    ]);
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning('Failed to log QrScan: ' . $e->getMessage());
+                }
                 continue;
             }
 
             // Nếu thiết bị chưa gán công đoạn
             if (empty($device->process_step)) {
-                QrScanLog::create([
-                    'device_id'      => $deviceId,
-                    'barcode'        => $barcode,
-                    'scanned_at'     => $scannedAt,
-                    'scanned_at_raw' => $timeRaw,
-                    'status'         => 'unmapped',
-                    'message'        => 'Thiết bị chưa được cấu hình công đoạn sản xuất.',
-                    'payload'        => $packet,
-                ]);
+                try {
+                    QrScanLog::create([
+                        'device_id'      => $deviceId,
+                        'barcode'        => $barcode,
+                        'scanned_at'     => $scannedAt,
+                        'scanned_at_raw' => $timeRaw,
+                        'status'         => 'unmapped',
+                        'message'        => 'Thiết bị chưa được cấu hình công đoạn sản xuất.',
+                        'payload'        => $packet,
+                    ]);
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning('Failed to log QrScan: ' . $e->getMessage());
+                }
                 continue;
             }
 
@@ -307,15 +319,19 @@ class QrScanController extends Controller
             }
 
             // Lưu lịch sử quét
-            QrScanLog::create([
-                'device_id'      => $deviceId,
-                'barcode'        => $barcode,
-                'scanned_at'     => $scannedAt,
-                'scanned_at_raw' => $timeRaw,
-                'status'         => ($res && $res['success']) ? 'success' : 'failed',
-                'message'        => $res['message'] ?? 'Lỗi không rõ nguyên nhân.',
-                'payload'        => $packet,
-            ]);
+            try {
+                QrScanLog::create([
+                    'device_id'      => $deviceId,
+                    'barcode'        => $barcode,
+                    'scanned_at'     => $scannedAt,
+                    'scanned_at_raw' => $timeRaw,
+                    'status'         => ($res && $res['success']) ? 'success' : 'failed',
+                    'message'        => $res['message'] ?? 'Lỗi không rõ nguyên nhân.',
+                    'payload'        => $packet,
+                ]);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('Failed to log QrScan: ' . $e->getMessage());
+            }
         }
 
         return response()->json([
