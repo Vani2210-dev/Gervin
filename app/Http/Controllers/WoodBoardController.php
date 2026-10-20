@@ -75,21 +75,19 @@ class WoodBoardController extends Controller
         $boardTypes = WoodBoardType::all();
 
         foreach ($boardTypes as $type) {
-            $typeData = $pricesData[$type->id] ?? null;
-            if ($typeData) {
-                // Compute code = color_code . prefix
-                $computedCode = $board->color_code . ($type->prefix ?? '');
+            $typeData = $pricesData[$type->id] ?? [];
+            // Compute code = color_code . prefix
+            $computedCode = $board->color_code . ($type->prefix ?? '');
 
-                $board->prices()->create([
-                    'wood_board_type_id' => $type->id,
-                    'code'               => $computedCode,
-                    'name'               => $typeData['name'] ?? null,
-                    'thickness'          => $typeData['thickness'] ?? null,
-                    'price_board'        => floatval($typeData['price_board'] ?? 0),
-                    'price_m2'           => floatval($typeData['price_m2'] ?? 0),
-                    'stock'              => floatval($typeData['stock'] ?? 0),
-                ]);
-            }
+            $board->prices()->create([
+                'wood_board_type_id' => $type->id,
+                'code'               => $computedCode,
+                'name'               => !empty($typeData['name']) ? $typeData['name'] : $type->name,
+                'thickness'          => $typeData['thickness'] ?? null,
+                'price_board'        => floatval($typeData['price_board'] ?? 0),
+                'price_m2'           => floatval($typeData['price_m2'] ?? 0),
+                'stock'              => floatval($typeData['stock'] ?? 0),
+            ]);
         }
 
         // Sync total stock to board
@@ -117,23 +115,21 @@ class WoodBoardController extends Controller
         $boardTypes = WoodBoardType::all();
 
         foreach ($boardTypes as $type) {
-            $typeData = $pricesData[$type->id] ?? null;
-            if ($typeData) {
-                // Compute code = color_code . prefix
-                $computedCode = $woodBoard->color_code . ($type->prefix ?? '');
+            $typeData = $pricesData[$type->id] ?? [];
+            // Compute code = color_code . prefix
+            $computedCode = $woodBoard->color_code . ($type->prefix ?? '');
 
-                $woodBoard->prices()->updateOrCreate(
-                    ['wood_board_type_id' => $type->id],
-                    [
-                        'code'               => $computedCode,
-                        'name'               => $typeData['name'] ?? null,
-                        'thickness'          => $typeData['thickness'] ?? null,
-                        'price_board'        => floatval($typeData['price_board'] ?? 0),
-                        'price_m2'           => floatval($typeData['price_m2'] ?? 0),
-                        'stock'              => floatval($typeData['stock'] ?? 0),
-                    ]
-                );
-            }
+            $woodBoard->prices()->updateOrCreate(
+                ['wood_board_type_id' => $type->id],
+                [
+                    'code'               => $computedCode,
+                    'name'               => !empty($typeData['name']) ? $typeData['name'] : $type->name,
+                    'thickness'          => $typeData['thickness'] ?? null,
+                    'price_board'        => floatval($typeData['price_board'] ?? 0),
+                    'price_m2'           => floatval($typeData['price_m2'] ?? 0),
+                    'stock'              => floatval($typeData['stock'] ?? 0),
+                ]
+            );
         }
 
         // Sync total stock to board
@@ -157,11 +153,13 @@ class WoodBoardController extends Controller
             'display_order' => 'required|integer',
         ]);
 
-        WoodBoardType::create([
+        $type = WoodBoardType::create([
             'name'          => $request->name,
             'prefix'        => $request->prefix,
             'display_order' => $request->display_order,
         ]);
+
+        $this->syncPricesForType($type);
 
         return redirect()->back()->with('success', 'Thêm loại ván thành công.');
     }
@@ -175,31 +173,21 @@ class WoodBoardController extends Controller
         ]);
 
         $oldPrefix = $type->prefix;
+        $oldName = $type->name;
         $type->update([
             'name'          => $request->name,
             'prefix'        => $request->prefix,
             'display_order' => $request->display_order,
         ]);
 
-        // If prefix changed, update all existing prices' codes of this type
-        if ($oldPrefix !== $request->prefix) {
-            $prices = WoodBoardPrice::where('wood_board_type_id', $type->id)
-                ->with('board')
-                ->get();
-            foreach ($prices as $price) {
-                if ($price->board) {
-                    $price->update([
-                        'code' => $price->board->color_code . ($request->prefix ?? ''),
-                    ]);
-                }
-            }
-        }
+        $this->syncPricesForType($type, $oldPrefix, $oldName);
 
         return redirect()->back()->with('success', 'Cập nhật loại ván thành công.');
     }
 
     public function destroyType(WoodBoardType $type)
     {
+        WoodBoardPrice::where('wood_board_type_id', $type->id)->delete();
         $type->delete();
         return redirect()->back()->with('success', 'Xóa loại ván thành công.');
     }
@@ -226,6 +214,7 @@ class WoodBoardController extends Controller
             // 1. Delete types
             $deletedIds = $request->input('deleted_types', []);
             if (!empty($deletedIds)) {
+                WoodBoardPrice::whereIn('wood_board_type_id', $deletedIds)->delete();
                 WoodBoardType::whereIn('id', $deletedIds)->delete();
             }
 
@@ -238,40 +227,76 @@ class WoodBoardController extends Controller
                 $type = WoodBoardType::find($id);
                 if ($type) {
                     $oldPrefix = $type->prefix;
+                    $oldName = $type->name;
                     $type->update([
                         'name'          => $data['name'],
                         'prefix'        => $data['prefix'],
                         'display_order' => $data['display_order'],
                     ]);
 
-                    // If prefix changed, update all existing prices' codes of this type
-                    if ($oldPrefix !== $data['prefix']) {
-                        $prices = WoodBoardPrice::where('wood_board_type_id', $type->id)
-                            ->with('board')
-                            ->get();
-                        foreach ($prices as $price) {
-                            if ($price->board) {
-                                $price->update([
-                                    'code' => $price->board->color_code . ($data['prefix'] ?? ''),
-                                ]);
-                            }
-                        }
-                    }
+                    $this->syncPricesForType($type, $oldPrefix, $oldName);
                 }
             }
 
             // 3. Insert new types
             $newTypesData = $request->input('new_types', []);
             foreach ($newTypesData as $data) {
-                WoodBoardType::create([
+                $newType = WoodBoardType::create([
                     'name'          => $data['name'],
                     'prefix'        => $data['prefix'],
                     'display_order' => $data['display_order'],
                 ]);
+
+                $this->syncPricesForType($newType);
             }
         });
 
         return redirect()->back()->with('success', 'Cập nhật cấu hình loại ván thành công.');
+    }
+
+    /**
+     * Đồng bộ mã số và tên hàng cho tất cả các mã màu (WoodBoard) của một loại ván (WoodBoardType).
+     * Mã số = mã màu + tiền tố loại ván (ví dụ: GV103 + .BA = GV103.BA)
+     * Tên hàng = Tên loại ván mới (name)
+     */
+    private function syncPricesForType(WoodBoardType $type, ?string $oldPrefix = null, ?string $oldName = null)
+    {
+        $prefix = $type->prefix ?? '';
+        $boards = WoodBoard::all();
+
+        foreach ($boards as $board) {
+            $computedCode = $board->color_code . $prefix;
+
+            $price = WoodBoardPrice::where('wood_board_id', $board->id)
+                ->where('wood_board_type_id', $type->id)
+                ->first();
+
+            if (!$price) {
+                WoodBoardPrice::create([
+                    'wood_board_id'      => $board->id,
+                    'wood_board_type_id' => $type->id,
+                    'code'               => $computedCode,
+                    'name'               => $type->name,
+                    'thickness'          => null,
+                    'price_board'        => 0,
+                    'price_m2'           => 0,
+                    'stock'              => 0,
+                ]);
+            } else {
+                $updates = [];
+                // Nếu tiền tố thay đổi hoặc mã số hiện tại đang rỗng, cập nhật lại mã số
+                if (($oldPrefix !== null && $oldPrefix !== $type->prefix) || empty($price->code)) {
+                    $updates['code'] = $computedCode;
+                }
+                // Nếu tên loại ván thay đổi và tên hàng cũ trùng tên loại ván cũ hoặc đang rỗng, cập nhật tên hàng mới
+                if ($oldName !== null && $oldName !== $type->name && (empty($price->name) || $price->name === $oldName)) {
+                    $updates['name'] = $type->name;
+                }
+                if (!empty($updates)) {
+                    $price->update($updates);
+                }
+            }
+        }
     }
 
     // Batch Update and Batch Insert Price Groups
