@@ -72,9 +72,7 @@ class InventoryController extends Controller
         $stockFilter = $request->input('stock_filter', 'all'); // 'all', 'low_stock', 'out_of_stock', 'in_stock'
         $search = trim((string)$request->input('search'));
 
-        $query = WoodBoard::with(['warehouse', 'prices.type']);
-
-        // Smart Date Filter handling (dùng params để hiển thị UI và chỉ lọc giao dịch khi người dùng chọn khoảng ngày cụ thể)
+        // Smart Date Filter handling
         $dateFilterData = $this->getDateFilterParams($request);
         $startDate = $dateFilterData['start_date'];
         $endDate = $dateFilterData['end_date'];
@@ -82,13 +80,14 @@ class InventoryController extends Controller
         $dateMode = $request->input('date_mode', $dateFilterData['preset']);
         $dateVal = $request->input('date_val', '');
 
-        if ($selectedCategory) {
-            $query->where('price_group', $selectedCategory);
-        }
-
         if ($isEdgeBandWarehouse) {
-            // Khi xem Kho Dán Chỉ (KHO-CHI): Theo quy tắc "hàng hóa có tấm nào thì có kho tồn dán chỉ cho tấm đó"
-            // Hiển thị tất cả các mã chỉ dán viền tương ứng với từng tấm
+            // Khi xem Kho Dán Chỉ (KHO-CHI): Hiển thị từng cuộn / mã chỉ dán viền tương ứng
+            $query = WoodBoard::with(['warehouse']);
+
+            if ($selectedCategory) {
+                $query->where('price_group', $selectedCategory);
+            }
+
             if ($stockFilter === 'low_stock') {
                 $query->whereColumn('edge_band_current_stock', '<=', 'edge_band_min_stock')->where('edge_band_current_stock', '>', 0);
             } elseif ($stockFilter === 'out_of_stock') {
@@ -96,68 +95,128 @@ class InventoryController extends Controller
             } elseif ($stockFilter === 'in_stock') {
                 $query->where('edge_band_current_stock', '>', 0);
             }
-        } else {
-            if ($selectedWarehouseId) {
-                // Khi chọn Kho Tấm Ván: Lọc theo warehouse_id, và nếu là Kho Tấm Ván (ID 1 hoặc KHO-VAN) thì bao gồm cả các tấm chưa gán warehouse_id
-                $query->where(function ($q) use ($selectedWarehouseId, $selectedWarehouse) {
-                    $q->where('warehouse_id', $selectedWarehouseId);
-                    if (($selectedWarehouse && $selectedWarehouse->code === 'KHO-VAN') || $selectedWarehouseId == 1) {
-                        $q->orWhereNull('warehouse_id');
-                    }
+
+            if ($startDate && $endDate && $dateMode !== 'all') {
+                $query->where(function ($q) use ($startDate, $endDate) {
+                    $q->whereHas('transactions', function ($t) use ($startDate, $endDate) {
+                        $t->whereBetween('date', [$startDate, $endDate])->where('item_type', 'edge_band');
+                    })->orWhereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
                 });
             }
-            if ($stockFilter === 'low_stock') {
-                $query->whereColumn('current_stock', '<=', 'min_stock')->where('current_stock', '>', 0);
-            } elseif ($stockFilter === 'out_of_stock') {
-                $query->where('current_stock', '<=', 0);
-            } elseif ($stockFilter === 'in_stock') {
-                $query->where('current_stock', '>', 0);
+
+            if ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('color_code', 'like', "%{$search}%")
+                      ->orWhere('origin_code', 'like', "%{$search}%")
+                      ->orWhere('price_group', 'like', "%{$search}%");
+                });
             }
-        }
 
-        if ($startDate && $endDate && $dateMode !== 'all') {
-            $query->where(function ($q) use ($startDate, $endDate, $isEdgeBandWarehouse, $selectedWarehouseId) {
-                $q->whereHas('transactions', function ($t) use ($startDate, $endDate, $isEdgeBandWarehouse, $selectedWarehouseId) {
-                    $t->whereBetween('date', [$startDate, $endDate]);
-                    if ($selectedWarehouseId) {
-                        $t->where('warehouse_id', $selectedWarehouseId);
-                    }
-                    if ($isEdgeBandWarehouse) {
-                        $t->where('item_type', 'edge_band');
-                    }
-                })->orWhereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
-            });
-        }
+            $materials = $query->orderBy('color_code')->paginate(50)->withQueryString();
 
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('color_code', 'like', "%{$search}%")
-                  ->orWhere('origin_code', 'like', "%{$search}%")
-                  ->orWhere('price_group', 'like', "%{$search}%")
-                  ->orWhereHas('prices', function ($subQ) use ($search) {
-                      $subQ->where('code', 'like', "%{$search}%")
-                           ->orWhere('name', 'like', "%{$search}%");
-                  });
-            });
-        }
-
-        $materials = $query->orderBy('price_group')->orderBy('color_code')->paginate(50)->withQueryString();
-
-        // Summary KPIs
-        $totalItems = WoodBoard::count();
-        if ($isEdgeBandWarehouse) {
+            // Summary KPIs Kho Chỉ
+            $totalItems = WoodBoard::count();
             $totalStockQty = (float)WoodBoard::sum('edge_band_current_stock');
             $totalStockValue = (float)(WoodBoard::selectRaw('SUM(edge_band_current_stock * edge_band_cost_price) as val')->value('val') ?? 0);
             $lowStockCount = WoodBoard::where(function ($q) {
                 $q->whereColumn('edge_band_current_stock', '<=', 'edge_band_min_stock')->orWhere('edge_band_current_stock', '<=', 0);
             })->count();
         } else {
-            $totalStockQty = (float)(\App\Models\WoodBoardPrice::sum('stock') ?: WoodBoard::sum('current_stock'));
-            $totalStockValue = (float)(\App\Models\WoodBoardPrice::selectRaw('SUM(stock * price_board) as val')->value('val')
-                ?: WoodBoard::selectRaw('SUM(current_stock * cost_price) as val')->value('val') ?? 0);
-            $lowStockCount = WoodBoard::where(function ($q) {
-                $q->whereColumn('current_stock', '<=', 'min_stock')->orWhere('current_stock', '<=', 0);
-            })->count();
+            // Khi xem Kho Tấm Ván hoặc Tất cả kho: Mỗi tên hàng hóa / loại ván (WoodBoardPrice) là 1 dòng độc lập
+            $hasPrices = \App\Models\WoodBoardPrice::exists();
+
+            if ($hasPrices) {
+                $query = \App\Models\WoodBoardPrice::with(['board.warehouse', 'type'])
+                    ->whereHas('board', function ($b) {
+                        $b->where('status', 'active');
+                    });
+
+                if ($selectedCategory) {
+                    $query->whereHas('board', function ($b) use ($selectedCategory) {
+                        $b->where('price_group', $selectedCategory);
+                    });
+                }
+
+                if ($selectedWarehouseId) {
+                    $query->whereHas('board', function ($b) use ($selectedWarehouseId, $selectedWarehouse) {
+                        $b->where(function ($w) use ($selectedWarehouseId, $selectedWarehouse) {
+                            $w->where('warehouse_id', $selectedWarehouseId);
+                            if (($selectedWarehouse && $selectedWarehouse->code === 'KHO-VAN') || $selectedWarehouseId == 1) {
+                                $w->orWhereNull('warehouse_id');
+                            }
+                        });
+                    });
+                }
+
+                if ($stockFilter === 'low_stock') {
+                    $query->where('stock', '<=', 5)->where('stock', '>', 0);
+                } elseif ($stockFilter === 'out_of_stock') {
+                    $query->where('stock', '<=', 0);
+                } elseif ($stockFilter === 'in_stock') {
+                    $query->where('stock', '>', 0);
+                }
+
+                if ($startDate && $endDate && $dateMode !== 'all') {
+                    $query->where(function ($q) use ($startDate, $endDate, $selectedWarehouseId) {
+                        $q->whereHas('transactions', function ($t) use ($startDate, $endDate, $selectedWarehouseId) {
+                            $t->whereBetween('date', [$startDate, $endDate]);
+                            if ($selectedWarehouseId) {
+                                $t->where('warehouse_id', $selectedWarehouseId);
+                            }
+                        })->orWhereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
+                    });
+                }
+
+                if ($search) {
+                    $query->where(function ($q) use ($search) {
+                        $q->where('code', 'like', "%{$search}%")
+                          ->orWhere('name', 'like', "%{$search}%")
+                          ->orWhereHas('board', function ($b) use ($search) {
+                              $b->where('color_code', 'like', "%{$search}%")
+                                ->orWhere('origin_code', 'like', "%{$search}%")
+                                ->orWhere('price_group', 'like', "%{$search}%");
+                          })
+                          ->orWhereHas('type', function ($t) use ($search) {
+                              $t->where('name', 'like', "%{$search}%")
+                                ->orWhere('prefix', 'like', "%{$search}%");
+                          });
+                    });
+                }
+
+                $materials = $query->join('wood_boards', 'wood_board_prices.wood_board_id', '=', 'wood_boards.id')
+                    ->leftJoin('wood_board_types', 'wood_board_prices.wood_board_type_id', '=', 'wood_board_types.id')
+                    ->select('wood_board_prices.*')
+                    ->orderBy('wood_boards.color_code', 'asc')
+                    ->orderBy('wood_board_types.display_order', 'asc')
+                    ->paginate(50)
+                    ->withQueryString();
+
+                // Summary KPIs
+                $totalItems = \App\Models\WoodBoardPrice::count();
+                $totalStockQty = (float)\App\Models\WoodBoardPrice::sum('stock');
+                $totalStockValue = (float)(\App\Models\WoodBoardPrice::selectRaw('SUM(stock * price_board) as val')->value('val') ?? 0);
+                $lowStockCount = \App\Models\WoodBoardPrice::where('stock', '<=', 5)->count();
+            } else {
+                $query = WoodBoard::with(['warehouse']);
+                if ($selectedCategory) $query->where('price_group', $selectedCategory);
+                if ($stockFilter === 'low_stock') $query->whereColumn('current_stock', '<=', 'min_stock')->where('current_stock', '>', 0);
+                elseif ($stockFilter === 'out_of_stock') $query->where('current_stock', '<=', 0);
+                elseif ($stockFilter === 'in_stock') $query->where('current_stock', '>', 0);
+                if ($search) {
+                    $query->where(function ($q) use ($search) {
+                        $q->where('color_code', 'like', "%{$search}%")
+                          ->orWhere('origin_code', 'like', "%{$search}%")
+                          ->orWhere('price_group', 'like', "%{$search}%");
+                    });
+                }
+                $materials = $query->orderBy('color_code')->paginate(50)->withQueryString();
+                $totalItems = WoodBoard::count();
+                $totalStockQty = (float)WoodBoard::sum('current_stock');
+                $totalStockValue = (float)(WoodBoard::selectRaw('SUM(current_stock * cost_price) as val')->value('val') ?? 0);
+                $lowStockCount = WoodBoard::where(function ($q) {
+                    $q->whereColumn('current_stock', '<=', 'min_stock')->orWhere('current_stock', '<=', 0);
+                })->count();
+            }
         }
 
         $categories = WoodBoard::select('price_group as category')->whereNotNull('price_group')->distinct()->pluck('category');
@@ -293,10 +352,38 @@ class InventoryController extends Controller
     }
 
     /**
-     * Update wood board
+     * Update wood board or individual commodity price
      */
     public function updateMaterial(Request $request, $id)
     {
+        // 1. Kiểm tra nếu là cập nhật dòng hàng hóa con (WoodBoardPrice)
+        $price = \App\Models\WoodBoardPrice::with('board')->find($id);
+        if ($price && ($request->boolean('is_price') || $request->has('price_board') || $request->has('stock') || !$request->has('color_code'))) {
+            if ($request->has('cost_price')) {
+                $price->price_board = (float)$request->cost_price;
+            }
+            if ($request->has('stock')) {
+                $price->stock = (float)$request->stock;
+            }
+            if ($request->filled('name')) {
+                $price->name = trim($request->name);
+            }
+            $price->save();
+
+            if ($price->board) {
+                $board = $price->board;
+                if ($request->filled('origin_code')) $board->origin_code = trim($request->origin_code);
+                if ($request->filled('category')) $board->price_group = trim($request->category);
+                if ($request->filled('warehouse_id')) $board->warehouse_id = $request->warehouse_id;
+                if ($request->filled('status')) $board->status = $request->status;
+                if ($request->has('notes')) $board->notes = $request->notes;
+                $board->save();
+            }
+
+            return back()->with('success', 'Cập nhật thông tin hàng hóa ' . ($price->code ?: $price->name) . ' thành công!');
+        }
+
+        // 2. Cập nhật WoodBoard (tấm ván hoặc chỉ dán viền)
         $material = WoodBoard::findOrFail($id);
 
         $request->validate([
@@ -347,23 +434,91 @@ class InventoryController extends Controller
     }
 
     /**
-     * Delete wood board
+     * Delete wood board or price
      */
     public function destroyMaterial($id)
     {
+        $price = \App\Models\WoodBoardPrice::find($id);
+        if ($price) {
+            $code = $price->code ?: $price->name;
+            $price->transactions()->delete();
+            $price->delete();
+            return back()->with('success', 'Đã xóa hàng hóa ' . $code . ' khỏi kho thành công!');
+        }
+
         $material = WoodBoard::findOrFail($id);
         $code = $material->color_code;
+        $material->transactions()->delete();
+        $material->prices()->delete();
         $material->delete();
-        return back()->with('success', 'Đã xóa tấm ' . $code . '!');
+        return back()->with('success', 'Đã xóa tấm ' . $code . ' khỏi kho thành công!');
     }
 
     /**
-     * Thẻ kho (Stock Card - lịch sử biến động của 1 mã tấm)
+     * Thẻ kho (Stock Card - lịch sử biến động của 1 mã hàng hóa / tấm / chỉ)
      */
     public function stockCard(Request $request, $id)
     {
-        $material = WoodBoard::findOrFail($id);
-        $txQuery = $material->transactions()->with(['warehouse', 'creator']);
+        $type = $request->input('type');
+
+        // Kiểm tra nếu là WoodBoardPrice
+        $price = \App\Models\WoodBoardPrice::with(['board.warehouse', 'type'])->find($id);
+        if ($price && ($type === 'price' || !$type)) {
+            $material = (object)[
+                'id'            => $price->id,
+                'code'          => $price->code ?: ($price->board?->color_code . ($price->type?->prefix ?? '')),
+                'origin_code'   => $price->board?->origin_code,
+                'category'      => $price->type?->name ?? $price->board?->price_group ?? 'Tấm cốt gỗ',
+                'name'          => 'Tấm ' . ($price->board?->color_code ?? '') . ' - ' . ($price->name ?: $price->type?->name),
+                'current_stock' => (float)$price->stock,
+                'unit'          => $price->board?->unit ?: 'Tấm',
+                'min_stock'     => 5,
+            ];
+
+            $txQuery = \App\Models\InventoryTransaction::where('wood_board_price_id', $price->id)
+                ->with(['warehouse', 'creator'])
+                ->orderBy('date', 'desc')
+                ->orderBy('id', 'desc');
+
+            if ($request->filled('warehouse_id')) {
+                $txQuery->where('warehouse_id', $request->input('warehouse_id'));
+            }
+            $transactions = $txQuery->paginate(30);
+
+            if ($request->ajax()) {
+                return view('inventory.partials.stock_card_modal_content', compact('material', 'transactions'));
+            }
+
+            return view('inventory.stock_card', compact('material', 'transactions'));
+        }
+
+        $materialModel = WoodBoard::findOrFail($id);
+        if ($type === 'edge_band') {
+            $material = (object)[
+                'id'            => $materialModel->id,
+                'code'          => $materialModel->edge_band_code,
+                'origin_code'   => $materialModel->origin_code,
+                'category'      => 'Chỉ dán viền',
+                'name'          => $materialModel->edge_band_name,
+                'current_stock' => (float)$materialModel->edge_band_current_stock,
+                'unit'          => $materialModel->edge_band_unit ?: 'm',
+                'min_stock'     => (float)$materialModel->edge_band_min_stock,
+            ];
+            $txQuery = $materialModel->transactions()->where('item_type', 'edge_band')->with(['warehouse', 'creator']);
+        } else {
+            $material = (object)[
+                'id'            => $materialModel->id,
+                'code'          => $materialModel->color_code,
+                'origin_code'   => $materialModel->origin_code,
+                'category'      => $materialModel->price_group ?: 'Tấm cốt gỗ',
+                'name'          => 'Tấm ' . $materialModel->color_code,
+                'current_stock' => (float)$materialModel->current_stock,
+                'unit'          => $materialModel->unit ?: 'Tấm',
+                'min_stock'     => (float)$materialModel->min_stock,
+            ];
+            $txQuery = $materialModel->transactions()->where('item_type', 'board')->with(['warehouse', 'creator']);
+        }
+
         if ($request->filled('warehouse_id')) {
             $txQuery->where('warehouse_id', $request->input('warehouse_id'));
         }
@@ -381,21 +536,79 @@ class InventoryController extends Controller
      */
     public function exportStock(Request $request)
     {
-        $materials = WoodBoard::with('warehouse')->orderBy('price_group')->orderBy('color_code')->get();
+        $selectedWarehouseId = $request->input('warehouse_id');
+        $selectedWarehouse = $selectedWarehouseId ? Warehouse::find($selectedWarehouseId) : null;
+        $isEdgeBandWarehouse = $selectedWarehouse && ($selectedWarehouse->code === 'KHO-CHI' || str_contains(mb_strtolower($selectedWarehouse->name), 'chỉ'));
 
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Danh_Sach_Ton_Kho');
 
-        // Headers
-        $sheet->setCellValue('A1', 'BÁO CÁO TỒN KHO TẤM VÁN - ' . date('d/m/Y H:i'));
-        $sheet->mergeCells('A1:I1');
-        $sheet->getStyle('A1')->getFont()->setSize(14)->setBold(true);
+        if ($isEdgeBandWarehouse) {
+            $materials = WoodBoard::orderBy('color_code')->get();
+            $sheet->setCellValue('A1', 'BÁO CÁO TỒN KHO CHỈ DÁN VIỀN - ' . date('d/m/Y H:i'));
+            $sheet->mergeCells('A1:I1');
+            $sheet->getStyle('A1')->getFont()->setSize(14)->setBold(true);
 
-        $headers = ['STT', 'Mã màu ván', 'Tên mặt hàng', 'Mã xuất xứ TQ', 'Nhóm giá / Loại', 'ĐVT', 'Tồn kho', 'Giá vốn (đ)', 'Giá trị tồn (đ)'];
-        $cols = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
-        foreach ($headers as $idx => $h) {
-            $sheet->setCellValue($cols[$idx] . '3', $h);
+            $headers = ['STT', 'Mã SKU Chỉ', 'Tên mặt hàng', 'Mã xuất xứ', 'Nhóm hàng', 'ĐVT', 'Tồn kho thực tế', 'Giá vốn (đ)', 'Giá trị tồn (đ)'];
+            $cols = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
+            foreach ($headers as $idx => $h) {
+                $sheet->setCellValue($cols[$idx] . '3', $h);
+            }
+
+            $row = 4;
+            foreach ($materials as $i => $m) {
+                $sheet->setCellValue('A' . $row, $i + 1);
+                $sheet->setCellValue('B' . $row, $m->edge_band_code);
+                $sheet->setCellValue('C' . $row, $m->edge_band_name);
+                $sheet->setCellValue('D' . $row, $m->origin_code ?: '-');
+                $sheet->setCellValue('E' . $row, 'Chỉ dán viền');
+                $sheet->setCellValue('F' . $row, $m->edge_band_unit ?: 'm');
+                $sheet->setCellValue('G' . $row, (float)$m->edge_band_current_stock);
+                $sheet->setCellValue('H' . $row, (float)$m->edge_band_cost_price);
+                $sheet->setCellValue('I' . $row, "=G{$row}*H{$row}");
+                $row++;
+            }
+        } else {
+            $prices = \App\Models\WoodBoardPrice::with(['board', 'type'])
+                ->join('wood_boards', 'wood_board_prices.wood_board_id', '=', 'wood_boards.id')
+                ->leftJoin('wood_board_types', 'wood_board_prices.wood_board_type_id', '=', 'wood_board_types.id')
+                ->select('wood_board_prices.*')
+                ->orderBy('wood_boards.color_code', 'asc')
+                ->orderBy('wood_board_types.display_order', 'asc')
+                ->get();
+
+            $sheet->setCellValue('A1', 'BÁO CÁO TỒN KHO VẬT TƯ / HÀNG HÓA - ' . date('d/m/Y H:i'));
+            $sheet->mergeCells('A1:I1');
+            $sheet->getStyle('A1')->getFont()->setSize(14)->setBold(true);
+
+            $headers = ['STT', 'Mã SKU', 'Tên hàng hóa / vật tư', 'Mã xuất xứ', 'Nhóm hàng', 'ĐVT', 'Tồn kho thực tế', 'Giá vốn (đ)', 'Giá trị tồn (đ)'];
+            $cols = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
+            foreach ($headers as $idx => $h) {
+                $sheet->setCellValue($cols[$idx] . '3', $h);
+            }
+
+            $row = 4;
+            foreach ($prices as $i => $p) {
+                $sku = $p->code ?: ($p->board?->color_code . ($p->type?->prefix ?? ''));
+                $name = 'Tấm ' . ($p->board?->color_code ?? '') . ' - ' . ($p->name ?: $p->type?->name);
+                $origin = $p->board?->origin_code ?: '-';
+                $category = $p->type?->name ?? $p->board?->price_group ?? 'Tấm cốt gỗ';
+                $unit = $p->board?->unit ?: 'Tấm';
+                $stock = (float)$p->stock;
+                $cost = (float)$p->price_board;
+
+                $sheet->setCellValue('A' . $row, $i + 1);
+                $sheet->setCellValue('B' . $row, $sku);
+                $sheet->setCellValue('C' . $row, $name);
+                $sheet->setCellValue('D' . $row, $origin);
+                $sheet->setCellValue('E' . $row, $category);
+                $sheet->setCellValue('F' . $row, $unit);
+                $sheet->setCellValue('G' . $row, $stock);
+                $sheet->setCellValue('H' . $row, $cost);
+                $sheet->setCellValue('I' . $row, "=G{$row}*H{$row}");
+                $row++;
+            }
         }
 
         $headerStyle = [

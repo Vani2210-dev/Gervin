@@ -177,7 +177,7 @@
                                     @endphp
                                     <select class="order-payment-code-select tom-select-payment-code" style="display: none !important;">
                                         <option value="">-- Chọn mã --</option>
-                                        <optgroup label="🪵 Tấm ván riêng / Ván mộc">
+                                        <optgroup label="Tấm ván riêng / Ván mộc">
                                             @foreach($woodBoardPrices ?? [] as $price)
                                                 @if($price->code)
                                                     <option value="{{ $price->code }}" {{ $selectedCode == $price->code ? 'selected' : '' }}>{{ $price->code }} - {{ $price->name }}</option>
@@ -287,7 +287,7 @@ function getPaymentCodeOptionsHtml() {
     // 1. Tấm ván riêng / Ván mộc
     const boardPrices = window.woodBoardPricesData || [];
     if (boardPrices.length > 0) {
-        optionsHtml += '<optgroup label="🪵 Tấm ván riêng / Ván mộc">';
+        optionsHtml += '<optgroup label="Tấm ván riêng / Ván mộc">';
         boardPrices.forEach(p => {
             if (p.code) {
                 optionsHtml += `<option value="${escapeHtml(p.code)}">${escapeHtml(p.code)} - ${escapeHtml(p.name || '')}</option>`;

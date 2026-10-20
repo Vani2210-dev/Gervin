@@ -136,13 +136,7 @@
                         @foreach($warehouses as $wh)
                             <a href="{{ route('inventory.index', array_merge(request()->query(), ['warehouse_id' => $wh->id])) }}"
                                class="px-3 py-1 rounded-lg transition-all {{ (string)$selectedWarehouseId === (string)$wh->id ? ($wh->code === 'KHO-CHI' ? 'bg-amber-600 text-white shadow-2xs font-bold' : 'bg-primary-600 text-white shadow-2xs font-bold') : 'text-neutral-600 hover:text-neutral-900' }}">
-                                @if($wh->code === 'KHO-CHI')
-                                    🎗️ {{ $wh->name }}
-                                @elseif($wh->code === 'KHO-VAN')
-                                    🪵 {{ $wh->name }}
-                                @else
-                                    📦 {{ $wh->name }}
-                                @endif
+                                {{ $wh->name }}
                             </a>
                         @endforeach
                     </div>
@@ -182,8 +176,8 @@
                         <thead>
                             <tr class="bg-neutral-50 text-neutral-700 uppercase font-bold border-b border-neutral-200">
                                 <th class="py-3 px-4 w-12 text-center">STT</th>
-                                <th class="py-3 px-4 w-32">Mã SKU</th>
-                                <th class="py-3 px-4 min-w-[200px]">Tên hàng hóa / Vật tư</th>
+                                <th class="py-3 px-4 w-36">Mã SKU</th>
+                                <th class="py-3 px-4 min-w-[260px]">Tên hàng hóa / Vật tư</th>
                                 <th class="py-3 px-4 w-28 text-center">Mã xuất xứ</th>
                                 <th class="py-3 px-4 w-44">Nhóm hàng</th>
                                 <th class="py-3 px-4 w-20 text-center">ĐVT</th>
@@ -200,133 +194,152 @@
                                     if ($isEdgeBandWarehouse) {
                                         $displaySku = $m->edge_band_code;
                                         $displayName = $m->edge_band_name;
+                                        $colorTag = $m->color_code;
+                                        $thickness = '';
+                                        $originCode = $m->origin_code ?: '—';
+                                        $categoryName = 'Chỉ dán viền';
                                         $displayUnit = $m->edge_band_unit ?: 'm';
                                         $displayCostPrice = (float)$m->edge_band_cost_price;
                                         $displayStock = (float)$m->edge_band_current_stock;
                                         $displayMinStock = (float)$m->edge_band_min_stock;
                                         $lineValue = $displayStock * $displayCostPrice;
+                                        $stockCardType = 'edge_band';
+                                        $colorLink = $m->color_code;
+                                        $editPayload = [
+                                            'id'                      => $m->id,
+                                            'code'                    => $m->edge_band_code,
+                                            'name'                    => $m->edge_band_name,
+                                            'origin_code'             => $m->origin_code,
+                                            'category'                => 'Chỉ dán viền',
+                                            'unit'                    => $m->edge_band_unit ?: 'm',
+                                            'cost_price'              => (float)$m->edge_band_cost_price,
+                                            'stock'                   => (float)$m->edge_band_current_stock,
+                                            'min_stock'               => (float)$m->edge_band_min_stock,
+                                            'warehouse_id'            => $m->warehouse_id,
+                                            'status'                  => $m->status,
+                                            'notes'                   => $m->notes,
+                                            'is_price'                => 0,
+                                            'edge_band_unit'          => $m->edge_band_unit ?: 'm',
+                                            'edge_band_current_stock' => (float)$m->edge_band_current_stock,
+                                            'edge_band_cost_price'    => (float)$m->edge_band_cost_price,
+                                            'edge_band_min_stock'     => (float)$m->edge_band_min_stock,
+                                        ];
                                     } else {
-                                        $displaySku = $m->code;
-                                        $displayName = $m->name;
-                                        $displayUnit = $m->unit;
-                                        $displayCostPrice = (float)$m->cost_price;
-                                        $displayStock = (float)$m->total_stock;
-                                        $displayMinStock = (float)$m->min_stock;
-                                        $lineValue = $m->current_stock * $m->cost_price;
+                                        $isPriceModel = ($m instanceof \App\Models\WoodBoardPrice);
+                                        $board = $isPriceModel ? $m->board : $m;
+                                        $color = $board?->color_code ?? '';
+
+                                        $displaySku = $isPriceModel 
+                                            ? ($m->code ?: ($color . ($m->type?->prefix ?? ''))) 
+                                            : $m->color_code;
+
+                                        $typeName = $isPriceModel ? ($m->name ?: ($m->type?->name ?? 'Tấm Acrylic')) : $m->name;
+                                        $displayName = 'Tấm ' . $color . ($typeName ? ' - ' . $typeName : '');
+                                        $colorTag = $color;
+                                        $thickness = $isPriceModel ? $m->thickness : '';
+                                        $originCode = $board?->origin_code ?: '—';
+                                        $categoryName = $isPriceModel ? ($m->type?->name ?? $board?->price_group ?? 'Tấm cốt gỗ') : ($m->price_group ?: 'Tấm cốt gỗ');
+                                        $displayUnit = $board?->unit ?: 'Tấm';
+                                        $displayCostPrice = (float)($isPriceModel ? $m->price_board : $m->cost_price);
+                                        $displayStock = (float)($isPriceModel ? $m->stock : $m->total_stock);
+                                        $displayMinStock = (float)($isPriceModel ? 5 : $m->min_stock);
+                                        $lineValue = $displayStock * $displayCostPrice;
+                                        $stockCardType = $isPriceModel ? 'price' : 'board';
+                                        $colorLink = $color;
+                                        $editPayload = [
+                                            'id'           => $m->id,
+                                            'code'         => $displaySku,
+                                            'name'         => $displayName,
+                                            'origin_code'  => $board?->origin_code,
+                                            'category'     => $categoryName,
+                                            'unit'         => $displayUnit,
+                                            'cost_price'   => $displayCostPrice,
+                                            'stock'        => $displayStock,
+                                            'min_stock'    => $displayMinStock,
+                                            'warehouse_id' => $board?->warehouse_id,
+                                            'status'       => $board?->status ?? 'active',
+                                            'notes'        => $board?->notes,
+                                            'is_price'     => $isPriceModel ? 1 : 0,
+                                        ];
                                     }
                                 @endphp
                                 <tr class="hover:bg-primary-50 hover:bg-opacity-40 transition-colors">
                                     <td class="py-3 px-4 text-center text-neutral-500 font-medium">
                                         {{ $materials->firstItem() + $index }}
                                     </td>
-                                    <td class="py-3 px-4 font-bold text-neutral-900">
-                                        <a href="javascript:void(0)" onclick="openStockCardModal({{ $m->id }})" class="hover:text-primary-600 hover:underline flex items-center gap-1.5">
-                                            @if($isEdgeBandWarehouse)
-                                                <span class="text-amber-600">🎗️</span>
-                                            @endif
+                                    <td class="py-3 px-4 font-bold text-neutral-900 whitespace-nowrap">
+                                        <a href="javascript:void(0)" onclick="openStockCardModal({{ $m->id }}, '{{ $stockCardType }}')" class="hover:text-primary-600 hover:underline flex items-center gap-1.5" title="Xem thẻ kho cho {{ $displaySku }}">
                                             <span>{{ $displaySku }}</span>
                                         </a>
                                     </td>
                                     <td class="py-3 px-4">
-                                        <div class="font-bold text-neutral-800">{{ $displayName }}</div>
-                                        @if(!$isEdgeBandWarehouse)
-                                            @if($m->prices->isNotEmpty())
-                                                <div class="flex flex-wrap gap-1 mt-1.5">
-                                                    @foreach($m->prices as $p)
-                                                        <span class="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded border {{ $p->stock > 0 ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-neutral-50 text-neutral-400 border-neutral-200' }}" title="{{ $p->code }} - Tồn: {{ number_format($p->stock) }} tấm">
-                                                            <span class="font-semibold text-neutral-600">{{ $p->type?->name ?? $p->code }}:</span>
-                                                            <span class="font-black {{ $p->stock > 0 ? 'text-emerald-700' : 'text-neutral-400' }}">{{ fmod($p->stock, 1) == 0 ? number_format($p->stock, 0, ',', '.') : number_format($p->stock, 2, ',', '.') }}</span>
-                                                        </span>
-                                                    @endforeach
-                                                </div>
-                                            @endif
-                                            {{-- Badge Kho Dán Chỉ hiển thị song song cho mỗi tấm --}}
-                                            <div class="mt-1.5 flex items-center gap-1.5">
-                                                <span class="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 font-semibold" title="Kho Dán Chỉ: {{ $m->edge_band_code }}">
-                                                    <iconify-icon icon="solar:ruler-angular-bold" class="text-amber-600 text-xs"></iconify-icon>
-                                                    Chỉ dán viền: <strong class="font-black text-amber-900">{{ fmod($m->edge_band_current_stock, 1) == 0 ? number_format($m->edge_band_current_stock, 0, ',', '.') : number_format($m->edge_band_current_stock, 2, ',', '.') }} {{ $m->edge_band_unit ?: 'm' }}</strong>
+                                        <div class="font-bold text-neutral-900 text-xs">{{ $displayName }}</div>
+                                        <div class="flex items-center gap-2 mt-0.5 text-[11px] text-neutral-500 flex-wrap">
+                                            @if($colorTag)
+                                                <span class="inline-flex items-center gap-1 font-semibold text-primary-700 bg-primary-50 px-1.5 py-0.5 rounded border border-primary-200">
+                                                    Mã màu: <strong>{{ $colorTag }}</strong>
                                                 </span>
-                                            </div>
-                                        @else
-                                            <div class="text-[11px] text-amber-700 mt-0.5">
-                                                Đồng bộ theo mã tấm: <strong>{{ $m->color_code }}</strong>
-                                            </div>
-                                        @endif
-                                        @if($m->notes)
-                                            <div class="text-[11px] text-neutral-400 truncate max-w-xs mt-1">{{ $m->notes }}</div>
+                                            @endif
+                                            @if(!empty($thickness))
+                                                <span class="text-neutral-300">•</span>
+                                                <span class="text-neutral-500 font-medium">Độ dày: <strong>{{ $thickness }}</strong></span>
+                                            @endif
+                                        </div>
+                                        @if(($m->notes ?? false) && !$isEdgeBandWarehouse)
+                                            <div class="text-[11px] text-neutral-400 truncate max-w-xs mt-0.5">{{ $m->notes }}</div>
                                         @endif
                                     </td>
                                     <td class="py-3 px-4 text-center text-neutral-600">
-                                        {{ $m->origin_code ?: '-' }}
+                                        {{ $originCode }}
                                     </td>
-                                    <td class="py-3 px-4 text-neutral-700">
-                                        <span class="bg-neutral-100 text-neutral-700 px-2 py-1 rounded text-[11px] font-medium">
-                                            {{ $isEdgeBandWarehouse ? 'Chỉ dán viền' : ($m->category ?: 'Vật tư chung') }}
+                                    <td class="py-3 px-4">
+                                        <span class="bg-neutral-100 text-neutral-700 px-2 py-1 rounded text-[11px] font-semibold inline-block">
+                                            {{ $categoryName }}
                                         </span>
                                     </td>
                                     <td class="py-3 px-4 text-center font-medium text-neutral-600">
                                         {{ $displayUnit }}
                                     </td>
-                                    <td class="py-3 px-4 text-right font-medium text-neutral-700">
-                                        {{ $displayCostPrice > 0 ? number_format($displayCostPrice, 0, ',', '.') . 'đ' : '-' }}
+                                    <td class="py-3 px-4 text-right font-medium text-neutral-700 whitespace-nowrap">
+                                        {{ $displayCostPrice > 0 ? number_format($displayCostPrice, 0, ',', '.') . 'đ' : '—' }}
                                     </td>
-                                    <td class="py-3 px-4 text-right">
-                                        <div class="font-black text-sm {{ $displayStock <= 0 ? 'text-danger-600' : ($displayStock <= $displayMinStock ? 'text-warning-600' : 'text-emerald-700') }}">
+                                    <td class="py-3 px-4 text-right whitespace-nowrap">
+                                        <div class="font-black text-sm {{ $displayStock <= 0 ? 'text-rose-600' : ($displayStock <= $displayMinStock ? 'text-warning-600' : 'text-emerald-700') }}">
                                             {{ fmod($displayStock, 1) == 0 ? number_format($displayStock, 0, ',', '.') : number_format($displayStock, 2, ',', '.') }}
                                         </div>
-                                        <div class="text-[10px] text-neutral-400">
-                                            {{ $isEdgeBandWarehouse ? 'Mét chỉ tồn kho' : 'Tổng các loại ván' }}
-                                        </div>
                                     </td>
-                                    <td class="py-3 px-4 text-right font-semibold text-neutral-800">
-                                        {{ $lineValue > 0 ? number_format($lineValue, 0, ',', '.') . 'đ' : '-' }}
+                                    <td class="py-3 px-4 text-right font-semibold text-neutral-800 whitespace-nowrap">
+                                        {{ $lineValue > 0 ? number_format($lineValue, 0, ',', '.') . 'đ' : '—' }}
                                     </td>
-                                    <td class="py-3 px-4 text-center">
+                                    <td class="py-3 px-4 text-center whitespace-nowrap">
                                         @if($displayStock <= 0)
-                                            <span class="bg-danger-100 text-danger-700 text-[10px] px-2 py-1 rounded-full font-bold inline-block">Hết hàng</span>
+                                            <span class="bg-rose-100 text-rose-700 text-[10px] px-2.5 py-1 rounded-full font-bold inline-block">Hết hàng</span>
                                         @elseif($displayStock <= $displayMinStock)
-                                            <span class="bg-warning-100 text-warning-800 text-[10px] px-2 py-1 rounded-full font-bold inline-block">Dưới định mức</span>
+                                            <span class="bg-warning-100 text-warning-800 text-[10px] px-2.5 py-1 rounded-full font-bold inline-block">Tồn thấp</span>
                                         @else
-                                            <span class="bg-success-100 text-success-700 text-[10px] px-2 py-1 rounded-full font-bold inline-block">Còn hàng</span>
+                                            <span class="bg-success-100 text-success-700 text-[10px] px-2.5 py-1 rounded-full font-bold inline-block">Còn hàng</span>
                                         @endif
                                     </td>
-                                    <td class="py-3 px-4 text-center">
-                                        <div class="flex items-center justify-center gap-2">
-                                            <a href="{{ route('wood_boards.index', ['search' => $m->color_code]) }}" 
-                                               class="p-1 text-info-600 hover:text-info-800 text-base" 
-                                               title="Xem trên Bảng giá tấm">
-                                                <iconify-icon icon="solar:grid-bold"></iconify-icon>
-                                            </a>
-                                            <button type="button" onclick="openStockCardModal({{ $m->id }})" class="p-1 text-primary-600 hover:text-primary-800 text-base" title="Xem thẻ kho">
+                                    <td class="py-3 px-4 text-center whitespace-nowrap">
+                                        <div class="flex items-center justify-center gap-1.5">
+                                            @if($colorLink)
+                                                <a href="{{ route('wood_boards.index', ['search' => $colorLink]) }}" 
+                                                   class="p-1 text-info-600 hover:text-info-800 text-base" 
+                                                   title="Xem trên Bảng giá tấm">
+                                                    <iconify-icon icon="solar:grid-bold"></iconify-icon>
+                                                </a>
+                                            @endif
+                                            <button type="button" onclick="openStockCardModal({{ $m->id }}, '{{ $stockCardType }}')" class="p-1 text-primary-600 hover:text-primary-800 text-base" title="Xem thẻ kho">
                                                 <iconify-icon icon="solar:history-bold"></iconify-icon>
                                             </button>
-                                            @php
-                                                $matPayload = [
-                                                    'id'                      => $m->id,
-                                                    'code'                    => $m->color_code,
-                                                    'name'                    => $m->name,
-                                                    'origin_code'             => $m->origin_code,
-                                                    'category'                => $m->price_group,
-                                                    'unit'                    => $m->unit,
-                                                    'cost_price'              => (float)$m->cost_price,
-                                                    'min_stock'               => (float)$m->min_stock,
-                                                    'warehouse_id'            => $m->warehouse_id,
-                                                    'status'                  => $m->status,
-                                                    'notes'                   => $m->notes,
-                                                    'edge_band_unit'          => $m->edge_band_unit ?: 'm',
-                                                    'edge_band_current_stock' => (float)$m->edge_band_current_stock,
-                                                    'edge_band_cost_price'    => (float)$m->edge_band_cost_price,
-                                                    'edge_band_min_stock'     => (float)$m->edge_band_min_stock,
-                                                ];
-                                            @endphp
                                             <button type="button" 
-                                                    data-material="{{ htmlspecialchars(json_encode($matPayload), ENT_QUOTES, 'UTF-8') }}"
+                                                    data-material="{{ htmlspecialchars(json_encode($editPayload), ENT_QUOTES, 'UTF-8') }}"
                                                     onclick="editMaterial(this)" 
                                                     class="p-1 text-warning-600 hover:text-warning-800 text-base transition-colors cursor-pointer" 
-                                                    title="Chỉnh sửa vật tư & chỉ dán">
+                                                    title="Chỉnh sửa hàng hóa">
                                                 <iconify-icon icon="lucide:edit"></iconify-icon>
                                             </button>
-                                            <form action="{{ route('inventory.materials.destroy', $m->id) }}" method="POST" onsubmit="return confirm('Bạn có chắc muốn xóa vật tư {{ addslashes($m->color_code) }}? Dữ liệu giao dịch liên quan sẽ bị xóa.')" class="inline-block m-0">
+                                            <form action="{{ route('inventory.materials.destroy', $m->id) }}" method="POST" onsubmit="return confirm('Bạn có chắc muốn xóa mặt hàng {{ addslashes($displaySku) }}?')" class="inline-block m-0">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="p-1 text-danger-600 hover:text-danger-800 text-base" title="Xóa">
@@ -397,15 +410,15 @@
                         <div class="grid grid-cols-3 gap-1 mb-1.5">
                             <button type="button" onclick="selectInvTypeShortcut(1)" id="btnInvType_1"
                                     class="inv-type-btn px-1.5 py-1 rounded text-[11px] font-bold border transition-all bg-emerald-600 text-white border-emerald-600 shadow-xs">
-                                🪵 MDF 1M
+                                MDF 1M
                             </button>
                             <button type="button" onclick="selectInvTypeShortcut(2)" id="btnInvType_2"
                                     class="inv-type-btn px-1.5 py-1 rounded text-[11px] font-bold border transition-all bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border-neutral-300 dark:border-neutral-700 hover:bg-neutral-50">
-                                🪵 MDF 2M
+                                MDF 2M
                             </button>
                             <button type="button" onclick="selectInvTypeShortcut(3)" id="btnInvType_3"
                                     class="inv-type-btn px-1.5 py-1 rounded text-[11px] font-bold border transition-all bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border-neutral-300 dark:border-neutral-700 hover:bg-neutral-50">
-                                🧱 Nhựa PVC
+                                Nhựa PVC
                             </button>
                         </div>
                         <select id="inv_lookup_type" onchange="onInvTypeSelectChange()"
@@ -524,6 +537,7 @@
     <form id="editMaterialForm" method="POST">
         @csrf
         @method('PUT')
+        <input type="hidden" name="is_price" id="edit_is_price" value="0">
         <div class="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
             <div class="grid grid-cols-2 gap-4">
                 <div>
@@ -537,7 +551,7 @@
             </div>
 
             <div>
-                <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Tên vật tư <span class="text-danger-500">*</span></label>
+                <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Tên hàng hóa / vật tư <span class="text-danger-500">*</span></label>
                 <input type="text" name="name" id="edit_name" class="form-control rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500" required>
             </div>
 
@@ -552,13 +566,17 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-3 gap-4">
+                <div>
+                    <label class="form-label text-xs font-semibold text-neutral-700 mb-1 block">Tồn kho thực tế</label>
+                    <input type="number" name="stock" id="edit_stock" step="0.01" class="form-control rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500">
+                </div>
                 <div>
                     <label class="form-label text-xs font-semibold text-neutral-700 mb-1 block">Giá vốn (đ)</label>
                     <input type="number" name="cost_price" id="edit_cost_price" min="0" step="1000" class="form-control rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500">
                 </div>
                 <div>
-                    <label class="form-label text-xs font-semibold text-neutral-700 mb-1 block">Định mức tồn tối thiểu</label>
+                    <label class="form-label text-xs font-semibold text-neutral-700 mb-1 block">Tồn tối thiểu</label>
                     <input type="number" name="min_stock" id="edit_min_stock" min="0" class="form-control rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500">
                 </div>
             </div>
@@ -582,7 +600,7 @@
             </div>
 
             {{-- Thông số chỉ dán viền đi kèm tại Kho Dán Chỉ --}}
-            <div class="p-3 bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800/40 rounded-xl space-y-2">
+            <div id="editEdgeBandSection" class="p-3 bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800/40 rounded-xl space-y-2">
                 <div class="flex items-center justify-between">
                     <span class="text-xs font-bold text-purple-900 dark:text-purple-300 flex items-center gap-1.5">
                         <iconify-icon icon="solar:ruler-angular-bold" class="text-base text-purple-600"></iconify-icon>
@@ -765,20 +783,30 @@
         setVal('edit_category', item.category || item.price_group || '');
         setVal('edit_unit', item.unit || 'Tấm');
         setVal('edit_cost_price', item.cost_price || 0);
-        setVal('edit_min_stock', item.min_stock || 50);
+        setVal('edit_stock', item.stock !== undefined ? item.stock : 0);
+        setVal('edit_min_stock', item.min_stock || 5);
         setVal('edit_warehouse_id', item.warehouse_id || '');
         setVal('edit_status', item.status || 'active');
         setVal('edit_notes', item.notes || '');
+        setVal('edit_is_price', item.is_price ? '1' : '0');
 
-        setText('edit_edge_band_code_label', 'CHI-' + (item.code || item.color_code || ''));
-        setVal('edit_edge_band_current_stock', item.edge_band_current_stock || 0);
-        setVal('edit_edge_band_cost_price', item.edge_band_cost_price || 0);
-        setVal('edit_edge_band_min_stock', item.edge_band_min_stock || 100);
+        const edgeSection = document.getElementById('editEdgeBandSection');
+        if (edgeSection) {
+            if (item.is_price) {
+                edgeSection.classList.add('hidden');
+            } else {
+                edgeSection.classList.remove('hidden');
+                setText('edit_edge_band_code_label', item.edge_band_code || ('CHI-' + (item.code || item.color_code || '')));
+                setVal('edit_edge_band_current_stock', item.edge_band_current_stock || 0);
+                setVal('edit_edge_band_cost_price', item.edge_band_cost_price || 0);
+                setVal('edit_edge_band_min_stock', item.edge_band_min_stock || 100);
+            }
+        }
 
         openModal('editMaterialModal');
     }
 
-    function openStockCardModal(materialId) {
+    function openStockCardModal(materialId, type = 'price') {
         const container = document.getElementById('stockCardModalContent');
         if (container) {
             container.innerHTML = `
@@ -790,7 +818,7 @@
         }
         openModal('stockCardModal');
 
-        fetch(`/warehouses/materials/${materialId}/stock-card`, {
+        fetch(`/warehouses/materials/${materialId}/stock-card?type=${encodeURIComponent(type)}`, {
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         })
         .then(res => res.text())

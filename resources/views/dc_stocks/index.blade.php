@@ -183,19 +183,19 @@
                 {{-- MDF 1 Mặt --}}
                 <a href="{{ route('dc-stocks.index', array_merge(request()->except(['board_type', 'page']), ['board_type' => 'MDF 1 MẶT ACRYLIC'])) }}"
                    class="px-2.5 py-1 rounded-lg font-bold transition-all text-xs flex items-center gap-1 {{ ($boardType ?? '') === 'MDF 1 MẶT ACRYLIC' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-white dark:bg-neutral-800 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60 hover:bg-emerald-50' }}">
-                   🪵 MDF 1 Mặt
+                   MDF 1 Mặt
                 </a>
 
                 {{-- MDF 2 Mặt --}}
                 <a href="{{ route('dc-stocks.index', array_merge(request()->except(['board_type', 'page']), ['board_type' => 'MDF 2 MẶT ACRYLIC'])) }}"
                    class="px-2.5 py-1 rounded-lg font-bold transition-all text-xs flex items-center gap-1 {{ ($boardType ?? '') === 'MDF 2 MẶT ACRYLIC' ? 'bg-purple-600 text-white shadow-sm' : 'bg-white dark:bg-neutral-800 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800/60 hover:bg-purple-50' }}">
-                   🪵 MDF 2 Mặt
+                   MDF 2 Mặt
                 </a>
 
                 {{-- Cốt Nhựa PVC --}}
                 <a href="{{ route('dc-stocks.index', array_merge(request()->except(['board_type', 'page']), ['board_type' => 'CỐT NHỰA PVC'])) }}"
                    class="px-2.5 py-1 rounded-lg font-bold transition-all text-xs flex items-center gap-1 {{ in_array(($boardType ?? ''), ['CỐT NHỰA PVC', 'CỐT NHỰA 1 MẶT ACRYLIC', 'CỐT NHỰA 2 MẶT ACRYLIC', 'PVC']) ? 'bg-amber-600 text-white shadow-sm' : 'bg-white dark:bg-neutral-800 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60 hover:bg-amber-50' }}">
-                   🧱 Cốt Nhựa PVC
+                   Cốt Nhựa PVC
                 </a>
 
                 <span class="text-neutral-300 dark:text-neutral-700 mx-1">|</span>
@@ -447,7 +447,7 @@
                                     id="btnType_{{ $typeMdf1->id }}"
                                     data-type-id="{{ $typeMdf1->id }}"
                                     class="type-shortcut-btn px-1.5 py-1.5 rounded-lg border text-[11px] font-bold text-center transition-all bg-emerald-600 text-white border-emerald-600 shadow-xs">
-                                🪵 MDF 1M
+                                MDF 1M
                             </button>
                             @endif
                             @if($typeMdf2)
@@ -455,7 +455,7 @@
                                     id="btnType_{{ $typeMdf2->id }}"
                                     data-type-id="{{ $typeMdf2->id }}"
                                     class="type-shortcut-btn px-1.5 py-1.5 rounded-lg border text-[11px] font-bold text-center transition-all bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border-neutral-300 dark:border-neutral-700 hover:bg-neutral-50">
-                                🪵 MDF 2M
+                                MDF 2M
                             </button>
                             @endif
                             @if($typePvc)
@@ -463,7 +463,7 @@
                                     id="btnType_{{ $typePvc->id }}"
                                     data-type-id="{{ $typePvc->id }}"
                                     class="type-shortcut-btn px-1.5 py-1.5 rounded-lg border text-[11px] font-bold text-center transition-all bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border-neutral-300 dark:border-neutral-700 hover:bg-neutral-50">
-                                🧱 Nhựa PVC
+                                Nhựa PVC
                             </button>
                             @endif
                         </div>
