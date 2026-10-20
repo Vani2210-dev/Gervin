@@ -3475,16 +3475,30 @@ document.addEventListener('DOMContentLoaded', function() {
                 <iconify-icon icon="lucide:user-plus" class="text-primary-600 text-lg"></iconify-icon>
                 Thêm khách hàng mới
             </h5>
-            <button type="button" onclick="closeModal('quickCreateCustomerModal')" class="w-8 h-8 rounded-lg hover:bg-neutral-100 flex items-center justify-center text-neutral-400 hover:text-danger-500 transition">
+            <button type="button" onclick="closeModal('quickCreateCustomerModal'); resetQcCodeState();" class="w-8 h-8 rounded-lg hover:bg-neutral-100 flex items-center justify-center text-neutral-400 hover:text-danger-500 transition">
                 <iconify-icon icon="lucide:x" class="text-lg"></iconify-icon>
             </button>
         </div>
 
         <form id="quickCreateCustomerForm" onsubmit="submitQuickCreateCustomer(event)" class="space-y-4">
-            <div>
-                <label class="block text-xs font-bold text-neutral-700 uppercase mb-1">Tên khách hàng <span class="text-danger-500">*</span></label>
-                <input type="text" name="qc_name" id="qc_name" required class="form-control rounded-lg w-full text-sm" placeholder="VD: Anh Nam, Cty Nội Thất ABC...">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="sm:col-span-1">
+                    <label class="block text-xs font-bold text-neutral-700 uppercase mb-1">Mã khách hàng</label>
+                    <div class="relative">
+                        <input type="text" name="qc_customer_code" id="qc_customer_code" 
+                            class="form-control rounded-lg w-full text-sm font-mono font-bold uppercase transition-colors" 
+                            placeholder="Tự sinh nếu trống" 
+                            autocomplete="off"
+                            oninput="handleCustomerCodeInput(this.value)">
+                        <span id="qc_code_status_icon" class="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center pointer-events-none hidden"></span>
+                    </div>
+                </div>
+                <div class="sm:col-span-2">
+                    <label class="block text-xs font-bold text-neutral-700 uppercase mb-1">Tên khách hàng <span class="text-danger-500">*</span></label>
+                    <input type="text" name="qc_name" id="qc_name" required class="form-control rounded-lg w-full text-sm" placeholder="VD: Anh Nam, Cty Nội Thất ABC...">
+                </div>
             </div>
+            <div id="qc_code_feedback" class="text-xs font-medium -mt-2 hidden"></div>
 
             <div>
                 <label class="block text-xs font-bold text-neutral-700 uppercase mb-1">Nhóm thị trường</label>
@@ -3520,7 +3534,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <div id="qc_error_msg" class="text-xs text-danger-600 hidden font-semibold"></div>
 
             <div class="flex justify-end gap-2 pt-3 border-t border-neutral-100">
-                <button type="button" onclick="closeModal('quickCreateCustomerModal')" class="btn btn-neutral px-4 py-2 text-sm rounded-lg">
+                <button type="button" onclick="closeModal('quickCreateCustomerModal'); resetQcCodeState();" class="btn btn-neutral px-4 py-2 text-sm rounded-lg">
                     Hủy
                 </button>
                 <button type="submit" id="qc_submit_btn" class="btn btn-primary px-5 py-2 text-sm rounded-lg flex items-center gap-1.5 font-semibold">
@@ -3533,6 +3547,110 @@ document.addEventListener('DOMContentLoaded', function() {
 </x-modal>
 
 <script>
+let qcCodeCheckTimer = null;
+let isQcCodeDuplicated = false;
+
+function resetQcCodeState() {
+    isQcCodeDuplicated = false;
+    clearTimeout(qcCodeCheckTimer);
+    const input = document.getElementById('qc_customer_code');
+    const icon = document.getElementById('qc_code_status_icon');
+    const feedback = document.getElementById('qc_code_feedback');
+    if (input) {
+        input.classList.remove('border-danger-500', 'bg-danger-50', 'text-danger-900', 'border-success-500', 'bg-success-50/20');
+    }
+    if (icon) {
+        icon.classList.add('hidden');
+        icon.innerHTML = '';
+    }
+    if (feedback) {
+        feedback.classList.add('hidden');
+        feedback.innerHTML = '';
+    }
+}
+
+function setQcCodeError(msg) {
+    const input = document.getElementById('qc_customer_code');
+    const icon = document.getElementById('qc_code_status_icon');
+    const feedback = document.getElementById('qc_code_feedback');
+    if (input) {
+        input.classList.remove('border-success-500', 'bg-success-50/20');
+        input.classList.add('border-danger-500', 'bg-danger-50', 'text-danger-900');
+    }
+    if (icon) {
+        icon.classList.remove('hidden');
+        icon.innerHTML = '<iconify-icon icon="lucide:alert-circle" class="text-danger-500 text-base"></iconify-icon>';
+    }
+    if (feedback) {
+        feedback.classList.remove('hidden');
+        feedback.innerHTML = '<span class="text-danger-600 flex items-center gap-1 font-bold"><iconify-icon icon="lucide:alert-triangle" class="text-sm flex-shrink-0"></iconify-icon> ' + msg + '</span>';
+    }
+}
+
+function setQcCodeSuccess(msg) {
+    const input = document.getElementById('qc_customer_code');
+    const icon = document.getElementById('qc_code_status_icon');
+    const feedback = document.getElementById('qc_code_feedback');
+    if (input) {
+        input.classList.remove('border-danger-500', 'bg-danger-50', 'text-danger-900');
+        input.classList.add('border-success-500', 'bg-success-50/20');
+    }
+    if (icon) {
+        icon.classList.remove('hidden');
+        icon.innerHTML = '<iconify-icon icon="lucide:check-circle-2" class="text-success-500 text-base"></iconify-icon>';
+    }
+    if (feedback) {
+        feedback.classList.remove('hidden');
+        feedback.innerHTML = '<span class="text-success-600 flex items-center gap-1 font-semibold"><iconify-icon icon="lucide:check" class="text-sm flex-shrink-0"></iconify-icon> ' + msg + '</span>';
+    }
+}
+
+function handleCustomerCodeInput(val) {
+    clearTimeout(qcCodeCheckTimer);
+    const code = val.trim();
+
+    if (!code) {
+        resetQcCodeState();
+        return;
+    }
+
+    // Fast check client-side
+    if (typeof window.allAllowedCustomers !== 'undefined' && Array.isArray(window.allAllowedCustomers)) {
+        const found = window.allAllowedCustomers.some(c => c.customer_code && c.customer_code.trim().toUpperCase() === code.toUpperCase());
+        if (found) {
+            isQcCodeDuplicated = true;
+            setQcCodeError('Mã khách hàng "' + code + '" đã bị trùng (đã tồn tại trong hệ thống)!');
+            return;
+        }
+    }
+
+    const icon = document.getElementById('qc_code_status_icon');
+    if (icon) {
+        icon.classList.remove('hidden');
+        icon.innerHTML = '<iconify-icon icon="lucide:loader-2" class="text-neutral-400 text-sm animate-spin"></iconify-icon>';
+    }
+
+    qcCodeCheckTimer = setTimeout(() => {
+        fetch('{{ route("customers.check-code") }}?code=' + encodeURIComponent(code))
+            .then(res => res.json())
+            .then(data => {
+                const currentVal = document.getElementById('qc_customer_code')?.value.trim();
+                if (currentVal !== code) return;
+
+                if (data.exists) {
+                    isQcCodeDuplicated = true;
+                    setQcCodeError(data.message || 'Mã khách hàng "' + code + '" đã bị trùng!');
+                } else {
+                    isQcCodeDuplicated = false;
+                    setQcCodeSuccess('Mã hợp lệ, có thể sử dụng');
+                }
+            })
+            .catch(() => {
+                if (icon) icon.classList.add('hidden');
+            });
+    }, 250);
+}
+
 function submitQuickCreateCustomer(e) {
     e.preventDefault();
     const btn = document.getElementById('qc_submit_btn');
@@ -3540,6 +3658,7 @@ function submitQuickCreateCustomer(e) {
     errEl.classList.add('hidden');
     errEl.textContent = '';
 
+    const customerCode = document.getElementById('qc_customer_code').value.trim();
     const name = document.getElementById('qc_name').value.trim();
     const marketGroupId = document.getElementById('qc_market_group_id').value;
     const phone = document.getElementById('qc_phone').value.trim();
@@ -3549,6 +3668,14 @@ function submitQuickCreateCustomer(e) {
 
     if (!name) {
         errEl.textContent = 'Vui lòng nhập tên khách hàng';
+        errEl.classList.remove('hidden');
+        return;
+    }
+
+    if (isQcCodeDuplicated) {
+        setQcCodeError('Mã khách hàng "' + customerCode + '" đã bị trùng, vui lòng nhập mã khác!');
+        document.getElementById('qc_customer_code').focus();
+        errEl.textContent = 'Mã khách hàng đã bị trùng! Vui lòng chọn mã khác.';
         errEl.classList.remove('hidden');
         return;
     }
@@ -3565,6 +3692,7 @@ function submitQuickCreateCustomer(e) {
         },
         body: JSON.stringify({
             name: name,
+            customer_code: customerCode || null,
             market_group_id: marketGroupId || null,
             phone: phone,
             address: address,
@@ -3608,6 +3736,7 @@ function submitQuickCreateCustomer(e) {
             }
 
             document.getElementById('quickCreateCustomerForm').reset();
+            resetQcCodeState();
             closeModal('quickCreateCustomerModal');
 
             if (typeof Swal !== 'undefined') {
@@ -3621,6 +3750,11 @@ function submitQuickCreateCustomer(e) {
                 });
             }
         } else {
+            if (data.errors && data.errors.customer_code) {
+                isQcCodeDuplicated = true;
+                setQcCodeError(data.errors.customer_code[0]);
+                document.getElementById('qc_customer_code').focus();
+            }
             errEl.textContent = data.message || 'Có lỗi xảy ra khi lưu khách hàng.';
             errEl.classList.remove('hidden');
         }

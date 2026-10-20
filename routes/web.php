@@ -297,6 +297,7 @@ Route::get('warehouses-redirect', function() {
 
 // Customers
 Route::middleware(['auth'])->group(function () {
+    Route::get('customers/check-code', [CustomerController::class, 'checkCode'])->name('customers.check-code');
     Route::get('customers/export', [CustomerController::class, 'exportExcel'])->name('customers.export');
     Route::get('customers/{customer}/orders/export', [CustomerController::class, 'exportOrdersExcel'])->name('customers.orders.export');
     Route::get('customers/{customer}/payments/export', [CustomerController::class, 'exportPaymentsExcel'])->name('customers.payments.export');

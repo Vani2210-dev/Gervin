@@ -1075,9 +1075,28 @@ class CustomerController extends Controller
         return redirect()->route('customers.index')->with('success', 'Xóa khách hàng thành công.');
     }
 
+    public function checkCode(Request $request)
+    {
+        $code = trim($request->query('code', ''));
+        if ($code === '') {
+            return response()->json([
+                'exists' => false,
+                'message' => 'Mã trống'
+            ]);
+        }
+
+        $exists = Customer::where('customer_code', $code)->exists();
+
+        return response()->json([
+            'exists'  => $exists,
+            'code'    => $code,
+            'message' => $exists ? 'Mã khách hàng "' . $code . '" đã tồn tại trong hệ thống!' : 'Mã hợp lệ'
+        ]);
+    }
+
     public function quickCreate(Request $request)
     {
-        $request->validate([
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
             'name'            => 'required|string|max:255',
             'customer_code'   => 'nullable|string|max:100|unique:customers,customer_code',
             'phone'           => 'nullable|string|max:20',
@@ -1085,7 +1104,18 @@ class CustomerController extends Controller
             'market_group_id' => 'nullable|exists:market_groups,id',
             'debt'            => 'nullable|numeric|min:0',
             'policy'          => 'nullable|string',
+        ], [
+            'name.required'        => 'Vui lòng nhập tên khách hàng.',
+            'customer_code.unique' => 'Mã khách hàng "' . $request->customer_code . '" đã tồn tại trong hệ thống. Vui lòng chọn mã khác!',
         ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first(),
+                'errors'  => $validator->errors(),
+            ], 422);
+        }
 
         if ($request->filled('customer_code')) {
             $customerCode = trim($request->customer_code);
