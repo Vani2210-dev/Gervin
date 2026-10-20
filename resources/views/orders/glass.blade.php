@@ -782,6 +782,11 @@ function addGlassOrderItem(button, isInitial = false, insertAfterRow = null) {
         }
     }
 
+    const isNK = typeof window.isNhapKhoSelected === 'function' && window.isNhapKhoSelected();
+    const defaultHeight = isNK ? 1220 : (lastData ? lastData.height : '');
+    const defaultWidth = isNK ? 2440 : (lastData ? lastData.width : '');
+    const unitPriceToUse = isNK ? 0 : copiedUnitPrice;
+
     let productCodeCellHtml = '';
     if (isAccessory) {
         productCodeCellHtml = `
@@ -843,10 +848,10 @@ function addGlassOrderItem(button, isInitial = false, insertAfterRow = null) {
         </td>
         ` : ''}
         <td style="width: 200px; min-width: 200px; " class="border border-neutral-200 ${isAccessory ? 'hidden' : ''}">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][height]" class="form-control form-control-sm rounded-lg border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500 bg-yellow-50/30 text-center px-1 py-1 h-8 text-xs" placeholder="Dài cánh (mm)" step="any" value="${lastData ? lastData.height : ''}">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][height]" class="form-control form-control-sm rounded-lg border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500 bg-yellow-50/30 text-center px-1 py-1 h-8 text-xs" placeholder="Dài cánh (mm)" step="any" value="${defaultHeight}">
         </td>
         <td style="width: 200px; min-width: 200px; " class="border border-neutral-200 ${isAccessory ? 'hidden' : ''}">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][width]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Rộng cánh (mm)" step="any" value="${lastData ? lastData.width : ''}">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][width]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Rộng cánh (mm)" step="any" value="${defaultWidth}">
         </td>
         <td style="width: 100px; min-width: 100px; " class="border border-neutral-200 ${isAccessory ? 'hidden' : ''}">
             <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][unit]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs px-1" placeholder="Đơn vị" value="${lastData ? lastData.unit : (isAccessory ? 'Cái' : 'Bộ')}">
@@ -865,7 +870,7 @@ function addGlassOrderItem(button, isInitial = false, insertAfterRow = null) {
                 oninput="if(!this.hasAttribute('readonly')){ this.previousElementSibling.value = this.value; calculateGlassTotalPrice(this.closest('.order-item-row'), 'area'); }">
         </td>
         <td style="width: 110px; min-width: 110px; " class="border border-neutral-200">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][unit_price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Đơn giá" min="0" step="any" required value="${copiedUnitPrice}">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][unit_price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Đơn giá" min="0" step="any" required value="${unitPriceToUse}">
         </td>
         <td style="width: 120px; min-width: 120px; " class="border border-neutral-200">
             <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][total_price]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center px-1 py-1 h-8 text-xs" placeholder="Thành tiền" readonly value="${lastData && lastData.total_price > 0 ? parseFloat(lastData.total_price).toLocaleString('vi-VN') : ''}">

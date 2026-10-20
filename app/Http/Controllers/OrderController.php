@@ -18,7 +18,7 @@ use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 class OrderController extends Controller
 {
-    private const ORDER_TYPES = ['acrylic', 'glass', 'min_late', 'Flywood', 'service'];
+    private const ORDER_TYPES = ['acrylic', 'glass', 'min_late', 'Flywood'];
 
     protected $acrylicOrderService;
     protected $minLateOrderService;

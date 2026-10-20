@@ -155,22 +155,6 @@
                     </ol>
                 </div>
             </div>
-        </div>
-    </div>
-                <div>
-                    <h5 class="text-lg font-bold mb-4 flex items-center gap-2 text-white">
-                        <iconify-icon icon="lucide:help-circle"></iconify-icon>
-                        Tiêu chuẩn làm đẹp
-                    </h5>
-                    <ol class="space-y-4 text-sm text-pink-100 list-decimal list-inside pl-1">
-                        <li>Vệ sinh sạch keo thừa trên các cạnh dán.</li>
-                        <li>Kiểm tra bề mặt ván, không để lại vết bẩn, dấu vân tay.</li>
-                        <li>Đối với Acrylic, sử dụng dung dịch đánh bóng chuyên dụng.</li>
-                        <li>Quét mã QR để xác nhận sau khi đã kiểm tra đạt yêu cầu.</li>
-                    </ol>
-                </div>
-            </div>
-        </div>
     </div>
 
     <!-- History list section -->

@@ -649,6 +649,9 @@ function addMinLateOrderItem(button, isInitial = false, insertAfterRow = null) {
     
     // Không sao chép từ sản phẩm cuối
     let lastData = null;
+    const isNK = typeof window.isNhapKhoSelected === 'function' && window.isNhapKhoSelected();
+    const defaultHeight = isNK ? 1220 : (lastData ? lastData.height : '');
+    const defaultWidth = isNK ? 2440 : (lastData ? lastData.width : '');
     
     const newItem = document.createElement('tr');
     newItem.className = 'order-item-row';
@@ -674,10 +677,10 @@ function addMinLateOrderItem(button, isInitial = false, insertAfterRow = null) {
         </td>
         ` : ''}
         <td style="width: 200px; min-width: 200px; " class="border border-neutral-200">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][height]" class="form-control form-control-sm rounded-lg border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500 bg-yellow-50/30 text-center px-1 py-1 h-8 text-xs" placeholder="Cao (vân)" step="any" value="${lastData ? lastData.height : ''}">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][height]" class="form-control form-control-sm rounded-lg border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500 bg-yellow-50/30 text-center px-1 py-1 h-8 text-xs" placeholder="Cao (vân)" step="any" value="${defaultHeight}">
         </td>
         <td style="width: 200px; min-width: 200px; " class="border border-neutral-200">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][width]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Rộng" step="any" value="${lastData ? lastData.width : ''}">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][width]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Rộng" step="any" value="${defaultWidth}">
         </td>
         <td style="width: 70px; min-width: 70px; " class="border border-neutral-200">
             <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Số lượng" min="1" required value="${lastData ? lastData.quantity : '1'}">

@@ -56,10 +56,45 @@ class Customer extends Model
         if ($user->canViewAllMarketGroups()) {
             return true;
         }
+        if (in_array(strtoupper($this->customer_code ?? ''), ['NK', 'NHAPKHO'], true) || in_array(mb_strtolower(trim($this->name ?? '')), ['nhập kho', 'nhap kho'], true)) {
+            return true;
+        }
         if (!$this->market_group_id) {
             return false;
         }
         return $user->marketGroups()->where('market_groups.id', $this->market_group_id)->exists();
+    }
+
+    public static function getNhapKhoCustomer(): ?self
+    {
+        try {
+            $customer = static::whereIn('customer_code', ['NK', 'NHAPKHO'])
+                ->orWhereRaw('LOWER(TRIM(name)) = ?', ['nhập kho'])
+                ->orWhereRaw('LOWER(TRIM(name)) = ?', ['nhap kho'])
+                ->first();
+
+            if (!$customer) {
+                $code = 'NK';
+                if (static::where('customer_code', $code)->exists()) {
+                    $code = 'NHAPKHO';
+                }
+                if (static::where('customer_code', $code)->exists()) {
+                    $code = 'NK' . date('ymd');
+                }
+                $customer = static::create([
+                    'customer_code'   => $code,
+                    'name'            => 'Nhập kho',
+                    'phone'           => '',
+                    'address'         => 'Kho Gervin',
+                    'status'          => 'active',
+                ]);
+            }
+
+            return $customer;
+        } catch (\Throwable $e) {
+            \Log::warning('Customer::getNhapKhoCustomer error: ' . $e->getMessage());
+            return null;
+        }
     }
 
     public function customerPayments()

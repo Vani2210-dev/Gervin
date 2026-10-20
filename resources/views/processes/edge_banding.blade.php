@@ -155,22 +155,6 @@
                     </ol>
                 </div>
             </div>
-        </div>
-    </div>
-                <div>
-                    <h5 class="text-lg font-bold mb-4 flex items-center gap-2 text-white">
-                        <iconify-icon icon="lucide:help-circle"></iconify-icon>
-                        Hướng dẫn thao tác
-                    </h5>
-                    <ol class="space-y-4 text-sm text-emerald-100 list-decimal list-inside pl-1">
-                        <li>Quét mã QR trên tem sản phẩm.</li>
-                        <li>Nhập số lượng chỉ đã dán (nếu hệ thống chưa tự động tính).</li>
-                        <li>Hệ thống sẽ ghi nhận thời gian và người thực hiện.</li>
-                        <li>Kiểm tra lịch sử bên dưới nếu cần chỉnh sửa.</li>
-                    </ol>
-                </div>
-            </div>
-        </div>
     </div>
 
     <!-- History list section -->

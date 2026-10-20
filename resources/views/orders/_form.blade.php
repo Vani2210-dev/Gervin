@@ -84,10 +84,16 @@
                             <div class="form-group">
                                 <div class="flex items-center justify-between mb-2">
                                     <label class="form-label font-semibold text-xs text-neutral-500 uppercase tracking-wider block m-0">Khách hàng <span class="text-danger-500">*</span></label>
-                                    <button type="button" onclick="openModal('quickCreateCustomerModal')" class="text-primary-600 hover:text-primary-700 text-xs font-semibold inline-flex items-center gap-1 transition">
-                                        <iconify-icon icon="lucide:user-plus" class="text-sm"></iconify-icon>
-                                        + Thêm khách
-                                    </button>
+                                    <div class="flex items-center gap-2">
+                                        <button type="button" onclick="selectNhapKhoCustomer()" class="text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-300 px-2.5 py-1 rounded-lg text-xs font-semibold inline-flex items-center gap-1 transition shadow-sm" title="Chọn khách hàng là Nhập kho">
+                                            <iconify-icon icon="lucide:warehouse" class="text-sm text-amber-600"></iconify-icon>
+                                            Nhập kho
+                                        </button>
+                                        <button type="button" onclick="openModal('quickCreateCustomerModal')" class="text-primary-600 hover:text-primary-700 text-xs font-semibold inline-flex items-center gap-1 transition">
+                                            <iconify-icon icon="lucide:user-plus" class="text-sm"></iconify-icon>
+                                            + Thêm khách
+                                        </button>
+                                    </div>
                                 </div>
                                 @php
                                     $currentUser = auth()->user();
@@ -98,6 +104,12 @@
                                     } else {
                                         $allowedCustomers = \App\Models\Customer::with('marketGroup')->orderBy('name')->get();
                                         $availableMarketGroups = \App\Models\MarketGroup::orderBy('name')->get();
+                                    }
+
+                                    $nhapKhoCustomer = \App\Models\Customer::getNhapKhoCustomer();
+                                    if ($nhapKhoCustomer) {
+                                        $allowedCustomers = $allowedCustomers->reject(fn($c) => $c->id === $nhapKhoCustomer->id);
+                                        $allowedCustomers->prepend($nhapKhoCustomer);
                                     }
 
                                     if (isset($acrylicOrder) && $acrylicOrder->customer && !$allowedCustomers->contains('id', $acrylicOrder->customer_id)) {
@@ -382,11 +394,12 @@ function switchOrderType(type) {
 }
 
 function fetchCustomerDebt(customerId) {
-    if (!customerId || !/^\d+$/.test(customerId)) {
+    const nhapKhoId = {{ $nhapKhoCustomer ? $nhapKhoCustomer->id : 'null' }};
+    if (!customerId || !/^\d+$/.test(customerId) || (nhapKhoId && customerId == nhapKhoId)) {
         const debtCard = document.getElementById('customer-debt-card');
         if (debtCard) {
-            debtCard.hidden = false;
-            debtCard.classList.remove('hidden');
+            debtCard.hidden = true;
+            debtCard.classList.add('hidden');
         }
         window.customerOldDebt = 0;
         window.customerOldPaid = 0;
@@ -431,6 +444,83 @@ function fetchCustomerDebt(customerId) {
         .catch(e => console.error(e));
 }
 
+window.nhapKhoCustomerId = {{ $nhapKhoCustomer ? $nhapKhoCustomer->id : 'null' }};
+
+window.isNhapKhoSelected = function() {
+    const custSelect = document.getElementById('customer-select');
+    if (!custSelect) return false;
+    const val = custSelect.value;
+    const nhapKhoId = window.nhapKhoCustomerId ? String(window.nhapKhoCustomerId) : null;
+    if (nhapKhoId && String(val) === nhapKhoId) {
+        return true;
+    }
+    if (custSelect.tomselect) {
+        const item = custSelect.tomselect.getItem(val);
+        const text = item ? (item.textContent || '') : '';
+        if (text.toLowerCase().includes('nhập kho') || text.toLowerCase().includes('nhap kho')) {
+            return true;
+        }
+    } else if (custSelect.selectedIndex >= 0) {
+        const text = custSelect.options[custSelect.selectedIndex]?.text || '';
+        if (text.toLowerCase().includes('nhập kho') || text.toLowerCase().includes('nhap kho')) {
+            return true;
+        }
+    }
+    const cName = document.querySelector('input[name="customer_name"]')?.value || '';
+    if (cName.trim().toLowerCase() === 'nhập kho' || cName.trim().toLowerCase() === 'nhap kho') {
+        return true;
+    }
+    return false;
+};
+
+window.applyNhapKhoToAllItems = function() {
+    const itemRows = document.querySelectorAll('.order-item-row');
+    itemRows.forEach(row => {
+        const heightInput = row.querySelector('input[name*="[height]"]');
+        const widthInput = row.querySelector('input[name*="[width]"]');
+        const unitPriceInput = row.querySelector('input[name*="[unit_price]"]');
+        
+        if (heightInput) heightInput.value = 1220;
+        if (widthInput) widthInput.value = 2440;
+        if (unitPriceInput) unitPriceInput.value = 0;
+
+        if (typeof calculateTotalPrice === 'function') {
+            calculateTotalPrice(row, 'unit_price');
+        } else if (typeof calculateMinLateTotalPrice === 'function') {
+            if (typeof calculateMinLateRowStats === 'function') {
+                calculateMinLateRowStats(row);
+            }
+            calculateMinLateTotalPrice(row);
+        } else if (typeof calculateGlassTotalPrice === 'function') {
+            calculateGlassTotalPrice(row, 'unit_price');
+        }
+    });
+
+    if (typeof updateOrderSummary === 'function') {
+        updateOrderSummary();
+    }
+};
+
+function selectNhapKhoCustomer() {
+    const custSelect = document.getElementById('customer-select');
+    const nhapKhoId = {{ $nhapKhoCustomer ? $nhapKhoCustomer->id : 'null' }};
+    if (custSelect && nhapKhoId) {
+        if (custSelect.tomselect) {
+            custSelect.tomselect.setValue(nhapKhoId);
+        } else {
+            custSelect.value = nhapKhoId;
+            fillCustomerInfo(nhapKhoId);
+        }
+        const cNameInput = document.querySelector('input[name="customer_name"]');
+        if (cNameInput) {
+            cNameInput.value = 'Nhập kho';
+        }
+        if (typeof window.applyNhapKhoToAllItems === 'function') {
+            window.applyNhapKhoToAllItems();
+        }
+    }
+}
+
 window.allAllowedCustomers = @json($allowedCustomers ?? \App\Models\Customer::all());
 
 function fillCustomerInfo(customerId) {
@@ -441,8 +531,12 @@ function fillCustomerInfo(customerId) {
     const mgSelect = document.getElementById('market_group_select');
 
     if (customer) {
-        if (cNameInput && !cNameInput.value.trim()) {
+        const isNK = (customer.customer_code === 'NK' || customer.customer_code === 'NHAPKHO' || (customer.name && customer.name.toLowerCase().includes('nhập kho')));
+        if (cNameInput && (!cNameInput.value.trim() || cNameInput.value.startsWith('Đơn nháp') || isNK)) {
             cNameInput.value = customer.name;
+        }
+        if (isNK && typeof window.applyNhapKhoToAllItems === 'function') {
+            window.applyNhapKhoToAllItems();
         }
         if (mgSelect) {
             mgSelect.value = customer.market_group_id || '';

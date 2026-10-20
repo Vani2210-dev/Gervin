@@ -581,7 +581,8 @@ function handleSupplyCodeChange(selectEl, value) {
             applyFlashEffect(thicknessInput);
         }
         if (unitPriceInput) {
-            unitPriceInput.value = price.price_m2 ? parseInt(price.price_m2) : 0;
+            const isNK = typeof window.isNhapKhoSelected === 'function' && window.isNhapKhoSelected();
+            unitPriceInput.value = isNK ? 0 : (price.price_m2 ? parseInt(price.price_m2) : 0);
             applyFlashEffect(unitPriceInput);
             calculateTotalPrice(itemRow, 'unit_price');
         }
@@ -738,7 +739,10 @@ function addOrderItem(button, isInitial = false, insertAfterRow = null) {
             copiedUnitPrice = lastUnitPriceInput.value;
         }
     }
-    const unitPriceToUse = copiedUnitPrice !== '' ? copiedUnitPrice : defaultUnitPrice;
+    const isNhapKho = typeof window.isNhapKhoSelected === 'function' && window.isNhapKhoSelected();
+    const defaultHeight = isNhapKho ? 1220 : '';
+    const defaultWidth = isNhapKho ? 2440 : '';
+    const unitPriceToUse = isNhapKho ? 0 : (copiedUnitPrice !== '' ? copiedUnitPrice : defaultUnitPrice);
     
     const newItem = document.createElement('tr');
     newItem.className = 'order-item-row';
@@ -765,10 +769,10 @@ function addOrderItem(button, isInitial = false, insertAfterRow = null) {
         </td>
         ` : ''}
         <td style="width: 200px; min-width: 200px; " class="border border-neutral-200">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][height]" class="form-control form-control-sm rounded-lg border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500 bg-yellow-50/30 text-center px-1 py-1 h-8 text-xs" placeholder="Cao (vân)" step="any" value="">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][height]" class="form-control form-control-sm rounded-lg border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500 bg-yellow-50/30 text-center px-1 py-1 h-8 text-xs" placeholder="Cao (vân)" step="any" value="${defaultHeight}">
         </td>
         <td style="width: 200px; min-width: 200px; " class="border border-neutral-200">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][width]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Rộng" step="any" value="">
+            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][width]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Rộng" step="any" value="${defaultWidth}">
         </td>
         <td style="width: 70px; min-width: 70px; " class="border border-neutral-200">
             <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Số lượng" min="1" required value="1">
@@ -867,6 +871,9 @@ function addOrderItem(button, isInitial = false, insertAfterRow = null) {
     bindAcrylicRowEvents(newRow);
     initBevelField(newRow);
     
+    if (isNhapKho) {
+        calculateTotalPrice(newRow, 'unit_price');
+    }
     updateOrderSummary();
     updateAcrylicRowIndexes();
 
@@ -1352,7 +1359,8 @@ function applyNarrowWidthRule(row, triggerCalculation = true) {
                 if (supplyCode && typeof woodBoardPricesData !== 'undefined') {
                     const price = woodBoardPricesData.find(p => p.code === supplyCode);
                     if (price) {
-                        unitPriceInput.value = price.price_m2 ? parseInt(price.price_m2) : '';
+                        const isNK = typeof window.isNhapKhoSelected === 'function' && window.isNhapKhoSelected();
+                        unitPriceInput.value = isNK ? 0 : (price.price_m2 ? parseInt(price.price_m2) : '');
                     }
                 }
             }
