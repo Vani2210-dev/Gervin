@@ -2900,6 +2900,318 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // =========================================================================
+    // HỖ TRỢ COPY - DÁN (CTRL+V) TỪ EXCEL VÀO CÁC BẢNG VẬT TƯ & SẢN PHẨM
+    // Cho phép copy 1 cột (hoặc nhiều cột) hàng trăm dòng từ Excel và dán trực tiếp.
+    // Tự động thêm dòng mới nếu bảng chưa đủ dòng.
+    // =========================================================================
+    function cleanExcelNumber(input, val) {
+        if (input.type !== 'number') return val;
+        let clean = (val || '').trim();
+        if (clean === '') return '';
+        // Loại bỏ ký tự tiền tệ, khoảng trắng thừa
+        clean = clean.replace(/[^\d.,\-]/g, '');
+        if (clean === '' || clean === '-') return '';
+        
+        // Xử lý dấu phân cách hàng nghìn vs thập phân
+        if (clean.includes('.') && clean.includes(',')) {
+            if (clean.indexOf('.') < clean.indexOf(',')) {
+                // Định dạng 1.250.000,50 -> 1250000.50
+                clean = clean.replace(/\./g, '').replace(',', '.');
+            } else {
+                // Định dạng 1,250,000.50 -> 1250000.50
+                clean = clean.replace(/,/g, '');
+            }
+        } else if (clean.includes(',')) {
+            // e.g. 1,200 hoặc 150,000
+            if (/^\d{1,3}(,\d{3})+$/.test(clean)) {
+                clean = clean.replace(/,/g, '');
+            } else {
+                // Số thập phân kiểu Việt: 12,5 -> 12.5
+                clean = clean.replace(',', '.');
+            }
+        } else if (clean.includes('.')) {
+            // e.g. 1.200 hoặc 150.000 trong Excel tiếng Việt
+            if (/^\d{1,3}(\.\d{3})+$/.test(clean)) {
+                clean = clean.replace(/\./g, '');
+            }
+        }
+        return clean;
+    }
+
+    function getRowEditableElements(row) {
+        if (!row) return [];
+        const all = Array.from(row.querySelectorAll('input:not([type="hidden"]), textarea, select'));
+        return all.filter(el => {
+            if (el.readOnly || el.disabled) return false;
+            if (el.offsetParent === null && el.style.display === 'none') return false;
+            if (el.closest('.hidden, [style*="display: none"], [style*="display:none"]')) return false;
+            if (el.classList.contains('product-bevel-select')) return false;
+            return true;
+        });
+    }
+
+    function getFieldNameSuffix(el) {
+        if (!el) return null;
+        const name = el.getAttribute('name');
+        if (!name) return null;
+        const match = name.match(/\[([a-zA-Z0-9_]+)\](\[[a-zA-Z0-9_]+\])?$/);
+        return match ? match[0] : null;
+    }
+
+    function getSpecialClassName(el) {
+        if (!el) return null;
+        if (el.classList.contains('old-height-input')) return 'old-height-input';
+        if (el.classList.contains('old-width-input')) return 'old-width-input';
+        if (el.classList.contains('display-area-input')) return 'display-area-input';
+        if (el.classList.contains('product-bevel-input')) return 'product-bevel-input';
+        return null;
+    }
+
+    function findTargetElementInRow(targetRow, matcher) {
+        if (!targetRow || !matcher) return null;
+        if (matcher.className) {
+            const found = targetRow.querySelector(`.${matcher.className}`);
+            if (found && !found.readOnly && !found.disabled) return found;
+        }
+        if (matcher.nameSuffix) {
+            const found = targetRow.querySelector(`[name*="${matcher.nameSuffix}"]`);
+            if (found && !found.readOnly && !found.disabled) return found;
+        }
+        const targetRowElements = getRowEditableElements(targetRow);
+        if (targetRowElements[matcher.fallbackIndex]) {
+            return targetRowElements[matcher.fallbackIndex];
+        }
+        return null;
+    }
+
+    function setInputValue(targetEl, rawVal) {
+        if (!targetEl) return;
+        let val = rawVal !== undefined && rawVal !== null ? String(rawVal).trim() : '';
+        if (val.startsWith('"') && val.endsWith('"')) {
+            val = val.slice(1, -1).replace(/""/g, '"').trim();
+        }
+
+        if (targetEl.tagName === 'SELECT') {
+            let matched = false;
+            const lower = val.toLowerCase();
+            for (let i = 0; i < targetEl.options.length; i++) {
+                const opt = targetEl.options[i];
+                if (opt.value.trim().toLowerCase() === lower || opt.text.trim().toLowerCase() === lower) {
+                    targetEl.selectedIndex = i;
+                    matched = true;
+                    break;
+                }
+            }
+            if (!matched && val === '') {
+                targetEl.value = '';
+            }
+            if (targetEl.tomselect) {
+                targetEl.tomselect.setValue(targetEl.value);
+            }
+        } else if (targetEl.type === 'number') {
+            targetEl.value = cleanExcelNumber(targetEl, val);
+        } else {
+            targetEl.value = val;
+        }
+
+        if (targetEl.classList.contains('product-bevel-input')) {
+            targetEl.setAttribute('data-auto-sync', 'none');
+            const row = targetEl.closest('.order-item-row');
+            if (row) {
+                if (typeof updateBevelFieldStyle === 'function') updateBevelFieldStyle(row);
+                if (typeof updateMinLateBevelFieldStyle === 'function') updateMinLateBevelFieldStyle(row);
+            }
+        }
+
+        targetEl.dispatchEvent(new Event('input', { bubbles: true }));
+        targetEl.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    function createNewRowForSupply(supplyRow, container) {
+        if (!supplyRow) return;
+        const glassBtn = supplyRow.querySelector('button[onclick*="addGlassOrderItem"]');
+        if (glassBtn && typeof addGlassOrderItem === 'function') {
+            addGlassOrderItem(glassBtn, true);
+            return;
+        }
+        const minLateBtn = supplyRow.querySelector('button[onclick*="addMinLateOrderItem"]');
+        if (minLateBtn && typeof addMinLateOrderItem === 'function') {
+            addMinLateOrderItem(minLateBtn, true);
+            return;
+        }
+        const acrylicBtn = supplyRow.querySelector('button[onclick*="addOrderItem"]');
+        if (acrylicBtn && typeof addOrderItem === 'function') {
+            addOrderItem(acrylicBtn, true);
+            return;
+        }
+        const anyAddBtn = supplyRow.querySelector('button[onclick*="OrderItem"], button[onclick*="add"]');
+        if (anyAddBtn) {
+            anyAddBtn.click();
+        }
+    }
+
+    // Khi người dùng bấm vào bất kỳ khoảng trống nào trong ô <td> của bảng, tự động focus vào input của ô đó
+    document.addEventListener('click', function(e) {
+        const td = e.target.closest('.order-item-row td, .payment-detail-row td');
+        if (!td) return;
+        if (e.target.closest('button, a, select, input, textarea, .ts-wrapper, .dropdown')) return;
+        const input = td.querySelector('input:not([type="hidden"]), textarea, select');
+        if (input && !input.readOnly && !input.disabled) {
+            input.focus();
+        }
+    });
+
+    // Lắng nghe sự kiện Paste (Ctrl+V) vào bảng vật tư
+    document.addEventListener('paste', function(event) {
+        const target = event.target;
+        let currentInput = target.closest ? target.closest('input:not([type="hidden"]), textarea, select') : null;
+        const currentRow = target.closest ? target.closest('.order-item-row, .payment-detail-row') : null;
+        if (!currentRow) return;
+
+        if (!currentInput && target.closest('td')) {
+            currentInput = target.closest('td').querySelector('input:not([type="hidden"]), textarea, select');
+        }
+        if (!currentInput) return;
+
+        const clipboardData = event.clipboardData || window.clipboardData;
+        if (!clipboardData) return;
+
+        // Bỏ qua nếu đang paste hình ảnh
+        if (clipboardData.types && Array.from(clipboardData.types).includes('Files')) {
+            const items = clipboardData.items;
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].type && items[i].type.indexOf('image') !== -1) {
+                    return;
+                }
+            }
+        }
+
+        const pastedText = clipboardData.getData('text');
+        if (!pastedText) return;
+
+        // Chuẩn hóa dòng từ clipboard
+        let rawLines = pastedText.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+        // Excel luôn kèm ký tự xuống dòng ở cuối vùng copy, xóa dòng rỗng cuối này
+        if (rawLines.length > 0 && rawLines[rawLines.length - 1].trim() === '') {
+            rawLines.pop();
+        }
+
+        // Nếu chỉ là 1 giá trị đơn lẻ không có tab, cho phép browser paste bình thường
+        if (rawLines.length <= 1 && (!rawLines[0] || !rawLines[0].includes('\t'))) {
+            return;
+        }
+
+        // Chặn hành vi dán mặc định để xử lý dán theo bảng Excel
+        event.preventDefault();
+
+        const isPayment = currentRow.classList.contains('payment-detail-row');
+        const container = currentRow.parentElement;
+        const rowSelector = isPayment ? '.payment-detail-row' : '.order-item-row';
+        const allRows = Array.from(container.querySelectorAll(rowSelector));
+        const startRowIndex = allRows.indexOf(currentRow);
+        if (startRowIndex === -1) return;
+
+        const supplyRow = currentRow.closest('.order-supply-row');
+        const totalRowsNeeded = startRowIndex + rawLines.length;
+        const rowsToAdd = totalRowsNeeded - allRows.length;
+
+        // Tự động tạo thêm dòng mới nếu số dòng copy nhiều hơn số dòng hiện có
+        if (rowsToAdd > 0) {
+            const originalUpdateSummary = window.updateOrderSummary;
+            try {
+                if (rowsToAdd > 5) {
+                    window.updateOrderSummary = function() {};
+                }
+                for (let i = 0; i < rowsToAdd; i++) {
+                    if (isPayment) {
+                        if (typeof addPaymentDetail === 'function') addPaymentDetail();
+                    } else if (supplyRow) {
+                        createNewRowForSupply(supplyRow, container);
+                    }
+                }
+            } finally {
+                window.updateOrderSummary = originalUpdateSummary;
+            }
+        }
+
+        const updatedRows = Array.from(container.querySelectorAll(rowSelector));
+        const currentRowElements = getRowEditableElements(currentRow);
+        let startColIndex = currentRowElements.indexOf(currentInput);
+        if (startColIndex === -1) {
+            startColIndex = currentRowElements.findIndex(el => el.closest('td') === currentInput.closest('td'));
+            if (startColIndex === -1) startColIndex = 0;
+        }
+
+        // Xác định matcher cho các cột được copy (hỗ trợ cả copy 1 cột lẫn nhiều cột)
+        const numColsInPaste = rawLines[0].split('\t').length;
+        const colMatchers = [];
+        for (let c = 0; c < numColsInPaste; c++) {
+            const refEl = currentRowElements[startColIndex + c];
+            if (refEl) {
+                colMatchers.push({
+                    nameSuffix: getFieldNameSuffix(refEl),
+                    className: getSpecialClassName(refEl),
+                    fallbackIndex: startColIndex + c
+                });
+            } else {
+                colMatchers.push({
+                    nameSuffix: null,
+                    className: null,
+                    fallbackIndex: startColIndex + c
+                });
+            }
+        }
+
+        const modifiedRows = [];
+        for (let r = 0; r < rawLines.length; r++) {
+            const targetRow = updatedRows[startRowIndex + r];
+            if (!targetRow) continue;
+            modifiedRows.push(targetRow);
+            const rowCells = rawLines[r].split('\t');
+            for (let c = 0; c < rowCells.length; c++) {
+                const matcher = colMatchers[c];
+                if (matcher) {
+                    const targetEl = findTargetElementInRow(targetRow, matcher);
+                    if (targetEl) {
+                        setInputValue(targetEl, rowCells[c]);
+                    }
+                }
+            }
+        }
+
+        // Kích hoạt tính toán công thức cho toàn bộ các dòng vừa dán
+        modifiedRows.forEach(row => {
+            if (typeof calculateTotalPrice === 'function') {
+                try { calculateTotalPrice(row); } catch(err) {}
+            }
+            if (typeof calculateGlassTotalPrice === 'function') {
+                try { calculateGlassTotalPrice(row); } catch(err) {}
+            }
+            if (typeof calculateMinLateRowStats === 'function') {
+                try { calculateMinLateRowStats(row); } catch(err) {}
+            }
+            if (typeof calculateMinLateTotalPrice === 'function') {
+                try { calculateMinLateTotalPrice(row); } catch(err) {}
+            }
+            if (typeof calculatePaymentDetailRowTotal === 'function' && row.classList.contains('payment-detail-row')) {
+                try { calculatePaymentDetailRowTotal(row); } catch(err) {}
+            }
+        });
+
+        // Cập nhật lại số thứ tự dòng và tổng hợp đơn hàng
+        if (typeof updateAcrylicRowIndexes === 'function') updateAcrylicRowIndexes();
+        if (typeof updateGlassRowIndexes === 'function') updateGlassRowIndexes();
+        if (typeof updateMinLateRowIndexes === 'function') updateMinLateRowIndexes();
+        if (typeof updateOrderSummary === 'function') updateOrderSummary();
+
+        // Hiển thị thông báo toast thành công
+        const toastMsg = `Đã dán thành công <strong>${modifiedRows.length}</strong> dòng từ Excel vào bảng!`;
+        if (typeof showPreviewToast === 'function') {
+            showPreviewToast(toastMsg, 'success');
+        }
+    });
+
     // Phím tắt Ctrl+Alt: ẩn/hiện tất cả popup ảnh đang mở
     let hiddenImageModals = []; // Lưu popup đã ẩn để hiện lại
     document.addEventListener('keydown', function(e) {

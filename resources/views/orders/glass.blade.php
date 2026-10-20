@@ -283,10 +283,14 @@
                 <iconify-icon icon="lucide:maximize-2" class="text-lg" data-order-supplies-popup-icon></iconify-icon>
                 <span data-order-supplies-popup-label>Phóng to</span>
             </button>
-            <button type="button" onclick="triggerGlassExcelImport()" class="btn btn-sm bg-neutral-100 text-neutral-700 hover:bg-neutral-200 border border-neutral-300 rounded-lg flex items-center gap-1" style="border-color: #10b981; color: #10b981; background: #ecfdf5;">
+            <button type="button" onclick="triggerGlassExcelImport()" class="btn btn-sm bg-neutral-100 text-neutral-700 hover:bg-neutral-200 border border-neutral-300 rounded-lg flex items-center gap-1" style="border-color: #10b981; color: #10b981; background: #ecfdf5;" title="Nhập danh sách từ file Excel (hoặc Copy trong Excel rồi nhấn Ctrl+V vào ô bất kỳ để dán hàng trăm dòng!)">
                 <iconify-icon icon="lucide:file-spreadsheet" class="text-lg"></iconify-icon>
                 <span class="mobile-hide-text">Nhập Excel</span>
             </button>
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-emerald-700 bg-emerald-50/80 rounded-lg border border-emerald-200 hide-on-mobile cursor-help" title="Mẹo: Bạn có thể copy 1 cột (hoặc nhiều cột) hàng trăm dòng trong Excel, click vào ô trong bảng và nhấn Ctrl+V để dán tự động!">
+                <iconify-icon icon="lucide:clipboard-paste" class="text-emerald-600 text-sm"></iconify-icon>
+                <span>Hỗ trợ Ctrl+V Excel</span>
+            </span>
             <input type="file" id="glass-excel-file-input" accept=".xlsx,.xls,.csv" style="display:none;">
             @if(!$isWarranty)
                 @if($hasPaymentDetails)
