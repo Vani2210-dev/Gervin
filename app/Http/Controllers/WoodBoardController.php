@@ -27,6 +27,46 @@ class WoodBoardController extends Controller
                 // Fetch all active wood board types ordered by display_order
         $boardTypes = WoodBoardType::orderBy('display_order', 'asc')->get();
 
+        // Tự động kiểm tra và tạo WoodBoardPrice còn thiếu cho các WoodBoardType hiện có
+        foreach ($boardTypes as $type) {
+            $prefix = $type->prefix ?? '';
+            $missingBoards = WoodBoard::whereDoesntHave('prices', function ($q) use ($type) {
+                $q->where('wood_board_type_id', $type->id);
+            })->get();
+
+            foreach ($missingBoards as $b) {
+                WoodBoardPrice::create([
+                    'wood_board_id'      => $b->id,
+                    'wood_board_type_id' => $type->id,
+                    'code'               => $b->color_code . $prefix,
+                    'name'               => $type->name,
+                    'thickness'          => null,
+                    'price_board'        => 0,
+                    'price_m2'           => 0,
+                    'stock'              => 0,
+                ]);
+            }
+
+            // Đồng thời bù mã số hoặc tên hàng nếu trước đó bị rỗng
+            WoodBoardPrice::where('wood_board_type_id', $type->id)
+                ->where(function ($q) {
+                    $q->whereNull('code')->orWhere('code', '');
+                })
+                ->with('board')
+                ->get()
+                ->each(function ($p) use ($prefix) {
+                    if ($p->board) {
+                        $p->update(['code' => $p->board->color_code . $prefix]);
+                    }
+                });
+
+            WoodBoardPrice::where('wood_board_type_id', $type->id)
+                ->where(function ($q) {
+                    $q->whereNull('name')->orWhere('name', '');
+                })
+                ->update(['name' => $type->name]);
+        }
+
         // Fetch all wood board price groups with their default prices
         $priceGroups = WoodBoardPriceGroup::with('prices')->get();
 

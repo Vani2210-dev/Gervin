@@ -174,9 +174,11 @@
                                     @php 
                                         $scheme = $colorSchemes[$idx % count($colorSchemes)];
                                         $price = $board->prices->firstWhere('wood_board_type_id', $type->id);
+                                        $displayCode = ($price && !empty($price->code)) ? $price->code : ($board->color_code . ($type->prefix ?? ''));
+                                        $displayName = ($price && !empty($price->name)) ? $price->name : $type->name;
                                     @endphp
-                                    <td class="border border-neutral-200"><span class="text-neutral-500 font-medium">{{ $price->code ?? '—' }}</span></td>
-                                    <td class="border border-neutral-200"><span class="text-neutral-600">{{ $price->name ?? '—' }}</span></td>
+                                    <td class="border border-neutral-200"><span class="text-neutral-500 font-medium">{{ $displayCode }}</span></td>
+                                    <td class="border border-neutral-200"><span class="text-neutral-600">{{ $displayName }}</span></td>
                                     <td class="border border-neutral-200"><span class="text-neutral-600 font-medium">{{ $price->thickness ?? '—' }}</span></td>
                                     <td class="text-center border border-neutral-200">
                                         @if($price)
@@ -400,9 +402,9 @@ function openEditModal(id, priceGroup, colorCode, prices) {
     document.getElementById('edit_price_group').value = priceGroup || '';
     document.getElementById('edit_color_code').value = colorCode || '';
     
-    // Clear all inputs first
+    // Clear all inputs first, defaulting name to type name
     @foreach($boardTypes as $type)
-        if(document.getElementById('edit_price_name_{{ $type->id }}')) document.getElementById('edit_price_name_{{ $type->id }}').value = '';
+        if(document.getElementById('edit_price_name_{{ $type->id }}')) document.getElementById('edit_price_name_{{ $type->id }}').value = '{{ addslashes($type->name) }}';
         if(document.getElementById('edit_price_thickness_{{ $type->id }}')) document.getElementById('edit_price_thickness_{{ $type->id }}').value = '';
         if(document.getElementById('edit_price_board_{{ $type->id }}')) document.getElementById('edit_price_board_{{ $type->id }}').value = '';
         if(document.getElementById('edit_price_m2_{{ $type->id }}')) document.getElementById('edit_price_m2_{{ $type->id }}').value = '';
@@ -417,7 +419,7 @@ function openEditModal(id, priceGroup, colorCode, prices) {
         let m2El        = document.getElementById('edit_price_m2_' + p.wood_board_type_id);
         let stockEl     = document.getElementById('edit_price_stock_' + p.wood_board_type_id);
 
-        if (nameEl)      nameEl.value      = p.name || '';
+        if (nameEl && p.name) nameEl.value = p.name;
         if (thicknessEl) thicknessEl.value = p.thickness || '';
         if (boardEl)     boardEl.value     = p.price_board ? parseInt(p.price_board) : '';
         if (m2El)        m2El.value        = p.price_m2 ? parseInt(p.price_m2) : '';
