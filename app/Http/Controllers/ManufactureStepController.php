@@ -136,7 +136,7 @@ class ManufactureStepController extends Controller
         $search = $request->input('search', '');
         $history = $this->paginateHistory($this->pressingService->getHistory(), $request);
         
-        $woodBoardPrices = \App\Models\WoodBoardPrice::with('type')
+        $woodBoardPrices = \App\Models\WoodBoardPrice::with(['type', 'board'])
             ->orderBy('code', 'asc')
             ->get()
             ->groupBy(function ($price) {
@@ -149,13 +149,16 @@ class ManufactureStepController extends Controller
     public function completePressing(Request $request)
     {
         $request->validate([
-            'product_code' => 'required|string',
+            'product_code' => 'nullable|string',
+            'wood_board_price_id' => 'nullable|integer',
             'notes' => 'nullable|string',
             'action_type' => 'required|string|in:làm lệnh ép,xuất kho ván,ép đơn,ép dự trữ,rollback',
         ]);
 
         $data = $request->all();
-        $data['product_code'] = $this->sanitizeProductCode($data['product_code']);
+        if (!empty($data['product_code'])) {
+            $data['product_code'] = $this->sanitizeProductCode($data['product_code']);
+        }
 
         $res = $this->pressingService->completeOrRollback($data);
 

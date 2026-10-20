@@ -8,70 +8,70 @@
 @section('content')
 <style>
     /* ───────── PRESSING PAGE STYLES ───────── */
-    .purpose-btn {
-        display: flex; align-items: center; justify-content: center;
-        gap: 8px; padding: 10px 16px; border-radius: 10px;
-        font-weight: 700; font-size: 13px; cursor: pointer;
-        border: 2px solid transparent; transition: all .2s;
+    .mode-tab-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        padding: 14px 18px;
+        border-radius: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition: all 0.2s ease;
         flex: 1;
+        text-align: center;
     }
-    .purpose-btn.active-order {
-        background: #ecfdf5; border-color: #10b981;
+    .mode-tab-btn.active-order {
+        background: #eef2ff;
+        border-color: #6366f1;
+        color: #3730a3;
+        box-shadow: 0 4px 12px -2px rgba(99, 102, 241, 0.15);
+    }
+    .mode-tab-btn.active-stock {
+        background: #ecfdf5;
+        border-color: #10b981;
         color: #065f46;
+        box-shadow: 0 4px 12px -2px rgba(16, 185, 129, 0.15);
     }
-    .purpose-btn.active-stock {
-        background: #eff6ff; border-color: #3b82f6;
-        color: #1e40af;
+    .dark .mode-tab-btn.active-order {
+        background: rgba(99, 102, 241, 0.15);
+        border-color: #818cf8;
+        color: #c7d2fe;
     }
-    .dark .purpose-btn.active-order {
-        background: rgba(16,185,129,.12); border-color: #10b981;
-        color: #6ee7b7;
+    .dark .mode-tab-btn.active-stock {
+        background: rgba(16, 185, 129, 0.15);
+        border-color: #34d399;
+        color: #a7f3d0;
     }
-    .dark .purpose-btn.active-stock {
-        background: rgba(59,130,246,.12); border-color: #3b82f6;
-        color: #93c5fd;
+    .mode-tab-btn:not(.active-order):not(.active-stock) {
+        background: #f8fafc;
+        border-color: #e2e8f0;
+        color: #64748b;
     }
-    .purpose-btn:not(.active-order):not(.active-stock) {
-        background: #f5f5f5; border-color: #e5e7eb;
-        color: #9ca3af;
+    .dark .mode-tab-btn:not(.active-order):not(.active-stock) {
+        background: #1e293b;
+        border-color: #334155;
+        color: #94a3b8;
     }
-    #confirmScanBtn:disabled {
-        opacity: 0.45 !important;
-        cursor: not-allowed !important;
-        pointer-events: none !important;
-        transform: none !important;
-        box-shadow: none !important;
+    .mode-tab-btn:hover:not(.active-order):not(.active-stock) {
+        background: #f1f5f9;
+        border-color: #cbd5e1;
     }
+    .dark .mode-tab-btn:hover:not(.active-order):not(.active-stock) {
+        background: #243044;
+        border-color: #475569;
+    }
+
     #historyTable th, #historyTable td {
         text-align: left !important;
     }
-    /* Progress bar */
-    .press-progress-bar {
-        height: 5px; border-radius: 9999px;
-        background: #e5e7eb; overflow: hidden;
-        flex: 1; min-width: 60px;
-    }
-    .dark .press-progress-bar { background: #404040; }
-    .press-progress-fill {
-        height: 100%; border-radius: 9999px;
-        background: linear-gradient(90deg, #6366f1, #818cf8);
-        transition: width .5s ease;
-    }
-    .status-processing {
-        background: rgba(250,204,21,.15); color: #854d0e;
-        border: 1px solid rgba(250,204,21,.4);
-    }
-    .status-done {
-        background: rgba(16,185,129,.12); color: #065f46;
-        border: 1px solid rgba(16,185,129,.3);
-    }
-    .dark .status-processing { background: rgba(250,204,21,.1); color: #fde047; border-color: rgba(250,204,21,.3); }
-    .dark .status-done       { background: rgba(74,222,128,.1); color: #4ade80; border-color: rgba(74,222,128,.3); }
-    #pressOrdersBody tr { transition: background .15s; }
+
     /* TomSelect modern styling */
     .ts-wrapper.single .ts-control {
         border-radius: 0.75rem !important;
-        padding: 0.8rem 1rem !important;
+        padding: 0.85rem 1rem !important;
         font-size: 0.95rem !important;
         border-color: #d1d5db !important;
         background-color: #f9fafb !important;
@@ -84,8 +84,8 @@
         color: #f5f5f5 !important;
     }
     .ts-wrapper.single.focus .ts-control {
-        border-color: #6366f1 !important;
-        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2) !important;
+        border-color: #10b981 !important;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2) !important;
     }
     .ts-dropdown {
         z-index: 99999 !important;
@@ -103,18 +103,18 @@
         font-size: 11px !important;
         font-weight: 800 !important;
         letter-spacing: 0.05em !important;
-        padding: 6px 12px !important;
+        padding: 7px 12px !important;
         background: #f1f5f9 !important;
-        color: #4f46e5 !important;
+        color: #059669 !important;
         border-bottom: 1px solid #e2e8f0 !important;
     }
     .dark .ts-dropdown .optgroup-header {
         background: #262626 !important;
-        color: #818cf8 !important;
+        color: #34d399 !important;
         border-color: #383838 !important;
     }
     .ts-dropdown .option {
-        padding: 8px 14px !important;
+        padding: 9px 14px !important;
         font-size: 13px !important;
         border-bottom: 1px solid rgba(0,0,0,0.03) !important;
     }
@@ -122,17 +122,17 @@
         border-bottom: 1px solid rgba(255,255,255,0.05) !important;
     }
     .ts-dropdown .option.active, .ts-dropdown .option:hover {
-        background-color: #eef2ff !important;
-        color: #4338ca !important;
+        background-color: #ecfdf5 !important;
+        color: #047857 !important;
     }
     .dark .ts-dropdown .option.active, .dark .ts-dropdown .option:hover {
-        background-color: #312e81 !important;
-        color: #e0e7ff !important;
+        background-color: #064e3b !important;
+        color: #a7f3d0 !important;
     }
 </style>
 
 <div class="-mt-4 mb-6">
-    <p class="text-sm text-neutral-500 dark:text-neutral-400">Kiểm soát quy trình lập lệnh và ép ván dán mặt Acrylic / Laminate theo đơn hàng hoặc dự trữ kho.</p>
+    <p class="text-sm text-neutral-500 dark:text-neutral-400">Kiểm soát quy trình dán ép ván Acrylic / Laminate theo đơn hàng (trừ kho) hoặc ép dự trữ kho (+1 kho).</p>
 </div>
 
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -144,120 +144,74 @@
                 {{-- Header --}}
                 <div class="flex items-center justify-between border-b border-neutral-100 dark:border-neutral-800 pb-3 sm:pb-4">
                     <div class="flex items-center gap-2">
-                        <iconify-icon icon="lucide:layers" class="text-xl text-indigo-600"></iconify-icon>
+                        <iconify-icon icon="lucide:layers" class="text-xl text-indigo-600 dark:text-indigo-400"></iconify-icon>
                         <span class="font-bold text-neutral-800 dark:text-neutral-100 text-base sm:text-lg">Kiểm soát ép ván dán mặt</span>
                     </div>
+                    <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                        <iconify-icon icon="lucide:zap" class="text-emerald-600 dark:text-emerald-400"></iconify-icon>
+                        Quét tự động ghi nhận
+                    </span>
                 </div>
 
-                {{-- Step 1: Tạo lệnh ép --}}
+                {{-- Mode Selection Toggle --}}
                 <div>
-                    <p class="text-xs font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                        <span class="w-4 h-4 rounded-full bg-indigo-600 text-white flex items-center justify-center font-black text-[9px]">1</span>
-                        Thiết lập lệnh ép mới
-                    </p>
-
-                    {{-- Toggle purpose --}}
-                    <div class="flex gap-2 sm:gap-4 mb-4">
-                        <button type="button" id="btnPurposeOrder" onclick="setPurpose('order')"
-                            class="purpose-btn active-order text-xs sm:text-sm py-2.5 sm:py-3">
-                            <iconify-icon icon="lucide:clipboard-check" class="text-base sm:text-lg"></iconify-icon>
-                            Ép Đơn Hàng
-                        </button>
-                        <button type="button" id="btnPurposeStock" onclick="setPurpose('stock')"
-                            class="purpose-btn text-xs sm:text-sm py-2.5 sm:py-3">
-                            <iconify-icon icon="lucide:archive" class="text-base sm:text-lg"></iconify-icon>
-                            Ép Dự Trữ Kho
-                        </button>
-                    </div>
-
-                    {{-- Material --}}
-                    <div>
-                        <label for="material_type" class="block text-xs sm:text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-2">Loại ván dán mặt Acrylic / Laminate</label>
-                        <select id="material_type"
-                            class="w-full pl-4 py-3 sm:py-3.5 border border-neutral-300 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                            <option value="">-- Chọn loại ván --</option>
-                            @foreach($woodBoardPrices as $typeName => $prices)
-                                <optgroup label="{{ $typeName }}">
-                                    @foreach($prices as $price)
-                                        @php
-                                            $val = $price->code . ($price->name ? ' - ' . $price->name : '') . ($price->thickness ? ' (' . $price->thickness . ')' : '');
-                                        @endphp
-                                        <option value="{{ $val }}">{{ $val }}</option>
-                                    @endforeach
-                                </optgroup>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mt-3 sm:mt-4">
-                        <div>
-                            <label for="qty_needed" class="block text-xs sm:text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-2">Số lượng tấm cần ép</label>
-                            <input type="number" id="qty_needed" min="1" value="1"
-                                class="w-full px-4 py-3 sm:py-3.5 border border-neutral-300 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        </div>
-                        <div>
-                            <label for="order_notes" class="block text-xs sm:text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-2">Ghi chú lệnh</label>
-                            <div class="relative flex items-center">
-                                <span class="absolute text-neutral-400 flex items-center justify-center pointer-events-none" style="left: 14px;">
-                                    <iconify-icon icon="lucide:file-text" class="text-lg"></iconify-icon>
-                                </span>
-                                <input type="text" id="order_notes"
-                                    class="w-full pr-4 py-3 sm:py-3.5 border border-neutral-300 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                    style="padding-left: 42px;"
-                                    placeholder="Cốt MDF thái xanh, dán keo PUR...">
+                    <label class="block text-xs font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-2.5">
+                        Chọn chế độ ép ván
+                    </label>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {{-- Mode 1: Ép theo đơn hàng --}}
+                        <button type="button" id="btnModeOrder" onclick="switchMode('order')"
+                            class="mode-tab-btn active-order">
+                            <div class="flex items-center gap-2 text-sm sm:text-base">
+                                <iconify-icon icon="lucide:clipboard-check" class="text-xl"></iconify-icon>
+                                <span>Ép theo đơn hàng</span>
                             </div>
-                        </div>
-                    </div>
+                            <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300">
+                                Trừ 1 tấm trong kho
+                            </span>
+                        </button>
 
-                    <button type="button" id="createOrderBtn" onclick="createPressOrder()"
-                        class="mt-4 w-full py-3.5 sm:py-4 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all transform hover:-translate-y-0.5 active:scale-[0.99] text-sm sm:text-base"
-                        style="background-color: rgb(79, 70, 229);">
-                        <iconify-icon icon="lucide:plus-circle" class="text-lg sm:text-xl"></iconify-icon>
-                        <span>Xác Nhận Tạo Lệnh Sản Xuất</span>
-                    </button>
+                        {{-- Mode 2: Ép dự trữ kho --}}
+                        <button type="button" id="btnModeStock" onclick="switchMode('stock')"
+                            class="mode-tab-btn">
+                            <div class="flex items-center gap-2 text-sm sm:text-base">
+                                <iconify-icon icon="lucide:archive" class="text-xl"></iconify-icon>
+                                <span>Ép dự trữ kho</span>
+                            </div>
+                            <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300">
+                                +1 tấm vào kho
+                            </span>
+                        </button>
+                    </div>
                 </div>
 
-                {{-- Divider --}}
-                <div class="border-t border-neutral-100 dark:border-neutral-800"></div>
-
-                {{-- Step 2: Quét QR --}}
-                <div>
-                    <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
-                        <p class="text-xs font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider flex items-center gap-1.5 mb-0">
-                            <span class="w-4 h-4 rounded-full bg-indigo-600 text-white flex items-center justify-center font-black text-[9px]">2</span>
-                            Quét mã QR tấm ván để ghi nhận
-                        </p>
-                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                            <iconify-icon icon="lucide:zap" class="text-emerald-600 dark:text-emerald-400"></iconify-icon>
-                            Quét là tự động xong
-                        </span>
-                    </div>
-
-                    {{-- Active order badge --}}
-                    <div id="activeOrderBadge" class="hidden mb-4">
-                        <div class="flex items-center gap-2 p-3 bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-800/50 rounded-xl">
-                            <iconify-icon icon="lucide:link" class="text-indigo-500 text-base flex-shrink-0"></iconify-icon>
-                            <div class="min-w-0 flex-1">
-                                <span class="text-[10px] text-indigo-400 font-bold block uppercase">Đang xử lý lệnh</span>
-                                <span id="activeOrderLabel" class="text-xs font-bold text-indigo-700 dark:text-indigo-300 truncate block"></span>
-                            </div>
-                            <button type="button" onclick="clearActiveOrder()" class="ml-auto text-indigo-400 hover:text-red-500 flex-shrink-0">
-                                <iconify-icon icon="lucide:x" class="text-sm"></iconify-icon>
-                            </button>
+                {{-- ═══════════════════════════════════════════ --}}
+                {{-- SECTION 1: ÉP THEO ĐƠN HÀNG (TRỪ KHO)       --}}
+                {{-- ═══════════════════════════════════════════ --}}
+                <div id="sectionOrderMode" class="flex flex-col gap-4">
+                    <div class="p-3.5 bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-800/50 rounded-xl text-xs text-indigo-900 dark:text-indigo-200 flex items-start gap-2.5">
+                        <iconify-icon icon="lucide:info" class="text-base text-indigo-600 dark:text-indigo-400 mt-0.5 flex-shrink-0"></iconify-icon>
+                        <div>
+                            <strong>Chế độ ÉP THEO ĐƠN HÀNG:</strong> Quét mã QR tem tấm ván hoặc mã Lệnh sản xuất (LSX). Hệ thống tự động ghi nhận hoàn thành bước ép và <strong>trừ 1 tấm ván tương ứng trong kho</strong>.
                         </div>
                     </div>
 
-                    {{-- QR input --}}
+                    {{-- QR scan input --}}
                     <div>
-                        <label for="qr_input" class="block text-xs sm:text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-2">Mã định danh tấm ván / Lệnh sản xuất (QR)</label>
+                        <label for="order_qr_input" class="block text-xs sm:text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
+                            Mã định danh tấm ván / Lệnh sản xuất (QR)
+                        </label>
                         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
-                            <div class="flex-grow">
-                                <input type="text" id="qr_input"
-                                    class="w-full pl-4 pr-4 py-3.5 sm:py-4 border border-neutral-300 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-base sm:text-lg font-mono font-bold"
-                                    placeholder="Quét mã tấm ván (VD: LLE-202610-01-01)...">
+                            <div class="relative flex-grow">
+                                <input type="text" id="order_qr_input" autofocus
+                                    class="w-full pl-4 pr-10 py-3.5 sm:py-4 border border-neutral-300 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-base sm:text-lg font-mono font-bold"
+                                    placeholder="Quét mã tấm ván hoặc LSX...">
+                                <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none">
+                                    <iconify-icon icon="lucide:qr-code" class="text-xl"></iconify-icon>
+                                </span>
                             </div>
-                            <button type="button" onclick="startScanning()"
-                                class="w-full sm:w-auto px-5 py-3.5 sm:py-4 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-xl flex items-center justify-center gap-2 font-bold text-sm sm:text-base transition-all whitespace-nowrap shadow-md">
+                            <button type="button" onclick="startScanning('order')"
+                                class="w-full sm:w-auto px-5 py-3.5 sm:py-4 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-xl flex items-center justify-center gap-2 font-bold text-sm sm:text-base transition-all whitespace-nowrap shadow-md flex-shrink-0">
                                 <iconify-icon icon="lucide:camera" class="text-xl"></iconify-icon>
                                 <span>Quét Camera</span>
                             </button>
@@ -265,31 +219,111 @@
 
                         {{-- Test codes --}}
                         <div class="mt-2.5 flex flex-wrap items-center gap-1.5 text-xs text-neutral-500">
-                            <span>Mã nhập thử (bấm là tự nhận):</span>
-                            <button type="button" onclick="fillQr('LLE-202610-01-01')" class="px-2 py-0.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 rounded border border-neutral-200 dark:border-neutral-700 font-mono text-[11px]">LLE-202610-01-01</button>
-                            <button type="button" onclick="fillQr('LLE-202610-01-02')" class="px-2 py-0.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 rounded border border-neutral-200 dark:border-neutral-700 font-mono text-[11px]">LLE-202610-01-02</button>
-                            <button type="button" onclick="fillQr('LLE-202610-01')" class="px-2 py-0.5 bg-indigo-100 hover:bg-indigo-200 dark:bg-indigo-950/30 dark:hover:bg-indigo-900/40 rounded border border-indigo-200 dark:border-indigo-800/50 font-mono text-[11px] text-indigo-600 dark:text-indigo-400">LLE-202610-01 (lô)</button>
+                            <span class="text-[11px]">Mã thử:</span>
+                            <button type="button" onclick="fillOrderQr('LSX01-001')" class="px-2 py-0.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 rounded border border-neutral-200 dark:border-neutral-700 font-mono text-[10px]">LSX01-001</button>
+                            <button type="button" onclick="fillOrderQr('LSX01-002')" class="px-2 py-0.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 rounded border border-neutral-200 dark:border-neutral-700 font-mono text-[10px]">LSX01-002</button>
+                            <button type="button" onclick="fillOrderQr('LSX01')" class="px-2 py-0.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/40 rounded border border-indigo-200 dark:border-indigo-800 font-mono text-[10px] text-indigo-600 dark:text-indigo-400">LSX01 (Lô)</button>
                         </div>
                     </div>
 
-                    <div class="mt-3 sm:mt-4">
-                        <label for="scan_notes" class="block text-xs sm:text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-2">Ghi chú xác minh</label>
+                    {{-- Order Notes --}}
+                    <div>
+                        <label for="order_notes" class="block text-xs sm:text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-1.5">Ghi chú xác minh (Tùy chọn)</label>
                         <div class="relative flex items-center">
                             <span class="absolute text-neutral-400 flex items-center justify-center pointer-events-none" style="left: 14px;">
                                 <iconify-icon icon="lucide:file-text" class="text-lg"></iconify-icon>
                             </span>
-                            <input type="text" id="scan_notes"
-                                class="w-full pr-4 py-3 sm:py-3.5 border border-neutral-300 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm sm:text-base"
+                            <input type="text" id="order_notes"
+                                class="w-full pr-4 py-2.5 sm:py-3 border border-neutral-300 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
                                 style="padding-left: 42px;"
-                                placeholder="Nhiệt ép đạt chuẩn 180°C...">
+                                placeholder="Nhiệt ép đạt chuẩn, keo PUR...">
                         </div>
                     </div>
 
-                    <button type="button" id="confirmScanBtn" onclick="submitScan()" disabled
-                        class="mt-4 w-full py-3.5 sm:py-4 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all transform hover:-translate-y-0.5 opacity-50 cursor-not-allowed pointer-events-none text-sm sm:text-base"
-                        style="background-color: rgb(79, 70, 229);">
-                        <iconify-icon icon="lucide:check-circle" class="text-xl" id="confirmBtnIcon"></iconify-icon>
-                        <span id="confirmBtnText">Ghi nhận quy trình dán ép hoàn tất</span>
+                    {{-- Submit Button --}}
+                    <button type="button" id="btnSubmitOrder" onclick="submitOrderPress()"
+                        class="mt-1 w-full py-3.5 sm:py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all transform hover:-translate-y-0.5 active:scale-[0.99] text-sm sm:text-base">
+                        <iconify-icon icon="lucide:check-circle" class="text-xl"></iconify-icon>
+                        <span>Xác nhận Ép theo đơn hàng (Trừ 1 tấm kho)</span>
+                    </button>
+                </div>
+
+                {{-- ═══════════════════════════════════════════ --}}
+                {{-- SECTION 2: ÉP DỰ TRỮ KHO (+1 TẤM VÀO KHO)   --}}
+                {{-- ═══════════════════════════════════════════ --}}
+                <div id="sectionStockMode" class="flex flex-col gap-4 hidden">
+                    <div class="p-3.5 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/50 rounded-xl text-xs text-emerald-900 dark:text-emerald-200 flex items-start gap-2.5">
+                        <iconify-icon icon="lucide:info" class="text-base text-emerald-600 dark:text-emerald-400 mt-0.5 flex-shrink-0"></iconify-icon>
+                        <div>
+                            <strong>Chế độ ÉP DỰ TRỮ KHO:</strong> Chọn loại ván cần ép hoặc quét mã ván. Khi xác nhận, hệ thống sẽ ghi nhận hoàn thành ép và <strong>cộng 1 tấm ván vào kho</strong>.
+                        </div>
+                    </div>
+
+                    {{-- Material dropdown --}}
+                    <div>
+                        <label for="stock_wood_board_id" class="block text-xs sm:text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
+                            Chọn loại ván dán mặt cần ép dự trữ
+                        </label>
+                        <select id="stock_wood_board_id"
+                            class="w-full pl-4 py-3 sm:py-3.5 border border-neutral-300 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <option value="">-- Chọn loại ván dán mặt --</option>
+                            @foreach($woodBoardPrices as $typeName => $prices)
+                                <optgroup label="{{ $typeName }}">
+                                    @foreach($prices as $price)
+                                        @php
+                                            $stockText = isset($price->stock) ? " (Tồn: {$price->stock} tấm)" : "";
+                                            $valLabel = $price->code . ($price->name ? ' - ' . $price->name : '') . ($price->thickness ? ' [' . $price->thickness . ']' : '') . $stockText;
+                                        @endphp
+                                        <option value="{{ $price->id }}" data-code="{{ $price->code }}" data-name="{{ $price->name }}">
+                                            {{ $valLabel }}
+                                        </option>
+                                    @endforeach
+                                </optgroup>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    {{-- Or scan board QR / code --}}
+                    <div>
+                        <label for="stock_qr_input" class="block text-xs sm:text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
+                            Hoặc quét mã ván / mã QR ván dán mặt
+                        </label>
+                        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
+                            <div class="relative flex-grow">
+                                <input type="text" id="stock_qr_input"
+                                    class="w-full pl-4 pr-10 py-3 sm:py-3.5 border border-neutral-300 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm sm:text-base font-mono font-bold"
+                                    placeholder="Quét mã ván (VD: GV103.BA, GV01)...">
+                                <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none">
+                                    <iconify-icon icon="lucide:qr-code" class="text-xl"></iconify-icon>
+                                </span>
+                            </div>
+                            <button type="button" onclick="startScanning('stock')"
+                                class="w-full sm:w-auto px-5 py-3 sm:py-3.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl flex items-center justify-center gap-2 font-bold text-sm sm:text-base transition-all whitespace-nowrap shadow-md flex-shrink-0">
+                                <iconify-icon icon="lucide:camera" class="text-xl"></iconify-icon>
+                                <span>Quét Camera</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    {{-- Stock Notes --}}
+                    <div>
+                        <label for="stock_notes" class="block text-xs sm:text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-1.5">Ghi chú ép dự trữ (Tùy chọn)</label>
+                        <div class="relative flex items-center">
+                            <span class="absolute text-neutral-400 flex items-center justify-center pointer-events-none" style="left: 14px;">
+                                <iconify-icon icon="lucide:file-text" class="text-lg"></iconify-icon>
+                            </span>
+                            <input type="text" id="stock_notes"
+                                class="w-full pr-4 py-2.5 sm:py-3 border border-neutral-300 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
+                                style="padding-left: 42px;"
+                                placeholder="Ép ván dự trữ kho, keo PUR...">
+                        </div>
+                    </div>
+
+                    {{-- Submit Button --}}
+                    <button type="button" id="btnSubmitStock" onclick="submitStockPress()"
+                        class="mt-1 w-full py-3.5 sm:py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all transform hover:-translate-y-0.5 active:scale-[0.99] text-sm sm:text-base">
+                        <iconify-icon icon="lucide:plus-circle" class="text-xl"></iconify-icon>
+                        <span>+1 Tấm Vào Kho (Xác Nhận Ép Dự Trữ)</span>
                     </button>
                 </div>
 
@@ -306,10 +340,9 @@
                 <iconify-icon icon="lucide:chevron-down" class="text-lg transition-transform duration-200"></iconify-icon>
             </summary>
             <div class="mt-3 pt-3 border-t border-indigo-500/50 text-xs text-indigo-100 space-y-2">
-                <p>1. Chọn mục đích ép: <strong>Theo đơn hàng</strong> hoặc <strong>Dự trữ kho</strong>.</p>
-                <p>2. Chọn loại ván, số lượng và bấm <strong>"Xác nhận tạo lệnh"</strong>.</p>
-                <p>3. Chọn lệnh đang xử lý trong danh sách bên dưới.</p>
-                <p>4. <strong>Quét mã QR</strong> từng tấm — hệ thống tự động ghi nhận không cần bấm nút.</p>
+                <p>1. <strong>Ép theo đơn hàng:</strong> Quét mã QR tấm ván -> Hoàn thành bước ép và <strong>-1 tấm trong kho</strong>.</p>
+                <p>2. <strong>Ép dự trữ kho:</strong> Chọn loại ván hoặc quét mã ván -> Bấm xác nhận để <strong>+1 tấm vào kho</strong>.</p>
+                <p>3. Xem toàn bộ lịch sử thao tác và biến động kho bên dưới.</p>
             </div>
         </details>
 
@@ -320,20 +353,26 @@
                     <iconify-icon icon="lucide:help-circle"></iconify-icon>
                     Hướng dẫn thao tác
                 </h5>
-                <ol class="space-y-3 text-sm text-indigo-100 list-decimal list-inside pl-1">
-                    <li>Chọn mục đích ép: <strong>Theo đơn hàng</strong> hoặc <strong>Dự trữ kho</strong>.</li>
-                    <li>Chọn loại ván, nhập số lượng và ghi chú lệnh.</li>
-                    <li>Bấm <strong>"Xác nhận tạo lệnh"</strong>.</li>
-                    <li>Click vào dòng lệnh bên dưới để chọn làm lệnh đang xử lý.</li>
-                    <li><strong>Quét mã QR</strong> từng tấm — tự động ghi nhận ngay lập tức.</li>
+                <ol class="space-y-4 text-sm text-indigo-100 list-decimal list-inside pl-1">
+                    <li>
+                        <strong>Ép theo đơn hàng:</strong><br>
+                        <span class="text-xs text-indigo-200">Dùng súng quét hoặc camera quét mã QR tem tấm -> Hệ thống tự động ghi nhận và <strong>trừ 1 tấm trong kho</strong>.</span>
+                    </li>
+                    <li>
+                        <strong>Ép dự trữ kho:</strong><br>
+                        <span class="text-xs text-indigo-200">Chọn loại ván hoặc quét mã ván -> Bấm xác nhận để <strong>cộng 1 tấm vào kho</strong>.</span>
+                    </li>
+                    <li>
+                        <strong>Tự động nhận diện:</strong><br>
+                        <span class="text-xs text-indigo-200">Hệ thống tự động liên kết vật tư tấm ván trong kho và lưu vào thẻ kho (Sổ kho).</span>
+                    </li>
                 </ol>
 
                 <div class="mt-6 pt-5 border-t border-indigo-500/50">
-                    <span class="text-xs text-indigo-200 block font-bold uppercase tracking-wider mb-2">Quy trình chuẩn:</span>
-                    <ul class="space-y-2 text-sm text-indigo-100 list-disc list-inside pl-1">
-                        <li>Tạo lệnh ép (chọn loại ván)</li>
-                        <li>Quét mã từng tấm sau khi ép xong (tự động nhận)</li>
-                        <li>Lệnh tự hoàn tất khi đủ số lượng</li>
+                    <span class="text-xs text-indigo-200 block font-bold uppercase tracking-wider mb-2">Quy tắc kho:</span>
+                    <ul class="space-y-2 text-sm text-indigo-100 list-disc list-inside pl-1 text-xs">
+                        <li><strong class="text-white">Ép theo đơn hàng</strong>: Trừ 1 tấm (-1)</li>
+                        <li><strong class="text-white">Ép dự trữ kho</strong>: Cộng 1 tấm (+1)</li>
                     </ul>
                 </div>
             </div>
@@ -353,47 +392,9 @@
 </div>
 
 {{-- ═══════════════════════════════════════════ --}}
-{{-- PRESS ORDERS MANAGEMENT TABLE              --}}
+{{-- LỊCH SỬ ÉP VÁN                             --}}
 {{-- ═══════════════════════════════════════════ --}}
 <div class="mt-8 card bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-sm overflow-hidden">
-    <div class="card-header border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/50 py-4 px-6 flex items-center flex-wrap gap-3 justify-between">
-        <h5 class="text-lg font-bold text-neutral-800 dark:text-neutral-100 mb-0 flex items-center gap-2">
-            Quản lý lệnh ép &amp; tấm ván
-        </h5>
-        <span class="text-sm text-neutral-500">Số lệnh thực thi: <strong id="activeOrderCount" class="text-indigo-600 dark:text-indigo-400">0</strong></span>
-    </div>
-
-    <div class="card-body p-6">
-        <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse text-sm">
-                <thead>
-                    <tr class="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50 whitespace-nowrap">
-                        <th class="py-3 px-4 font-semibold text-neutral-600 dark:text-neutral-400">MÃ LỆNH</th>
-                        <th class="py-3 px-4 font-semibold text-neutral-600 dark:text-neutral-400">DÒNG VẬT LIỆU</th>
-                        <th class="py-3 px-4 font-semibold text-neutral-600 dark:text-neutral-400">MỤC ĐÍCH</th>
-                        <th class="py-3 px-4 font-semibold text-neutral-600 dark:text-neutral-400">SỐ LƯỢNG CẦN</th>
-                        <th class="py-3 px-4 font-semibold text-neutral-600 dark:text-neutral-400">SẢN LƯỢNG ĐÃ ÉP</th>
-                        <th class="py-3 px-4 font-semibold text-neutral-600 dark:text-neutral-400">TRẠNG THÁI</th>
-                        <th class="py-3 px-4 font-semibold text-neutral-600 dark:text-neutral-400">GHI CHÚ</th>
-                        <th class="py-3 px-4 font-semibold text-neutral-600 dark:text-neutral-400 text-right">HÀNH ĐỘNG</th>
-                    </tr>
-                </thead>
-                <tbody id="pressOrdersBody" class="divide-y divide-neutral-100 dark:divide-neutral-800">
-                    <tr id="emptyOrdersRow">
-                        <td colspan="8" class="py-10 text-center text-neutral-400 dark:text-neutral-500">
-                            Chưa có lệnh ép nào. Tạo lệnh mới từ form bên trên.
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-{{-- ═══════════════════════════════════════════ --}}
-{{-- LỊCH SỬ QUY TRÌNH (server-side)            --}}
-{{-- ═══════════════════════════════════════════ --}}
-<div class="mt-6 card bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-sm overflow-hidden">
     <div class="card-header border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/50 py-4 px-6 flex items-center flex-wrap gap-3 justify-between">
         <h5 class="text-lg font-bold text-neutral-800 dark:text-neutral-100 mb-0 flex items-center gap-2">
             Lịch sử ép ván
@@ -434,7 +435,7 @@
                     <tr class="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50 whitespace-nowrap">
                         <th class="py-3 px-4 font-semibold text-neutral-600 dark:text-neutral-400">MÃ ĐỊNH DANH</th>
                         <th class="py-3 px-4 font-semibold text-neutral-600 dark:text-neutral-400">HÀNH ĐỘNG</th>
-                        <th class="py-3 px-4 font-semibold text-neutral-600 dark:text-neutral-400">TÊN SẢN PHẨM</th>
+                        <th class="py-3 px-4 font-semibold text-neutral-600 dark:text-neutral-400">TÊN SẢN PHẨM / VÁN</th>
                         <th class="py-3 px-4 font-semibold text-neutral-600 dark:text-neutral-400">GHI CHÚ</th>
                         <th class="py-3 px-4 font-semibold text-neutral-600 dark:text-neutral-400">NGƯỜI THAO TÁC</th>
                     </tr>
@@ -449,12 +450,12 @@
                         </td>
                         <td class="py-3 px-4">
                             @if($item->action === 'ép đơn')
-                            <span class="text-xs px-2.5 py-1 rounded-full font-semibold inline-flex items-center gap-1" style="background-color: rgba(16,185,129,.1); color: rgb(5,150,105); border: 1px solid rgba(16,185,129,.3);">
-                                <iconify-icon icon="lucide:check-circle" class="text-xs"></iconify-icon> ÉP ĐƠN
+                            <span class="text-xs px-2.5 py-1 rounded-full font-semibold inline-flex items-center gap-1" style="background-color: rgba(99,102,241,.1); color: rgb(79,70,229); border: 1px solid rgba(99,102,241,.3);">
+                                <iconify-icon icon="lucide:clipboard-check" class="text-xs"></iconify-icon> ÉP ĐƠN (-1 KHO)
                             </span>
                             @elseif($item->action === 'ép dự trữ')
-                            <span class="text-xs px-2.5 py-1 rounded-full font-semibold inline-flex items-center gap-1" style="background-color: rgba(59,130,246,.1); color: rgb(37,99,235); border: 1px solid rgba(59,130,246,.3);">
-                                <iconify-icon icon="lucide:archive" class="text-xs"></iconify-icon> ÉP DỰ TRỮ
+                            <span class="text-xs px-2.5 py-1 rounded-full font-semibold inline-flex items-center gap-1" style="background-color: rgba(16,185,129,.1); color: rgb(5,150,105); border: 1px solid rgba(16,185,129,.3);">
+                                <iconify-icon icon="lucide:archive" class="text-xs"></iconify-icon> ÉP DỰ TRỮ (+1 KHO)
                             </span>
                             @elseif($item->action === 'quay lại ép')
                             <span class="text-xs px-2.5 py-1 rounded-full font-semibold inline-flex items-center gap-1" style="background-color: rgba(249,115,22,.1); color: rgb(234,88,12); border: 1px solid rgba(249,115,22,.3);">
@@ -481,9 +482,10 @@
                         </td>
                     </tr>
                     @empty
-                    <tr id="noHistoryRow">
-                        <td colspan="5" class="py-8 text-center text-neutral-400 dark:text-neutral-500">
-                            Chưa có lịch sử ép ván nào.
+                    <tr>
+                        <td colspan="5" class="py-12 text-center text-neutral-400 dark:text-neutral-500">
+                            <iconify-icon icon="lucide:inbox" class="text-4xl mb-2"></iconify-icon>
+                            <p class="mb-0">Chưa có lịch sử ép ván nào được ghi nhận.</p>
                         </td>
                     </tr>
                     @endforelse
@@ -491,12 +493,8 @@
             </table>
         </div>
 
-        @if($history instanceof \Illuminate\Pagination\LengthAwarePaginator && $history->total() > $perPage)
-        <div class="flex items-center justify-between flex-wrap gap-2 mt-6">
-            <span class="text-secondary-light text-sm">
-                Hiển thị {{ $history->firstItem() ?? 0 }} đến {{ $history->lastItem() ?? 0 }}
-                trong tổng {{ $history->total() }} bản ghi lịch sử
-            </span>
+        @if($history->hasPages())
+        <div class="mt-4 pt-4 border-t border-neutral-100 dark:border-neutral-800 flex justify-end">
             {{ $history->links() }}
         </div>
         @endif
@@ -522,23 +520,6 @@
     </div>
 </div>
 
-{{-- Sheet Codes Modal --}}
-<div id="sheetCodesModal" class="fixed inset-0 bg-neutral-900/80 backdrop-blur-sm z-50 flex items-center justify-center hidden">
-    <div class="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl w-full max-w-lg mx-4 overflow-hidden shadow-2xl">
-        <div class="px-5 py-4 border-b border-neutral-100 dark:border-neutral-800 flex justify-between items-center">
-            <span class="font-bold text-neutral-800 dark:text-neutral-100 flex items-center gap-2">
-                <iconify-icon icon="lucide:list" class="text-indigo-600 text-lg"></iconify-icon>
-                Mã từng tấm trong lệnh
-            </span>
-            <button type="button" onclick="closeSheetModal()" class="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 p-1 rounded-lg">
-                <iconify-icon icon="lucide:x" class="text-xl"></iconify-icon>
-            </button>
-        </div>
-        <div class="p-5 flex flex-col gap-3 max-h-[60vh] overflow-y-auto" id="sheetCodesContent">
-        </div>
-    </div>
-</div>
-
 {{-- Toast Container --}}
 <div id="toastContainer" class="fixed top-4 left-1/2 -translate-x-1/2 sm:left-auto sm:right-5 sm:translate-x-0 sm:bottom-5 sm:top-auto z-50 flex flex-col gap-2 w-[92vw] sm:w-auto max-w-md pointer-events-none"></div>
 
@@ -547,171 +528,102 @@
 const PRESSING_ROUTE = '{{ route("processes.pressing.complete") }}';
 const CSRF_TOKEN     = '{{ csrf_token() }}';
 
-// ─────────────────────────────────────────
-// STATE
-// ─────────────────────────────────────────
-let currentPurpose    = "order";          // "order" | "stock"
-let pressOrders       = [];               // in-memory list of pressing orders
-let activeOrderId     = null;             // currently selected order id for scanning
+let currentMode       = 'order'; // 'order' | 'stock'
 let html5QrCode       = null;
-let materialTomSelect = null;
-
-const STORAGE_KEY  = "press_orders_v2";
+let stockTomSelect    = null;
+let scanTargetMode    = 'order';
 
 // ─────────────────────────────────────────
 // INIT
 // ─────────────────────────────────────────
-document.addEventListener("DOMContentLoaded", () => {
-    loadFromStorage();
-    renderOrdersTable();
-    bindQrInput();
-
-    // Khởi tạo TomSelect thông minh cho chọn loại ván
-    if (typeof TomSelect !== "undefined") {
-        const matEl = document.getElementById("material_type");
-        if (matEl && !matEl.tomselect) {
-            materialTomSelect = new TomSelect(matEl, {
-                placeholder: "🔍 Gõ tìm mã ván (Vd: GV01, PARC, Melamine...) hoặc chọn danh mục...",
-                allowEmptyOption: true,
-                maxOptions: null,
-                lockOptgroupOrder: true,
-                searchField: ["text", "value"],
-                render: {
-                    optgroup_header: function(data, escape) {
-                        return '<div class="optgroup-header">' + escape(data.label) + '</div>';
-                    },
-                    option: function(data, escape) {
-                        return '<div class="option flex items-center justify-between">' +
-                               '<span class="font-medium">' + escape(data.text) + '</span>' +
-                               '</div>';
-                    }
+document.addEventListener('DOMContentLoaded', () => {
+    // Init TomSelect for stock selection
+    const matSelect = document.getElementById('stock_wood_board_id');
+    if (matSelect && typeof TomSelect !== 'undefined' && !matSelect.tomselect) {
+        stockTomSelect = new TomSelect(matSelect, {
+            placeholder: "🔍 Gõ tìm mã ván (Vd: GV01, GV103, Melamine...) hoặc chọn từ danh sách...",
+            allowEmptyOption: true,
+            maxOptions: null,
+            lockOptgroupOrder: true,
+            searchField: ["text", "value"],
+            render: {
+                optgroup_header: function(data, escape) {
+                    return '<div class="optgroup-header">' + escape(data.label) + '</div>';
+                },
+                option: function(data, escape) {
+                    return '<div class="option flex items-center justify-between">' +
+                           '<span class="font-medium">' + escape(data.text) + '</span>' +
+                           '</div>';
                 }
-            });
-        }
+            }
+        });
+    }
+
+    // Bind Enter on inputs
+    const orderInput = document.getElementById('order_qr_input');
+    if (orderInput) {
+        orderInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                submitOrderPress();
+            }
+        });
+    }
+
+    const stockInput = document.getElementById('stock_qr_input');
+    if (stockInput) {
+        stockInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                submitStockPress();
+            }
+        });
     }
 });
 
 // ─────────────────────────────────────────
-// PURPOSE SELECTION
+// MODE SWITCHING
 // ─────────────────────────────────────────
-function setPurpose(p) {
-    currentPurpose = p;
-    const btnO = document.getElementById("btnPurposeOrder");
-    const btnS = document.getElementById("btnPurposeStock");
+function switchMode(mode) {
+    currentMode = mode;
+    const btnOrder = document.getElementById('btnModeOrder');
+    const btnStock = document.getElementById('btnModeStock');
+    const secOrder = document.getElementById('sectionOrderMode');
+    const secStock = document.getElementById('sectionStockMode');
 
-    btnO.className = "purpose-btn" + (p === "order" ? " active-order" : "");
-    btnS.className = "purpose-btn" + (p === "stock" ? " active-stock" : "");
-}
-
-// ─────────────────────────────────────────
-// CREATE PRESSING ORDER
-// ─────────────────────────────────────────
-function createPressOrder() {
-    const material = (materialTomSelect ? materialTomSelect.getValue() : document.getElementById("material_type").value).trim();
-    const qty      = parseInt(document.getElementById("qty_needed").value) || 1;
-    const notes    = document.getElementById("order_notes").value.trim();
-
-    if (!material) {
-        showToast("Vui lòng chọn loại ván dán mặt!", "error");
-        return;
-    }
-    if (qty < 1) {
-        showToast("Số lượng tấm phải ít nhất 1.", "error");
-        return;
-    }
-
-    const now   = new Date();
-    const stamp = now.toLocaleDateString("vi-VN", {day:"2-digit", month:"2-digit"}).replace("/","-");
-    const seq   = pressOrders.filter(o => o.date === stamp).length + 1;
-    const seqPad = String(seq).padStart(2, "0");
-    const id    = `LLE-${stamp}-${seqPad}`;
-
-    const order = {
-        id,
-        purpose:  currentPurpose,          // "order" | "stock"
-        material,
-        qty_needed: qty,
-        qty_done:   0,
-        notes,
-        status:   "processing",            // "processing" | "done"
-        date:     stamp,
-        created:  now.toLocaleString("vi-VN"),
-        scans:    []                        // individual scan logs
-    };
-
-    pressOrders.unshift(order);
-    saveToStorage();
-    renderOrdersTable();
-
-    // reset form
-    if (materialTomSelect) {
-        materialTomSelect.clear();
+    if (mode === 'order') {
+        btnOrder.className = 'mode-tab-btn active-order';
+        btnStock.className = 'mode-tab-btn';
+        secOrder.classList.remove('hidden');
+        secStock.classList.add('hidden');
+        setTimeout(() => document.getElementById('order_qr_input')?.focus(), 50);
     } else {
-        document.getElementById("material_type").value = "";
+        btnOrder.className = 'mode-tab-btn';
+        btnStock.className = 'mode-tab-btn active-stock';
+        secOrder.classList.add('hidden');
+        secStock.classList.remove('hidden');
+        setTimeout(() => {
+            if (stockTomSelect) stockTomSelect.focus();
+            else document.getElementById('stock_qr_input')?.focus();
+        }, 50);
     }
-    document.getElementById("qty_needed").value       = "1";
-    document.getElementById("order_notes").value      = "";
-
-    showToast(`Đã tạo lệnh ép <strong>${id}</strong> thành công!`, "success");
-
-    // Auto-select as active order
-    selectActiveOrder(id);
 }
 
-// ─────────────────────────────────────────
-// ACTIVE ORDER (for scanning)
-// ─────────────────────────────────────────
-function selectActiveOrder(id) {
-    activeOrderId = id;
-    const order   = pressOrders.find(o => o.id === id);
-    if (!order) return;
-
-    const badge = document.getElementById("activeOrderBadge");
-    const label = document.getElementById("activeOrderLabel");
-    badge.classList.remove("hidden");
-    label.textContent = `${order.id} — ${order.material} (${order.purpose === "order" ? "Ép đơn hàng" : "Ép dự trữ kho"})`;
-    document.getElementById("qr_input").focus();
+function fillOrderQr(code) {
+    const inp = document.getElementById('order_qr_input');
+    if (inp) {
+        inp.value = code;
+        submitOrderPress();
+    }
 }
 
-function clearActiveOrder() {
-    activeOrderId = null;
-    document.getElementById("activeOrderBadge").classList.add("hidden");
-    document.getElementById("activeOrderLabel").textContent = "";
-}
-
-function sanitizeProductCode(code) {
-    if (!code) return "";
+function sanitizeCode(code) {
+    if (!code) return '';
     code = code.trim();
-    if (code.includes("_")) {
-        code = code.split("_")[0].trim();
+    if (code.includes('_')) {
+        code = code.split('_')[0].trim();
     }
     return code;
-}
-
-// ─────────────────────────────────────────
-// QR INPUT BINDING
-// ─────────────────────────────────────────
-function bindQrInput() {
-    const inp = document.getElementById("qr_input");
-    inp.addEventListener("input", () => {
-        const val = inp.value;
-        const clean = sanitizeProductCode(val);
-        if (val !== clean) inp.value = clean;
-        const has = inp.value.trim().length > 0;
-        document.getElementById("confirmScanBtn").disabled = !has;
-    });
-    inp.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" && inp.value.trim()) {
-            e.preventDefault();
-            submitScan();
-        }
-    });
-}
-
-function fillQr(code) {
-    document.getElementById("qr_input").value = code;
-    document.getElementById("confirmScanBtn").disabled = false;
-    submitScan();
 }
 
 // ─────────────────────────────────────────
@@ -748,338 +660,260 @@ function playBeep(isSuccess = true) {
 }
 
 // ─────────────────────────────────────────
-// SUBMIT SCAN → API
+// TOAST NOTIFICATION
 // ─────────────────────────────────────────
-async function submitScan() {
-    const inp   = document.getElementById("qr_input");
-    const code  = sanitizeProductCode(inp.value);
-    inp.value   = code;
-    const notes = document.getElementById("scan_notes").value.trim();
+function showToast(message, type = 'success') {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+
+    const toast = document.createElement('div');
+    const isSuccess = type === 'success';
+
+    toast.className = `p-4 rounded-xl shadow-lg border flex items-center gap-3 transition-all transform duration-300 translate-y-2 opacity-0 text-sm font-medium pointer-events-auto ${
+        isSuccess
+            ? 'bg-emerald-600 text-white border-emerald-500 shadow-emerald-900/20'
+            : 'bg-rose-600 text-white border-rose-500 shadow-rose-900/20'
+    }`;
+
+    toast.innerHTML = `
+        <iconify-icon icon="${isSuccess ? 'lucide:check-circle' : 'lucide:alert-circle'}" class="text-xl flex-shrink-0"></iconify-icon>
+        <div class="flex-1">${message}</div>
+    `;
+
+    container.appendChild(toast);
+
+    setTimeout(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+    }, 10);
+
+    setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+    }, 4000);
+}
+
+// ─────────────────────────────────────────
+// SUBMIT: ÉP THEO ĐƠN HÀNG (TRỪ 1 TẤM KHO)
+// ─────────────────────────────────────────
+async function submitOrderPress() {
+    const input = document.getElementById('order_qr_input');
+    const code = sanitizeCode(input.value);
+    input.value = code;
+    const notes = document.getElementById('order_notes').value.trim();
 
     if (!code) {
         playBeep(false);
-        showToast("Vui lòng nhập hoặc quét mã QR!", "error");
+        showToast('Vui lòng quét hoặc nhập mã QR tấm ván / Lệnh sản xuất!', 'error');
+        input.focus();
         return;
     }
 
-    // Determine action_type
-    let actionType;
-    if (activeOrderId) {
-        const order = pressOrders.find(o => o.id === activeOrderId);
-        actionType  = order && order.purpose === "stock" ? "ép dự trữ" : "ép đơn";
-    } else {
-        // No active order: default to "ép đơn"
-        actionType = "ép đơn";
-    }
-
-    // UI: loading state
-    const btn = document.getElementById("confirmScanBtn");
-    const savedHTML = btn.innerHTML;
+    const btn = document.getElementById('btnSubmitOrder');
+    const originalHtml = btn.innerHTML;
     btn.disabled = true;
-    btn.innerHTML = `<iconify-icon icon="lucide:loader-2" class="text-base animate-spin"></iconify-icon><span>Đang xử lý...</span>`;
+    btn.innerHTML = `<iconify-icon icon="lucide:loader-2" class="text-xl animate-spin"></iconify-icon><span>Đang ghi nhận...</span>`;
 
     try {
         const resp = await fetch(PRESSING_ROUTE, {
-            method: "POST",
+            method: 'POST',
             headers: {
-                "Content-Type": "application/json",
-                "X-CSRF-TOKEN":  CSRF_TOKEN
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': CSRF_TOKEN
             },
-            body: JSON.stringify({ product_code: code, notes, action_type: actionType })
+            body: JSON.stringify({
+                product_code: code,
+                notes: notes,
+                action_type: 'ép đơn'
+            })
         });
 
         const res = await resp.json();
-        btn.innerHTML = savedHTML;
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
 
         if (res.success) {
             playBeep(true);
-            showToast(res.message, "success");
+            showToast(res.message, 'success');
+            input.value = '';
+            document.getElementById('order_notes').value = '';
+            input.focus();
 
-            // Update active order progress
-            if (activeOrderId) {
-                const order = pressOrders.find(o => o.id === activeOrderId);
-                if (order) {
-                    order.qty_done  = Math.min(order.qty_done + 1, order.qty_needed);
-                    order.scans.push({ code, notes, time: new Date().toLocaleString("vi-VN"), action: actionType });
-                    if (order.qty_done >= order.qty_needed) {
-                        order.status = "done";
-                    }
-                    saveToStorage();
-                    renderOrdersTable();
-                }
+            // Prepend row to history table
+            if (res.data) {
+                prependHistoryRow(res.data);
             }
-
-            // Clear inputs
-            document.getElementById("qr_input").value   = "";
-            document.getElementById("scan_notes").value = "";
-            btn.disabled = true;
-            document.getElementById("qr_input").focus();
-
-            // Prepend history row
-            prependHistoryRow(res.data);
-
         } else {
             playBeep(false);
-            showToast(res.message || "Có lỗi xảy ra!", "error");
-            btn.disabled = false;
+            showToast(res.message || 'Có lỗi xảy ra, vui lòng thử lại.', 'error');
         }
-    } catch (err) {
+    } catch (e) {
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
         playBeep(false);
-        btn.innerHTML = savedHTML;
-        btn.disabled  = false;
-        showToast("Không thể kết nối máy chủ!", "error");
+        showToast('Lỗi kết nối máy chủ!', 'error');
     }
 }
 
 // ─────────────────────────────────────────
-// RENDER ORDERS TABLE
+// SUBMIT: ÉP DỰ TRỮ KHO (+1 TẤM VÀO KHO)
 // ─────────────────────────────────────────
-function renderOrdersTable() {
-    const tbody = document.getElementById("pressOrdersBody");
-    const empty = document.getElementById("emptyOrdersRow");
+async function submitStockPress() {
+    let priceId = stockTomSelect ? stockTomSelect.getValue() : document.getElementById('stock_wood_board_id').value;
+    const qrInput = document.getElementById('stock_qr_input');
+    let code = sanitizeCode(qrInput.value);
+    qrInput.value = code;
+    const notes = document.getElementById('stock_notes').value.trim();
 
-    // Remove old rows (keep empty row)
-    Array.from(tbody.rows).forEach(r => {
-        if (r.id !== "emptyOrdersRow") r.remove();
-    });
-
-    if (pressOrders.length === 0) {
-        empty.style.display = "";
-        document.getElementById("activeOrderCount").textContent = "0";
+    if (!priceId && !code) {
+        playBeep(false);
+        showToast('Vui lòng chọn loại ván hoặc quét mã ván cần ép dự trữ!', 'error');
         return;
     }
 
-    empty.style.display = "none";
-    const processing = pressOrders.filter(o => o.status === "processing").length;
-    document.getElementById("activeOrderCount").textContent = processing;
+    const btn = document.getElementById('btnSubmitStock');
+    const originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = `<iconify-icon icon="lucide:loader-2" class="text-xl animate-spin"></iconify-icon><span>Đang cộng kho...</span>`;
 
-    pressOrders.forEach(order => {
-        const pct     = order.qty_needed > 0 ? Math.round(order.qty_done / order.qty_needed * 100) : 0;
-        const isDone  = order.status === "done";
-        const isActive = order.id === activeOrderId;
+    try {
+        const resp = await fetch(PRESSING_ROUTE, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': CSRF_TOKEN
+            },
+            body: JSON.stringify({
+                wood_board_price_id: priceId || null,
+                product_code: code || null,
+                notes: notes,
+                action_type: 'ép dự trữ'
+            })
+        });
 
-        const purposeBadge = order.purpose === "order"
-            ? `<span class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50">
-                <iconify-icon icon="lucide:clipboard-check"></iconify-icon> ÉP ĐƠN</span>`
-            : `<span class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800/50">
-                <iconify-icon icon="lucide:archive"></iconify-icon> DỰ TRỮ</span>`;
+        const res = await resp.json();
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
 
-        const statusBadge = isDone
-            ? `<span class="status-done text-[10px] font-bold px-2 py-0.5 rounded inline-flex items-center gap-1">
-                <iconify-icon icon="lucide:check-circle-2"></iconify-icon> HOÀN TẤT</span>`
-            : `<span class="status-processing text-[10px] font-bold px-2 py-0.5 rounded inline-flex items-center gap-1">
-                <iconify-icon icon="lucide:loader" class="animate-spin" style="animation-duration:2s"></iconify-icon> ĐANG XỬ LÝ</span>`;
+        if (res.success) {
+            playBeep(true);
+            showToast(res.message, 'success');
+            qrInput.value = '';
+            document.getElementById('stock_notes').value = '';
+            if (stockTomSelect) stockTomSelect.clear();
 
-        const rowBg = isActive ? "bg-indigo-50/60 dark:bg-indigo-950/10" : "hover:bg-neutral-50/50 dark:hover:bg-neutral-800/10";
-
-        const tr = document.createElement("tr");
-        tr.id = `order-row-${order.id}`;
-        tr.className = `${rowBg} transition-colors cursor-pointer`;
-        tr.onclick   = () => selectActiveOrder(order.id);
-        tr.innerHTML = `
-            <td class="py-3 px-4">
-                <div class="flex items-center gap-1.5">
-                    ${isActive ? `<div class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse flex-shrink-0"></div>` : `<div class="w-2 h-2 rounded-full bg-transparent flex-shrink-0"></div>`}
-                    <span class="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400">${order.id}</span>
-                </div>
-            </td>
-            <td class="py-3 px-4">
-                <span class="text-sm text-neutral-700 dark:text-neutral-300">${order.material}</span>
-            </td>
-            <td class="py-3 px-4">${purposeBadge}</td>
-            <td class="py-3 px-4">
-                <span class="font-semibold text-neutral-800 dark:text-neutral-200 text-sm">${order.qty_needed} tấm</span>
-            </td>
-            <td class="py-3 px-4">
-                <div class="flex items-center gap-3 min-w-[140px]">
-                    <div class="press-progress-bar flex-1">
-                        <div class="press-progress-fill" style="width:${pct}%"></div>
-                    </div>
-                    <span class="text-xs font-semibold text-neutral-600 dark:text-neutral-400 whitespace-nowrap">${order.qty_done} tấm \u00a0 ${pct}%</span>
-                </div>
-            </td>
-            <td class="py-3 px-4">${statusBadge}</td>
-            <td class="py-3 px-4 text-xs text-neutral-500 dark:text-neutral-400">${order.notes || "—"}</td>
-            <td class="py-3 px-4 text-right" onclick="event.stopPropagation()">
-                <div class="flex items-center justify-end gap-2">
-                    <button type="button" onclick="openSheetModal('${order.id}')"
-                        class="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/20 dark:hover:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/50 whitespace-nowrap transition-colors">
-                        Mã từng tấm
-                    </button>
-                    <button type="button" onclick="deleteOrder('${order.id}')"
-                        class="p-1.5 rounded-lg text-neutral-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors">
-                        <iconify-icon icon="lucide:trash-2" class="text-base"></iconify-icon>
-                    </button>
-                </div>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
-}
-
-// ─────────────────────────────────────────
-// DELETE ORDER
-// ─────────────────────────────────────────
-function deleteOrder(id) {
-    if (!confirm("Xóa lệnh ép này khỏi danh sách?")) return;
-    pressOrders = pressOrders.filter(o => o.id !== id);
-    if (activeOrderId === id) clearActiveOrder();
-    saveToStorage();
-    renderOrdersTable();
-    showToast("Đã xóa lệnh ép.", "success");
-}
-
-// ─────────────────────────────────────────
-// SHEET CODES MODAL
-// ─────────────────────────────────────────
-function openSheetModal(id) {
-    const order = pressOrders.find(o => o.id === id);
-    if (!order) return;
-
-    const content = document.getElementById("sheetCodesContent");
-
-    if (order.scans.length === 0) {
-        content.innerHTML = `
-            <div class="py-8 text-center text-neutral-400">
-                <iconify-icon icon="lucide:inbox" class="text-3xl opacity-40 block mx-auto mb-2"></iconify-icon>
-                <span class="text-sm">Chưa có tấm nào được quét cho lệnh này.</span>
-            </div>`;
-    } else {
-        content.innerHTML = order.scans.map((s, i) => `
-            <div class="flex items-center gap-3 py-2.5 border-b border-neutral-100 dark:border-neutral-800 last:border-0">
-                <span class="text-xs font-bold text-neutral-400 w-5 text-right">${i + 1}.</span>
-                <span class="font-mono text-xs bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 px-2.5 py-1 rounded text-neutral-800 dark:text-neutral-200">${s.code}</span>
-                <div class="ml-auto text-right">
-                    <span class="text-[10px] text-neutral-400 block">${s.time}</span>
-                    <span class="text-[10px] font-semibold ${s.action === "ép đơn" ? "text-emerald-600" : "text-blue-600"}">${s.action === "ép đơn" ? "Ép đơn" : "Ép dự trữ"}</span>
-                </div>
-            </div>
-        `).join("");
+            if (res.data) {
+                prependHistoryRow(res.data);
+            }
+        } else {
+            playBeep(false);
+            showToast(res.message || 'Có lỗi xảy ra, vui lòng thử lại.', 'error');
+        }
+    } catch (e) {
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+        playBeep(false);
+        showToast('Lỗi kết nối máy chủ!', 'error');
     }
-
-    document.getElementById("sheetCodesModal").classList.remove("hidden");
-}
-
-function closeSheetModal() {
-    document.getElementById("sheetCodesModal").classList.add("hidden");
 }
 
 // ─────────────────────────────────────────
-// PERSIST TO localStorage
-// ─────────────────────────────────────────
-function saveToStorage() {
-    try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(pressOrders));
-    } catch(e) {}
-}
-
-function loadFromStorage() {
-    try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) pressOrders = JSON.parse(raw);
-    } catch(e) { pressOrders = []; }
-}
-
-// ─────────────────────────────────────────
-// HISTORY ROW PREPEND
+// DYNAMIC PREPEND TO HISTORY TABLE
 // ─────────────────────────────────────────
 function prependHistoryRow(data) {
-    if (!data) return;
-    const tbody = document.getElementById("historyTableBody");
-    const noRow = tbody.querySelector("tr:only-child");
+    const tbody = document.getElementById('historyTableBody');
+    if (!tbody) return;
 
-    let badge = "";
-    if (data.action === "ép đơn") {
-        badge = `<span class="bg-emerald-100 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50 text-xs px-2.5 py-1 rounded-full font-semibold inline-flex items-center gap-1"><iconify-icon icon="lucide:check-circle" class="text-xs"></iconify-icon> ÉP ĐƠN</span>`;
-    } else if (data.action === "ép dự trữ") {
-        badge = `<span class="bg-blue-100 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800/50 text-xs px-2.5 py-1 rounded-full font-semibold inline-flex items-center gap-1"><iconify-icon icon="lucide:archive" class="text-xs"></iconify-icon> ÉP DỰ TRỮ</span>`;
-    } else if (data.action === "quay lại ép") {
-        badge = `<span class="bg-amber-100 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50 text-xs px-2.5 py-1 rounded-full font-semibold inline-flex items-center gap-1"><iconify-icon icon="lucide:undo" class="text-xs"></iconify-icon> QUAY LẠI</span>`;
-    } else {
-        badge = `<span class="bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 text-xs px-2.5 py-1 rounded-full font-semibold">${(data.action || "").toUpperCase()}</span>`;
+    // Remove empty row if present
+    const emptyRow = tbody.querySelector('tr td[colspan]');
+    if (emptyRow) {
+        emptyRow.closest('tr').remove();
     }
 
-    const tr = document.createElement("tr");
-    tr.className = "hover:bg-neutral-50/50 dark:hover:bg-neutral-800/10 transition-colors";
+    const tr = document.createElement('tr');
+    tr.className = 'hover:bg-neutral-50/50 dark:hover:bg-neutral-800/10 transition-colors bg-indigo-50/30 dark:bg-indigo-950/20';
+
+    let actionBadge = '';
+    if (data.action === 'ép đơn') {
+        actionBadge = `<span class="text-xs px-2.5 py-1 rounded-full font-semibold inline-flex items-center gap-1" style="background-color: rgba(99,102,241,.1); color: rgb(79,70,229); border: 1px solid rgba(99,102,241,.3);"><iconify-icon icon="lucide:clipboard-check" class="text-xs"></iconify-icon> ÉP ĐƠN (-1 KHO)</span>`;
+    } else if (data.action === 'ép dự trữ') {
+        actionBadge = `<span class="text-xs px-2.5 py-1 rounded-full font-semibold inline-flex items-center gap-1" style="background-color: rgba(16,185,129,.1); color: rgb(5,150,105); border: 1px solid rgba(16,185,129,.3);"><iconify-icon icon="lucide:archive" class="text-xs"></iconify-icon> ÉP DỰ TRỮ (+1 KHO)</span>`;
+    } else {
+        actionBadge = `<span class="text-xs px-2.5 py-1 rounded-full font-semibold inline-flex items-center gap-1 bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-700">${data.action.toUpperCase()}</span>`;
+    }
+
     tr.innerHTML = `
         <td class="py-3 px-4 font-mono text-xs">
-            <span class="bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-700 px-2.5 py-1 rounded">${data.product_code}</span>
+            <span class="bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-700 px-2.5 py-1 rounded">
+                ${data.product_code}
+            </span>
         </td>
-        <td class="py-3 px-4">${badge}</td>
-        <td class="py-3 px-4 text-neutral-800 dark:text-neutral-200 font-medium">${data.product_name}</td>
-        <td class="py-3 px-4 text-neutral-500 dark:text-neutral-400 text-xs">${data.notes || "—"}</td>
+        <td class="py-3 px-4">${actionBadge}</td>
+        <td class="py-3 px-4 text-neutral-800 dark:text-neutral-200 font-medium">${data.product_name || '—'}</td>
+        <td class="py-3 px-4 text-neutral-600 dark:text-neutral-400">${data.notes || '—'}</td>
         <td class="py-3 px-4">
             <div class="flex items-center gap-2">
-                <div class="w-7 h-7 rounded-full bg-indigo-100 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-400 flex items-center justify-center font-bold text-xs uppercase">${(data.operator || "H").substring(0, 1)}</div>
+                <div class="w-7 h-7 rounded-full bg-indigo-100 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-400 flex items-center justify-center font-bold text-xs uppercase">
+                    ${(data.operator || 'H').substring(0, 1)}
+                </div>
                 <div>
-                    <span class="block font-medium text-neutral-800 dark:text-neutral-200 leading-none mb-0.5">${data.operator}</span>
-                    <span class="block text-[10px] text-neutral-400 leading-none">${data.time}</span>
+                    <span class="block font-medium text-neutral-800 dark:text-neutral-200 leading-none mb-1">${data.operator || 'Hệ thống'}</span>
+                    <span class="block text-[10px] text-neutral-400 leading-none">${data.time || 'Vừa xong'}</span>
                 </div>
             </div>
         </td>
     `;
 
-    if (noRow && noRow.querySelector("td[colspan]")) {
-        tbody.replaceChild(tr, noRow);
-    } else {
-        tbody.insertBefore(tr, tbody.firstChild);
-    }
+    tbody.insertBefore(tr, tbody.firstChild);
 }
 
 // ─────────────────────────────────────────
 // CAMERA SCANNER
 // ─────────────────────────────────────────
-function startScanning() {
-    document.getElementById("scannerModal").classList.remove("hidden");
+function startScanning(mode = 'order') {
+    scanTargetMode = mode;
+    const modal = document.getElementById('scannerModal');
+    modal.classList.remove('hidden');
+
     html5QrCode = new Html5Qrcode("reader");
     html5QrCode.start(
         { facingMode: "environment" },
         { fps: 10, qrbox: { width: 250, height: 250 } },
-        (decoded) => {
-            const code = sanitizeProductCode(decoded);
-            document.getElementById("qr_input").value = code;
-            document.getElementById("confirmScanBtn").disabled = false;
+        (decodedText) => {
+            const clean = sanitizeCode(decodedText);
             stopScanning();
-            playBeep(true);
-            submitScan();
+
+            if (scanTargetMode === 'order') {
+                const inp = document.getElementById('order_qr_input');
+                if (inp) {
+                    inp.value = clean;
+                    submitOrderPress();
+                }
+            } else {
+                const inp = document.getElementById('stock_qr_input');
+                if (inp) {
+                    inp.value = clean;
+                    submitStockPress();
+                }
+            }
         },
         () => {}
     ).catch(err => {
-        alert("Không thể khởi động camera: " + err);
+        showToast("Không thể mở camera: " + err, "error");
         stopScanning();
     });
 }
 
 function stopScanning() {
-    if (html5QrCode && html5QrCode.isScanning) {
-        html5QrCode.stop()
-            .then(() => document.getElementById("scannerModal").classList.add("hidden"))
-            .catch(() => document.getElementById("scannerModal").classList.add("hidden"));
+    if (html5QrCode) {
+        html5QrCode.stop().then(() => {
+            html5QrCode.clear();
+            document.getElementById('scannerModal').classList.add('hidden');
+        }).catch(() => {
+            document.getElementById('scannerModal').classList.add('hidden');
+        });
     } else {
-        document.getElementById("scannerModal").classList.add("hidden");
+        document.getElementById('scannerModal').classList.add('hidden');
     }
 }
-
-// ─────────────────────────────────────────
-// TOAST
-// ─────────────────────────────────────────
-function showToast(message, type = "success") {
-    const toast = document.createElement("div");
-    toast.className = [
-        "flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border text-sm font-semibold",
-        "transition-all transform translate-y-2 opacity-0 duration-300",
-        type === "success"
-            ? "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-400"
-            : "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800 text-red-800 dark:text-red-400"
-    ].join(" ");
-    toast.innerHTML = `
-        <iconify-icon icon="${type === "success" ? "lucide:check-circle" : "lucide:alert-circle"}" class="text-lg flex-shrink-0"></iconify-icon>
-        <span>${message}</span>
-    `;
-    document.getElementById("toastContainer").appendChild(toast);
-    setTimeout(() => toast.classList.remove("translate-y-2", "opacity-0"), 10);
-    setTimeout(() => { toast.classList.add("opacity-0", "translate-y-2"); setTimeout(() => toast.remove(), 300); }, 3500);
-}
 </script>
-
 @endsection

@@ -159,21 +159,29 @@ class WoodBoardController extends Controller
             // Compute code = color_code . prefix
             $computedCode = $woodBoard->color_code . ($type->prefix ?? '');
 
+            $updateData = [
+                'code'        => $computedCode,
+                'name'        => !empty($typeData['name']) ? $typeData['name'] : $type->name,
+                'thickness'   => $typeData['thickness'] ?? null,
+                'price_board' => floatval($typeData['price_board'] ?? 0),
+                'price_m2'    => floatval($typeData['price_m2'] ?? 0),
+            ];
+
+            if (isset($typeData['stock'])) {
+                $updateData['stock'] = floatval($typeData['stock']);
+            }
+
             $woodBoard->prices()->updateOrCreate(
                 ['wood_board_type_id' => $type->id],
-                [
-                    'code'               => $computedCode,
-                    'name'               => !empty($typeData['name']) ? $typeData['name'] : $type->name,
-                    'thickness'          => $typeData['thickness'] ?? null,
-                    'price_board'        => floatval($typeData['price_board'] ?? 0),
-                    'price_m2'           => floatval($typeData['price_m2'] ?? 0),
-                    'stock'              => floatval($typeData['stock'] ?? 0),
-                ]
+                $updateData
             );
         }
 
-        // Sync total stock to board
-        $woodBoard->update(['current_stock' => $woodBoard->prices()->sum('stock')]);
+        // Sync total stock to board if prices have stock
+        $pricesStockSum = $woodBoard->prices()->sum('stock');
+        if ($pricesStockSum > 0 || $woodBoard->prices()->count() > 0) {
+            $woodBoard->update(['current_stock' => $pricesStockSum]);
+        }
 
         return redirect()->route('wood_boards.index')->with('success', 'Cập nhật dòng bảng giá thành công.');
     }
