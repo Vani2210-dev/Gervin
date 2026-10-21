@@ -104,14 +104,21 @@ class PressingService
             ->get();
 
         foreach ($pressingTxs as $tx) {
-            $code = $tx->boardPrice?->code ?? $tx->woodBoard?->color_code ?? ($tx->reference_id ?? 'KHO');
+            $scannedCode = null;
+            if ($tx->notes && preg_match('/\[Mã: (.+?)\]/', $tx->notes, $mCode)) {
+                $scannedCode = $mCode[1];
+            } elseif ($tx->notes && preg_match('/^Mã quét: (.+)$/', $tx->notes, $mCode)) {
+                $scannedCode = $mCode[1];
+            }
+
+            $code = $scannedCode ?? $tx->boardPrice?->code ?? $tx->woodBoard?->color_code ?? ($tx->reference_id ?? 'KHO');
             $name = $tx->boardPrice?->name ?? ($tx->woodBoard ? 'Tấm ' . $tx->woodBoard->color_code : 'Ván kho');
             $action = $tx->voucher_code === 'EP-KHO' ? 'ép dự trữ' : 'ép đơn';
 
-            // Avoid showing duplicate if this exact reference_id is already in order history for 'ép đơn'
-            if ($tx->reference_id && $action === 'ép đơn') {
-                $alreadyExists = $history->contains(function ($h) use ($tx) {
-                    return $h->product_code === $tx->reference_id && $h->action === 'ép đơn';
+            // Avoid showing duplicate if this exact code is already in order history for 'ép đơn'
+            if ($action === 'ép đơn') {
+                $alreadyExists = $history->contains(function ($h) use ($code) {
+                    return $h->product_code === $code && $h->action === 'ép đơn';
                 });
                 if ($alreadyExists) {
                     continue;
@@ -175,6 +182,12 @@ class PressingService
             $warehouseId = Warehouse::value('id') ?? 1;
         }
 
+        $refIdInt = (is_numeric($refId) && (int)$refId > 0) ? (int)$refId : null;
+        $finalNotes = $notes;
+        if (!empty($refId) && !is_numeric($refId)) {
+            $finalNotes = $finalNotes ? "{$finalNotes} [Mã: {$refId}]" : "Mã quét: {$refId}";
+        }
+
         InventoryTransaction::create([
             'warehouse_id'        => $warehouseId,
             'item_type'           => 'board',
@@ -183,12 +196,12 @@ class PressingService
             'date'                => now()->toDateString(),
             'type'                => $qtyChange > 0 ? 'receipt' : 'issue',
             'voucher_code'        => $voucherCode,
-            'reference_id'        => $refId,
+            'reference_id'        => $refIdInt,
             'reference_type'      => 'pressing',
             'in_qty'              => $qtyChange > 0 ? abs($qtyChange) : 0,
             'out_qty'             => $qtyChange < 0 ? abs($qtyChange) : 0,
             'stock_after'         => $newStock,
-            'notes'               => $notes,
+            'notes'               => $finalNotes,
             'created_by'          => Auth::id(),
         ]);
 
