@@ -214,22 +214,135 @@ class PressingService
             $s = trim($itemOrCode);
             if (!$s) return null;
 
-            // 1. By code on WoodBoardPrice
+            // Bỏ các ký tự rác / dấu ? nếu có do máy quét
+            $s = trim($s, "?* \t\n\r\0\x0B");
+
+            // Bỏ hậu tố _ nesting nếu có (VD: 5438.GV26.TP.PVC.016_16 -> 5438.GV26.TP.PVC.016)
+            if (str_contains($s, '_')) {
+                $s = explode('_', $s)[0];
+            }
+
+            // 1. Khớp trực tiếp mã WoodBoardPrice hoặc WoodBoard
             $price = WoodBoardPrice::with('board')->where('code', $s)->first();
             if ($price) return $price;
 
-            // 2. By color_code on WoodBoard
             $board = WoodBoard::with('prices')->where('color_code', $s)->first();
             if ($board) {
-                if ($board->prices && $board->prices->isNotEmpty()) {
-                    return $board->prices->first();
-                }
-                return $board;
+                return $board->prices->isNotEmpty() ? $board->prices->first() : $board;
             }
 
-            // 3. By name like
             $price = WoodBoardPrice::with('board')->where('name', 'like', "%{$s}%")->first();
             if ($price) return $price;
+
+            // 2. Kiểm tra nếu $s là mã tem tấm thành phẩm (AcrylicOrderItemCode, MinLateOrderItemCode, GlassOrderItemCode)
+            $codeRecord = AcrylicOrderItemCode::where('product_id', $s)->first();
+            if ($codeRecord && $codeRecord->acrylicOrderItem) {
+                $resolved = $this->resolveWoodBoard($codeRecord->acrylicOrderItem);
+                if ($resolved) return $resolved;
+            }
+
+            $codeRecord = MinLateOrderItemCode::where('product_id', $s)->first();
+            if ($codeRecord && $codeRecord->minLateOrderItem) {
+                $resolved = $this->resolveWoodBoard($codeRecord->minLateOrderItem);
+                if ($resolved) return $resolved;
+            }
+
+            $codeRecord = GlassOrderItemCode::where('product_id', $s)->first();
+            if ($codeRecord && $codeRecord->glassOrderItem) {
+                $resolved = $this->resolveWoodBoard($codeRecord->glassOrderItem);
+                if ($resolved) return $resolved;
+            }
+
+            // 3. Kiểm tra nếu $s là mã tem tấm lệnh ép (PressingOrderItem: LLE-...)
+            $pressingItem = PressingOrderItem::with('pressingOrder')->where('piece_code', $s)->first();
+            if ($pressingItem && $pressingItem->pressingOrder) {
+                $po = $pressingItem->pressingOrder;
+                if ($po->wood_board_id) {
+                    $b = WoodBoard::with('prices')->find($po->wood_board_id);
+                    if ($b) return $b->prices->isNotEmpty() ? $b->prices->first() : $b;
+                }
+                if ($po->material_name) {
+                    $resolved = $this->resolveWoodBoard($po->material_name);
+                    if ($resolved) return $resolved;
+                }
+            }
+
+            // 4. Phân tích chuỗi ghép mã (VD: '211026.6.GV28.1', '5438.GV26.TP.PVC.016', 'DH...GV26...')
+            // Thử kiểm tra phần đuôi sau mã đơn hàng dạng Ngày.SốĐơn (VD: 211026.6.GV28.1 -> GV28.1)
+            if (preg_match('/^\d{6}\.\d+\.(.+)$/', $s, $matchOrderSuffix)) {
+                $suffix = trim($matchOrderSuffix[1]);
+                $price = WoodBoardPrice::with('board')->where('code', $suffix)->first();
+                if ($price) return $price;
+
+                $board = WoodBoard::with('prices')->where('color_code', $suffix)->first();
+                if ($board) {
+                    return $board->prices->isNotEmpty() ? $board->prices->first() : $board;
+                }
+            }
+
+            // Tách các phân đoạn (tokens) theo dấu chấm, gạch ngang, gạch dưới
+            $tokens = preg_split('/[.\-_\s]+/', $s);
+            $countTokens = count($tokens);
+
+            // Thử các cặp token liền kề (VD: GV28 và 1 -> GV28.1 hoặc GV28-1)
+            for ($i = 0; $i < $countTokens - 1; $i++) {
+                $comboDot = $tokens[$i] . '.' . $tokens[$i + 1];
+                $price = WoodBoardPrice::with('board')->where('code', $comboDot)->first();
+                if ($price) return $price;
+
+                $comboDash = $tokens[$i] . '-' . $tokens[$i + 1];
+                $price = WoodBoardPrice::with('board')->where('code', $comboDash)->first();
+                if ($price) return $price;
+            }
+
+            // Thử từng token đơn lẻ (VD: GV28, GV26, GV103, PARC01...)
+            foreach ($tokens as $token) {
+                $token = trim($token);
+                if (empty($token) || is_numeric($token) || strlen($token) < 2) continue;
+
+                // Khớp mã màu WoodBoard
+                $board = WoodBoard::with('prices')->where('color_code', $token)->first();
+                if ($board) {
+                    return $board->prices->isNotEmpty() ? $board->prices->first() : $board;
+                }
+
+                // Khớp mã WoodBoardPrice
+                $price = WoodBoardPrice::with('board')->where('code', $token)->first();
+                if ($price) return $price;
+            }
+
+            // 5. Thử trích xuất mã màu bằng regex thông dụng (VD: GV28, GV103, PARC1, v.v.)
+            if (preg_match('/([A-Za-z]{2,5}\d{1,4}[A-Za-z0-9.]*)/', $s, $mColor)) {
+                $candidate = $mColor[1];
+                $price = WoodBoardPrice::with('board')->where('code', $candidate)->first();
+                if ($price) return $price;
+
+                // Nếu có dấu chấm ở đuôi (VD: GV28.1) thì thử cả phần trước dấu chấm (GV28)
+                if (str_contains($candidate, '.')) {
+                    $baseColor = explode('.', $candidate)[0];
+                    $board = WoodBoard::with('prices')->where('color_code', $baseColor)->first();
+                    if ($board) {
+                        return $board->prices->isNotEmpty() ? $board->prices->first() : $board;
+                    }
+                }
+
+                $board = WoodBoard::with('prices')->where('color_code', $candidate)->first();
+                if ($board) {
+                    return $board->prices->isNotEmpty() ? $board->prices->first() : $board;
+                }
+            }
+
+            // 6. Kiểm tra nếu có mã đơn hàng đầu chuỗi (VD: '211026.6')
+            if ($countTokens >= 2) {
+                $orderCode = $tokens[0] . '.' . $tokens[1];
+                $order = \App\Models\Order::with('supplies')->where('order_code', $orderCode)->first();
+                if ($order && $order->supplies && $order->supplies->isNotEmpty()) {
+                    foreach ($order->supplies as $sup) {
+                        $resolved = $this->resolveWoodBoard($sup->order_supply_code ?: $sup->supply_name);
+                        if ($resolved) return $resolved;
+                    }
+                }
+            }
 
             return null;
         }
@@ -314,7 +427,7 @@ class PressingService
                 return [
                     'success' => false,
                     'status_code' => 404,
-                    'message' => 'Không tìm thấy loại ván dán mặt tương ứng. Vui lòng chọn loại ván từ danh sách hoặc kiểm tra lại mã.'
+                    'message' => "Không tìm thấy loại ván dán mặt tương ứng với mã '{$codeStr}'. Vui lòng kiểm tra lại mã tem hoặc mã màu ván trong kho."
                 ];
             }
 
