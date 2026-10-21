@@ -661,6 +661,38 @@ function previewOrder() {
     const totalAmount = document.getElementById('total-amount')?.textContent || '0 VNĐ';
     const grandTotal = document.getElementById('grand-total')?.textContent || '0 VNĐ';
 
+    const oldDebtVal = parseFloat(window.customerOldDebt || 0);
+    const orderTotalNum = parseFloat((grandTotal || '0').replace(/[^0-9.-]+/g, '')) || 0;
+    const totalCombinedDebtVal = oldDebtVal + orderTotalNum;
+    let debtSummaryHTML = '';
+    if (oldDebtVal > 0 || totalCombinedDebtVal > 0) {
+        debtSummaryHTML = `
+            <div class="mt-5 pt-4 border-t-2 border-dashed border-primary-200">
+                <div class="text-xs font-bold uppercase tracking-wider text-neutral-600 mb-2.5 flex items-center justify-between">
+                    <span class="flex items-center gap-1.5 text-primary-700">
+                        <iconify-icon icon="lucide:wallet" class="text-base text-primary-600"></iconify-icon>
+                        <span>Thông tin công nợ khách hàng</span>
+                    </span>
+                    <span class="text-[11px] font-normal text-neutral-400 lowercase italic">(đồng bộ với bảng công nợ khi xuất excel)</span>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="bg-white p-3.5 rounded-xl border border-neutral-200 shadow-xs flex flex-col justify-between">
+                        <span class="text-xs font-semibold text-neutral-500">Công nợ cũ:</span>
+                        <span class="text-base font-bold text-neutral-800 mt-1 font-mono">
+                            ${Math.round(oldDebtVal).toLocaleString('vi-VN')} đ
+                        </span>
+                    </div>
+                    <div class="bg-white p-3.5 rounded-xl border border-rose-200 bg-rose-50/50 shadow-xs flex flex-col justify-between">
+                        <span class="text-xs font-bold text-rose-700">Tổng công nợ (gồm đơn này):</span>
+                        <span class="text-lg font-black text-rose-600 mt-1 font-mono">
+                            ${Math.round(totalCombinedDebtVal).toLocaleString('vi-VN')} đ
+                        </span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
     // Thu thập vật tư & sản phẩm (Đầy đủ 100% tất cả các cột)
     let suppliesHTML = '';
     const supplyRows = document.querySelectorAll('.order-supply-row');
@@ -1092,18 +1124,24 @@ function previewOrder() {
                 <div class="flex-1 overflow-y-auto p-4 md:p-6 bg-neutral-100/50" style="min-height:0;" id="preview-order-scroll-container">
                     <div id="preview-order-capture-area" class="bg-white p-6 md:p-8 space-y-6 rounded-2xl border border-neutral-200 shadow-sm w-full mx-auto" style="min-width: 1100px;">
                         <!-- Header trên ảnh khi xuất -->
-                        <div class="border-b-2 border-primary-500 pb-4 flex items-center justify-between">
-                            <div class="flex items-center gap-3">
-                                <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-primary-600 to-primary-700 text-white flex items-center justify-center font-black text-xl shadow-sm">G</div>
+                        <div class="border-b-2 border-primary-500 pb-5 flex items-start justify-between gap-6">
+                            <div class="flex items-center gap-4">
+                                <img src="{{ asset('logo.png') }}" alt="Gervin Wood" class="h-16 w-auto object-contain flex-shrink-0" style="max-height: 64px;" crossorigin="anonymous">
                                 <div>
-                                    <h4 class="font-bold text-lg text-neutral-800 m-0 leading-tight">PHIẾU THÔNG TIN ĐƠN HÀNG</h4>
-                                    <p class="text-xs text-neutral-500 m-0 mt-0.5 font-medium">Hệ thống sản xuất & gia công Gervin</p>
+                                    <h3 class="font-black text-lg text-neutral-900 m-0 tracking-tight leading-tight uppercase">CÔNG TY TNHH GỖ GERVIN</h3>
+                                    <p class="text-xs text-neutral-600 m-0 mt-1 font-medium leading-relaxed">
+                                        Địa chỉ: Xóm 3, Hưng Thịnh, Hưng Nguyên, Nghệ An<br>
+                                        Hotline: <strong class="text-neutral-800 font-semibold">0967.181.786</strong> • Email: contact@gervinwood.com • Website: <strong class="text-primary-600">www.gervinwood.com</strong>
+                                    </p>
                                 </div>
                             </div>
-                            <div class="text-right">
+                            <div class="text-right flex-shrink-0">
+                                <div class="inline-block px-3 py-1 bg-primary-50 text-primary-700 border border-primary-200 rounded-lg font-bold text-xs uppercase tracking-wider mb-1.5">
+                                    BÁO GIÁ KIÊM ĐƠN ĐẶT HÀNG
+                                </div>
                                 <div class="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Mã đơn hàng</div>
-                                <div class="text-xl font-extrabold text-primary-600 font-mono tracking-tight">${orderCode}</div>
-                                <div class="text-xs text-neutral-500 mt-0.5">${formatDate(orderDate)}</div>
+                                <div class="text-2xl font-black text-primary-600 font-mono tracking-tight leading-none">${orderCode}</div>
+                                <div class="text-xs text-neutral-500 mt-1 font-medium">Ngày chốt: ${formatDate(orderDate)}</div>
                             </div>
                         </div>
 
@@ -1217,6 +1255,7 @@ function previewOrder() {
                                 <span class="font-bold text-sm text-neutral-800">Tổng thanh toán:</span>
                                 <span class="text-2xl font-extrabold text-primary-600">${grandTotal}</span>
                             </div>
+                            ${debtSummaryHTML}
                         </div>
 
                         <!-- Footer trên ảnh khi xuất -->

@@ -211,11 +211,11 @@
                 </div>
                 <div class="mt-6 pt-4 border-t border-sky-600/50 flex items-center gap-3">
                     <div class="w-10 h-10 rounded-full bg-sky-800 border border-sky-400 flex items-center justify-center text-white text-base font-bold">
-                        {{ strtoupper(substr(Auth::user()->name ?? 'Q', 0, 2)) }}
+                        {{ strtoupper(substr(Auth::user()?->name ?? 'Q', 0, 2)) }}
                     </div>
                     <div>
                         <span class="text-[10px] text-sky-200 block font-bold leading-none mb-1">NGƯỜI KIỂM SOÁT</span>
-                        <span class="text-sm font-bold block leading-none text-white">{{ Auth::user()->name ?? 'Hệ thống' }}</span>
+                        <span class="text-sm font-bold block leading-none text-white">{{ Auth::user()?->name ?? 'Hệ thống' }}</span>
                     </div>
                 </div>
             </div>
@@ -466,11 +466,14 @@
 @endsection
 
 @php
-    $script = '
-    <script src="https://unpkg.com/html5-qrcode"></script>
-    <script>
-        let html5QrCode = null;
-        let currentQcMode = 'pass'; // 'pass' | 'defect'
+    $script = '';
+@endphp
+
+@push('scripts')
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script>
+    let html5QrCode = null;
+    let currentQcMode = 'pass'; // 'pass' | 'defect'
 
         function sanitizeProductCode(code) {
             if (!code) return "";
@@ -672,11 +675,11 @@
                 actionType = "lỗi " + outcome;
             }
 
-            fetch("' . route("processes.qc.complete") . '", {
+            fetch("{{ route('processes.qc.complete') }}", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "X-CSRF-TOKEN": "' . csrf_token() . '"
+                    "X-CSRF-TOKEN": "{{ csrf_token() }}"
                 },
                 body: JSON.stringify({
                     product_code: code,
@@ -736,7 +739,7 @@
                 Đang tìm kiếm...
             `;
             
-            fetch("' . route("processes.qc.product-info") . '?product_code=" + encodeURIComponent(code))
+            fetch("{{ route('processes.qc.product-info') }}?product_code=" + encodeURIComponent(code))
                 .then(response => response.json())
                 .then(res => {
                     submitBtn.disabled = false;
@@ -899,11 +902,11 @@
                 actionType = "lỗi " + outcome;
             }
 
-            fetch("' . route("processes.qc.complete") . '", {
+            fetch("{{ route('processes.qc.complete') }}", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "X-CSRF-TOKEN": "' . csrf_token() . '"
+                    "X-CSRF-TOKEN": "{{ csrf_token() }}"
                 },
                 body: JSON.stringify({
                     product_code: code,
@@ -1130,5 +1133,4 @@
             toggleSubmitButton();
         });
     </script>
-    ';
-@endphp
+@endpush

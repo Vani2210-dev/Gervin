@@ -42,6 +42,35 @@
     $discountAmt = $acrylicOrder->discount_amount ?? 0;
     $vatAmt = $acrylicOrder->vat_amount ?? 0;
     $subTotal = $acrylicOrder->total_amount + $discountAmt - $vatAmt;
+
+    // Order specific payment
+    $orderPaidAmt = $acrylicOrder->orderPayments ? $acrylicOrder->orderPayments->sum('amount') : 0;
+    $orderRemainingAmt = max(0, $acrylicOrder->total_amount - $orderPaidAmt);
+
+    // Customer debt calculation matching OrderController::getExportData exactly
+    $debtInfo = $exportData['customer_debt_info'] ?? null;
+    if ($debtInfo === null && $acrylicOrder->customer) {
+        $thisOrderTotal = round($acrylicOrder->total_amount, -3);
+        $thisOrderPaid = $acrylicOrder->orderPayments ? $acrylicOrder->orderPayments->sum('amount') : 0;
+        $thisOrderUnpaid = 0;
+        if (!in_array($acrylicOrder->status, ['draft', 'cancelled', 'pending'])) {
+            $thisOrderUnpaid = max(0, $thisOrderTotal - $thisOrderPaid);
+        }
+        $currentTotalDebt = $acrylicOrder->customer->total_debt ?? 0;
+        $todayPaid = $acrylicOrder->customer->customerPayments()
+            ->whereDate('payment_date', \Carbon\Carbon::today())
+            ->sum('amount');
+        $oldDebt = max(0, $currentTotalDebt - $thisOrderUnpaid + $todayPaid);
+        $totalCombinedDebt = $oldDebt + $thisOrderTotal - $todayPaid;
+
+        if ($oldDebt > 0 || $todayPaid > 0 || $totalCombinedDebt > 0) {
+            $debtInfo = [
+                'old_debt' => $oldDebt,
+                'this_order_paid' => $todayPaid,
+                'total_combined_debt' => max(0, $totalCombinedDebt),
+            ];
+        }
+    }
 @endphp
 
 <!-- Preview Order Modal -->
@@ -79,18 +108,24 @@
         <div class="flex-1 overflow-y-auto p-4 md:p-6 bg-neutral-100/50" style="min-height:0;" id="preview-order-scroll-container">
             <div id="preview-order-capture-area" class="bg-white p-6 md:p-8 space-y-6 rounded-2xl border border-neutral-200 shadow-sm w-full mx-auto" style="min-width: 1100px;">
                 <!-- Header trên ảnh khi xuất -->
-                <div class="border-b-2 border-primary-500 pb-4 flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-primary-600 to-primary-700 text-white flex items-center justify-center font-black text-xl shadow-sm">G</div>
+                <div class="border-b-2 border-primary-500 pb-5 flex items-start justify-between gap-6">
+                    <div class="flex items-center gap-4">
+                        <img src="{{ asset('logo.png') }}" alt="Gervin Wood" class="h-16 w-auto object-contain flex-shrink-0" style="max-height: 64px;" crossorigin="anonymous">
                         <div>
-                            <h4 class="font-bold text-lg text-neutral-800 m-0 leading-tight">PHIẾU THÔNG TIN ĐƠN HÀNG</h4>
-                            <p class="text-xs text-neutral-500 m-0 mt-0.5 font-medium">Hệ thống sản xuất & gia công Gervin</p>
+                            <h3 class="font-black text-lg text-neutral-900 m-0 tracking-tight leading-tight uppercase">CÔNG TY TNHH GỖ GERVIN</h3>
+                            <p class="text-xs text-neutral-600 m-0 mt-1 font-medium leading-relaxed">
+                                Địa chỉ: Xóm 3, Hưng Thịnh, Hưng Nguyên, Nghệ An<br>
+                                Hotline: <strong class="text-neutral-800 font-semibold">0967.181.786</strong> • Email: contact@gervinwood.com • Website: <strong class="text-primary-600">www.gervinwood.com</strong>
+                            </p>
                         </div>
                     </div>
-                    <div class="text-right">
+                    <div class="text-right flex-shrink-0">
+                        <div class="inline-block px-3 py-1 bg-primary-50 text-primary-700 border border-primary-200 rounded-lg font-bold text-xs uppercase tracking-wider mb-1.5">
+                            BÁO GIÁ KIÊM ĐƠN ĐẶT HÀNG
+                        </div>
                         <div class="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Mã đơn hàng</div>
-                        <div class="text-xl font-extrabold text-primary-600 font-mono tracking-tight">{{ $acrylicOrder->order_code }}</div>
-                        <div class="text-xs text-neutral-500 mt-0.5">{{ $orderDateFormatted }}</div>
+                        <div class="text-2xl font-black text-primary-600 font-mono tracking-tight leading-none">{{ $acrylicOrder->order_code }}</div>
+                        <div class="text-xs text-neutral-500 mt-1 font-medium">Ngày chốt: {{ $orderDateFormatted }}</div>
                     </div>
                 </div>
 
@@ -526,9 +561,53 @@
                         </div>
                     @endif
                     <div class="mt-4 pt-4 border-t border-primary-100 flex items-center justify-between">
-                        <span class="font-bold text-sm text-neutral-800">Tổng thanh toán:</span>
+                        <span class="font-bold text-sm text-neutral-800">Tổng thanh toán đơn này:</span>
                         <span class="text-2xl font-extrabold text-primary-600">{{ number_format(round($acrylicOrder->total_amount, -3), 0, ',', '.') }} VNĐ</span>
                     </div>
+
+                    @if($orderPaidAmt > 0)
+                        <div class="mt-2.5 pt-2.5 border-t border-dashed border-primary-200/80 flex items-center justify-between text-xs">
+                            <span class="text-neutral-600 font-medium">Đã thanh toán đơn này:</span>
+                            <span class="font-bold text-emerald-600 font-mono text-sm">{{ number_format(round($orderPaidAmt, -3), 0, ',', '.') }} đ</span>
+                        </div>
+                        <div class="mt-1 flex items-center justify-between text-xs">
+                            <span class="text-neutral-600 font-medium">Còn lại của đơn:</span>
+                            <span class="font-bold text-rose-600 font-mono text-sm">{{ number_format(round($orderRemainingAmt, -3), 0, ',', '.') }} đ</span>
+                        </div>
+                    @endif
+
+                    {{-- Khối thông tin công nợ khách hàng (đồng bộ với khi xuất Excel) --}}
+                    @if(!empty($debtInfo))
+                        <div class="mt-5 pt-4 border-t-2 border-dashed border-primary-200">
+                            <div class="text-xs font-bold uppercase tracking-wider text-neutral-600 mb-2.5 flex items-center justify-between">
+                                <span class="flex items-center gap-1.5 text-primary-700">
+                                    <iconify-icon icon="lucide:wallet" class="text-base text-primary-600"></iconify-icon>
+                                    <span>Thông tin công nợ khách hàng</span>
+                                </span>
+                                <span class="text-[11px] font-normal text-neutral-400 lowercase italic">(đồng bộ với bảng công nợ khi xuất excel)</span>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div class="bg-white p-3.5 rounded-xl border border-neutral-200 shadow-xs flex flex-col justify-between">
+                                    <span class="text-xs font-semibold text-neutral-500">Công nợ:</span>
+                                    <span class="text-base font-bold text-neutral-800 mt-1 font-mono">
+                                        {{ number_format(round($debtInfo['old_debt'], -3), 0, ',', '.') }} đ
+                                    </span>
+                                </div>
+                                <div class="bg-white p-3.5 rounded-xl border border-emerald-200 bg-emerald-50/40 shadow-xs flex flex-col justify-between">
+                                    <span class="text-xs font-semibold text-emerald-700">Đã TT (hôm nay):</span>
+                                    <span class="text-base font-bold text-emerald-600 mt-1 font-mono">
+                                        {{ number_format(round($debtInfo['this_order_paid'], -3), 0, ',', '.') }} đ
+                                    </span>
+                                </div>
+                                <div class="bg-white p-3.5 rounded-xl border border-rose-200 bg-rose-50/50 shadow-xs flex flex-col justify-between">
+                                    <span class="text-xs font-bold text-rose-700">Tổng công nợ:</span>
+                                    <span class="text-lg font-black text-rose-600 mt-1 font-mono">
+                                        {{ number_format(round($debtInfo['total_combined_debt'], -3), 0, ',', '.') }} đ
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
                 </div>
 
                 <!-- Footer trên ảnh khi xuất -->

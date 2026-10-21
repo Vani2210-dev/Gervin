@@ -103,6 +103,17 @@ class QrScanController extends Controller
 
         // 5. Nếu vẫn rỗng nhưng có raw content text thuần (máy quét gửi trực tiếp chuỗi barcode đơn giản)
         if (empty($payload) && !empty($rawContentClean)) {
+            // Nếu raw content bắt đầu bằng '[' hoặc '{', đây là gói JSON bị đứt đoạn / lỗi cú pháp khi truyền mạng (VD: '[{"time":"...","device')
+            // Tuyệt đối không coi chuỗi JSON vỡ này là mã barcode
+            if (str_starts_with($rawContentClean, '[') || str_starts_with($rawContentClean, '{')) {
+                \Illuminate\Support\Facades\Log::info('Ignored broken/truncated JSON payload from scanner: ' . mb_substr($rawContentClean, 0, 100));
+                return response()->json([
+                    'status'   => 'success',
+                    'message'  => 'Broken JSON payload ignored',
+                    'received' => 0
+                ], 200);
+            }
+
             $payload = [
                 'result' => $rawContentClean,
             ];
@@ -171,6 +182,9 @@ class QrScanController extends Controller
                             $flattenedPayload[] = $subDecoded;
                         }
                         continue;
+                    } else {
+                        // Chuỗi JSON bị đứt đoạn / lỗi cú pháp, bỏ qua để không thành barcode rác
+                        continue;
                     }
                 }
                 $flattenedPayload[] = ['result' => $pClean];
@@ -223,18 +237,36 @@ class QrScanController extends Controller
             $barcode = mb_convert_encoding($barcode, 'UTF-8', 'UTF-8');
             $barcode = trim(preg_replace('/[\x00-\x1F\x7F]/', '', $barcode));
 
-            if ($barcode === '') {
+            // 1. Loại bỏ các ký tự dấu ?, *, khoảng trắng ở đầu hoặc cuối chuỗi do nhiễu UART/Serial máy quét gửi về
+            $barcode = trim($barcode, "?*#~`^ \t\n\r\0\x0B");
+
+            // 2. Bỏ qua nếu là mảnh JSON bị đứt đoạn vô tình lọt vào (VD: [{"time":... hoặc {"device":...)
+            if ($barcode === '' || str_starts_with($barcode, '[{') || str_starts_with($barcode, '{"') || str_starts_with($barcode, '[') || str_starts_with($barcode, '{')) {
                 continue;
             }
 
-            // Bỏ qua nếu quét nhầm mã cấu hình máy quét
+            // 3. Bỏ qua nếu quét nhầm mã cấu hình máy quét
             if (str_starts_with($barcode, '<cmd>') || str_starts_with($barcode, 'cmd:')) {
                 continue;
             }
 
-            // Chuẩn hóa mã tấm: nếu phần mềm nesting Wood xuất mã kèm hậu tố _ (VD: 5213.GV40.TP.016_16) -> chỉ lấy mã tấm trước dấu _
+            // 4. Trích xuất mã sản phẩm nếu chuỗi chứa định dạng tấm gỗ chuẩn (\d{3,6}\.[A-Za-z0-9_.-]+)
+            if (preg_match('/(\d{3,6}\.[A-Za-z0-9_.-]+)/', $barcode, $matches)) {
+                $barcode = $matches[1];
+            }
+
+            // 5. Chuẩn hóa mã tấm: nếu phần mềm nesting Wood xuất mã kèm hậu tố _ (VD: 5213.GV40.TP.016_16) -> chỉ lấy mã tấm trước dấu _
             if (str_contains($barcode, '_')) {
                 $barcode = explode('_', $barcode)[0];
+            }
+
+            $barcode = trim($barcode, "?*#~`^ \t\n\r\0\x0B");
+
+            // 6. Cắt độ dài tối đa an toàn (190 ký tự) để không bao giờ vượt quá giới hạn VARCHAR(255) của MySQL
+            $barcode = mb_substr($barcode, 0, 190);
+
+            if ($barcode === '') {
+                continue;
             }
 
             $receivedCount++;
