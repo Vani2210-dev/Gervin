@@ -24,6 +24,26 @@ function estimateRowHeight(text, mergedWidth) {
     return Math.max(18, totalLines * 16);
 }
 
+function getMaterialName(supply) {
+    if (!supply) return '';
+    const rawCode = (supply.order_supply_code || '').trim();
+    const name = (supply.supply_name || '').trim();
+
+    let colorCode = '';
+    if (rawCode) {
+        colorCode = rawCode.split('.')[0].split('_')[0].trim();
+    }
+
+    if (colorCode && name) {
+        if (name.toLowerCase().startsWith(colorCode.toLowerCase())) {
+            return name;
+        }
+        return `${colorCode} ${name}`;
+    }
+
+    return colorCode || name || '';
+}
+
 async function exportToExcel(customData = null, returnBlob = false) {
     let btn = null;
     let originalHtml = '';
@@ -685,7 +705,7 @@ async function exportToExcel(customData = null, returnBlob = false) {
                     row.getCell(3).value = customerLabel;                    // Sản phẩm (tên KH)
                     row.getCell(4).value = item.product_code || '';          // STT / mã SP
                     row.getCell(5).value = (item.notes && String(item.notes).trim() !== '') ? item.notes.trim() : '.'; // Tên chi tiết (Detail Name) - Lấy từ Ghi chú (trống thì điền '.')
-                    row.getCell(6).value = supply.supply_name || '';         // Vật liệu
+                    row.getCell(6).value = getMaterialName(supply);          // Vật liệu: [Mã màu không hậu tố] [Tên vật liệu]
                     row.getCell(7).value = parseFloat((parseFloat(item.height) || 0).toFixed(2));    // Dài
                     row.getCell(8).value = parseFloat((parseFloat(item.width) || 0).toFixed(2));     // Rộng
                     row.getCell(9).value = (item.thickness && !isNaN(parseFloat(item.thickness))) ? parseFloat(parseFloat(item.thickness).toFixed(2)) : 19; // Dày

@@ -34,6 +34,31 @@ function parseMullionMillingDetails(itemName) {
 }
 
 /**
+ * Format material name for Nesting: prepend base color code (without suffix) before supply name.
+ * E.g.: code "GV103.BA" + name "Acrylic Foil" -> "GV103 Acrylic Foil"
+ */
+function getMaterialName(supply) {
+    if (!supply) return '';
+    const rawCode = (supply.order_supply_code || '').trim();
+    const name = (supply.supply_name || '').trim();
+
+    // Lấy mã màu cơ sở (bỏ hậu tố sau dấu . hoặc _ như .BA, .TP, .PVC, .2M...)
+    let colorCode = '';
+    if (rawCode) {
+        colorCode = rawCode.split('.')[0].split('_')[0].trim();
+    }
+
+    if (colorCode && name) {
+        if (name.toLowerCase().startsWith(colorCode.toLowerCase())) {
+            return name;
+        }
+        return `${colorCode} ${name}`;
+    }
+
+    return colorCode || name || '';
+}
+
+/**
  * Build one BAZIS-PM nesting workbook and trigger download.
  * @param {Object} orderData   - Full order export data (window.orderExportData)
  * @param {Array}  suppliesData - Filtered supplies (each with their .items subset)
@@ -196,7 +221,7 @@ async function generateNestingWorkbook(orderData, suppliesData, filename) {
                     itemOrder,                                                // C Đơn hàng
                     sttCode,                                                  // D STT
                     (item.notes && String(item.notes).trim() !== '') ? item.notes.trim() : '.', // E Tên (Detail Name) - Lấy từ Ghi chú (trống thì điền '.')
-                    supply.supply_name || '',                                 // F Vật liệu
+                    getMaterialName(supply),                                  // F Vật liệu: [Mã màu không hậu tố] [Tên vật liệu]
                     h,                                                        // G Dài
                     w,                                                        // H Rộng
                     (function() {
@@ -560,7 +585,8 @@ async function exportBulkNestingFiles(ordersData, returnBlobs = false) {
         const grouped = [];
         const map = new Map();
         suppliesList.forEach(s => {
-            const key = (s.supply_name || s.order_supply_code || 'VatTu').trim().toLowerCase();
+            const matName = getMaterialName(s);
+            const key = (matName || 'VatTu').toLowerCase();
             if (!map.has(key)) {
                 const cloned = { ...s, items: [...s.items] };
                 map.set(key, cloned);

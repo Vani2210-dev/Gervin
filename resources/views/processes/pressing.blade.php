@@ -67,68 +67,6 @@
     #historyTable th, #historyTable td {
         text-align: left !important;
     }
-
-    /* TomSelect modern styling */
-    .ts-wrapper.single .ts-control {
-        border-radius: 0.75rem !important;
-        padding: 0.85rem 1rem !important;
-        font-size: 0.95rem !important;
-        border-color: #d1d5db !important;
-        background-color: #f9fafb !important;
-        box-shadow: none !important;
-        transition: all 0.2s ease;
-    }
-    .dark .ts-wrapper.single .ts-control {
-        background-color: #262626 !important;
-        border-color: #404040 !important;
-        color: #f5f5f5 !important;
-    }
-    .ts-wrapper.single.focus .ts-control {
-        border-color: #10b981 !important;
-        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2) !important;
-    }
-    .ts-dropdown {
-        z-index: 99999 !important;
-        border-radius: 0.75rem !important;
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
-        border: 1px solid #e5e7eb !important;
-        overflow: hidden !important;
-    }
-    .dark .ts-dropdown {
-        background-color: #1c1c1c !important;
-        border-color: #404040 !important;
-        color: #f5f5f5 !important;
-    }
-    .ts-dropdown .optgroup-header {
-        font-size: 11px !important;
-        font-weight: 800 !important;
-        letter-spacing: 0.05em !important;
-        padding: 7px 12px !important;
-        background: #f1f5f9 !important;
-        color: #059669 !important;
-        border-bottom: 1px solid #e2e8f0 !important;
-    }
-    .dark .ts-dropdown .optgroup-header {
-        background: #262626 !important;
-        color: #34d399 !important;
-        border-color: #383838 !important;
-    }
-    .ts-dropdown .option {
-        padding: 9px 14px !important;
-        font-size: 13px !important;
-        border-bottom: 1px solid rgba(0,0,0,0.03) !important;
-    }
-    .dark .ts-dropdown .option {
-        border-bottom: 1px solid rgba(255,255,255,0.05) !important;
-    }
-    .ts-dropdown .option.active, .ts-dropdown .option:hover {
-        background-color: #ecfdf5 !important;
-        color: #047857 !important;
-    }
-    .dark .ts-dropdown .option.active, .dark .ts-dropdown .option:hover {
-        background-color: #064e3b !important;
-        color: #a7f3d0 !important;
-    }
 </style>
 
 <div class="-mt-4 mb-6">
@@ -255,38 +193,14 @@
                     <div class="p-3.5 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/50 rounded-xl text-xs text-emerald-900 dark:text-emerald-200 flex items-start gap-2.5">
                         <iconify-icon icon="lucide:info" class="text-base text-emerald-600 dark:text-emerald-400 mt-0.5 flex-shrink-0"></iconify-icon>
                         <div>
-                            <strong>Chế độ ÉP DỰ TRỮ KHO:</strong> Chọn loại ván cần ép hoặc quét mã ván. Khi xác nhận, hệ thống sẽ ghi nhận hoàn thành ép và <strong>cộng 1 tấm ván vào kho</strong>.
+                            <strong>Chế độ ÉP DỰ TRỮ KHO:</strong> Quét hoặc nhập mã ván cần ép. Khi xác nhận, hệ thống sẽ ghi nhận hoàn thành ép và <strong>cộng 1 tấm ván vào kho</strong>.
                         </div>
                     </div>
 
-                    {{-- Material dropdown --}}
-                    <div>
-                        <label for="stock_wood_board_id" class="block text-xs sm:text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
-                            Chọn loại ván dán mặt cần ép dự trữ
-                        </label>
-                        <select id="stock_wood_board_id"
-                            class="w-full pl-4 py-3 sm:py-3.5 border border-neutral-300 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                            <option value="">-- Chọn loại ván dán mặt --</option>
-                            @foreach($woodBoardPrices as $typeName => $prices)
-                                <optgroup label="{{ $typeName }}">
-                                    @foreach($prices as $price)
-                                        @php
-                                            $stockText = isset($price->stock) ? " (Tồn: {$price->stock} tấm)" : "";
-                                            $valLabel = $price->code . ($price->name ? ' - ' . $price->name : '') . ($price->thickness ? ' [' . $price->thickness . ']' : '') . $stockText;
-                                        @endphp
-                                        <option value="{{ $price->id }}" data-code="{{ $price->code }}" data-name="{{ $price->name }}">
-                                            {{ $valLabel }}
-                                        </option>
-                                    @endforeach
-                                </optgroup>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    {{-- Or scan board QR / code --}}
+                    {{-- Scan board QR / code --}}
                     <div>
                         <label for="stock_qr_input" class="block text-xs sm:text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
-                            Hoặc quét mã ván / mã QR ván dán mặt
+                            Mã ván dán mặt ép dự trữ (QR / Barcode)
                         </label>
                         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
                             <div class="relative flex-grow">
@@ -341,7 +255,7 @@
             </summary>
             <div class="mt-3 pt-3 border-t border-indigo-500/50 text-xs text-indigo-100 space-y-2">
                 <p>1. <strong>Ép theo đơn hàng:</strong> Quét mã QR tấm ván -> Hoàn thành bước ép và <strong>-1 tấm trong kho</strong>.</p>
-                <p>2. <strong>Ép dự trữ kho:</strong> Chọn loại ván hoặc quét mã ván -> Bấm xác nhận để <strong>+1 tấm vào kho</strong>.</p>
+                <p>2. <strong>Ép dự trữ kho:</strong> Quét hoặc nhập mã ván -> Bấm xác nhận để <strong>+1 tấm vào kho</strong>.</p>
                 <p>3. Xem toàn bộ lịch sử thao tác và biến động kho bên dưới.</p>
             </div>
         </details>
@@ -360,7 +274,7 @@
                     </li>
                     <li>
                         <strong>Ép dự trữ kho:</strong><br>
-                        <span class="text-xs text-indigo-200">Chọn loại ván hoặc quét mã ván -> Bấm xác nhận để <strong>cộng 1 tấm vào kho</strong>.</span>
+                        <span class="text-xs text-indigo-200">Quét hoặc nhập mã ván -> Bấm xác nhận để <strong>cộng 1 tấm vào kho</strong>.</span>
                     </li>
                     <li>
                         <strong>Tự động nhận diện:</strong><br>
@@ -530,35 +444,12 @@ const CSRF_TOKEN     = '{{ csrf_token() }}';
 
 let currentMode       = 'order'; // 'order' | 'stock'
 let html5QrCode       = null;
-let stockTomSelect    = null;
 let scanTargetMode    = 'order';
 
 // ─────────────────────────────────────────
 // INIT
 // ─────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-    // Init TomSelect for stock selection
-    const matSelect = document.getElementById('stock_wood_board_id');
-    if (matSelect && typeof TomSelect !== 'undefined' && !matSelect.tomselect) {
-        stockTomSelect = new TomSelect(matSelect, {
-            placeholder: "🔍 Gõ tìm mã ván (Vd: GV01, GV103, Melamine...) hoặc chọn từ danh sách...",
-            allowEmptyOption: true,
-            maxOptions: null,
-            lockOptgroupOrder: true,
-            searchField: ["text", "value"],
-            render: {
-                optgroup_header: function(data, escape) {
-                    return '<div class="optgroup-header">' + escape(data.label) + '</div>';
-                },
-                option: function(data, escape) {
-                    return '<div class="option flex items-center justify-between">' +
-                           '<span class="font-medium">' + escape(data.text) + '</span>' +
-                           '</div>';
-                }
-            }
-        });
-    }
-
     // Bind Enter on inputs
     const orderInput = document.getElementById('order_qr_input');
     if (orderInput) {
@@ -603,8 +494,7 @@ function switchMode(mode) {
         secOrder.classList.add('hidden');
         secStock.classList.remove('hidden');
         setTimeout(() => {
-            if (stockTomSelect) stockTomSelect.focus();
-            else document.getElementById('stock_qr_input')?.focus();
+            document.getElementById('stock_qr_input')?.focus();
         }, 50);
     }
 }
@@ -758,15 +648,15 @@ async function submitOrderPress() {
 // SUBMIT: ÉP DỰ TRỮ KHO (+1 TẤM VÀO KHO)
 // ─────────────────────────────────────────
 async function submitStockPress() {
-    let priceId = stockTomSelect ? stockTomSelect.getValue() : document.getElementById('stock_wood_board_id').value;
     const qrInput = document.getElementById('stock_qr_input');
     let code = sanitizeCode(qrInput.value);
     qrInput.value = code;
     const notes = document.getElementById('stock_notes').value.trim();
 
-    if (!priceId && !code) {
+    if (!code) {
         playBeep(false);
-        showToast('Vui lòng chọn loại ván hoặc quét mã ván cần ép dự trữ!', 'error');
+        showToast('Vui lòng quét hoặc nhập mã ván cần ép dự trữ!', 'error');
+        qrInput.focus();
         return;
     }
 
@@ -783,8 +673,7 @@ async function submitStockPress() {
                 'X-CSRF-TOKEN': CSRF_TOKEN
             },
             body: JSON.stringify({
-                wood_board_price_id: priceId || null,
-                product_code: code || null,
+                product_code: code,
                 notes: notes,
                 action_type: 'ép dự trữ'
             })
@@ -799,8 +688,9 @@ async function submitStockPress() {
             showToast(res.message, 'success');
             qrInput.value = '';
             document.getElementById('stock_notes').value = '';
-            if (stockTomSelect) stockTomSelect.clear();
+            qrInput.focus();
 
+            // Prepend row to history table
             if (res.data) {
                 prependHistoryRow(res.data);
             }

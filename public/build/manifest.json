@@ -1,6 +1,6 @@
 {
   "resources/css/app.css": {
-    "file": "assets/app-DyTau70o.css",
+    "file": "assets/app--uhrn40e.css",
     "src": "resources/css/app.css",
     "isEntry": true
   },
@@ -11,7 +11,7 @@
     "isEntry": true
   },
   "resources/js/order-export.js": {
-    "file": "assets/order-export-C2oAmt2F.js",
+    "file": "assets/order-export-CCeulMDh.js",
     "name": "order-export",
     "src": "resources/js/order-export.js",
     "isEntry": true

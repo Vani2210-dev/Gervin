@@ -148,6 +148,7 @@
                                     </td>
                                     <td class="py-3 px-3 text-right font-bold text-neutral-700 book-qty" data-book="{{ (float)$m->current_stock }}">
                                         {{ fmod($m->current_stock, 1) == 0 ? number_format($m->current_stock, 0, ',', '.') : number_format($m->current_stock, 2, ',', '.') }}
+                                        <input type="hidden" name="items[{{ $index }}][book_quantity]" value="{{ (float)$m->current_stock }}">
                                     </td>
                                     <td class="py-2 px-3 text-center">
                                         <input type="number" 
@@ -155,9 +156,9 @@
                                                value="{{ (float)$m->current_stock }}" 
                                                step="any" 
                                                min="0" 
+                                               placeholder="0"
                                                class="actual-qty form-control rounded-lg px-3 py-2 border-neutral-300 text-xs w-32 text-right font-bold text-neutral-900 focus:border-amber-500" 
-                                               oninput="calcRowDiff(this)" 
-                                               required>
+                                               oninput="calcRowDiff(this)">
                                     </td>
                                     <td class="py-3 px-3 text-right font-bold row-diff text-neutral-400">
                                         0

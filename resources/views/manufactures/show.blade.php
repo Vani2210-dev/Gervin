@@ -557,7 +557,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-<script src="{{ asset('assets/js/nesting-export.js') }}"></script>
+<script src="{{ asset('assets/js/nesting-export.js') }}?v={{ file_exists(public_path('assets/js/nesting-export.js')) ? filemtime(public_path('assets/js/nesting-export.js')) : time() }}"></script>
 <script>
 window.moOrdersExportData = @json($acrylicOrdersExportData ?? []);
 

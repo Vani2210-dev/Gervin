@@ -452,8 +452,12 @@ class InventoryService
 
                     if (!$board) continue;
 
-                    $bookQty = (float)($item['book_quantity'] ?? $board->edge_band_current_stock);
-                    $actualQty = (float)($item['actual_quantity'] ?? $bookQty);
+                    $bookQty = isset($item['book_quantity']) && $item['book_quantity'] !== '' && $item['book_quantity'] !== null 
+                        ? (float)$item['book_quantity'] 
+                        : (float)($board->edge_band_current_stock ?? 0);
+                    $actualQty = isset($item['actual_quantity']) && $item['actual_quantity'] !== '' && $item['actual_quantity'] !== null 
+                        ? (float)$item['actual_quantity'] 
+                        : 0;
                     $diff = $actualQty - $bookQty;
 
                     InventoryStocktakeItem::create($this->sanitizeItemData('inventory_stocktake_items', [
@@ -491,8 +495,12 @@ class InventoryService
 
                     if (!$boardId && !$boardPrice) continue;
 
-                    $bookQty = (float)($item['book_quantity'] ?? ($boardPrice?->stock ?? 0));
-                    $actualQty = (float)($item['actual_quantity'] ?? $bookQty);
+                    $bookQty = isset($item['book_quantity']) && $item['book_quantity'] !== '' && $item['book_quantity'] !== null 
+                        ? (float)$item['book_quantity'] 
+                        : (float)($boardPrice?->stock ?? 0);
+                    $actualQty = isset($item['actual_quantity']) && $item['actual_quantity'] !== '' && $item['actual_quantity'] !== null 
+                        ? (float)$item['actual_quantity'] 
+                        : 0;
                     $diff = $actualQty - $bookQty;
 
                     InventoryStocktakeItem::create($this->sanitizeItemData('inventory_stocktake_items', [

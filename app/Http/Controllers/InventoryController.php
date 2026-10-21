@@ -618,20 +618,6 @@ class InventoryController extends Controller
         ];
         $sheet->getStyle('A3:I3')->applyFromArray($headerStyle);
 
-        $row = 4;
-        foreach ($materials as $i => $m) {
-            $sheet->setCellValue('A' . $row, $i + 1);
-            $sheet->setCellValue('B' . $row, $m->color_code);
-            $sheet->setCellValue('C' . $row, 'Tấm ' . $m->color_code);
-            $sheet->setCellValue('D' . $row, $m->origin_code ?: '-');
-            $sheet->setCellValue('E' . $row, $m->price_group);
-            $sheet->setCellValue('F' . $row, $m->unit);
-            $sheet->setCellValue('G' . $row, $m->current_stock);
-            $sheet->setCellValue('H' . $row, $m->cost_price);
-            $sheet->setCellValue('I' . $row, "=G{$row}*H{$row}");
-            $row++;
-        }
-
         // Summary row
         $sheet->setCellValue('A' . $row, 'TỔNG CỘNG:');
         $sheet->mergeCells("A{$row}:F{$row}");
@@ -845,18 +831,30 @@ class InventoryController extends Controller
         $request->validate([
             'warehouse_id'            => 'required|exists:warehouses,id',
             'date'                    => 'required|date',
-            'items'                   => 'required|array|min:1',
-            'items.*.material_id'     => 'required',
-            'items.*.book_quantity'   => 'required|numeric',
-            'items.*.actual_quantity' => 'required|numeric|min:0',
+            'items'                   => 'nullable|array',
+            'items.*.material_id'     => 'nullable',
+            'items.*.book_quantity'   => 'nullable|numeric',
+            'items.*.actual_quantity' => 'nullable|numeric',
         ]);
 
         $warehouse = Warehouse::findOrFail($request->warehouse_id);
 
+        $rawItems = $request->input('items', []);
+        $items = [];
+        foreach ($rawItems as $it) {
+            if (empty($it['material_id'])) continue;
+            $items[] = [
+                'material_id'     => $it['material_id'],
+                'book_quantity'   => isset($it['book_quantity']) && $it['book_quantity'] !== '' ? (float)$it['book_quantity'] : null,
+                'actual_quantity' => isset($it['actual_quantity']) && $it['actual_quantity'] !== '' ? (float)$it['actual_quantity'] : 0,
+                'notes'           => $it['notes'] ?? ($it['reason'] ?? null),
+            ];
+        }
+
         $stocktake = $this->inventoryService->createStocktake(
             $warehouse,
             $request->only(['code', 'date', 'creator_name', 'notes']),
-            $request->input('items', []),
+            $items,
             Auth::id()
         );
 

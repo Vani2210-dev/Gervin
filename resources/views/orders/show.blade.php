@@ -898,9 +898,9 @@
     <script>
         window.orderExportData = @json($exportData);
     </script>
-    <script src="{{ asset('assets/js/order-export.js') }}"></script>
+    <script src="{{ asset('assets/js/order-export.js') }}?v={{ file_exists(public_path('assets/js/order-export.js')) ? filemtime(public_path('assets/js/order-export.js')) : time() }}"></script>
     @if($acrylicOrder->type === 'acrylic')
-        <script src="{{ asset('assets/js/nesting-export.js') }}"></script>
+        <script src="{{ asset('assets/js/nesting-export.js') }}?v={{ file_exists(public_path('assets/js/nesting-export.js')) ? filemtime(public_path('assets/js/nesting-export.js')) : time() }}"></script>
     @endif
     <script>
         // Auto-export when accessed with ?export=1 or ?export_nesting=1
