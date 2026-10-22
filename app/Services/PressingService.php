@@ -149,7 +149,7 @@ class PressingService
         $boardName = '';
         $boardId = null;
         $priceId = null;
-        $warehouseId = 1;
+        $targetWarehouseId = null;
 
         if ($boardOrPrice instanceof WoodBoardPrice) {
             $current = (float)$boardOrPrice->stock;
@@ -161,7 +161,7 @@ class PressingService
             if ($parentBoard) {
                 $parentBoard->current_stock = $parentBoard->prices()->sum('stock');
                 $parentBoard->save();
-                $warehouseId = $parentBoard->warehouse_id ?? 1;
+                $targetWarehouseId = $parentBoard->warehouse_id;
             }
 
             $boardName = "{$boardOrPrice->code}" . ($boardOrPrice->name ? " - {$boardOrPrice->name}" : "");
@@ -175,11 +175,35 @@ class PressingService
 
             $boardName = "Tấm {$boardOrPrice->color_code}";
             $boardId = $boardOrPrice->id;
-            $warehouseId = $boardOrPrice->warehouse_id ?? 1;
+            $targetWarehouseId = $boardOrPrice->warehouse_id;
         }
 
-        if (!$warehouseId) {
-            $warehouseId = Warehouse::value('id') ?? 1;
+        // Đảm bảo warehouse_id luôn tồn tại trong bảng warehouses (tránh lỗi khóa ngoại 1452)
+        $warehouse = null;
+        if ($targetWarehouseId) {
+            $warehouse = Warehouse::find($targetWarehouseId);
+        }
+        if (!$warehouse) {
+            $warehouse = Warehouse::where('code', 'KHO-VAN')->first() ?? Warehouse::first();
+        }
+        if (!$warehouse) {
+            $warehouse = Warehouse::create([
+                'name' => 'Kho Tấm Ván',
+                'code' => 'KHO-VAN',
+                'status' => 'active',
+                'item_name' => 'Tấm Ván',
+                'description' => 'Kho ván gỗ công nghiệp phục vụ ép'
+            ]);
+        }
+        $warehouseId = $warehouse->id;
+
+        // Đồng bộ warehouse_id hợp lệ vào board nếu trước đó chưa có hoặc sai
+        if ($boardOrPrice instanceof WoodBoardPrice && isset($parentBoard) && $parentBoard && $parentBoard->warehouse_id !== $warehouseId) {
+            $parentBoard->warehouse_id = $warehouseId;
+            $parentBoard->save();
+        } elseif (!($boardOrPrice instanceof WoodBoardPrice) && $boardOrPrice->warehouse_id !== $warehouseId) {
+            $boardOrPrice->warehouse_id = $warehouseId;
+            $boardOrPrice->save();
         }
 
         $refIdInt = (is_numeric($refId) && (int)$refId > 0) ? (int)$refId : null;
