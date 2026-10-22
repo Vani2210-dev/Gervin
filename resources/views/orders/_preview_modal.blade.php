@@ -619,25 +619,68 @@
         </div>
 
         <!-- Footer -->
-        <div class="flex items-center justify-between gap-3 px-6 py-4 border-t border-neutral-200 flex-shrink-0 bg-neutral-50/50 flex-wrap">
+        <div class="flex items-center justify-between gap-4 px-6 py-4 border-t border-neutral-200 flex-shrink-0 bg-neutral-50/50 flex-wrap">
             <div class="flex items-center gap-2 text-xs text-neutral-600 mr-auto">
                 <iconify-icon icon="lucide:sparkles" class="text-base text-amber-500 shrink-0"></iconify-icon>
                 <span>Bấm <strong>Copy ảnh gửi Zalo</strong>, sau đó mở chat với khách và ấn <strong>Ctrl + V</strong> để gửi ảnh ngay.</span>
             </div>
             <div class="flex items-center gap-2 flex-wrap">
-                <button type="button" onclick="closePreviewOrder()" class="btn btn-outline-neutral px-5 py-2.5 rounded-lg text-sm font-semibold transition-all">Đóng</button>
-                <button type="button" onclick="copyPreviewOrderImage()" class="btn text-white px-4 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all flex items-center gap-1.5 hover:opacity-95" style="background:#0068FF; border:none;" title="Copy ảnh để dán Ctrl + V vào Zalo">
+                <button type="button" onclick="closePreviewOrder()" class="btn btn-outline-neutral px-4 py-2 rounded-lg text-sm font-semibold transition-all">Đóng</button>
+                <button type="button" onclick="copyPreviewOrderImage()" class="btn text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-sm transition-all flex items-center gap-2 hover:opacity-95" style="background:#0068FF; border:none;" title="Copy ảnh để dán Ctrl + V vào Zalo">
                     <iconify-icon icon="lucide:copy" class="text-base"></iconify-icon>
-                    Copy ảnh gửi Zalo
+                    <span>Copy ảnh gửi Zalo</span>
                 </button>
                 @can('edit order')
                     @if(!in_array($acrylicOrder->status, ['in_production', 'cancelled']))
-                        <a href="{{ route('orders.edit', $acrylicOrder) }}" class="btn btn-primary px-6 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all flex items-center gap-1.5">
+                        <a href="{{ route('orders.edit', $acrylicOrder) }}" class="btn btn-primary px-4 py-2 rounded-lg text-sm font-semibold shadow-sm transition-all flex items-center gap-2">
                             <iconify-icon icon="lucide:edit-3" class="text-base"></iconify-icon>
-                            Chỉnh sửa đơn hàng
+                            <span>Chỉnh sửa đơn hàng</span>
                         </a>
                     @endif
                 @endcan
+
+                @if(auth()->user()->can('approve order') || auth()->user()->can('edit order') || auth()->user()->hasRole('Admin') || auth()->user()->hasRole('Kế toán') || auth()->user()->hasRole('Kỹ thuật'))
+                    {{-- 1. Nút Kế toán duyệt --}}
+                    @if(!$acrylicOrder->accountant_approved_by && in_array($acrylicOrder->status, ['draft', 'pending']))
+                        <form method="POST" action="{{ route('orders.update-status', $acrylicOrder) }}" onsubmit="return confirm('Kế toán xác nhận duyệt đơn hàng {{ $acrylicOrder->order_code }}?')" class="m-0 inline-block">
+                            @csrf
+                            <input type="hidden" name="status" value="accountant_approve">
+                            <button type="submit" class="btn text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition-all flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 cursor-pointer" title="Kế toán xác nhận duyệt đơn hàng">
+                                <iconify-icon icon="lucide:check-circle" class="text-base"></iconify-icon>
+                                <span>Kế toán duyệt</span>
+                            </button>
+                        </form>
+                    @elseif($acrylicOrder->accountant_approved_by)
+                        <span class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-300" title="Kế toán duyệt lúc {{ $acrylicOrder->accountant_approved_at?->format('H:i d/m/Y') }}">
+                            <iconify-icon icon="lucide:check-check" class="text-sm text-emerald-600"></iconify-icon>
+                            <span>KT đã duyệt ({{ $acrylicOrder->accountantApprover?->name ?? 'Xong' }})</span>
+                        </span>
+                    @endif
+
+                    {{-- 2. Nút Kỹ thuật duyệt (Chuyển SX) --}}
+                    @if(!$acrylicOrder->technical_approved_by && in_array($acrylicOrder->status, ['draft', 'pending']))
+                        @if($acrylicOrder->accountant_approved_by)
+                            <form method="POST" action="{{ route('orders.update-status', $acrylicOrder) }}" onsubmit="return confirm('Kỹ thuật xác nhận duyệt & Chuyển sản xuất đơn hàng {{ $acrylicOrder->order_code }}?')" class="m-0 inline-block">
+                                @csrf
+                                <input type="hidden" name="status" value="transferred">
+                                <button type="submit" class="btn text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition-all flex items-center gap-2 bg-violet-600 hover:bg-violet-700 cursor-pointer" title="Kỹ thuật duyệt & Chuyển đơn sang sản xuất">
+                                    <iconify-icon icon="lucide:factory" class="text-base"></iconify-icon>
+                                    <span>{{ !empty($acrylicOrder->edit_reason) ? 'Chuyển SX lại' : 'Kỹ thuật duyệt & Chuyển SX' }}</span>
+                                </button>
+                            </form>
+                        @else
+                            <button type="button" onclick="alert('Đơn hàng cần được Kế toán duyệt trước khi Kỹ thuật duyệt chuyển sản xuất!')" class="btn bg-neutral-100 text-neutral-400 border border-neutral-300 px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 cursor-not-allowed opacity-75" title="Cần Kế toán duyệt trước khi Chuyển SX">
+                                <iconify-icon icon="lucide:factory" class="text-base"></iconify-icon>
+                                <span>Kỹ thuật duyệt</span>
+                            </button>
+                        @endif
+                    @elseif($acrylicOrder->technical_approved_by)
+                        <span class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold bg-violet-50 text-violet-800 border border-violet-300" title="Kỹ thuật duyệt lúc {{ $acrylicOrder->technical_approved_at?->format('H:i d/m/Y') }}">
+                            <iconify-icon icon="lucide:check-check" class="text-sm text-violet-600"></iconify-icon>
+                            <span>SX đã duyệt ({{ $acrylicOrder->technicalApprover?->name ?? 'Đã chuyển SX' }})</span>
+                        </span>
+                    @endif
+                @endif
             </div>
         </div>
     </div>

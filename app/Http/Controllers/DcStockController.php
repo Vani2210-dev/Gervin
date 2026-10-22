@@ -249,7 +249,7 @@ class DcStockController extends Controller
             DB::beginTransaction();
 
             if ($replaceExisting) {
-                DcStock::truncate();
+                DcStock::query()->delete();
             }
 
             $recordsToInsert = [];

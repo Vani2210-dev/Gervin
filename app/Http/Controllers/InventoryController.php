@@ -149,11 +149,11 @@ class InventoryController extends Controller
                 }
 
                 if ($stockFilter === 'low_stock') {
-                    $query->where('stock', '<=', 5)->where('stock', '>', 0);
+                    $query->where('wood_board_prices.stock', '<=', 5)->where('wood_board_prices.stock', '>', 0);
                 } elseif ($stockFilter === 'out_of_stock') {
-                    $query->where('stock', '<=', 0);
+                    $query->where('wood_board_prices.stock', '<=', 0);
                 } elseif ($stockFilter === 'in_stock') {
-                    $query->where('stock', '>', 0);
+                    $query->where('wood_board_prices.stock', '>', 0);
                 }
 
                 if ($startDate && $endDate && $dateMode !== 'all') {
@@ -163,22 +163,22 @@ class InventoryController extends Controller
                             if ($selectedWarehouseId) {
                                 $t->where('warehouse_id', $selectedWarehouseId);
                             }
-                        })->orWhereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
+                        })->orWhereBetween('wood_board_prices.created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
                     });
                 }
 
                 if ($search) {
                     $query->where(function ($q) use ($search) {
-                        $q->where('code', 'like', "%{$search}%")
-                          ->orWhere('name', 'like', "%{$search}%")
+                        $q->where('wood_board_prices.code', 'like', "%{$search}%")
+                          ->orWhere('wood_board_prices.name', 'like', "%{$search}%")
                           ->orWhereHas('board', function ($b) use ($search) {
                               $b->where('color_code', 'like', "%{$search}%")
                                 ->orWhere('origin_code', 'like', "%{$search}%")
                                 ->orWhere('price_group', 'like', "%{$search}%");
                           })
                           ->orWhereHas('type', function ($t) use ($search) {
-                              $t->where('name', 'like', "%{$search}%")
-                                ->orWhere('prefix', 'like', "%{$search}%");
+                              $t->where('wood_board_types.name', 'like', "%{$search}%")
+                                ->orWhere('wood_board_types.prefix', 'like', "%{$search}%");
                           });
                     });
                 }
@@ -357,8 +357,13 @@ class InventoryController extends Controller
     public function updateMaterial(Request $request, $id)
     {
         // 1. Kiểm tra nếu là cập nhật dòng hàng hóa con (WoodBoardPrice)
-        $price = \App\Models\WoodBoardPrice::with('board')->find($id);
-        if ($price && ($request->boolean('is_price') || $request->has('price_board') || $request->has('stock') || !$request->has('color_code'))) {
+        $isPrice = $request->input('is_price') === '1' || $request->boolean('is_price');
+        $price = $isPrice ? \App\Models\WoodBoardPrice::with('board')->find($id) : null;
+        if (!$price && !$request->has('color_code') && !$request->has('edge_band_current_stock')) {
+            $price = \App\Models\WoodBoardPrice::with('board')->find($id);
+        }
+
+        if ($price) {
             if ($request->has('cost_price')) {
                 $price->price_board = (float)$request->cost_price;
             }
@@ -372,9 +377,15 @@ class InventoryController extends Controller
 
             if ($price->board) {
                 $board = $price->board;
+                $board->current_stock = $board->prices()->sum('stock');
                 if ($request->filled('origin_code')) $board->origin_code = trim($request->origin_code);
                 if ($request->filled('category')) $board->price_group = trim($request->category);
-                if ($request->filled('warehouse_id')) $board->warehouse_id = $request->warehouse_id;
+                if ($request->filled('warehouse_id')) {
+                    $whExists = \App\Models\Warehouse::where('id', $request->warehouse_id)->exists();
+                    if ($whExists) {
+                        $board->warehouse_id = $request->warehouse_id;
+                    }
+                }
                 if ($request->filled('status')) $board->status = $request->status;
                 if ($request->has('notes')) $board->notes = $request->notes;
                 $board->save();
@@ -404,13 +415,18 @@ class InventoryController extends Controller
 
         $group = trim($request->price_group ?: $request->category);
 
+        $targetWarehouseId = $material->warehouse_id;
+        if ($request->filled('warehouse_id') && \App\Models\Warehouse::where('id', $request->warehouse_id)->exists()) {
+            $targetWarehouseId = $request->warehouse_id;
+        }
+
         $updateData = [
             'origin_code' => trim($request->origin_code),
             'price_group' => $group ?: $material->price_group,
             'unit' => trim($request->unit) ?: $material->unit,
             'cost_price' => (float)($request->cost_price ?? $material->cost_price),
             'min_stock' => (float)($request->min_stock ?? $material->min_stock),
-            'warehouse_id' => $request->warehouse_id,
+            'warehouse_id' => $targetWarehouseId,
             'status' => $request->status ?: $material->status,
             'notes' => $request->notes,
         ];

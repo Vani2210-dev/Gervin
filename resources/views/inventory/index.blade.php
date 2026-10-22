@@ -268,7 +268,10 @@
                                         {{ $materials->firstItem() + $index }}
                                     </td>
                                     <td class="py-3 px-4 font-bold text-neutral-900 whitespace-nowrap">
-                                        <a href="javascript:void(0)" onclick="openStockCardModal({{ $m->id }}, '{{ $stockCardType }}')" class="hover:text-primary-600 hover:underline flex items-center gap-1.5" title="Xem thẻ kho cho {{ $displaySku }}">
+                                        <a href="{{ route('inventory.materials.stock-card', [$m->id, 'type' => $stockCardType]) }}" 
+                                           onclick="event.preventDefault(); openStockCardModal({{ $m->id }}, '{{ $stockCardType }}')" 
+                                           class="hover:text-primary-600 hover:underline flex items-center gap-2" 
+                                           title="Xem thẻ kho cho {{ $displaySku }}">
                                             <span>{{ $displaySku }}</span>
                                         </a>
                                     </td>
@@ -276,7 +279,7 @@
                                         <div class="font-bold text-neutral-900 text-xs">{{ $displayName }}</div>
                                         <div class="flex items-center gap-2 mt-0.5 text-[11px] text-neutral-500 flex-wrap">
                                             @if($colorTag)
-                                                <span class="inline-flex items-center gap-1 font-semibold text-primary-700 bg-primary-50 px-1.5 py-0.5 rounded border border-primary-200">
+                                                <span class="inline-flex items-center gap-1 font-semibold text-primary-700 bg-primary-50 px-2 py-0.5 rounded border border-primary-200">
                                                     Mã màu: <strong>{{ $colorTag }}</strong>
                                                 </span>
                                             @endif
@@ -321,7 +324,7 @@
                                         @endif
                                     </td>
                                     <td class="py-3 px-4 text-center whitespace-nowrap">
-                                        <div class="flex items-center justify-center gap-1.5">
+                                        <div class="flex items-center justify-center gap-2">
                                             @if($colorLink)
                                                 <a href="{{ route('wood_boards.index', ['search' => $colorLink]) }}" 
                                                    class="p-1 text-info-600 hover:text-info-800 text-base" 
@@ -329,11 +332,14 @@
                                                     <iconify-icon icon="solar:grid-bold"></iconify-icon>
                                                 </a>
                                             @endif
-                                            <button type="button" onclick="openStockCardModal({{ $m->id }}, '{{ $stockCardType }}')" class="p-1 text-primary-600 hover:text-primary-800 text-base" title="Xem thẻ kho">
+                                            <a href="{{ route('inventory.materials.stock-card', [$m->id, 'type' => $stockCardType]) }}" 
+                                               onclick="event.preventDefault(); openStockCardModal({{ $m->id }}, '{{ $stockCardType }}')" 
+                                               class="p-1 text-primary-600 hover:text-primary-800 text-base" 
+                                               title="Xem thẻ kho">
                                                 <iconify-icon icon="solar:history-bold"></iconify-icon>
-                                            </button>
+                                            </a>
                                             <button type="button" 
-                                                    data-material="{{ htmlspecialchars(json_encode($editPayload), ENT_QUOTES, 'UTF-8') }}"
+                                                    data-material='@json($editPayload)'
                                                     onclick="editMaterial(this)" 
                                                     class="p-1 text-warning-600 hover:text-warning-800 text-base transition-colors cursor-pointer" 
                                                     title="Chỉnh sửa hàng hóa">
@@ -755,11 +761,19 @@
     function editMaterial(btnOrObj) {
         let item = btnOrObj;
         if (btnOrObj instanceof HTMLElement) {
+            const raw = btnOrObj.getAttribute('data-material');
             try {
-                item = JSON.parse(btnOrObj.getAttribute('data-material'));
+                item = JSON.parse(raw);
             } catch (e) {
-                console.error("Lỗi parse data-material:", e);
-                return;
+                try {
+                    const txt = document.createElement('textarea');
+                    txt.innerHTML = raw;
+                    item = JSON.parse(txt.value);
+                } catch (e2) {
+                    console.error("Lỗi parse data-material:", e, e2);
+                    alert("Không thể đọc thông tin vật tư. Vui lòng tải lại trang.");
+                    return;
+                }
             }
         }
         if (!item) return;
@@ -821,12 +835,15 @@
         fetch(`/warehouses/materials/${materialId}/stock-card?type=${encodeURIComponent(type)}`, {
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         })
-        .then(res => res.text())
+        .then(res => {
+            if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+            return res.text();
+        })
         .then(html => {
             if (container) container.innerHTML = html;
         })
         .catch(err => {
-            if (container) container.innerHTML = `<div class="p-4 text-danger-600 text-xs">Lỗi khi tải thẻ kho: ${err}</div>`;
+            if (container) container.innerHTML = `<div class="p-4 text-danger-600 text-xs">Lỗi khi tải thẻ kho: ${err.message || err}</div>`;
         });
     }
 

@@ -636,17 +636,23 @@ class OrderController extends Controller
 
         $orderType = $type;
         
+        $parentId = $request->query('parent_id');
+        $parentOrder = $parentId ? Order::find($parentId) : null;
+
         $oldDraftId = old('draft_order_id');
         if ($oldDraftId) {
             $acrylicOrder = Order::where('status', 'draft')
                 ->when($relationType, function ($q) use ($relationType) {
                     $q->where('relation_type', $relationType);
                 })
+                ->when($parentOrder, function ($q) use ($parentOrder) {
+                    $q->where('parent_id', $parentOrder->id);
+                })
                 ->find($oldDraftId);
         }
         
         if (!isset($acrylicOrder) || !$acrylicOrder) {
-            $acrylicOrder = $this->createDraftOrder($type, $relationType);
+            $acrylicOrder = $this->createDraftOrder($type, $relationType, $parentOrder);
         }
 
         $isDraftCreate = true;
@@ -1149,16 +1155,48 @@ class OrderController extends Controller
         return $prefix . ($maxNumber + 1);
     }
 
-    private function createDraftOrder(string $type, ?string $relationType = null): Order
+    private function generateChildOrderCode(Order $parentOrder): string
     {
-        return DB::transaction(function () use ($type, $relationType) {
-            $orderCode = $this->generateOrderCode();
+        $parentCode = trim((string)$parentOrder->order_code);
+        if ($parentCode === '') {
+            return $this->generateOrderCode();
+        }
+
+        // Tìm tất cả các đơn con của đơn cha này
+        $existingCodes = Order::where(function ($q) use ($parentOrder, $parentCode) {
+                $q->where('parent_id', $parentOrder->id)
+                  ->orWhere('order_code', 'like', $parentCode . '.%');
+            })
+            ->lockForUpdate()
+            ->pluck('order_code');
+
+        $maxSuffix = 0;
+        foreach ($existingCodes as $code) {
+            if (preg_match('/^' . preg_quote($parentCode, '/') . '\.(\d+)$/', $code, $matches)) {
+                $num = intval($matches[1]);
+                if ($num > $maxSuffix) {
+                    $maxSuffix = $num;
+                }
+            }
+        }
+
+        return $parentCode . '.' . ($maxSuffix + 1);
+    }
+
+    private function createDraftOrder(string $type, ?string $relationType = null, ?Order $parentOrder = null): Order
+    {
+        return DB::transaction(function () use ($type, $relationType, $parentOrder) {
+            $orderCode = $parentOrder ? $this->generateChildOrderCode($parentOrder) : $this->generateOrderCode();
 
             return Order::create([
                 'order_code' => $orderCode,
+                'parent_id' => $parentOrder?->id,
                 'type' => $type,
                 'relation_type' => $relationType,
-                'customer_name' => '',
+                'customer_id' => $parentOrder?->customer_id,
+                'customer_name' => $parentOrder?->customer_name ?? '',
+                'phone' => $parentOrder?->phone,
+                'address' => $parentOrder?->address,
                 'total_amount' => 0,
                 'status' => 'draft',
             ]);
@@ -1276,7 +1314,7 @@ class OrderController extends Controller
     private function buildReuseDraftOrder(Order $order): Order
     {
         return DB::transaction(function () use ($order) {
-            $orderCode = $this->generateOrderCode();
+            $orderCode = $this->generateChildOrderCode($order);
 
             return Order::create([
                 'parent_id' => $order->id,
@@ -1345,7 +1383,7 @@ class OrderController extends Controller
     private function buildReworkDraftOrder(Order $order, array $selectedPieces): Order
     {
         return DB::transaction(function () use ($order, $selectedPieces) {
-            $orderCode = $this->generateOrderCode();
+            $orderCode = $this->generateChildOrderCode($order);
 
             $reworkOrder = Order::create([
                 'parent_id'        => $order->id,
@@ -1613,7 +1651,7 @@ class OrderController extends Controller
     private function buildWarrantyDraftOrder(Order $order, array $selectedItemIds): Order
     {
         return DB::transaction(function () use ($order, $selectedItemIds) {
-            $orderCode = $this->generateOrderCode();
+            $orderCode = $this->generateChildOrderCode($order);
 
             $warrantyOrder = Order::create([
                 'parent_id' => $order->id,
@@ -1753,7 +1791,7 @@ class OrderController extends Controller
                 $oldDraft->delete();
             }
 
-            $orderCode = $this->generateOrderCode();
+            $orderCode = $this->generateChildOrderCode($order);
 
             $additionalOrder = Order::create([
                 'parent_id' => $order->id,
@@ -1863,7 +1901,7 @@ class OrderController extends Controller
     private function buildAdditionalDraftOrder(Order $order): Order
     {
         return \DB::transaction(function () use ($order) {
-            $orderCode = $this->generateOrderCode();
+            $orderCode = $this->generateChildOrderCode($order);
 
             return Order::create([
                 'parent_id' => $order->id,
