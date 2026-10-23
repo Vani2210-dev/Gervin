@@ -1373,18 +1373,27 @@ async function submitQuickManufacture(e) {
             </li>
             @endif
 
-            {{-- Chuyển sản xuất (Kỹ thuật duyệt) - Chỉ hiển thị khi Kế toán ĐÃ duyệt và Kỹ thuật CHƯA duyệt --}}
-            @if($order->accountant_approved_by && !$order->technical_approved_by && in_array($order->status, ['draft', 'pending']))
-            <li class="border-t border-neutral-100 my-1 pt-1">
-                <form method="POST" action="{{ route('orders.update-status', $order) }}" onsubmit="return confirm('Kỹ thuật xác nhận duyệt & Chuyển đơn hàng {{ $order->order_code }} sang sản xuất?')">
-                    @csrf
-                    <input type="hidden" name="status" value="transferred">
-                    <button type="submit" class="w-full flex items-center gap-2 px-4 py-2 hover:bg-violet-50 text-violet-700 text-left transition-colors font-medium">
-                        <iconify-icon icon="lucide:factory" class="text-violet-600 text-lg"></iconify-icon>
-                        <span>{{ !empty($order->edit_reason) ? 'Chuyển SX lại' : 'Kỹ thuật duyệt (Chuyển SX)' }}</span>
+            {{-- Chuyển sản xuất (Kỹ thuật duyệt) --}}
+            @if(!$order->technical_approved_by && in_array($order->status, ['draft', 'pending']))
+                @if($order->accountant_approved_by)
+                <li class="border-t border-neutral-100 my-1 pt-1">
+                    <form method="POST" action="{{ route('orders.update-status', $order) }}" onsubmit="return confirm('Kỹ thuật xác nhận duyệt & Chuyển đơn hàng {{ $order->order_code }} sang sản xuất?')">
+                        @csrf
+                        <input type="hidden" name="status" value="transferred">
+                        <button type="submit" class="w-full flex items-center gap-2 px-4 py-2 hover:bg-violet-50 text-violet-700 text-left transition-colors font-medium">
+                            <iconify-icon icon="lucide:factory" class="text-violet-600 text-lg"></iconify-icon>
+                            <span>{{ !empty($order->edit_reason) ? 'Chuyển SX lại' : 'Kỹ thuật duyệt (Chuyển SX)' }}</span>
+                        </button>
+                    </form>
+                </li>
+                @else
+                <li class="border-t border-neutral-100 my-1 pt-1">
+                    <button type="button" onclick="alert('Đơn hàng cần được Kế toán duyệt trước khi Kỹ thuật duyệt chuyển sản xuất!')" class="w-full flex items-center gap-2 px-4 py-2 text-neutral-400 text-left cursor-not-allowed opacity-60 font-medium" title="Cần Kế toán duyệt trước khi Kỹ thuật duyệt">
+                        <iconify-icon icon="lucide:factory" class="text-neutral-400 text-lg"></iconify-icon>
+                        <span>Kỹ thuật duyệt (Chờ KT duyệt)</span>
                     </button>
-                </form>
-            </li>
+                </li>
+                @endif
             @endif
 
             {{-- Yêu cầu sửa đơn --}}

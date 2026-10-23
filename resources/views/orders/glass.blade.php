@@ -418,7 +418,7 @@
                                 <th scope="col" style="width: 80px; min-width: 80px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá <span class="text-danger-500">*</span></th>
                                 <th scope="col" style="width: 90px; min-width: 90px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Thành tiền</th>
                                 <th scope="col" style="min-width: 120px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Ghi chú</th>
-                                <th scope="col" style="width: 60px; min-width: 60px; white-space: nowrap; position: sticky; right: 0; z-index: 3; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Hành động</th>
+                                <th scope="col" style="width: 104px; min-width: 104px; white-space: nowrap; position: sticky; right: 0; z-index: 3; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Hành động</th>
                             </tr>
                             <tr class="table-summary-row bg-neutral-100 font-bold text-neutral-800 text-center">
                                 <td class="border border-neutral-200 text-center sticky-stt-td" style="font-size: 80% !important; background-color: #f1f5f9;">TỔNG</td>
@@ -524,7 +524,7 @@
                                         <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][area_m2]" class="real-area-input" value="{{ $item->area_m2 }}">
                                         <input type="text" class="display-area-input form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" 
                                             placeholder="Khối lượng (m2)" 
-                                            value="{{ $item->area_m2 ? number_format($item->area_m2, 2, '.', '') : '' }}"
+                                            value="{{ ((float)($item->area_m2 ?? 0) > 0) ? number_format($item->area_m2, 2, '.', '') : '' }}"
                                             {{ $isLaborRow ? 'readonly disabled bg-neutral-100' : '' }}
                                             onfocus="if(!this.hasAttribute('readonly')){ this.value = this.previousElementSibling.value; }"
                                             onblur="if(!this.hasAttribute('readonly')){ if(this.value && !isNaN(this.value)){ this.previousElementSibling.value = this.value; this.value = Number(this.value).toFixed(2); } else { this.previousElementSibling.value = ''; this.value = ''; } }"
@@ -539,10 +539,13 @@
                                     <td style="min-width: 160px;" class="border border-neutral-200">
                                         <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Ghi chú" value="{{ $item->notes }}">
                                     </td>
-                                    <td style="width: 80px; min-width: 80px; " class="text-center align-middle border border-neutral-200">
+                                    <td style="width: 104px; min-width: 104px; " class="text-center align-middle border border-neutral-200">
                                         <div class="flex items-center gap-1 justify-center">
                                             <button type="button" onclick="insertGlassRow(this)" class="text-neutral-400 hover:text-success-500 transition-colors p-1" title="Chèn dòng mới ở dưới">
                                                 <iconify-icon icon="lucide:list-plus" class="text-base"></iconify-icon>
+                                            </button>
+                                            <button type="button" onclick="insertGlassRow(this, 10)" class="text-neutral-400 hover:text-success-600 transition-colors p-1 flex items-center justify-center font-bold" title="Chèn 10 dòng mới ở dưới">
+                                                <span style="font-size: 10px; font-weight: 800; line-height: 1; padding: 2px 4px; border-radius: 4px; background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0;">+10</span>
                                             </button>
                                             <button type="button" onclick="duplicateGlassRow(this)" class="text-neutral-400 hover:text-primary-500 transition-colors p-1" title="Nhân bản sản phẩm">
                                                 <iconify-icon icon="lucide:copy" class="text-base"></iconify-icon>
@@ -664,7 +667,7 @@ function addGlassOrderSupply(isAccessory = false) {
                         <th scope="col" style="width: 110px; min-width: 110px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá <span class="text-danger-500">*</span></th>
                         <th scope="col" style="width: 120px; min-width: 120px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Thành tiền</th>
                         <th scope="col" style="min-width: 160px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Ghi chú</th>
-                        <th scope="col" style="width: 80px; min-width: 80px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Hành động</th>
+                        <th scope="col" style="width: 104px; min-width: 104px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Hành động</th>
                     </tr>
                     <tr class="table-summary-row bg-neutral-100 font-bold text-neutral-800 text-center">
                         <td class="border border-neutral-200 text-center sticky-stt-td" style="font-size: 80% !important; background-color: #f1f5f9;">TỔNG</td>
@@ -878,10 +881,13 @@ function addGlassOrderItem(button, isInitial = false, insertAfterRow = null) {
         <td style="min-width: 160px;" class="border border-neutral-200">
             <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Ghi chú" value="${lastData ? lastData.notes : ''}">
         </td>
-        <td style="width: 80px; min-width: 80px; " class="text-center align-middle border border-neutral-200">
+        <td style="width: 104px; min-width: 104px; " class="text-center align-middle border border-neutral-200">
             <div class="flex items-center gap-1 justify-center">
                 <button type="button" onclick="insertGlassRow(this)" class="text-neutral-400 hover:text-success-500 transition-colors p-1" title="Chèn dòng mới ở dưới">
                     <iconify-icon icon="lucide:list-plus" class="text-base"></iconify-icon>
+                </button>
+                <button type="button" onclick="insertGlassRow(this, 10)" class="text-neutral-400 hover:text-success-600 transition-colors p-1 flex items-center justify-center font-bold" title="Chèn 10 dòng mới ở dưới">
+                    <span style="font-size: 10px; font-weight: 800; line-height: 1; padding: 2px 4px; border-radius: 4px; background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0;">+10</span>
                 </button>
                 <button type="button" onclick="duplicateGlassRow(this)" class="text-neutral-400 hover:text-primary-500 transition-colors p-1" title="Nhân bản sản phẩm">
                     <iconify-icon icon="lucide:copy" class="text-base"></iconify-icon>
@@ -1169,9 +1175,26 @@ function applyFlashEffect(el) {
     }, 850);
 }
 
-function insertGlassRow(button) {
+function insertGlassRow(button, count = 1) {
     const currentRow = button.closest('.order-item-row');
-    addGlassOrderItem(button, false, currentRow);
+    if (count === 1) {
+        addGlassOrderItem(button, false, currentRow);
+    } else {
+        let current = currentRow;
+        for (let i = 0; i < count; i++) {
+            addGlassOrderItem(button, true, current);
+            current = current.nextElementSibling;
+        }
+        updateOrderSummary();
+        updateGlassRowIndexes();
+        if (current) {
+            current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            const focusInput = current.querySelector('input[name*="[height]"]') || current.querySelector('input[name*="[wing_opening_direction]"]');
+            if (focusInput) {
+                focusInput.focus();
+            }
+        }
+    }
 }
 
 function duplicateGlassRow(button) {
@@ -1708,7 +1731,7 @@ function showGlassExcelModal(groups, accessories = []) {
                     <td style="padding:6px 10px;text-align:center;color:#374151;">${item.height !== '' ? item.height : '—'}</td>
                     <td style="padding:6px 10px;text-align:center;color:#374151;">${item.width !== '' ? item.width : '—'}</td>
                     <td style="padding:6px 10px;text-align:center;font-weight:600;color:#1d4ed8;">${item.quantity}</td>
-                    <td style="padding:6px 10px;text-align:center;color:#374151;">${item.area_m2 !== '' ? Number(item.area_m2).toFixed(2) : '—'}</td>
+                    <td style="padding:6px 10px;text-align:center;color:#374151;">${(item.area_m2 !== '' && parseFloat(item.area_m2) > 0) ? Number(item.area_m2).toFixed(2) : '—'}</td>
                     <td style="padding:6px 10px;text-align:right;font-weight:600;color:#15803d;">${item.unit_price !== '' ? Number(item.unit_price).toLocaleString('vi-VN') : '—'}</td>
                     <td style="padding:6px 10px;text-align:right;font-weight:600;color:#059669;">${item.total_price !== '' ? Number(item.total_price).toLocaleString('vi-VN') : '—'}</td>
                     <td style="padding:6px 10px;color:#6b7280;font-style:italic;max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${window._glassEscHtml(item.notes)}">${window._glassEscHtml(item.notes)}</td>
@@ -1829,7 +1852,7 @@ function confirmGlassExcelImport() {
             setVal('input[name*="[area_m2]"]', item.area_m2);
             const displayArea = newRow.querySelector('.display-area-input');
             if (displayArea) {
-                displayArea.value = item.area_m2 ? Number(item.area_m2).toFixed(2) : '';
+                displayArea.value = (item.area_m2 && parseFloat(item.area_m2) > 0) ? Number(item.area_m2).toFixed(2) : '';
             }
             setVal('input[name*="[unit_price]"]', item.unit_price);
             if (item.total_price !== undefined && item.total_price !== '') {

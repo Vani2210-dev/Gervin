@@ -295,7 +295,7 @@
                                 <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số tấm CNC</th>
                                 <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Chiều vân</th>
                                 <th scope="col" style="min-width: 140px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Ghi chú</th>
-                                <th scope="col" style="width: 80px; min-width: 80px; white-space: nowrap; position: sticky; right: 0; z-index: 3; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Hành động</th>
+                                <th scope="col" style="width: 104px; min-width: 104px; white-space: nowrap; position: sticky; right: 0; z-index: 3; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Hành động</th>
                             </tr>
                             <tr class="table-summary-row bg-neutral-100 font-bold text-neutral-800 text-center">
                                 <td class="border border-neutral-200 text-center sticky-stt-td" style="font-size: 80% !important; background-color: #f1f5f9;">TỔNG</td>
@@ -438,28 +438,28 @@
                                     </select>
                                 </td>
                                 <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
-                                    <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][straight_paste_length]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="Số mét dán thẳng" step="any" value="{{ $item->straight_paste_length ?? 0 }}" readonly>
+                                    <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][straight_paste_length]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="Số mét dán thẳng" step="any" value="{{ ((float)($item->straight_paste_length ?? 0) > 0) ? $item->straight_paste_length : '' }}" readonly>
                                 </td>
                                 <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
-                                    <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][beveled_length]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="Số mét dán vát" step="any" value="{{ $item->beveled_length ?? 0 }}" readonly>
+                                    <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][beveled_length]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="Số mét dán vát" step="any" value="{{ ((float)($item->beveled_length ?? 0) > 0) ? $item->beveled_length : '' }}" readonly>
                                 </td>
                                 <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
-                                    <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][vat_moi_length]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="Số mét dán vát mòi" step="any" value="{{ $item->vat_moi_length ?? 0 }}" readonly>
+                                    <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][vat_moi_length]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="Số mét dán vát mòi" step="any" value="{{ ((float)($item->vat_moi_length ?? 0) > 0) ? $item->vat_moi_length : '' }}" readonly>
                                 </td>
                                 <td style="width: 105px; min-width: 105px; " class="border border-neutral-200">
-                                    <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][ban_rong_40_59]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="Số mét dán bản rộng 40-59mm" step="any" value="{{ $item->ban_rong_40_59 ?? 0 }}" readonly>
+                                    <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][ban_rong_40_59]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="Số mét dán bản rộng 40-59mm" step="any" value="{{ ((float)($item->ban_rong_40_59 ?? 0) > 0) ? $item->ban_rong_40_59 : '' }}" readonly>
                                 </td>
                                 <td style="width: 105px; min-width: 105px; " class="border border-neutral-200">
-                                    <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][ban_rong_17_39]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="Số mét dán bản rộng 17-39mm" step="any" value="{{ $item->ban_rong_17_39 ?? 0 }}" readonly>
+                                    <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][ban_rong_17_39]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="Số mét dán bản rộng 17-39mm" step="any" value="{{ ((float)($item->ban_rong_17_39 ?? 0) > 0) ? $item->ban_rong_17_39 : '' }}" readonly>
                                 </td>
                                 <td style="width: 105px; min-width: 105px; " class="border border-neutral-200">
-                                    <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][ban_rong_25_35]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="Số mét dán bản rộng 25-35mm" step="any" value="{{ $item->ban_rong_25_35 ?? 0 }}" readonly>
+                                    <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][ban_rong_25_35]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="Số mét dán bản rộng 25-35mm" step="any" value="{{ ((float)($item->ban_rong_25_35 ?? 0) > 0) ? $item->ban_rong_25_35 : '' }}" readonly>
                                 </td>
                                 <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
-                                    <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][beveled_handle]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="Số vát tay nắm âm" step="any" value="{{ $item->beveled_handle ?? 0 }}" readonly>
+                                    <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][beveled_handle]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="Số vát tay nắm âm" step="any" value="{{ ((float)($item->beveled_handle ?? 0) > 0) ? $item->beveled_handle : '' }}" readonly>
                                 </td>
                                 <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
-                                    <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][cnc]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="Số tấm CNC" value="{{ $item->cnc ?? 0 }}" readonly>
+                                    <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][cnc]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="Số tấm CNC" value="{{ ((float)($item->cnc ?? 0) > 0) ? $item->cnc : '' }}" readonly>
                                 </td>
                                 <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
                                     <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][direction]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 px-1 py-1 h-8 text-xs" placeholder="Chiều vân" value="{{ $item->direction ?? '' }}">
@@ -468,10 +468,13 @@
                                 <td style="min-width: 160px;" class="border border-neutral-200">
                                     <textarea name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-xs w-full resize-none font-medium text-neutral-700 leading-tight" rows="2" style="min-height: 46px; padding: 4px 6px; font-size: 11px;" placeholder="Ghi chú">{{ $item->notes ?? '' }}</textarea>
                                 </td>
-                                <td style="width: 80px; min-width: 80px; position: sticky; right: 0; z-index: 1; background-color: #fff; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="text-center align-middle border border-neutral-200">
+                                <td style="width: 104px; min-width: 104px; position: sticky; right: 0; z-index: 1; background-color: #fff; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="text-center align-middle border border-neutral-200">
                                     <div class="flex items-center gap-1 justify-center">
                                         <button type="button" onclick="insertMinLateRow(this)" class="text-neutral-400 hover:text-success-500 transition-colors p-1" title="Chèn dòng mới ở dưới">
                                             <iconify-icon icon="lucide:list-plus" class="text-base"></iconify-icon>
+                                        </button>
+                                        <button type="button" onclick="insertMinLateRow(this, 10)" class="text-neutral-400 hover:text-success-600 transition-colors p-1 flex items-center justify-center font-bold" title="Chèn 10 dòng mới ở dưới">
+                                            <span style="font-size: 10px; font-weight: 800; line-height: 1; padding: 2px 4px; border-radius: 4px; background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0;">+10</span>
                                         </button>
                                         <button type="button" onclick="duplicateMinLateRow(this)" class="text-neutral-400 hover:text-primary-500 transition-colors p-1" title="Nhân bản sản phẩm">
                                             <iconify-icon icon="lucide:copy" class="text-base"></iconify-icon>
@@ -581,7 +584,7 @@ function addMinLateOrderSupply() {
                         <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số tấm CNC</th>
                         <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Chiều vân</th>
                         <th scope="col" style="min-width: 140px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Ghi chú</th>
-                        <th scope="col" style="width: 80px; min-width: 80px; white-space: nowrap; position: sticky; right: 0; z-index: 3; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Hành động</th>
+                        <th scope="col" style="width: 104px; min-width: 104px; white-space: nowrap; position: sticky; right: 0; z-index: 3; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Hành động</th>
                     </tr>
                     <tr class="table-summary-row bg-neutral-100 font-bold text-neutral-800 text-center">
                         <td class="border border-neutral-200 text-center sticky-stt-td" style="font-size: 80% !important; background-color: #f1f5f9;">TỔNG</td>
@@ -779,10 +782,13 @@ function addMinLateOrderItem(button, isInitial = false, insertAfterRow = null) {
         <td style="min-width: 160px;" class="border border-neutral-200">
             <textarea name="supplies[${supplyIndex}][items][${itemIndex}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-xs w-full resize-none font-medium text-neutral-700 leading-tight" rows="2" style="min-height: 46px; padding: 4px 6px; font-size: 11px;" placeholder="Ghi chú">${lastData ? (lastData.notes || '') : ''}</textarea>
         </td>
-        <td style="width: 80px; min-width: 80px; position: sticky; right: 0; z-index: 1; background-color: #fff; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="text-center align-middle border border-neutral-200">
+        <td style="width: 104px; min-width: 104px; position: sticky; right: 0; z-index: 1; background-color: #fff; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="text-center align-middle border border-neutral-200">
             <div class="flex items-center gap-1 justify-center">
                 <button type="button" onclick="insertMinLateRow(this)" class="text-neutral-400 hover:text-success-500 transition-colors p-1" title="Chèn dòng mới ở dưới">
                     <iconify-icon icon="lucide:list-plus" class="text-base"></iconify-icon>
+                </button>
+                <button type="button" onclick="insertMinLateRow(this, 10)" class="text-neutral-400 hover:text-success-600 transition-colors p-1 flex items-center justify-center font-bold" title="Chèn 10 dòng mới ở dưới">
+                    <span style="font-size: 10px; font-weight: 800; line-height: 1; padding: 2px 4px; border-radius: 4px; background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0;">+10</span>
                 </button>
                 <button type="button" onclick="duplicateMinLateRow(this)" class="text-neutral-400 hover:text-primary-500 transition-colors p-1" title="Nhân bản sản phẩm">
                     <iconify-icon icon="lucide:copy" class="text-base"></iconify-icon>
@@ -891,9 +897,26 @@ function updateMinLateRowIndexes() {
     });
 }
 
-function insertMinLateRow(button) {
+function insertMinLateRow(button, count = 1) {
     const currentRow = button.closest('.order-item-row');
-    addMinLateOrderItem(button, false, currentRow);
+    if (count === 1) {
+        addMinLateOrderItem(button, false, currentRow);
+    } else {
+        let current = currentRow;
+        for (let i = 0; i < count; i++) {
+            addMinLateOrderItem(button, true, current);
+            current = current.nextElementSibling;
+        }
+        updateOrderSummary();
+        updateMinLateRowIndexes();
+        if (current) {
+            current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            const focusInput = current.querySelector('input[name*="[thickness]"]') || current.querySelector('input[name*="[height]"]');
+            if (focusInput) {
+                focusInput.focus();
+            }
+        }
+    }
 }
 
 function duplicateMinLateRow(button) {
@@ -989,26 +1012,26 @@ function calculateMinLateRowStats(row) {
     // Set outputs
     const straightInput = row.querySelector('input[name*="[straight_paste_length]"]');
     if (straightInput) {
-        straightInput.value = straightLength.toFixed(2);
-        straightInput.setAttribute('data-exact-value', straightLength);
+        straightInput.value = straightLength > 0 ? straightLength.toFixed(2) : '';
+        straightInput.setAttribute('data-exact-value', straightLength > 0 ? straightLength : '');
     }
     
     const beveledInput = row.querySelector('input[name*="[beveled_length]"]');
     if (beveledInput) {
-        beveledInput.value = beveledLength.toFixed(2);
-        beveledInput.setAttribute('data-exact-value', beveledLength);
+        beveledInput.value = beveledLength > 0 ? beveledLength.toFixed(2) : '';
+        beveledInput.setAttribute('data-exact-value', beveledLength > 0 ? beveledLength : '');
     }
     
     const vatMoiInput = row.querySelector('input[name*="[vat_moi_length]"]');
     if (vatMoiInput) {
-        vatMoiInput.value = vatMoiLength.toFixed(2);
-        vatMoiInput.setAttribute('data-exact-value', vatMoiLength);
+        vatMoiInput.value = vatMoiLength > 0 ? vatMoiLength.toFixed(2) : '';
+        vatMoiInput.setAttribute('data-exact-value', vatMoiLength > 0 ? vatMoiLength : '');
     }
     
     const banRong2535Input = row.querySelector('input[name*="[ban_rong_25_35]"]');
     if (banRong2535Input) {
-        banRong2535Input.value = banRong2535Length.toFixed(2);
-        banRong2535Input.setAttribute('data-exact-value', banRong2535Length);
+        banRong2535Input.value = banRong2535Length > 0 ? banRong2535Length.toFixed(2) : '';
+        banRong2535Input.setAttribute('data-exact-value', banRong2535Length > 0 ? banRong2535Length : '');
     }
     
     // Dán bản rộng 40-59mm and 17-39mm logic based on dimension checks
@@ -1027,28 +1050,28 @@ function calculateMinLateRowStats(row) {
     
     const banRong40_59Input = row.querySelector('input[name*="[ban_rong_40_59]"]');
     if (banRong40_59Input) {
-        banRong40_59Input.value = banRong40_59Length.toFixed(2);
-        banRong40_59Input.setAttribute('data-exact-value', banRong40_59Length);
+        banRong40_59Input.value = banRong40_59Length > 0 ? banRong40_59Length.toFixed(2) : '';
+        banRong40_59Input.setAttribute('data-exact-value', banRong40_59Length > 0 ? banRong40_59Length : '');
     }
     
     const banRong17_39Input = row.querySelector('input[name*="[ban_rong_17_39]"]');
     if (banRong17_39Input) {
-        banRong17_39Input.value = banRong17_39Length.toFixed(2);
-        banRong17_39Input.setAttribute('data-exact-value', banRong17_39Length);
+        banRong17_39Input.value = banRong17_39Length > 0 ? banRong17_39Length.toFixed(2) : '';
+        banRong17_39Input.setAttribute('data-exact-value', banRong17_39Length > 0 ? banRong17_39Length : '');
     }
     
     // 4. CNC count: if any of the 4 contains "BAN VE CT" or "XEM BAN VE CT"
     const hasBanVe = [h1, h2, w1, w2].some(val => val === 'XEM BAN VE CT' || val === 'BAN VE CT');
     const cncInput = row.querySelector('input[name*="[cnc]"]');
     if (cncInput) {
-        cncInput.value = hasBanVe ? quantity : 0;
+        cncInput.value = hasBanVe ? quantity : '';
     }
     
     // 5. Số vát tay nắm âm: if any of the 4 contains "VAT TNA"
     const hasVatTna = [h1, h2, w1, w2].some(val => val === 'VAT TNA');
     const beveledHandleInput = row.querySelector('input[name*="[beveled_handle]"]');
     if (beveledHandleInput) {
-        beveledHandleInput.value = hasVatTna ? quantity : 0;
+        beveledHandleInput.value = hasVatTna ? quantity : '';
     }
     
     // 6. Bevel sync

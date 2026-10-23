@@ -764,6 +764,10 @@ class OrderController extends Controller
             }
         }
 
+        if ($request->status === 'transferred') {
+            return redirect()->back()->with('error', 'Đơn hàng mới tạo cần được Kế toán duyệt trước khi Kỹ thuật duyệt chuyển sản xuất.');
+        }
+
         $request->validate($rules);
         $service->update($request, $draftOrder);
 
@@ -821,6 +825,10 @@ class OrderController extends Controller
             if (!$request->filled('customer_name')) {
                 $request->merge(['customer_name' => 'Đơn nháp ' . $order->order_code]);
             }
+        }
+
+        if ($request->status === 'transferred' && !$order->accountant_approved_by) {
+            return redirect()->back()->with('error', 'Đơn hàng cần được Kế toán duyệt trước khi Kỹ thuật duyệt chuyển sản xuất.');
         }
 
         $request->validate($rules);
@@ -892,8 +900,8 @@ class OrderController extends Controller
         }
 
         if ($status === 'accountant_unapprove') {
-            if ($order->status === 'transferred' || in_array($order->status, ['in_production', 'completed'])) {
-                return redirect()->back()->with('error', 'Đơn hàng đã chuyển sản xuất, không thể huỷ duyệt kế toán.');
+            if ($order->status === 'transferred' || in_array($order->status, ['in_production', 'completed']) || $order->technical_approved_by) {
+                return redirect()->back()->with('error', 'Đơn hàng đã được duyệt chuyển sản xuất, không thể huỷ duyệt kế toán.');
             }
             $order->accountant_approved_by = null;
             $order->accountant_approved_at = null;

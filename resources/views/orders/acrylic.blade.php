@@ -352,7 +352,7 @@
                                 <th scope="col" style="width: 80px; min-width: 80px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá <span class="text-danger-500">*</span></th>
                                 <th scope="col" style="width: 90px; min-width: 90px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Thành tiền</th>
                                 <th scope="col" style="min-width: 120px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Ghi chú</th>
-                                <th scope="col" style="width: 90px; min-width: 90px; position: sticky; right: 0; z-index: 3; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Hành động</th>
+                                <th scope="col" style="width: 120px; min-width: 120px; position: sticky; right: 0; z-index: 3; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Hành động</th>
                             </tr>
                             <tr class="table-summary-row bg-neutral-100 font-bold text-neutral-800 text-center">
                                 <td class="border border-neutral-200 text-center sticky-stt-td" style="font-size: 80% !important; background-color: #f1f5f9;">TỔNG</td>
@@ -445,10 +445,10 @@
                                     <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][grain_direction]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Chiều vân" value="{{ $item->grain_direction }}">
                                 </td>
                                 <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
-                                    <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][wing_area]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Cánh (m2)" step="any" value="{{ $item->wing_area }}">
+                                    <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][wing_area]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Cánh (m2)" step="any" value="{{ ((float)($item->wing_area ?? 0) > 0) ? $item->wing_area : '' }}">
                                 </td>
                                 <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
-                                    <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][molding_length]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Phào (m)" step="any" value="{{ $item->molding_length }}">
+                                    <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][molding_length]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Phào (m)" step="any" value="{{ ((float)($item->molding_length ?? 0) > 0) ? $item->molding_length : '' }}">
                                     <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][edge_bevel]" class="product-edge-bevel-input" value="{{ $item->edge_bevel }}">
                                 </td>
                                 <td style="width: 130px; min-width: 130px; " class="border border-neutral-200">
@@ -488,13 +488,16 @@
                                 <td style="min-width: 160px;" class="border border-neutral-200">
                                     <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Ghi chú" value="{{ $item->notes }}">
                                 </td>
-                                <td style="width: 90px; min-width: 90px; " class="text-center align-middle border border-neutral-200">
+                                <td style="width: 120px; min-width: 120px; " class="text-center align-middle border border-neutral-200">
                                     <div class="flex items-center gap-1 justify-center">
                                         <button type="button" onclick="addFakeThicknessRow(this)" class="text-neutral-400 hover:text-warning-500 transition-colors p-1" title="Tạo công giả dày">
                                             <iconify-icon icon="lucide:layers" class="text-base"></iconify-icon>
                                         </button>
                                         <button type="button" onclick="insertAcrylicRow(this)" class="text-neutral-400 hover:text-success-500 transition-colors p-1" title="Chèn dòng mới ở dưới">
                                             <iconify-icon icon="lucide:list-plus" class="text-base"></iconify-icon>
+                                        </button>
+                                        <button type="button" onclick="insertAcrylicRow(this, 10)" class="text-neutral-400 hover:text-success-600 transition-colors p-1 flex items-center justify-center font-bold" title="Chèn 10 dòng mới ở dưới">
+                                            <span style="font-size: 10px; font-weight: 800; line-height: 1; padding: 2px 4px; border-radius: 4px; background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0;">+10</span>
                                         </button>
                                         <button type="button" onclick="duplicateAcrylicRow(this)" class="text-neutral-400 hover:text-primary-500 transition-colors p-1" title="Nhân bản sản phẩm">
                                             <iconify-icon icon="lucide:copy" class="text-base"></iconify-icon>
@@ -647,7 +650,7 @@ function addOrderSupply() {
                         <th scope="col" style="width: 80px; min-width: 80px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá <span class="text-danger-500">*</span></th>
                         <th scope="col" style="width: 90px; min-width: 90px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Thành tiền</th>
                         <th scope="col" style="min-width: 120px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Ghi chú</th>
-                        <th scope="col" style="width: 60px; min-width: 60px; white-space: nowrap; position: sticky; right: 0; z-index: 3; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Hành động</th>
+                        <th scope="col" style="width: 120px; min-width: 120px; white-space: nowrap; position: sticky; right: 0; z-index: 3; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Hành động</th>
                     </tr>
                     <tr class="table-summary-row bg-neutral-100 font-bold text-neutral-800 text-center">
                         <td class="border border-neutral-200 text-center sticky-stt-td" style="font-size: 80% !important; background-color: #f1f5f9;">TỔNG</td>
@@ -837,13 +840,16 @@ function addOrderItem(button, isInitial = false, insertAfterRow = null) {
         <td style="min-width: 160px;" class="border border-neutral-200">
             <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Ghi chú" value="">
         </td>
-        <td style="width: 90px; min-width: 90px; " class="text-center align-middle border border-neutral-200">
+        <td style="width: 120px; min-width: 120px; " class="text-center align-middle border border-neutral-200">
             <div class="flex items-center gap-1 justify-center">
                 <button type="button" onclick="addFakeThicknessRow(this)" class="text-neutral-400 hover:text-warning-500 transition-colors p-1" title="Tạo công giả dày">
                     <iconify-icon icon="lucide:layers" class="text-base"></iconify-icon>
                 </button>
                 <button type="button" onclick="insertAcrylicRow(this)" class="text-neutral-400 hover:text-success-500 transition-colors p-1" title="Chèn dòng mới ở dưới">
                     <iconify-icon icon="lucide:list-plus" class="text-base"></iconify-icon>
+                </button>
+                <button type="button" onclick="insertAcrylicRow(this, 10)" class="text-neutral-400 hover:text-success-600 transition-colors p-1 flex items-center justify-center font-bold" title="Chèn 10 dòng mới ở dưới">
+                    <span style="font-size: 10px; font-weight: 800; line-height: 1; padding: 2px 4px; border-radius: 4px; background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0;">+10</span>
                 </button>
                 <button type="button" onclick="duplicateAcrylicRow(this)" class="text-neutral-400 hover:text-primary-500 transition-colors p-1" title="Nhân bản sản phẩm">
                     <iconify-icon icon="lucide:copy" class="text-base"></iconify-icon>
@@ -899,8 +905,8 @@ function removeOrderItem(button) {
     if (isLaborRow) {
         const prevRow = row.previousElementSibling;
         if (prevRow && prevRow.classList.contains('order-item-row')) {
-            const parentInsertBtn = prevRow.querySelector('button[onclick*="insertAcrylicRow"]');
-            if (parentInsertBtn) parentInsertBtn.style.display = '';
+            const parentInsertBtns = prevRow.querySelectorAll('button[onclick*="insertAcrylicRow"]');
+            parentInsertBtns.forEach(b => b.style.display = '');
             const parentFakeThickBtn = prevRow.querySelector('button[onclick*="addFakeThicknessRow"]');
             if (parentFakeThickBtn) parentFakeThickBtn.style.display = '';
             const parentDuplicateBtn = prevRow.querySelector('button[onclick*="duplicateAcrylicRow"]');
@@ -1065,9 +1071,21 @@ function bindAcrylicRowEvents(row) {
     }
 }
 
-function insertAcrylicRow(button) {
-    const currentRow = button.closest('.order-item-row');
-    addOrderItem(button, false, currentRow);
+function insertAcrylicRow(button, count = 1) {
+    let current = button.closest('.order-item-row');
+    let lastAdded = null;
+    for (let i = 0; i < count; i++) {
+        addOrderItem(button, true, current);
+        current = current.nextElementSibling;
+        lastAdded = current;
+    }
+    updateOrderSummary();
+    updateAcrylicRowIndexes();
+    if (lastAdded) {
+        lastAdded.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        const focusInput = lastAdded.querySelector('input[name*="[height]"]');
+        if (focusInput) focusInput.focus();
+    }
 }
 
 function duplicateAcrylicRow(button) {
@@ -1221,8 +1239,8 @@ function addFakeThicknessRow(button) {
     }
 
     // The parent row should not be able to insert, duplicate or add another fake thickness row
-    const parentInsertBtn = row.querySelector('button[onclick*="insertAcrylicRow"]');
-    if (parentInsertBtn) parentInsertBtn.style.display = 'none';
+    const parentInsertBtns = row.querySelectorAll('button[onclick*="insertAcrylicRow"]');
+    parentInsertBtns.forEach(b => b.style.display = 'none');
     const parentFakeThickBtn = row.querySelector('button[onclick*="addFakeThicknessRow"]');
     if (parentFakeThickBtn) parentFakeThickBtn.style.display = 'none';
     const parentDuplicateBtn = row.querySelector('button[onclick*="duplicateAcrylicRow"]');
@@ -1273,7 +1291,7 @@ function calculateTotalPrice(row, sourceEvent) {
             wingAreaInput.value = wingArea > 0 ? wingArea : '';
         } else {
             if (!isNaN(width) && width > 0 && width < 55) {
-                wingAreaInput.value = 0;
+                wingAreaInput.value = '';
             } else {
                 let wingArea = 0;
                 if (height > 0 && width > 0 && quantity > 0) {
@@ -1339,7 +1357,7 @@ function applyNarrowWidthRule(row, triggerCalculation = true) {
         }
         // Cánh (m2) = 0
         if (wingAreaInput) {
-            wingAreaInput.value = 0;
+            wingAreaInput.value = '';
         }
     } else {
         // Restore normal border
@@ -1347,7 +1365,7 @@ function applyNarrowWidthRule(row, triggerCalculation = true) {
 
         // Phào (m) = 0 khi rộng >= 55
         if (moldingLengthInput) {
-            moldingLengthInput.value = 0;
+            moldingLengthInput.value = '';
         }
 
         // If it transitioned from narrow to wide, restore the original price
@@ -1515,8 +1533,8 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const prevRow = row.previousElementSibling;
             if (prevRow && prevRow.classList.contains('order-item-row')) {
-                const parentInsertBtn = prevRow.querySelector('button[onclick*="insertAcrylicRow"]');
-                if (parentInsertBtn) parentInsertBtn.style.display = 'none';
+                const parentInsertBtns = prevRow.querySelectorAll('button[onclick*="insertAcrylicRow"]');
+                parentInsertBtns.forEach(b => b.style.display = 'none');
                 const parentFakeThickBtn = prevRow.querySelector('button[onclick*="addFakeThicknessRow"]');
                 if (parentFakeThickBtn) parentFakeThickBtn.style.display = 'none';
                 const parentDuplicateBtn = prevRow.querySelector('button[onclick*="duplicateAcrylicRow"]');
@@ -1888,8 +1906,8 @@ function showExcelModal(groups) {
                 <td style="padding:6px 10px;text-align:center;font-weight:600;color:#1d4ed8;">${item.quantity}</td>
                 <td style="padding:6px 10px;text-align:center;color:#374151;">${item.bevel !== '' ? item.bevel : '—'}</td>
                 <td style="padding:6px 10px;text-align:center;color:#374151;">${item.grain !== '' ? item.grain : '—'}</td>
-                <td style="padding:6px 10px;text-align:center;color:#374151;">${item.wing_area !== '' ? item.wing_area : '—'}</td>
-                <td style="padding:6px 10px;text-align:center;color:#374151;">${item.molding !== '' ? item.molding : '—'}</td>
+                <td style="padding:6px 10px;text-align:center;color:#374151;">${(item.wing_area !== '' && parseFloat(item.wing_area) > 0) ? item.wing_area : '—'}</td>
+                <td style="padding:6px 10px;text-align:center;color:#374151;">${(item.molding !== '' && parseFloat(item.molding) > 0) ? item.molding : '—'}</td>
                 <td style="padding:6px 10px;text-align:right;font-weight:600;color:#15803d;">${item.unit_price !== '' ? Number(item.unit_price).toLocaleString('vi-VN') : '—'}</td>
                 <td style="padding:6px 10px;text-align:right;font-weight:600;color:#059669;">${item.total_price !== '' ? Number(item.total_price).toLocaleString('vi-VN') : '—'}</td>
                 <td style="padding:6px 10px;color:#6b7280;font-style:italic;">${escHtml(item.notes)}</td>
@@ -1970,8 +1988,8 @@ function confirmExcelImport() {
             setVal('input[name*="[height]"]',        item.height);
             setVal('input[name*="[width]"]',         item.width);
             setVal('input[name*="[quantity]"]',      item.quantity);
-            setVal('input[name*="[wing_area]"]',     item.wing_area);
-            setVal('input[name*="[molding_length]"]',item.molding);
+            setVal('input[name*="[wing_area]"]',     (item.wing_area && parseFloat(item.wing_area) > 0) ? item.wing_area : '');
+            setVal('input[name*="[molding_length]"]', (item.molding && parseFloat(item.molding) > 0) ? item.molding : '');
             setVal('input[name*="[unit_price]"]',    item.unit_price);
             setVal('input[name*="[notes]"]',         item.notes);
             const bevelIn = newRow.querySelector('.product-bevel-input') || newRow.querySelector('input[name*="[bevel]"]:not([name*="[edge_bevel]"])');

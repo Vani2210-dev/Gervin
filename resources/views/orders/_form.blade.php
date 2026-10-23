@@ -334,8 +334,12 @@
                 @if($acrylicOrder->status !== 'cancelled')
                 <button type="submit" name="status" value="cancelled" class="btn bg-danger-50 text-danger-600 hover:bg-danger-100 border border-danger-200 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all" onclick="return confirm('Bạn có chắc chắn muốn hủy đơn hàng này?')">Hủy đơn</button>
                 @endif
-                @if($acrylicOrder->status === 'pending' && $acrylicOrder->accountant_approved_by)
-                <button type="submit" name="status" value="transferred" class="btn bg-violet-50 text-violet-600 hover:bg-violet-100 border border-violet-200 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all" onclick="return confirm('Kỹ thuật xác nhận duyệt & chuyển đơn hàng sang sản xuất?')">{{ !empty($acrylicOrder->edit_reason) ? 'Chuyển SX lại' : 'Kỹ thuật duyệt & Chuyển SX' }}</button>
+                @if($acrylicOrder->status === 'pending')
+                    @if($acrylicOrder->accountant_approved_by)
+                    <button type="submit" name="status" value="transferred" class="btn bg-violet-50 text-violet-600 hover:bg-violet-100 border border-violet-200 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all" onclick="return confirm('Kỹ thuật xác nhận duyệt & chuyển đơn hàng sang sản xuất?')">{{ !empty($acrylicOrder->edit_reason) ? 'Chuyển SX lại' : 'Kỹ thuật duyệt & Chuyển SX' }}</button>
+                    @else
+                    <button type="button" onclick="alert('Đơn hàng cần được Kế toán duyệt trước khi Kỹ thuật duyệt chuyển sản xuất!')" class="btn bg-neutral-100 text-neutral-400 border border-neutral-300 px-5 py-2.5 rounded-lg text-sm font-semibold cursor-not-allowed opacity-75" title="Đơn hàng cần được Kế toán duyệt trước khi Kỹ thuật duyệt chuyển sản xuất">{{ !empty($acrylicOrder->edit_reason) ? 'Chuyển SX lại' : 'Kỹ thuật duyệt & Chuyển SX' }}</button>
+                    @endif
                 @endif
             @endif
             <button type="submit" name="action" value="save" class="btn btn-primary px-6 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all flex items-center gap-1.5" onclick="document.getElementById('order-form-action').value = 'save'">
@@ -878,17 +882,21 @@ function previewOrder() {
                     // Cánh (m2) hoặc Khối lượng
                     else if (titleLower.includes('cánh') || titleLower.includes('m2') || titleLower.includes('khối lượng')) {
                         const num = parseFloat(cellVal);
-                        if (!isNaN(num)) {
+                        if (!isNaN(num) && num > 0) {
                             sumWingArea += num;
                             cellVal = num.toFixed(2);
+                        } else {
+                            cellVal = '';
                         }
                     }
                     // Phào (m)
                     else if (titleLower.includes('phào')) {
                         const num = parseFloat(cellVal);
-                        if (!isNaN(num)) {
+                        if (!isNaN(num) && num > 0) {
                             sumMolding += num;
                             cellVal = num.toFixed(2);
+                        } else {
+                            cellVal = '';
                         }
                     }
                     // Chiều vân
@@ -912,6 +920,14 @@ function previewOrder() {
                     // Ghi chú
                     else if (titleLower.includes('ghi chú')) {
                         align = 'left';
+                    }
+                }
+
+                // Nếu giá trị là 0.00 hoặc 0 (trừ số lượng) thì để trống để hiển thị — như các cột khác
+                if (cellVal === '0.00' || cellVal === '0,00' || cellVal === '0' || cellVal === 0) {
+                    const titleLower = col.title.toLowerCase();
+                    if (!titleLower.includes('số lượng') && titleLower !== 'sl' && titleLower !== 'sl cánh') {
+                        cellVal = '';
                     }
                 }
 
