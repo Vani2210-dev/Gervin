@@ -209,6 +209,10 @@ class AcrylicOrderService
             $updateData['board_return_status'] = $order->board_return_status;
         }
 
+                if ($request->filled('order_code')) {
+            $updateData['order_code'] = trim((string)$request->order_code);
+        }
+
         $order->update($updateData);
 
         // Clean up old supplies and items (explicitly delete codes first to avoid duplicate key on unique constraint)

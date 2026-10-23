@@ -704,6 +704,18 @@ class OrderController extends Controller
         if ($order->status === 'cancelled') {
             return redirect()->route('orders.index')->with('error', 'Đơn hàng đã bị hủy, không thể chỉnh sửa.');
         }
+
+        if ($request->filled('order_code')) {
+            $customCode = trim((string)$request->order_code);
+            $exists = Order::where('order_code', $customCode)
+                ->where('id', '!=', $order->id)
+                ->exists();
+            if ($exists) {
+                return redirect()->back()->withInput()->with('error', "Mã đơn hàng '{$customCode}' đã tồn tại trong hệ thống. Vui lòng nhập mã khác.");
+            }
+            $order->order_code = $customCode;
+            $order->save();
+        }
         $order->load(['supplies.items', 'supplies.minLateItems', 'supplies.glassItems', 'paymentDetails']);
         $acrylicOrder = $order;
         $isDraftCreate = false;
@@ -730,6 +742,18 @@ class OrderController extends Controller
         ]);
 
         $draftOrder = Order::where('status', 'draft')->findOrFail($request->draft_order_id);
+
+        if ($request->filled('order_code')) {
+            $customCode = trim((string)$request->order_code);
+            $exists = Order::where('order_code', $customCode)
+                ->where('id', '!=', $draftOrder->id)
+                ->exists();
+            if ($exists) {
+                return redirect()->back()->withInput()->with('error', "Mã đơn hàng '{$customCode}' đã tồn tại trong hệ thống. Vui lòng nhập mã khác.");
+            }
+            $draftOrder->order_code = $customCode;
+            $draftOrder->save();
+        }
 
         $user = auth()->user();
         if ($user && !$user->canViewAllMarketGroups() && $request->filled('customer_id')) {
@@ -796,6 +820,18 @@ class OrderController extends Controller
         }
         if ($order->status === 'cancelled') {
             return redirect()->route('orders.index')->with('error', 'Đơn hàng đã bị hủy, không thể chỉnh sửa.');
+        }
+
+        if ($request->filled('order_code')) {
+            $customCode = trim((string)$request->order_code);
+            $exists = Order::where('order_code', $customCode)
+                ->where('id', '!=', $order->id)
+                ->exists();
+            if ($exists) {
+                return redirect()->back()->withInput()->with('error', "Mã đơn hàng '{$customCode}' đã tồn tại trong hệ thống. Vui lòng nhập mã khác.");
+            }
+            $order->order_code = $customCode;
+            $order->save();
         }
 
         if ($request->filled('supplies_json')) {
@@ -1164,21 +1200,34 @@ class OrderController extends Controller
 
     private function generateOrderCode(): string
     {
-        $dateStr = now()->format('dmy');
-        $prefix = $dateStr . '.';
+        $yearPrefix = now()->format('y'); // '26'
+        $prefix = $yearPrefix . '.';
 
-        $orders = Order::where(function ($q) use ($dateStr) {
-                $q->where('order_code', 'like', $dateStr . '.%')
-                  ->orWhere('order_code', 'like', $dateStr . '_%');
-            })
+        $orders = Order::whereNotNull('order_code')
+            ->where('order_code', '!=', '')
             ->lockForUpdate()
             ->pluck('order_code');
 
         $maxNumber = 0;
         foreach ($orders as $code) {
-            $parts = preg_split('/[._]/', $code);
-            if (isset($parts[1]) && is_numeric($parts[1])) {
-                $num = intval($parts[1]);
+            $code = trim((string)$code);
+            // 1. Dạng 26.5178 hoặc 26.1 hoặc 26_5178
+            if (preg_match('/^' . preg_quote($yearPrefix, '/') . '[._](\d+)$/', $code, $matches)) {
+                $num = intval($matches[1]);
+                if ($num > $maxNumber) {
+                    $maxNumber = $num;
+                }
+            }
+            // 2. Dạng số nguyên thuần túy (VD: người dùng nhập trực tiếp 5178)
+            elseif (preg_match('/^\d+$/', $code)) {
+                $num = intval($code);
+                if ($num > $maxNumber) {
+                    $maxNumber = $num;
+                }
+            }
+            // 3. Dạng đơn con của năm hiện tại (VD: 26.5178.1 -> lấy 5178)
+            elseif (preg_match('/^' . preg_quote($yearPrefix, '/') . '[._](\d+)\./', $code, $matches)) {
+                $num = intval($matches[1]);
                 if ($num > $maxNumber) {
                     $maxNumber = $num;
                 }

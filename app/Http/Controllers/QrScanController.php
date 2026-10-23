@@ -251,7 +251,7 @@ class QrScanController extends Controller
             }
 
             // 4. Trích xuất mã sản phẩm nếu chuỗi chứa định dạng tấm gỗ chuẩn (\d{3,6}\.[A-Za-z0-9_.-]+)
-            if (preg_match('/(\d{3,6}\.[A-Za-z0-9_.-]+)/', $barcode, $matches)) {
+            if (preg_match('/((?:\d{2}\.)?\d{1,8}\.[A-Za-z0-9_.-]+)/', $barcode, $matches)) {
                 $barcode = $matches[1];
             }
 

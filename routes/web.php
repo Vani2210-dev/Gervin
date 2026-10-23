@@ -315,6 +315,18 @@ Route::middleware(['auth'])->group(function () {
 
 // Orders
 Route::middleware(['auth'])->group(function () {
+    // Sắp xếp đơn hàng (phải đặt TRƯỚC Route::resource('orders') để không bị dính orders/{order})
+    Route::get('orders/sequence', [OrderSequenceController::class, 'index'])->name('orders.sequence');
+    Route::get('orders/sequence/export', [OrderSequenceController::class, 'export'])->name('orders.sequence.export');
+
+    // Chuyển hướng tương thích cho URL cũ
+    Route::get('manufactures/sequence', function () {
+        return redirect()->route('orders.sequence', request()->query());
+    })->name('manufactures.sequence');
+    Route::get('manufactures/sequence/export', function () {
+        return redirect()->route('orders.sequence.export', request()->query());
+    })->name('manufactures.sequence.export');
+
     Route::get('orders/export', [OrderController::class, 'exportExcel'])->name('orders.export');
     Route::resource('orders', OrderController::class)->names('orders');
     Route::post('orders/bulk-destroy', [OrderController::class, 'bulkDestroy'])->name('orders.bulk-destroy');
@@ -349,20 +361,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('customers/{customer}/care-logs', [\App\Http\Controllers\CustomerCareLogController::class, 'index'])->name('customers.care-logs.index');
     Route::post('customers/{customer}/care-logs', [\App\Http\Controllers\CustomerCareLogController::class, 'store'])->name('customers.care-logs.store');
     Route::delete('customers/{customer}/care-logs/{careLog}', [\App\Http\Controllers\CustomerCareLogController::class, 'destroy'])->name('customers.care-logs.destroy');
-});
-
-// Order Sequence (Tiến độ sản xuất theo đơn hàng)
-Route::middleware(['auth'])->group(function () {
-    Route::get('orders/sequence', [OrderSequenceController::class, 'index'])->name('orders.sequence');
-    Route::get('orders/sequence/export', [OrderSequenceController::class, 'export'])->name('orders.sequence.export');
-
-    // Chuyển hướng tương thích cho URL cũ
-    Route::get('manufactures/sequence', function () {
-        return redirect()->route('orders.sequence', request()->query());
-    })->name('manufactures.sequence');
-    Route::get('manufactures/sequence/export', function () {
-        return redirect()->route('orders.sequence.export', request()->query());
-    })->name('manufactures.sequence.export');
 });
 
 // Manufacture Steps / Processes

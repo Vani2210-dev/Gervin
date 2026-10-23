@@ -135,6 +135,10 @@ class ServiceOrderService
             'attachments'     => !empty($allAttachments) ? json_encode($allAttachments) : null,
         ];
 
+                if ($request->filled('order_code')) {
+            $updateData['order_code'] = trim((string)$request->order_code);
+        }
+
         $order->update($updateData);
 
         // Xóa supplies/items nếu có (đơn dịch vụ không có tấm sản phẩm)
