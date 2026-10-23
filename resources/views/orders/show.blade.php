@@ -373,6 +373,11 @@
                             <h6 class="font-bold text-base text-neutral-800 m-0">Vật tư:
                                 {{ $supply->order_supply_code ? '[' . $supply->order_supply_code . '] ' : '' }}{{ $supply->supply_name }}
                             </h6>
+                            @if(($supply->inventory_action ?? '') === 'subtract')
+                                <span class="text-xs font-bold text-rose-700 bg-rose-50 px-2 py-1 rounded-lg border border-rose-200">Trừ kho</span>
+                            @elseif(($supply->inventory_action ?? '') === 'add' && (str_contains(mb_strtolower($acrylicOrder->customer_name ?? ''), 'nhập kho') || str_contains(mb_strtolower($acrylicOrder->customer_name ?? ''), 'nhap kho')))
+                                <span class="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-200">Thêm kho</span>
+                            @endif
                         </div>
                         @if($supply->quantity)
                             <span class="text-sm font-semibold bg-neutral-100 px-3 py-1 rounded-lg text-neutral-700">

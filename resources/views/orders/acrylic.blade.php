@@ -327,6 +327,20 @@
                         </select>
                         <input type="text" name="supplies[{{ $supplyIndex }}][supply_name]" class="form-control form-control-sm rounded-lg w-64 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Tên vật tư (ví dụ: Acrylic, Melamine...)" value="{{ $supply->supply_name }}">
                         <input type="number" name="supplies[{{ $supplyIndex }}][quantity]" class="form-control form-control-sm rounded-lg w-24 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="SL" min="0" step="any" value="{{ $supply->quantity ?? 0 }}">
+                        @php
+                            $isNKOrder = isset($acrylicOrder) && (
+                                $acrylicOrder->customer_id == ($nhapKhoCustomer?->id ?? -1) || 
+                                str_contains(mb_strtolower($acrylicOrder->customer_name ?? ''), 'nhập kho') ||
+                                str_contains(mb_strtolower($acrylicOrder->customer_name ?? ''), 'nhap kho')
+                            );
+                            $currentAction = $supply->inventory_action ?? 'add';
+                        @endphp
+                        <div class="supply-inventory-action-wrap items-center gap-2" style="{{ $isNKOrder ? 'display: flex;' : 'display: none;' }}">
+                            <select name="supplies[{{ $supplyIndex }}][inventory_action]" class="supply-inventory-action-select form-select form-select-sm rounded-lg text-xs font-bold border transition-colors {{ $currentAction === 'subtract' ? 'bg-rose-50 text-rose-700 border-rose-300' : 'bg-emerald-50 text-emerald-700 border-emerald-300' }}" onchange="updateSupplyInventoryActionStyle(this)">
+                                <option value="add" {{ $currentAction === 'add' ? 'selected' : '' }}>+ Thêm kho</option>
+                                <option value="subtract" {{ $currentAction === 'subtract' ? 'selected' : '' }}>- Trừ kho</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="flex items-center gap-2">
                         <button type="button" onclick="this.closest('.order-supply-row').remove(); updateOrderSummary(); if(typeof updateAcrylicRowIndexes === 'function') updateAcrylicRowIndexes();" class="text-neutral-400 hover:text-danger-500 transition-colors p-1 flex items-center justify-center" title="Xóa vật tư này">
@@ -625,6 +639,12 @@ function addOrderSupply() {
                 </select>
                 <input type="text" name="supplies[${supplyIndex}][supply_name]" class="form-control form-control-sm rounded-lg w-64 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Tên vật tư (ví dụ: Acrylic, Melamine...)">
                 <input type="number" name="supplies[${supplyIndex}][quantity]" class="form-control form-control-sm rounded-lg w-24 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="SL" min="0" step="0.01" value="0">
+                <div class="supply-inventory-action-wrap items-center gap-2" style="${(typeof window.isNhapKhoSelected === 'function' && window.isNhapKhoSelected()) ? 'display: flex;' : 'display: none;'}">
+                    <select name="supplies[${supplyIndex}][inventory_action]" class="supply-inventory-action-select form-select form-select-sm rounded-lg text-xs font-bold border transition-colors bg-emerald-50 text-emerald-700 border-emerald-300" onchange="updateSupplyInventoryActionStyle(this)">
+                        <option value="add" selected>+ Thêm kho</option>
+                        <option value="subtract">- Trừ kho</option>
+                    </select>
+                </div>
             </div>
             <div class="flex items-center gap-2">
                 <button type="button" onclick="this.closest('.order-supply-row').remove(); updateOrderSummary(); if(typeof updateAcrylicRowIndexes === 'function') updateAcrylicRowIndexes();" class="text-neutral-400 hover:text-danger-500 transition-colors p-1 flex items-center justify-center" title="Xóa vật tư này">

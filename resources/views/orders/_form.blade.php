@@ -459,6 +459,24 @@ function fetchCustomerDebt(customerId) {
 
 window.nhapKhoCustomerId = {{ $nhapKhoCustomer ? $nhapKhoCustomer->id : 'null' }};
 
+window.updateSupplyInventoryActionStyle = function(selectEl) {
+    if (!selectEl) return;
+    if (selectEl.value === 'subtract') {
+        selectEl.classList.remove('bg-emerald-50', 'text-emerald-700', 'border-emerald-300');
+        selectEl.classList.add('bg-rose-50', 'text-rose-700', 'border-rose-300');
+    } else {
+        selectEl.classList.remove('bg-rose-50', 'text-rose-700', 'border-rose-300');
+        selectEl.classList.add('bg-emerald-50', 'text-emerald-700', 'border-emerald-300');
+    }
+};
+
+window.toggleSupplyInventoryActionVisibility = function() {
+    const isNK = typeof window.isNhapKhoSelected === 'function' && window.isNhapKhoSelected();
+    document.querySelectorAll('.supply-inventory-action-wrap').forEach(function(el) {
+        el.style.display = isNK ? 'flex' : 'none';
+    });
+};
+
 window.isNhapKhoSelected = function() {
     const custSelect = document.getElementById('customer-select');
     if (!custSelect) return false;
@@ -531,6 +549,9 @@ function selectNhapKhoCustomer() {
         if (typeof window.applyNhapKhoToAllItems === 'function') {
             window.applyNhapKhoToAllItems();
         }
+        if (typeof window.toggleSupplyInventoryActionVisibility === 'function') {
+            window.toggleSupplyInventoryActionVisibility();
+        }
     }
 }
 
@@ -550,6 +571,9 @@ function fillCustomerInfo(customerId) {
         }
         if (isNK && typeof window.applyNhapKhoToAllItems === 'function') {
             window.applyNhapKhoToAllItems();
+        }
+        if (typeof window.toggleSupplyInventoryActionVisibility === 'function') {
+            window.toggleSupplyInventoryActionVisibility();
         }
         if (mgSelect) {
             mgSelect.value = customer.market_group_id || '';

@@ -13,6 +13,7 @@ class OrderSupply extends Model
         'order_supply_code',
         'supply_name',
         'quantity',
+        'inventory_action',
     ];
 
     public function order()

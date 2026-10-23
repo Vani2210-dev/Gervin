@@ -296,9 +296,21 @@
                                 {{-- Mã màu / Vật tư --}}
                                 <td class="py-2 px-4 text-xs whitespace-nowrap">
                                     <div class="flex flex-col gap-1">
-                                        <span class="font-mono font-semibold text-neutral-800 bg-neutral-100 px-2 py-1 rounded-md border border-neutral-200 inline-block w-fit">
-                                            {{ $supply->order_supply_code ?? '—' }}
-                                        </span>
+                                        <div class="flex items-center gap-2">
+                                            <span class="font-mono font-semibold text-neutral-800 bg-neutral-100 px-2 py-1 rounded-md border border-neutral-200 inline-block w-fit">
+                                                {{ $supply->order_supply_code ?? '—' }}
+                                            </span>
+                                            @if(($supply->inventory_action ?? '') === 'subtract')
+                                                <span class="text-[10px] font-bold text-rose-700 bg-rose-50 px-2 py-1 rounded border border-rose-200" title="Trừ kho khi ép">Trừ kho</span>
+                                            @elseif(($supply->inventory_action ?? '') === 'add')
+                                                @php
+                                                    $isNK = str_contains(mb_strtolower($order->customer_name ?? ''), 'nhập kho') || str_contains(mb_strtolower($order->customer_name ?? ''), 'nhap kho');
+                                                @endphp
+                                                @if($isNK)
+                                                    <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-1 rounded border border-emerald-200" title="Thêm kho khi ép">Thêm kho</span>
+                                                @endif
+                                            @endif
+                                        </div>
                                         @if(!empty($supply->supply_name))
                                             <span class="text-neutral-500 text-xs block truncate max-w-xs">{{ $supply->supply_name }}</span>
                                         @endif

@@ -290,6 +290,7 @@ class GlassOrderService
                 'order_supply_code' => $supplyData['order_supply_code'] ?? null,
                 'supply_name'       => $supplyData['supply_name'] ?? 'Vật tư',
                 'quantity'          => $supplyData['quantity'] ?? 1,
+                'inventory_action'  => $supplyData['inventory_action'] ?? 'add',
             ]);
 
             if (!isset($supplyData['items']) || !is_array($supplyData['items'])) continue;

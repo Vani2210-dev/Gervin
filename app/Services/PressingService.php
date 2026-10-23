@@ -595,7 +595,11 @@ class PressingService
             if ($prevAction === 'ép đơn') {
                 $board = $this->resolveWoodBoard($item, $priceId);
                 if ($board) {
-                    $this->adjustWoodBoardStock($board, -1, 'EP-KHO', $codeRecord->product_id, "Hoàn tác ép đơn: {$codeRecord->product_id}");
+                    $supply = $item->orderSupply;
+                    $invAction = $supply?->inventory_action ?? 'add';
+                    $reverseQty = ($invAction === 'subtract') ? 1 : -1;
+                    $revVoucher = ($reverseQty > 0) ? 'EP-DON' : 'EP-KHO';
+                    $this->adjustWoodBoardStock($board, $reverseQty, $revVoucher, $codeRecord->product_id, "Hoàn tác ép đơn: {$codeRecord->product_id}");
                 }
             }
 
@@ -628,12 +632,27 @@ class PressingService
                 $item->save();
             }
 
-            // Nhập 1 tấm ván vào kho
+            // Cân đối kho theo cấu hình Thêm kho / Trừ kho của vật tư
             $boardInfo = '';
             $board = $this->resolveWoodBoard($item, $priceId);
             if ($board) {
-                $adj = $this->adjustWoodBoardStock($board, 1, 'EP-DON', $codeRecord->product_id, "Ép đơn tấm {$codeRecord->product_id}" . ($notes ? ": {$notes}" : ''));
-                $boardInfo = " [Đã nhập 1 tấm: {$adj['board_name']} - Tồn kho: {$adj['new_stock']}]";
+                $supply = $item->orderSupply;
+                $invAction = $supply?->inventory_action ?? 'add';
+                $isSubtract = ($invAction === 'subtract');
+
+                $qtyChange = $isSubtract ? -1 : 1;
+                $voucherCode = $isSubtract ? 'XUAT-KHO' : 'EP-DON';
+                $actionLabel = $isSubtract ? 'Đã trừ 1 tấm' : 'Đã nhập 1 tấm';
+                $actionNote = $isSubtract ? 'Trừ kho (-1 tấm)' : 'Nhập kho (+1 tấm)';
+
+                $adj = $this->adjustWoodBoardStock(
+                    $board,
+                    $qtyChange,
+                    $voucherCode,
+                    $codeRecord->product_id,
+                    "Ép đơn tấm {$codeRecord->product_id} [{$actionNote}]" . ($notes ? ": {$notes}" : '')
+                );
+                $boardInfo = " [{$actionLabel}: {$adj['board_name']} - Tồn kho: {$adj['new_stock']}]";
             }
 
             $msg = "Đã ghi nhận ép theo đơn cho tấm {$codeStr} thành công!{$boardInfo}";
