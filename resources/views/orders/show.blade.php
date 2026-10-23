@@ -127,7 +127,7 @@
                             <span>Xem trước</span>
                         </button>
 
-                        @can('edit order')
+                        @if(auth()->user()->can('approve order') || auth()->user()->can('edit order'))
                             {{-- Nút Kế toán duyệt --}}
                             @if(!$acrylicOrder->accountant_approved_by && in_array($acrylicOrder->status, ['draft', 'pending']))
                                 <form method="POST" action="{{ route('orders.update-status', $acrylicOrder) }}" onsubmit="return confirm('Kế toán xác nhận duyệt đơn hàng {{ $acrylicOrder->order_code }}?')" class="m-0 inline-block">
@@ -1014,7 +1014,7 @@
                             <iconify-icon icon="lucide:edit-3" class="text-base"></iconify-icon> Chỉnh sửa đơn hàng
                         </button>
                     @endif
-                @endcan
+                @endif
                 @can('add order')
                     <div class="flex flex-col gap-2 w-full">
                         <button type="button" onclick="openReworkModal()"

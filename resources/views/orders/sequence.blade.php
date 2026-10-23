@@ -115,14 +115,14 @@
         
         {{-- Tìm kiếm & Lọc nhanh ngày --}}
         <div class="flex items-center flex-wrap gap-3">
-            <form method="GET" action="{{ route('manufactures.sequence') }}" class="flex items-center flex-wrap gap-3">
+            <form method="GET" action="{{ route('orders.sequence') }}" class="flex items-center flex-wrap gap-3">
                 <input type="hidden" name="completion_status" value="{{ $completionStatus }}">
                 
                 {{-- Ô tìm kiếm --}}
                 <div class="relative">
                     <iconify-icon icon="lucide:search" class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-base"></iconify-icon>
                     <input type="text" name="search" class="form-control border-neutral-200 rounded-xl pl-9 pr-3 py-2 text-xs w-64 md:w-80 focus:border-primary-500" 
-                        placeholder="Tìm khách hàng, mã đơn, mã màu, lệnh..." value="{{ $search }}">
+                        placeholder="Tìm khách hàng, mã đơn, mã màu, vật tư..." value="{{ $search }}">
                 </div>
 
                 <button type="submit" class="btn bg-primary-600 hover:bg-primary-700 text-white text-xs px-4 py-2 rounded-xl font-semibold transition">
@@ -131,19 +131,19 @@
             </form>
 
             {{-- Bộ lọc ngày tháng chung --}}
-            <x-date-filter :action="route('manufactures.sequence')" />
+            <x-date-filter :action="route('orders.sequence')" />
 
             {{-- Quick Filter Pills --}}
             <div class="flex items-center gap-1 bg-neutral-100 p-1 rounded-xl">
-                <a href="{{ route('manufactures.sequence', ['date' => $date, 'search' => $search]) }}" 
+                <a href="{{ route('orders.sequence', ['date' => $date, 'search' => $search]) }}" 
                     class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {{ empty($completionStatus) ? 'bg-white text-primary-600 shadow-sm' : 'text-neutral-600 hover:text-neutral-900' }}">
                     Tất cả
                 </a>
-                <a href="{{ route('manufactures.sequence', ['date' => $date, 'search' => $search, 'completion_status' => 'uncompleted']) }}" 
+                <a href="{{ route('orders.sequence', ['date' => $date, 'search' => $search, 'completion_status' => 'uncompleted']) }}" 
                     class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {{ $completionStatus === 'uncompleted' ? 'bg-white text-warning-700 shadow-sm' : 'text-neutral-600 hover:text-neutral-900' }}">
                     Đang làm
                 </a>
-                <a href="{{ route('manufactures.sequence', ['date' => $date, 'search' => $search, 'completion_status' => 'completed']) }}" 
+                <a href="{{ route('orders.sequence', ['date' => $date, 'search' => $search, 'completion_status' => 'completed']) }}" 
                     class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {{ $completionStatus === 'completed' ? 'bg-white text-success-700 shadow-sm' : 'text-neutral-600 hover:text-neutral-900' }}">
                     Đã xong
                 </a>
@@ -153,13 +153,13 @@
         {{-- Bên phải: Nút xuất Excel & Xóa lọc --}}
         <div class="flex items-center gap-2">
             @if(!empty($completionStatus) || !empty($date) || !empty($search))
-            <a href="{{ route('manufactures.sequence') }}" class="btn bg-danger-50 hover:bg-danger-100 text-danger-600 text-xs px-3 py-2 rounded-xl flex items-center gap-1.5 font-semibold transition" title="Xóa toàn bộ bộ lọc">
+            <a href="{{ route('orders.sequence') }}" class="btn bg-danger-50 hover:bg-danger-100 text-danger-600 text-xs px-3 py-2 rounded-xl flex items-center gap-1.5 font-semibold transition" title="Xóa toàn bộ bộ lọc">
                 <iconify-icon icon="lucide:x" class="text-base"></iconify-icon>
                 Xóa lọc
             </a>
             @endif
 
-            <a href="{{ route('manufactures.sequence.export', ['date' => $date, 'search' => $search, 'completion_status' => $completionStatus]) }}" 
+            <a href="{{ route('orders.sequence.export', ['date' => $date, 'search' => $search, 'completion_status' => $completionStatus]) }}" 
                 class="btn bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-4 py-2 rounded-xl flex items-center gap-2 font-semibold shadow-sm transition">
                 <iconify-icon icon="solar:file-download-bold-duotone" class="text-lg"></iconify-icon>
                 Xuất Excel
@@ -411,7 +411,7 @@
                                 </div>
                                 <h6 class="text-sm font-bold text-neutral-700 mb-1">Không tìm thấy dữ liệu phù hợp</h6>
                                 <p class="text-xs text-neutral-400 mb-4">Vui lòng thay đổi từ khóa tìm kiếm hoặc bỏ chọn bộ lọc ngày</p>
-                                <a href="{{ route('manufactures.sequence') }}" class="btn btn-sm bg-primary-50 text-primary-600 hover:bg-primary-100 font-semibold px-4 py-2 rounded-xl text-xs transition">
+                                <a href="{{ route('orders.sequence') }}" class="btn btn-sm bg-primary-50 text-primary-600 hover:bg-primary-100 font-semibold px-4 py-2 rounded-xl text-xs transition">
                                     Tải lại toàn bộ dữ liệu
                                 </a>
                             </td>

@@ -20,7 +20,7 @@ use App\Http\Controllers\CncTemplateController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\QrCodeGeneratorController;
-use App\Http\Controllers\ManufactureController;
+use App\Http\Controllers\OrderSequenceController;
 use App\Http\Controllers\WarehouseController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\ManufactureStepController;
@@ -351,15 +351,18 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('customers/{customer}/care-logs/{careLog}', [\App\Http\Controllers\CustomerCareLogController::class, 'destroy'])->name('customers.care-logs.destroy');
 });
 
-// Manufacture Orders
+// Order Sequence (Tiến độ sản xuất theo đơn hàng)
 Route::middleware(['auth'])->group(function () {
-    Route::get('manufactures/sequence', [ManufactureController::class, 'sequenceIndex'])->name('manufactures.sequence');
-    Route::get('manufactures/sequence/export', [ManufactureController::class, 'sequenceExport'])->name('manufactures.sequence.export');
-    Route::post('manufactures/quick-create', [ManufactureController::class, 'quickCreate'])->name('manufactures.quick-create');
-    Route::resource('manufactures', ManufactureController::class)->names('manufactures');
-    Route::post('manufactures/{manufacture}/approve/{step}', [ManufactureController::class, 'approveStep'])->name('manufactures.approve');
-    Route::get('manufactures/{manufacture}/print-stamps', [ManufactureController::class, 'printStamps'])->name('manufactures.print-stamps');
-    Route::post('manufactures/{manufacture}/assign-stamps', [ManufactureController::class, 'assignStamps'])->name('manufactures.assign-stamps');
+    Route::get('orders/sequence', [OrderSequenceController::class, 'index'])->name('orders.sequence');
+    Route::get('orders/sequence/export', [OrderSequenceController::class, 'export'])->name('orders.sequence.export');
+
+    // Chuyển hướng tương thích cho URL cũ
+    Route::get('manufactures/sequence', function () {
+        return redirect()->route('orders.sequence', request()->query());
+    })->name('manufactures.sequence');
+    Route::get('manufactures/sequence/export', function () {
+        return redirect()->route('orders.sequence.export', request()->query());
+    })->name('manufactures.sequence.export');
 });
 
 // Manufacture Steps / Processes

@@ -103,13 +103,8 @@ class PermissionSeeder extends Seeder
             'add order',
             'edit order',
             'delete order',
+            'approve order',
             
-            // Manufacture permissions
-            'view manufacture',
-            'add manufacture',
-            'edit manufacture',
-            'delete manufacture',
-            'approve manufacture',
 
             // Warehouse permissions
             'view warehouse',

@@ -18,7 +18,6 @@ class DashboardController extends Controller
 
         $orderQuery = \App\Models\Order::where('status', '!=', 'draft');
         $customerQuery = \App\Models\Customer::query();
-        $manufactureOrderQuery = \App\Models\ManufactureOrder::query();
 
         if (!$isAdmin && $user) {
             $orderQuery->whereHas('customer.users', function ($q) use ($user) {
@@ -29,9 +28,6 @@ class DashboardController extends Controller
                 $q->where('users.id', $user->id);
             });
 
-            $manufactureOrderQuery->whereHas('orders.customer.users', function ($q) use ($user) {
-                $q->where('users.id', $user->id);
-            });
         }
 
         $now = \Carbon\Carbon::now();
@@ -112,7 +108,6 @@ class DashboardController extends Controller
             'total_warehouses' => \App\Models\Warehouse::count(),
             'total_dc_stocks' => \App\Models\DcStock::where('status', 'available')->count(),
             'total_dc_used' => \App\Models\DcStock::where('status', 'used')->count(),
-            'total_manufacture_orders' => (clone $manufactureOrderQuery)->count(),
             'total_qr_devices' => \App\Models\QrDevice::count(),
             'qr_scans_today' => \App\Models\QrScanLog::whereDate('created_at', $today)->count(),
             'total_users' => \App\Models\User::count(),

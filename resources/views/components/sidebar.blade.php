@@ -72,22 +72,14 @@
             @endif
 
             {{-- Nhóm Sản xuất & Vận hành --}}
-            @if(auth()->user()->can('view manufacture') || auth()->user()->can('view sequence') || auth()->user()->can('view pressing') || auth()->user()->can('view cnc') || auth()->user()->can('view edge banding') || auth()->user()->can('view finishing') || auth()->user()->can('view qc') || auth()->user()->can('view packing') || auth()->user()->can('view dispatch') || auth()->user()->can('view delivery') || auth()->user()->can('view qr device') || auth()->user()->hasRole('Admin'))
+            @if(auth()->user()->can('view sequence') || auth()->user()->can('view pressing') || auth()->user()->can('view cnc') || auth()->user()->can('view edge banding') || auth()->user()->can('view finishing') || auth()->user()->can('view qc') || auth()->user()->can('view packing') || auth()->user()->can('view dispatch') || auth()->user()->can('view delivery') || auth()->user()->can('view qr device') || auth()->user()->hasRole('Admin'))
             <li class="sidebar-menu-group-title">Sản xuất & Vận hành</li>
             @endif
 
-            @can('view manufacture')
-            <li>
-                <a href="{{ route('manufactures.index') }}">
-                    <iconify-icon icon="mdi:factory" class="menu-icon"></iconify-icon>
-                    <span>Lệnh sản xuất</span>
-                </a>
-            </li>
-            @endcan
 
             @can('view sequence')
             <li>
-                <a href="{{ route('manufactures.sequence') }}">
+                <a href="{{ route('orders.sequence') }}">
                     <iconify-icon icon="lucide:arrow-up-down" class="menu-icon"></iconify-icon>
                     <span>Sắp xếp đơn hàng</span>
                 </a>
@@ -182,7 +174,7 @@
             </li>
             @endif
 
-            @if(auth()->user()->can('view manufacture') || auth()->user()->can('view order') || auth()->user()->hasRole('Admin'))
+            @if(auth()->user()->can('view order') || auth()->user()->hasRole('Admin'))
             <li>
                 <a href="{{ route('qrcode.index') }}">
                     <iconify-icon icon="solar:qr-code-bold-duotone" class="menu-icon"></iconify-icon>

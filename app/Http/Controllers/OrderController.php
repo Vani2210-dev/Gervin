@@ -40,6 +40,7 @@ class OrderController extends Controller
         $this->middleware('permission:add order',    ['only' => ['create', 'createByType', 'store']]);
         $this->middleware('permission:edit order',   ['only' => ['edit', 'update']]);
         $this->middleware('permission:delete order', ['only' => ['destroy', 'bulkDestroy']]);
+        $this->middleware('permission:approve order|edit order', ['only' => ['updateStatus']]);
     }
 
     public function index(Request $request)
@@ -60,9 +61,6 @@ class OrderController extends Controller
             'technicalApprover',
             'rejecter',
         ])
-            ->withCount(['manufactureOrders' => function ($q) {
-                $q->whereIn('status', ['stamps_received', 'in_production', 'completed']);
-            }])
             ->when($user && !$user->canViewAllMarketGroups(), function ($q) use ($user) {
                 $userMarketGroupIds = $user->marketGroups()->pluck('market_groups.id');
                 $q->whereHas('customer', function ($cq) use ($userMarketGroupIds) {

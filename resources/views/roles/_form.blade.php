@@ -12,7 +12,6 @@
         'customer'      => 'Khách hàng',
         'order'         => 'Đơn hàng',
         'market group'  => 'Nhóm thị trường',
-        'manufacture'   => 'Lệnh sản xuất',
         'warehouse'     => 'Kho vật tư',
         'pressing'      => 'Ép ván',
         'cnc'           => 'Cắt CNC',

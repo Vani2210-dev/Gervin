@@ -193,10 +193,6 @@ class Order extends Model
     }
 
     // Quan hệ với lệnh sản xuất (nhiều-nhiều)
-    public function manufactureOrders()
-    {
-        return $this->belongsToMany(ManufactureOrder::class, 'manufacture_order_order', 'order_id', 'manufacture_order_id');
-    }
 
     // Liên kết đơn cha (đơn gốc)
     public function parent()
