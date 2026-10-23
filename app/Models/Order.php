@@ -25,6 +25,10 @@ class Order extends Model
 
     public function adjustCustomerDebtOnCreate()
     {
+        if ($this->isNhapKho()) {
+            return;
+        }
+
         if ($this->customer && !in_array($this->status, ['draft', 'pending', 'cancelled']) && $this->board_return_status !== 'returned') {
             $amount = round($this->total_amount, -3);
             $this->customer->increment('debt', $amount);
@@ -33,6 +37,10 @@ class Order extends Model
 
     public function adjustCustomerDebtOnUpdate()
     {
+        if ($this->isNhapKho()) {
+            return;
+        }
+
         $oldStatus = $this->getOriginal('status');
         $newStatus = $this->status;
         $oldAmount = round($this->getOriginal('total_amount') ?? 0, -3);
@@ -82,6 +90,10 @@ class Order extends Model
 
     public function adjustCustomerDebtOnDelete()
     {
+        if ($this->isNhapKho()) {
+            return;
+        }
+
         if ($this->customer && !in_array($this->status, ['draft', 'pending', 'cancelled']) && $this->board_return_status !== 'returned') {
             $amount = round($this->total_amount, -3);
             $this->customer->decrement('debt', $amount);
@@ -345,6 +357,41 @@ class Order extends Model
         }
 
         return round($meters, 2);
+    }
+
+    public function isNhapKho(): bool
+    {
+        if ($this->customer && (
+            in_array(strtoupper($this->customer->customer_code ?? ''), ['NK', 'NHAPKHO'], true) ||
+            in_array(mb_strtolower(trim($this->customer->name ?? '')), ['nhập kho', 'nhap kho'], true)
+        )) {
+            return true;
+        }
+        $cName = mb_strtolower(trim($this->customer_name ?? ''));
+        return in_array($cName, ['nhập kho', 'nhap kho'], true);
+    }
+
+    public function scopeWhereNhapKho($query)
+    {
+        return $query->where(function ($q) {
+            $q->whereHas('customer', function ($cq) {
+                $cq->whereIn('customer_code', ['NK', 'NHAPKHO'])
+                   ->orWhereRaw('LOWER(TRIM(name)) IN (?, ?)', ['nhập kho', 'nhap kho']);
+            })->orWhereRaw('LOWER(TRIM(customer_name)) IN (?, ?)', ['nhập kho', 'nhap kho']);
+        });
+    }
+
+    public function scopeWhereNotNhapKho($query)
+    {
+        return $query->where(function ($q) {
+            $q->whereDoesntHave('customer', function ($cq) {
+                $cq->whereIn('customer_code', ['NK', 'NHAPKHO'])
+                   ->orWhereRaw('LOWER(TRIM(name)) IN (?, ?)', ['nhập kho', 'nhap kho']);
+            })->where(function ($sub) {
+                $sub->whereNull('customer_name')
+                    ->orWhereRaw('LOWER(TRIM(customer_name)) NOT IN (?, ?)', ['nhập kho', 'nhap kho']);
+            });
+        });
     }
 }
 

@@ -128,8 +128,11 @@ class RevenueReportController extends Controller
         $lostThresholdDate = $targetThresholdDate->copy()->subMonths($lostMonths)->toDateString();
         $returningThresholdDate = $targetThresholdDate->copy()->subMonths($returningMonths)->toDateString();
 
-        // 3. Query danh sách Khách hàng có phân quyền
-        $customerQuery = Customer::with('users')->orderBy('customer_code');
+        // 3. Query danh sách Khách hàng có phân quyền (Không đưa đơn/khách Nhập kho vào báo cáo doanh thu)
+        $customerQuery = Customer::with('users')
+            ->whereNotIn('customer_code', ['NK', 'NHAPKHO'])
+            ->whereRaw('LOWER(TRIM(name)) NOT IN (?, ?)', ['nhập kho', 'nhap kho'])
+            ->orderBy('customer_code');
 
         $filterUserId = null;
         if ($canViewAll) {
@@ -169,6 +172,7 @@ class RevenueReportController extends Controller
 
         // 4. Lấy đơn hàng và thanh toán từ đầu tháng được chọn trở đi (startOfMonth)
         $monthOrders = Order::whereIn('customer_id', $customerIds)
+            ->whereNotNhapKho()
             ->whereNotIn('status', ['draft', 'pending', 'cancelled'])
             ->whereDate('order_date', '>=', $startOfMonth)
             ->get(['id', 'customer_id', 'total_amount', 'type', 'relation_type', 'board_return_status', 'order_date']);
@@ -180,6 +184,7 @@ class RevenueReportController extends Controller
         // Lấy tất cả đơn hàng trong quá khứ tính đến ngày/tháng được chọn để thống kê trạng thái khách
         $pastLimitDate = ($viewMode === 'month') ? $endOfMonth : (($viewMode === 'range') ? $toDate : $selectedDate);
         $pastOrders = Order::whereIn('customer_id', $customerIds)
+            ->whereNotNhapKho()
             ->whereNotIn('status', ['draft', 'pending', 'cancelled'])
             ->whereDate('order_date', '<=', $pastLimitDate)
             ->orderBy('order_date', 'desc')
@@ -512,8 +517,11 @@ class RevenueReportController extends Controller
             $filename = 'Bao_Cao_Doanh_Thu_' . $selectedCarbon->format('Y-m-d') . '.xlsx';
         }
 
-        // 2. Query danh sách Khách hàng theo bộ lọc
-        $customerQuery = Customer::with('users')->orderBy('customer_code');
+        // 2. Query danh sách Khách hàng theo bộ lọc (Không đưa đơn/khách Nhập kho vào báo cáo doanh thu)
+        $customerQuery = Customer::with('users')
+            ->whereNotIn('customer_code', ['NK', 'NHAPKHO'])
+            ->whereRaw('LOWER(TRIM(name)) NOT IN (?, ?)', ['nhập kho', 'nhap kho'])
+            ->orderBy('customer_code');
         $filterUserId = null;
         if ($canViewAll) {
             $filterUserId = $request->input('user_id');
@@ -546,6 +554,7 @@ class RevenueReportController extends Controller
         $latestDateStr = $lastDateCarbon->toDateString();
 
         $monthOrders = Order::whereIn('customer_id', $customerIds)
+            ->whereNotNhapKho()
             ->whereNotIn('status', ['draft', 'pending', 'cancelled'])
             ->whereDate('order_date', '>=', $startOfMonth)
             ->get(['id', 'customer_id', 'total_amount', 'type', 'relation_type', 'board_return_status', 'order_date']);
@@ -556,6 +565,7 @@ class RevenueReportController extends Controller
 
         // Lấy lịch sử đơn hàng trong quá khứ tính đến ngày muộn nhất để xét trạng thái KH
         $pastOrders = Order::whereIn('customer_id', $customerIds)
+            ->whereNotNhapKho()
             ->whereNotIn('status', ['draft', 'pending', 'cancelled'])
             ->whereDate('order_date', '<=', $latestDateStr)
             ->orderBy('order_date', 'desc')

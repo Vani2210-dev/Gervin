@@ -94,6 +94,12 @@
                             class="px-3 py-1 rounded-full text-xs font-semibold {{ $typeColors[$acrylicOrder->type] ?? 'bg-neutral-100 text-neutral-600' }}">
                             {{ $typeLabels[$acrylicOrder->type] ?? $acrylicOrder->type }}
                         </span>
+                        @if($acrylicOrder->isNhapKho())
+                            <span class="px-3 py-1 rounded-full text-xs font-semibold bg-sky-100 text-sky-800 border border-sky-300 flex items-center gap-1.5 shadow-2xs">
+                                <iconify-icon icon="solar:box-minimalistic-bold-duotone" class="text-sm text-sky-600"></iconify-icon>
+                                <span>Đơn Nhập Kho</span>
+                            </span>
+                        @endif
                         <span
                             class="px-3 py-1 rounded-full text-xs font-semibold {{ $statusColors[$acrylicOrder->status] ?? 'bg-neutral-100 text-neutral-600' }}">
                             {{ $statusLabels[$acrylicOrder->status] ?? $acrylicOrder->status }}
@@ -239,7 +245,12 @@
                         <div class="flex flex-col gap-1">
                             <span class="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Khách hàng</span>
                             <span class="font-bold text-neutral-800">
-                                @if($acrylicOrder->customer)
+                                @if($acrylicOrder->isNhapKho())
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-sky-100 text-sky-800 border border-sky-300">
+                                        <iconify-icon icon="lucide:warehouse" class="text-sm"></iconify-icon>
+                                        Nhập kho nội bộ Gervin (Không tính tiền)
+                                    </span>
+                                @elseif($acrylicOrder->customer)
                                     <a href="{{ route('customers.index', ['overview_id' => $acrylicOrder->customer->id]) }}" class="text-primary-600 hover:underline">
                                         {{ $acrylicOrder->customer->name }} ({{ $acrylicOrder->customer->customer_code }})
                                     </a>
@@ -810,48 +821,65 @@
                         </span>
                     </div>
                     
-                    @php
-                        $discountAmt = $acrylicOrder->discount_amount ?? 0;
-                        $vatAmt = $acrylicOrder->vat_amount ?? 0;
-                        $subTotal = $acrylicOrder->total_amount + $discountAmt - $vatAmt;
-                    @endphp
-                    
-                    <div class="flex justify-between items-center text-sm">
-                        <span class="text-neutral-500">Tổng tiền hàng:</span>
-                        <span class="font-semibold text-neutral-800">
-                            {{ number_format(round($subTotal, -3), 0, ',', '.') }} VNĐ
-                        </span>
-                    </div>
+                    @if($acrylicOrder->isNhapKho())
+                        <div class="p-3.5 bg-sky-50 border border-sky-200 rounded-xl text-xs text-sky-900 leading-relaxed space-y-1">
+                            <div class="font-bold flex items-center gap-1.5 text-sky-800">
+                                <iconify-icon icon="solar:box-minimalistic-bold-duotone" class="text-base text-sky-600"></iconify-icon>
+                                <span>Đơn nhập kho lưu trữ</span>
+                            </div>
+                            <div class="text-sky-700">Đơn hàng sản xuất lưu kho nội bộ xưởng. Không tính tiền và không tính vào công nợ khách hàng.</div>
+                        </div>
 
-                    @if($acrylicOrder->discount_percent > 0)
-                    <div class="flex justify-between items-center text-sm">
-                        <span class="text-neutral-500">Chiết khấu ({{ (float)$acrylicOrder->discount_percent }}%):</span>
-                        <span class="font-semibold text-danger-600">
-                            -{{ number_format(round($discountAmt, -3), 0, ',', '.') }} VNĐ
-                        </span>
-                    </div>
+                        <div class="border-t border-neutral-100 pt-3 flex justify-between items-center">
+                            <span class="text-base font-bold text-neutral-800">Thành tiền:</span>
+                            <span class="text-base font-bold text-sky-700 bg-sky-100 px-2.5 py-1 rounded-lg" id="summary-total-amount">
+                                Không tính tiền
+                            </span>
+                        </div>
+                    @else
+                        @php
+                            $discountAmt = $acrylicOrder->discount_amount ?? 0;
+                            $vatAmt = $acrylicOrder->vat_amount ?? 0;
+                            $subTotal = $acrylicOrder->total_amount + $discountAmt - $vatAmt;
+                        @endphp
+                        
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="text-neutral-500">Tổng tiền hàng:</span>
+                            <span class="font-semibold text-neutral-800">
+                                {{ number_format(round($subTotal, -3), 0, ',', '.') }} VNĐ
+                            </span>
+                        </div>
+
+                        @if($acrylicOrder->discount_percent > 0)
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="text-neutral-500">Chiết khấu ({{ (float)$acrylicOrder->discount_percent }}%):</span>
+                            <span class="font-semibold text-danger-600">
+                                -{{ number_format(round($discountAmt, -3), 0, ',', '.') }} VNĐ
+                            </span>
+                        </div>
+                        @endif
+
+                        @if($acrylicOrder->vat_percent > 0)
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="text-neutral-500">VAT ({{ (float)$acrylicOrder->vat_percent }}%):</span>
+                            <span class="font-semibold text-neutral-800">
+                                +{{ number_format(round($vatAmt, -3), 0, ',', '.') }} VNĐ
+                            </span>
+                        </div>
+                        @endif
+
+                        <div class="border-t border-neutral-100 pt-3 flex justify-between items-center">
+                            <span class="text-base font-bold text-neutral-800">Tổng thanh toán:</span>
+                            <span class="text-lg font-black text-primary-600" id="summary-total-amount">
+                                {{ number_format(round($acrylicOrder->total_amount, -3), 0, ',', '.') }} VNĐ
+                            </span>
+                        </div>
                     @endif
-
-                    @if($acrylicOrder->vat_percent > 0)
-                    <div class="flex justify-between items-center text-sm">
-                        <span class="text-neutral-500">VAT ({{ (float)$acrylicOrder->vat_percent }}%):</span>
-                        <span class="font-semibold text-neutral-800">
-                            +{{ number_format(round($vatAmt, -3), 0, ',', '.') }} VNĐ
-                        </span>
-                    </div>
-                    @endif
-
-                    <div class="border-t border-neutral-100 pt-3 flex justify-between items-center">
-                        <span class="text-base font-bold text-neutral-800">Tổng thanh toán:</span>
-                        <span class="text-lg font-black text-primary-600" id="summary-total-amount">
-                            {{ number_format(round($acrylicOrder->total_amount, -3), 0, ',', '.') }} VNĐ
-                        </span>
-                    </div>
                 </div>
             </div>
 
             {{-- ===== CÔNG NỢ KHÁCH HÀNG ===== --}}
-            @if($acrylicOrder->customer && !in_array($acrylicOrder->status, ['draft', 'pending', 'cancelled']))
+            @if(!$acrylicOrder->isNhapKho() && $acrylicOrder->customer && !in_array($acrylicOrder->status, ['draft', 'pending', 'cancelled']))
             @php
                 $customer = $acrylicOrder->customer;
                 $debtSummary = $customer->debt_summary;

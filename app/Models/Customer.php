@@ -125,6 +125,7 @@ class Customer extends Model
     public function getDebtSummaryExcluding($excludeOrderId = null)
     {
         $query = $this->orders()
+            ->whereNotNhapKho()
             ->whereNotIn('status', ['draft', 'cancelled', 'pending']);
             
         if ($excludeOrderId) {

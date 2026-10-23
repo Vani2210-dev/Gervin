@@ -48,6 +48,9 @@ class OrderController extends Controller
         $search  = $request->input('search', '');
 
         $user = auth()->user();
+        $isViewingDrafts = $request->input('filter_status') === 'draft';
+        $isViewingNhapKho = $request->input('filter_nhap_kho') == '1';
+
         $query = Order::with([
             'customer',
             'supplies.items',
@@ -66,8 +69,13 @@ class OrderController extends Controller
                     $cq->whereIn('market_group_id', $userMarketGroupIds);
                 });
             })
-            ->when($request->input('filter_status') !== 'draft', function ($q) {
-                $q->where('status', '!=', 'draft');
+            ->when($isViewingNhapKho, function ($q) {
+                $q->whereNhapKho();
+            }, function ($q) use ($isViewingDrafts) {
+                $q->whereNotNhapKho();
+                if (!$isViewingDrafts) {
+                    $q->where('status', '!=', 'draft');
+                }
             })
             ->when($search, function ($q) use ($search) {
                 $q->where(function ($query) use ($search) {
@@ -103,14 +111,14 @@ class OrderController extends Controller
         $dateMode = $request->input('date_mode', $dateFilterData['preset']);
         $dateVal = $request->input('date_val', '');
 
-        // Compute totals before pagination
+        // Compute totals before pagination (Đơn nhập kho không cần tính tiền nong)
         $totalsQuery = clone $query;
         $totalOrdersCount = $totalsQuery->count();
-        $totalAmountSum = (float) $totalsQuery->sum('total_amount');
+        $totalAmountSum = $isViewingNhapKho ? 0 : (float) $totalsQuery->sum('total_amount');
         
         $matchingOrders = (clone $totalsQuery)->get();
         $matchingOrderIds = $matchingOrders->pluck('id');
-        $totalPaidSum = DB::table('customer_payments')
+        $totalPaidSum = $isViewingNhapKho ? 0 : DB::table('customer_payments')
             ->whereIn('order_id', $matchingOrderIds)
             ->sum('amount');
         $totalDebtSum = max(0, $totalAmountSum - $totalPaidSum);
@@ -162,6 +170,16 @@ class OrderController extends Controller
         }
 
         $draftOrdersCount = Order::where('status', 'draft')
+            ->whereNotNhapKho()
+            ->when($user && !$user->canViewAllMarketGroups(), function ($q) use ($user) {
+                $userMarketGroupIds = $user->marketGroups()->pluck('market_groups.id');
+                $q->whereHas('customer', function ($cq) use ($userMarketGroupIds) {
+                    $cq->whereIn('market_group_id', $userMarketGroupIds);
+                });
+            })
+            ->count();
+
+        $nhapKhoOrdersCount = Order::whereNhapKho()
             ->when($user && !$user->canViewAllMarketGroups(), function ($q) use ($user) {
                 $userMarketGroupIds = $user->marketGroups()->pluck('market_groups.id');
                 $q->whereHas('customer', function ($cq) use ($userMarketGroupIds) {
@@ -182,6 +200,8 @@ class OrderController extends Controller
             'totalDebtSum',
             'customers',
             'draftOrdersCount',
+            'nhapKhoOrdersCount',
+            'isViewingNhapKho',
             'dateMode',
             'dateVal',
             'dateLabel',
@@ -209,6 +229,7 @@ class OrderController extends Controller
     {
         $search = $request->input('search', '');
         $user = auth()->user();
+        $isViewingNhapKho = $request->input('filter_nhap_kho') == '1';
 
         $query = Order::with([
             'customer',
@@ -222,8 +243,13 @@ class OrderController extends Controller
                     $cq->whereIn('market_group_id', $userMarketGroupIds);
                 });
             })
-            ->when($request->input('filter_status') !== 'draft', function ($q) {
-                $q->where('status', '!=', 'draft');
+            ->when($isViewingNhapKho, function ($q) {
+                $q->whereNhapKho();
+            }, function ($q) use ($request) {
+                $q->whereNotNhapKho();
+                if ($request->input('filter_status') !== 'draft') {
+                    $q->where('status', '!=', 'draft');
+                }
             })
             ->when($search, function ($q) use ($search) {
                 $q->where(function ($query) use ($search) {
@@ -255,10 +281,10 @@ class OrderController extends Controller
 
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
-        $sheet->setTitle('Danh_sach_don_hang');
+        $sheet->setTitle($isViewingNhapKho ? 'Don_nhap_kho' : 'Danh_sach_don_hang');
 
         // Banner Title
-        $sheet->setCellValue('A1', 'BÁO CÁO DANH SÁCH ĐƠN HÀNG');
+        $sheet->setCellValue('A1', $isViewingNhapKho ? 'BÁO CÁO DANH SÁCH ĐƠN HÀNG NHẬP KHO' : 'BÁO CÁO DANH SÁCH ĐƠN HÀNG');
         $sheet->mergeCells('A1:L1');
         $sheet->getStyle('A1')->getFont()->setSize(16)->setBold(true)->getColor()->setARGB('FF1E3A8A');
         $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
@@ -317,7 +343,8 @@ class OrderController extends Controller
         foreach ($orders as $i => $o) {
             $sheets = (float) $o->total_sheets;
             $meters = (float) $o->total_meters;
-            $amount = (float) round($o->total_amount, -3);
+            $isNK = $isViewingNhapKho || $o->isNhapKho();
+            $amount = $isNK ? 0 : (float) round($o->total_amount, -3);
 
             $totalSheets += $sheets;
             $totalMeters += $meters;
@@ -326,7 +353,7 @@ class OrderController extends Controller
             $sheet->setCellValue('A' . $row, $i + 1);
             $sheet->setCellValue('B' . $row, $o->order_code ?: '—');
             $sheet->setCellValue('C' . $row, $typeLabels[$o->type] ?? ($o->type ?: '—'));
-            $sheet->setCellValue('D' . $row, $o->customer ? $o->customer->name : '—');
+            $sheet->setCellValue('D' . $row, $isNK ? 'Nhập kho Gervin' : ($o->customer ? $o->customer->name : '—'));
             $sheet->setCellValue('E' . $row, $o->customer_name ?: '—');
             $sheet->setCellValueExplicit('F' . $row, (string) ($o->phone ?? ''), \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
             $sheet->setCellValue('G' . $row, $o->order_date ? \Carbon\Carbon::parse($o->order_date)->format('d/m/Y H:i') : '—');

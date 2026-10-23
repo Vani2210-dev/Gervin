@@ -21,6 +21,9 @@
     $orderDateFormatted = $acrylicOrder->order_date ? \Carbon\Carbon::parse($acrylicOrder->order_date)->format('d/m/Y H:i') : $acrylicOrder->created_at->format('d/m/Y H:i');
     $deadlineFormatted = $acrylicOrder->deadline ? \Carbon\Carbon::parse($acrylicOrder->deadline)->format('d/m/Y') : '—';
     $customerName = $acrylicOrder->customer ? ($acrylicOrder->customer->name . ' (' . $acrylicOrder->customer->customer_code . ')') : '';
+    if ($acrylicOrder->isNhapKho()) {
+        $customerName = 'Nhập kho nội bộ Gervin';
+    }
 
     $totalItems = $acrylicOrder->supplies->flatMap(function ($s) use ($acrylicOrder) {
         if ($acrylicOrder->type === 'min_late') return $s->minLateItems;
@@ -120,9 +123,15 @@
                         </div>
                     </div>
                     <div class="text-right flex-shrink-0">
-                        <div class="inline-block px-3 py-1 bg-primary-50 text-primary-700 border border-primary-200 rounded-lg font-bold text-xs uppercase tracking-wider mb-1.5">
-                            BÁO GIÁ KIÊM ĐƠN ĐẶT HÀNG
-                        </div>
+                        @if($acrylicOrder->isNhapKho())
+                            <div class="inline-block px-3 py-1 bg-sky-100 text-sky-800 border border-sky-300 rounded-lg font-bold text-xs uppercase tracking-wider mb-1.5">
+                                ĐƠN SẢN XUẤT NHẬP KHO
+                            </div>
+                        @else
+                            <div class="inline-block px-3 py-1 bg-primary-50 text-primary-700 border border-primary-200 rounded-lg font-bold text-xs uppercase tracking-wider mb-1.5">
+                                BÁO GIÁ KIÊM ĐƠN ĐẶT HÀNG
+                            </div>
+                        @endif
                         <div class="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Mã đơn hàng</div>
                         <div class="text-2xl font-black text-primary-600 font-mono tracking-tight leading-none">{{ $acrylicOrder->order_code }}</div>
                         <div class="text-xs text-neutral-500 mt-1 font-medium">Ngày chốt: {{ $orderDateFormatted }}</div>
@@ -547,65 +556,74 @@
                         </div>
                         <div class="text-center p-3 bg-white/70 rounded-lg">
                             <div class="text-xs text-neutral-500 font-medium">Tổng tiền hàng</div>
-                            <div class="text-lg font-bold text-neutral-800 mt-1">{{ number_format(round($subTotal, -3), 0, ',', '.') }} đ</div>
+                            <div class="text-lg font-bold text-neutral-800 mt-1">{{ $acrylicOrder->isNhapKho() ? '0 đ' : number_format(round($subTotal, -3), 0, ',', '.') . ' đ' }}</div>
                         </div>
                     </div>
-                    @if($acrylicOrder->discount_percent > 0)
-                        <div class="mt-2 text-xs text-right font-medium text-danger-600">
-                            Chiết khấu ({{ (float)$acrylicOrder->discount_percent }}%): -{{ number_format(round($discountAmt, -3), 0, ',', '.') }} đ
-                        </div>
-                    @endif
-                    @if($acrylicOrder->vat_percent > 0)
-                        <div class="mt-1 text-xs text-right font-medium text-neutral-700">
-                            VAT ({{ (float)$acrylicOrder->vat_percent }}%): +{{ number_format(round($vatAmt, -3), 0, ',', '.') }} đ
-                        </div>
-                    @endif
-                    <div class="mt-4 pt-4 border-t border-primary-100 flex items-center justify-between">
-                        <span class="font-bold text-sm text-neutral-800">Tổng thanh toán đơn này:</span>
-                        <span class="text-2xl font-extrabold text-primary-600">{{ number_format(round($acrylicOrder->total_amount, -3), 0, ',', '.') }} VNĐ</span>
-                    </div>
-
-                    @if($orderPaidAmt > 0)
-                        <div class="mt-2.5 pt-2.5 border-t border-dashed border-primary-200/80 flex items-center justify-between text-xs">
-                            <span class="text-neutral-600 font-medium">Đã thanh toán đơn này:</span>
-                            <span class="font-bold text-emerald-600 font-mono text-sm">{{ number_format(round($orderPaidAmt, -3), 0, ',', '.') }} đ</span>
-                        </div>
-                        <div class="mt-1 flex items-center justify-between text-xs">
-                            <span class="text-neutral-600 font-medium">Còn lại của đơn:</span>
-                            <span class="font-bold text-rose-600 font-mono text-sm">{{ number_format(round($orderRemainingAmt, -3), 0, ',', '.') }} đ</span>
-                        </div>
-                    @endif
-
-                    {{-- Khối thông tin công nợ khách hàng (đồng bộ với khi xuất Excel) --}}
-                    @if(!empty($debtInfo))
-                        <div class="mt-5 pt-4 border-t-2 border-dashed border-primary-200">
-                            <div class="text-xs font-bold uppercase tracking-wider text-neutral-600 mb-2.5 flex items-center justify-between">
-                                <span class="flex items-center gap-1.5 text-primary-700">
-                                    <iconify-icon icon="lucide:wallet" class="text-base text-primary-600"></iconify-icon>
-                                    <span>Thông tin công nợ khách hàng</span>
-                                </span>
-                                <span class="text-[11px] font-normal text-neutral-400 lowercase italic">(đồng bộ với bảng công nợ khi xuất excel)</span>
+                    @if(!$acrylicOrder->isNhapKho())
+                        @if($acrylicOrder->discount_percent > 0)
+                            <div class="mt-2 text-xs text-right font-medium text-danger-600">
+                                Chiết khấu ({{ (float)$acrylicOrder->discount_percent }}%): -{{ number_format(round($discountAmt, -3), 0, ',', '.') }} đ
                             </div>
-                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                <div class="bg-white p-3.5 rounded-xl border border-neutral-200 shadow-xs flex flex-col justify-between">
-                                    <span class="text-xs font-semibold text-neutral-500">Công nợ:</span>
-                                    <span class="text-base font-bold text-neutral-800 mt-1 font-mono">
-                                        {{ number_format(round($debtInfo['old_debt'], -3), 0, ',', '.') }} đ
+                        @endif
+                        @if($acrylicOrder->vat_percent > 0)
+                            <div class="mt-1 text-xs text-right font-medium text-neutral-700">
+                                VAT ({{ (float)$acrylicOrder->vat_percent }}%): +{{ number_format(round($vatAmt, -3), 0, ',', '.') }} đ
+                            </div>
+                        @endif
+                        <div class="mt-4 pt-4 border-t border-primary-100 flex items-center justify-between">
+                            <span class="font-bold text-sm text-neutral-800">Tổng thanh toán đơn này:</span>
+                            <span class="text-2xl font-extrabold text-primary-600">{{ number_format(round($acrylicOrder->total_amount, -3), 0, ',', '.') }} VNĐ</span>
+                        </div>
+
+                        @if($orderPaidAmt > 0)
+                            <div class="mt-2.5 pt-2.5 border-t border-dashed border-primary-200/80 flex items-center justify-between text-xs">
+                                <span class="text-neutral-600 font-medium">Đã thanh toán đơn này:</span>
+                                <span class="font-bold text-emerald-600 font-mono text-sm">{{ number_format(round($orderPaidAmt, -3), 0, ',', '.') }} đ</span>
+                            </div>
+                            <div class="mt-1 flex items-center justify-between text-xs">
+                                <span class="text-neutral-600 font-medium">Còn lại của đơn:</span>
+                                <span class="font-bold text-rose-600 font-mono text-sm">{{ number_format(round($orderRemainingAmt, -3), 0, ',', '.') }} đ</span>
+                            </div>
+                        @endif
+
+                        {{-- Khối thông tin công nợ khách hàng (đồng bộ với khi xuất Excel) --}}
+                        @if(!empty($debtInfo))
+                            <div class="mt-5 pt-4 border-t-2 border-dashed border-primary-200">
+                                <div class="text-xs font-bold uppercase tracking-wider text-neutral-600 mb-2.5 flex items-center justify-between">
+                                    <span class="flex items-center gap-1.5 text-primary-700">
+                                        <iconify-icon icon="lucide:wallet" class="text-base text-primary-600"></iconify-icon>
+                                        <span>Thông tin công nợ khách hàng</span>
                                     </span>
+                                    <span class="text-[11px] font-normal text-neutral-400 lowercase italic">(đồng bộ với bảng công nợ khi xuất excel)</span>
                                 </div>
-                                <div class="bg-white p-3.5 rounded-xl border border-emerald-200 bg-emerald-50/40 shadow-xs flex flex-col justify-between">
-                                    <span class="text-xs font-semibold text-emerald-700">Đã TT (hôm nay):</span>
-                                    <span class="text-base font-bold text-emerald-600 mt-1 font-mono">
-                                        {{ number_format(round($debtInfo['this_order_paid'], -3), 0, ',', '.') }} đ
-                                    </span>
-                                </div>
-                                <div class="bg-white p-3.5 rounded-xl border border-rose-200 bg-rose-50/50 shadow-xs flex flex-col justify-between">
-                                    <span class="text-xs font-bold text-rose-700">Tổng công nợ:</span>
-                                    <span class="text-lg font-black text-rose-600 mt-1 font-mono">
-                                        {{ number_format(round($debtInfo['total_combined_debt'], -3), 0, ',', '.') }} đ
-                                    </span>
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    <div class="bg-white p-3.5 rounded-xl border border-neutral-200 shadow-xs flex flex-col justify-between">
+                                        <span class="text-xs font-semibold text-neutral-500">Công nợ:</span>
+                                        <span class="text-base font-bold text-neutral-800 mt-1 font-mono">
+                                            {{ number_format(round($debtInfo['old_debt'], -3), 0, ',', '.') }} đ
+                                        </span>
+                                    </div>
+                                    <div class="bg-white p-3.5 rounded-xl border border-emerald-200 bg-emerald-50/40 shadow-xs flex flex-col justify-between">
+                                        <span class="text-xs font-semibold text-emerald-700">Đã TT (hôm nay):</span>
+                                        <span class="text-base font-bold text-emerald-600 mt-1 font-mono">
+                                            {{ number_format(round($debtInfo['this_order_paid'], -3), 0, ',', '.') }} đ
+                                        </span>
+                                    </div>
+                                    <div class="bg-white p-3.5 rounded-xl border border-rose-200 bg-rose-50/50 shadow-xs flex flex-col justify-between">
+                                        <span class="text-xs font-bold text-rose-700">Tổng công nợ:</span>
+                                        <span class="text-lg font-black text-rose-600 mt-1 font-mono">
+                                            {{ number_format(round($debtInfo['total_combined_debt'], -3), 0, ',', '.') }} đ
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
+                        @endif
+                    @else
+                        <div class="mt-4 pt-4 border-t border-primary-100 flex items-center justify-between">
+                            <span class="font-bold text-sm text-neutral-800">Mục đích đơn hàng:</span>
+                            <span class="text-sm font-bold text-sky-700 bg-sky-100 px-3 py-1.5 rounded-lg border border-sky-200">
+                                Sản xuất nhập kho lưu trữ (Không tính tiền)
+                            </span>
                         </div>
                     @endif
                 </div>

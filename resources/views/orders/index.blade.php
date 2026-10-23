@@ -22,15 +22,15 @@
 <div class="grid grid-cols-12 gap-y-6" style="row-gap: 24px;">
     <div class="col-span-12 mb-6" style="margin-bottom: 24px;">
         {{-- Statistics Grid --}}
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 {{ !empty($isViewingNhapKho) ? 'lg:grid-cols-3' : 'lg:grid-cols-4' }} gap-4 sm:gap-6">
             <!-- Card 1: Tổng đơn hàng -->
             <div class="bg-white border border-neutral-200 rounded-2xl p-5 shadow-sm flex items-center gap-4 transition-all hover:shadow-md">
-                <div class="w-12 h-12 rounded-xl bg-primary-50 flex items-center justify-center text-primary-600 text-2xl flex-shrink-0">
-                    <iconify-icon icon="lucide:shopping-bag"></iconify-icon>
+                <div class="w-12 h-12 rounded-xl {{ !empty($isViewingNhapKho) ? 'bg-sky-50 text-sky-600' : 'bg-primary-50 text-primary-600' }} flex items-center justify-center text-2xl flex-shrink-0">
+                    <iconify-icon icon="{{ !empty($isViewingNhapKho) ? 'lucide:warehouse' : 'lucide:shopping-bag' }}"></iconify-icon>
                 </div>
                 <div class="min-w-0 flex-1">
                     <div class="text-xs text-neutral-500 font-medium mb-1 flex items-center gap-1.5 flex-wrap">
-                        <span>Tổng đơn hàng</span>
+                        <span>{{ !empty($isViewingNhapKho) ? 'Đơn hàng nhập kho' : 'Tổng đơn hàng' }}</span>
                         <span class="text-[10px] font-normal text-neutral-400 capitalize whitespace-nowrap">({{ $dateLabel }})</span>
                     </div>
                     <div class="text-xl font-bold text-neutral-800">{{ number_format($totalOrdersCount, 0, ',', '.') }} <span class="text-sm font-medium text-neutral-500">đơn</span></div>
@@ -71,7 +71,8 @@
                 </div>
             </div>
 
-            <!-- Card 4: Tổng tiền hàng -->
+            @if(empty($isViewingNhapKho))
+            <!-- Card 4: Tổng tiền hàng (Ẩn khi xem đơn nhập kho vì không tính tiền) -->
             <div class="bg-white border border-neutral-200 rounded-2xl p-5 shadow-sm flex items-center gap-4 transition-all hover:shadow-md">
                 <div class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 text-2xl flex-shrink-0">
                     <iconify-icon icon="lucide:circle-dollar-sign"></iconify-icon>
@@ -84,6 +85,7 @@
                     <div class="text-xl font-bold text-neutral-800">{{ number_format($totalAmountSum, 0, ',', '.') }}₫</div>
                 </div>
             </div>
+            @endif
         </div>
     </div>
 
@@ -95,6 +97,9 @@
                     {{-- Search --}}
                     <form method="GET" action="{{ route('orders.index') }}" class="navbar-search">
                         <input type="hidden" name="per_page" value="{{ $perPage }}">
+                        @if(!empty($isViewingNhapKho))
+                            <input type="hidden" name="filter_nhap_kho" value="1">
+                        @endif
                         @if($dateMode && $dateMode !== 'all')
                             <input type="hidden" name="date_mode" value="{{ $dateMode }}">
                             <input type="hidden" name="date_val" value="{{ $dateVal }}">
@@ -110,6 +115,9 @@
                         <span class="text-base font-medium text-secondary-light mb-0">Hiển thị</span>
                         <form method="GET" action="{{ route('orders.index') }}" id="perPageForm">
                             <input type="hidden" name="search" value="{{ $search }}">
+                            @if(!empty($isViewingNhapKho))
+                                <input type="hidden" name="filter_nhap_kho" value="1">
+                            @endif
                             @if($dateMode && $dateMode !== 'all')
                                 <input type="hidden" name="date_mode" value="{{ $dateMode }}">
                                 <input type="hidden" name="date_val" value="{{ $dateVal }}">
@@ -146,13 +154,27 @@
                     </a>
                     @endif
 
+                    @if(!empty($isViewingNhapKho))
+                    <a href="{{ route('orders.index') }}"
+                        class="btn bg-sky-600 hover:bg-sky-700 text-white text-sm btn-sm px-3 py-2 rounded-lg flex items-center gap-1.5 font-medium shadow-sm transition-all" title="Quay lại danh sách đơn hàng thông thường">
+                        <iconify-icon icon="lucide:arrow-left" class="icon text-base"></iconify-icon>
+                        Đang xem Đơn nhập kho (Quay lại)
+                    </a>
+                    @else
+                    <a href="{{ route('orders.index', ['filter_nhap_kho' => '1']) }}"
+                        class="btn bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 text-sm btn-sm px-3 py-2 rounded-lg flex items-center gap-1.5 font-semibold transition-all" title="Xem tất cả đơn hàng nhập kho">
+                        <iconify-icon icon="lucide:warehouse" class="icon text-base text-sky-600"></iconify-icon>
+                        Xem đơn nhập kho <span class="bg-sky-200/80 text-sky-900 text-xs px-1.5 py-0.5 rounded-full font-bold ml-0.5">{{ $nhapKhoOrdersCount ?? 0 }}</span>
+                    </a>
+                    @endif
+
                     <button type="button" onclick="openModal('filter-modal')"
                         class="btn bg-light-600 text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2">
                         <iconify-icon icon="solar:filter-outline" class="icon text-xl line-height-1"></iconify-icon>
                         Lọc
                     </button>
                     @if(request()->filled('filter_customer_id') || request()->filled('filter_status') || request()->filled('filter_type') || request()->filled('filter_start_date') || request()->filled('filter_end_date') || ($dateMode !== 'all' && request()->filled('date_mode')))
-                    <a href="{{ route('orders.index') }}" class="btn text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2">
+                    <a href="{{ route('orders.index', !empty($isViewingNhapKho) ? ['filter_nhap_kho' => '1'] : []) }}" class="btn text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2">
                         <iconify-icon icon="solar:close-circle-outline" class="icon text-xl line-height-1"></iconify-icon>
                         Xóa lọc
                     </a>
@@ -282,7 +304,7 @@
                                 <th scope="col" class="px-3 whitespace-nowrap" style="min-width: 140px;">Tên khách hàng</th>
                                 <th scope="col" class="text-center whitespace-nowrap px-3" style="min-width: 85px;">Số tấm</th>
                                 <th scope="col" class="text-center whitespace-nowrap px-3" style="min-width: 105px;">Tổng số mét</th>
-                                <th scope="col" class="text-end whitespace-nowrap px-3" style="min-width: 110px;">Tổng tiền</th>
+                                <th scope="col" class="text-end whitespace-nowrap px-3" style="min-width: 110px;">{{ !empty($isViewingNhapKho) ? 'Tính tiền' : 'Tổng tiền' }}</th>
                                 <th scope="col" class="text-center whitespace-nowrap px-3" style="min-width: 140px;">Tiến trình duyệt</th>
                                 <th scope="col" class="px-3 whitespace-nowrap" style="min-width: 105px;">Số điện thoại</th>
                                 <th scope="col" class="whitespace-nowrap px-3" style="min-width: 125px;">Ngày tạo đơn</th>
@@ -326,6 +348,9 @@
                                     @endphp
                                     <div class="inline-flex items-center gap-1.5 whitespace-nowrap">
                                         <span class="text-sm font-semibold {{ $showWarning ? 'text-danger-600' : 'text-neutral-900' }}">{{ $order->order_code }}</span>
+                                        @if($order->isNhapKho())
+                                            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-100 text-sky-800 border border-sky-200">Nhập kho</span>
+                                        @endif
                                         @if($order->relation_type === 'rework')
                                             <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">Sửa tấm</span>
                                         @elseif($order->relation_type === 'warranty')
@@ -407,7 +432,12 @@
                                     <span class="text-sm font-semibold text-neutral-900 truncate max-w-[200px] inline-block" title="{{ $order->customer_name }}">{{ $order->customer_name ?: '—' }}</span>
                                 </td>
                                 <td class="px-3 align-middle whitespace-nowrap">
-                                    @if($order->customer)
+                                    @if($order->isNhapKho())
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-sky-100 text-sky-800 border border-sky-200">
+                                            <iconify-icon icon="lucide:warehouse" class="text-xs"></iconify-icon>
+                                            Nhập kho Gervin
+                                        </span>
+                                    @elseif($order->customer)
                                         <a href="{{ route('customers.index', ['overview_id' => $order->customer->id]) }}" class="text-sm font-semibold text-neutral-900 hover:text-primary-600 inline-flex items-center gap-1.5" title="{{ $order->customer->name }} ({{ $order->customer->customer_code }})">
                                             <span>{{ $order->customer->name }}</span>
                                             <span class="text-xs text-neutral-400 font-normal">({{ $order->customer->customer_code }})</span>
@@ -437,7 +467,13 @@
                                     @endif
                                 </td>
                                 <td class="text-end align-middle whitespace-nowrap px-3">
-                                    <span class="text-sm font-bold text-neutral-900">{{ number_format(round($order->total_amount, -3), 0, ',', '.') }}₫</span>
+                                    @if(!empty($isViewingNhapKho) || $order->isNhapKho())
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-100">
+                                            Không tính tiền
+                                        </span>
+                                    @else
+                                        <span class="text-sm font-bold text-neutral-900">{{ number_format(round($order->total_amount, -3), 0, ',', '.') }}₫</span>
+                                    @endif
                                 </td>
                                 <td class="px-3 align-middle whitespace-nowrap text-center">
                                     @php
@@ -533,6 +569,9 @@
     <form action="{{ route('orders.index') }}" method="GET" id="orderFilterModalForm">
         <input type="hidden" name="per_page" value="{{ $perPage }}">
         <input type="hidden" name="search" value="{{ $search }}">
+        @if(!empty($isViewingNhapKho))
+            <input type="hidden" name="filter_nhap_kho" value="1">
+        @endif
         <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
 
             <div class="form-group md:col-span-2">
