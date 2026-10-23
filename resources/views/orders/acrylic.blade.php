@@ -68,6 +68,12 @@
     #order-supplies-container .order-supply-row table td[style*="width:160px"] { min-width: 120px !important; }
     #order-supplies-container .order-supply-row table td[style*="width: 80px"],
     #order-supplies-container .order-supply-row table td[style*="width:80px"] { width: 60px !important; min-width: 60px !important; max-width: 60px !important; }
+    #order-supplies-container .order-supply-row table th.order-action-col,
+    #order-supplies-container .order-supply-row table td.order-action-col {
+        width: 168px !important;
+        min-width: 168px !important;
+        max-width: 168px !important;
+    }
 
     /* Style TomSelect for Mã vật tư dropdown in the header row */
     .order-supply-row .ts-wrapper.tom-select-supply-code {
@@ -352,7 +358,7 @@
                                 <th scope="col" style="width: 80px; min-width: 80px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá <span class="text-danger-500">*</span></th>
                                 <th scope="col" style="width: 90px; min-width: 90px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Thành tiền</th>
                                 <th scope="col" style="min-width: 120px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Ghi chú</th>
-                                <th scope="col" style="width: 120px; min-width: 120px; position: sticky; right: 0; z-index: 3; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Hành động</th>
+                                <th scope="col" style="width: 168px; min-width: 168px; white-space: nowrap; position: sticky; right: 0; z-index: 3; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="order-action-col align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Hành động</th>
                             </tr>
                             <tr class="table-summary-row bg-neutral-100 font-bold text-neutral-800 text-center">
                                 <td class="border border-neutral-200 text-center sticky-stt-td" style="font-size: 80% !important; background-color: #f1f5f9;">TỔNG</td>
@@ -374,7 +380,7 @@
                                 <td class="border border-neutral-200"></td>
                                 <td class="border border-neutral-200 text-center" data-summary-field="total_price" style="font-size: 80% !important;">0</td>
                                 <td class="border border-neutral-200"></td>
-                                <td class="border border-neutral-200" style="position: sticky; right: 0; z-index: 3; background-color: #f1f5f9;"></td>
+                                <td class="order-action-col border border-neutral-200" style="width: 168px; min-width: 168px; position: sticky; right: 0; z-index: 3; background-color: #f1f5f9;"></td>
                         </thead>
                         <tbody class="supply-items-container" data-supply-index="{{ $supplyIndex }}">
                             @foreach($supply->items as $itemIndex => $item)
@@ -488,8 +494,8 @@
                                 <td style="min-width: 160px;" class="border border-neutral-200">
                                     <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Ghi chú" value="{{ $item->notes }}">
                                 </td>
-                                <td style="width: 120px; min-width: 120px; " class="text-center align-middle border border-neutral-200">
-                                    <div class="flex items-center gap-1 justify-center">
+                                <td style="width: 168px; min-width: 168px; position: sticky; right: 0; z-index: 1; background-color: #fff; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="order-action-col text-center align-middle border border-neutral-200">
+                                    <div class="flex items-center gap-1 justify-center flex-nowrap whitespace-nowrap">
                                         <button type="button" onclick="addFakeThicknessRow(this)" class="text-neutral-400 hover:text-warning-500 transition-colors p-1" title="Tạo công giả dày">
                                             <iconify-icon icon="lucide:layers" class="text-base"></iconify-icon>
                                         </button>
@@ -650,7 +656,7 @@ function addOrderSupply() {
                         <th scope="col" style="width: 80px; min-width: 80px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá <span class="text-danger-500">*</span></th>
                         <th scope="col" style="width: 90px; min-width: 90px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Thành tiền</th>
                         <th scope="col" style="min-width: 120px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Ghi chú</th>
-                        <th scope="col" style="width: 120px; min-width: 120px; white-space: nowrap; position: sticky; right: 0; z-index: 3; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Hành động</th>
+                        <th scope="col" style="width: 168px; min-width: 168px; white-space: nowrap; position: sticky; right: 0; z-index: 3; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="order-action-col align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Hành động</th>
                     </tr>
                     <tr class="table-summary-row bg-neutral-100 font-bold text-neutral-800 text-center">
                         <td class="border border-neutral-200 text-center sticky-stt-td" style="font-size: 80% !important; background-color: #f1f5f9;">TỔNG</td>
@@ -672,7 +678,7 @@ function addOrderSupply() {
                         <td class="border border-neutral-200"></td>
                         <td class="border border-neutral-200 text-center" data-summary-field="total_price" style="font-size: 80% !important;">0</td>
                         <td class="border border-neutral-200"></td>
-                        <td class="border border-neutral-200" style="position: sticky; right: 0; z-index: 3; background-color: #f1f5f9;"></td>
+                        <td class="order-action-col border border-neutral-200" style="width: 168px; min-width: 168px; position: sticky; right: 0; z-index: 3; background-color: #f1f5f9;"></td>
                 </thead>
                 <tbody class="supply-items-container" data-supply-index="${supplyIndex}">
                 </tbody>
@@ -840,8 +846,8 @@ function addOrderItem(button, isInitial = false, insertAfterRow = null) {
         <td style="min-width: 160px;" class="border border-neutral-200">
             <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Ghi chú" value="">
         </td>
-        <td style="width: 120px; min-width: 120px; " class="text-center align-middle border border-neutral-200">
-            <div class="flex items-center gap-1 justify-center">
+        <td style="width: 168px; min-width: 168px; position: sticky; right: 0; z-index: 1; background-color: #fff; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="order-action-col text-center align-middle border border-neutral-200">
+            <div class="flex items-center gap-1 justify-center flex-nowrap whitespace-nowrap">
                 <button type="button" onclick="addFakeThicknessRow(this)" class="text-neutral-400 hover:text-warning-500 transition-colors p-1" title="Tạo công giả dày">
                     <iconify-icon icon="lucide:layers" class="text-base"></iconify-icon>
                 </button>

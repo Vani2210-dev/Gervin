@@ -61,6 +61,12 @@
     #min-late-supplies-container .order-supply-row table td[style*="width:80px"] { width: 55px !important; min-width: 55px !important; max-width: 55px !important; }
     #min-late-supplies-container .order-supply-row table td[style*="min-width: 140px"],
     #min-late-supplies-container .order-supply-row table td[style*="min-width:140px"] { min-width: 90px !important; }
+    #min-late-supplies-container .order-supply-row table th.order-action-col,
+    #min-late-supplies-container .order-supply-row table td.order-action-col {
+        width: 140px !important;
+        min-width: 140px !important;
+        max-width: 140px !important;
+    }
 
     body > .ts-dropdown {
         z-index: 99999 !important;
@@ -295,7 +301,7 @@
                                 <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số tấm CNC</th>
                                 <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Chiều vân</th>
                                 <th scope="col" style="min-width: 140px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Ghi chú</th>
-                                <th scope="col" style="width: 104px; min-width: 104px; white-space: nowrap; position: sticky; right: 0; z-index: 3; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Hành động</th>
+                                <th scope="col" style="width: 140px; min-width: 140px; white-space: nowrap; position: sticky; right: 0; z-index: 3; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="order-action-col align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Hành động</th>
                             </tr>
                             <tr class="table-summary-row bg-neutral-100 font-bold text-neutral-800 text-center">
                                 <td class="border border-neutral-200 text-center sticky-stt-td" style="font-size: 80% !important; background-color: #f1f5f9;">TỔNG</td>
@@ -326,7 +332,7 @@
                                 <td class="border border-neutral-200"></td>
                                 <td class="border border-neutral-200"></td>
                                 <td class="border border-neutral-200"></td>
-                                <td class="border border-neutral-200" style="position: sticky; right: 0; z-index: 3; background-color: #f1f5f9;"></td>
+                                <td class="order-action-col border border-neutral-200" style="width: 140px; min-width: 140px; position: sticky; right: 0; z-index: 3; background-color: #f1f5f9;"></td>
                         </thead>
                         <tbody class="supply-items-container" data-supply-index="{{ $supplyIndex }}">
                             @foreach($supply->minLateItems as $itemIndex => $item)
@@ -468,8 +474,8 @@
                                 <td style="min-width: 160px;" class="border border-neutral-200">
                                     <textarea name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-xs w-full resize-none font-medium text-neutral-700 leading-tight" rows="2" style="min-height: 46px; padding: 4px 6px; font-size: 11px;" placeholder="Ghi chú">{{ $item->notes ?? '' }}</textarea>
                                 </td>
-                                <td style="width: 104px; min-width: 104px; position: sticky; right: 0; z-index: 1; background-color: #fff; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="text-center align-middle border border-neutral-200">
-                                    <div class="flex items-center gap-1 justify-center">
+                                <td style="width: 140px; min-width: 140px; position: sticky; right: 0; z-index: 1; background-color: #fff; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="order-action-col text-center align-middle border border-neutral-200">
+                                    <div class="flex items-center gap-1 justify-center flex-nowrap whitespace-nowrap">
                                         <button type="button" onclick="insertMinLateRow(this)" class="text-neutral-400 hover:text-success-500 transition-colors p-1" title="Chèn dòng mới ở dưới">
                                             <iconify-icon icon="lucide:list-plus" class="text-base"></iconify-icon>
                                         </button>
@@ -584,7 +590,7 @@ function addMinLateOrderSupply() {
                         <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số tấm CNC</th>
                         <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Chiều vân</th>
                         <th scope="col" style="min-width: 140px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Ghi chú</th>
-                        <th scope="col" style="width: 104px; min-width: 104px; white-space: nowrap; position: sticky; right: 0; z-index: 3; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Hành động</th>
+                        <th scope="col" style="width: 140px; min-width: 140px; white-space: nowrap; position: sticky; right: 0; z-index: 3; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="order-action-col align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Hành động</th>
                     </tr>
                     <tr class="table-summary-row bg-neutral-100 font-bold text-neutral-800 text-center">
                         <td class="border border-neutral-200 text-center sticky-stt-td" style="font-size: 80% !important; background-color: #f1f5f9;">TỔNG</td>
@@ -613,7 +619,7 @@ function addMinLateOrderSupply() {
                         <td class="border border-neutral-200 text-center" data-summary-field="cnc" style="font-size: 80% !important;">0</td>
                         <td class="border border-neutral-200"></td>
                         <td class="border border-neutral-200"></td>
-                        <td class="border border-neutral-200" style="position: sticky; right: 0; z-index: 3; background-color: #f1f5f9;"></td>
+                        <td class="order-action-col border border-neutral-200" style="width: 140px; min-width: 140px; position: sticky; right: 0; z-index: 3; background-color: #f1f5f9;"></td>
                 </thead>
                 <tbody class="supply-items-container" data-supply-index="${minLateSupplyIndex}">
                 </tbody>
@@ -782,8 +788,8 @@ function addMinLateOrderItem(button, isInitial = false, insertAfterRow = null) {
         <td style="min-width: 160px;" class="border border-neutral-200">
             <textarea name="supplies[${supplyIndex}][items][${itemIndex}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-xs w-full resize-none font-medium text-neutral-700 leading-tight" rows="2" style="min-height: 46px; padding: 4px 6px; font-size: 11px;" placeholder="Ghi chú">${lastData ? (lastData.notes || '') : ''}</textarea>
         </td>
-        <td style="width: 104px; min-width: 104px; position: sticky; right: 0; z-index: 1; background-color: #fff; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="text-center align-middle border border-neutral-200">
-            <div class="flex items-center gap-1 justify-center">
+        <td style="width: 140px; min-width: 140px; position: sticky; right: 0; z-index: 1; background-color: #fff; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="order-action-col text-center align-middle border border-neutral-200">
+            <div class="flex items-center gap-1 justify-center flex-nowrap whitespace-nowrap">
                 <button type="button" onclick="insertMinLateRow(this)" class="text-neutral-400 hover:text-success-500 transition-colors p-1" title="Chèn dòng mới ở dưới">
                     <iconify-icon icon="lucide:list-plus" class="text-base"></iconify-icon>
                 </button>

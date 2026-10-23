@@ -132,7 +132,7 @@ class PressingService
                 'action'       => $action,
                 'operator'     => $tx->creator?->name ?? 'Hệ thống',
                 'time'         => $tx->created_at ? $tx->created_at->toDateTimeString() : now()->toDateTimeString(),
-                'notes'        => $tx->notes ?? ($action === 'ép dự trữ' ? '+1 tấm vào kho' : '-1 tấm trong kho'),
+                'notes'        => $tx->notes ?? '+1 tấm vào kho',
                 'item_id'      => $tx->id,
             ]);
         }
@@ -510,7 +510,7 @@ class PressingService
                 }
 
                 $updatedCount = 0;
-                $deductedCount = 0;
+                $importedCount = 0;
 
                 foreach ($items as $itemObj) {
                     $codeRecord = null;
@@ -561,7 +561,7 @@ class PressingService
                                 if ($prevAction === 'ép đơn' && $orderItem) {
                                     $board = $this->resolveWoodBoard($orderItem, $priceId);
                                     if ($board) {
-                                        $this->adjustWoodBoardStock($board, 1, 'EP-KHO', $codeRecord->product_id, "Hoàn tác ép đơn: {$codeRecord->product_id}");
+                                        $this->adjustWoodBoardStock($board, -1, 'EP-KHO', $codeRecord->product_id, "Hoàn tác ép đơn: {$codeRecord->product_id}");
                                     }
                                 }
                             }
@@ -579,12 +579,12 @@ class PressingService
                                 $codeRecord->save();
                                 $updatedCount++;
 
-                                // Deduct 1 wood board for each item in order pressing
+                                // Nhập 1 tấm ván vào kho cho mỗi sản phẩm khi ép theo đơn
                                 if ($actionType === 'ép đơn' && $orderItem) {
                                     $board = $this->resolveWoodBoard($orderItem, $priceId);
                                     if ($board) {
-                                        $this->adjustWoodBoardStock($board, -1, 'EP-DON', $codeRecord->product_id, "Ép đơn SX: {$codeStr}");
-                                        $deductedCount++;
+                                        $this->adjustWoodBoardStock($board, 1, 'EP-DON', $codeRecord->product_id, "Ép đơn SX: {$codeStr}");
+                                        $importedCount++;
                                     }
                                 }
                             }
@@ -602,7 +602,7 @@ class PressingService
 
                 $msg = $actionType === 'rollback'
                     ? "Đã hoàn tác quy trình ép ván cho {$updatedCount} tấm trong Lệnh sản xuất {$codeStr}."
-                    : "Đã ghi nhận ép theo đơn cho {$updatedCount} tấm trong Lệnh sản xuất {$codeStr} (Đã trừ kho {$deductedCount} tấm ván).";
+                    : "Đã ghi nhận ép theo đơn cho {$updatedCount} tấm trong Lệnh sản xuất {$codeStr} (Đã nhập kho {$importedCount} tấm ván).";
 
                 return [
                     'success' => true,
@@ -654,19 +654,19 @@ class PressingService
         if (!$codeRecord && $actionType === 'ép đơn') {
             $directBoard = $this->resolveWoodBoard($codeStr, $priceId);
             if ($directBoard) {
-                $adj = $this->adjustWoodBoardStock($directBoard, -1, 'EP-DON', $codeStr, $notes ?: 'Ép theo đơn hàng (-1 tấm)');
+                $adj = $this->adjustWoodBoardStock($directBoard, 1, 'EP-DON', $codeStr, $notes ?: 'Ép theo đơn hàng (+1 tấm vào kho)');
                 return [
                     'success' => true,
                     'status_code' => 200,
                     'is_bulk' => false,
-                    'message' => "Đã ghi nhận ép theo đơn và trừ 1 tấm trong kho cho {$adj['board_name']}. Tồn kho còn lại: {$adj['new_stock']} tấm.",
+                    'message' => "Đã ghi nhận ép theo đơn và nhập 1 tấm vào kho cho {$adj['board_name']}. Tồn kho hiện tại: {$adj['new_stock']} tấm.",
                     'data' => [
                         'product_code' => $directBoard->code ?? $directBoard->color_code ?? $codeStr,
                         'product_name' => $adj['board_name'],
                         'type'         => 'stock',
                         'operator'     => $operatorName,
                         'time'         => $logTime,
-                        'notes'        => $notes ?: 'Ép theo đơn hàng (-1 tấm)',
+                        'notes'        => $notes ?: 'Ép theo đơn hàng (+1 tấm vào kho)',
                         'action'       => 'ép đơn',
                         'new_stock'    => $adj['new_stock']
                     ]
@@ -724,7 +724,7 @@ class PressingService
             if ($prevAction === 'ép đơn') {
                 $board = $this->resolveWoodBoard($item, $priceId);
                 if ($board) {
-                    $this->adjustWoodBoardStock($board, 1, 'EP-KHO', $codeRecord->product_id, "Hoàn tác ép đơn: {$codeRecord->product_id}");
+                    $this->adjustWoodBoardStock($board, -1, 'EP-KHO', $codeRecord->product_id, "Hoàn tác ép đơn: {$codeRecord->product_id}");
                 }
             }
 
@@ -757,12 +757,12 @@ class PressingService
                 $item->save();
             }
 
-            // Deduct 1 wood board from stock
+            // Nhập 1 tấm ván vào kho
             $boardInfo = '';
             $board = $this->resolveWoodBoard($item, $priceId);
             if ($board) {
-                $adj = $this->adjustWoodBoardStock($board, -1, 'EP-DON', $codeRecord->product_id, "Ép đơn tấm {$codeRecord->product_id}" . ($notes ? ": {$notes}" : ''));
-                $boardInfo = " [Đã trừ 1 tấm: {$adj['board_name']} - Tồn còn: {$adj['new_stock']}]";
+                $adj = $this->adjustWoodBoardStock($board, 1, 'EP-DON', $codeRecord->product_id, "Ép đơn tấm {$codeRecord->product_id}" . ($notes ? ": {$notes}" : ''));
+                $boardInfo = " [Đã nhập 1 tấm: {$adj['board_name']} - Tồn kho: {$adj['new_stock']}]";
             }
 
             $msg = "Đã ghi nhận ép theo đơn cho tấm {$codeStr} thành công!{$boardInfo}";

@@ -70,7 +70,7 @@
 </style>
 
 <div class="-mt-4 mb-6">
-    <p class="text-sm text-neutral-500 dark:text-neutral-400">Kiểm soát quy trình dán ép ván Acrylic / Laminate theo đơn hàng (trừ kho) hoặc ép dự trữ kho (+1 kho).</p>
+    <p class="text-sm text-neutral-500 dark:text-neutral-400">Kiểm soát quy trình dán ép ván Acrylic / Laminate theo đơn hàng (nhập kho) hoặc ép dự trữ kho (+1 kho).</p>
 </div>
 
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -124,13 +124,13 @@
                 </div>
 
                 {{-- ═══════════════════════════════════════════ --}}
-                {{-- SECTION 1: ÉP THEO ĐƠN HÀNG (TRỪ KHO)       --}}
+                {{-- SECTION 1: ÉP THEO ĐƠN HÀNG (NHẬP KHO)      --}}
                 {{-- ═══════════════════════════════════════════ --}}
                 <div id="sectionOrderMode" class="flex flex-col gap-4">
                     <div class="p-3.5 bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-800/50 rounded-xl text-xs text-indigo-900 dark:text-indigo-200 flex items-start gap-2.5">
                         <iconify-icon icon="lucide:info" class="text-base text-indigo-600 dark:text-indigo-400 mt-0.5 flex-shrink-0"></iconify-icon>
                         <div>
-                            <strong>Chế độ ÉP THEO ĐƠN HÀNG:</strong> Quét mã QR tem tấm ván hoặc mã Lệnh sản xuất (LSX). Hệ thống tự động ghi nhận hoàn thành bước ép và <strong>trừ 1 tấm ván tương ứng trong kho</strong>.
+                            <strong>Chế độ ÉP THEO ĐƠN HÀNG:</strong> Quét mã QR tem tấm ván hoặc mã Lệnh sản xuất (LSX). Hệ thống tự động ghi nhận hoàn thành bước ép và <strong>nhập 1 tấm ván tương ứng vào kho</strong>.
                         </div>
                     </div>
 
@@ -270,7 +270,7 @@
                 <ol class="space-y-4 text-sm text-indigo-100 list-decimal list-inside pl-1">
                     <li>
                         <strong>Ép theo đơn hàng:</strong><br>
-                        <span class="text-xs text-indigo-200">Dùng súng quét hoặc camera quét mã QR tem tấm -> Hệ thống tự động ghi nhận và <strong>trừ 1 tấm trong kho</strong>.</span>
+                        <span class="text-xs text-indigo-200">Dùng súng quét hoặc camera quét mã QR tem tấm -> Hệ thống tự động ghi nhận và <strong>nhập 1 tấm vào kho</strong>.</span>
                     </li>
                     <li>
                         <strong>Ép dự trữ kho:</strong><br>

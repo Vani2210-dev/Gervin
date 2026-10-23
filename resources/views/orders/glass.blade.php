@@ -57,6 +57,12 @@
     #glass-supplies-container .order-supply-row table td[style*="width:80px"] { width: 60px !important; min-width: 60px !important; max-width: 60px !important; }
     #glass-supplies-container .order-supply-row table td[style*="min-width: 160px"],
     #glass-supplies-container .order-supply-row table td[style*="min-width:160px"] { min-width: 120px !important; }
+    #glass-supplies-container .order-supply-row table th.order-action-col,
+    #glass-supplies-container .order-supply-row table td.order-action-col {
+        width: 140px !important;
+        min-width: 140px !important;
+        max-width: 140px !important;
+    }
     /* Style TomSelect inside table rows to match compact inputs */
     .table .ts-wrapper {
         padding: 0 !important;
@@ -418,7 +424,7 @@
                                 <th scope="col" style="width: 80px; min-width: 80px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá <span class="text-danger-500">*</span></th>
                                 <th scope="col" style="width: 90px; min-width: 90px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Thành tiền</th>
                                 <th scope="col" style="min-width: 120px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Ghi chú</th>
-                                <th scope="col" style="width: 104px; min-width: 104px; white-space: nowrap; position: sticky; right: 0; z-index: 3; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Hành động</th>
+                                <th scope="col" style="width: 140px; min-width: 140px; white-space: nowrap; position: sticky; right: 0; z-index: 3; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="order-action-col align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Hành động</th>
                             </tr>
                             <tr class="table-summary-row bg-neutral-100 font-bold text-neutral-800 text-center">
                                 <td class="border border-neutral-200 text-center sticky-stt-td" style="font-size: 80% !important; background-color: #f1f5f9;">TỔNG</td>
@@ -440,7 +446,7 @@
                                 <td class="border border-neutral-200"></td>
                                 <td class="border border-neutral-200 text-center" data-summary-field="total_price" style="font-size: 80% !important;">0</td>
                                 <td class="border border-neutral-200"></td>
-                                <td class="border border-neutral-200" style="position: sticky; right: 0; z-index: 3; background-color: #f1f5f9;"></td>
+                                <td class="order-action-col border border-neutral-200" style="width: 140px; min-width: 140px; position: sticky; right: 0; z-index: 3; background-color: #f1f5f9;"></td>
                             </tr>
                         </thead>
                         <tbody class="supply-items-container" data-supply-index="{{ $supplyIndex }}">
@@ -539,8 +545,8 @@
                                     <td style="min-width: 160px;" class="border border-neutral-200">
                                         <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Ghi chú" value="{{ $item->notes }}">
                                     </td>
-                                    <td style="width: 104px; min-width: 104px; " class="text-center align-middle border border-neutral-200">
-                                        <div class="flex items-center gap-1 justify-center">
+                                    <td style="width: 140px; min-width: 140px; position: sticky; right: 0; z-index: 1; background-color: #fff; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="order-action-col text-center align-middle border border-neutral-200">
+                                        <div class="flex items-center gap-1 justify-center flex-nowrap whitespace-nowrap">
                                             <button type="button" onclick="insertGlassRow(this)" class="text-neutral-400 hover:text-success-500 transition-colors p-1" title="Chèn dòng mới ở dưới">
                                                 <iconify-icon icon="lucide:list-plus" class="text-base"></iconify-icon>
                                             </button>
@@ -667,7 +673,7 @@ function addGlassOrderSupply(isAccessory = false) {
                         <th scope="col" style="width: 110px; min-width: 110px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá <span class="text-danger-500">*</span></th>
                         <th scope="col" style="width: 120px; min-width: 120px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Thành tiền</th>
                         <th scope="col" style="min-width: 160px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Ghi chú</th>
-                        <th scope="col" style="width: 104px; min-width: 104px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Hành động</th>
+                        <th scope="col" style="width: 140px; min-width: 140px; white-space: nowrap; position: sticky; right: 0; z-index: 3; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="order-action-col align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Hành động</th>
                     </tr>
                     <tr class="table-summary-row bg-neutral-100 font-bold text-neutral-800 text-center">
                         <td class="border border-neutral-200 text-center sticky-stt-td" style="font-size: 80% !important; background-color: #f1f5f9;">TỔNG</td>
@@ -689,7 +695,7 @@ function addGlassOrderSupply(isAccessory = false) {
                         <td class="border border-neutral-200"></td>
                         <td class="border border-neutral-200 text-center" data-summary-field="total_price" style="font-size: 80% !important;">0</td>
                         <td class="border border-neutral-200"></td>
-                        <td class="border border-neutral-200" style="position: sticky; right: 0; z-index: 3; background-color: #f1f5f9;"></td>
+                        <td class="order-action-col border border-neutral-200" style="width: 140px; min-width: 140px; position: sticky; right: 0; z-index: 3; background-color: #f1f5f9;"></td>
                     </tr>
                 </thead>
                 <tbody class="supply-items-container" data-supply-index="${glassSupplyIndex}">
@@ -881,8 +887,8 @@ function addGlassOrderItem(button, isInitial = false, insertAfterRow = null) {
         <td style="min-width: 160px;" class="border border-neutral-200">
             <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Ghi chú" value="${lastData ? lastData.notes : ''}">
         </td>
-        <td style="width: 104px; min-width: 104px; " class="text-center align-middle border border-neutral-200">
-            <div class="flex items-center gap-1 justify-center">
+        <td style="width: 140px; min-width: 140px; position: sticky; right: 0; z-index: 1; background-color: #fff; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="order-action-col text-center align-middle border border-neutral-200">
+            <div class="flex items-center gap-1 justify-center flex-nowrap whitespace-nowrap">
                 <button type="button" onclick="insertGlassRow(this)" class="text-neutral-400 hover:text-success-500 transition-colors p-1" title="Chèn dòng mới ở dưới">
                     <iconify-icon icon="lucide:list-plus" class="text-base"></iconify-icon>
                 </button>
