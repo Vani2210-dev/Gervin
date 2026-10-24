@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\Warehouse;
 use App\Models\WoodBoard;
+use App\Models\WoodBoardType;
+use App\Models\WoodBoardPrice;
 use App\Models\InventoryReceipt;
 use App\Models\InventoryReceiptItem;
 use App\Models\InventoryIssue;
