@@ -13,6 +13,7 @@ class WoodBoard extends Model
     protected $fillable = [
         'price_group',
         'color_code',
+        'foil_name',
         'origin_code',
         'unit',
         'cost_price',

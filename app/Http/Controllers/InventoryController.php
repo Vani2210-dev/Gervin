@@ -38,7 +38,7 @@ class InventoryController extends Controller
         ]]);
 
         $this->middleware('permission:add warehouse', ['only' => [
-            'storeMaterial', 'createReceipt', 'storeReceipt', 'createIssue', 'storeIssue',
+            'storeMaterial', 'importStock', 'createReceipt', 'storeReceipt', 'createIssue', 'storeIssue',
             'createStocktake', 'storeStocktake', 'storeWarehouse'
         ]]);
 
@@ -171,9 +171,11 @@ class InventoryController extends Controller
                     $query->where(function ($q) use ($search) {
                         $q->where('wood_board_prices.code', 'like', "%{$search}%")
                           ->orWhere('wood_board_prices.name', 'like', "%{$search}%")
+                          ->orWhere('wood_board_prices.foil_name', 'like', "%{$search}%")
                           ->orWhereHas('board', function ($b) use ($search) {
                               $b->where('color_code', 'like', "%{$search}%")
                                 ->orWhere('origin_code', 'like', "%{$search}%")
+                                ->orWhere('foil_name', 'like', "%{$search}%")
                                 ->orWhere('price_group', 'like', "%{$search}%");
                           })
                           ->orWhereHas('type', function ($t) use ($search) {
@@ -271,6 +273,7 @@ class InventoryController extends Controller
             'color_code' => 'nullable|string|max:100',
             'code' => 'nullable|string|max:100',
             'origin_code' => 'nullable|string|max:100',
+            'foil_name' => 'nullable|string|max:255',
             'unit' => 'nullable|string|max:50',
             'cost_price' => 'nullable|numeric|min:0',
             'min_stock' => 'nullable|numeric|min:0',
@@ -298,6 +301,7 @@ class InventoryController extends Controller
         $board = WoodBoard::create([
             'color_code' => $code,
             'origin_code' => trim($request->origin_code),
+            'foil_name' => trim($request->foil_name) ?: null,
             'price_group' => $category ?: 'Tấm cốt gỗ / Acrylic',
             'unit' => trim($request->unit) ?: 'Tấm',
             'cost_price' => (float)($request->cost_price ?? 0),
@@ -373,12 +377,16 @@ class InventoryController extends Controller
             if ($request->filled('name')) {
                 $price->name = trim($request->name);
             }
+            if ($request->has('foil_name')) {
+                $price->foil_name = trim($request->foil_name) ?: null;
+            }
             $price->save();
 
             if ($price->board) {
                 $board = $price->board;
                 $board->current_stock = $board->prices()->sum('stock');
                 if ($request->filled('origin_code')) $board->origin_code = trim($request->origin_code);
+                if ($request->has('foil_name')) $board->foil_name = trim($request->foil_name) ?: null;
                 if ($request->filled('category')) $board->price_group = trim($request->category);
                 if ($request->filled('warehouse_id')) {
                     $whExists = \App\Models\Warehouse::where('id', $request->warehouse_id)->exists();
@@ -399,6 +407,7 @@ class InventoryController extends Controller
 
         $request->validate([
             'origin_code' => 'nullable|string|max:100',
+            'foil_name' => 'nullable|string|max:255',
             'price_group' => 'nullable|string|max:255',
             'category' => 'nullable|string|max:255',
             'unit' => 'nullable|string|max:50',
@@ -422,6 +431,7 @@ class InventoryController extends Controller
 
         $updateData = [
             'origin_code' => trim($request->origin_code),
+            'foil_name' => trim($request->foil_name) ?: null,
             'price_group' => $group ?: $material->price_group,
             'unit' => trim($request->unit) ?: $material->unit,
             'cost_price' => (float)($request->cost_price ?? $material->cost_price),
@@ -1589,5 +1599,38 @@ class InventoryController extends Controller
         $name = $warehouse->name;
         $warehouse->delete();
         return back()->with('success', 'Đã xóa kho ' . $name . '!');
+    }
+
+    /**
+     * Nhập tồn kho từ file Excel Ton_Kho_Tam_Van_
+     */
+    public function importStock(Request $request)
+    {
+        if ($request->boolean('use_server_file')) {
+            $filePath = base_path('Ton_Kho_Tam_Van_.xlsx');
+            if (!file_exists($filePath)) {
+                $filePath = 'C:/Code/Gervin/Ton_Kho_Tam_Van_.xlsx';
+            }
+            if (!file_exists($filePath)) {
+                return back()->withErrors(['excel_file' => 'Không tìm thấy file Ton_Kho_Tam_Van_.xlsx trên máy chủ!']);
+            }
+        } else {
+            $request->validate([
+                'excel_file' => 'required|file|mimes:xlsx,xls|max:20480',
+            ], [
+                'excel_file.required' => 'Vui lòng chọn file Excel để nhập dữ liệu!',
+                'excel_file.mimes'    => 'File phải có định dạng .xlsx hoặc .xls!',
+                'excel_file.max'      => 'Dung lượng file tối đa là 20MB!',
+            ]);
+            $filePath = $request->file('excel_file')->getRealPath();
+        }
+
+        try {
+            $result = $this->inventoryService->importStockFromExcel($filePath);
+
+            return back()->with('success', "Đã nhập thành công {$result['total_items']} dòng vật tư (Cập nhật: {$result['updated_count']}, Thêm mới: {$result['created_count']}). Tổng tồn kho: " . number_format($result['total_stock'], 2, ',', '.') . " tấm!");
+        } catch (\Exception $e) {
+            return back()->withErrors(['excel_file' => 'Lỗi khi nhập file Excel: ' . $e->getMessage()]);
+        }
     }
 }

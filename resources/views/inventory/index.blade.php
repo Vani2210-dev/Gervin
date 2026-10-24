@@ -158,6 +158,11 @@
                     </div>
 
                     {{-- Export Excel --}}
+                                        {{-- Import Excel --}}
+                    <button type="button" onclick="openModal('importStockModal')" class="btn bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm">
+                        <iconify-icon icon="solar:file-excel-bold" class="text-base"></iconify-icon> Nhập Excel tồn kho
+                    </button>
+
                     <a href="{{ route('inventory.export-stock', request()->query()) }}" class="btn bg-white border border-neutral-300 text-neutral-700 hover:bg-neutral-50 px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shadow-2xs">
                         <iconify-icon icon="solar:file-excel-outline" class="text-base text-emerald-600"></iconify-icon> Xuất Excel
                     </a>
@@ -178,6 +183,7 @@
                                 <th class="py-3 px-4 w-12 text-center">STT</th>
                                 <th class="py-3 px-4 w-36">Mã SKU</th>
                                 <th class="py-3 px-4 min-w-[260px]">Tên hàng hóa / Vật tư</th>
+                                <th class="py-3 px-4 min-w-[240px]">Tên Foil thay thế</th>
                                 <th class="py-3 px-4 w-28 text-center">Mã xuất xứ</th>
                                 <th class="py-3 px-4 w-44">Nhóm hàng</th>
                                 <th class="py-3 px-4 w-20 text-center">ĐVT</th>
@@ -218,6 +224,7 @@
                                             'warehouse_id'            => $m->warehouse_id,
                                             'status'                  => $m->status,
                                             'notes'                   => $m->notes,
+                                            'foil_name'                => $m->foil_name ?? '',
                                             'is_price'                => 0,
                                             'edge_band_unit'          => $m->edge_band_unit ?: 'm',
                                             'edge_band_current_stock' => (float)$m->edge_band_current_stock,
@@ -259,6 +266,7 @@
                                             'warehouse_id' => $board?->warehouse_id,
                                             'status'       => $board?->status ?? 'active',
                                             'notes'        => $board?->notes,
+                                            'foil_name'     => $isPriceModel ? ($m->foil_name ?: ($board?->foil_name ?: '')) : ($m->foil_name ?: ''),
                                             'is_price'     => $isPriceModel ? 1 : 0,
                                         ];
                                     }
@@ -290,6 +298,18 @@
                                         </div>
                                         @if(($m->notes ?? false) && !$isEdgeBandWarehouse)
                                             <div class="text-[11px] text-neutral-400 truncate max-w-xs mt-0.5">{{ $m->notes }}</div>
+                                        @endif
+                                    </td>
+                                                                        <td class="py-3 px-4 min-w-[240px]">
+                                        @php
+                                            $foilNameDisplay = $isPriceModel 
+                                                ? ($m->foil_name ?: ($board?->foil_name ?: '')) 
+                                                : ($m->foil_name ?: '');
+                                        @endphp
+                                        @if($foilNameDisplay)
+                                            <span class="text-neutral-800 font-medium text-xs block leading-relaxed">{{ $foilNameDisplay }}</span>
+                                        @else
+                                            <span class="text-neutral-300">—</span>
                                         @endif
                                     </td>
                                     <td class="py-3 px-4 text-center text-neutral-600">
@@ -357,7 +377,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="11" class="py-12 text-center text-neutral-500 font-medium bg-neutral-50">
+                                    <td colspan="12" class="py-12 text-center text-neutral-500 font-medium bg-neutral-50">
                                         <iconify-icon icon="solar:box-broken-outline" class="text-4xl text-neutral-300 mb-2 block"></iconify-icon>
                                         Chưa tìm thấy vật tư hàng hóa nào. Bấm <strong>"Thêm vật tư mới"</strong> để bắt đầu.
                                     </td>
@@ -450,6 +470,11 @@
                     <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Mã xuất xứ (NCC)</label>
                     <input type="text" name="origin_code" class="form-control rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500" placeholder="Vd: 2201">
                 </div>
+            </div>
+
+                        <div>
+                <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Tên Foil thay thế</label>
+                <input type="text" name="foil_name" id="create_mat_foil_name" class="form-control rounded-lg w-full border-neutral-200 px-4 py-2 text-xs focus:border-primary-500" placeholder="Tên hàng Foil thay thế tên cũ (nếu có)">
             </div>
 
             <div>
@@ -558,7 +583,12 @@
 
             <div>
                 <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Tên hàng hóa / vật tư <span class="text-danger-500">*</span></label>
-                <input type="text" name="name" id="edit_name" class="form-control rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500" required>
+                <input type="text" name="name" id="edit_name" class="form-control rounded-lg w-full border-neutral-200 px-4 py-2 text-xs focus:border-primary-500" required>
+            </div>
+
+            <div>
+                <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Tên Foil thay thế</label>
+                <input type="text" name="foil_name" id="edit_foil_name" class="form-control rounded-lg w-full border-neutral-200 px-4 py-2 text-xs focus:border-primary-500" placeholder="Tên hàng Foil thay thế tên cũ">
             </div>
 
             <div class="grid grid-cols-2 gap-4">
@@ -737,6 +767,9 @@
     </form>
 </x-modal>
 
+
+
+
 @push('scripts')
 <script>
     if (typeof window.openModal !== 'function') {
@@ -793,6 +826,7 @@
         setText('edit_code_label', item.code || item.color_code || '');
         setVal('edit_code', item.code || item.color_code || '');
         setVal('edit_name', item.name || ('Tấm ' + (item.code || item.color_code || '')));
+        setVal('edit_foil_name', item.foil_name || '');
         setVal('edit_origin_code', item.origin_code || '');
         setVal('edit_category', item.category || item.price_group || '');
         setVal('edit_unit', item.unit || 'Tấm');

@@ -253,6 +253,7 @@ Route::middleware(['auth'])->prefix('warehouses')->name('inventory.')->group(fun
     Route::delete('/materials/{material}', [InventoryController::class, 'destroyMaterial'])->name('materials.destroy');
     Route::get('/materials/{material}/stock-card', [InventoryController::class, 'stockCard'])->name('materials.stock-card');
     Route::get('/export-stock', [InventoryController::class, 'exportStock'])->name('export-stock');
+    Route::post('/import-stock', [InventoryController::class, 'importStock'])->name('import-stock');
 
     // 2. Receipts (Phiếu Nhập kho - PNK)
     Route::get('/receipts', [InventoryController::class, 'receipts'])->name('receipts.index');

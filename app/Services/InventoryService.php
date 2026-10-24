@@ -1062,4 +1062,176 @@ class InventoryService
         }
         return $data;
     }
+
+    /**
+     * Nhập tồn kho và thông tin từ file Excel Ton_Kho_Tam_Van_
+     */
+    public function importStockFromExcel(string $filePath): array
+    {
+        if (!file_exists($filePath)) {
+            throw new \Exception("Không tìm thấy file: {$filePath}");
+        }
+
+        $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($filePath);
+        $sheet = $spreadsheet->getActiveSheet();
+        $highestRow = $sheet->getHighestRow();
+
+        $warehouse = Warehouse::where('code', 'KHO-VAN')->first() ?? Warehouse::first();
+        if (!$warehouse) {
+            $warehouse = Warehouse::create([
+                'name' => 'Kho Tấm Ván',
+                'code' => 'KHO-VAN',
+                'status' => 'active',
+                'item_name' => 'Tấm Ván',
+                'description' => 'Kho ván gỗ công nghiệp phục vụ ép'
+            ]);
+        }
+
+        $types = WoodBoardType::all()->keyBy('name');
+        $typeSuffixes = [
+            1 => '',
+            2 => '.TP',
+            3 => '.TP.2M',
+            4 => '.TP.PVC.1M',
+            5 => '.TP.PVC',
+            6 => '.TP.PVC.2M',
+        ];
+
+        $updatedCount = 0;
+        $createdCount = 0;
+        $totalStock = 0;
+
+        DB::transaction(function () use ($sheet, $highestRow, $warehouse, $types, $typeSuffixes, &$updatedCount, &$createdCount, &$totalStock) {
+            for ($r = 4; $r <= $highestRow; $r++) {
+                $sku = trim((string)$sheet->getCell('B' . $r)->getFormattedValue());
+                if (!$sku || stripos($sku, 'tổng') !== false) continue;
+
+                $name = trim((string)$sheet->getCell('C' . $r)->getFormattedValue());
+                $foilName = trim((string)$sheet->getCell('D' . $r)->getFormattedValue());
+                $origin = trim((string)$sheet->getCell('E' . $r)->getFormattedValue());
+                $group = trim((string)$sheet->getCell('F' . $r)->getFormattedValue());
+                $unit = trim((string)$sheet->getCell('G' . $r)->getFormattedValue());
+                $stockRaw = $sheet->getCell('H' . $r)->getCalculatedValue();
+                $stock = is_numeric($stockRaw) ? (float)$stockRaw : 0;
+
+                if ($foilName === '0') $foilName = '';
+                if ($origin === '0') $origin = '';
+
+                // Base color code
+                $baseCode = $sku;
+                if (str_contains($sku, '.')) {
+                    $baseCode = explode('.', $sku)[0];
+                }
+
+                // Find or create WoodBoard
+                $board = WoodBoard::where('color_code', $baseCode)->first();
+                if (!$board) {
+                    $board = WoodBoard::create([
+                        'color_code'    => $baseCode,
+                        'price_group'   => $group ?: 'Acrylic Foil',
+                        'origin_code'   => $origin ?: null,
+                        'foil_name'     => $foilName ?: null,
+                        'unit'          => $unit ?: 'Tấm',
+                        'cost_price'    => 0,
+                        'min_stock'     => 5,
+                        'initial_stock' => $stock,
+                        'current_stock' => $stock,
+                        'warehouse_id'  => $warehouse->id,
+                        'status'        => 'active',
+                    ]);
+                } else {
+                    $dirty = false;
+                    if (!empty($origin) && $board->origin_code !== $origin) {
+                        $board->origin_code = $origin;
+                        $dirty = true;
+                    }
+                    if (!empty($foilName) && $board->foil_name !== $foilName) {
+                        $board->foil_name = $foilName;
+                        $dirty = true;
+                    }
+                    if ($dirty) {
+                        $board->save();
+                    }
+                }
+
+                // Resolve type
+                $typeId = null;
+                if ($group) {
+                    $type = $types->get($group);
+                    if (!$type) {
+                        $type = WoodBoardType::where('name', 'like', "%{$group}%")->first();
+                    }
+                    $typeId = $type?->id;
+                }
+                if (!$typeId) {
+                    if (str_ends_with($sku, '.TP.PVC.2M')) $typeId = 6;
+                    elseif (str_ends_with($sku, '.TP.PVC.1M')) $typeId = 4;
+                    elseif (str_ends_with($sku, '.TP.PVC')) $typeId = 5;
+                    elseif (str_ends_with($sku, '.TP.2M')) $typeId = 3;
+                    elseif (str_ends_with($sku, '.TP')) $typeId = 2;
+                    else $typeId = 1;
+                }
+
+                // Update or create price
+                $price = WoodBoardPrice::where('code', $sku)->first();
+                if ($price) {
+                    $price->stock = $stock;
+                    if ($name) $price->name = $name;
+                    if ($foilName) $price->foil_name = $foilName;
+                    if ($typeId && !$price->wood_board_type_id) $price->wood_board_type_id = $typeId;
+                    $price->save();
+                    $updatedCount++;
+                } else {
+                    $price = WoodBoardPrice::create([
+                        'wood_board_id'      => $board->id,
+                        'wood_board_type_id' => $typeId,
+                        'code'               => $sku,
+                        'name'               => $name,
+                        'foil_name'          => $foilName ?: null,
+                        'thickness'          => '1.0',
+                        'price_board'        => 0,
+                        'price_m2'           => 0,
+                        'stock'              => $stock,
+                    ]);
+                    $createdCount++;
+                }
+
+                $totalStock += $stock;
+            }
+
+            // Ensure variants
+            $allBoards = WoodBoard::with('prices')->get();
+            $allTypes = WoodBoardType::all();
+            foreach ($allBoards as $board) {
+                $existingCodes = $board->prices->pluck('code')->toArray();
+                foreach ($allTypes as $type) {
+                    $suffix = $typeSuffixes[$type->id] ?? '';
+                    $expectedCode = $board->color_code . $suffix;
+                    if (!in_array($expectedCode, $existingCodes)) {
+                        WoodBoardPrice::create([
+                            'wood_board_id'      => $board->id,
+                            'wood_board_type_id' => $type->id,
+                            'code'               => $expectedCode,
+                            'name'               => "Tấm {$board->color_code} - {$type->name}",
+                            'foil_name'          => ($type->id == 1) ? $board->foil_name : null,
+                            'thickness'          => '1.0',
+                            'price_board'        => 0,
+                            'price_m2'           => 0,
+                            'stock'              => 0,
+                        ]);
+                        $createdCount++;
+                    }
+                }
+                $board->current_stock = $board->prices()->sum('stock');
+                $board->save();
+            }
+        });
+
+        return [
+            'total_items'   => $updatedCount + $createdCount,
+            'updated_count' => $updatedCount,
+            'created_count' => $createdCount,
+            'total_stock'   => $totalStock,
+        ];
+    }
 }

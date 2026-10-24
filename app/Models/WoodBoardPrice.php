@@ -13,6 +13,7 @@ class WoodBoardPrice extends Model
         'wood_board_type_id',
         'code',
         'name',
+        'foil_name',
         'thickness',
         'price_board',
         'price_m2',
