@@ -689,7 +689,7 @@ class OrderController extends Controller
         return view('orders.create', compact('orderType', 'acrylicOrder', 'isDraftCreate', 'woodBoardPrices', 'cncTemplates', 'glassPrices', 'minLatePrices'));
     }
 
-    public function edit(Order $order)
+    public function edit(Request $request, Order $order)
     {
         $user = auth()->user();
         if ($user && !$user->canViewAllMarketGroups()) {
