@@ -1632,6 +1632,17 @@ window.cncTemplatesData = @json($cncTemplates ?? []);
 
 function onCncTemplateChange(selectEl) {
     const td = selectEl.closest('td');
+    const tr = selectEl.closest('tr');
+    const noteInput = tr ? tr.querySelector('input[name*="[notes]"]') : null;
+
+    // Cột khoét kính ghi cái gì thì replace ghi chú thành cái đó
+    if (noteInput) {
+        const selectedText = selectEl.value ? (selectEl.options[selectEl.selectedIndex]?.text || selectEl.value).trim() : '';
+        noteInput.value = selectedText;
+        noteInput.dispatchEvent(new Event('input', { bubbles: true }));
+        noteInput.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
     if (!selectEl.value) {
         // Clear all hidden fields
         td.querySelectorAll('input[type="hidden"]').forEach(el => el.value = '');

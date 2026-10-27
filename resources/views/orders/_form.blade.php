@@ -5183,6 +5183,18 @@ function submitQuickCreateCustomer(e) {
             });
             inp.dataset.undoVal = inp.value;
         }
+
+        // Đồng bộ: Cột khoét kính ghi cái gì thì replace ghi chú thành cái đó
+        if (e.target && (e.target.classList.contains('cnc-template-select') || (e.target.name && e.target.name.includes('[vertical_grain_cnc]')))) {
+            const tr = e.target.closest('tr');
+            const noteInput = tr ? tr.querySelector('input[name*="[notes]"]') : null;
+            if (noteInput) {
+                const selectedText = e.target.value ? (e.target.options ? (e.target.options[e.target.selectedIndex]?.text || e.target.value) : e.target.value).trim() : '';
+                noteInput.value = selectedText;
+                noteInput.dispatchEvent(new Event('input', { bubbles: true }));
+                noteInput.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        }
     });
 
     // 6. Phím tắt mở rộng vùng chọn, Delete, Cut (Ctrl+X), Undo (Ctrl+Z), Redo (Ctrl+Shift+Z / Ctrl+Y)
