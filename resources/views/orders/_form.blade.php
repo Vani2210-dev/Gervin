@@ -4583,6 +4583,158 @@ function submitQuickCreateCustomer(e) {
     let currentCellTbody = null;
     let internalCopiedText = null;
 
+    // === HỆ THỐNG HOÀN TÁC UNDO / REDO ===
+    const undoStack = [];
+    const redoStack = [];
+
+    function pushUndoAction(action) {
+        undoStack.push(action);
+        if (undoStack.length > 50) undoStack.shift();
+        redoStack.length = 0; // Khi có thao tác mới, xóa lịch sử redo
+    }
+
+    function flashCells(cells, className = 'excel-undo-pulse') {
+        cells.forEach(c => {
+            c.classList.add(className);
+            setTimeout(() => c.classList.remove(className), 800);
+        });
+    }
+
+    function performUndo() {
+        if (undoStack.length === 0) return false;
+        const action = undoStack.pop();
+        const affected = [];
+
+        action.changes.forEach(ch => {
+            if (ch.input && document.body.contains(ch.input)) {
+                ch.input.value = ch.oldValue;
+                ch.input.dispatchEvent(new Event('input', { bubbles: true }));
+                ch.input.dispatchEvent(new Event('change', { bubbles: true }));
+                affected.push(ch.input);
+            }
+        });
+
+        redoStack.push(action);
+        if (typeof updateOrderSummary === 'function') updateOrderSummary();
+        flashCells(affected);
+        updateFillHandlePosition();
+
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'info',
+                title: `Đã hoàn tác: ${action.description || 'Undo'} (Ctrl + Z)`,
+                showConfirmButton: false,
+                timer: 1500
+            });
+        }
+        return true;
+    }
+
+    function performRedo() {
+        if (redoStack.length === 0) return false;
+        const action = redoStack.pop();
+        const affected = [];
+
+        action.changes.forEach(ch => {
+            if (ch.input && document.body.contains(ch.input)) {
+                ch.input.value = ch.newValue;
+                ch.input.dispatchEvent(new Event('input', { bubbles: true }));
+                ch.input.dispatchEvent(new Event('change', { bubbles: true }));
+                affected.push(ch.input);
+            }
+        });
+
+        undoStack.push(action);
+        if (typeof updateOrderSummary === 'function') updateOrderSummary();
+        flashCells(affected);
+        updateFillHandlePosition();
+
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'info',
+                title: `Đã làm lại: ${action.description || 'Redo'} (Ctrl + Shift + Z)`,
+                showConfirmButton: false,
+                timer: 1500
+            });
+        }
+        return true;
+    }
+
+    // === HỆ THỐNG CẮT (CTRL + X) ===
+    function performCut(e) {
+        const activeEl = document.activeElement;
+        const isTableInput = activeEl && activeEl.closest('table.bordered-table tbody tr.order-item-row, table.bordered-table tbody tr.payment-detail-row');
+
+        let targetCells = [];
+        if (selectedCells.length > 0) {
+            targetCells = [...selectedCells];
+        } else if (isTableInput && !activeEl.readOnly && !activeEl.disabled) {
+            targetCells = [activeEl];
+        }
+
+        if (targetCells.length === 0) return false;
+
+        if (e) e.preventDefault();
+
+        // 1. Nhóm dữ liệu TSV để copy vào clipboard
+        const rowMap = new Map();
+        targetCells.forEach(cell => {
+            const tr = cell.closest('tr');
+            if (!rowMap.has(tr)) rowMap.set(tr, []);
+            rowMap.get(tr).push(cell.value || '');
+        });
+
+        const tsvLines = [];
+        rowMap.forEach(cols => tsvLines.push(cols.join('\t')));
+        const tsv = tsvLines.join('\n');
+        internalCopiedText = tsv;
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(tsv).catch(() => {});
+        }
+        if (e && e.clipboardData) {
+            e.clipboardData.setData('text/plain', tsv);
+        }
+
+        // 2. Lưu vào Undo stack
+        const changes = targetCells.map(c => ({
+            input: c,
+            oldValue: c.value,
+            newValue: ''
+        }));
+        pushUndoAction({
+            type: 'cut',
+            description: `Cắt ${targetCells.length} ô`,
+            changes: changes
+        });
+
+        // 3. Xóa giá trị các ô
+        targetCells.forEach(c => {
+            c.value = '';
+            c.dispatchEvent(new Event('input', { bubbles: true }));
+            c.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+
+        if (typeof updateOrderSummary === 'function') updateOrderSummary();
+        updateFillHandlePosition();
+
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: `Đã cắt ${targetCells.length} ô (Ctrl + X)!`,
+                showConfirmButton: false,
+                timer: 1500
+            });
+        }
+        return true;
+    }
+
     // Khởi tạo phần tử Fill Handle (chấm vuông màu xanh góc dưới phải ô giống Excel)
     function ensureFillHandle() {
         if (!fillHandleEl) {
@@ -4788,6 +4940,19 @@ function submitQuickCreateCustomer(e) {
 
             if (fillSourceCell && fillTargetCells.length > 0) {
                 const fillVal = fillSourceCell.value;
+
+                // Ghi vào Undo Stack
+                const changes = fillTargetCells.map(inp => ({
+                    input: inp,
+                    oldValue: inp.value,
+                    newValue: fillVal
+                }));
+                pushUndoAction({
+                    type: 'fill',
+                    description: `Điền tự động ${fillTargetCells.length} ô`,
+                    changes: changes
+                });
+
                 fillTargetCells.forEach(inp => {
                     inp.value = fillVal;
                     inp.dispatchEvent(new Event('input', { bubbles: true }));
@@ -4869,6 +5034,11 @@ function submitQuickCreateCustomer(e) {
         }
     });
 
+    // Sự kiện Cắt (Ctrl + X) dạng native event
+    document.addEventListener('cut', function(e) {
+        performCut(e);
+    });
+
     // 5. Sự kiện Paste (Ctrl + V)
     document.addEventListener('paste', function(e) {
         const activeEl = document.activeElement;
@@ -4893,6 +5063,17 @@ function submitQuickCreateCustomer(e) {
         if (isSingleValue && selectedCells.length > 1) {
             e.preventDefault();
             const singleVal = rawLines[0][0].trim();
+
+            const changes = selectedCells.map(cell => ({
+                input: cell,
+                oldValue: cell.value,
+                newValue: singleVal
+            }));
+            pushUndoAction({
+                type: 'paste',
+                description: `Dán ${selectedCells.length} ô`,
+                changes: changes
+            });
 
             selectedCells.forEach(cell => {
                 cell.value = singleVal;
@@ -4924,6 +5105,7 @@ function submitQuickCreateCustomer(e) {
         if (rawLines.length > 1 || rawLines[0].length > 1) {
             e.preventDefault();
             const pastedCells = [];
+            const changes = [];
 
             rawLines.forEach((rowVals, rOffset) => {
                 const targetRowIndex = startPos.rowIndex + rOffset;
@@ -4938,6 +5120,11 @@ function submitQuickCreateCustomer(e) {
 
                     const inp = targetTd.querySelector('input:not([type="hidden"]), select, textarea');
                     if (inp && !inp.readOnly && !inp.disabled) {
+                        changes.push({
+                            input: inp,
+                            oldValue: inp.value,
+                            newValue: val.trim()
+                        });
                         inp.value = val.trim();
                         inp.dispatchEvent(new Event('input', { bubbles: true }));
                         inp.dispatchEvent(new Event('change', { bubbles: true }));
@@ -4945,6 +5132,14 @@ function submitQuickCreateCustomer(e) {
                     }
                 });
             });
+
+            if (changes.length > 0) {
+                pushUndoAction({
+                    type: 'paste_grid',
+                    description: `Dán ${changes.length} ô`,
+                    changes: changes
+                });
+            }
 
             if (typeof updateOrderSummary === 'function') updateOrderSummary();
 
@@ -4970,13 +5165,74 @@ function submitQuickCreateCustomer(e) {
         }
     });
 
-    // 6. Phím tắt mở rộng vùng chọn (Shift + ArrowDown / ArrowUp) và Delete ô
+    // Theo dõi giá trị ban đầu khi focus ô để hỗ trợ Undo chỉnh sửa đơn lẻ
+    document.addEventListener('focusin', function(e) {
+        const inp = e.target.closest('table.bordered-table tbody tr.order-item-row td input:not([type="hidden"]), table.bordered-table tbody tr.payment-detail-row td input:not([type="hidden"])');
+        if (inp) {
+            inp.dataset.undoVal = inp.value;
+        }
+    });
+
+    document.addEventListener('change', function(e) {
+        const inp = e.target.closest('table.bordered-table tbody tr.order-item-row td input:not([type="hidden"]), table.bordered-table tbody tr.payment-detail-row td input:not([type="hidden"])');
+        if (inp && inp.dataset.undoVal !== undefined && inp.value !== inp.dataset.undoVal) {
+            pushUndoAction({
+                type: 'edit',
+                description: 'Sửa ô',
+                changes: [{ input: inp, oldValue: inp.dataset.undoVal, newValue: inp.value }]
+            });
+            inp.dataset.undoVal = inp.value;
+        }
+    });
+
+    // 6. Phím tắt mở rộng vùng chọn, Delete, Cut (Ctrl+X), Undo (Ctrl+Z), Redo (Ctrl+Shift+Z / Ctrl+Y)
     document.addEventListener('keydown', function(e) {
+        // Ctrl + Z: Hoàn tác (Undo)
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z') && !e.shiftKey) {
+            const isTableInput = document.activeElement && document.activeElement.closest('table.bordered-table tbody tr.order-item-row, table.bordered-table tbody tr.payment-detail-row');
+            if (isTableInput || selectedCells.length > 0 || undoStack.length > 0) {
+                if (performUndo()) {
+                    e.preventDefault();
+                    return;
+                }
+            }
+        }
+
+        // Ctrl + Shift + Z hoặc Ctrl + Y: Làm lại (Redo)
+        if (((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'z' || e.key === 'Z')) || 
+            ((e.ctrlKey || e.metaKey) && (e.key === 'y' || e.key === 'Y'))) {
+            const isTableInput = document.activeElement && document.activeElement.closest('table.bordered-table tbody tr.order-item-row, table.bordered-table tbody tr.payment-detail-row');
+            if (isTableInput || selectedCells.length > 0 || redoStack.length > 0) {
+                if (performRedo()) {
+                    e.preventDefault();
+                    return;
+                }
+            }
+        }
+
+        // Ctrl + X: Cắt dữ liệu (Cut)
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'x' || e.key === 'X')) {
+            if (performCut(e)) {
+                return;
+            }
+        }
+
         // Phím Delete hoặc Backspace khi có nhiều ô được chọn
         if ((e.key === 'Delete' || e.key === 'Backspace') && selectedCells.length > 1) {
             const isTyping = ['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName) && selectedCells.length <= 1;
             if (!isTyping) {
                 e.preventDefault();
+                const changes = selectedCells.map(cell => ({
+                    input: cell,
+                    oldValue: cell.value,
+                    newValue: ''
+                }));
+                pushUndoAction({
+                    type: 'delete',
+                    description: `Xóa ${selectedCells.length} ô`,
+                    changes: changes
+                });
+
                 selectedCells.forEach(cell => {
                     cell.value = '';
                     cell.dispatchEvent(new Event('input', { bubbles: true }));
@@ -5020,6 +5276,9 @@ function submitQuickCreateCustomer(e) {
     window.deleteExcelSelectedRows = deleteSelectedRows;
     window.copyExcelSelectedRows = copySelectedRows;
     window.clearCellSelection = clearCellSelection;
+    window.performExcelUndo = performUndo;
+    window.performExcelRedo = performRedo;
+    window.performExcelCut = performCut;
 })();
 </script>
 
@@ -5150,6 +5409,14 @@ function submitQuickCreateCustomer(e) {
     #excel-fill-handle:hover {
         transform: scale(1.3);
         background-color: #1d4ed8;
+    }
+
+    .excel-undo-pulse {
+        animation: excelUndoFlash 0.8s ease-out;
+    }
+    @keyframes excelUndoFlash {
+        0% { background-color: #fef08a !important; outline: 2px solid #eab308 !important; }
+        100% { background-color: inherit; outline: none; }
     }
 </style>
 
