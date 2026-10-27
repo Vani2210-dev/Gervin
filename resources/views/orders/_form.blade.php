@@ -4567,9 +4567,459 @@ function submitQuickCreateCustomer(e) {
         initButtons();
     }
 
+    // ========================================================
+    // EXCEL-LIKE CELL SELECTION, AUTO-FILL HANDLE & RANGE COPY/PASTE
+    // ========================================================
+    let selectedCells = [];
+    let cellAnchor = null;
+    let cellActive = null;
+    let isCellDragSelecting = false;
+    let isHandleDragging = false;
+    let fillHandleEl = null;
+    let fillSourceCell = null;
+    let fillTargetCells = [];
+    let mouseStartPos = { x: 0, y: 0 };
+    let isPossibleDrag = false;
+    let currentCellTbody = null;
+    let internalCopiedText = null;
+
+    // Khởi tạo phần tử Fill Handle (chấm vuông màu xanh góc dưới phải ô giống Excel)
+    function ensureFillHandle() {
+        if (!fillHandleEl) {
+            fillHandleEl = document.getElementById('excel-fill-handle');
+            if (!fillHandleEl) {
+                fillHandleEl = document.createElement('div');
+                fillHandleEl.id = 'excel-fill-handle';
+                fillHandleEl.title = 'Kéo xuống để tự động điền giá trị giống Excel';
+                document.body.appendChild(fillHandleEl);
+            }
+
+            fillHandleEl.onmousedown = function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (!cellActive && selectedCells.length === 0) return;
+                isHandleDragging = true;
+                fillSourceCell = cellActive || selectedCells[0];
+                fillTargetCells = [];
+                currentCellTbody = fillSourceCell.closest('tbody');
+            };
+        }
+    }
+
+    // Đặt vị trí của Fill Handle tại góc dưới bên phải của ô đang active hoặc vùng ô đang chọn
+    function updateFillHandlePosition() {
+        ensureFillHandle();
+        if (!fillHandleEl) return;
+        const target = selectedCells.length > 0 ? selectedCells[selectedCells.length - 1] : cellActive;
+        if (!target || !document.body.contains(target)) {
+            fillHandleEl.style.display = 'none';
+            return;
+        }
+
+        const rect = target.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0 || rect.bottom < 0 || rect.top > window.innerHeight) {
+            fillHandleEl.style.display = 'none';
+            return;
+        }
+
+        fillHandleEl.style.display = 'block';
+        fillHandleEl.style.left = (rect.right - 4 + window.scrollX) + 'px';
+        fillHandleEl.style.top = (rect.bottom - 4 + window.scrollY) + 'px';
+    }
+
+    // Xóa toàn bộ ô đang bôi đen
+    function clearCellSelection() {
+        selectedCells.forEach(cell => {
+            cell.classList.remove('excel-cell-selected', 'excel-copied-marching', 'excel-fill-preview');
+        });
+        selectedCells = [];
+        if (fillHandleEl) fillHandleEl.style.display = 'none';
+    }
+
+    // Xác định tọa độ dòng & cột của ô input trong bảng
+    function getCellPos(input) {
+        if (!input) return null;
+        const td = input.closest('td');
+        const tr = input.closest('tr.order-item-row, tr.payment-detail-row');
+        if (!td || !tr) return null;
+        const tbody = tr.closest('tbody');
+        if (!tbody) return null;
+
+        const rows = Array.from(tbody.querySelectorAll('tr.order-item-row, tr.payment-detail-row'));
+        const rowIndex = rows.indexOf(tr);
+        const tds = Array.from(tr.querySelectorAll('td'));
+        const colIndex = tds.indexOf(td);
+
+        return { rowIndex, colIndex, tr, td, tbody, rows };
+    }
+
+    // Lấy danh sách ô trong hình chữ nhật từ startPos đến endPos
+    function getCellsInRect(startPos, endPos) {
+        if (!startPos || !endPos || startPos.tbody !== endPos.tbody) return [];
+        const minR = Math.min(startPos.rowIndex, endPos.rowIndex);
+        const maxR = Math.max(startPos.rowIndex, endPos.rowIndex);
+        const minC = Math.min(startPos.colIndex, endPos.colIndex);
+        const maxC = Math.max(startPos.colIndex, endPos.colIndex);
+
+        const cells = [];
+        for (let r = minR; r <= maxR; r++) {
+            const row = startPos.rows[r];
+            if (!row) continue;
+            const rowTds = Array.from(row.querySelectorAll('td'));
+            for (let c = minC; c <= maxC; c++) {
+                const cellTd = rowTds[c];
+                if (!cellTd) continue;
+                const inp = cellTd.querySelector('input:not([type="hidden"]), select, textarea');
+                if (inp && !inp.readOnly && !inp.disabled) {
+                    cells.push(inp);
+                }
+            }
+        }
+        return cells;
+    }
+
+    // Chọn vùng ô từ anchor đến target
+    function selectCellRange(startInput, endInput) {
+        const startPos = getCellPos(startInput);
+        const endPos = getCellPos(endInput);
+        if (!startPos || !endPos) return;
+
+        clearCellSelection();
+        const cells = getCellsInRect(startPos, endPos);
+        cells.forEach(c => c.classList.add('excel-cell-selected'));
+        selectedCells = cells;
+        cellActive = endInput;
+        updateFillHandlePosition();
+    }
+
+    // 1. Khi nhấn chuột xuống một ô input (mousedown)
+    document.addEventListener('mousedown', function(e) {
+        // Bỏ qua nếu bấm vào fill handle
+        if (e.target.closest('#excel-fill-handle')) return;
+
+        const input = e.target.closest('table.bordered-table tbody tr.order-item-row td input:not([type="hidden"]), table.bordered-table tbody tr.payment-detail-row td input:not([type="hidden"])');
+        if (!input || input.readOnly || input.disabled) {
+            if (!e.target.closest('.excel-cell-selected')) {
+                clearCellSelection();
+            }
+            return;
+        }
+
+        ensureFillHandle();
+
+        if (e.shiftKey && cellAnchor && cellAnchor.closest('tbody') === input.closest('tbody')) {
+            // Shift + click: Chọn dải ô từ anchor đến ô này
+            e.preventDefault();
+            selectCellRange(cellAnchor, input);
+            return;
+        }
+
+        cellActive = input;
+        cellAnchor = input;
+        mouseStartPos = { x: e.clientX, y: e.clientY };
+        isPossibleDrag = true;
+        currentCellTbody = input.closest('tbody');
+
+        // Bôi sáng ô hiện tại
+        clearCellSelection();
+        selectedCells = [input];
+        input.classList.add('excel-cell-selected');
+        updateFillHandlePosition();
+    });
+
+    // 2. Khi rê chuột (mousemove)
+    document.addEventListener('mousemove', function(e) {
+        // Trường hợp A: Kéo góc Fill Handle (chấm vuông xanh) để điền tự động giống Excel
+        if (isHandleDragging && fillSourceCell && currentCellTbody) {
+            e.preventDefault();
+            const el = document.elementFromPoint(e.clientX, e.clientY);
+            const targetInput = el?.closest('td')?.querySelector('input:not([type="hidden"]), select, textarea');
+            const sourcePos = getCellPos(fillSourceCell);
+            const targetPos = getCellPos(targetInput);
+
+            // Bỏ preview cũ
+            document.querySelectorAll('.excel-fill-preview').forEach(el => el.classList.remove('excel-fill-preview'));
+            fillTargetCells = [];
+
+            if (sourcePos && targetPos && sourcePos.tbody === targetPos.tbody) {
+                // Điền dọc theo cột của ô nguồn
+                const col = sourcePos.colIndex;
+                const minR = Math.min(sourcePos.rowIndex, targetPos.rowIndex);
+                const maxR = Math.max(sourcePos.rowIndex, targetPos.rowIndex);
+
+                for (let r = minR; r <= maxR; r++) {
+                    const row = sourcePos.rows[r];
+                    if (!row) continue;
+                    const inp = row.querySelectorAll('td')[col]?.querySelector('input:not([type="hidden"]), select, textarea');
+                    if (inp && inp !== fillSourceCell && !inp.readOnly && !inp.disabled) {
+                        inp.classList.add('excel-fill-preview');
+                        fillTargetCells.push(inp);
+                    }
+                }
+            }
+            return;
+        }
+
+        // Trường hợp B: Kéo chuột từ ô này qua các ô khác để bôi đen dải ô (kéo 1 đường từ trên xuống)
+        if (isPossibleDrag && cellAnchor) {
+            const dx = Math.abs(e.clientX - mouseStartPos.x);
+            const dy = Math.abs(e.clientY - mouseStartPos.y);
+
+            // Chỉ kích hoạt chế độ kéo chọn khi di chuyển chuột ra khỏi vị trí ban đầu
+            if (dx > 4 || dy > 4) {
+                isCellDragSelecting = true;
+                window.getSelection()?.removeAllRanges(); // ngăn bôi đen text mặc định của trình duyệt
+
+                const el = document.elementFromPoint(e.clientX, e.clientY);
+                const targetInput = el?.closest('td')?.querySelector('input:not([type="hidden"]), select, textarea');
+                if (targetInput && targetInput.closest('tbody') === currentCellTbody) {
+                    selectCellRange(cellAnchor, targetInput);
+                }
+            }
+        }
+    });
+
+    // 3. Khi thả chuột (mouseup)
+    document.addEventListener('mouseup', function(e) {
+        // Hoàn tất kéo Fill Handle
+        if (isHandleDragging) {
+            isHandleDragging = false;
+            document.querySelectorAll('.excel-fill-preview').forEach(el => el.classList.remove('excel-fill-preview'));
+
+            if (fillSourceCell && fillTargetCells.length > 0) {
+                const fillVal = fillSourceCell.value;
+                fillTargetCells.forEach(inp => {
+                    inp.value = fillVal;
+                    inp.dispatchEvent(new Event('input', { bubbles: true }));
+                    inp.dispatchEvent(new Event('change', { bubbles: true }));
+                });
+
+                if (typeof updateOrderSummary === 'function') updateOrderSummary();
+
+                // Chọn lại vùng vừa điền
+                clearCellSelection();
+                selectedCells = [fillSourceCell, ...fillTargetCells];
+                selectedCells.forEach(c => c.classList.add('excel-cell-selected'));
+                cellActive = fillTargetCells[fillTargetCells.length - 1];
+                updateFillHandlePosition();
+
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: `Đã tự động điền "${fillVal}" vào ${fillTargetCells.length} ô!`,
+                        showConfirmButton: false,
+                        timer: 1800
+                    });
+                }
+            }
+            fillSourceCell = null;
+            fillTargetCells = [];
+            return;
+        }
+
+        isPossibleDrag = false;
+        isCellDragSelecting = false;
+        updateFillHandlePosition();
+    });
+
+    // 4. Sự kiện Copy (Ctrl + C)
+    document.addEventListener('copy', function(e) {
+        if (selectedCells.length > 1) {
+            e.preventDefault();
+
+            // Nhóm các ô theo dòng
+            const rowMap = new Map();
+            selectedCells.forEach(cell => {
+                const tr = cell.closest('tr');
+                if (!rowMap.has(tr)) rowMap.set(tr, []);
+                rowMap.get(tr).push(cell.value || '');
+            });
+
+            const tsvLines = [];
+            rowMap.forEach(cols => {
+                tsvLines.push(cols.join('\t'));
+            });
+
+            const tsv = tsvLines.join('\n');
+            internalCopiedText = tsv;
+            if (e.clipboardData) {
+                e.clipboardData.setData('text/plain', tsv);
+            }
+
+            // Hiệu ứng viền marching ants giống Excel
+            selectedCells.forEach(c => c.classList.add('excel-copied-marching'));
+            setTimeout(() => {
+                selectedCells.forEach(c => c.classList.remove('excel-copied-marching'));
+            }, 1500);
+
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: `Đã copy ${selectedCells.length} ô vào clipboard!`,
+                    showConfirmButton: false,
+                    timer: 1500
+                });
+            }
+        } else if (cellActive) {
+            internalCopiedText = cellActive.value;
+        }
+    });
+
+    // 5. Sự kiện Paste (Ctrl + V)
+    document.addEventListener('paste', function(e) {
+        const activeEl = document.activeElement;
+        const isTableInput = activeEl && activeEl.closest('table.bordered-table tbody tr.order-item-row, table.bordered-table tbody tr.payment-detail-row');
+
+        // Chỉ can thiệp khi đang focus ô trong bảng hoặc có ô đang được bôi đen
+        if (!isTableInput && selectedCells.length === 0) return;
+
+        let clipboardText = '';
+        if (e.clipboardData) {
+            clipboardText = e.clipboardData.getData('text/plain');
+        }
+        if (!clipboardText && internalCopiedText) {
+            clipboardText = internalCopiedText;
+        }
+        if (!clipboardText) return;
+
+        const rawLines = clipboardText.replace(/\r\n/g, '\n').replace(/\r/g, '\n').replace(/\n$/, '').split('\n').map(l => l.split('\t'));
+        const isSingleValue = rawLines.length === 1 && rawLines[0].length === 1;
+
+        // TRƯỜNG HỢP 1: Copy 1 giá trị (ví dụ: 1200) và dán vào nhiều ô đang chọn
+        if (isSingleValue && selectedCells.length > 1) {
+            e.preventDefault();
+            const singleVal = rawLines[0][0].trim();
+
+            selectedCells.forEach(cell => {
+                cell.value = singleVal;
+                cell.dispatchEvent(new Event('input', { bubbles: true }));
+                cell.dispatchEvent(new Event('change', { bubbles: true }));
+            });
+
+            if (typeof updateOrderSummary === 'function') updateOrderSummary();
+            updateFillHandlePosition();
+
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: `Đã dán "${singleVal}" vào ${selectedCells.length} ô!`,
+                    showConfirmButton: false,
+                    timer: 1800
+                });
+            }
+            return;
+        }
+
+        // TRƯỜNG HỢP 2: Dán bảng dữ liệu nhiều dòng/nhiều cột từ Excel hoặc sao chép nhiều ô
+        const startInput = (selectedCells.length > 0 ? selectedCells[0] : activeEl);
+        const startPos = getCellPos(startInput);
+        if (!startPos) return;
+
+        if (rawLines.length > 1 || rawLines[0].length > 1) {
+            e.preventDefault();
+            const pastedCells = [];
+
+            rawLines.forEach((rowVals, rOffset) => {
+                const targetRowIndex = startPos.rowIndex + rOffset;
+                const targetRow = startPos.rows[targetRowIndex];
+                if (!targetRow) return;
+
+                const rowTds = Array.from(targetRow.querySelectorAll('td'));
+                rowVals.forEach((val, cOffset) => {
+                    const targetColIndex = startPos.colIndex + cOffset;
+                    const targetTd = rowTds[targetColIndex];
+                    if (!targetTd) return;
+
+                    const inp = targetTd.querySelector('input:not([type="hidden"]), select, textarea');
+                    if (inp && !inp.readOnly && !inp.disabled) {
+                        inp.value = val.trim();
+                        inp.dispatchEvent(new Event('input', { bubbles: true }));
+                        inp.dispatchEvent(new Event('change', { bubbles: true }));
+                        pastedCells.push(inp);
+                    }
+                });
+            });
+
+            if (typeof updateOrderSummary === 'function') updateOrderSummary();
+
+            if (pastedCells.length > 0) {
+                clearCellSelection();
+                selectedCells = pastedCells;
+                selectedCells.forEach(c => c.classList.add('excel-cell-selected'));
+                cellActive = pastedCells[pastedCells.length - 1];
+                updateFillHandlePosition();
+
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: `Đã dán ${pastedCells.length} ô dữ liệu!`,
+                        showConfirmButton: false,
+                        timer: 1800
+                    });
+                }
+            }
+            return;
+        }
+    });
+
+    // 6. Phím tắt mở rộng vùng chọn (Shift + ArrowDown / ArrowUp) và Delete ô
+    document.addEventListener('keydown', function(e) {
+        // Phím Delete hoặc Backspace khi có nhiều ô được chọn
+        if ((e.key === 'Delete' || e.key === 'Backspace') && selectedCells.length > 1) {
+            const isTyping = ['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName) && selectedCells.length <= 1;
+            if (!isTyping) {
+                e.preventDefault();
+                selectedCells.forEach(cell => {
+                    cell.value = '';
+                    cell.dispatchEvent(new Event('input', { bubbles: true }));
+                    cell.dispatchEvent(new Event('change', { bubbles: true }));
+                });
+                if (typeof updateOrderSummary === 'function') updateOrderSummary();
+                return;
+            }
+        }
+
+        // Shift + ArrowDown / ArrowUp để mở rộng dải ô giống Excel
+        if (e.shiftKey && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+            const current = cellActive || (selectedCells.length > 0 ? selectedCells[selectedCells.length - 1] : null);
+            const currentPos = getCellPos(current);
+            if (!currentPos) return;
+
+            const nextRowIndex = e.key === 'ArrowDown' ? currentPos.rowIndex + 1 : currentPos.rowIndex - 1;
+            const nextRow = currentPos.rows[nextRowIndex];
+            if (!nextRow) return;
+
+            const nextInput = nextRow.querySelectorAll('td')[currentPos.colIndex]?.querySelector('input:not([type="hidden"]), select, textarea');
+            if (nextInput) {
+                e.preventDefault();
+                cellAnchor = cellAnchor || current;
+                selectCellRange(cellAnchor, nextInput);
+                nextInput.focus();
+            }
+        }
+
+        // Escape: Bỏ chọn ô
+        if (e.key === 'Escape' && selectedCells.length > 0) {
+            clearCellSelection();
+        }
+    });
+
+    // Cập nhật lại vị trí handle khi cuộn bảng hoặc màn hình
+    window.addEventListener('scroll', updateFillHandlePosition, true);
+    window.addEventListener('resize', updateFillHandlePosition);
+
     window.clearExcelRowSelection = clearExcelRowSelection;
     window.deleteExcelSelectedRows = deleteSelectedRows;
     window.copyExcelSelectedRows = copySelectedRows;
+    window.clearCellSelection = clearCellSelection;
 })();
 </script>
 
@@ -4648,6 +5098,58 @@ function submitQuickCreateCustomer(e) {
     tr.payment-detail-row.row-selected textarea {
         background-color: #f0f9ff !important;
         border-color: #93c5fd !important;
+    }
+
+    /* === EXCEL-LIKE CELL SELECTION & AUTO-FILL STYLES === */
+    .excel-cell-selected,
+    table.bordered-table tbody tr.order-item-row td input.excel-cell-selected,
+    table.bordered-table tbody tr.payment-detail-row td input.excel-cell-selected {
+        background-color: #dbeafe !important; /* Tailwind blue-100 */
+        color: #1e3a8a !important;
+        outline: 2px solid #2563eb !important;
+        outline-offset: -2px !important;
+        position: relative;
+        z-index: 5;
+    }
+
+    .excel-fill-preview,
+    table.bordered-table tbody tr.order-item-row td input.excel-fill-preview,
+    table.bordered-table tbody tr.payment-detail-row td input.excel-fill-preview {
+        background-color: rgba(59, 130, 246, 0.18) !important;
+        outline: 2px dashed #2563eb !important;
+        outline-offset: -2px !important;
+    }
+
+    .excel-copied-marching,
+    table.bordered-table tbody tr.order-item-row td input.excel-copied-marching {
+        outline: 2px dashed #16a34a !important;
+        outline-offset: -2px !important;
+        animation: excelMarchingAnts 0.8s linear infinite;
+    }
+
+    @keyframes excelMarchingAnts {
+        0% { outline-offset: -2px; }
+        50% { outline-offset: -1px; }
+        100% { outline-offset: -2px; }
+    }
+
+    #excel-fill-handle {
+        position: absolute;
+        width: 8px;
+        height: 8px;
+        background-color: #2563eb;
+        border: 1.5px solid #ffffff;
+        cursor: crosshair;
+        z-index: 99999;
+        display: none;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+        border-radius: 1px;
+        pointer-events: auto;
+        transition: transform 0.1s ease;
+    }
+    #excel-fill-handle:hover {
+        transform: scale(1.3);
+        background-color: #1d4ed8;
     }
 </style>
 
