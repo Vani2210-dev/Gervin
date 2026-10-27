@@ -6,20 +6,48 @@
 {{-- Order Supplies & Items Section Card --}}
 <style>
     .input-narrow-warning,
-    input.input-narrow-warning[type='number'],
-    #order-supplies-container .order-supply-row table input.input-narrow-warning {
+    input.input-narrow-warning,
+    select.input-narrow-warning,
+    #order-supplies-container .order-supply-row table input.input-narrow-warning,
+    #order-supplies-container .order-supply-row table select.input-narrow-warning {
         background-color: #fef2f2 !important;
         color: #ef4444 !important;
         font-weight: bold !important;
-        border: 0 !important;
+        border-color: #fca5a5 !important;
     }
     .input-narrow-warning:focus,
-    input.input-narrow-warning[type='number']:focus,
-    #order-supplies-container .order-supply-row table input.input-narrow-warning:focus {
+    input.input-narrow-warning:focus,
+    select.input-narrow-warning:focus,
+    #order-supplies-container .order-supply-row table input.input-narrow-warning:focus,
+    #order-supplies-container .order-supply-row table select.input-narrow-warning:focus {
         background-color: #fef2f2 !important;
         color: #ef4444 !important;
         font-weight: bold !important;
         outline: 2px solid #ef4444 !important;
+        outline-offset: -2px !important;
+        box-shadow: none !important;
+    }
+
+    /* Kính và CNC màu vàng */
+    .input-cnc-highlight,
+    input.input-cnc-highlight,
+    select.input-cnc-highlight,
+    #order-supplies-container .order-supply-row table input.input-cnc-highlight,
+    #order-supplies-container .order-supply-row table select.input-cnc-highlight {
+        background-color: #fef9c3 !important;
+        color: #b45309 !important;
+        font-weight: bold !important;
+        border-color: #fde047 !important;
+    }
+    .input-cnc-highlight:focus,
+    input.input-cnc-highlight:focus,
+    select.input-cnc-highlight:focus,
+    #order-supplies-container .order-supply-row table input.input-cnc-highlight:focus,
+    #order-supplies-container .order-supply-row table select.input-cnc-highlight:focus {
+        background-color: #fef9c3 !important;
+        color: #b45309 !important;
+        font-weight: bold !important;
+        outline: 2px solid #eab308 !important;
         outline-offset: -2px !important;
         box-shadow: none !important;
     }
@@ -471,8 +499,11 @@
                                     <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][molding_length]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Phào (m)" step="any" value="{{ ((float)($item->molding_length ?? 0) > 0) ? $item->molding_length : '' }}">
                                     <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][edge_bevel]" class="product-edge-bevel-input" value="{{ $item->edge_bevel }}">
                                 </td>
+                                @php
+                                    $hasCncThisRow = !empty($item->vertical_grain_cnc) || (!empty($item->notes) && (stripos($item->notes, 'kính') !== false || stripos($item->notes, 'cnc') !== false));
+                                @endphp
                                 <td style="width: 130px; min-width: 130px; " class="border border-neutral-200">
-                                    <select name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][vertical_grain_cnc]" class="cnc-template-select form-select form-select-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 px-1 py-1 h-8 text-xs" onchange="onCncTemplateChange(this)">
+                                    <select name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][vertical_grain_cnc]" class="cnc-template-select form-select form-select-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 px-1 py-1 h-8 text-xs {{ !empty($item->vertical_grain_cnc) ? 'input-cnc-highlight' : '' }}" onchange="onCncTemplateChange(this)">
                                         <option value="">-- CNC --</option>
                                         @foreach($cncTemplates ?? [] as $cncTpl)
                                         <option value="{{ $cncTpl->name }}" data-params='{{ json_encode($cncTpl) }}' {{ ($item->vertical_grain_cnc === $cncTpl->name) ? 'selected' : '' }}>{{ $cncTpl->name }}</option>
@@ -506,7 +537,7 @@
                                     <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][total_price]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center px-1 py-1 h-8 text-xs" placeholder="Thành tiền" value="{{ number_format($item->total_price, 0, ',', '.') }}" readonly>
                                 </td>
                                 <td style="min-width: 160px;" class="border border-neutral-200">
-                                    <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Ghi chú" value="{{ $item->notes }}">
+                                    <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs {{ $hasCncThisRow ? 'input-cnc-highlight' : '' }}" placeholder="Ghi chú" value="{{ $item->notes }}">
                                 </td>
                                 <td style="width: 130px; min-width: 130px; position: sticky; right: 0; z-index: 1; background-color: #fff; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="order-action-col text-center align-middle border border-neutral-200">
                                     <div class="flex items-center gap-1 justify-center flex-nowrap whitespace-nowrap">
@@ -1646,8 +1677,14 @@ function onCncTemplateChange(selectEl) {
     if (!selectEl.value) {
         // Clear all hidden fields
         td.querySelectorAll('input[type="hidden"]').forEach(el => el.value = '');
+        selectEl.classList.remove('input-cnc-highlight');
+        if (noteInput) noteInput.classList.remove('input-cnc-highlight');
         return;
     }
+
+    // Màu vàng cho kính và CNC
+    selectEl.classList.add('input-cnc-highlight');
+    if (noteInput) noteInput.classList.add('input-cnc-highlight');
     const selectedOption = selectEl.options[selectEl.selectedIndex];
     let params = null;
     try {

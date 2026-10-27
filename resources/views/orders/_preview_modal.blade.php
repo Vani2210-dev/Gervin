@@ -297,6 +297,7 @@
     $wVal = floatval($item->width ?? 0);
     $prodName = trim($item->product_name ?? ($item->name ?? ''));
     $isNarrow = ($wVal > 0 && $wVal < 55 && $prodName !== 'Công giả dày');
+    $hasCnc = !empty($item->vertical_grain_cnc) || (!empty($item->notes) && (stripos($item->notes, 'kính') !== false || stripos($item->notes, 'cnc') !== false));
 @endphp
                                                         <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: center; {{ $isNarrow ? 'color: #ef4444; background-color: #fef2f2; font-weight: 700;' : 'color: #0f172a;' }} font-size: 13px; white-space: nowrap;">{{ $item->width ?: '—' }}</td>
                                                         <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: center; color: #0f172a; font-size: 13px; font-weight: 700; white-space: nowrap;">{{ $item->quantity }}</td>
@@ -306,7 +307,7 @@
                                                         <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: center; color: #0f172a; font-size: 13px; white-space: nowrap;">{{ ((float)($item->molding_length ?? 0) > 0) ? number_format($item->molding_length, 2, ',', '.') : '—' }}</td>
                                                         <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: right; color: #0f172a; font-size: 13px; font-weight: 600; white-space: nowrap;">{{ $item->unit_price ? number_format($item->unit_price, 0, ',', '.') . ' đ' : '—' }}</td>
                                                         <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: right; color: #059669; font-size: 13px; font-weight: 700; white-space: nowrap;">{{ $item->total_price ? number_format($item->total_price, 0, ',', '.') . ' đ' : '—' }}</td>
-                                                        <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: left; color: #64748b; font-size: 13px; white-space: nowrap;">{{ $item->notes ?: '—' }}</td>
+                                                        <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: left; {{ $hasCnc ? 'color: #b45309; background-color: #fef9c3; font-weight: 700;' : 'color: #64748b;' }} font-size: 13px; white-space: nowrap;">{{ $item->notes ?: ($item->vertical_grain_cnc ?: '—') }}</td>
                                                     </tr>
                                                 @empty
                                                     <tr><td colspan="14" class="text-center text-xs text-neutral-400 py-4">Chưa có sản phẩm</td></tr>
@@ -375,6 +376,7 @@
     $wVal = floatval($sizes['width'] ?? ($item->width ?? 0));
     $prodName = trim($item->name ?? ($item->product_name ?? ''));
     $isNarrow = ($wVal > 0 && $wVal < 55 && $prodName !== 'Công giả dày');
+    $hasCnc = ((float)($item->cnc ?? 0) > 0) || (!empty($item->notes) && (stripos($item->notes, 'kính') !== false || stripos($item->notes, 'cnc') !== false));
 @endphp
                                                         <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: center; {{ $isNarrow ? 'color: #ef4444; background-color: #fef2f2; font-weight: 700;' : 'color: #0f172a;' }} font-size: 13px; white-space: nowrap;">{{ $sizes['width'] ?? '—' }}</td>
                                                         <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: center; color: #0f172a; font-size: 13px; font-weight: 700; white-space: nowrap;">{{ $item->quantity }}</td>
@@ -385,9 +387,9 @@
                                                         <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: center; color: #0f172a; font-size: 13px; white-space: nowrap;">{{ ((float)($item->vat_moi_length ?? 0) > 0) ? $item->vat_moi_length : '—' }}</td>
                                                         <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: center; color: #0f172a; font-size: 13px; white-space: nowrap;">{{ ((float)($item->ban_rong_40_59 ?? 0) > 0) ? $item->ban_rong_40_59 : (((float)($item->ban_rong_17_39 ?? 0) > 0) ? $item->ban_rong_17_39 : (((float)($item->ban_rong_25_35 ?? 0) > 0) ? $item->ban_rong_25_35 : '—')) }}</td>
                                                         <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: center; color: #0f172a; font-size: 13px; white-space: nowrap;">{{ ((float)($item->beveled_handle ?? 0) > 0) ? $item->beveled_handle : '—' }}</td>
-                                                        <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: center; color: #0f172a; font-size: 13px; white-space: nowrap;">{{ ((float)($item->cnc ?? 0) > 0) ? $item->cnc : '—' }}</td>
+                                                        <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: center; {{ ((float)($item->cnc ?? 0) > 0) ? 'color: #b45309; background-color: #fef9c3; font-weight: 700;' : 'color: #0f172a;' }} font-size: 13px; white-space: nowrap;">{{ ((float)($item->cnc ?? 0) > 0) ? $item->cnc : '—' }}</td>
                                                         <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: center; color: #0f172a; font-size: 13px; white-space: nowrap;">{{ $item->direction ?: '—' }}</td>
-                                                        <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: left; color: #64748b; font-size: 13px; white-space: nowrap;">{{ $item->notes ?: '—' }}</td>
+                                                        <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: left; {{ $hasCnc ? 'color: #b45309; background-color: #fef9c3; font-weight: 700;' : 'color: #64748b;' }} font-size: 13px; white-space: nowrap;">{{ $item->notes ?: '—' }}</td>
                                                     </tr>
                                                 @empty
                                                     <tr><td colspan="17" class="text-center text-xs text-neutral-400 py-4">Chưa có sản phẩm</td></tr>
@@ -450,6 +452,7 @@
     $wVal = floatval($item->width ?? 0);
     $prodName = trim($item->product_name ?? ($item->name ?? ''));
     $isNarrow = ($wVal > 0 && $wVal < 55 && $prodName !== 'Công giả dày');
+    $hasCnc = (!empty($item->notes) && (stripos($item->notes, 'kính') !== false || stripos($item->notes, 'cnc') !== false));
 @endphp
                                                         <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: center; {{ $isNarrow ? 'color: #ef4444; background-color: #fef2f2; font-weight: 700;' : 'color: #0f172a;' }} font-size: 13px; white-space: nowrap;">{{ $item->width ?: '—' }}</td>
                                                         <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: center; color: #0f172a; font-size: 13px; white-space: nowrap;">{{ $item->unit ?: 'cánh' }}</td>
@@ -457,7 +460,7 @@
                                                         <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: center; color: #2563eb; font-size: 13px; font-weight: 600; white-space: nowrap;">{{ ((float)($item->area_m2 ?? 0) > 0) ? number_format($item->area_m2, 2, ',', '.') : '—' }}</td>
                                                         <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: right; color: #0f172a; font-size: 13px; font-weight: 600; white-space: nowrap;">{{ $item->unit_price ? number_format($item->unit_price, 0, ',', '.') . ' đ' : '—' }}</td>
                                                         <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: right; color: #059669; font-size: 13px; font-weight: 700; white-space: nowrap;">{{ $item->total_price ? number_format($item->total_price, 0, ',', '.') . ' đ' : '—' }}</td>
-                                                        <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: left; color: #64748b; font-size: 13px; white-space: nowrap;">{{ $item->notes ?: '—' }}</td>
+                                                        <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: left; {{ $hasCnc ? 'color: #b45309; background-color: #fef9c3; font-weight: 700;' : 'color: #64748b;' }} font-size: 13px; white-space: nowrap;">{{ $item->notes ?: '—' }}</td>
                                                     </tr>
                                                 @empty
                                                     <tr><td colspan="15" class="text-center text-xs text-neutral-400 py-4">Chưa có sản phẩm</td></tr>

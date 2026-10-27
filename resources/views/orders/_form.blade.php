@@ -953,9 +953,25 @@ function previewOrder() {
                             isBold = true;
                         }
                     }
-                    // Ghi chú
+                    // Khoét kính & Ghi chú: màu vàng cho kính và CNC
+                    else if (titleLower.includes('khoét kính') || titleLower.includes('cnc')) {
+                        align = 'center';
+                        if (cellVal && cellVal !== '—' && cellVal !== '-- CNC --') {
+                            textColor = '#b45309';
+                            bgColor = '#fef9c3';
+                            isBold = true;
+                        }
+                    }
                     else if (titleLower.includes('ghi chú')) {
                         align = 'left';
+                        const cncSelect = row.querySelector('.cnc-template-select, select[name*="[vertical_grain_cnc]"]');
+                        const cncVal = cncSelect ? cncSelect.value : '';
+                        const isGlassOrCnc = (cncVal && cncVal !== '') || (cellVal && /kính|cnc/i.test(cellVal));
+                        if (isGlassOrCnc) {
+                            textColor = '#b45309';
+                            bgColor = '#fef9c3';
+                            isBold = true;
+                        }
                     }
                 }
 
@@ -5184,10 +5200,18 @@ function submitQuickCreateCustomer(e) {
             inp.dataset.undoVal = inp.value;
         }
 
-        // Đồng bộ: Cột khoét kính ghi cái gì thì replace ghi chú thành cái đó
+        // Đồng bộ: Cột khoét kính ghi cái gì thì replace ghi chú thành cái đó + tô màu vàng
         if (e.target && (e.target.classList.contains('cnc-template-select') || (e.target.name && e.target.name.includes('[vertical_grain_cnc]')))) {
             const tr = e.target.closest('tr');
             const noteInput = tr ? tr.querySelector('input[name*="[notes]"]') : null;
+            const hasVal = !!e.target.value;
+            if (hasVal) {
+                e.target.classList.add('input-cnc-highlight');
+                if (noteInput) noteInput.classList.add('input-cnc-highlight');
+            } else {
+                e.target.classList.remove('input-cnc-highlight');
+                if (noteInput) noteInput.classList.remove('input-cnc-highlight');
+            }
             if (noteInput) {
                 const selectedText = e.target.value ? (e.target.options ? (e.target.options[e.target.selectedIndex]?.text || e.target.value) : e.target.value).trim() : '';
                 noteInput.value = selectedText;
@@ -5429,6 +5453,53 @@ function submitQuickCreateCustomer(e) {
     @keyframes excelUndoFlash {
         0% { background-color: #fef08a !important; outline: 2px solid #eab308 !important; }
         100% { background-color: inherit; outline: none; }
+    }
+
+    .input-narrow-warning,
+    input.input-narrow-warning,
+    select.input-narrow-warning,
+    table.bordered-table tbody tr.order-item-row td input.input-narrow-warning,
+    table.bordered-table tbody tr.order-item-row td select.input-narrow-warning {
+        background-color: #fef2f2 !important;
+        color: #ef4444 !important;
+        font-weight: bold !important;
+        border-color: #fca5a5 !important;
+    }
+    .input-narrow-warning:focus,
+    input.input-narrow-warning:focus,
+    select.input-narrow-warning:focus,
+    table.bordered-table tbody tr.order-item-row td input.input-narrow-warning:focus,
+    table.bordered-table tbody tr.order-item-row td select.input-narrow-warning:focus {
+        background-color: #fef2f2 !important;
+        color: #ef4444 !important;
+        font-weight: bold !important;
+        outline: 2px solid #ef4444 !important;
+        outline-offset: -2px !important;
+        box-shadow: none !important;
+    }
+
+    /* Kính và CNC màu vàng */
+    .input-cnc-highlight,
+    input.input-cnc-highlight,
+    select.input-cnc-highlight,
+    table.bordered-table tbody tr.order-item-row td input.input-cnc-highlight,
+    table.bordered-table tbody tr.order-item-row td select.input-cnc-highlight {
+        background-color: #fef9c3 !important;
+        color: #b45309 !important;
+        font-weight: bold !important;
+        border-color: #fde047 !important;
+    }
+    .input-cnc-highlight:focus,
+    input.input-cnc-highlight:focus,
+    select.input-cnc-highlight:focus,
+    table.bordered-table tbody tr.order-item-row td input.input-cnc-highlight:focus,
+    table.bordered-table tbody tr.order-item-row td select.input-cnc-highlight:focus {
+        background-color: #fef9c3 !important;
+        color: #b45309 !important;
+        font-weight: bold !important;
+        outline: 2px solid #eab308 !important;
+        outline-offset: -2px !important;
+        box-shadow: none !important;
     }
 </style>
 
