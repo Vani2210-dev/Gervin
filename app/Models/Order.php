@@ -389,5 +389,60 @@ class Order extends Model
             });
         });
     }
+
+    /**
+     * Kiểm tra đơn hàng có đang bị khóa không cho sửa không.
+     * Quy tắc:
+     * - Admin luôn có quyền sửa.
+     * - Đơn bị hủy (cancelled) hoặc đang sản xuất / hoàn thành: khóa.
+     * - Đơn nháp (draft): luôn được sửa.
+     * - Khi Kế toán/Kỹ thuật bấm "Yêu cầu sửa" (có edit_reason): MỞ KHÓA cho Sale sửa.
+     * - Khi Kế toán đã duyệt (hoặc Kỹ thuật đã duyệt / đã chuyển sản xuất): KHÓA SỬA.
+     */
+    public function isLockedForEdit(?User $user = null): bool
+    {
+        $user = $user ?? auth()->user();
+        if (!$user) {
+            return true;
+        }
+
+        // Admin luôn có quyền can thiệp
+        if ($user->hasRole('Admin')) {
+            return false;
+        }
+
+        if ($this->status === 'cancelled') {
+            return true;
+        }
+
+        if (in_array($this->status, ['in_production', 'completed'])) {
+            return true;
+        }
+
+        // Đơn nháp luôn sửa được
+        if ($this->status === 'draft') {
+            return false;
+        }
+
+        // Nếu Kế toán đã yêu cầu sửa -> MỞ KHÓA cho Sale sửa
+        if (!empty($this->edit_reason) || !empty($this->rejected_step)) {
+            return false;
+        }
+
+        // Nếu Kế toán đã duyệt hoặc Kỹ thuật đã duyệt hoặc đã chuyển sản xuất -> KHÓA SỬA
+        if ($this->accountant_approved_by || $this->technical_approved_by || $this->status === 'transferred') {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Kiểm tra đơn hàng có đang trong trạng thái yêu cầu sửa lại không.
+     */
+    public function isRequestedEdit(): bool
+    {
+        return !empty($this->edit_reason) || !empty($this->rejected_step);
+    }
 }
 

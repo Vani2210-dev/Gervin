@@ -626,6 +626,7 @@ class OrderController extends Controller
                             $seenStockIds[] = $stock->id;
 
                             $dcStockMatches[] = [
+                                'dc_id' => $stock->id,
                                 'supply_name' => $supply->supply_name ?: ($supply->order_supply_code ?: '—'),
                                 'supply_code' => $supply->order_supply_code ?: '',
                                 'grain_direction' => $grainVal,
@@ -698,11 +699,14 @@ class OrderController extends Controller
             }
         }
 
-        if ($order->status === 'in_production' && !$user?->hasRole('Admin') && !$user?->can('edit order')) {
-            return redirect()->route('orders.index')->with('error', 'Đơn hàng đang trong quá trình sản xuất, chỉ Admin hoặc nhân viên có quyền sửa mới được điều chỉnh.');
-        }
-        if ($order->status === 'cancelled') {
-            return redirect()->route('orders.index')->with('error', 'Đơn hàng đã bị hủy, không thể chỉnh sửa.');
+        if ($order->isLockedForEdit($user)) {
+            $msg = 'Đơn hàng đã được Kế toán duyệt (hoặc đã chuyển sản xuất). Vui lòng liên hệ Kế toán bấm "Yêu cầu sửa" để mở khóa chỉnh sửa.';
+            if ($order->status === 'cancelled') {
+                $msg = 'Đơn hàng đã bị hủy, không thể chỉnh sửa.';
+            } elseif (in_array($order->status, ['in_production', 'completed'])) {
+                $msg = 'Đơn hàng đang trong quá trình sản xuất hoặc đã hoàn thành, chỉ Admin mới có quyền điều chỉnh.';
+            }
+            return redirect()->route('orders.show', $order)->with('error', $msg);
         }
 
         if ($request->filled('order_code')) {
@@ -797,6 +801,12 @@ class OrderController extends Controller
             return redirect()->route('orders.index', ['filter_status' => 'draft'])->with('success', 'Đã lưu đơn nháp thành công.');
         }
 
+        try {
+            \App\Services\NotificationService::notifyOrderCreated($draftOrder);
+        } catch (\Throwable $e) {
+            \Log::error('Notification error on order create: ' . $e->getMessage());
+        }
+
         return redirect()->route('orders.index')->with('success', 'Tạo đơn hàng thành công.');
     }
 
@@ -815,11 +825,14 @@ class OrderController extends Controller
             }
         }
 
-        if ($order->status === 'in_production') {
-            return redirect()->route('orders.index')->with('error', 'Đơn hàng đang trong quá trình sản xuất, không thể chỉnh sửa.');
-        }
-        if ($order->status === 'cancelled') {
-            return redirect()->route('orders.index')->with('error', 'Đơn hàng đã bị hủy, không thể chỉnh sửa.');
+        if ($order->isLockedForEdit($user)) {
+            $msg = 'Đơn hàng đã được Kế toán duyệt (hoặc đã chuyển sản xuất). Vui lòng liên hệ Kế toán bấm "Yêu cầu sửa" để mở khóa chỉnh sửa.';
+            if ($order->status === 'cancelled') {
+                $msg = 'Đơn hàng đã bị hủy, không thể chỉnh sửa.';
+            } elseif (in_array($order->status, ['in_production', 'completed'])) {
+                $msg = 'Đơn hàng đang trong quá trình sản xuất hoặc đã hoàn thành, chỉ Admin mới có quyền điều chỉnh.';
+            }
+            return redirect()->route('orders.show', $order)->with('error', $msg);
         }
 
         if ($request->filled('order_code')) {
@@ -899,6 +912,51 @@ class OrderController extends Controller
             return redirect()->route('orders.index', ['filter_status' => 'draft'])->with('success', 'Đã lưu đơn nháp thành công.');
         }
 
+        // Nếu đơn hàng trước đó đang trong luồng Kế toán yêu cầu sửa và Sale vừa sửa xong:
+        $wasRequestedEdit = !empty($order->edit_reason) || !empty($order->rejected_step);
+        if ($wasRequestedEdit) {
+            $order->update([
+                'edit_reason' => null,
+                'rejected_by' => null,
+                'rejected_at' => null,
+                'rejected_step' => null,
+                'status' => 'pending',
+                'accountant_approved_by' => null,
+                'accountant_approved_at' => null,
+                'technical_approved_by' => null,
+                'technical_approved_at' => null,
+            ]);
+
+            // Bắn thông báo cho Kế toán để duyệt lại
+            try {
+                $recipients = \App\Services\NotificationService::getOrderNotificationRecipients($order);
+                \App\Services\NotificationService::createNotification([
+                    'sender_id'   => auth()->id(),
+                    'type'        => 'order_status_changed',
+                    'title'       => "Đơn {$order->order_code} đã sửa xong (Chờ duyệt lại)",
+                    'content'     => "Sale vừa chỉnh sửa lại đơn {$order->order_code} theo yêu cầu, vui lòng Kế toán kiểm tra và duyệt lại.",
+                    'link'        => route('orders.show', $order),
+                    'target_type' => 'order_stakeholders',
+                    'target_ids'  => $recipients,
+                    'data'        => [
+                        'order_id'   => $order->id,
+                        'order_code' => $order->order_code,
+                        'action'     => 'resubmitted_for_approval',
+                    ],
+                ], $recipients);
+            } catch (\Throwable $e) {
+                \Log::error('Notification error on order resubmit: ' . $e->getMessage());
+            }
+
+            return redirect()->route('orders.show', $order)->with('success', 'Đã lưu chỉnh sửa đơn hàng thành công! Đơn hàng đã được chuyển về trạng thái Chờ duyệt để Kế toán duyệt lại.');
+        }
+
+        try {
+            \App\Services\NotificationService::notifyOrderUpdated($order);
+        } catch (\Throwable $e) {
+            \Log::error('Notification error on order update: ' . $e->getMessage());
+        }
+
         return redirect()->route('orders.index')->with('success', 'Cập nhật đơn hàng thành công.');
     }
 
@@ -930,6 +988,9 @@ class OrderController extends Controller
                 $order->status = 'pending';
             }
             $order->save();
+            try {
+                \App\Services\NotificationService::notifyOrderStatusChanged($order, 'accountant_approve');
+            } catch (\Throwable $e) {}
             return redirect()->back()->with('success', 'Kế toán đã duyệt đơn hàng ' . $order->order_code);
         }
 
@@ -940,6 +1001,9 @@ class OrderController extends Controller
             $order->accountant_approved_by = null;
             $order->accountant_approved_at = null;
             $order->save();
+            try {
+                \App\Services\NotificationService::notifyOrderStatusChanged($order, 'accountant_unapprove');
+            } catch (\Throwable $e) {}
             return redirect()->back()->with('success', 'Đã huỷ duyệt kế toán cho đơn hàng ' . $order->order_code);
         }
 
@@ -970,6 +1034,9 @@ class OrderController extends Controller
             }
 
             $order->save();
+            try {
+                \App\Services\NotificationService::notifyOrderStatusChanged($order, 'request_edit', $reason);
+            } catch (\Throwable $e) {}
             $stepLabel = $step === 'technical' ? 'Kỹ thuật' : 'Kế toán';
             return redirect()->back()->with('success', "[$stepLabel] Đã gửi yêu cầu sửa đơn hàng {$order->order_code} thành công.");
         }
@@ -990,6 +1057,9 @@ class OrderController extends Controller
             $order->rejected_at = null;
             $order->rejected_step = null;
             $order->save();
+            try {
+                \App\Services\NotificationService::notifyOrderStatusChanged($order, 'transferred');
+            } catch (\Throwable $e) {}
             return redirect()->back()->with('success', 'Kỹ thuật đã duyệt & Chuyển sản xuất thành công đơn hàng ' . $order->order_code);
         }
 
@@ -1002,6 +1072,9 @@ class OrderController extends Controller
             }
             $order->status = 'cancelled';
             $order->save();
+            try {
+                \App\Services\NotificationService::notifyOrderStatusChanged($order, 'cancelled');
+            } catch (\Throwable $e) {}
             return redirect()->back()->with('success', 'Hủy thành công đơn hàng ' . $order->order_code);
         }
 

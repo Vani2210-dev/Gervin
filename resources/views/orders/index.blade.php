@@ -1263,16 +1263,32 @@
 
             {{-- Chỉnh sửa đơn hàng --}}
             <li class="{{ in_array($order->status, ['draft', 'pending']) ? '' : 'border-t border-neutral-100 my-1 pt-1' }}">
-                @if($order->status !== 'cancelled')
-                    <a href="{{ route('orders.edit', $order) }}" class="flex items-center gap-2 px-4 py-2 hover:bg-neutral-50 text-neutral-700 transition-colors">
-                        <iconify-icon icon="lucide:edit" class="text-primary-500 text-lg"></iconify-icon>
-                        <span>Chỉnh sửa đơn</span>
-                    </a>
-                @else
+                @if($order->status === 'cancelled')
                     <button type="button" disabled class="w-full flex items-center gap-2 px-4 py-2 text-neutral-300 text-left cursor-not-allowed" title="Đơn hàng đã bị hủy">
                         <iconify-icon icon="lucide:edit" class="text-neutral-300 text-lg"></iconify-icon>
                         <span>Chỉnh sửa đơn</span>
                     </button>
+                @elseif($order->isLockedForEdit())
+                    <button type="button" onclick="alert('Đơn hàng đã được Kế toán duyệt (hoặc đã chuyển sản xuất). Cần Kế toán bấm \'Yêu cầu sửa đơn\' để mở khóa cho phép Sale sửa.')" class="w-full flex items-center justify-between px-4 py-2 text-neutral-400 hover:bg-neutral-50 text-left transition-colors" title="Đã được Kế toán duyệt - Cần Kế toán yêu cầu sửa để mở khóa">
+                        <div class="flex items-center gap-2">
+                            <iconify-icon icon="lucide:lock" class="text-neutral-400 text-lg"></iconify-icon>
+                            <span>Chỉnh sửa đơn</span>
+                        </div>
+                        <span class="text-[10px] bg-neutral-100 text-neutral-500 font-bold px-1.5 py-0.5 rounded">Khóa</span>
+                    </button>
+                @elseif($order->isRequestedEdit())
+                    <a href="{{ route('orders.edit', $order) }}" class="flex items-center justify-between px-4 py-2 bg-amber-50 hover:bg-amber-100 text-amber-900 transition-colors font-bold" title="Kế toán đã yêu cầu sửa: {{ $order->edit_reason }}">
+                        <div class="flex items-center gap-2">
+                            <iconify-icon icon="lucide:edit-3" class="text-amber-600 text-lg"></iconify-icon>
+                            <span>Sửa theo yêu cầu KT</span>
+                        </div>
+                        <span class="text-[10px] bg-amber-200 text-amber-800 font-bold px-1.5 py-0.5 rounded animate-pulse">Cần sửa</span>
+                    </a>
+                @else
+                    <a href="{{ route('orders.edit', $order) }}" class="flex items-center gap-2 px-4 py-2 hover:bg-neutral-50 text-neutral-700 transition-colors">
+                        <iconify-icon icon="lucide:edit" class="text-primary-500 text-lg"></iconify-icon>
+                        <span>Chỉnh sửa đơn</span>
+                    </a>
                 @endif
             </li>
 

@@ -447,6 +447,20 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('vehicles/{vehicle}/fuel-logs/{fuelLog}', [VehicleController::class, 'destroyFuelLog'])->name('vehicles.fuel-logs.destroy');
 });
 
+// Quản lý Thông báo (Notification Module & API)
+use App\Http\Controllers\NotificationController;
+Route::middleware(['auth'])->group(function () {
+    Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('notifications', [NotificationController::class, 'store'])->name('notifications.store');
+    Route::post('notifications/settings', [NotificationController::class, 'saveSettings'])->name('notifications.settings');
+    Route::delete('notifications/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
+    
+    // API cho Navbar chuông & Polling realtime
+    Route::get('api/notifications', [NotificationController::class, 'apiIndex'])->name('api.notifications.index');
+    Route::post('api/notifications/{id}/read', [NotificationController::class, 'apiMarkAsRead'])->name('api.notifications.mark-read');
+    Route::post('api/notifications/read-all', [NotificationController::class, 'apiMarkAllAsRead'])->name('api.notifications.read-all');
+});
+
 // Tiện ích chạy migration trực tiếp từ web (hỗ trợ cập nhật database server)
 Route::get('/run-migrate', function () {
     try {

@@ -155,6 +155,7 @@
                     </ol>
                 </div>
             </div>
+        </div>
     </div>
 
     <!-- History list section -->

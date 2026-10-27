@@ -488,13 +488,10 @@
                                 <td style="min-width: 160px;" class="border border-neutral-200">
                                     <textarea name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-xs w-full resize-none font-medium text-neutral-700 leading-tight" rows="2" style="min-height: 46px; padding: 4px 6px; font-size: 11px;" placeholder="Ghi chú">{{ $item->notes ?? '' }}</textarea>
                                 </td>
-                                <td style="width: 140px; min-width: 140px; position: sticky; right: 0; z-index: 1; background-color: #fff; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="order-action-col text-center align-middle border border-neutral-200">
+                                <td style="width: 110px; min-width: 110px; position: sticky; right: 0; z-index: 1; background-color: #fff; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="order-action-col text-center align-middle border border-neutral-200">
                                     <div class="flex items-center gap-1 justify-center flex-nowrap whitespace-nowrap">
                                         <button type="button" onclick="insertMinLateRow(this)" class="text-neutral-400 hover:text-success-500 transition-colors p-1" title="Chèn dòng mới ở dưới">
                                             <iconify-icon icon="lucide:list-plus" class="text-base"></iconify-icon>
-                                        </button>
-                                        <button type="button" onclick="insertMinLateRow(this, 10)" class="text-neutral-400 hover:text-success-600 transition-colors p-1 flex items-center justify-center font-bold" title="Chèn 10 dòng mới ở dưới">
-                                            <span style="font-size: 10px; font-weight: 800; line-height: 1; padding: 2px 4px; border-radius: 4px; background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0;">+10</span>
                                         </button>
                                         <button type="button" onclick="duplicateMinLateRow(this)" class="text-neutral-400 hover:text-primary-500 transition-colors p-1" title="Nhân bản sản phẩm">
                                             <iconify-icon icon="lucide:copy" class="text-base"></iconify-icon>
@@ -512,11 +509,23 @@
                     </table>
                     </div>
                 </div>
-                {{-- Nút thêm sản phẩm mới --}}
-                <button type="button" onclick="addMinLateOrderItem(this)" class="order-table-form-action w-full mt-4 py-3 border-2 border-dashed border-primary-300 hover:border-primary-500 rounded-xl bg-primary-50/50 hover:bg-primary-50 text-primary-600 font-semibold text-sm flex items-center justify-center gap-1.5 transition-all duration-200">
-                    <iconify-icon icon="lucide:plus" class="text-lg"></iconify-icon>
-                    Thêm sản phẩm mới
-                </button>
+                {{-- Nút thêm sản phẩm mới & thao tác hàng loạt --}}
+                <div class="flex items-center gap-2 mt-4 flex-wrap">
+                    <button type="button" onclick="addMinLateOrderItem(this)" class="order-table-form-action flex-1 min-w-[180px] py-2.5 border-2 border-dashed border-primary-300 hover:border-primary-500 rounded-xl bg-primary-50/50 hover:bg-primary-50 text-primary-600 font-semibold text-sm flex items-center justify-center gap-1.5 transition-all duration-200">
+                        <iconify-icon icon="lucide:plus" class="text-lg"></iconify-icon>
+                        <span>Thêm sản phẩm mới</span>
+                    </button>
+                    <button type="button" onclick="addMinLateMultipleItems(this, 10)" class="px-3.5 py-2.5 border border-dashed border-emerald-300 hover:border-emerald-500 rounded-xl bg-emerald-50/60 hover:bg-emerald-100 text-emerald-700 font-semibold text-xs flex items-center justify-center gap-1.5 transition-all duration-200 shadow-sm" title="Thêm nhanh 10 dòng (Phím tắt: Alt + +)">
+                        <span class="px-1.5 py-0.5 rounded bg-emerald-600 text-white font-bold text-[10px]">+10</span>
+                        <span>Thêm 10 dòng</span>
+                        <span class="text-[10px] text-emerald-600/80 font-normal bg-emerald-100/80 px-1 py-0.5 rounded">Alt +</span>
+                    </button>
+                    <button type="button" onclick="removeMinLateEmptyRows(this)" class="px-3.5 py-2.5 border border-dashed border-rose-300 hover:border-rose-500 rounded-xl bg-rose-50/60 hover:bg-rose-100 text-rose-700 font-semibold text-xs flex items-center justify-center gap-1.5 transition-all duration-200 shadow-sm" title="Xóa các dòng chưa nhập kích thước trong bảng này (Phím tắt: Alt + Del)">
+                        <iconify-icon icon="lucide:trash-2" class="text-base text-rose-600"></iconify-icon>
+                        <span>Xóa dòng trống</span>
+                        <span class="text-[10px] text-rose-600/80 font-normal bg-rose-100/80 px-1 py-0.5 rounded">Alt Del</span>
+                    </button>
+                </div>
             </div>
             @endforeach
             @php $minLateSupplyIndex = $acrylicOrder->supplies->count() @endphp
@@ -646,10 +655,22 @@ function addMinLateOrderSupply() {
             </table>
             </div>
         </div>
-        <button type="button" onclick="addMinLateOrderItem(this)" class="w-full mt-4 py-3 border-2 border-dashed border-primary-300 hover:border-primary-500 rounded-xl bg-primary-50/50 hover:bg-primary-50 text-primary-600 font-semibold text-sm flex items-center justify-center gap-1.5 transition-all duration-200">
-            <iconify-icon icon="lucide:plus" class="text-lg"></iconify-icon>
-            Thêm sản phẩm mới
-        </button>
+        <div class="flex items-center gap-2 mt-4 flex-wrap">
+            <button type="button" onclick="addMinLateOrderItem(this)" class="order-table-form-action flex-1 min-w-[180px] py-2.5 border-2 border-dashed border-primary-300 hover:border-primary-500 rounded-xl bg-primary-50/50 hover:bg-primary-50 text-primary-600 font-semibold text-sm flex items-center justify-center gap-1.5 transition-all duration-200">
+                <iconify-icon icon="lucide:plus" class="text-lg"></iconify-icon>
+                <span>Thêm sản phẩm mới</span>
+            </button>
+            <button type="button" onclick="addMinLateMultipleItems(this, 10)" class="px-3.5 py-2.5 border border-dashed border-emerald-300 hover:border-emerald-500 rounded-xl bg-emerald-50/60 hover:bg-emerald-100 text-emerald-700 font-semibold text-xs flex items-center justify-center gap-1.5 transition-all duration-200 shadow-sm" title="Thêm nhanh 10 dòng (Phím tắt: Alt + +)">
+                <span class="px-1.5 py-0.5 rounded bg-emerald-600 text-white font-bold text-[10px]">+10</span>
+                <span>Thêm 10 dòng</span>
+                <span class="text-[10px] text-emerald-600/80 font-normal bg-emerald-100/80 px-1 py-0.5 rounded">Alt +</span>
+            </button>
+            <button type="button" onclick="removeMinLateEmptyRows(this)" class="px-3.5 py-2.5 border border-dashed border-rose-300 hover:border-rose-500 rounded-xl bg-rose-50/60 hover:bg-rose-100 text-rose-700 font-semibold text-xs flex items-center justify-center gap-1.5 transition-all duration-200 shadow-sm" title="Xóa các dòng chưa nhập kích thước trong bảng này (Phím tắt: Alt + Del)">
+                <iconify-icon icon="lucide:trash-2" class="text-base text-rose-600"></iconify-icon>
+                <span>Xóa dòng trống</span>
+                <span class="text-[10px] text-rose-600/80 font-normal bg-rose-100/80 px-1 py-0.5 rounded">Alt Del</span>
+            </button>
+        </div>
     `;
     container.appendChild(newSupply);
 
@@ -808,13 +829,10 @@ function addMinLateOrderItem(button, isInitial = false, insertAfterRow = null) {
         <td style="min-width: 160px;" class="border border-neutral-200">
             <textarea name="supplies[${supplyIndex}][items][${itemIndex}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-xs w-full resize-none font-medium text-neutral-700 leading-tight" rows="2" style="min-height: 46px; padding: 4px 6px; font-size: 11px;" placeholder="Ghi chú">${lastData ? (lastData.notes || '') : ''}</textarea>
         </td>
-        <td style="width: 140px; min-width: 140px; position: sticky; right: 0; z-index: 1; background-color: #fff; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="order-action-col text-center align-middle border border-neutral-200">
+        <td style="width: 110px; min-width: 110px; position: sticky; right: 0; z-index: 1; background-color: #fff; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="order-action-col text-center align-middle border border-neutral-200">
             <div class="flex items-center gap-1 justify-center flex-nowrap whitespace-nowrap">
                 <button type="button" onclick="insertMinLateRow(this)" class="text-neutral-400 hover:text-success-500 transition-colors p-1" title="Chèn dòng mới ở dưới">
                     <iconify-icon icon="lucide:list-plus" class="text-base"></iconify-icon>
-                </button>
-                <button type="button" onclick="insertMinLateRow(this, 10)" class="text-neutral-400 hover:text-success-600 transition-colors p-1 flex items-center justify-center font-bold" title="Chèn 10 dòng mới ở dưới">
-                    <span style="font-size: 10px; font-weight: 800; line-height: 1; padding: 2px 4px; border-radius: 4px; background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0;">+10</span>
                 </button>
                 <button type="button" onclick="duplicateMinLateRow(this)" class="text-neutral-400 hover:text-primary-500 transition-colors p-1" title="Nhân bản sản phẩm">
                     <iconify-icon icon="lucide:copy" class="text-base"></iconify-icon>
@@ -2077,6 +2095,94 @@ function confirmMinLateExcelImport() {
 
     closeMinLateExcelImport();
 }
+
+function addMinLateMultipleItems(button, count = 10) {
+    const supplyRow = button.closest ? button.closest('.order-supply-row') : null;
+    const tbody = supplyRow ? supplyRow.querySelector('.supply-items-container') : document.querySelector('.supply-items-container');
+    const addBtn = supplyRow ? supplyRow.querySelector('button[onclick*="addMinLateOrderItem"]') : document.querySelector('button[onclick*="addMinLateOrderItem"]');
+    if (!addBtn) return;
+    let lastAdded = null;
+    for (let i = 0; i < count; i++) {
+        addMinLateOrderItem(addBtn, true);
+        if (tbody) lastAdded = tbody.lastElementChild;
+    }
+    updateOrderSummary();
+    if (typeof updateMinLateRowIndexes === 'function') updateMinLateRowIndexes();
+    if (lastAdded) {
+        lastAdded.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        const focusInput = lastAdded.querySelector('input[name*="[height]"]');
+        if (focusInput) focusInput.focus();
+    }
+}
+
+function removeMinLateEmptyRows(buttonOrScope = null) {
+    let container = document;
+    if (buttonOrScope && buttonOrScope.closest) {
+        container = buttonOrScope.closest('.order-supply-row') || document;
+    }
+    const rows = container.querySelectorAll('.order-item-row');
+    let removedCount = 0;
+    rows.forEach(row => {
+        const h = (row.querySelector('input[name*="[height]"]')?.value || '').trim();
+        const w = (row.querySelector('input[name*="[width]"]')?.value || '').trim();
+        if (!h && !w) {
+            row.remove();
+            removedCount++;
+        }
+    });
+
+    // Nếu bảng bị xóa hết, đảm bảo còn ít nhất 1 dòng mặc định
+    const supplyContainers = container === document 
+        ? document.querySelectorAll('.supply-items-container') 
+        : [container.querySelector('.supply-items-container')];
+    supplyContainers.forEach(tbody => {
+        if (tbody && tbody.querySelectorAll('.order-item-row').length === 0) {
+            const addBtn = tbody.closest('.order-supply-row')?.querySelector('button[onclick*="addMinLateOrderItem"]');
+            if (addBtn) addMinLateOrderItem(addBtn, true);
+        }
+    });
+
+    updateOrderSummary();
+    if (typeof updateMinLateRowIndexes === 'function') updateMinLateRowIndexes();
+
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: removedCount > 0 ? 'success' : 'info',
+            title: removedCount > 0 ? `Đã xóa ${removedCount} dòng trống!` : 'Không có dòng trống nào để xóa.',
+            showConfirmButton: false,
+            timer: 2000
+        });
+    }
+}
+
+// Lắng nghe phím tắt Alt + Delete / Alt + X (xóa dòng trống) và Alt + + / Alt + Insert (thêm 10 dòng)
+document.addEventListener('keydown', function(e) {
+    if (e.altKey && (e.key === 'Delete' || e.code === 'Delete' || e.key === 'x' || e.key === 'X')) {
+        e.preventDefault();
+        const activeSupply = document.activeElement ? document.activeElement.closest('.order-supply-row') : null;
+        removeMinLateEmptyRows(activeSupply || null);
+    }
+    if (e.altKey && (e.key === '+' || e.key === '=' || e.code === 'Equal' || e.code === 'NumpadAdd' || e.key === 'Insert' || e.code === 'Insert')) {
+        e.preventDefault();
+        const activeSupply = (document.activeElement ? document.activeElement.closest('.order-supply-row') : null) || document.querySelector('.order-supply-row');
+        const addBtn = activeSupply ? activeSupply.querySelector('button[onclick*="addMinLateOrderItem"]') : null;
+        if (addBtn) {
+            addMinLateMultipleItems(addBtn, 10);
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: 'Đã thêm 10 dòng mới!',
+                    showConfirmButton: false,
+                    timer: 1500
+                });
+            }
+        }
+    }
+});
 
 </script>
 

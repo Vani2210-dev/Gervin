@@ -1007,7 +1007,19 @@
                             <iconify-icon icon="lucide:alert-circle" class="text-base"></iconify-icon> Yêu cầu sửa đơn
                         </button>
                     @endif
-                    @if(!in_array($acrylicOrder->status, ['in_production', 'cancelled']))
+                    @if($acrylicOrder->isLockedForEdit())
+                        <button type="button" onclick="alert('Đơn hàng đã được Kế toán duyệt (hoặc đã chuyển sản xuất). Cần Kế toán bấm \'Yêu cầu sửa đơn\' để mở khóa cho phép Sale sửa.')"
+                            class="w-full justify-center flex items-center gap-2 py-3 rounded-xl font-semibold bg-neutral-200 hover:bg-neutral-300 text-neutral-600 shadow-sm text-sm transition-colors cursor-pointer"
+                            title="Đã được Kế toán duyệt - Cần Kế toán yêu cầu sửa để mở khóa">
+                            <iconify-icon icon="lucide:lock" class="text-base text-neutral-500"></iconify-icon> Chỉnh sửa đơn hàng (Khóa)
+                        </button>
+                    @elseif($acrylicOrder->isRequestedEdit())
+                        <a href="{{ route('orders.edit', $acrylicOrder) }}"
+                            class="w-full justify-center flex items-center gap-2 py-3 rounded-xl font-semibold bg-amber-600 hover:bg-amber-700 text-white shadow-sm text-sm transition-colors cursor-pointer animate-pulse"
+                            title="Kế toán đã yêu cầu sửa: {{ $acrylicOrder->edit_reason }}">
+                            <iconify-icon icon="lucide:edit-3" class="text-base"></iconify-icon> Sửa đơn theo yêu cầu Kế toán
+                        </a>
+                    @elseif(!in_array($acrylicOrder->status, ['in_production', 'cancelled']))
                         <a href="{{ route('orders.edit', $acrylicOrder) }}"
                             class="w-full justify-center flex items-center gap-2 py-3 rounded-xl font-semibold bg-neutral-900 hover:bg-black text-white shadow-sm text-sm transition-colors cursor-pointer">
                             <iconify-icon icon="lucide:edit-3" class="text-base"></iconify-icon> Chỉnh sửa đơn hàng

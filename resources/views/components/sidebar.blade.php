@@ -32,6 +32,12 @@
                     <span>Dashboard</span>
                 </a>
             </li>
+            <li>
+                <a href="{{ route('notifications.index') }}">
+                    <iconify-icon icon="solar:bell-bing-bold-duotone" class="menu-icon"></iconify-icon>
+                    <span>Thông báo</span>
+                </a>
+            </li>
 
             {{-- Nhóm Nghiệp vụ & Đơn hàng --}}
             @if(auth()->check() && (auth()->user()->can('view customer') || auth()->user()->can('view order') || auth()->user()->can('view revenue report') || auth()->user()->hasRole('Admin')))

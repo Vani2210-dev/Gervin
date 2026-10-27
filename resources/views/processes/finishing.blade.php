@@ -28,7 +28,7 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <!-- Left column: Beautification Control (col-span-8) -->
-        <div class="col-span-12 md:col-span-8 flex flex-col gap-6">
+        <div class="lg:col-span-8 flex flex-col gap-6">
             <div class="card bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-sm">
                 <div class="card-body p-4 sm:p-6 flex flex-col gap-4 sm:gap-6">
                     <!-- Header of card -->
@@ -126,9 +126,9 @@
         </div>
 
         <!-- Right column: Operation Manual (col-span-4) -->
-        <div class="col-span-12 md:col-span-4">
+        <div class="lg:col-span-4">
             <!-- Mobile compact collapsible guide -->
-            <details class="md:hidden bg-pink-50 dark:bg-pink-950/20 border border-pink-200 dark:border-pink-800/50 rounded-xl p-3.5 text-pink-900 dark:text-pink-200 text-xs">
+            <details class="lg:hidden bg-pink-50 dark:bg-pink-950/20 border border-pink-200 dark:border-pink-800/50 rounded-xl p-3.5 text-pink-900 dark:text-pink-200 text-xs">
                 <summary class="font-bold cursor-pointer flex items-center gap-2 select-none">
                     <iconify-icon icon="lucide:help-circle" class="text-base text-pink-600 dark:text-pink-400"></iconify-icon>
                     <span>Tiêu chuẩn làm đẹp</span>
@@ -141,7 +141,7 @@
             </details>
 
             <!-- Desktop full guide card -->
-            <div class="hidden md:flex text-white rounded-2xl p-6 shadow-md flex-col h-full min-h-[340px]" style="background-color: #d1135c;">
+            <div class="hidden lg:flex text-white rounded-2xl p-6 shadow-md flex-col h-full min-h-[340px]" style="background-color: #d1135c;">
                 <div>
                     <h5 class="text-lg font-bold mb-4 flex items-center gap-2 text-white">
                         <iconify-icon icon="lucide:help-circle"></iconify-icon>
@@ -155,6 +155,7 @@
                     </ol>
                 </div>
             </div>
+        </div>
     </div>
 
     <!-- History list section -->

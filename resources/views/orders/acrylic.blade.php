@@ -70,9 +70,9 @@
     #order-supplies-container .order-supply-row table td[style*="width:80px"] { width: 60px !important; min-width: 60px !important; max-width: 60px !important; }
     #order-supplies-container .order-supply-row table th.order-action-col,
     #order-supplies-container .order-supply-row table td.order-action-col {
-        width: 168px !important;
-        min-width: 168px !important;
-        max-width: 168px !important;
+        width: 130px !important;
+        min-width: 130px !important;
+        max-width: 130px !important;
     }
 
     /* Style TomSelect for Mã vật tư dropdown in the header row */
@@ -508,16 +508,13 @@
                                 <td style="min-width: 160px;" class="border border-neutral-200">
                                     <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Ghi chú" value="{{ $item->notes }}">
                                 </td>
-                                <td style="width: 168px; min-width: 168px; position: sticky; right: 0; z-index: 1; background-color: #fff; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="order-action-col text-center align-middle border border-neutral-200">
+                                <td style="width: 130px; min-width: 130px; position: sticky; right: 0; z-index: 1; background-color: #fff; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="order-action-col text-center align-middle border border-neutral-200">
                                     <div class="flex items-center gap-1 justify-center flex-nowrap whitespace-nowrap">
                                         <button type="button" onclick="addFakeThicknessRow(this)" class="text-neutral-400 hover:text-warning-500 transition-colors p-1" title="Tạo công giả dày">
                                             <iconify-icon icon="lucide:layers" class="text-base"></iconify-icon>
                                         </button>
                                         <button type="button" onclick="insertAcrylicRow(this)" class="text-neutral-400 hover:text-success-500 transition-colors p-1" title="Chèn dòng mới ở dưới">
                                             <iconify-icon icon="lucide:list-plus" class="text-base"></iconify-icon>
-                                        </button>
-                                        <button type="button" onclick="insertAcrylicRow(this, 10)" class="text-neutral-400 hover:text-success-600 transition-colors p-1 flex items-center justify-center font-bold" title="Chèn 10 dòng mới ở dưới">
-                                            <span style="font-size: 10px; font-weight: 800; line-height: 1; padding: 2px 4px; border-radius: 4px; background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0;">+10</span>
                                         </button>
                                         <button type="button" onclick="duplicateAcrylicRow(this)" class="text-neutral-400 hover:text-primary-500 transition-colors p-1" title="Nhân bản sản phẩm">
                                             <iconify-icon icon="lucide:copy" class="text-base"></iconify-icon>
@@ -536,11 +533,21 @@
                     </div>
                 </div>
                 
-                {{-- Nút thêm sản phẩm mới --}}
-                <div class="flex gap-2 mt-4">
-                    <button type="button" onclick="addOrderItem(this)" class="flex-1 py-3 border-2 border-dashed border-primary-300 hover:border-primary-500 rounded-xl bg-primary-50/50 hover:bg-primary-50 text-primary-600 font-semibold text-sm flex items-center justify-center gap-1.5 transition-all duration-200">
+                {{-- Nút thêm sản phẩm mới & thao tác hàng loạt --}}
+                <div class="flex items-center gap-2 mt-4 flex-wrap">
+                    <button type="button" onclick="addOrderItem(this)" class="flex-1 min-w-[180px] py-2.5 border-2 border-dashed border-primary-300 hover:border-primary-500 rounded-xl bg-primary-50/50 hover:bg-primary-50 text-primary-600 font-semibold text-sm flex items-center justify-center gap-1.5 transition-all duration-200">
                         <iconify-icon icon="lucide:plus" class="text-lg"></iconify-icon>
-                        Thêm sản phẩm mới
+                        <span>Thêm sản phẩm mới</span>
+                    </button>
+                    <button type="button" onclick="addAcrylicMultipleItems(this, 10)" class="px-3.5 py-2.5 border border-dashed border-emerald-300 hover:border-emerald-500 rounded-xl bg-emerald-50/60 hover:bg-emerald-100 text-emerald-700 font-semibold text-xs flex items-center justify-center gap-1.5 transition-all duration-200 shadow-sm" title="Thêm nhanh 10 dòng (Phím tắt: Alt + +)">
+                        <span class="px-1.5 py-0.5 rounded bg-emerald-600 text-white font-bold text-[10px]">+10</span>
+                        <span>Thêm 10 dòng</span>
+                        <span class="text-[10px] text-emerald-600/80 font-normal bg-emerald-100/80 px-1 py-0.5 rounded">Alt +</span>
+                    </button>
+                    <button type="button" onclick="removeAcrylicEmptyRows(this)" class="px-3.5 py-2.5 border border-dashed border-rose-300 hover:border-rose-500 rounded-xl bg-rose-50/60 hover:bg-rose-100 text-rose-700 font-semibold text-xs flex items-center justify-center gap-1.5 transition-all duration-200 shadow-sm" title="Xóa các dòng chưa nhập kích thước trong bảng này (Phím tắt: Alt + Del)">
+                        <iconify-icon icon="lucide:trash-2" class="text-base text-rose-600"></iconify-icon>
+                        <span>Xóa dòng trống</span>
+                        <span class="text-[10px] text-rose-600/80 font-normal bg-rose-100/80 px-1 py-0.5 rounded">Alt Del</span>
                     </button>
                 </div>
             </div>
@@ -698,17 +705,29 @@ function addOrderSupply() {
                         <td class="border border-neutral-200"></td>
                         <td class="border border-neutral-200 text-center" data-summary-field="total_price" style="font-size: 80% !important;">0</td>
                         <td class="border border-neutral-200"></td>
-                        <td class="order-action-col border border-neutral-200" style="width: 168px; min-width: 168px; position: sticky; right: 0; z-index: 3; background-color: #f1f5f9;"></td>
+                        <td class="order-action-col border border-neutral-200" style="width: 130px; min-width: 130px; position: sticky; right: 0; z-index: 3; background-color: #f1f5f9;"></td>
                 </thead>
                 <tbody class="supply-items-container" data-supply-index="${supplyIndex}">
                 </tbody>
             </table>
             </div>
         </div>
-        <button type="button" onclick="addOrderItem(this)" class="w-full mt-4 py-3 border-2 border-dashed border-primary-300 hover:border-primary-500 rounded-xl bg-primary-50/50 hover:bg-primary-50 text-primary-600 font-semibold text-sm flex items-center justify-center gap-1.5 transition-all duration-200">
-            <iconify-icon icon="lucide:plus" class="text-lg"></iconify-icon>
-            Thêm sản phẩm mới
-        </button>
+        <div class="flex items-center gap-2 mt-4 flex-wrap">
+            <button type="button" onclick="addOrderItem(this)" class="flex-1 min-w-[180px] py-2.5 border-2 border-dashed border-primary-300 hover:border-primary-500 rounded-xl bg-primary-50/50 hover:bg-primary-50 text-primary-600 font-semibold text-sm flex items-center justify-center gap-1.5 transition-all duration-200">
+                <iconify-icon icon="lucide:plus" class="text-lg"></iconify-icon>
+                <span>Thêm sản phẩm mới</span>
+            </button>
+            <button type="button" onclick="addAcrylicMultipleItems(this, 10)" class="px-3.5 py-2.5 border border-dashed border-emerald-300 hover:border-emerald-500 rounded-xl bg-emerald-50/60 hover:bg-emerald-100 text-emerald-700 font-semibold text-xs flex items-center justify-center gap-1.5 transition-all duration-200 shadow-sm" title="Thêm nhanh 10 dòng (Phím tắt: Alt + +)">
+                <span class="px-1.5 py-0.5 rounded bg-emerald-600 text-white font-bold text-[10px]">+10</span>
+                <span>Thêm 10 dòng</span>
+                <span class="text-[10px] text-emerald-600/80 font-normal bg-emerald-100/80 px-1 py-0.5 rounded">Alt +</span>
+            </button>
+            <button type="button" onclick="removeAcrylicEmptyRows(this)" class="px-3.5 py-2.5 border border-dashed border-rose-300 hover:border-rose-500 rounded-xl bg-rose-50/60 hover:bg-rose-100 text-rose-700 font-semibold text-xs flex items-center justify-center gap-1.5 transition-all duration-200 shadow-sm" title="Xóa các dòng chưa nhập kích thước trong bảng này (Phím tắt: Alt + Del)">
+                <iconify-icon icon="lucide:trash-2" class="text-base text-rose-600"></iconify-icon>
+                <span>Xóa dòng trống</span>
+                <span class="text-[10px] text-rose-600/80 font-normal bg-rose-100/80 px-1 py-0.5 rounded">Alt Del</span>
+            </button>
+        </div>
     `;
     container.appendChild(newSupply);
 
@@ -866,16 +885,13 @@ function addOrderItem(button, isInitial = false, insertAfterRow = null) {
         <td style="min-width: 160px;" class="border border-neutral-200">
             <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Ghi chú" value="">
         </td>
-        <td style="width: 168px; min-width: 168px; position: sticky; right: 0; z-index: 1; background-color: #fff; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="order-action-col text-center align-middle border border-neutral-200">
+        <td style="width: 130px; min-width: 130px; position: sticky; right: 0; z-index: 1; background-color: #fff; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="order-action-col text-center align-middle border border-neutral-200">
             <div class="flex items-center gap-1 justify-center flex-nowrap whitespace-nowrap">
                 <button type="button" onclick="addFakeThicknessRow(this)" class="text-neutral-400 hover:text-warning-500 transition-colors p-1" title="Tạo công giả dày">
                     <iconify-icon icon="lucide:layers" class="text-base"></iconify-icon>
                 </button>
                 <button type="button" onclick="insertAcrylicRow(this)" class="text-neutral-400 hover:text-success-500 transition-colors p-1" title="Chèn dòng mới ở dưới">
                     <iconify-icon icon="lucide:list-plus" class="text-base"></iconify-icon>
-                </button>
-                <button type="button" onclick="insertAcrylicRow(this, 10)" class="text-neutral-400 hover:text-success-600 transition-colors p-1 flex items-center justify-center font-bold" title="Chèn 10 dòng mới ở dưới">
-                    <span style="font-size: 10px; font-weight: 800; line-height: 1; padding: 2px 4px; border-radius: 4px; background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0;">+10</span>
                 </button>
                 <button type="button" onclick="duplicateAcrylicRow(this)" class="text-neutral-400 hover:text-primary-500 transition-colors p-1" title="Nhân bản sản phẩm">
                     <iconify-icon icon="lucide:copy" class="text-base"></iconify-icon>
@@ -2096,5 +2112,97 @@ function escHtml(str) {
     if (!str) return '';
     return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+
+function addAcrylicMultipleItems(button, count = 10) {
+    const supplyRow = button.closest ? button.closest('.order-supply-row') : null;
+    const tbody = supplyRow ? supplyRow.querySelector('.supply-items-container') : document.querySelector('.supply-items-container');
+    const addBtn = supplyRow ? supplyRow.querySelector('button[onclick*="addOrderItem"]') : document.querySelector('button[onclick*="addOrderItem"]');
+    if (!addBtn) return;
+    let lastAdded = null;
+    for (let i = 0; i < count; i++) {
+        addOrderItem(addBtn, true);
+        if (tbody) lastAdded = tbody.lastElementChild;
+    }
+    updateOrderSummary();
+    if (typeof updateAcrylicRowIndexes === 'function') updateAcrylicRowIndexes();
+    if (lastAdded) {
+        lastAdded.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        const focusInput = lastAdded.querySelector('input[name*="[height]"]');
+        if (focusInput) focusInput.focus();
+    }
+}
+
+function removeAcrylicEmptyRows(buttonOrScope = null) {
+    let container = document;
+    if (buttonOrScope && buttonOrScope.closest) {
+        container = buttonOrScope.closest('.order-supply-row') || document;
+    }
+    const rows = container.querySelectorAll('.order-item-row');
+    let removedCount = 0;
+    rows.forEach(row => {
+        const isLabor = row.dataset.isLabor === '1' || row.querySelector('.labor-badge') != null || (row.querySelector('input[name*="[product_name]"]') && row.querySelector('input[name*="[product_name]"]').value.trim() === 'Công giả dày');
+        if (isLabor) return;
+        const h = (row.querySelector('input[name*="[height]"]')?.value || '').trim();
+        const w = (row.querySelector('input[name*="[width]"]')?.value || '').trim();
+        if (!h && !w) {
+            row.remove();
+            removedCount++;
+        }
+    });
+
+    // Nếu bảng bị xóa hết, đảm bảo còn ít nhất 1 dòng mặc định
+    const supplyContainers = container === document 
+        ? document.querySelectorAll('.supply-items-container') 
+        : [container.querySelector('.supply-items-container')];
+    supplyContainers.forEach(tbody => {
+        if (tbody && tbody.querySelectorAll('.order-item-row').length === 0) {
+            const addBtn = tbody.closest('.order-supply-row')?.querySelector('button[onclick*="addOrderItem"]');
+            if (addBtn) addOrderItem(addBtn, true);
+        }
+    });
+
+    updateOrderSummary();
+    if (typeof updateAcrylicRowIndexes === 'function') updateAcrylicRowIndexes();
+
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: removedCount > 0 ? 'success' : 'info',
+            title: removedCount > 0 ? `Đã xóa ${removedCount} dòng trống!` : 'Không có dòng trống nào để xóa.',
+            showConfirmButton: false,
+            timer: 2000
+        });
+    }
+}
+
+// Lắng nghe phím tắt Alt + Delete / Alt + X (xóa dòng trống) và Alt + + / Alt + Insert (thêm 10 dòng)
+document.addEventListener('keydown', function(e) {
+    // Alt + Delete hoặc Alt + X: Xóa dòng trống
+    if (e.altKey && (e.key === 'Delete' || e.code === 'Delete' || e.key === 'x' || e.key === 'X')) {
+        e.preventDefault();
+        const activeSupply = document.activeElement ? document.activeElement.closest('.order-supply-row') : null;
+        removeAcrylicEmptyRows(activeSupply || null);
+    }
+    // Alt + + hoặc Alt + Insert: Thêm 10 dòng
+    if (e.altKey && (e.key === '+' || e.key === '=' || e.code === 'Equal' || e.code === 'NumpadAdd' || e.key === 'Insert' || e.code === 'Insert')) {
+        e.preventDefault();
+        const activeSupply = (document.activeElement ? document.activeElement.closest('.order-supply-row') : null) || document.querySelector('.order-supply-row');
+        const addBtn = activeSupply ? activeSupply.querySelector('button[onclick*="addOrderItem"]') : null;
+        if (addBtn) {
+            addAcrylicMultipleItems(addBtn, 10);
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: 'Đã thêm 10 dòng mới!',
+                    showConfirmButton: false,
+                    timer: 1500
+                });
+            }
+        }
+    }
+});
 
 </script>

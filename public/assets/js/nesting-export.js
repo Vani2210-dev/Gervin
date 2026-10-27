@@ -301,7 +301,18 @@ async function generateNestingWorkbook(orderData, suppliesData, filename) {
             cell.border = thinBorder;
         });
 
-        const dcMatches = orderData.dc_stock_matches || [];
+        const rawDcMatches = orderData.dc_stock_matches || [];
+        const seenCurDc = new Set();
+        const dcMatches = [];
+        rawDcMatches.forEach(m => {
+            const key = m.dc_id
+                ? `id_${m.dc_id}`
+                : `${m.dc_board_code}_${m.dc_height}_${m.dc_width}_${m.dc_location}_${m.dc_note || ''}`;
+            if (!seenCurDc.has(key)) {
+                seenCurDc.add(key);
+                dcMatches.push(m);
+            }
+        });
         let curDcRow = 2;
 
         if (dcMatches.length > 0) {
@@ -489,7 +500,9 @@ async function exportManufactureNestingFiles(moCode, ordersData) {
     const seenDcKeys = new Set();
     ordersData.forEach(od => {
         (od.dc_stock_matches || []).forEach(m => {
-            const key = `${m.supply_name}_${m.dc_board_code}_${m.dc_height}_${m.dc_width}_${m.dc_location}`;
+            const key = m.dc_id
+                ? `id_${m.dc_id}`
+                : `${m.dc_board_code}_${m.dc_height}_${m.dc_width}_${m.dc_location}_${m.dc_note || ''}`;
             if (!seenDcKeys.has(key)) {
                 seenDcKeys.add(key);
                 allDcMatches.push(m);
@@ -540,7 +553,9 @@ async function exportBulkNestingFiles(ordersData, returnBlobs = false) {
     acrylicOrders.forEach(orderData => {
         // Thu thập Kho DC
         (orderData.dc_stock_matches || []).forEach(m => {
-            const key = `${m.supply_name}_${m.dc_board_code}_${m.dc_height}_${m.dc_width}_${m.dc_location}`;
+            const key = m.dc_id
+                ? `id_${m.dc_id}`
+                : `${m.dc_board_code}_${m.dc_height}_${m.dc_width}_${m.dc_location}_${m.dc_note || ''}`;
             if (!seenDcKeys.has(key)) {
                 seenDcKeys.add(key);
                 allDcMatches.push(m);

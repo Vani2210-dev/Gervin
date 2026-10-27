@@ -45,11 +45,14 @@
                     <iconify-icon icon="lucide:alert-triangle" class="text-2xl text-amber-600 mt-0.5 flex-shrink-0"></iconify-icon>
                     <div class="flex-1">
                         <div class="flex items-center justify-between gap-2 flex-wrap">
-                            <span class="font-bold text-base text-amber-950">Đơn hàng đang có yêu cầu sửa</span>
+                            <span class="font-bold text-base text-amber-950">Kế toán yêu cầu sửa đơn hàng (Đã mở khóa sửa)</span>
                             <span class="px-2.5 py-0.5 rounded text-xs font-semibold bg-amber-200 text-amber-800">Cần điều chỉnh</span>
                         </div>
                         <div class="text-sm mt-1.5 whitespace-pre-line text-neutral-800 font-medium bg-white p-3 rounded-lg border border-amber-200 shadow-2xs">
                             <strong class="text-amber-900">Lý do yêu cầu sửa:</strong> {{ $acrylicOrder->edit_reason }}
+                        </div>
+                        <div class="text-xs text-amber-700 font-medium italic mt-2">
+                            * Sau khi bạn điều chỉnh và bấm "Lưu đơn hàng", đơn hàng sẽ tự động chuyển về trạng thái Chờ duyệt để Kế toán duyệt lại.
                         </div>
                     </div>
                 </div>
@@ -3888,6 +3891,14 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
         
         <div class="space-y-4 overflow-y-auto pr-2 flex-1 mt-4">
+            <div class="flex items-start gap-3 p-3 rounded-lg bg-sky-50/70 border border-sky-200">
+                <div class="px-2.5 py-1.5 bg-white border border-sky-300 rounded text-xs font-mono font-bold text-sky-800 shadow-sm flex items-center gap-1 shrink-0"><iconify-icon icon="lucide:table" class="text-sky-600"></iconify-icon> Bôi đen giống Excel</div>
+                <div>
+                    <p class="font-semibold text-sm text-sky-950 m-0">Chọn nhiều dòng & Xóa cả loạt (hoặc Copy)</p>
+                    <p class="text-sm text-sky-800 m-0">Bấm và kéo chuột ở cột <strong>STT</strong> để bôi đen nhiều dòng (hoặc bấm dòng đầu rồi giữ <strong>Shift</strong> bấm dòng cuối). Nhấn phím <strong>Delete</strong> để xóa cả loạt, hoặc <strong>Ctrl+C</strong> để sao chép.</p>
+                </div>
+            </div>
+
             <div class="flex items-start gap-3 p-3 rounded-lg bg-neutral-50 border border-neutral-100">
                 <div class="px-2.5 py-1.5 bg-white border border-neutral-200 rounded text-xs font-mono font-bold text-neutral-700 shadow-sm flex items-center gap-1 shrink-0">Ctrl + <iconify-icon icon="lucide:mouse"></iconify-icon> Lăn chuột</div>
                 <div>
@@ -4257,14 +4268,386 @@ function submitQuickCreateCustomer(e) {
         btn.disabled = false;
         btn.innerHTML = '<iconify-icon icon="lucide:check" class="text-base"></iconify-icon> Lưu & Chọn khách';
         errEl.textContent = 'Lỗi kết nối máy chủ.';
-        errEl.classList.remove('hidden');
     });
 }
+
+// ==============================================================
+// EXCEL-LIKE MULTI-ROW SELECTION & BULK ACTIONS (XÓA / COPY)
+// ==============================================================
+(function() {
+    let excelSelectionAnchorRow = null;
+    let isExcelDragging = false;
+    let currentTbody = null;
+
+    function getSelectedRows() {
+        return Array.from(document.querySelectorAll('tr.order-item-row.row-selected, tr.payment-detail-row.row-selected'));
+    }
+
+    function clearExcelRowSelection() {
+        document.querySelectorAll('tr.row-selected').forEach(r => r.classList.remove('row-selected'));
+        updateExcelSelectionBar();
+    }
+
+    function updateExcelSelectionBar() {
+        const bar = document.getElementById('excel-selection-bar');
+        const countEl = document.getElementById('excel-selected-count');
+        if (!bar || !countEl) return;
+
+        const count = getSelectedRows().length;
+        if (count > 0) {
+            countEl.textContent = count;
+            bar.style.display = 'flex';
+        } else {
+            bar.style.display = 'none';
+        }
+    }
+
+    function getTableRows(tbody) {
+        return Array.from(tbody.querySelectorAll('tr.order-item-row, tr.payment-detail-row'));
+    }
+
+    function selectRowRange(tbody, startRow, endRow) {
+        const allRows = getTableRows(tbody);
+        const startIdx = allRows.indexOf(startRow);
+        const endIdx = allRows.indexOf(endRow);
+        if (startIdx === -1 || endIdx === -1) return;
+
+        const min = Math.min(startIdx, endIdx);
+        const max = Math.max(startIdx, endIdx);
+
+        allRows.forEach((r, idx) => {
+            if (idx >= min && idx <= max) {
+                r.classList.add('row-selected');
+            } else {
+                r.classList.remove('row-selected');
+            }
+        });
+        updateExcelSelectionBar();
+    }
+
+    // Xử lý sự kiện mousedown trên cột STT (bắt đầu kéo chọn giống Excel)
+    document.addEventListener('mousedown', function(e) {
+        const sttCell = e.target.closest('td.sticky-stt-td');
+        if (!sttCell) {
+            // Nếu click bên ngoài bảng và bên ngoài thanh floating bar -> bỏ chọn
+            if (!e.target.closest('#excel-selection-bar') && !e.target.closest('th.sticky-stt-th')) {
+                if (getSelectedRows().length > 0 && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+                    clearExcelRowSelection();
+                }
+            }
+            return;
+        }
+
+        const row = sttCell.closest('tr.order-item-row, tr.payment-detail-row');
+        if (!row) return;
+
+        const tbody = row.closest('tbody');
+        if (!tbody) return;
+
+        currentTbody = tbody;
+        isExcelDragging = true;
+
+        if (e.shiftKey && excelSelectionAnchorRow && excelSelectionAnchorRow.closest('tbody') === tbody) {
+            // Shift + click: Chọn dải dòng từ dòng trước đến dòng này
+            selectRowRange(tbody, excelSelectionAnchorRow, row);
+        } else if (e.ctrlKey || e.metaKey) {
+            // Ctrl + click: Chọn/bỏ chọn từng dòng
+            row.classList.toggle('row-selected');
+            excelSelectionAnchorRow = row;
+            updateExcelSelectionBar();
+        } else {
+            // Click thường: Chọn dòng này và chuẩn bị kéo
+            clearExcelRowSelection();
+            row.classList.add('row-selected');
+            excelSelectionAnchorRow = row;
+            updateExcelSelectionBar();
+        }
+    });
+
+    // Kéo chuột qua các dòng STT khác để bôi đen dải dòng
+    document.addEventListener('mouseover', function(e) {
+        if (!isExcelDragging || !excelSelectionAnchorRow || !currentTbody) return;
+
+        const sttCell = e.target.closest('td.sticky-stt-td');
+        if (!sttCell) return;
+
+        const row = sttCell.closest('tr.order-item-row, tr.payment-detail-row');
+        if (!row || row.closest('tbody') !== currentTbody) return;
+
+        selectRowRange(currentTbody, excelSelectionAnchorRow, row);
+    });
+
+    // Kết thúc kéo chuột
+    document.addEventListener('mouseup', function() {
+        isExcelDragging = false;
+    });
+
+    // Click vào tiêu đề cột STT trên header -> Chọn / Bỏ chọn toàn bộ dòng trong bảng đó
+    document.addEventListener('click', function(e) {
+        const sttTh = e.target.closest('th.sticky-stt-th');
+        if (!sttTh) return;
+
+        const table = sttTh.closest('table');
+        if (!table) return;
+
+        const rows = Array.from(table.querySelectorAll('tr.order-item-row, tr.payment-detail-row'));
+        if (rows.length === 0) return;
+
+        const allSelected = rows.every(r => r.classList.contains('row-selected'));
+        clearExcelRowSelection();
+        if (!allSelected) {
+            rows.forEach(r => r.classList.add('row-selected'));
+            excelSelectionAnchorRow = rows[0];
+        }
+        updateExcelSelectionBar();
+    });
+
+    // Khi người dùng bấm vào ô input/textarea để gõ dữ liệu -> tự động hủy bôi đen dòng
+    document.addEventListener('focusin', function(e) {
+        if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) {
+            if (getSelectedRows().length > 0) {
+                clearExcelRowSelection();
+            }
+        }
+    });
+
+    // Xóa các dòng đang được bôi đen
+    function deleteSelectedRows() {
+        const selectedRows = getSelectedRows();
+        if (selectedRows.length === 0) return;
+
+        const parentTbodies = new Set();
+        selectedRows.forEach(row => {
+            const tbody = row.closest('.supply-items-container, tbody');
+            if (tbody) parentTbodies.add(tbody);
+
+            // Khôi phục nút nếu dòng là công giả dày
+            const isLaborRow = row.dataset.isLabor === '1' || row.querySelector('.labor-badge') != null || (row.querySelector('input[name*="[product_name]"]') && row.querySelector('input[name*="[product_name]"]').value.trim() === 'Công giả dày');
+            if (isLaborRow) {
+                const prevRow = row.previousElementSibling;
+                if (prevRow && prevRow.classList.contains('order-item-row')) {
+                    prevRow.querySelectorAll('button[onclick*="insertAcrylicRow"]').forEach(b => b.style.display = '');
+                    const p1 = prevRow.querySelector('button[onclick*="addFakeThicknessRow"]');
+                    if (p1) p1.style.display = '';
+                    const p2 = prevRow.querySelector('button[onclick*="duplicateAcrylicRow"]');
+                    if (p2) p2.style.display = '';
+                }
+            }
+            row.remove();
+        });
+
+        // Nếu bảng bị xóa sạch, tự động thêm 1 dòng trắng mặc định
+        parentTbodies.forEach(tbody => {
+            if (tbody.querySelectorAll('.order-item-row').length === 0) {
+                const supplyRow = tbody.closest('.order-supply-row');
+                const addAcrylicBtn = supplyRow?.querySelector('button[onclick*="addOrderItem"]');
+                const addGlassBtn = supplyRow?.querySelector('button[onclick*="addGlassOrderItem"]');
+                const addMinLateBtn = supplyRow?.querySelector('button[onclick*="addMinLateOrderItem"]');
+                if (addAcrylicBtn && typeof addOrderItem === 'function') addOrderItem(addAcrylicBtn, true);
+                else if (addGlassBtn && typeof addGlassOrderItem === 'function') addGlassOrderItem(addGlassBtn, true);
+                else if (addMinLateBtn && typeof addMinLateOrderItem === 'function') addMinLateOrderItem(addMinLateBtn, true);
+            }
+        });
+
+        clearExcelRowSelection();
+
+        // Cập nhật lại số thứ tự và tổng tiền
+        if (typeof updateOrderSummary === 'function') updateOrderSummary();
+        if (typeof updateAcrylicRowIndexes === 'function') updateAcrylicRowIndexes();
+        if (typeof updateGlassRowIndexes === 'function') updateGlassRowIndexes();
+        if (typeof updateMinLateRowIndexes === 'function') updateMinLateRowIndexes();
+
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: `Đã xóa ${selectedRows.length} dòng được chọn!`,
+                showConfirmButton: false,
+                timer: 2000
+            });
+        }
+    }
+
+    // Sao chép các dòng đang chọn thành dạng bảng TSV để dán vào Excel / Ctrl+V
+    function copySelectedRows() {
+        const selectedRows = getSelectedRows();
+        if (selectedRows.length === 0) return;
+
+        const lines = [];
+        selectedRows.forEach(row => {
+            const inputs = Array.from(row.querySelectorAll('input:not([type="hidden"]), select, textarea'));
+            const rowData = inputs.map(input => {
+                if (input.tagName === 'SELECT') {
+                    return input.options[input.selectedIndex]?.text || input.value || '';
+                }
+                return input.value || '';
+            });
+            lines.push(rowData.join('\t'));
+        });
+
+        const tsvText = lines.join('\n');
+        navigator.clipboard.writeText(tsvText).then(() => {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: `Đã copy ${selectedRows.length} dòng (sẵn sàng dán Excel hoặc Ctrl+V)!`,
+                    showConfirmButton: false,
+                    timer: 2000
+                });
+            }
+        }).catch(err => {
+            console.error('Copy failed:', err);
+        });
+    }
+
+    // Bắt phím tắt bàn phím
+    document.addEventListener('keydown', function(e) {
+        const selectedCount = getSelectedRows().length;
+
+        // Escape: Bỏ chọn dòng
+        if (e.key === 'Escape' && selectedCount > 0) {
+            e.preventDefault();
+            clearExcelRowSelection();
+            return;
+        }
+
+        // Delete hoặc Backspace khi có dòng đang bôi đen (và không đang focus gõ chữ trong ô input)
+        if ((e.key === 'Delete' || e.key === 'Backspace') && selectedCount > 0) {
+            const isTyping = ['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName);
+            if (!isTyping) {
+                e.preventDefault();
+                deleteSelectedRows();
+                return;
+            }
+        }
+
+        // Ctrl + C: Sao chép các dòng đang chọn
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'C') && selectedCount > 0) {
+            const textSelected = window.getSelection().toString();
+            if (!textSelected) {
+                e.preventDefault();
+                copySelectedRows();
+                return;
+            }
+        }
+
+        // Ctrl + A: Bôi đen tất cả các dòng trong bảng hiện tại
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'a' || e.key === 'A')) {
+            const activeTable = document.activeElement ? document.activeElement.closest('table') : null;
+            if (activeTable && activeTable.querySelector('tr.order-item-row, tr.payment-detail-row')) {
+                const isInsideTextInput = ['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName);
+                if (!isInsideTextInput) {
+                    e.preventDefault();
+                    clearExcelRowSelection();
+                    activeTable.querySelectorAll('tr.order-item-row, tr.payment-detail-row').forEach(r => r.classList.add('row-selected'));
+                    updateExcelSelectionBar();
+                }
+            }
+        }
+    });
+
+    // Gán sự kiện click cho các nút trên floating selection bar
+    function initButtons() {
+        const delBtn = document.getElementById('excel-delete-selected-btn');
+        if (delBtn) delBtn.onclick = deleteSelectedRows;
+
+        const copyBtn = document.getElementById('excel-copy-selected-btn');
+        if (copyBtn) copyBtn.onclick = copySelectedRows;
+
+        const clearBtn = document.getElementById('excel-clear-selection-btn');
+        if (clearBtn) clearBtn.onclick = clearExcelRowSelection;
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initButtons);
+    } else {
+        initButtons();
+    }
+
+    window.clearExcelRowSelection = clearExcelRowSelection;
+    window.deleteExcelSelectedRows = deleteSelectedRows;
+    window.copyExcelSelectedRows = copySelectedRows;
+})();
 </script>
+
+{{-- Floating Action Bar cho Thao tác Bôi đen Nhiều Dòng (Excel-style) --}}
+<div id="excel-selection-bar" style="display:none;" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] bg-slate-900/95 text-white backdrop-blur-md px-5 py-2.5 rounded-2xl shadow-2xl border border-slate-700/80 items-center gap-3 transition-all duration-200 animate-in fade-in slide-in-from-bottom-4">
+    <div class="flex items-center gap-2 pr-3 border-r border-slate-700 text-xs font-semibold text-slate-200">
+        <span class="inline-flex items-center justify-center w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-400 font-bold text-xs">
+            <iconify-icon icon="lucide:check-square" class="text-sm"></iconify-icon>
+        </span>
+        <span>Đã chọn: <strong id="excel-selected-count" class="text-white text-sm font-extrabold">0</strong> dòng</span>
+    </div>
+    <div class="flex items-center gap-2">
+        <button type="button" id="excel-delete-selected-btn" class="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-md transition-all hover:scale-105 active:scale-95 cursor-pointer" title="Xóa các dòng đang chọn (Phím Delete)">
+            <iconify-icon icon="lucide:trash-2" class="text-sm"></iconify-icon>
+            <span>Xóa dòng đã chọn (Del)</span>
+        </button>
+        <button type="button" id="excel-copy-selected-btn" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white text-xs font-semibold flex items-center gap-1.5 border border-slate-700 transition-all hover:scale-105 active:scale-95 cursor-pointer" title="Sao chép các dòng đang chọn (Ctrl + C)">
+            <iconify-icon icon="lucide:copy" class="text-sm"></iconify-icon>
+            <span>Copy (Ctrl+C)</span>
+        </button>
+    </div>
+    <button type="button" id="excel-clear-selection-btn" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer" title="Bỏ chọn (Phím Esc)">
+        <iconify-icon icon="lucide:x" class="text-base"></iconify-icon>
+    </button>
+</div>
 
 <style>
     .order-row-height-resize-handle:hover {
         background-color: transparent !important;
+    }
+
+    /* === EXCEL-LIKE MULTI-ROW SELECTION STYLES === */
+    .sticky-stt-td {
+        cursor: pointer !important;
+        user-select: none !important;
+        -webkit-user-select: none !important;
+        transition: background-color 0.15s ease, color 0.15s ease;
+    }
+    .sticky-stt-td:hover {
+        background-color: #dbeafe !important;
+        color: #1d4ed8 !important;
+        font-weight: 700 !important;
+    }
+    .sticky-stt-th {
+        cursor: pointer !important;
+        user-select: none !important;
+        -webkit-user-select: none !important;
+        transition: background-color 0.15s ease;
+    }
+    .sticky-stt-th:hover {
+        background-color: #dbeafe !important;
+        color: #1d4ed8 !important;
+    }
+    tr.order-item-row.row-selected,
+    tr.payment-detail-row.row-selected {
+        background-color: #e0f2fe !important;
+    }
+    tr.order-item-row.row-selected > td,
+    tr.payment-detail-row.row-selected > td {
+        background-color: #e0f2fe !important;
+        border-top: 1px solid #38bdf8 !important;
+        border-bottom: 1px solid #38bdf8 !important;
+    }
+    tr.order-item-row.row-selected > td.sticky-stt-td,
+    tr.payment-detail-row.row-selected > td.sticky-stt-td {
+        background-color: #0284c7 !important;
+        color: #ffffff !important;
+        font-weight: 800 !important;
+        box-shadow: inset -2px 0 0 #0369a1 !important;
+    }
+    tr.order-item-row.row-selected input,
+    tr.order-item-row.row-selected select,
+    tr.order-item-row.row-selected textarea,
+    tr.payment-detail-row.row-selected input,
+    tr.payment-detail-row.row-selected select,
+    tr.payment-detail-row.row-selected textarea {
+        background-color: #f0f9ff !important;
+        border-color: #93c5fd !important;
     }
 </style>
 
