@@ -721,17 +721,36 @@ function previewOrder() {
         return n.toLocaleString('vi-VN') + ' đ';
     };
 
+        // Hàm phân tích số tiền VNĐ loại bỏ triệt để dấu chấm phân cách hàng nghìn
+    const parseVNMoneyText = (val) => {
+        if (val === undefined || val === null || val === '') return 0;
+        if (typeof val === 'number') return val;
+        let s = String(val).trim().replace(/\./g, '').replace(/,/g, '');
+        s = s.replace(/[^0-9-]/g, '');
+        return parseFloat(s) || 0;
+    };
+
     // Thu thập tóm tắt từ sidebar
     const totalItems = document.getElementById('total-items')?.textContent || '0';
-    const totalSheets = document.getElementById('total-sheets')?.textContent || '0';
-    const totalArea = document.getElementById('total-area')?.textContent || '0 m²';
-        const totalAmount = document.getElementById('total-amount')?.textContent || '0 VNĐ';
+    // Số tấm thuần túy không kèm chữ "tấm" để khớp 100% với trang xem đơn
+    const totalSheets = (document.getElementById('total-sheets')?.textContent || '0').replace(/\s*tấm\s*/i, '').trim();
+    
+    // Diện tích: format 2 chữ số thập phân chuẩn vi-VN (ví dụ 9,45 m²) khớp trang xem đơn
+    let totalAreaRaw = document.getElementById('total-area')?.textContent || '0 m²';
+    const areaParsed = parseFloat(totalAreaRaw.replace(/,/g, '.').replace(/[^0-9.]/g, '')) || 0;
+    const totalAreaDisplay = (areaParsed > 0 ? areaParsed.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0') + ' m²';
+
+    // Tiền hàng: format đuôi "đ" khớp trang xem đơn
+    const totalAmountRaw = document.getElementById('total-amount')?.textContent || '0 VNĐ';
+    const totalAmountNum = parseVNMoneyText(totalAmountRaw);
+    const totalAmountDisplay = Math.round(totalAmountNum).toLocaleString('vi-VN') + ' đ';
+
     const grandTotal = document.getElementById('grand-total')?.textContent || '0 VNĐ';
-    const orderTotalNum = parseFloat((grandTotal || '0').replace(/[^0-9.-]+/g, '')) || 0;
+    const orderTotalNum = parseVNMoneyText(grandTotal);
 
     // Chiết khấu & VAT (khớp 100% với _preview_modal.blade.php)
     const discountPercentVal = parseFloat(document.getElementById('discount_percent')?.value) || 0;
-    const discountAmtVal = parseFloat((document.getElementById('discount-amount')?.textContent || '0').replace(/[^0-9.-]+/g, '')) || 0;
+    const discountAmtVal = parseVNMoneyText(document.getElementById('discount-amount')?.textContent);
     let discountHTML = '';
     if (discountPercentVal > 0) {
         discountHTML = `
@@ -742,7 +761,7 @@ function previewOrder() {
     }
 
     const vatPercentVal = parseFloat(document.getElementById('vat_percent')?.value) || 0;
-    const vatAmtVal = parseFloat((document.getElementById('vat-amount')?.textContent || '0').replace(/[^0-9.-]+/g, '')) || 0;
+    const vatAmtVal = parseVNMoneyText(document.getElementById('vat-amount')?.textContent);
     let vatHTML = '';
     if (vatPercentVal > 0) {
         vatHTML = `
@@ -1398,11 +1417,11 @@ function previewOrder() {
                                 </div>
                                 <div class="text-center p-3 bg-white/70 rounded-lg">
                                     <div class="text-xs text-neutral-500 font-medium">Tổng diện tích</div>
-                                    <div class="text-lg font-bold text-blue-600 mt-1">${totalArea}</div>
+                                    <div class="text-lg font-bold text-blue-600 mt-1">${totalAreaDisplay}</div>
                                 </div>
                                 <div class="text-center p-3 bg-white/70 rounded-lg">
                                     <div class="text-xs text-neutral-500 font-medium">Tổng tiền hàng</div>
-                                    <div class="text-lg font-bold text-neutral-800 mt-1">${totalAmount}</div>
+                                    <div class="text-lg font-bold text-neutral-800 mt-1">${totalAmountDisplay}</div>
                                 </div>
                             </div>
                             ${discountHTML}
