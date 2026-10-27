@@ -13,13 +13,40 @@
     $thisOrderPaid = $isEdit && $acrylicOrder->orderPayments ? $acrylicOrder->orderPayments->sum('amount') : 0;
     $thisOrderOldAmount = $isEdit ? round($acrylicOrder->total_amount, -3) : 0;
     $thisOrderOldStatusWasValid = $isEdit ? !in_array($acrylicOrder->status, ['draft', 'pending', 'cancelled']) : false;
+    // Tính toán công nợ khách hàng khớp 100% với _preview_modal.blade.php và OrderController::getExportData
+    $initialDebtInfo = null;
+    if ($isEdit && $acrylicOrder->customer) {
+        $thisOrderTotal = round($acrylicOrder->total_amount, -3);
+        $thisOrderPaid = $acrylicOrder->orderPayments ? $acrylicOrder->orderPayments->sum('amount') : 0;
+        $thisOrderUnpaid = 0;
+        if (!in_array($acrylicOrder->status, ['draft', 'cancelled', 'pending'])) {
+            $thisOrderUnpaid = max(0, $thisOrderTotal - $thisOrderPaid);
+        }
+        $currentTotalDebt = $acrylicOrder->customer->total_debt ?? 0;
+        $todayPaid = $acrylicOrder->customer->customerPayments()
+            ->whereDate('payment_date', \Carbon\Carbon::today())
+            ->sum('amount');
+        $oldDebt = max(0, $currentTotalDebt - $thisOrderUnpaid + $todayPaid);
+        $totalCombinedDebt = $oldDebt + $thisOrderTotal - $todayPaid;
+
+        if ($oldDebt > 0 || $todayPaid > 0 || $totalCombinedDebt > 0) {
+            $initialDebtInfo = [
+                'old_debt' => $oldDebt,
+                'this_order_paid' => $todayPaid,
+                'total_combined_debt' => max(0, $totalCombinedDebt),
+            ];
+        }
+    }
 @endphp
 <script>
     window.currentOrderId = @json($thisOrderId);
     window.thisOrderPaid = @json($thisOrderPaid);
     window.thisOrderOldAmount = @json($thisOrderOldAmount);
     window.thisOrderOldStatusWasValid = @json($thisOrderOldStatusWasValid);
-    window.customerOldDebt = 0;
+    window.initialDebtInfo = @json($initialDebtInfo);
+    window.customerOldDebt = {{ $initialDebtInfo ? $initialDebtInfo['old_debt'] : 0 }};
+    window.customerTodayPaid = {{ $initialDebtInfo ? $initialDebtInfo['this_order_paid'] : 0 }};
+    window.orderPaidAmt = @json($thisOrderPaid);
 </script>
 <link rel="stylesheet" href="{{ asset('assets/css/order-form.css') }}?v={{ time() }}">
 <div class="card p-0 rounded-xl border-0">
@@ -279,7 +306,7 @@
                                 <label class="form-label font-semibold text-xs text-neutral-500 uppercase tracking-wider mb-2 block">Hình ảnh đã tải</label>
                                 <div class="flex flex-col gap-2.5" id="existing-attachments">
                                     @foreach(json_decode($acrylicOrder->attachments, true) ?? [] as $index => $image)
-                                    <div class="flex items-center justify-between p-2 border border-neutral-100 rounded-xl bg-neutral-50/50 hover:bg-neutral-50 transition-colors">
+                                    <div id="existing-attachment-item-{{ $index }}" class="existing-attachment-item flex items-center justify-between p-2 border border-neutral-100 rounded-xl bg-neutral-50/50 hover:bg-neutral-50 transition-colors">
                                         <div class="flex items-center gap-3">
                                             <img src="{{ route('orders.image', ['filename' => basename($image)]) }}" class="w-12 h-12 rounded-lg object-cover border border-neutral-200 shadow-sm cursor-pointer" onclick="openModal('modal-existing-attachment-{{ $index }}')">
                                             <div>
@@ -289,7 +316,7 @@
                                                 </button>
                                             </div>
                                         </div>
-                                        <button type="button" onclick="deleteAttachment('{{ $index }}', '{{ $image }}')" class="text-neutral-400 hover:text-danger-500 transition-colors p-1.5" title="Xóa ảnh">
+                                        <button type="button" onclick="deleteAttachment('{{ $index }}', '{{ $image }}', this)" class="text-neutral-400 hover:text-danger-500 transition-colors p-1.5" title="Xóa ảnh">
                                             <iconify-icon icon="lucide:trash-2" class="text-lg"></iconify-icon>
                                         </button>
                                     </div>
@@ -698,14 +725,67 @@ function previewOrder() {
     const totalItems = document.getElementById('total-items')?.textContent || '0';
     const totalSheets = document.getElementById('total-sheets')?.textContent || '0';
     const totalArea = document.getElementById('total-area')?.textContent || '0 m²';
-    const totalAmount = document.getElementById('total-amount')?.textContent || '0 VNĐ';
+        const totalAmount = document.getElementById('total-amount')?.textContent || '0 VNĐ';
     const grandTotal = document.getElementById('grand-total')?.textContent || '0 VNĐ';
-
-    const oldDebtVal = parseFloat(window.customerOldDebt || 0);
     const orderTotalNum = parseFloat((grandTotal || '0').replace(/[^0-9.-]+/g, '')) || 0;
-    const totalCombinedDebtVal = oldDebtVal + orderTotalNum;
+
+    // Chiết khấu & VAT (khớp 100% với _preview_modal.blade.php)
+    const discountPercentVal = parseFloat(document.getElementById('discount_percent')?.value) || 0;
+    const discountAmtVal = parseFloat((document.getElementById('discount-amount')?.textContent || '0').replace(/[^0-9.-]+/g, '')) || 0;
+    let discountHTML = '';
+    if (discountPercentVal > 0) {
+        discountHTML = `
+            <div class="mt-2 text-xs text-right font-medium text-danger-600">
+                Chiết khấu (${discountPercentVal}%): -${Math.abs(Math.round(discountAmtVal)).toLocaleString('vi-VN')} đ
+            </div>
+        `;
+    }
+
+    const vatPercentVal = parseFloat(document.getElementById('vat_percent')?.value) || 0;
+    const vatAmtVal = parseFloat((document.getElementById('vat-amount')?.textContent || '0').replace(/[^0-9.-]+/g, '')) || 0;
+    let vatHTML = '';
+    if (vatPercentVal > 0) {
+        vatHTML = `
+            <div class="mt-1 text-xs text-right font-medium text-neutral-700">
+                VAT (${vatPercentVal}%): +${Math.round(vatAmtVal).toLocaleString('vi-VN')} đ
+            </div>
+        `;
+    }
+
+    // Đã thanh toán đơn này & Còn lại của đơn (khớp 100% với _preview_modal.blade.php)
+    const orderPaidAmt = parseFloat(window.orderPaidAmt || window.thisOrderPaid || 0);
+    let paidSummaryHTML = '';
+    if (orderPaidAmt > 0) {
+        const orderRemainingAmt = Math.max(0, orderTotalNum - orderPaidAmt);
+        paidSummaryHTML = `
+            <div class="mt-2.5 pt-2.5 border-t border-dashed border-primary-200/80 flex items-center justify-between text-xs">
+                <span class="text-neutral-600 font-medium">Đã thanh toán đơn này:</span>
+                <span class="font-bold text-emerald-600 font-mono text-sm">${Math.round(orderPaidAmt).toLocaleString('vi-VN')} đ</span>
+            </div>
+            <div class="mt-1 flex items-center justify-between text-xs">
+                <span class="text-neutral-600 font-medium">Còn lại của đơn:</span>
+                <span class="font-bold text-rose-600 font-mono text-sm">${Math.round(orderRemainingAmt).toLocaleString('vi-VN')} đ</span>
+            </div>
+        `;
+    }
+
+    // Thông tin công nợ khách hàng (3 ô: Công nợ, Đã TT (hôm nay), Tổng công nợ - khớp 100% với _preview_modal.blade.php)
+    let debtOld = 0;
+    let debtTodayPaid = 0;
+    let debtTotal = 0;
+
+    if (window.initialDebtInfo) {
+        debtOld = parseFloat(window.initialDebtInfo.old_debt || 0);
+        debtTodayPaid = parseFloat(window.initialDebtInfo.this_order_paid || 0);
+        debtTotal = Math.max(0, debtOld + orderTotalNum - debtTodayPaid);
+    } else if (window.customerOldDebt || window.customerTodayPaid) {
+        debtOld = parseFloat(window.customerOldDebt || 0);
+        debtTodayPaid = parseFloat(window.customerTodayPaid || 0);
+        debtTotal = Math.max(0, debtOld + orderTotalNum - debtTodayPaid);
+    }
+
     let debtSummaryHTML = '';
-    if (oldDebtVal > 0 || totalCombinedDebtVal > 0) {
+    if (debtOld > 0 || debtTodayPaid > 0 || debtTotal > 0) {
         debtSummaryHTML = `
             <div class="mt-5 pt-4 border-t-2 border-dashed border-primary-200">
                 <div class="text-xs font-bold uppercase tracking-wider text-neutral-600 mb-2.5 flex items-center justify-between">
@@ -715,17 +795,23 @@ function previewOrder() {
                     </span>
                     <span class="text-[11px] font-normal text-neutral-400 lowercase italic">(đồng bộ với bảng công nợ khi xuất excel)</span>
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div class="bg-white p-3.5 rounded-xl border border-neutral-200 shadow-xs flex flex-col justify-between">
-                        <span class="text-xs font-semibold text-neutral-500">Công nợ cũ:</span>
+                        <span class="text-xs font-semibold text-neutral-500">Công nợ:</span>
                         <span class="text-base font-bold text-neutral-800 mt-1 font-mono">
-                            ${Math.round(oldDebtVal).toLocaleString('vi-VN')} đ
+                            ${Math.round(debtOld).toLocaleString('vi-VN')} đ
+                        </span>
+                    </div>
+                    <div class="bg-white p-3.5 rounded-xl border border-emerald-200 bg-emerald-50/40 shadow-xs flex flex-col justify-between">
+                        <span class="text-xs font-semibold text-emerald-700">Đã TT (hôm nay):</span>
+                        <span class="text-base font-bold text-emerald-600 mt-1 font-mono">
+                            ${Math.round(debtTodayPaid).toLocaleString('vi-VN')} đ
                         </span>
                     </div>
                     <div class="bg-white p-3.5 rounded-xl border border-rose-200 bg-rose-50/50 shadow-xs flex flex-col justify-between">
-                        <span class="text-xs font-bold text-rose-700">Tổng công nợ (gồm đơn này):</span>
+                        <span class="text-xs font-bold text-rose-700">Tổng công nợ:</span>
                         <span class="text-lg font-black text-rose-600 mt-1 font-mono">
-                            ${Math.round(totalCombinedDebtVal).toLocaleString('vi-VN')} đ
+                            ${Math.round(debtTotal).toLocaleString('vi-VN')} đ
                         </span>
                     </div>
                 </div>
@@ -1319,10 +1405,13 @@ function previewOrder() {
                                     <div class="text-lg font-bold text-neutral-800 mt-1">${totalAmount}</div>
                                 </div>
                             </div>
+                            ${discountHTML}
+                            ${vatHTML}
                             <div class="mt-4 pt-4 border-t border-primary-100 flex items-center justify-between">
-                                <span class="font-bold text-sm text-neutral-800">Tổng thanh toán:</span>
+                                <span class="font-bold text-sm text-neutral-800">Tổng thanh toán đơn này:</span>
                                 <span class="text-2xl font-extrabold text-primary-600">${grandTotal}</span>
                             </div>
+                            ${paidSummaryHTML}
                             ${debtSummaryHTML}
                         </div>
 
@@ -1746,14 +1835,21 @@ function updateOrderSummary() {
             });
         }
 
-        // Calculate items quantity from supplies.items
+        // Calculate items quantity and area from supplies.items
         const rows = document.querySelectorAll('.order-item-row');
         rows.forEach(row => {
             const qtyInput = row.querySelector('input[name*="quantity"]');
+            const heightInput = row.querySelector('input[name*="[size][height]"]') || row.querySelector('input[name*="[height]"]');
+            const widthInput = row.querySelector('input[name*="[size][width]"]') || row.querySelector('input[name*="[width]"]');
             if (qtyInput && !qtyInput.disabled) {
                 const qty = parseFloat(qtyInput.value) || 0;
                 totalItems++;
                 totalSheets += qty;
+                const h = parseFloat(heightInput ? heightInput.value : 0) || 0;
+                const w = parseFloat(widthInput ? widthInput.value : 0) || 0;
+                if (h > 0 && w > 0) {
+                    totalArea += (h * w * qty) / 1000000;
+                }
             }
         });
         
@@ -2859,20 +2955,54 @@ document.addEventListener('DOMContentLoaded', () => {
     observeOrderColumnResizeTables();
 });
 
-function deleteAttachment(index, imagePath) {
+function deleteAttachment(index, imagePath, btn = null) {
     if (confirm('Bạn có chắc muốn xóa hình ảnh này?')) {
-        // Remove from DOM
-        const container = document.getElementById('existing-attachments');
-        const imageDivs = container.querySelectorAll('.relative');
-        if (imageDivs[index]) {
-            imageDivs[index].remove();
+        // 1. Xóa phần tử khỏi giao diện DOM ngay lập tức
+        const itemById = document.getElementById(`existing-attachment-item-${index}`);
+        if (itemById) {
+            itemById.remove();
+        } else if (btn) {
+            const row = btn.closest('.existing-attachment-item') || btn.closest('.flex.items-center.justify-between') || btn.closest('div');
+            if (row) row.remove();
+        } else {
+            const container = document.getElementById('existing-attachments');
+            if (container) {
+                const rows = container.querySelectorAll(':scope > div');
+                if (rows[index]) rows[index].remove();
+            }
+        }
+
+        // Đóng và xóa modal popup xem ảnh nếu có
+        if (typeof closeModal === 'function') {
+            try { closeModal(`modal-existing-attachment-${index}`); } catch (e) {}
+        }
+        const modalEl = document.getElementById(`modal-existing-attachment-${index}`);
+        if (modalEl) modalEl.remove();
+
+        // Đồng bộ xóa thumbnail trong chế độ toàn màn hình (fullscreen clone) nếu đang mở
+        const fsClone = document.querySelector('.fullscreen-attachments-clone');
+        if (fsClone) {
+            const activePanel = document.querySelector('.order-panel-fullscreen') || document.querySelector('.fullscreen-mode');
+            if (activePanel && typeof syncAttachmentsToFullscreen === 'function') {
+                syncAttachmentsToFullscreen(activePanel, true);
+            }
         }
         
-        // Track deleted attachments
+        // 2. Ghi nhận đường dẫn ảnh đã xóa vào input hidden để gửi lên server khi cập nhật
         const deleteInput = document.getElementById('delete-attachments');
-        let deleted = deleteInput.value ? JSON.parse(deleteInput.value) : [];
-        deleted.push(imagePath);
-        deleteInput.value = JSON.stringify(deleted);
+        if (deleteInput) {
+            let deleted = [];
+            try {
+                deleted = deleteInput.value ? JSON.parse(deleteInput.value) : [];
+                if (!Array.isArray(deleted)) deleted = [];
+            } catch (e) {
+                deleted = [];
+            }
+            if (!deleted.includes(imagePath)) {
+                deleted.push(imagePath);
+            }
+            deleteInput.value = JSON.stringify(deleted);
+        }
     }
 }
 
