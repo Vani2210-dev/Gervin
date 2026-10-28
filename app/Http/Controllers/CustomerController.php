@@ -284,12 +284,17 @@ class CustomerController extends Controller
 
         $marketGroups = \App\Models\MarketGroup::orderBy('name')->get();
 
+        $selectedDiscountMonth = $request->input('discount_month', now()->format('Y-m'));
+        $monthlyDiscountCalc = $customer->calculateMonthlyDiscount($selectedDiscountMonth);
+
         $activeTab = $request->input('tab', 'info');
         if (!$request->has('tab')) {
             if ($request->hasAny(['page', 'search', 'status', 'date_mode', 'date_val', 'start_date', 'end_date', 'per_page'])) {
                 $activeTab = 'orders';
             } elseif ($request->hasAny(['payment_page', 'payment_date'])) {
                 $activeTab = 'payments';
+            } elseif ($request->has('discount_month')) {
+                $activeTab = 'discount';
             }
         }
 
@@ -313,8 +318,87 @@ class CustomerController extends Controller
             'paymentDate',
             'customerOrders',
             'marketGroups',
-            'activeTab'
+            'activeTab',
+            'selectedDiscountMonth',
+            'monthlyDiscountCalc'
         ));
+    }
+
+    public function saveMonthlyDiscountPolicy(Request $request, Customer $customer)
+    {
+        abort_unless($customer->isAccessibleBy(auth()->user()), 403, 'Bạn không có quyền cập nhật khách hàng này.');
+
+        $tiers = [];
+        if ($request->has('tiers') && is_array($request->tiers)) {
+            foreach ($request->tiers as $t) {
+                $minAmt = (float) str_replace(['.', ',', ' '], '', $t['min_amount'] ?? 0);
+                $pct = (float) ($t['percent'] ?? 0);
+                if ($minAmt > 0 && $pct > 0) {
+                    $tiers[] = [
+                        'min_amount' => $minAmt,
+                        'percent'    => $pct,
+                    ];
+                }
+            }
+        } elseif ($request->filled('min_amount') && $request->filled('percent')) {
+            $minAmt = (float) str_replace(['.', ',', ' '], '', $request->min_amount);
+            $pct = (float) $request->percent;
+            if ($minAmt > 0 && $pct > 0) {
+                $tiers[] = [
+                    'min_amount' => $minAmt,
+                    'percent'    => $pct,
+                ];
+            }
+        }
+
+        $policy = [
+            'is_active' => $request->boolean('is_active', true),
+            'tiers'     => $tiers,
+            'note'      => $request->input('note', ''),
+        ];
+
+        $customer->update(['monthly_discount_policy' => $policy]);
+
+        return redirect()->route('customers.show', ['customer' => $customer->id, 'tab' => 'discount', 'discount_month' => $request->input('discount_month', now()->format('Y-m'))])
+            ->with('success', 'Cập nhật chính sách chiết khấu tháng thành công!');
+    }
+
+    public function applyMonthlyDiscount(Request $request, Customer $customer)
+    {
+        abort_unless($customer->isAccessibleBy(auth()->user()), 403, 'Bạn không có quyền thao tác với khách hàng này.');
+
+        $month = $request->input('month', now()->format('Y-m'));
+        $note = $request->input('note');
+
+        try {
+            $result = $customer->applyMonthlyDiscount($month, $note, auth()->id());
+            return redirect()->route('customers.show', ['customer' => $customer->id, 'tab' => 'discount', 'discount_month' => $month])
+                ->with('success', 'Đã áp dụng giảm trừ ' . number_format($result['calc']['discount_amount'], 0, ',', '.') . '₫ vào công nợ tháng ' . $result['calc']['month_label'] . ' thành công!');
+        } catch (\Throwable $e) {
+            return redirect()->route('customers.show', ['customer' => $customer->id, 'tab' => 'discount', 'discount_month' => $month])
+                ->with('error', $e->getMessage());
+        }
+    }
+
+    public function cancelMonthlyDiscount(Request $request, Customer $customer)
+    {
+        abort_unless($customer->isAccessibleBy(auth()->user()), 403, 'Bạn không có quyền thao tác với khách hàng này.');
+
+        $month = $request->input('month');
+        if (!$month) {
+            return redirect()->back()->with('error', 'Tháng không hợp lệ.');
+        }
+
+        try {
+            $success = $customer->cancelMonthlyDiscount($month);
+            if ($success) {
+                return redirect()->route('customers.show', ['customer' => $customer->id, 'tab' => 'discount', 'discount_month' => $month])
+                    ->with('success', 'Đã hủy chiết khấu tháng ' . date('m/Y', strtotime($month . '-01')) . ' và khôi phục lại công nợ!');
+            }
+            return redirect()->back()->with('error', 'Không tìm thấy dữ liệu chiết khấu của tháng đã chọn.');
+        } catch (\Throwable $e) {
+            return redirect()->back()->with('error', $e->getMessage());
+        }
     }
 
     public function exportExcel(Request $request)

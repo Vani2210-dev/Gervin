@@ -88,6 +88,7 @@ class CustomerPayment extends Model
         return match($method) {
             'cash'     => 'Tiền mặt',
             'transfer' => 'Chuyển khoản',
+            'discount' => 'Chiết khấu tháng',
             'other'    => 'Khác',
             default    => $method,
         };
