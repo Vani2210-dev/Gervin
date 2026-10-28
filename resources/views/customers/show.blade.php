@@ -1736,7 +1736,6 @@ function toggleDetailsSection() {
 
 let apmOrderTomSelect = null;
 let epmOrderTomSelect = null;
-let editMarketGroupTomSelect = null;
 
 function openAddPaymentModal() {
     if (apmOrderTomSelect) {
@@ -1903,20 +1902,20 @@ document.addEventListener('DOMContentLoaded', function () {
                 maxOptions: null
             });
         }
-
-        const emgEl = document.getElementById('edit_market_group_id');
-        if (emgEl && !emgEl.tomselect) {
-            editMarketGroupTomSelect = new TomSelect(emgEl, {
-                placeholder: '🌐 Chọn nhóm thị trường...',
-                allowEmptyOption: true,
-                dropdownParent: 'body',
-                plugins: ['clear_button'],
-                maxOptions: null
-            });
-        }
     }
 });
 </script>
+
+<style>
+select.tomselected {
+    display: none !important;
+}
+.ts-wrapper.form-select {
+    padding: 0 !important;
+    border: none !important;
+    background-image: none !important;
+}
+</style>
 @endpush
 
 @endsection

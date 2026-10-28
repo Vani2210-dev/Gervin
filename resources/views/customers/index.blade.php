@@ -1071,11 +1071,7 @@ function openEditCustomerModalFromBtn(btn) {
     
     const mgSelect = document.getElementById('edit_market_group_id');
     if (mgSelect) {
-        if (mgSelect.tomselect) {
-            mgSelect.tomselect.setValue(marketGroupId || '');
-        } else {
-            mgSelect.value = marketGroupId || '';
-        }
+        mgSelect.value = marketGroupId || '';
     }
 
     // Reset and populate existing photos in edit modal
@@ -2118,26 +2114,24 @@ document.addEventListener("DOMContentLoaded", function() {
             });
         }
 
-        ['filter_market_group_id', 'create_market_group_id', 'edit_market_group_id'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el && !el.tomselect) {
-                new TomSelect(el, {
-                    placeholder: '-- Chọn nhóm thị trường --',
-                    allowEmptyOption: true,
-                    dropdownParent: "body"
-                });
-            }
-        });
     }
 });
 </script>
 
 <style>
+select.tomselected {
+    display: none !important;
+}
+.ts-wrapper.form-select {
+    padding: 0 !important;
+    border: none !important;
+    background-image: none !important;
+}
 .ts-dropdown {
     z-index: 999999 !important;
     max-height: 200px !important;
     overflow-y: auto !important;
-    border-radius: 0.5rem !important;
+    border-radius: 8px !important;
 }
 #edit-customer-modal [data-modal-content],
 #create-customer-modal [data-modal-content] {
