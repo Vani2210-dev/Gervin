@@ -272,6 +272,7 @@ class CNCService
 
             $item->notes = $notes;
             $item->save();
+            \App\Models\Order::markInProductionFromItem($item);
 
             $message = 'Xác nhận hoàn thành công đoạn cắt CNC thành công.';
         }

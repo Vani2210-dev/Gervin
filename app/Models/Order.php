@@ -440,9 +440,290 @@ class Order extends Model
     /**
      * Kiểm tra đơn hàng có đang trong trạng thái yêu cầu sửa lại không.
      */
-    public function isRequestedEdit(): bool
+        public function isRequestedEdit(): bool
     {
         return !empty($this->edit_reason) || !empty($this->rejected_step);
     }
+
+    /**
+     * Tự động kiểm tra và chuyển trạng thái đơn hàng sang "in_production" (Đang sản xuất)
+     * nếu đơn hàng đang ở trạng thái transferred/pending và đã có ít nhất 1 tấm được gia công/quét mã.
+     */
+    public function checkAndMarkInProduction(): bool
+    {
+        if (!in_array($this->status, ['transferred', 'pending'])) {
+            return false;
+        }
+
+        $hasProductionLogs = false;
+        $this->loadMissing([
+            'supplies.items.codes',
+            'supplies.minLateItems.codes',
+            'supplies.glassItems.codes',
+        ]);
+
+        foreach ($this->supplies as $supply) {
+            foreach ([$supply->items, $supply->minLateItems, $supply->glassItems] as $items) {
+                if (!$items) continue;
+                foreach ($items as $item) {
+                    foreach ($item->codes as $code) {
+                        $logs = $code->status ?? [];
+                        if (is_string($logs)) {
+                            $logs = json_decode($logs, true) ?? [];
+                        }
+                        if (!empty($logs)) {
+                            $hasProductionLogs = true;
+                            break 4;
+                        }
+                    }
+                }
+            }
+        }
+
+        if ($hasProductionLogs) {
+            $this->update(['status' => 'in_production']);
+            try {
+                \App\Services\NotificationService::notifyOrderStatusChanged($this, 'in_production');
+            } catch (\Throwable $e) {}
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Tự động kiểm tra và chuyển trạng thái đơn hàng sang "completed" (Hoàn thành)
+     * Điều kiện: Tất cả các tấm của đơn hàng đều đã được đưa vào gói (is_packaged = true)
+     * và gói hàng chứa tấm đó đã được khách nhận đơn (delivered_at không rỗng).
+     */
+    public function checkAndMarkCompleted(): bool
+    {
+        if ($this->status === 'completed' || in_array($this->status, ['draft', 'cancelled'])) {
+            return false;
+        }
+
+        $this->loadMissing([
+            'supplies.items.codes',
+            'supplies.minLateItems.codes',
+            'supplies.glassItems.codes',
+        ]);
+
+        $allPlateCodes = [];
+        foreach ($this->supplies as $supply) {
+            foreach ([$supply->items, $supply->minLateItems, $supply->glassItems] as $items) {
+                if (!$items) continue;
+                foreach ($items as $item) {
+                    foreach ($item->codes as $code) {
+                        if (!empty($code->product_id)) {
+                            $allPlateCodes[] = (string) $code->product_id;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Nếu đơn hàng chưa có mã tấm nào, không tự động hoàn thành
+        if (empty($allPlateCodes)) {
+            return false;
+        }
+
+        // Lấy danh sách các mã tấm đã được đưa vào gói (is_packaged = true)
+        // VÀ kiện hàng chứa tấm đó đã được khách nhận đơn (delivered_at IS NOT NULL)
+        $deliveredPlateCodes = \App\Models\PackingPackageItem::whereIn('item_code_id', $allPlateCodes)
+            ->where('is_packaged', true)
+            ->whereHas('package', function ($q) {
+                $q->whereNotNull('delivered_at');
+            })
+            ->pluck('item_code_id')
+            ->map(fn($v) => (string) $v)
+            ->unique()
+            ->toArray();
+
+        // Kiểm tra xem tất cả các tấm đã được giao hay chưa (100% tấm đều có trong $deliveredPlateCodes)
+        $missingPlateCodes = array_diff($allPlateCodes, $deliveredPlateCodes);
+
+        if (empty($missingPlateCodes)) {
+            $this->update(['status' => 'completed']);
+            try {
+                \App\Services\NotificationService::notifyOrderStatusChanged($this, 'completed');
+            } catch (\Throwable $e) {}
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Cập nhật trạng thái đơn hàng sang "in_production" trực tiếp từ item đang thao tác.
+     */
+    public static function markInProductionFromItem($item): void
+    {
+        if (!$item) return;
+        $order = $item->orderSupply?->order ?? $item->order ?? null;
+        if ($order && in_array($order->status, ['transferred', 'pending'])) {
+            $order->update(['status' => 'in_production']);
+            try {
+                \App\Services\NotificationService::notifyOrderStatusChanged($order, 'in_production');
+            } catch (\Throwable $e) {}
+        }
+    }
+
+    /**
+     * Thống kê tiến độ sản xuất chi tiết của đơn hàng:
+     * - Số tấm chưa sản xuất
+     * - Số tấm đang sản xuất
+     * - Số kiện / tấm đã đóng gói
+     * - Số tấm khách đã nhận
+     */
+    public function getProductionProgressStats(): array
+    {
+        $this->loadMissing([
+            'supplies.items.codes',
+            'supplies.minLateItems.codes',
+            'supplies.glassItems.codes',
+        ]);
+
+        $allPlateCodes = [];
+        $totalPlatesExpected = 0;
+
+        foreach ($this->supplies as $supply) {
+            if ($this->type === 'glass') {
+                $items = $supply->glassItems;
+                $totalPlatesExpected += (int) ($items->sum('wing_quantity') ?: $items->sum('quantity'));
+            } elseif (in_array($this->type, ['min_late', 'Flywood'])) {
+                $items = $supply->minLateItems;
+                $totalPlatesExpected += (int) $items->sum('quantity');
+            } else {
+                $items = $supply->items;
+                $totalPlatesExpected += (int) $items->sum('quantity');
+            }
+
+            foreach ($items as $item) {
+                foreach ($item->codes as $code) {
+                    if (!empty($code->product_id)) {
+                        $allPlateCodes[(string) $code->product_id] = $code;
+                    }
+                }
+            }
+        }
+
+        $totalPlates = count($allPlateCodes) > 0 ? count($allPlateCodes) : $totalPlatesExpected;
+
+        // Tra cứu thông tin đóng gói & giao hàng từ PackingPackageItem
+        $packageItems = collect();
+        if (!empty($allPlateCodes)) {
+            $packageItems = \App\Models\PackingPackageItem::with('package')
+                ->whereIn('item_code_id', array_keys($allPlateCodes))
+                ->get();
+        }
+
+        $packedPlateCodes = [];
+        $deliveredPlateCodes = [];
+        $relatedPackages = collect();
+
+        foreach ($packageItems as $pkgItem) {
+            $codeId = (string) $pkgItem->item_code_id;
+            $pkg = $pkgItem->package;
+
+            if ($pkg) {
+                $relatedPackages->put($pkg->id, $pkg);
+            }
+
+            if ($pkgItem->is_packaged) {
+                $packedPlateCodes[$codeId] = true;
+                if ($pkg && !empty($pkg->delivered_at)) {
+                    $deliveredPlateCodes[$codeId] = true;
+                }
+            }
+        }
+
+        $countDelivered = count($deliveredPlateCodes);
+        $countPackedTotal = count($packedPlateCodes);
+        $completedPackagesCount = $relatedPackages->where('status', 'completed')->count();
+        $totalPackagesCount = $relatedPackages->count();
+
+        $countInProduction = 0;
+        $countNotStarted = 0;
+        $countCompletedQc = 0;
+
+        foreach ($allPlateCodes as $productId => $code) {
+            $statusLogs = $code->status ?? [];
+            if (is_string($statusLogs)) {
+                $statusLogs = json_decode($statusLogs, true) ?? [];
+            }
+
+            $hasStarted = false;
+            $hasCompletedQc = false;
+            $hasPackedLog = false;
+            $hasDeliveredLog = false;
+
+            foreach ($statusLogs as $log) {
+                $act = mb_strtolower($log['action'] ?? '');
+                if ($act === 'hoàn thành qc' || $act === 'hoàn thành làm đẹp') {
+                    $hasCompletedQc = true;
+                }
+                if (str_contains($act, 'đóng gói')) {
+                    $hasPackedLog = true;
+                }
+                if (str_contains($act, 'giao hàng') || str_contains($act, 'đã nhận') || str_contains($act, 'hoàn thành giao')) {
+                    $hasDeliveredLog = true;
+                }
+                if (
+                    str_contains($act, 'ép') ||
+                    str_contains($act, 'cnc') ||
+                    str_contains($act, 'dán') ||
+                    str_contains($act, 'cắt') ||
+                    str_contains($act, 'làm đẹp') ||
+                    str_contains($act, 'lỗi')
+                ) {
+                    $hasStarted = true;
+                }
+            }
+
+            // Đồng bộ nếu trong log quét có đóng gói hoặc giao hàng
+            if ($hasDeliveredLog && !isset($deliveredPlateCodes[$productId])) {
+                $deliveredPlateCodes[$productId] = true;
+                $countDelivered++;
+            }
+            if (($hasPackedLog || $hasDeliveredLog) && !isset($packedPlateCodes[$productId])) {
+                $packedPlateCodes[$productId] = true;
+                $countPackedTotal++;
+            }
+
+            // Phân loại trạng thái tấm:
+            if (isset($packedPlateCodes[$productId])) {
+                continue;
+            }
+
+            if ($hasStarted) {
+                $countInProduction++;
+                if ($hasCompletedQc) {
+                    $countCompletedQc++;
+                }
+            } else {
+                $countNotStarted++;
+            }
+        }
+
+        // Trường hợp đơn chưa tạo barcode/codes
+        if (empty($allPlateCodes)) {
+            $countNotStarted = $totalPlates;
+        }
+
+        $countPackedWaitingDelivery = max(0, $countPackedTotal - $countDelivered);
+
+        return [
+            'total_plates'                  => $totalPlates,
+            'not_started_plates'            => $countNotStarted,
+            'in_production_plates'          => $countInProduction,
+            'completed_qc_plates'           => $countCompletedQc,
+            'packed_plates'                 => $countPackedTotal,
+            'packed_waiting_delivery_plates'=> $countPackedWaitingDelivery,
+            'delivered_plates'              => $countDelivered,
+            'total_packages'                => $totalPackagesCount,
+            'completed_packages'            => $completedPackagesCount,
+        ];
+    }
 }
+
 

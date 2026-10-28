@@ -631,6 +631,7 @@ class PressingService
                 $item->notes = $notes;
                 $item->save();
             }
+            \App\Models\Order::markInProductionFromItem($item);
 
             // Cân đối kho theo cấu hình Thêm kho / Trừ kho của vật tư
             $boardInfo = '';

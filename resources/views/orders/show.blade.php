@@ -45,6 +45,102 @@
         }
     </style>
 
+    @php
+        $productionStats = $productionStats ?? $acrylicOrder->getProductionProgressStats();
+        $totalPlates = $productionStats['total_plates'] ?? 0;
+        $notStartedPlates = $productionStats['not_started_plates'] ?? 0;
+        $inProductionPlates = $productionStats['in_production_plates'] ?? 0;
+        $packedPlates = $productionStats['packed_plates'] ?? 0;
+        $deliveredPlates = $productionStats['delivered_plates'] ?? 0;
+        $totalPackages = $productionStats['total_packages'] ?? 0;
+        $completedPackages = $productionStats['completed_packages'] ?? 0;
+    @endphp
+
+    {{-- Khối thống kê tiến độ: Chưa SX, Đang SX, Đã đóng gói, Khách đã nhận --}}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        {{-- 1. Chưa sản xuất --}}
+        <div class="card p-4 rounded-xl border border-neutral-200 bg-white shadow-xs flex items-center gap-4 transition-all hover:shadow-sm">
+            <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 border border-amber-200">
+                <iconify-icon icon="lucide:clock-3" class="text-2xl"></iconify-icon>
+            </div>
+            <div class="min-w-0 flex-1">
+                <p class="text-xs font-semibold uppercase tracking-wider text-neutral-500 mb-1">Chưa sản xuất</p>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-2xl font-black text-amber-600">{{ number_format($notStartedPlates) }}</span>
+                    <span class="text-xs font-semibold text-neutral-400">/ {{ number_format($totalPlates) }} tấm</span>
+                </div>
+                <div class="mt-2 text-xs text-neutral-400 truncate">
+                    Chưa quét công đoạn gia công
+                </div>
+            </div>
+        </div>
+
+        {{-- 2. Đang sản xuất --}}
+        <div class="card p-4 rounded-xl border border-neutral-200 bg-white shadow-xs flex items-center gap-4 transition-all hover:shadow-sm">
+            <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-200">
+                <iconify-icon icon="lucide:factory" class="text-2xl"></iconify-icon>
+            </div>
+            <div class="min-w-0 flex-1">
+                <p class="text-xs font-semibold uppercase tracking-wider text-neutral-500 mb-1">Đang sản xuất</p>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-2xl font-black text-blue-600">{{ number_format($inProductionPlates) }}</span>
+                    <span class="text-xs font-semibold text-neutral-400">/ {{ number_format($totalPlates) }} tấm</span>
+                </div>
+                <div class="mt-2 text-xs text-neutral-500 truncate">
+                    @if(!empty($productionStats['completed_qc_plates']) && $productionStats['completed_qc_plates'] > 0)
+                        Đạt QC: <strong class="text-emerald-600 font-bold">{{ $productionStats['completed_qc_plates'] }}</strong> tấm
+                    @else
+                        Đang gia công tại xưởng
+                    @endif
+                </div>
+            </div>
+        </div>
+
+        {{-- 3. Đã đóng gói --}}
+        <div class="card p-4 rounded-xl border border-neutral-200 bg-white shadow-xs flex items-center gap-4 transition-all hover:shadow-sm">
+            <div class="w-12 h-12 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center shrink-0 border border-teal-200">
+                <iconify-icon icon="lucide:package" class="text-2xl"></iconify-icon>
+            </div>
+            <div class="min-w-0 flex-1">
+                <p class="text-xs font-semibold uppercase tracking-wider text-neutral-500 mb-1">Đã đóng gói</p>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-2xl font-black text-teal-600">{{ number_format($packedPlates) }}</span>
+                    <span class="text-xs font-semibold text-neutral-400">tấm ({{ $totalPackages }} kiện)</span>
+                </div>
+                <div class="mt-2 text-xs text-neutral-500 truncate">
+                    @if($totalPackages > 0)
+                        Hoàn tất: <strong class="text-teal-700 font-bold">{{ $completedPackages }}/{{ $totalPackages }}</strong> kiện
+                    @else
+                        Chưa tạo kiện đóng gói
+                    @endif
+                </div>
+            </div>
+        </div>
+
+        {{-- 4. Khách đã nhận --}}
+        <div class="card p-4 rounded-xl border border-neutral-200 bg-white shadow-xs flex items-center gap-4 transition-all hover:shadow-sm">
+            <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-200">
+                <iconify-icon icon="lucide:truck" class="text-2xl"></iconify-icon>
+            </div>
+            <div class="min-w-0 flex-1">
+                <p class="text-xs font-semibold uppercase tracking-wider text-neutral-500 mb-1">Khách đã nhận</p>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-2xl font-black text-emerald-600">{{ number_format($deliveredPlates) }}</span>
+                    <span class="text-xs font-semibold text-neutral-400">/ {{ number_format($totalPlates) }} tấm</span>
+                </div>
+                <div class="mt-2 text-xs text-neutral-500 truncate">
+                    @if($totalPlates > 0 && $deliveredPlates >= $totalPlates)
+                        <span class="text-emerald-700 font-bold">Đã nhận đủ 100%</span>
+                    @elseif($deliveredPlates > 0)
+                        <span>Đã giao: <strong>{{ round(($deliveredPlates / max(1, $totalPlates)) * 100) }}%</strong> đơn</span>
+                    @else
+                        <span class="text-neutral-400">Chưa có tấm nào giao</span>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="grid grid-cols-12 gap-6">
         {{-- Main Order Info --}}
         <div class="col-span-12 md:col-span-8 space-y-6">
@@ -835,6 +931,38 @@
         return $s->items;
     })->sum(fn($i) => $i->quantity ?? $i->wing_quantity ?? 0) }}
                         </span>
+                    </div>
+
+                    {{-- Tiến độ sản xuất tấm --}}
+                    <div class="p-4 rounded-xl bg-neutral-50 border border-neutral-100 space-y-2 text-xs">
+                        <div class="flex justify-between items-center">
+                            <span class="text-neutral-500 flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-amber-500 inline-block"></span>
+                                Chưa sản xuất:
+                            </span>
+                            <span class="font-bold text-amber-700">{{ number_format($notStartedPlates) }} tấm</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-neutral-500 flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-blue-500 inline-block"></span>
+                                Đang sản xuất:
+                            </span>
+                            <span class="font-bold text-blue-700">{{ number_format($inProductionPlates) }} tấm</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-neutral-500 flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-teal-500 inline-block"></span>
+                                Đã đóng gói:
+                            </span>
+                            <span class="font-bold text-teal-700">{{ number_format($packedPlates) }} tấm ({{ $totalPackages }} kiện)</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-neutral-500 flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
+                                Khách đã nhận:
+                            </span>
+                            <span class="font-bold text-emerald-700">{{ number_format($deliveredPlates) }} tấm</span>
+                        </div>
                     </div>
                     
                     @if($acrylicOrder->isNhapKho())

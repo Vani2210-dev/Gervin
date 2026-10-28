@@ -218,9 +218,12 @@ class OrderController extends Controller
         }
 
         $order->load(['supplies.items.codes', 'supplies.minLateItems.codes', 'supplies.glassItems.codes', 'paymentDetails', 'orderPayments.creator', 'accountantApprover', 'technicalApprover', 'rejecter']);
+        $order->checkAndMarkInProduction();
+        $order->checkAndMarkCompleted();
         $acrylicOrder = $order;
         $exportData = $this->getExportData($order);
-        return view('orders.show', compact('acrylicOrder', 'exportData'));
+        $productionStats = $order->getProductionProgressStats();
+        return view('orders.show', compact('acrylicOrder', 'exportData', 'productionStats'));
     }
 
     public function exportExcel(Request $request)

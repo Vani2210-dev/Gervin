@@ -267,6 +267,7 @@ class FinishingService
 
             $item->notes = $notes;
             $item->save();
+            \App\Models\Order::markInProductionFromItem($item);
 
             $message = 'Xác nhận hoàn thành công đoạn làm đẹp thành công.';
         }

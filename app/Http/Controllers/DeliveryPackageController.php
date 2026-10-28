@@ -392,40 +392,48 @@ class DeliveryPackageController extends Controller
     /**
      * Tự động kiểm tra và cập nhật trạng thái Đơn hàng sang Hoàn thành nếu tất cả các kiện đã giao
      */
+    /**
+     * Tự động kiểm tra và cập nhật trạng thái Đơn hàng sang Hoàn thành (completed)
+     * nếu tất cả các tấm của đơn hàng đều đã được đưa vào gói và khách đã nhận đơn.
+     */
     private function checkAndCompleteOrder(PackingPackage $package): void
     {
-        $effectiveItems = $package->items->where('is_packaged', true);
-        if ($effectiveItems->isEmpty()) {
-            $effectiveItems = $package->items;
+        $package->loadMissing('items.itemCode');
+        $this->loadMorphCodeRelations($package->items->map(fn ($item) => $item->itemCode)->filter());
+
+        $orders = collect();
+
+        foreach ($package->items as $item) {
+            $code = $item->itemCode;
+            $order = null;
+            if ($code instanceof AcrylicOrderItemCode) {
+                $order = $code->acrylicOrderItem?->orderSupply?->order;
+            } elseif ($code instanceof GlassOrderItemCode) {
+                $order = $code->glassOrderItem?->orderSupply?->order;
+            } elseif ($code instanceof MinLateOrderItemCode) {
+                $order = $code->minLateOrderItem?->orderSupply?->order;
+            }
+
+            if (!$order && !empty($item->item_code_id)) {
+                $acrylicCode = AcrylicOrderItemCode::with('acrylicOrderItem.orderSupply.order')->where('product_id', $item->item_code_id)->first();
+                $order = $acrylicCode?->acrylicOrderItem?->orderSupply?->order;
+                if (!$order) {
+                    $glassCode = GlassOrderItemCode::with('glassOrderItem.orderSupply.order')->where('product_id', $item->item_code_id)->first();
+                    $order = $glassCode?->glassOrderItem?->orderSupply?->order;
+                }
+                if (!$order) {
+                    $minLateCode = MinLateOrderItemCode::with('minLateOrderItem.orderSupply.order')->where('product_id', $item->item_code_id)->first();
+                    $order = $minLateCode?->minLateOrderItem?->orderSupply?->order;
+                }
+            }
+
+            if ($order && !$orders->contains('id', $order->id)) {
+                $orders->push($order);
+            }
         }
 
-        $packageOrder = $this->resolvePackageOrder($effectiveItems);
-        if (! $packageOrder) {
-            return;
-        }
-
-        $orderPackageIds = PackingPackageItem::whereHasMorph('itemCode', [
-            AcrylicOrderItemCode::class,
-            GlassOrderItemCode::class,
-            MinLateOrderItemCode::class,
-        ], function ($q, $type) use ($packageOrder) {
-            if ($type === AcrylicOrderItemCode::class) {
-                $q->whereHas('acrylicOrderItem.orderSupply', fn($sq) => $sq->where('order_id', $packageOrder->id));
-            } elseif ($type === GlassOrderItemCode::class) {
-                $q->whereHas('glassOrderItem.orderSupply', fn($sq) => $sq->where('order_id', $packageOrder->id));
-            } elseif ($type === MinLateOrderItemCode::class) {
-                $q->whereHas('minLateOrderItem.orderSupply', fn($sq) => $sq->where('order_id', $packageOrder->id));
-            }
-        })->pluck('packing_package_id')->unique();
-
-        if ($orderPackageIds->isNotEmpty()) {
-            $undeliveredCount = PackingPackage::whereIn('id', $orderPackageIds)
-                ->whereNull('delivered_at')
-                ->count();
-
-            if ($undeliveredCount === 0) {
-                $packageOrder->update(['status' => 'completed']);
-            }
+        foreach ($orders as $order) {
+            $order->checkAndMarkCompleted();
         }
     }
 
