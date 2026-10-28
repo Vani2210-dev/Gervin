@@ -367,10 +367,14 @@
                     class="card p-0 rounded-xl border-0 overflow-hidden shadow-sm bg-white border-l-4 border-l-primary-500 mb-2">
                     <div class="card-header border-b border-neutral-200 bg-white py-4 px-6 flex items-center justify-between">
                         <div class="flex items-center gap-3">
-                            <div class="p-1.5 bg-primary-50 rounded-lg text-primary-500 flex items-center justify-center">
+                            @php
+                                $hasPvc = (stripos($supply->order_supply_code ?? '', 'PVC') !== false) 
+                                       || (stripos($supply->supply_name ?? '', 'PVC') !== false);
+                            @endphp
+                            <div class="p-1.5 {{ $hasPvc ? 'bg-emerald-100 text-emerald-800' : 'bg-primary-50 text-primary-500' }} rounded-lg flex items-center justify-center">
                                 <iconify-icon icon="lucide:clipboard-list" class="text-base"></iconify-icon>
                             </div>
-                            <h6 class="font-bold text-base text-neutral-800 m-0">Vật tư:
+                            <h6 class="font-bold text-base {{ $hasPvc ? 'text-emerald-800' : 'text-neutral-800' }} m-0" {!! $hasPvc ? 'style="color: #166534 !important;"' : '' !!}>Vật tư:
                                 {{ $supply->order_supply_code ? '[' . $supply->order_supply_code . '] ' : '' }}{{ $supply->supply_name }}
                             </h6>
                             @if(($supply->inventory_action ?? '') === 'subtract')

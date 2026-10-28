@@ -380,6 +380,9 @@
                         <div class="label__content-line"><strong>Mã đơn:</strong> {{ $orderCode }}</div>
                         <div class="label__content-line"><strong>Loại:</strong> {{ $typeSummary }}</div>
                         <div class="label__content-line"><strong>Tổng SL linh kiện:</strong> {{ $totalItems }}</div>
+                        @if(!empty($plateSttString))
+                            <div class="label__content-line" style="word-break: break-word;"><strong>Mã STT:</strong> <span style="font-weight: 700;">{{ $plateSttString }}</span></div>
+                        @endif
                     </div>
 
                     <div class="label__info-group label__info-group--customer">

@@ -146,23 +146,14 @@
             </li>
             @endcan
 
-            @can('view dispatch')
-            <li>
+            @if(auth()->user()->can('view dispatch') || auth()->user()->can('view delivery'))
+            <li class="{{ request()->routeIs('processes.dispatch') || request()->routeIs('processes.delivery') ? 'active-page' : '' }}">
                 <a href="{{ route('processes.dispatch') }}">
                     <iconify-icon icon="lucide:truck" class="menu-icon"></iconify-icon>
-                    <span>Xuất xưởng</span>
+                    <span>Điều vận & Giao nhận</span>
                 </a>
             </li>
-            @endcan
-
-            @can('view delivery')
-            <li>
-                <a href="{{ route('processes.delivery') }}">
-                    <iconify-icon icon="lucide:navigation" class="menu-icon"></iconify-icon>
-                    <span>Giao hàng</span>
-                </a>
-            </li>
-            @endcan
+            @endif
 
             <li>
                 <a href="{{ route('vehicles.index') }}">

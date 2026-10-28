@@ -63,19 +63,43 @@ class PackingPackageController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-        ]);
+        // Tự động sinh mã kiện theo định dạng yymmdd001 (ví dụ hôm nay 28/10/2026 -> 261028001)
+        $datePrefix = date('ymd');
+
+        $existingCodes = PackingPackage::where('name', 'like', $datePrefix . '%')
+            ->pluck('name')
+            ->toArray();
+
+        $maxSeq = 0;
+        foreach ($existingCodes as $c) {
+            if (preg_match('/^' . $datePrefix . '(\d{3,})$/', $c, $m)) {
+                $seq = intval($m[1]);
+                if ($seq > $maxSeq) {
+                    $maxSeq = $seq;
+                }
+            }
+        }
+
+        $nextSeq = $maxSeq + 1;
+        do {
+            $packageName = $datePrefix . sprintf('%03d', $nextSeq);
+            $exists = PackingPackage::where('name', $packageName)->exists();
+            if ($exists) {
+                $nextSeq++;
+            }
+        } while ($exists);
+
+        $name = $request->filled('name') ? trim($request->input('name')) : $packageName;
 
         $package = PackingPackage::create([
-            'name' => $validated['name'],
+            'name' => $name,
             'status' => 'draft',
             'packed_by' => Auth::id(),
         ]);
 
         return redirect()
             ->route('processes.packing.show', $package)
-            ->with('success', 'Tạo kiện đóng gói thành công.');
+            ->with('success', "Tạo kiện đóng gói {$package->name} thành công.");
     }
 
     public function show(PackingPackage $package)
@@ -131,10 +155,23 @@ class PackingPackageController extends Controller
         $packageOrder = $this->resolvePackageOrder($printPackageItems);
 
         $totalItems = $printItems->count();
-        $orderCode = $printItems->first()?->order_code ?? '—';
-        $typeSummary = $printItems->pluck('type')->filter()->unique()->values()->implode(', ') ?: '—';
-        // Mã kiện lấy thẳng ID của kiện, không thêm tiền tố.
-        $packageCode = (string) $package->id;
+        $orderCode = $printItems->first()?->order_code ?? '-';
+        $typeSummary = $printItems->pluck('type')->filter()->unique()->values()->implode(', ') ?: '-';
+
+        // Trích xuất mã STT của các tấm trong kiện theo thứ tự quét
+        $plateSttList = $printItems->map(function ($it) {
+            $codeStr = trim($it->product_code ?? '');
+            if (preg_match('/\.(\d+)$/', $codeStr, $matches)) {
+                return $matches[1];
+            }
+            $parts = explode('.', $codeStr);
+            $last = end($parts);
+            return $last ?: $codeStr;
+        })->filter(fn($val) => $val !== '' && $val !== '-' && $val !== '—')->values();
+
+        $plateSttString = $plateSttList->implode(', ');
+
+        $packageCode = (string) ($package->name ?: $package->id);
 
         // QR dùng trực tiếp mã kiện đang lưu trong database.
         $qrSvg = QrCode::format('svg')
@@ -155,6 +192,7 @@ class PackingPackageController extends Controller
             'customerName' => $packageOrder?->customer_name ?? '—',
             'customerPhone' => $packageOrder?->phone ?? '—',
             'deliveryAddress' => $packageOrder?->address ?? '—',
+            'plateSttString' => $plateSttString,
         ]);
     }
 

@@ -36,11 +36,14 @@
                 <span class="packing-page__current-user-name font-semibold text-neutral-900">{{ $currentUser?->name ?? 'Người đóng gói' }}</span>
             </div>
             @can('add packing')
-                <button type="button" onclick="openModal('create-packing-package-modal')"
-                    class="packing-page__create-package-button btn bg-primary-600 hover:bg-primary-700 text-white px-5 py-2.5 rounded-lg flex items-center justify-center gap-2 font-semibold shadow-sm">
-                    <iconify-icon icon="lucide:plus" class="packing-page__create-package-icon text-xl"></iconify-icon>
-                    <span class="packing-page__create-package-label">Tạo kiện mới</span>
-                </button>
+                <form method="POST" action="{{ route('processes.packing.store') }}" class="inline-block m-0">
+                    @csrf
+                    <button type="submit"
+                        class="packing-page__create-package-button btn bg-primary-600 hover:bg-primary-700 text-white px-5 py-2.5 rounded-lg flex items-center justify-center gap-2 font-semibold shadow-sm">
+                        <iconify-icon icon="lucide:plus" class="packing-page__create-package-icon text-xl"></iconify-icon>
+                        <span class="packing-page__create-package-label">Tạo kiện mới</span>
+                    </button>
+                </form>
             @endcan
         </div>
     </div>
@@ -309,46 +312,6 @@
     </div>
 
     @can('add packing')
-        <x-modal name="create-packing-package-modal" maxWidth="lg" class="packing-page__create-modal">
-            <form method="POST" action="{{ route('processes.packing.store') }}" class="packing-page__create-modal-form">
-                @csrf
-                <div class="packing-page__create-modal-header px-6 py-5 border-b border-neutral-200 flex items-center justify-between">
-                    <div class="packing-page__create-modal-title-group flex items-center gap-3">
-                        <span class="packing-page__create-modal-icon-wrap w-12 h-12 rounded-lg bg-primary-100 text-primary-600 border border-primary-200 flex items-center justify-center shadow-sm">
-                            <iconify-icon icon="lucide:package" class="packing-page__create-modal-icon text-2xl"></iconify-icon>
-                        </span>
-                        <h5 class="packing-page__create-modal-title text-xl font-bold text-neutral-900 mb-0">Tạo kiện đóng gói</h5>
-                    </div>
-                    <button type="button" onclick="closeModal('create-packing-package-modal')" class="packing-page__create-modal-close text-secondary-light hover:text-neutral-900 text-2xl leading-none">
-                        <iconify-icon icon="lucide:x" class="packing-page__create-modal-close-icon"></iconify-icon>
-                    </button>
-                </div>
-
-                <div class="packing-page__create-modal-body px-6 py-5">
-                    <div class="packing-page__create-modal-field mb-4">
-                        <label class="packing-page__create-modal-label form-label font-semibold text-sm text-neutral-700">Người đóng gói hiện tại</label>
-                        <input type="text" value="{{ $currentUser?->name ?? 'Người đóng gói' }}" class="packing-page__create-modal-input form-control rounded-lg bg-neutral-50" readonly>
-                    </div>
-
-                    <div class="packing-page__create-modal-field">
-                        <label for="packing_package_name" class="packing-page__create-modal-label form-label font-semibold text-sm text-neutral-700">Tên kiện / Biển số</label>
-                        <input type="text" id="packing_package_name" name="name" value="{{ old('name') }}" class="packing-page__create-modal-input form-control rounded-lg" placeholder="Ví dụ: Kiện 1" required autofocus>
-                        @error('name')
-                            <p class="packing-page__create-modal-error text-danger-600 text-sm mt-2 mb-0">{{ $message }}</p>
-                        @enderror
-                    </div>
-                </div>
-
-                <div class="packing-page__create-modal-footer px-6 py-5 border-t border-neutral-200 bg-neutral-50 flex justify-end gap-3">
-                    <button type="button" onclick="closeModal('create-packing-package-modal')" class="packing-page__create-modal-cancel btn bg-neutral-100 hover:bg-neutral-200 text-neutral-700 px-5 py-2.5 rounded-lg font-semibold">Hủy bỏ</button>
-                    <button type="submit" class="packing-page__create-modal-submit btn bg-primary-600 hover:bg-primary-700 text-white px-5 py-2.5 rounded-lg font-semibold flex items-center gap-2">
-                        <iconify-icon icon="lucide:plus" class="packing-page__create-modal-submit-icon text-lg"></iconify-icon>
-                        <span class="packing-page__create-modal-submit-label">Tạo kiện</span>
-                    </button>
-                </div>
-            </form>
-        </x-modal>
-
         {{-- Modal Sửa tên kiện --}}
         <x-modal name="edit-packing-package-modal" maxWidth="lg" class="packing-page__edit-modal">
             <form id="editPackingPackageForm" method="POST" action="" class="packing-page__edit-modal-form">
@@ -396,13 +359,7 @@
             }
         </script>
 
-        @if($errors->has('name'))
-            <script>
-                document.addEventListener('DOMContentLoaded', function () {
-                    openModal('create-packing-package-modal');
-                });
-            </script>
-        @endif
+        
     @endcan
 
 

@@ -681,6 +681,14 @@ function previewOrder() {
             customerText = t.startsWith('--') ? '' : t;
         }
     }
+    let combinedCustomerDisplay = '';
+    if (customerText && customerName) {
+        combinedCustomerDisplay = `${customerText} (${customerName})`;
+    } else if (customerText) {
+        combinedCustomerDisplay = customerText;
+    } else {
+        combinedCustomerDisplay = customerName || '—';
+    }
     const phone = getVal('[name="phone"]');
     const orderDate = getVal('[name="order_date"]');
     const deliveryDays = getVal('[name="delivery_days"]');
@@ -1128,15 +1136,33 @@ function previewOrder() {
         });
         summaryRowHTML += '</tr>';
 
+        let hasPvc = (supplyCode && supplyCode.toUpperCase().includes('PVC')) || (supplyName && supplyName.toUpperCase().includes('PVC'));
+        if (!hasPvc) {
+            const itemCodeElements = supplyRow.querySelectorAll('input[name*="[product_code]"], select[name*="[product_code]"], .order-item-row');
+            for (let el of itemCodeElements) {
+                const txt = el.value || el.textContent || '';
+                if (txt.toUpperCase().includes('PVC')) {
+                    hasPvc = true;
+                    break;
+                }
+            }
+        }
+
+        const iconBgClass = hasPvc ? 'bg-emerald-100 text-emerald-800' : 'bg-primary-100 text-primary-700';
+        const titleColorClass = hasPvc ? 'text-emerald-800' : 'text-neutral-800';
+        const titleInlineStyle = hasPvc ? 'style="color: #166534 !important;"' : '';
+        const nameColorClass = hasPvc ? 'text-emerald-800 font-bold' : 'text-neutral-600 font-semibold';
+        const badgeClass = hasPvc ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-primary-50 text-primary-700 border-primary-200';
+
         suppliesHTML += `
             <div class="mb-6">
                 <div class="flex items-center gap-3 mb-2.5 pb-2 border-b border-neutral-200">
-                    <div class="p-1.5 bg-primary-100 rounded-lg text-primary-700 flex items-center justify-center font-bold">
+                    <div class="p-1.5 ${iconBgClass} rounded-lg flex items-center justify-center font-bold">
                         <iconify-icon icon="lucide:clipboard-list" class="text-base"></iconify-icon>
                     </div>
-                    <span class="font-extrabold text-sm text-neutral-800">${supplyCode || 'Vật tư ' + (sIdx + 1)}</span>
-                    ${supplyName ? `<span class="text-xs font-semibold text-neutral-600">— ${supplyName}</span>` : ''}
-                    ${supplyQty ? `<span class="text-xs bg-primary-50 text-primary-700 border border-primary-200 px-2.5 py-0.5 rounded-full font-bold">SL tấm: ${supplyQty}</span>` : ''}
+                    <span class="font-extrabold text-sm ${titleColorClass}" ${titleInlineStyle}>${supplyCode || 'Vật tư ' + (sIdx + 1)}</span>
+                    ${supplyName ? `<span class="text-xs ${nameColorClass}" ${titleInlineStyle}>- ${supplyName}</span>` : ''}
+                    ${supplyQty ? `<span class="text-xs ${badgeClass} border px-2.5 py-0.5 rounded-full font-bold">SL tấm: ${supplyQty}</span>` : ''}
                 </div>
                 <div class="overflow-x-auto rounded-lg border border-neutral-300">
                     <table class="w-full" style="border-collapse: collapse; min-width: 100%;">
@@ -1325,8 +1351,7 @@ function previewOrder() {
                                     <iconify-icon icon="lucide:user" class="text-lg text-primary-500"></iconify-icon>
                                     <h6 class="font-bold text-sm text-neutral-800 m-0">Thông tin khách hàng & công trình</h6>
                                 </div>
-                                ${customerText ? infoRow('Khách hàng', customerText, 'lucide:user') : ''}
-                                ${infoRow('Tên công trình', customerName, 'lucide:building')}
+                                ${infoRow('Tên khách hàng', combinedCustomerDisplay, 'lucide:user')}
                                 ${infoRow('Số điện thoại', phone, 'lucide:phone')}
                                 ${infoRow('Địa chỉ', address, 'lucide:map-pin')}
                             </div>

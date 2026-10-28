@@ -28,52 +28,10 @@ class DeliveryPackageController extends Controller
      */
     public function index(Request $request)
     {
-        $range = $request->input('range', 'all');
-        $search = trim($request->input('search', ''));
-        $perPage = (int) $request->input('per_page', 15);
-        $perPage = in_array($perPage, [15, 25, 50, 100], true) ? $perPage : 15;
-
-        // 1. Lấy danh sách lịch sử giao hàng thành công
-        $query = PackingPackage::with(['packer', 'vehicle', 'items.itemCode'])
-            ->whereNotNull('delivered_at')
-            ->orderByDesc('delivered_at');
-
-        $this->applyDateFilter($query, $request, 'delivered_at');
-
-        $packages = $query->get();
-
-        $historyRows = $this->buildHistoryRows($packages);
-        $historyRows = $this->filterHistoryRows($historyRows, $range, $search);
-        $historyRows = $this->paginateHistoryRows($historyRows, $perPage, $request);
-
-        // 2. Danh sách kiện ĐANG CHỜ GIAO HÀNG (đã xuất xưởng nhưng chưa giao xong)
-        $pendingPackages = PackingPackage::with(['packer', 'vehicle', 'items.itemCode'])
-            ->where('status', 'completed')
-            ->whereNotNull('dispatched_at')
-            ->whereNull('delivered_at')
-            ->orderByDesc('dispatched_at')
-            ->get();
-        $pendingRows = $this->buildPendingRows($pendingPackages);
-
-        // 3. Danh sách xe giao hàng
-        $vehicles = Vehicle::where('status', 'active')->orderBy('name')->get();
-
-        return view('delivery.index', [
-            'historyRows'        => $historyRows,
-            'pendingRows'        => $pendingRows,
-            'pendingCount'       => $pendingPackages->count(),
-            'vehicles'           => $vehicles,
-            'todayDeliveryCount' => $this->getTodayDeliveryCount(),
-            'range'              => $range,
-            'search'             => $search,
-            'perPage'            => $perPage,
-            'currentUser'        => Auth::user(),
-        ]);
+        $request->merge(['mode' => 'delivery']);
+        return app(DispatchPackageController::class)->index($request);
     }
 
-    /**
-     * Xem thông tin kiểm tra trước khi xác nhận giao hàng
-     */
     public function preview(Request $request)
     {
         $validated = $request->validate([

@@ -145,15 +145,21 @@
                             <iconify-icon icon="lucide:user" class="text-lg text-primary-500"></iconify-icon>
                             <h6 class="font-bold text-sm text-neutral-800 m-0">Thông tin khách hàng & công trình</h6>
                         </div>
-                        @if($customerName)
-                            <div class="flex items-start justify-between py-1.5 border-b border-neutral-100 text-xs">
-                                <span class="text-neutral-500 flex items-center gap-1.5 font-medium"><iconify-icon icon="lucide:user" class="text-sm text-neutral-400"></iconify-icon>Khách hàng:</span>
-                                <span class="font-bold text-neutral-800 text-right">{{ $customerName }}</span>
-                            </div>
-                        @endif
+                        @php
+                            $fullCustomerDisplay = '';
+                            if ($acrylicOrder->isNhapKho()) {
+                                $fullCustomerDisplay = 'Nhập kho nội bộ Gervin';
+                            } elseif ($acrylicOrder->customer && $acrylicOrder->customer_name) {
+                                $fullCustomerDisplay = $acrylicOrder->customer->name . ($acrylicOrder->customer->customer_code ? ' (' . $acrylicOrder->customer->customer_code . ')' : '') . ' (' . $acrylicOrder->customer_name . ')';
+                            } elseif ($acrylicOrder->customer) {
+                                $fullCustomerDisplay = $acrylicOrder->customer->name . ($acrylicOrder->customer->customer_code ? ' (' . $acrylicOrder->customer->customer_code . ')' : '');
+                            } else {
+                                $fullCustomerDisplay = $acrylicOrder->customer_name ?: '—';
+                            }
+                        @endphp
                         <div class="flex items-start justify-between py-1.5 border-b border-neutral-100 text-xs">
-                            <span class="text-neutral-500 flex items-center gap-1.5 font-medium"><iconify-icon icon="lucide:building" class="text-sm text-neutral-400"></iconify-icon>Tên công trình:</span>
-                            <span class="font-bold text-neutral-800 text-right">{{ $acrylicOrder->customer_name ?: '—' }}</span>
+                            <span class="text-neutral-500 flex items-center gap-1.5 font-medium"><iconify-icon icon="lucide:user" class="text-sm text-neutral-400"></iconify-icon>Tên khách hàng:</span>
+                            <span class="font-bold text-neutral-800 text-right">{{ $fullCustomerDisplay }}</span>
                         </div>
                         <div class="flex items-start justify-between py-1.5 border-b border-neutral-100 text-xs">
                             <span class="text-neutral-500 flex items-center gap-1.5 font-medium"><iconify-icon icon="lucide:phone" class="text-sm text-neutral-400"></iconify-icon>Số điện thoại:</span>
@@ -230,14 +236,34 @@
                         </div>
 
                         @foreach($acrylicOrder->supplies as $sIdx => $supply)
+                            @php
+                                $hasPvc = (stripos($supply->order_supply_code ?? '', 'PVC') !== false) 
+                                       || (stripos($supply->supply_name ?? '', 'PVC') !== false);
+                                if (!$hasPvc && isset($supply->items)) {
+                                    foreach ($supply->items as $it) {
+                                        if (stripos($it->product_code ?? '', 'PVC') !== false || stripos($it->product_name ?? '', 'PVC') !== false) {
+                                            $hasPvc = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                                if (!$hasPvc && isset($supply->minLateItems)) {
+                                    foreach ($supply->minLateItems as $it) {
+                                        if (stripos($it->product_code ?? '', 'PVC') !== false || stripos($it->name ?? '', 'PVC') !== false) {
+                                            $hasPvc = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                            @endphp
                             <div class="mb-6">
                                 <div class="flex items-center gap-3 mb-2.5 pb-2 border-b border-neutral-200">
-                                    <div class="p-1.5 bg-primary-100 rounded-lg text-primary-700 flex items-center justify-center font-bold">
+                                    <div class="p-1.5 {{ $hasPvc ? 'bg-emerald-100 text-emerald-800' : 'bg-primary-100 text-primary-700' }} rounded-lg flex items-center justify-center font-bold">
                                         <iconify-icon icon="lucide:clipboard-list" class="text-base"></iconify-icon>
                                     </div>
-                                    <span class="font-extrabold text-sm text-neutral-800">{{ $supply->order_supply_code ? '[' . $supply->order_supply_code . '] ' : '' }}{{ $supply->supply_name ?: 'Vật tư ' . ($sIdx + 1) }}</span>
+                                    <span class="font-extrabold text-sm {{ $hasPvc ? 'text-emerald-800' : 'text-neutral-800' }}" {!! $hasPvc ? 'style="color: #166534 !important;"' : '' !!}>{{ $supply->order_supply_code ? '[' . $supply->order_supply_code . '] ' : '' }}{{ $supply->supply_name ?: 'Vật tư ' . ($sIdx + 1) }}</span>
                                     @if($supply->quantity)
-                                        <span class="text-xs bg-primary-50 text-primary-700 border border-primary-200 px-2.5 py-0.5 rounded-full font-bold">SL tấm: {{ floatval($supply->quantity) == intval($supply->quantity) ? number_format($supply->quantity, 0, ',', '.') : number_format($supply->quantity, 2, ',', '.') }}</span>
+                                        <span class="text-xs {{ $hasPvc ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-primary-50 text-primary-700 border-primary-200' }} border px-2.5 py-0.5 rounded-full font-bold">SL tấm: {{ floatval($supply->quantity) == intval($supply->quantity) ? number_format($supply->quantity, 0, ',', '.') : number_format($supply->quantity, 2, ',', '.') }}</span>
                                     @endif
                                 </div>
 
