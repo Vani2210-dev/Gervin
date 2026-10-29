@@ -74,6 +74,9 @@
             ];
         }
     }
+
+    // Tra cứu thông tin đóng gói từ mục processes/packing
+    $packingInfo = $acrylicOrder->getPackingInfo();
 @endphp
 
 <!-- Preview Order Modal -->
@@ -196,9 +199,22 @@
                             <span class="text-neutral-500 flex items-center gap-1.5 font-medium"><iconify-icon icon="lucide:clock" class="text-sm text-neutral-400"></iconify-icon>Hạn đơn:</span>
                             <span class="font-bold text-danger-600 text-right">{{ $deadlineFormatted }}</span>
                         </div>
-                        <div class="flex items-start justify-between py-1.5 text-xs">
-                            <span class="text-neutral-500 flex items-center gap-1.5 font-medium"><iconify-icon icon="lucide:activity" class="text-sm text-neutral-400"></iconify-icon>Trạng thái:</span>
+                        <div class="flex items-start justify-between py-2 border-b border-neutral-100 text-xs">
+                            <span class="text-neutral-500 flex items-center gap-2 font-medium"><iconify-icon icon="lucide:activity" class="text-sm text-neutral-400"></iconify-icon>Trạng thái:</span>
                             <span class="font-bold text-neutral-800 text-right">{{ $statusText }}</span>
+                        </div>
+                        <div class="flex items-start justify-between py-2 text-xs">
+                            <span class="text-neutral-500 flex items-center gap-2 font-medium"><iconify-icon icon="lucide:package" class="text-sm text-neutral-400"></iconify-icon>Số kiện đóng gói:</span>
+                            <span class="font-bold text-right {{ $packingInfo['total_packages'] > 0 ? 'text-primary-600' : 'text-neutral-400' }}">
+                                @if($packingInfo['total_packages'] > 0)
+                                    <span>{{ $packingInfo['total_packages'] }} kiện</span>
+                                    @if(!empty($packingInfo['package_names']))
+                                        <span class="text-[10px] text-neutral-500 font-normal block font-mono">({{ implode(', ', $packingInfo['package_names']) }})</span>
+                                    @endif
+                                @else
+                                    <span class="text-neutral-400 font-normal">Chưa đóng gói</span>
+                                @endif
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -655,6 +671,116 @@
                             </span>
                         </div>
                     @endif
+                </div>
+
+                <!-- Khối Lưu ý, Xác nhận chữ ký 3 bên & Điều khoản báo giá (đồng bộ với file Excel) -->
+                <div class="mt-6 pt-4 border-t-2 border-neutral-300 space-y-4 text-neutral-800" style="font-family: 'Times New Roman', Times, serif;">
+                    <!-- 1. Lưu ý nhận hàng -->
+                    <div class="p-4 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-950 leading-relaxed">
+                        <div class="font-bold text-sm mb-1 text-amber-900">Lưu ý:</div>
+                        <div class="space-y-1">
+                            <p class="m-0">+ Khách hàng phải kiểm tra và xác nhận đã nhận đầy đủ số lượng, tình trạng bên ngoài của hàng như hàng không bị xước hoặc hư hỏng.</p>
+                            <p class="m-0">+ Nếu khách hàng nhận hàng mà không kiểm tra hoặc bỏ qua bước kiểm tra và ký nhận thì bên cung cấp hàng không chịu trách nhiệm về việc hư hỏng hay thiếu sót hàng tính từ thời điểm giao xong hàng.</p>
+                        </div>
+                    </div>
+
+                    <!-- 2. Khu vực chữ ký & Xét duyệt điện tử -->
+                    <div class="grid grid-cols-3 gap-4 text-center pt-2">
+                        <!-- Cột 1: Bên mua -->
+                        <div class="p-4 rounded-xl border border-neutral-200 bg-neutral-50 flex flex-col justify-between" style="min-height: 160px;">
+                            <div>
+                                <div class="font-bold text-sm uppercase tracking-wide text-neutral-900">Xác nhận bên mua hàng</div>
+                                <div class="text-xs text-neutral-600 mt-2 italic leading-relaxed">
+                                    Ngày............đã nhận đủ số lượng và đã kiểm tra hàng không bị xước hoặc hư hỏng.
+                                </div>
+                            </div>
+                            <div class="text-xs text-neutral-400 italic pt-6 pb-2">(Ký, ghi rõ họ tên)</div>
+                        </div>
+
+                        <!-- Cột 2: Kỹ thuật duyệt -->
+                        <div class="p-4 rounded-xl border border-neutral-200 bg-neutral-50 flex flex-col justify-between" style="min-height: 160px;">
+                            <div>
+                                <div class="font-bold text-sm uppercase tracking-wide text-neutral-900">Kỹ thuật duyệt</div>
+                            </div>
+                            @if($acrylicOrder->technical_approved_by)
+                                <div class="my-auto py-2 flex flex-col items-center justify-center">
+                                    <div class="px-4 py-2 rounded-xl text-center inline-block" style="border: 2px solid #2563eb; background-color: #eff6ff; transform: rotate(-2deg);">
+                                        <div class="text-[10px] font-black uppercase tracking-widest text-blue-700 flex items-center justify-center gap-1">
+                                            <iconify-icon icon="lucide:check-circle-2" class="text-xs text-blue-600"></iconify-icon>
+                                            <span>ĐÃ DUYỆT SẢN XUẤT</span>
+                                        </div>
+                                        <div class="text-xs font-bold text-neutral-900 mt-1 uppercase">
+                                            {{ $acrylicOrder->technicalApprover?->name ?? 'Kỹ thuật' }}
+                                        </div>
+                                        @if($acrylicOrder->technical_approved_at)
+                                            <div class="text-[10px] text-neutral-500 font-mono mt-0.5">
+                                                {{ $acrylicOrder->technical_approved_at->format('H:i d/m/Y') }}
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                            @else
+                                <div class="my-auto py-6 flex flex-col items-center justify-center">
+                                    <span class="text-xs text-neutral-400 italic">(Chờ duyệt)</span>
+                                </div>
+                            @endif
+                            <div class="text-[10px] text-neutral-400 pb-2">Xác nhận duyệt hệ thống</div>
+                        </div>
+
+                        <!-- Cột 3: Kế toán duyệt -->
+                        <div class="p-4 rounded-xl border border-neutral-200 bg-neutral-50 flex flex-col justify-between" style="min-height: 160px;">
+                            <div>
+                                <div class="font-bold text-sm uppercase tracking-wide text-neutral-900">Kế toán duyệt</div>
+                            </div>
+                            @if($acrylicOrder->accountant_approved_by)
+                                <div class="my-auto py-2 flex flex-col items-center justify-center">
+                                    <div class="px-4 py-2 rounded-xl text-center inline-block" style="border: 2px solid #059669; background-color: #ecfdf5; transform: rotate(-2deg);">
+                                        <div class="text-[10px] font-black uppercase tracking-widest text-emerald-700 flex items-center justify-center gap-1">
+                                            <iconify-icon icon="lucide:check-circle-2" class="text-xs text-emerald-600"></iconify-icon>
+                                            <span>KẾ TOÁN ĐÃ DUYỆT</span>
+                                        </div>
+                                        <div class="text-xs font-bold text-neutral-900 mt-1 uppercase">
+                                            {{ $acrylicOrder->accountantApprover?->name ?? 'Kế toán' }}
+                                        </div>
+                                        @if($acrylicOrder->accountant_approved_at)
+                                            <div class="text-[10px] text-neutral-500 font-mono mt-0.5">
+                                                {{ $acrylicOrder->accountant_approved_at->format('H:i d/m/Y') }}
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                            @else
+                                <div class="my-auto py-6 flex flex-col items-center justify-center">
+                                    <span class="text-xs text-neutral-400 italic">(Chờ duyệt)</span>
+                                </div>
+                            @endif
+                            <div class="text-[10px] text-neutral-400 pb-2">Xác nhận duyệt hệ thống</div>
+                        </div>
+                    </div>
+
+                    <!-- 3. Các điều khoản thanh toán & bảo hành (5 điều) -->
+                    <div class="pt-3 text-xs space-y-2 text-neutral-700 leading-relaxed border-t border-neutral-200">
+                        <div class="flex items-start gap-2">
+                            <span class="font-bold text-neutral-900 w-4 shrink-0 text-center">1.</span>
+                            <span>Đơn giá trên chưa bao gồm VAT. Đúng sai ±1 mm.</span>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <span class="font-bold text-neutral-900 w-4 shrink-0 text-center">2.</span>
+                            <span>Ứng trước 50% tiền đơn hàng gia công, thanh toán 50% còn lại trước khi lấy hàng tại kho, giao hàng tại nhà máy bên bán sau 2 đến 3 ngày.</span>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <span class="font-bold text-neutral-900 w-4 shrink-0 text-center">3.</span>
+                            <span>Khi mua tấm Quý khách vui lòng thanh toán 100% tiền hàng trước khi chuyển hàng ra khỏi kho bên bán.</span>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <span class="font-bold text-neutral-900 w-4 shrink-0 text-center">4.</span>
+                            <span>Quý khách có thể thanh toán bằng tiền mặt hoặc chuyển khoản vào một trong các tài khoản sau:</span>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <span class="font-bold text-neutral-900 w-4 shrink-0 text-center">5.</span>
+                            <span>Bảo hành cong vênh, bong tróc 12 tháng, bảo trì vĩnh viễn. Không bảo hành mối và ngập nước.</span>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Footer trên ảnh khi xuất -->

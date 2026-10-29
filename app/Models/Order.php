@@ -722,6 +722,73 @@ class Order extends Model
             'delivered_plates'              => $countDelivered,
             'total_packages'                => $totalPackagesCount,
             'completed_packages'            => $completedPackagesCount,
+            'package_names'                 => $relatedPackages->pluck('name')->filter()->values()->all(),
+        ];
+    }
+
+    /**
+     * Lấy thông tin các kiện đóng gói của đơn hàng từ mục processes/packing
+     */
+    public function getPackingInfo(): array
+    {
+        $allPlateCodeIds = [];
+        if ($this->supplies) {
+            foreach ($this->supplies as $supply) {
+                $items = $this->type === 'min_late'
+                    ? $supply->minLateItems
+                    : ($this->type === 'glass' ? $supply->glassItems : $supply->items);
+                if ($items) {
+                    foreach ($items as $item) {
+                        if ($item->codes) {
+                            foreach ($item->codes as $code) {
+                                if (!empty($code->product_id)) {
+                                    $allPlateCodeIds[(string) $code->product_id] = true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (empty($allPlateCodeIds)) {
+            return [
+                'total_packages' => 0,
+                'completed_packages' => 0,
+                'package_names' => [],
+                'text' => 'Chưa đóng gói',
+            ];
+        }
+
+        $packageItems = \App\Models\PackingPackageItem::with('package')
+            ->whereIn('item_code_id', array_keys($allPlateCodeIds))
+            ->where('is_packaged', true)
+            ->get();
+
+        $relatedPackages = collect();
+        foreach ($packageItems as $pkgItem) {
+            if ($pkgItem->package) {
+                $relatedPackages->put($pkgItem->package->id, $pkgItem->package);
+            }
+        }
+
+        $totalPackages = $relatedPackages->count();
+        $completedPackages = $relatedPackages->where('status', 'completed')->count();
+        $names = $relatedPackages->pluck('name')->filter()->values();
+
+        $text = 'Chưa đóng gói';
+        if ($totalPackages > 0) {
+            $text = $totalPackages . ' kiện';
+            if ($names->isNotEmpty()) {
+                $text .= ' (' . $names->implode(', ') . ')';
+            }
+        }
+
+        return [
+            'total_packages' => $totalPackages,
+            'completed_packages' => $completedPackages,
+            'package_names' => $names->all(),
+            'text' => $text,
         ];
     }
 }

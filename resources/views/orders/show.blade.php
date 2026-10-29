@@ -391,6 +391,22 @@
                                 @endif
                             </span>
                         </div>
+                        @php
+                            $showPackingInfo = $acrylicOrder->getPackingInfo();
+                        @endphp
+                        <div class="flex flex-col gap-1">
+                            <span class="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Số kiện đóng gói</span>
+                            <span class="font-medium {{ $showPackingInfo['total_packages'] > 0 ? 'text-primary-600' : 'text-neutral-500' }}">
+                                @if($showPackingInfo['total_packages'] > 0)
+                                    <span class="font-bold">{{ $showPackingInfo['total_packages'] }} kiện</span>
+                                    @if(!empty($showPackingInfo['package_names']))
+                                        <span class="text-xs text-neutral-500 font-mono">({{ implode(', ', $showPackingInfo['package_names']) }})</span>
+                                    @endif
+                                @else
+                                    <span class="text-neutral-400">Chưa đóng gói</span>
+                                @endif
+                            </span>
+                        </div>
                         <div class="flex flex-col gap-1 md:col-span-2">
                             <span class="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Địa chỉ giao
                                 hàng</span>

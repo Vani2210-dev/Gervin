@@ -779,6 +779,23 @@ class OrderController extends Controller
         $isDraftSave = $request->input('action') === 'draft';
         if ($isDraftSave) {
             $request->merge(['status' => 'draft']);
+        } else {
+            // Xác nhận đơn từ đơn nháp sang đơn thường: Cập nhật lại ngày giờ tạo đơn theo đúng thời điểm gửi đơn
+            $now = \Carbon\Carbon::now('Asia/Ho_Chi_Minh');
+            $request->merge(['order_date' => $now->format('Y-m-d H:i:s')]);
+            $draftOrder->order_date = $now;
+            $draftOrder->created_at = $now;
+            $draftOrder->save();
+
+            // Tính lại hạn giao hàng (deadline) dựa trên ngày giờ chốt đơn mới + số ngày giao
+            if ($request->filled('delivery_days') && (float)$request->delivery_days > 0) {
+                $deliveryDays = (float) $request->delivery_days;
+                $fullDays = floor($deliveryDays);
+                $fraction = $deliveryDays - $fullDays;
+                $hours = round($fraction * 24);
+                $deadline = $now->copy()->addDays($fullDays)->addHours($hours);
+                $request->merge(['deadline' => $deadline->format('Y-m-d H:i:s')]);
+            }
         }
 
         $rules = $service->getStoreRules();
@@ -799,6 +816,12 @@ class OrderController extends Controller
 
         $request->validate($rules);
         $service->update($request, $draftOrder);
+
+        if (!$isDraftSave) {
+            $now = \Carbon\Carbon::now('Asia/Ho_Chi_Minh');
+            $draftOrder->created_at = $now;
+            $draftOrder->saveQuietly();
+        }
 
         if ($isDraftSave) {
             return redirect()->route('orders.index', ['filter_status' => 'draft'])->with('success', 'Đã lưu đơn nháp thành công.');
@@ -858,9 +881,27 @@ class OrderController extends Controller
             }
         }
 
+        $wasDraftBefore = $order->status === 'draft';
         $isDraftSave = $request->input('action') === 'draft' || ($request->status === 'draft' && $order->status === 'draft');
         if ($isDraftSave) {
             $request->merge(['status' => 'draft']);
+        } elseif ($wasDraftBefore) {
+            // Xác nhận đơn từ đơn nháp sang đơn thường: Cập nhật lại ngày giờ tạo đơn theo đúng thời điểm gửi đơn
+            $now = \Carbon\Carbon::now('Asia/Ho_Chi_Minh');
+            $request->merge(['order_date' => $now->format('Y-m-d H:i:s')]);
+            $order->order_date = $now;
+            $order->created_at = $now;
+            $order->save();
+
+            // Tính lại hạn giao hàng (deadline) dựa trên ngày giờ chốt đơn mới + số ngày giao
+            if ($request->filled('delivery_days') && (float)$request->delivery_days > 0) {
+                $deliveryDays = (float) $request->delivery_days;
+                $fullDays = floor($deliveryDays);
+                $fraction = $deliveryDays - $fullDays;
+                $hours = round($fraction * 24);
+                $deadline = $now->copy()->addDays($fullDays)->addHours($hours);
+                $request->merge(['deadline' => $deadline->format('Y-m-d H:i:s')]);
+            }
         }
 
         $service = $this->serviceFor($request->type);
@@ -883,6 +924,12 @@ class OrderController extends Controller
 
         $request->validate($rules);
         $service->update($request, $order);
+
+        if ($wasDraftBefore && !$isDraftSave) {
+            $now = \Carbon\Carbon::now('Asia/Ho_Chi_Minh');
+            $order->created_at = $now;
+            $order->saveQuietly();
+        }
 
         if ($request->status === 'transferred') {
             if (!$order->accountant_approved_by) {

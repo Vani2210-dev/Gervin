@@ -174,18 +174,29 @@ class AcrylicOrderService
             }
         }
 
+        $isDraftSave = ($request->input('action') === 'draft' || $request->status === 'draft');
+        $isPromotingFromDraft = ($order->status === 'draft' && !$isDraftSave);
+
+        if ($isPromotingFromDraft) {
+            $currentOrderDate = now();
+        } else {
+            $currentOrderDate = $request->order_date ? Carbon::parse($request->order_date) : ($order->order_date ?? now());
+        }
+
         $deadline = null;
-        if ($request->filled('order_date') && $request->filled('delivery_days')) {
-            $orderDate = Carbon::parse($request->order_date);
+        if ($request->filled('delivery_days')) {
+            $orderDate = $currentOrderDate->copy();
             $deliveryDays = (float) $request->delivery_days;
             $fullDays = floor($deliveryDays);
             $fraction = $deliveryDays - $fullDays;
             $hours = round($fraction * 24);
             $deadline = $orderDate->copy()->addDays($fullDays)->addHours($hours);
+        } elseif ($request->filled('deadline')) {
+            $deadline = $request->deadline;
         }
 
         $updateData = [
-            'order_date'    => $request->order_date ? Carbon::parse($request->order_date) : $order->order_date,
+            'order_date'    => $currentOrderDate,
             'delivery_days' => $request->delivery_days,
             'customer_id'   => $customerId,
             'customer_name' => $request->customer_name,
@@ -199,11 +210,15 @@ class AcrylicOrderService
             'vat_percent'     => $vatPercent,
             'vat_amount'      => $vatAmount,
             'total_amount'    => $totalAmount,
-            'status'          => ($request->input('action') === 'draft' || $request->status === 'draft')
+            'status'          => $isDraftSave
                 ? 'draft'
                 : ($order->status === 'draft' ? 'pending' : ($request->status ?? $order->status)),
             'attachments'   => !empty($allAttachments) ? json_encode($allAttachments) : null,
         ];
+
+        if ($isPromotingFromDraft) {
+            $updateData['created_at'] = $currentOrderDate;
+        }
 
         if ($order->relation_type === 'additional' && $order->board_return_status !== null) {
             $updateData['board_return_status'] = $order->board_return_status;
