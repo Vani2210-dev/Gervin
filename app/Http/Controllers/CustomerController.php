@@ -1334,6 +1334,7 @@ class CustomerController extends Controller
             'total_amount'  => $totalAmount,
             'total_paid'    => $totalPaid,
             'total_debt'    => $customer->total_debt,
+            'debt_info_for_order' => $customer->getDebtInfoForOrder($excludeOrderId ? \App\Models\Order::find($excludeOrderId) : null),
             'unpaid_debt_summary' => $customer->getDebtSummaryExcluding($excludeOrderId),
             'status_counts' => $statusCounts,
             'recent_orders' => $recentOrders,

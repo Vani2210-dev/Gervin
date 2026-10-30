@@ -13,30 +13,10 @@
     $thisOrderPaid = $isEdit && $acrylicOrder->orderPayments ? $acrylicOrder->orderPayments->sum('amount') : 0;
     $thisOrderOldAmount = $isEdit ? round($acrylicOrder->total_amount, -3) : 0;
     $thisOrderOldStatusWasValid = $isEdit ? !in_array($acrylicOrder->status, ['draft', 'pending', 'cancelled']) : false;
-    // Tính toán công nợ khách hàng khớp 100% với _preview_modal.blade.php và OrderController::getExportData
-    $initialDebtInfo = null;
-    if ($isEdit && $acrylicOrder->customer) {
-        $thisOrderTotal = round($acrylicOrder->total_amount, -3);
-        $thisOrderPaid = $acrylicOrder->orderPayments ? $acrylicOrder->orderPayments->sum('amount') : 0;
-        $thisOrderUnpaid = 0;
-        if (!in_array($acrylicOrder->status, ['draft', 'cancelled', 'pending'])) {
-            $thisOrderUnpaid = max(0, $thisOrderTotal - $thisOrderPaid);
-        }
-        $currentTotalDebt = $acrylicOrder->customer->total_debt ?? 0;
-        $todayPaid = $acrylicOrder->customer->customerPayments()
-            ->whereDate('payment_date', \Carbon\Carbon::today())
-            ->sum('amount');
-        $oldDebt = max(0, $currentTotalDebt - $thisOrderUnpaid + $todayPaid);
-        $totalCombinedDebt = $oldDebt + $thisOrderTotal - $todayPaid;
-
-        if ($oldDebt > 0 || $todayPaid > 0 || $totalCombinedDebt > 0) {
-            $initialDebtInfo = [
-                'old_debt' => $oldDebt,
-                'this_order_paid' => $todayPaid,
-                'total_combined_debt' => max(0, $totalCombinedDebt),
-            ];
-        }
-    }
+    // Tính toán công nợ khách hàng theo thứ tự thời gian khớp 100% với _preview_modal.blade.php và OrderController::getExportData (Phương án 2)
+    $initialDebtInfo = ($isEdit && $acrylicOrder->customer) 
+        ? $acrylicOrder->customer->getDebtInfoForOrder($acrylicOrder) 
+        : null;
 @endphp
 <script>
     window.currentOrderId = @json($thisOrderId);
@@ -460,10 +440,17 @@ function fetchCustomerDebt(customerId) {
         .then(r => r.json())
         .then(data => {
             const debtCard = document.getElementById('customer-debt-card');
+            if (data.debt_info_for_order) {
+                window.initialDebtInfo = data.debt_info_for_order;
+                window.customerOldDebt = data.debt_info_for_order.old_debt || 0;
+                window.customerTodayPaid = data.debt_info_for_order.this_order_paid || 0;
+            }
             if (data.unpaid_debt_summary) {
-                window.customerOldDebt = data.unpaid_debt_summary.total_debt || 0;
-                window.customerOldPaid = data.unpaid_debt_summary.total_paid || 0;
-                window.customerOldAmount = data.unpaid_debt_summary.total_amount || 0;
+                if (!data.debt_info_for_order) {
+                    window.customerOldDebt = data.unpaid_debt_summary.total_debt || 0;
+                    window.customerOldPaid = data.unpaid_debt_summary.total_paid || 0;
+                    window.customerOldAmount = data.unpaid_debt_summary.total_amount || 0;
+                }
                 const initDebtInput = document.getElementById('customer_initial_debt');
                 if (initDebtInput && data.customer) {
                     initDebtInput.value = data.customer.debt || 0;
@@ -836,27 +823,27 @@ function previewOrder() {
     if (debtOld > 0 || debtTodayPaid > 0 || debtTotal > 0) {
         debtSummaryHTML = `
             <div class="mt-5 pt-4 border-t-2 border-dashed border-primary-200">
-                <div class="text-xs font-bold uppercase tracking-wider text-neutral-600 mb-2.5 flex items-center justify-between">
-                    <span class="flex items-center gap-1.5 text-primary-700">
+                <div class="text-xs font-bold uppercase tracking-wider text-neutral-600 mb-2 flex items-center justify-between">
+                    <span class="flex items-center gap-2 text-primary-700">
                         <iconify-icon icon="lucide:wallet" class="text-base text-primary-600"></iconify-icon>
                         <span>Thông tin công nợ khách hàng</span>
                     </span>
                     <span class="text-[11px] font-normal text-neutral-400 lowercase italic">(đồng bộ với bảng công nợ khi xuất excel)</span>
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div class="bg-white p-3.5 rounded-xl border border-neutral-200 shadow-xs flex flex-col justify-between">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="bg-white p-4 rounded-xl border border-neutral-200 shadow-xs flex flex-col justify-between">
                         <span class="text-xs font-semibold text-neutral-500">Công nợ:</span>
                         <span class="text-base font-bold text-neutral-800 mt-1 font-mono">
                             ${Math.round(debtOld).toLocaleString('vi-VN')} đ
                         </span>
                     </div>
-                    <div class="bg-white p-3.5 rounded-xl border border-emerald-200 bg-emerald-50/40 shadow-xs flex flex-col justify-between">
+                    <div class="bg-white p-4 rounded-xl border border-emerald-200 bg-emerald-50/40 shadow-xs flex flex-col justify-between">
                         <span class="text-xs font-semibold text-emerald-700">Đã TT (hôm nay):</span>
                         <span class="text-base font-bold text-emerald-600 mt-1 font-mono">
                             ${Math.round(debtTodayPaid).toLocaleString('vi-VN')} đ
                         </span>
                     </div>
-                    <div class="bg-white p-3.5 rounded-xl border border-rose-200 bg-rose-50/50 shadow-xs flex flex-col justify-between">
+                    <div class="bg-white p-4 rounded-xl border border-rose-200 bg-rose-50/50 shadow-xs flex flex-col justify-between">
                         <span class="text-xs font-bold text-rose-700">Tổng công nợ:</span>
                         <span class="text-lg font-black text-rose-600 mt-1 font-mono">
                             ${Math.round(debtTotal).toLocaleString('vi-VN')} đ

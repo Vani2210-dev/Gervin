@@ -791,6 +791,17 @@ class Order extends Model
             'text' => $text,
         ];
     }
+
+    /**
+     * Lấy thông tin công nợ lũy kế theo thứ tự thời gian cho đơn hàng này (Phương án 2).
+     */
+    public function getCustomerDebtInfo(?float $customTotal = null, ?string $customOrderDate = null): ?array
+    {
+        if (!$this->customer) {
+            return null;
+        }
+        return $this->customer->getDebtInfoForOrder($this, $customTotal, $customOrderDate);
+    }
 }
 
 
