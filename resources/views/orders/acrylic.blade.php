@@ -645,6 +645,7 @@ function handleSupplyCodeChange(selectEl, value) {
             const isNK = typeof window.isNhapKhoSelected === 'function' && window.isNhapKhoSelected();
             unitPriceInput.value = isNK ? 0 : (price.price_m2 ? parseInt(price.price_m2) : 0);
             applyFlashEffect(unitPriceInput);
+            applyNarrowWidthRule(itemRow, false);
             calculateTotalPrice(itemRow, 'unit_price');
         }
     });
@@ -1084,6 +1085,14 @@ function bindAcrylicRowEvents(row) {
         });
     }
     if (widthInput) {
+        const triggerNarrowCheck = () => {
+            if (widthInput.narrowTimeout) {
+                clearTimeout(widthInput.narrowTimeout);
+                widthInput.narrowTimeout = null;
+            }
+            applyNarrowWidthRule(row, true);
+        };
+
         widthInput.addEventListener('input', () => {
             calculateTotalPrice(row, 'width');
             syncBevelOnSizeChange(row);
@@ -1091,17 +1100,13 @@ function bindAcrylicRowEvents(row) {
             // Dùng debounce để tránh đổi đơn giá liên tục khi người dùng đang nhập số (ví dụ: gõ 120 không bị nhảy xuống 100k ở số 1 và 12)
             clearTimeout(widthInput.narrowTimeout);
             widthInput.narrowTimeout = setTimeout(() => {
-                applyNarrowWidthRule(row, true);
-            }, 500);
-        });
-
-        widthInput.addEventListener('blur', () => {
-            if (widthInput.narrowTimeout) {
-                clearTimeout(widthInput.narrowTimeout);
                 widthInput.narrowTimeout = null;
                 applyNarrowWidthRule(row, true);
-            }
+            }, 300);
         });
+
+        widthInput.addEventListener('change', triggerNarrowCheck);
+        widthInput.addEventListener('blur', triggerNarrowCheck);
     }
     if (quantityInput) {
         quantityInput.addEventListener('input', () => {
@@ -1193,6 +1198,7 @@ function duplicateAcrylicRow(button) {
 
     bindAcrylicRowEvents(newRow);
     initBevelField(newRow);
+    applyNarrowWidthRule(newRow, true);
     updateAcrylicRowIndexes();
     updateOrderSummary();
 }
@@ -1334,6 +1340,7 @@ function addFakeThicknessRow(button) {
 
     bindAcrylicRowEvents(newRow);
     initBevelField(newRow);
+    applyNarrowWidthRule(newRow, true);
     updateAcrylicRowIndexes();
     updateOrderSummary();
 }
@@ -1363,7 +1370,7 @@ function calculateTotalPrice(row, sourceEvent) {
             }
             wingAreaInput.value = wingArea > 0 ? wingArea : '';
         } else {
-            if (!isNaN(width) && width > 0 && width < 55) {
+            if (!isNaN(width) && width > 0 && width <= 55) {
                 wingAreaInput.value = '';
             } else {
                 let wingArea = 0;
@@ -1388,7 +1395,7 @@ function calculateTotalPrice(row, sourceEvent) {
 }
 
 /**
- * Narrow-width rule: width < 55mm → Phào = (cao × SL) / 1000, Đơn giá = 100.000, Cánh = 0.
+ * Narrow-width rule: width <= 55mm → Phào = (cao × SL) / 1000, Đơn giá = 100.000, Cánh = 0.
  * Width input gets red border as visual warning.
  */
 function applyNarrowWidthRule(row, triggerCalculation = true) {
@@ -1412,8 +1419,8 @@ function applyNarrowWidthRule(row, triggerCalculation = true) {
     const quantity = parseFloat(quantityInput ? quantityInput.value : 1) || 1;
 
     const lastWidth = parseFloat(widthInput.dataset.lastWidth);
-    const isPreviousNarrow = !isNaN(lastWidth) && lastWidth > 0 && lastWidth < 55;
-    const isCurrentNarrow = !isNaN(width) && width > 0 && width < 55;
+    const isPreviousNarrow = !isNaN(lastWidth) && lastWidth > 0 && lastWidth <= 55;
+    const isCurrentNarrow = !isNaN(width) && width > 0 && width <= 55;
 
     if (isCurrentNarrow) {
         // Red border warning
@@ -1436,7 +1443,7 @@ function applyNarrowWidthRule(row, triggerCalculation = true) {
         // Restore normal border
         widthInput.classList.remove('input-narrow-warning');
 
-        // Phào (m) = 0 khi rộng >= 55
+        // Phào (m) = 0 khi rộng > 55
         if (moldingLengthInput) {
             moldingLengthInput.value = '';
         }

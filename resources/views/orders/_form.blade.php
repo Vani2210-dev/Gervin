@@ -1081,7 +1081,7 @@ function previewOrder() {
                         const productNameInput = row.querySelector('input[name*="[product_name]"]') || row.querySelector('input[name*="[name]"]');
                         const prodName = productNameInput ? productNameInput.value.trim() : '';
                         const isLabor = row.hasAttribute('data-is-labor') || row.classList.contains('bg-amber-50/60') || prodName === 'Công giả dày';
-                        if (!isNaN(num) && num > 0 && num < 55 && !isLabor) {
+                        if (!isNaN(num) && num > 0 && num <= 55 && !isLabor) {
                             textColor = '#ef4444';
                             bgColor = '#fef2f2';
                             isBold = true;

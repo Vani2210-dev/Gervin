@@ -338,7 +338,7 @@
 @php
     $wVal = floatval($item->width ?? 0);
     $prodName = trim($item->product_name ?? ($item->name ?? ''));
-    $isNarrow = ($wVal > 0 && $wVal < 55 && $prodName !== 'Công giả dày');
+    $isNarrow = ($wVal > 0 && $wVal <= 55 && $prodName !== 'Công giả dày');
     $hasCnc = !empty($item->vertical_grain_cnc) || (!empty($item->notes) && (stripos($item->notes, 'kính') !== false || stripos($item->notes, 'cnc') !== false));
 @endphp
                                                         <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: center; {{ $isNarrow ? 'color: #ef4444; background-color: #fef2f2; font-weight: 700;' : 'color: #0f172a;' }} font-size: 13px; white-space: nowrap;">{{ $item->width ?: '—' }}</td>
@@ -417,7 +417,7 @@
 @php
     $wVal = floatval($sizes['width'] ?? ($item->width ?? 0));
     $prodName = trim($item->name ?? ($item->product_name ?? ''));
-    $isNarrow = ($wVal > 0 && $wVal < 55 && $prodName !== 'Công giả dày');
+    $isNarrow = ($wVal > 0 && $wVal <= 55 && $prodName !== 'Công giả dày');
     $hasCnc = ((float)($item->cnc ?? 0) > 0) || (!empty($item->notes) && (stripos($item->notes, 'kính') !== false || stripos($item->notes, 'cnc') !== false));
 @endphp
                                                         <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: center; {{ $isNarrow ? 'color: #ef4444; background-color: #fef2f2; font-weight: 700;' : 'color: #0f172a;' }} font-size: 13px; white-space: nowrap;">{{ $sizes['width'] ?? '—' }}</td>
@@ -493,7 +493,7 @@
 @php
     $wVal = floatval($item->width ?? 0);
     $prodName = trim($item->product_name ?? ($item->name ?? ''));
-    $isNarrow = ($wVal > 0 && $wVal < 55 && $prodName !== 'Công giả dày');
+    $isNarrow = ($wVal > 0 && $wVal <= 55 && $prodName !== 'Công giả dày');
     $hasCnc = (!empty($item->notes) && (stripos($item->notes, 'kính') !== false || stripos($item->notes, 'cnc') !== false));
 @endphp
                                                         <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: center; {{ $isNarrow ? 'color: #ef4444; background-color: #fef2f2; font-weight: 700;' : 'color: #0f172a;' }} font-size: 13px; white-space: nowrap;">{{ $item->width ?: '—' }}</td>
