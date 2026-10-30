@@ -50,8 +50,30 @@
     $orderPaidAmt = $acrylicOrder->orderPayments ? $acrylicOrder->orderPayments->sum('amount') : 0;
     $orderRemainingAmt = max(0, $acrylicOrder->total_amount - $orderPaidAmt);
 
-    // Customer debt calculation matching OrderController::getExportData exactly (Phương án 2 lũy kế)
-    $debtInfo = $exportData['customer_debt_info'] ?? $acrylicOrder->getCustomerDebtInfo();
+    // Customer debt calculation matching OrderController::getExportData exactly
+    $debtInfo = $exportData['customer_debt_info'] ?? null;
+    if ($debtInfo === null && $acrylicOrder->customer) {
+        $thisOrderTotal = round($acrylicOrder->total_amount, -3);
+        $thisOrderPaid = $acrylicOrder->orderPayments ? $acrylicOrder->orderPayments->sum('amount') : 0;
+        $thisOrderUnpaid = 0;
+        if (!in_array($acrylicOrder->status, ['draft', 'cancelled', 'pending'])) {
+            $thisOrderUnpaid = max(0, $thisOrderTotal - $thisOrderPaid);
+        }
+        $currentTotalDebt = $acrylicOrder->customer->total_debt ?? 0;
+        $todayPaid = $acrylicOrder->customer->customerPayments()
+            ->whereDate('payment_date', \Carbon\Carbon::today())
+            ->sum('amount');
+        $oldDebt = max(0, $currentTotalDebt - $thisOrderUnpaid + $todayPaid);
+        $totalCombinedDebt = $oldDebt + $thisOrderTotal - $todayPaid;
+
+        if ($oldDebt > 0 || $todayPaid > 0 || $totalCombinedDebt > 0) {
+            $debtInfo = [
+                'old_debt' => $oldDebt,
+                'this_order_paid' => $todayPaid,
+                'total_combined_debt' => max(0, $totalCombinedDebt),
+            ];
+        }
+    }
 
     // Tra cứu thông tin đóng gói từ mục processes/packing
     $packingInfo = $acrylicOrder->getPackingInfo();

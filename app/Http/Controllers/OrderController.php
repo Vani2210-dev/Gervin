@@ -452,7 +452,27 @@ class OrderController extends Controller
             'vat_amount' => $acrylicOrder->vat_amount ?? 0,
             'total_amount' => round($acrylicOrder->total_amount, -3),
             'delivery_days' => $acrylicOrder->delivery_days ?? ($acrylicOrder->type === 'glass' ? 5 : 2),
-            'customer_debt_info' => $acrylicOrder->getCustomerDebtInfo(),
+            'customer_debt_info' => call_user_func(function() use ($acrylicOrder) {
+                if (!$acrylicOrder->customer) return null;
+                $thisOrderTotal = round($acrylicOrder->total_amount, -3);
+                $thisOrderPaid = $acrylicOrder->orderPayments->sum('amount');
+                $thisOrderUnpaid = 0;
+                if (!in_array($acrylicOrder->status, ['draft', 'cancelled', 'pending'])) {
+                    $thisOrderUnpaid = max(0, $thisOrderTotal - $thisOrderPaid);
+                }
+                $currentTotalDebt = $acrylicOrder->customer->total_debt;
+                $todayPaid = $acrylicOrder->customer->customerPayments()->whereDate('payment_date', \Carbon\Carbon::today())->sum('amount');
+                $oldDebt = max(0, $currentTotalDebt - $thisOrderUnpaid + $todayPaid);
+                $totalCombinedDebt = $oldDebt + $thisOrderTotal - $todayPaid;
+                
+                if ($oldDebt == 0 && $todayPaid == 0 && $totalCombinedDebt == 0) return null;
+                
+                return [
+                    'old_debt' => $oldDebt,
+                    'this_order_paid' => $todayPaid, // still named this_order_paid in JS, but sends today's paid
+                    'total_combined_debt' => max(0, $totalCombinedDebt),
+                ];
+            }),
             'supplies' => $acrylicOrder->supplies->map(function ($supply) use ($acrylicOrder) {
                 $items = [];
                 if (in_array($acrylicOrder->type, ['min_late', 'Flywood'])) {

@@ -13,8 +13,30 @@
     $thisOrderPaid = $isEdit && $acrylicOrder->orderPayments ? $acrylicOrder->orderPayments->sum('amount') : 0;
     $thisOrderOldAmount = $isEdit ? round($acrylicOrder->total_amount, -3) : 0;
     $thisOrderOldStatusWasValid = $isEdit ? !in_array($acrylicOrder->status, ['draft', 'pending', 'cancelled']) : false;
-    // Tính toán công nợ khách hàng khớp 100% với _preview_modal.blade.php và OrderController::getExportData (Phương án 2 lũy kế)
-    $initialDebtInfo = ($isEdit && $acrylicOrder->customer) ? $acrylicOrder->getCustomerDebtInfo() : null;
+    // Tính toán công nợ khách hàng khớp 100% với _preview_modal.blade.php và OrderController::getExportData
+    $initialDebtInfo = null;
+    if ($isEdit && $acrylicOrder->customer) {
+        $thisOrderTotal = round($acrylicOrder->total_amount, -3);
+        $thisOrderPaid = $acrylicOrder->orderPayments ? $acrylicOrder->orderPayments->sum('amount') : 0;
+        $thisOrderUnpaid = 0;
+        if (!in_array($acrylicOrder->status, ['draft', 'cancelled', 'pending'])) {
+            $thisOrderUnpaid = max(0, $thisOrderTotal - $thisOrderPaid);
+        }
+        $currentTotalDebt = $acrylicOrder->customer->total_debt ?? 0;
+        $todayPaid = $acrylicOrder->customer->customerPayments()
+            ->whereDate('payment_date', \Carbon\Carbon::today())
+            ->sum('amount');
+        $oldDebt = max(0, $currentTotalDebt - $thisOrderUnpaid + $todayPaid);
+        $totalCombinedDebt = $oldDebt + $thisOrderTotal - $todayPaid;
+
+        if ($oldDebt > 0 || $todayPaid > 0 || $totalCombinedDebt > 0) {
+            $initialDebtInfo = [
+                'old_debt' => $oldDebt,
+                'this_order_paid' => $todayPaid,
+                'total_combined_debt' => max(0, $totalCombinedDebt),
+            ];
+        }
+    }
 @endphp
 <script>
     window.currentOrderId = @json($thisOrderId);
@@ -438,17 +460,10 @@ function fetchCustomerDebt(customerId) {
         .then(r => r.json())
         .then(data => {
             const debtCard = document.getElementById('customer-debt-card');
-            if (data.order_debt_info) {
-                window.customerOldDebt = parseFloat(data.order_debt_info.old_debt || 0);
-                window.customerTodayPaid = parseFloat(data.order_debt_info.this_order_paid || 0);
-                window.initialDebtInfo = data.order_debt_info;
-            } else if (data.unpaid_debt_summary) {
+            if (data.unpaid_debt_summary) {
                 window.customerOldDebt = data.unpaid_debt_summary.total_debt || 0;
                 window.customerOldPaid = data.unpaid_debt_summary.total_paid || 0;
                 window.customerOldAmount = data.unpaid_debt_summary.total_amount || 0;
-                window.customerTodayPaid = 0;
-                window.initialDebtInfo = null;
-            }
                 const initDebtInput = document.getElementById('customer_initial_debt');
                 if (initDebtInput && data.customer) {
                     initDebtInput.value = data.customer.debt || 0;

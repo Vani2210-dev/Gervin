@@ -1328,20 +1328,12 @@ class CustomerController extends Controller
             ];
         });
 
-        $orderForDebt = $excludeOrderId ? \App\Models\Order::find($excludeOrderId) : null;
-        if (!$orderForDebt) {
-            $orderForDebt = new \App\Models\Order(['customer_id' => $customer->id, 'total_amount' => 0]);
-        }
-        $orderForDebt->setRelation('customer', $customer);
-        $orderDebtInfo = $orderForDebt->getCustomerDebtInfo();
-
         return response()->json([
             'customer'      => $customer,
             'total_orders'  => $totalOrders,
             'total_amount'  => $totalAmount,
             'total_paid'    => $totalPaid,
             'total_debt'    => $customer->total_debt,
-            'order_debt_info' => $orderDebtInfo,
             'unpaid_debt_summary' => $customer->getDebtSummaryExcluding($excludeOrderId),
             'status_counts' => $statusCounts,
             'recent_orders' => $recentOrders,
