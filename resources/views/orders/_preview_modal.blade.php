@@ -28,18 +28,23 @@
     $totalItems = $acrylicOrder->supplies->flatMap(function ($s) use ($acrylicOrder) {
         if ($acrylicOrder->type === 'min_late') return $s->minLateItems;
         if ($acrylicOrder->type === 'glass') return $s->glassItems;
-        return $s->items;
+        return $s->items->filter(fn($i) => ($i->product_name ?? '') !== 'Công giả dày');
     })->sum(fn($i) => $i->quantity ?? $i->wing_quantity ?? 0);
 
     if ($acrylicOrder->type === 'service' && $totalItems == 0) {
         $totalItems = $acrylicOrder->paymentDetails ? $acrylicOrder->paymentDetails->sum('quantity') : 0;
     }
 
-    $totalSheets = $acrylicOrder->supplies->sum(fn($s) => $s->quantity ?? 0);
+    $totalSheets = $acrylicOrder->supplies->sum(function ($s) use ($acrylicOrder) {
+        if ($acrylicOrder->type === 'acrylic') {
+            return $s->items->filter(fn($i) => ($i->product_name ?? '') !== 'Công giả dày')->sum('quantity');
+        }
+        return $s->quantity ?? 0;
+    });
 
     $totalArea = $acrylicOrder->supplies->flatMap(function ($s) use ($acrylicOrder) {
         if ($acrylicOrder->type === 'glass') return $s->glassItems;
-        return $s->items;
+        return $s->items->filter(fn($i) => ($i->product_name ?? '') !== 'Công giả dày');
     })->sum(fn($i) => $i->wing_area ?? $i->area_m2 ?? 0);
 
     $discountAmt = $acrylicOrder->discount_amount ?? 0;
@@ -289,8 +294,11 @@
                                             <tbody>
                                                 @forelse($supply->items as $iIdx => $item)
                                                     @php
-                                                        $sumQty += (float)($item->quantity ?? 0);
-                                                        $sumWingArea += (float)($item->wing_area ?? 0);
+                                                        $isLabor = ($item->product_name ?? '') === 'Công giả dày';
+                                                        if (!$isLabor) {
+                                                            $sumQty += (float)($item->quantity ?? 0);
+                                                            $sumWingArea += (float)($item->wing_area ?? 0);
+                                                        }
                                                         $sumMolding += (float)($item->molding_length ?? 0);
                                                         $sumTotal += (float)($item->total_price ?? 0);
 

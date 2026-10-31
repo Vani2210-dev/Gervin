@@ -1870,8 +1870,18 @@ function updateOrderSummary() {
             if (itemQtyInputs.length > 0) {
                 let total = 0;
                 itemQtyInputs.forEach(input => {
+                    const row = input.closest('tr');
                     // Ignore rows that might be visually hidden or disabled (e.g. templates)
-                    if (!input.disabled && !input.closest('tr.hidden')) {
+                    if (!input.disabled && (!row || !row.classList.contains('hidden'))) {
+                        const isLabor = row && (
+                            row.dataset.isLabor === '1' ||
+                            row.classList.contains('bg-amber-50/60') ||
+                            row.querySelector('.labor-badge') != null ||
+                            (row.querySelector('input[name*="[product_name]"]')?.value?.trim() === 'Công giả dày') ||
+                            (row.querySelector('input[name*="[is_labor]"]')?.value === '1')
+                        );
+                        if (isLabor) return; // BỎ RA: Không cộng số lượng công giả dày vào tổng số tấm của vật tư!
+
                         const val = parseFloat(input.value);
                         if (!isNaN(val)) {
                             total += val;
@@ -1900,8 +1910,20 @@ function updateOrderSummary() {
                     // Fields that should display as float (decimals)
                     const isFloat = field === 'wing_area' || field === 'weight' || field.includes('length') || field.includes('ban_rong') || field === 'area_m2';
                     
-                    table.querySelectorAll(`tbody tr:not(.hidden) input[name*="[${field}]"]`).forEach(input => {
-                        if (!input.disabled && input.type !== 'hidden') {
+                    table.querySelectorAll(`tbody tr:not(.hidden)`).forEach(row => {
+                        const isLabor = row.dataset.isLabor === '1' ||
+                            row.classList.contains('bg-amber-50/60') ||
+                            row.querySelector('.labor-badge') != null ||
+                            (row.querySelector('input[name*="[product_name]"]')?.value?.trim() === 'Công giả dày') ||
+                            (row.querySelector('input[name*="[is_labor]"]')?.value === '1');
+
+                        // BỎ RA: Dòng công giả dày KHÔNG cộng số lượng và KHÔNG cộng m2/chiều dài vào tổng bảng!
+                        if (isLabor && (field === 'quantity' || field === 'wing_area' || field === 'area_m2' || field === 'molding_length')) {
+                            return;
+                        }
+
+                        const input = row.querySelector(`input[name*="[${field}]"]`);
+                        if (input && !input.disabled && input.type !== 'hidden') {
                             let valStr = input.hasAttribute('data-exact-value') ? input.getAttribute('data-exact-value') : input.value;
                             if (typeof valStr === 'string' && !isFloat) {
                                 valStr = valStr.replace(/\./g, '');
@@ -2030,6 +2052,12 @@ function updateOrderSummary() {
     } else {
         const rows = document.querySelectorAll('.order-item-row');
         rows.forEach(row => {
+            const isLabor = row.dataset.isLabor === '1' ||
+                row.classList.contains('bg-amber-50/60') ||
+                row.querySelector('.labor-badge') != null ||
+                (row.querySelector('input[name*="[product_name]"]')?.value?.trim() === 'Công giả dày') ||
+                (row.querySelector('input[name*="[is_labor]"]')?.value === '1');
+
             const qtyInput = row.querySelector('input[name*="quantity"]');
             const priceInput = row.querySelector('input[name*="total_price"]');
             const heightInput = row.querySelector('input[name*="[height]"]');
@@ -2040,13 +2068,21 @@ function updateOrderSummary() {
                 const totalPrice = parseFloat(rawPrice) || 0;
                 const height = parseFloat(heightInput ? heightInput.value : 0) || 0;
                 const width = parseFloat(widthInput ? widthInput.value : 0) || 0;
+
+                // Tiền công vẫn được cộng vào tổng tiền đơn hàng!
+                if (!window.isReworkOrder && !window.isWarrantyOrder) {
+                    totalAmount += totalPrice;
+                }
+
+                // BỎ RA: Không cộng số tấm, số sản phẩm, diện tích m2 của công giả dày vào tổng sản lượng của đơn!
+                if (isLabor) {
+                    return;
+                }
+
                 totalItems++;
                 totalSheets += quantity;
                 if (height > 0 && width > 0) {
                     totalArea += (height * width * quantity) / 1000000;
-                }
-                if (!window.isReworkOrder && !window.isWarrantyOrder) {
-                    totalAmount += totalPrice;
                 }
             }
         });

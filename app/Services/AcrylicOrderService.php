@@ -310,7 +310,7 @@ class AcrylicOrderService
                 'order_id'          => $order->id,
                 'order_supply_code' => $supplyData['order_supply_code'] ?? null,
                 'supply_name'       => $supplyData['supply_name'] ?? 'Vật tư',
-                'quantity'          => $supplyData['quantity'] ?? 1,
+                'quantity'          => $this->calculateSupplyNonLaborQuantity($supplyData),
                 'inventory_action'  => $supplyData['inventory_action'] ?? 'add',
                 'warehouse_id'      => $supplyData['warehouse_id'] ?? null,
             ]);
@@ -379,6 +379,27 @@ class AcrylicOrderService
                 // else: labor row — no codes, globalPieceIndex unchanged
             }
         }
+    }
+
+    /**
+     * Calculate total physical sheets quantity for a supply block (excluding labor rows like 'Công giả dày')
+     */
+    protected function calculateSupplyNonLaborQuantity(array $supplyData): float
+    {
+        $qty = 0;
+        if (isset($supplyData['items']) && is_array($supplyData['items'])) {
+            foreach ($supplyData['items'] as $item) {
+                $isLabor = !empty($item['is_labor']) && $item['is_labor'] == '1';
+                $isLabor = $isLabor || (($item['product_name'] ?? '') === 'Công giả dày');
+                if (!$isLabor) {
+                    $qty += floatval($item['quantity'] ?? 0);
+                }
+            }
+        }
+        if ($qty <= 0 && isset($supplyData['quantity'])) {
+            $qty = floatval($supplyData['quantity']);
+        }
+        return $qty > 0 ? $qty : 1;
     }
 
     /**

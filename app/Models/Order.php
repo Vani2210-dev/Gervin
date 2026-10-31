@@ -225,12 +225,16 @@ class Order extends Model
                     }
                 } else {
                     if ($supply->relationLoaded('items')) {
-                        $sheets += (float) $supply->items->sum('quantity');
+                        $sheets += (float) $supply->items->filter(fn($i) => ($i->product_name ?? '') !== 'Công giả dày')->sum('quantity');
                     }
                 }
             }
             if ($sheets <= 0) {
-                $sheets = (float) $this->supplies->sum('quantity');
+                if ($this->type === 'acrylic') {
+                    $sheets = (float) $this->items()->where('acrylic_order_items.product_name', '!=', 'Công giả dày')->sum('acrylic_order_items.quantity');
+                } else {
+                    $sheets = (float) $this->supplies->sum('quantity');
+                }
             }
         } else {
             if (in_array($this->type, ['min_late', 'Flywood'])) {
@@ -238,9 +242,9 @@ class Order extends Model
             } elseif ($this->type === 'glass') {
                 $sheets = (float) $this->glassItems()->sum('glass_order_items.wing_quantity');
             } else {
-                $sheets = (float) $this->items()->sum('acrylic_order_items.quantity');
+                $sheets = (float) $this->items()->where('acrylic_order_items.product_name', '!=', 'Công giả dày')->sum('acrylic_order_items.quantity');
             }
-            if ($sheets <= 0) {
+            if ($sheets <= 0 && $this->type !== 'acrylic') {
                 $sheets = (float) $this->supplies()->sum('order_supplies.quantity');
             }
         }
@@ -290,6 +294,7 @@ class Order extends Model
                 } else {
                     if ($supply->relationLoaded('items')) {
                         foreach ($supply->items as $item) {
+                            if (($item->product_name ?? '') === 'Công giả dày') continue;
                             if ((float) ($item->molding_length ?? 0) > 0) {
                                 $meters += (float) $item->molding_length;
                             } elseif ((float) ($item->height ?? 0) > 0 && (float) ($item->width ?? 0) > 0) {
@@ -333,6 +338,7 @@ class Order extends Model
                 }
             } else {
                 foreach ($this->items as $item) {
+                    if (($item->product_name ?? '') === 'Công giả dày') continue;
                     if ((float) ($item->molding_length ?? 0) > 0) {
                         $meters += (float) $item->molding_length;
                     } elseif ((float) ($item->height ?? 0) > 0 && (float) ($item->width ?? 0) > 0) {
