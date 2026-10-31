@@ -35,7 +35,7 @@
                         </div>
                         <div>
                             <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Kho nhận <span class="text-danger-500">*</span></label>
-                            <select name="warehouse_id" id="select_warehouse" class="form-select rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500" required>
+                            <select name="warehouse_id" id="select_warehouse" class="form-select rounded-lg w-full border border-neutral-300 px-3 py-2 text-xs font-semibold text-neutral-800 bg-white focus:border-primary-500 focus:ring-primary-500" required>
                                 @foreach($warehouses as $wh)
                                     <option value="{{ $wh->id }}">{{ $wh->name }}</option>
                                 @endforeach
@@ -151,6 +151,7 @@
         background-color: #eff6ff !important;
         color: #1d4ed8 !important;
     }
+    select.tomselected,
     select.material-tom-select.tomselected {
         display: none !important;
     }
@@ -226,7 +227,7 @@
 
     let rowCount = 0;
 
-    function addItemRow(selectedMaterialId = '', qty = '', price = '') {
+    function addItemRow(selectedMaterialId = '', qty = '', price = '', notes = '') {
         const tbody = document.getElementById('itemsTableBody');
         const tr = document.createElement('tr');
         const thisRowIdx = rowCount;
@@ -251,7 +252,7 @@
             </td>
             <td class="py-2 px-3 text-right font-bold text-neutral-800 line-total-cell">0đ</td>
             <td class="py-2 px-3">
-                <input type="text" name="items[${thisRowIdx}][notes]" class="form-control rounded-lg w-full border-neutral-200 px-2 py-1 text-xs" placeholder="Ghi chú...">
+                <input type="text" name="items[${thisRowIdx}][notes]" value="${notes}" class="form-control rounded-lg w-full border-neutral-200 px-2 py-1 text-xs" placeholder="Ghi chú...">
             </td>
             <td class="py-2 px-3 text-center">
                 <button type="button" onclick="removeRow(${thisRowIdx})" class="text-danger-500 hover:text-danger-700 p-1 text-base leading-none" title="Xóa dòng">&times;</button>
@@ -408,15 +409,7 @@
     function initDefaultRows() {
         const whEl = document.getElementById("select_warehouse");
         if (whEl) {
-            if (typeof TomSelect !== "undefined" && !whEl.tomselect) {
-                const whTs = new TomSelect(whEl, {
-                    placeholder: "-- Chọn kho nhận --",
-                    allowEmptyOption: false
-                });
-                whTs.on('change', onWarehouseChange);
-            } else {
-                whEl.addEventListener('change', onWarehouseChange);
-            }
+            whEl.addEventListener('change', onWarehouseChange);
         }
         onWarehouseChange();
         addItemRow();

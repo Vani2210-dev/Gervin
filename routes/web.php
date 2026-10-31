@@ -260,6 +260,8 @@ Route::middleware(['auth'])->prefix('warehouses')->name('inventory.')->group(fun
     Route::get('/receipts/create', [InventoryController::class, 'createReceipt'])->name('receipts.create');
     Route::post('/receipts', [InventoryController::class, 'storeReceipt'])->name('receipts.store');
     Route::get('/receipts/{receipt}', [InventoryController::class, 'showReceipt'])->name('receipts.show');
+    Route::get('/receipts/{receipt}/edit', [InventoryController::class, 'editReceipt'])->name('receipts.edit');
+    Route::put('/receipts/{receipt}', [InventoryController::class, 'updateReceipt'])->name('receipts.update');
     Route::get('/receipts/{receipt}/print', [InventoryController::class, 'printReceipt'])->name('receipts.print');
     Route::delete('/receipts/{receipt}', [InventoryController::class, 'destroyReceipt'])->name('receipts.destroy');
 
@@ -268,6 +270,8 @@ Route::middleware(['auth'])->prefix('warehouses')->name('inventory.')->group(fun
     Route::get('/issues/create', [InventoryController::class, 'createIssue'])->name('issues.create');
     Route::post('/issues', [InventoryController::class, 'storeIssue'])->name('issues.store');
     Route::get('/issues/{issue}', [InventoryController::class, 'showIssue'])->name('issues.show');
+    Route::get('/issues/{issue}/edit', [InventoryController::class, 'editIssue'])->name('issues.edit');
+    Route::put('/issues/{issue}', [InventoryController::class, 'updateIssue'])->name('issues.update');
     Route::get('/issues/{issue}/print', [InventoryController::class, 'printIssue'])->name('issues.print');
     Route::delete('/issues/{issue}', [InventoryController::class, 'destroyIssue'])->name('issues.destroy');
 
@@ -345,6 +349,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('orders/{order}/rework-create', [OrderController::class, 'reworkCreateForm'])->name('orders.rework-create');
     Route::get('orders/{order}/warranty-create', [OrderController::class, 'warrantyCreateForm'])->name('orders.warranty-create');
     Route::get('orders/{order}/reuse-create', [OrderController::class, 'reuseCreateForm'])->name('orders.reuse-create');
+    Route::get('orders/{order}/preview', [OrderController::class, 'preview'])->name('orders.preview');
     Route::get('orders/{order}/print-handwritten', [OrderController::class, 'printHandwritten'])->name('orders.print-handwritten');
     Route::post('orders/{order}/create-additional', [OrderController::class, 'createAdditionalOrder'])->name('orders.create-additional');
     Route::get('orders/{order}/additional-create', [OrderController::class, 'additionalCreateForm'])->name('orders.additional-create');

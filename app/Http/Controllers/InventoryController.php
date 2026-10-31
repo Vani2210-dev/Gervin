@@ -43,7 +43,7 @@ class InventoryController extends Controller
         ]]);
 
         $this->middleware('permission:edit warehouse', ['only' => [
-            'updateMaterial', 'balanceStocktake', 'updateWarehouse'
+            'updateMaterial', 'balanceStocktake', 'updateWarehouse', 'editReceipt', 'updateReceipt'
         ]]);
 
         $this->middleware('permission:delete warehouse', ['only' => [
@@ -81,25 +81,51 @@ class InventoryController extends Controller
         $dateVal = $request->input('date_val', '');
 
         if ($isEdgeBandWarehouse) {
-            // Khi xem Kho Dán Chỉ (KHO-CHI): Hiển thị từng cuộn / mã chỉ dán viền tương ứng
+            // Khi xem Kho Dán Chỉ: Hiển thị danh mục cuộn/mã chỉ dán viền (ăn theo wood-boards)
             $query = WoodBoard::with(['warehouse']);
 
             if ($selectedCategory) {
                 $query->where('price_group', $selectedCategory);
             }
 
-            if ($stockFilter === 'low_stock') {
-                $query->whereColumn('edge_band_current_stock', '<=', 'edge_band_min_stock')->where('edge_band_current_stock', '>', 0);
-            } elseif ($stockFilter === 'out_of_stock') {
-                $query->where('edge_band_current_stock', '<=', 0);
-            } elseif ($stockFilter === 'in_stock') {
-                $query->where('edge_band_current_stock', '>', 0);
+            $isMainEdgeBandWh = ($selectedWarehouse && $selectedWarehouse->code === 'KHO-CHI') || $selectedWarehouseId == 2;
+            $edgeWhStockMap = [];
+            if ($selectedWarehouseId && !$isMainEdgeBandWh) {
+                $edgeWhStockMap = \App\Models\InventoryTransaction::where('warehouse_id', $selectedWarehouseId)
+                    ->where('item_type', 'edge_band')
+                    ->whereNotNull('wood_board_id')
+                    ->groupBy('wood_board_id')
+                    ->selectRaw('wood_board_id, SUM(in_qty - out_qty) as net_stock')
+                    ->pluck('net_stock', 'wood_board_id')
+                    ->toArray();
+
+                if ($stockFilter === 'in_stock') {
+                    $inStockBoardIds = array_keys(array_filter($edgeWhStockMap, fn($v) => (float)$v > 0));
+                    $query->whereIn('id', $inStockBoardIds);
+                } elseif ($stockFilter === 'out_of_stock') {
+                    $inStockBoardIds = array_keys(array_filter($edgeWhStockMap, fn($v) => (float)$v > 0));
+                    $query->whereNotIn('id', $inStockBoardIds);
+                } elseif ($stockFilter === 'low_stock') {
+                    $lowStockBoardIds = array_keys(array_filter($edgeWhStockMap, fn($v) => (float)$v > 0 && (float)$v <= 100));
+                    $query->whereIn('id', $lowStockBoardIds);
+                }
+            } else {
+                if ($stockFilter === 'low_stock') {
+                    $query->whereColumn('edge_band_current_stock', '<=', 'edge_band_min_stock')->where('edge_band_current_stock', '>', 0);
+                } elseif ($stockFilter === 'out_of_stock') {
+                    $query->where('edge_band_current_stock', '<=', 0);
+                } elseif ($stockFilter === 'in_stock') {
+                    $query->where('edge_band_current_stock', '>', 0);
+                }
             }
 
             if ($startDate && $endDate && $dateMode !== 'all') {
-                $query->where(function ($q) use ($startDate, $endDate) {
-                    $q->whereHas('transactions', function ($t) use ($startDate, $endDate) {
+                $query->where(function ($q) use ($startDate, $endDate, $selectedWarehouseId) {
+                    $q->whereHas('transactions', function ($t) use ($startDate, $endDate, $selectedWarehouseId) {
                         $t->whereBetween('date', [$startDate, $endDate])->where('item_type', 'edge_band');
+                        if ($selectedWarehouseId) {
+                            $t->where('warehouse_id', $selectedWarehouseId);
+                        }
                     })->orWhereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
                 });
             }
@@ -114,15 +140,34 @@ class InventoryController extends Controller
 
             $materials = $query->orderBy('color_code')->paginate(50)->withQueryString();
 
+            if ($selectedWarehouseId && !$isMainEdgeBandWh) {
+                $materials->getCollection()->transform(function ($item) use ($edgeWhStockMap) {
+                    $item->edge_band_warehouse_stock = isset($edgeWhStockMap[$item->id]) ? (float)$edgeWhStockMap[$item->id] : 0.0;
+                    return $item;
+                });
+            }
+
             // Summary KPIs Kho Chỉ
             $totalItems = WoodBoard::count();
-            $totalStockQty = (float)WoodBoard::sum('edge_band_current_stock');
-            $totalStockValue = (float)(WoodBoard::selectRaw('SUM(edge_band_current_stock * edge_band_cost_price) as val')->value('val') ?? 0);
-            $lowStockCount = WoodBoard::where(function ($q) {
-                $q->whereColumn('edge_band_current_stock', '<=', 'edge_band_min_stock')->orWhere('edge_band_current_stock', '<=', 0);
-            })->count();
+            if ($selectedWarehouseId && !$isMainEdgeBandWh) {
+                $totalStockQty = (float)\App\Models\InventoryTransaction::where('warehouse_id', $selectedWarehouseId)
+                    ->where('item_type', 'edge_band')
+                    ->sum(DB::raw('in_qty - out_qty'));
+                $totalStockValue = (float)\App\Models\InventoryTransaction::where('warehouse_id', $selectedWarehouseId)
+                    ->where('item_type', 'edge_band')
+                    ->selectRaw('SUM((in_qty - out_qty) * unit_price) as val')
+                    ->value('val') ?? 0;
+                $inStockCount = count(array_filter($edgeWhStockMap, fn($v) => (float)$v > 0));
+                $lowStockCount = $totalItems - $inStockCount;
+            } else {
+                $totalStockQty = (float)WoodBoard::sum('edge_band_current_stock');
+                $totalStockValue = (float)(WoodBoard::selectRaw('SUM(edge_band_current_stock * edge_band_cost_price) as val')->value('val') ?? 0);
+                $lowStockCount = WoodBoard::where(function ($q) {
+                    $q->whereColumn('edge_band_current_stock', '<=', 'edge_band_min_stock')->orWhere('edge_band_current_stock', '<=', 0);
+                })->count();
+            }
         } else {
-            // Khi xem Kho Tấm Ván hoặc Tất cả kho: Mỗi tên hàng hóa / loại ván (WoodBoardPrice) là 1 dòng độc lập
+            // Khi xem Kho Tấm Ván, các kho phụ hoặc Tất cả kho: Toàn bộ danh mục vật tư ăn theo wood-boards / wood_board_prices
             $hasPrices = \App\Models\WoodBoardPrice::exists();
 
             if ($hasPrices) {
@@ -137,23 +182,57 @@ class InventoryController extends Controller
                     });
                 }
 
-                if ($selectedWarehouseId) {
-                    $query->whereHas('board', function ($b) use ($selectedWarehouseId, $selectedWarehouse) {
-                        $b->where(function ($w) use ($selectedWarehouseId, $selectedWarehouse) {
-                            $w->where('warehouse_id', $selectedWarehouseId);
-                            if (($selectedWarehouse && $selectedWarehouse->code === 'KHO-VAN') || $selectedWarehouseId == 1) {
-                                $w->orWhereNull('warehouse_id');
-                            }
-                        });
-                    });
-                }
+                $warehouseStockMap = [];
+                $otherWhStocks = [];
+                $isMainWarehouse = ($selectedWarehouse && $selectedWarehouse->code === 'KHO-VAN') || $selectedWarehouseId == 1;
 
-                if ($stockFilter === 'low_stock') {
-                    $query->where('wood_board_prices.stock', '<=', 5)->where('wood_board_prices.stock', '>', 0);
-                } elseif ($stockFilter === 'out_of_stock') {
-                    $query->where('wood_board_prices.stock', '<=', 0);
-                } elseif ($stockFilter === 'in_stock') {
-                    $query->where('wood_board_prices.stock', '>', 0);
+                if ($selectedWarehouseId) {
+                    $warehouseStockMap = \App\Models\InventoryTransaction::where('warehouse_id', $selectedWarehouseId)
+                        ->whereNotNull('wood_board_price_id')
+                        ->groupBy('wood_board_price_id')
+                        ->selectRaw('wood_board_price_id, SUM(in_qty - out_qty) as net_stock')
+                        ->pluck('net_stock', 'wood_board_price_id')
+                        ->toArray();
+
+                    if ($isMainWarehouse) {
+                        $otherWhStocks = \App\Models\InventoryTransaction::where('warehouse_id', '!=', $selectedWarehouseId)
+                            ->whereNotNull('wood_board_price_id')
+                            ->groupBy('wood_board_price_id')
+                            ->selectRaw('wood_board_price_id, SUM(in_qty - out_qty) as net_stock')
+                            ->pluck('net_stock', 'wood_board_price_id')
+                            ->toArray();
+                    }
+
+                    if ($stockFilter === 'in_stock') {
+                        if ($isMainWarehouse) {
+                            $query->where('wood_board_prices.stock', '>', 0);
+                        } else {
+                            $inStockPriceIds = array_keys(array_filter($warehouseStockMap, fn($v) => (float)$v > 0));
+                            $query->whereIn('wood_board_prices.id', $inStockPriceIds);
+                        }
+                    } elseif ($stockFilter === 'out_of_stock') {
+                        if ($isMainWarehouse) {
+                            $query->where('wood_board_prices.stock', '<=', 0);
+                        } else {
+                            $inStockPriceIds = array_keys(array_filter($warehouseStockMap, fn($v) => (float)$v > 0));
+                            $query->whereNotIn('wood_board_prices.id', $inStockPriceIds);
+                        }
+                    } elseif ($stockFilter === 'low_stock') {
+                        if ($isMainWarehouse) {
+                            $query->where('wood_board_prices.stock', '<=', 5)->where('wood_board_prices.stock', '>', 0);
+                        } else {
+                            $lowStockPriceIds = array_keys(array_filter($warehouseStockMap, fn($v) => (float)$v > 0 && (float)$v <= 5));
+                            $query->whereIn('wood_board_prices.id', $lowStockPriceIds);
+                        }
+                    }
+                } else {
+                    if ($stockFilter === 'low_stock') {
+                        $query->where('wood_board_prices.stock', '<=', 5)->where('wood_board_prices.stock', '>', 0);
+                    } elseif ($stockFilter === 'out_of_stock') {
+                        $query->where('wood_board_prices.stock', '<=', 0);
+                    } elseif ($stockFilter === 'in_stock') {
+                        $query->where('wood_board_prices.stock', '>', 0);
+                    }
                 }
 
                 if ($startDate && $endDate && $dateMode !== 'all') {
@@ -193,11 +272,42 @@ class InventoryController extends Controller
                     ->paginate(50)
                     ->withQueryString();
 
+                if ($selectedWarehouseId) {
+                    $materials->getCollection()->transform(function ($item) use ($isMainWarehouse, $warehouseStockMap, $otherWhStocks) {
+                        if ($isMainWarehouse) {
+                            $otherSum = $otherWhStocks[$item->id] ?? 0;
+                            $thisTxSum = $warehouseStockMap[$item->id] ?? null;
+                            $item->warehouse_stock = $thisTxSum !== null ? (float)$thisTxSum : max(0, (float)$item->stock - (float)$otherSum);
+                        } else {
+                            $item->warehouse_stock = isset($warehouseStockMap[$item->id]) ? (float)$warehouseStockMap[$item->id] : 0.0;
+                        }
+                        return $item;
+                    });
+                }
+
                 // Summary KPIs
                 $totalItems = \App\Models\WoodBoardPrice::count();
-                $totalStockQty = (float)\App\Models\WoodBoardPrice::sum('stock');
-                $totalStockValue = (float)(\App\Models\WoodBoardPrice::selectRaw('SUM(stock * price_board) as val')->value('val') ?? 0);
-                $lowStockCount = \App\Models\WoodBoardPrice::where('stock', '<=', 5)->count();
+                if ($selectedWarehouseId) {
+                    if ($isMainWarehouse) {
+                        $otherWhStockSum = (float)\App\Models\InventoryTransaction::where('warehouse_id', '!=', $selectedWarehouseId)
+                            ->sum(DB::raw('in_qty - out_qty'));
+                        $totalStockQty = max(0, (float)\App\Models\WoodBoardPrice::sum('stock') - $otherWhStockSum);
+                        $totalStockValue = max(0, (float)(\App\Models\WoodBoardPrice::selectRaw('SUM(stock * price_board) as val')->value('val') ?? 0));
+                        $lowStockCount = \App\Models\WoodBoardPrice::where('stock', '<=', 5)->count();
+                    } else {
+                        $totalStockQty = (float)\App\Models\InventoryTransaction::where('warehouse_id', $selectedWarehouseId)
+                            ->sum(DB::raw('in_qty - out_qty'));
+                        $totalStockValue = (float)\App\Models\InventoryTransaction::where('warehouse_id', $selectedWarehouseId)
+                            ->selectRaw('SUM((in_qty - out_qty) * unit_price) as val')
+                            ->value('val') ?? 0;
+                        $inStockCount = count(array_filter($warehouseStockMap, fn($v) => (float)$v > 0));
+                        $lowStockCount = $totalItems - $inStockCount;
+                    }
+                } else {
+                    $totalStockQty = (float)\App\Models\WoodBoardPrice::sum('stock');
+                    $totalStockValue = (float)(\App\Models\WoodBoardPrice::selectRaw('SUM(stock * price_board) as val')->value('val') ?? 0);
+                    $lowStockCount = \App\Models\WoodBoardPrice::where('stock', '<=', 5)->count();
+                }
             } else {
                 $query = WoodBoard::with(['warehouse']);
                 if ($selectedCategory) $query->where('price_group', $selectedCategory);
@@ -372,7 +482,35 @@ class InventoryController extends Controller
                 $price->price_board = (float)$request->cost_price;
             }
             if ($request->has('stock')) {
-                $price->stock = (float)$request->stock;
+                $newStock = (float)$request->stock;
+                $targetWarehouseId = $request->input('warehouse_id');
+                $isSubWarehouse = $targetWarehouseId && $targetWarehouseId != 1 && ($wh = Warehouse::find($targetWarehouseId)) && $wh->code !== 'KHO-VAN';
+                if ($isSubWarehouse) {
+                    $currentWhStock = (float)\App\Models\InventoryTransaction::where('warehouse_id', $targetWarehouseId)
+                        ->where('wood_board_price_id', $price->id)
+                        ->sum(DB::raw('in_qty - out_qty'));
+                    $diff = $newStock - $currentWhStock;
+                    if ($diff != 0) {
+                        \App\Models\InventoryTransaction::create([
+                            'warehouse_id'        => $targetWarehouseId,
+                            'wood_board_id'       => $price->wood_board_id,
+                            'wood_board_price_id' => $price->id,
+                            'item_type'           => 'board',
+                            'date'                => now()->toDateString(),
+                            'type'                => 'initial',
+                            'voucher_code'        => 'CBK-' . strtoupper(\Illuminate\Support\Str::random(6)),
+                            'in_qty'              => $diff > 0 ? $diff : 0,
+                            'out_qty'             => $diff < 0 ? abs($diff) : 0,
+                            'stock_after'         => $newStock,
+                            'unit_price'          => (float)$price->price_board,
+                            'notes'               => 'Cập nhật số dư kho ' . $wh->name,
+                            'created_by'          => \Illuminate\Support\Facades\Auth::id(),
+                        ]);
+                        $price->stock = max(0, (float)$price->stock + $diff);
+                    }
+                } else {
+                    $price->stock = $newStock;
+                }
             }
             if ($request->filled('name')) {
                 $price->name = trim($request->name);
@@ -614,14 +752,54 @@ class InventoryController extends Controller
                 $sheet->setCellValue($cols[$idx] . '3', $h);
             }
 
+            $warehouseStockMap = [];
+            $otherWhStocks = [];
+            $isMainWarehouse = ($selectedWarehouse && $selectedWarehouse->code === 'KHO-VAN') || $selectedWarehouseId == 1;
+
+            if ($selectedWarehouseId) {
+                $warehouseStockMap = \App\Models\InventoryTransaction::where('warehouse_id', $selectedWarehouseId)
+                    ->whereNotNull('wood_board_price_id')
+                    ->groupBy('wood_board_price_id')
+                    ->selectRaw('wood_board_price_id, SUM(in_qty - out_qty) as net_stock')
+                    ->pluck('net_stock', 'wood_board_price_id')
+                    ->toArray();
+
+                if ($isMainWarehouse) {
+                    $otherWhStocks = \App\Models\InventoryTransaction::where('warehouse_id', '!=', $selectedWarehouseId)
+                        ->whereNotNull('wood_board_price_id')
+                        ->groupBy('wood_board_price_id')
+                        ->selectRaw('wood_board_price_id, SUM(in_qty - out_qty) as net_stock')
+                        ->pluck('net_stock', 'wood_board_price_id')
+                        ->toArray();
+                }
+            }
+
             $row = 4;
             foreach ($prices as $i => $p) {
                 $sku = $p->code ?: ($p->board?->color_code . ($p->type?->prefix ?? ''));
-                $name = 'Tấm ' . ($p->board?->color_code ?? '') . ' - ' . ($p->name ?: $p->type?->name);
+                $color = $p->board?->color_code ?? '';
+                $rawName = trim($p->name ?: ($p->type?->name ?? 'Tấm Acrylic'));
+                if (preg_match('/^Tấm\s+([^-\s]+)\s*-\s*Tấm\s+\1\s*-\s*(.+)$/ui', $rawName, $matches)) {
+                    $rawName = 'Tấm ' . $matches[1] . ' - ' . $matches[2];
+                }
+                if (preg_match('/^tấm\s+/iu', $rawName) || ($color && stripos($rawName, $color) !== false)) {
+                    $name = $rawName;
+                } else {
+                    $name = 'Tấm ' . ($color ? $color . ' - ' : '') . $rawName;
+                }
                 $origin = $p->board?->origin_code ?: '-';
                 $category = $p->type?->name ?? $p->board?->price_group ?? 'Tấm cốt gỗ';
                 $unit = $p->board?->unit ?: 'Tấm';
                 $stock = (float)$p->stock;
+                if ($selectedWarehouseId) {
+                    if ($isMainWarehouse) {
+                        $otherSum = $otherWhStocks[$p->id] ?? 0;
+                        $thisTxSum = $warehouseStockMap[$p->id] ?? null;
+                        $stock = $thisTxSum !== null ? (float)$thisTxSum : max(0, (float)$p->stock - (float)$otherSum);
+                    } else {
+                        $stock = isset($warehouseStockMap[$p->id]) ? (float)$warehouseStockMap[$p->id] : 0.0;
+                    }
+                }
                 $cost = (float)$p->price_board;
 
                 $sheet->setCellValue('A' . $row, $i + 1);
@@ -731,6 +909,39 @@ class InventoryController extends Controller
         return view('inventory.receipts.show', compact('receipt'));
     }
 
+    public function editReceipt(InventoryReceipt $receipt)
+    {
+        $receipt->load(['items.woodBoard', 'items.boardPrice.type']);
+        $warehouses = Warehouse::orderBy('name')->get();
+        $materials = $this->getSelectableMaterials();
+
+        return view('inventory.receipts.edit', compact('receipt', 'warehouses', 'materials'));
+    }
+
+    public function updateReceipt(Request $request, InventoryReceipt $receipt)
+    {
+        $request->validate([
+            'warehouse_id'        => 'required|exists:warehouses,id',
+            'date'                => 'required|date',
+            'items'               => 'required|array|min:1',
+            'items.*.material_id' => 'required',
+            'items.*.quantity'    => 'required|numeric|min:0.01',
+            'items.*.unit_price'  => 'nullable|numeric|min:0',
+        ]);
+
+        $warehouse = Warehouse::findOrFail($request->warehouse_id);
+
+        $receipt = $this->inventoryService->updateReceipt(
+            $receipt,
+            $warehouse,
+            $request->only(['code', 'date', 'supplier_name', 'deliverer', 'receiver', 'notes']),
+            $request->input('items', []),
+            Auth::id()
+        );
+
+        return redirect()->route('inventory.receipts.show', $receipt)->with('success', 'Cập nhật phiếu nhập kho ' . $receipt->code . ' thành công!');
+    }
+
     public function printReceipt(InventoryReceipt $receipt)
     {
         $receipt->load(['warehouse', 'creator', 'items.woodBoard', 'items.boardPrice.type']);
@@ -801,6 +1012,38 @@ class InventoryController extends Controller
     {
         $issue->load(['warehouse', 'creator', 'items.woodBoard', 'items.boardPrice.type']);
         return view('inventory.issues.show', compact('issue'));
+    }
+
+    public function editIssue(InventoryIssue $issue)
+    {
+        $issue->load(['items.woodBoard', 'items.boardPrice.type']);
+        $warehouses = Warehouse::orderBy('name')->get();
+        $materials = $this->getSelectableMaterials();
+
+        return view('inventory.issues.edit', compact('issue', 'warehouses', 'materials'));
+    }
+
+    public function updateIssue(Request $request, InventoryIssue $issue)
+    {
+        $request->validate([
+            'warehouse_id'        => 'required|exists:warehouses,id',
+            'date'                => 'required|date',
+            'items'               => 'required|array|min:1',
+            'items.*.material_id' => 'required',
+            'items.*.quantity'    => 'required|numeric|min:0.01',
+        ]);
+
+        $warehouse = Warehouse::findOrFail($request->warehouse_id);
+
+        $issue = $this->inventoryService->updateIssue(
+            $issue,
+            $warehouse,
+            $request->only(['code', 'date', 'recipient', 'deliverer', 'reason', 'notes']),
+            $request->input('items', []),
+            Auth::id()
+        );
+
+        return redirect()->route('inventory.issues.show', $issue)->with('success', 'Cập nhật phiếu xuất kho ' . $issue->code . ' thành công!');
     }
 
     public function printIssue(InventoryIssue $issue)
@@ -929,7 +1172,13 @@ class InventoryController extends Controller
                         'item_type'           => 'board',
                         'warehouse_code'      => 'KHO-VAN',
                         'code'                => $p->code,
-                        'name'                => ($p->name ?: $typeName) . ($color ? " (Màu {$color})" : ''),
+                        'name'                => (function() use ($p, $typeName, $color) {
+                            $raw = trim($p->name ?: ($typeName ? 'Tấm ' . ($color ? $color . ' - ' : '') . $typeName : ''));
+                            if (preg_match('/^Tấm\s+([^-\s]+)\s*-\s*Tấm\s+\1\s*-\s*(.+)$/ui', $raw, $m)) {
+                                $raw = 'Tấm ' . $m[1] . ' - ' . $m[2];
+                            }
+                            return $raw ?: ('Tấm ' . $color);
+                        })(),
                         'origin_code'         => $p->board?->origin_code ?? '',
                         'category'            => $group ?: $typeName,
                         'unit'                => 'Tấm',
@@ -1606,6 +1855,16 @@ class InventoryController extends Controller
      */
     public function importStock(Request $request)
     {
+        $warehouseId = $request->input('warehouse_id');
+        $warehouse = $warehouseId ? Warehouse::find($warehouseId) : null;
+        if (!$warehouse) {
+            $warehouse = Warehouse::where('code', 'KHO-VAN')->first() ?? Warehouse::first();
+        }
+
+        if (!$warehouse) {
+            return back()->withErrors(['excel_file' => 'Không tìm thấy kho hàng hợp lệ để nhập!']);
+        }
+
         if ($request->boolean('use_server_file')) {
             $filePath = base_path('Ton_Kho_Tam_Van_.xlsx');
             if (!file_exists($filePath)) {
@@ -1616,19 +1875,23 @@ class InventoryController extends Controller
             }
         } else {
             $request->validate([
-                'excel_file' => 'required|file|mimes:xlsx,xls|max:20480',
+                'excel_file'   => 'required|file|mimes:xlsx,xls|max:20480',
+                'warehouse_id' => 'required|exists:warehouses,id',
             ], [
-                'excel_file.required' => 'Vui lòng chọn file Excel để nhập dữ liệu!',
-                'excel_file.mimes'    => 'File phải có định dạng .xlsx hoặc .xls!',
-                'excel_file.max'      => 'Dung lượng file tối đa là 20MB!',
+                'excel_file.required'   => 'Vui lòng chọn file Excel để nhập dữ liệu!',
+                'excel_file.mimes'      => 'File phải có định dạng .xlsx hoặc .xls!',
+                'excel_file.max'        => 'Dung lượng file tối đa là 20MB!',
+                'warehouse_id.required' => 'Vui lòng chọn kho cần nhập tồn!',
+                'warehouse_id.exists'   => 'Kho được chọn không tồn tại!',
             ]);
             $filePath = $request->file('excel_file')->getRealPath();
         }
 
         try {
-            $result = $this->inventoryService->importStockFromExcel($filePath);
+            $result = $this->inventoryService->importStockFromExcel($filePath, $warehouse->id);
 
-            return back()->with('success', "Đã nhập thành công {$result['total_items']} dòng vật tư (Cập nhật: {$result['updated_count']}, Thêm mới: {$result['created_count']}). Tổng tồn kho: " . number_format($result['total_stock'], 2, ',', '.') . " tấm!");
+            return redirect()->route('inventory.index', ['warehouse_id' => $warehouse->id])
+                ->with('success', "Đã nhập thành công {$result['total_items']} dòng vật tư vào kho \"{$warehouse->name}\" (Cập nhật: {$result['updated_count']}, Thêm mới: {$result['created_count']}). Tổng tồn kho: " . number_format($result['total_stock'], 2, ',', '.') . "!");
         } catch (\Exception $e) {
             return back()->withErrors(['excel_file' => 'Lỗi khi nhập file Excel: ' . $e->getMessage()]);
         }

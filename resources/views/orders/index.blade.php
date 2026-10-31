@@ -303,7 +303,7 @@
                                 <th scope="col" class="px-3 whitespace-nowrap" style="min-width: 105px;">Số điện thoại</th>
                                 <th scope="col" class="whitespace-nowrap px-3" style="min-width: 125px;">Ngày tạo đơn</th>
                                 <th scope="col" class="whitespace-nowrap px-3" style="min-width: 115px;">Hạn đơn</th>
-                                <th scope="col" class="text-center whitespace-nowrap px-3" style="width: 90px; min-width: 90px;">Hành động</th>
+                                <th scope="col" class="text-center whitespace-nowrap px-3" style="width: 125px; min-width: 125px;">Hành động</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -516,9 +516,14 @@
                                     <div class="flex items-center gap-2 justify-center">
                                         @can('view order')
                                         {{-- Xem chi tiết (luôn hiển thị ngoài) --}}
-                                        <a href="{{ route('orders.show', $order) }}" class="bg-primary-100 hover:bg-primary-200 text-primary-600 font-medium w-8 h-8 flex justify-center items-center rounded-full" title="Xem chi tiết">
+                                        <a href="{{ route('orders.show', $order) }}" class="bg-primary-100 hover:bg-primary-200 text-primary-600 font-medium w-8 h-8 flex justify-center items-center rounded-full transition-colors" title="Xem chi tiết">
                                             <iconify-icon icon="lucide:eye" class="menu-icon"></iconify-icon>
                                         </a>
+
+                                        {{-- Xem trước đơn hàng --}}
+                                        <button type="button" onclick="openOrderPreviewModal({{ $order->id }})" class="bg-emerald-100 hover:bg-emerald-200 text-emerald-700 font-medium w-8 h-8 flex justify-center items-center rounded-full transition-colors cursor-pointer" title="Xem trước đơn hàng & chụp ảnh gửi Zalo">
+                                            <iconify-icon icon="solar:document-text-bold-duotone" class="text-base"></iconify-icon>
+                                        </button>
                                         @endcan
 
                                         {{-- Dropdown hành động rút gọn --}}
@@ -1152,6 +1157,14 @@
         <ul class="py-2 text-sm text-neutral-700 space-y-0.5" aria-labelledby="btn-dropdown-{{ $order->id }}">
             
             @can('view order')
+            {{-- Xem trước đơn hàng --}}
+            <li>
+                <button type="button" onclick="openOrderPreviewModal({{ $order->id }})" class="w-full flex items-center gap-2 px-4 py-2 hover:bg-emerald-50 text-emerald-700 text-left transition-colors font-medium cursor-pointer">
+                    <iconify-icon icon="solar:document-text-bold-duotone" class="text-emerald-600 text-lg"></iconify-icon>
+                    <span>Xem trước đơn hàng</span>
+                </button>
+            </li>
+
             {{-- Xuất Excel --}}
             <li>
                 <a href="{{ route('orders.show', $order) }}?export=1" class="flex items-center gap-2 px-4 py-2 hover:bg-neutral-50 text-neutral-700 transition-colors">
@@ -1474,10 +1487,75 @@
     </div>
 @endforeach
 @include('orders._request_edit_modal')
+
+{{-- Container nạp modal Xem trước đơn hàng động bằng AJAX --}}
+<div id="order-preview-modal-container"></div>
 @endsection
 
 @push('scripts')
 <script>
+    function openOrderPreviewModal(orderId) {
+        const container = document.getElementById('order-preview-modal-container');
+        if (!container) return;
+
+        // Loading indicator
+        const loadingEl = document.createElement('div');
+        loadingEl.id = 'preview-order-loading-indicator';
+        loadingEl.style.cssText = 'position:fixed; inset:0; z-index:99999999; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.45); backdrop-filter:blur(2px);';
+        loadingEl.innerHTML = `
+            <div class="bg-white rounded-2xl px-6 py-4 shadow-2xl flex items-center gap-3 border border-neutral-200">
+                <iconify-icon icon="line-md:loading-loop" class="text-2xl text-emerald-600 animate-spin"></iconify-icon>
+                <span class="text-xs font-bold text-neutral-800">Đang tải bản xem trước đơn hàng...</span>
+            </div>
+        `;
+        document.body.appendChild(loadingEl);
+
+        fetch(`/orders/${orderId}/preview`, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(res => {
+            if (!res.ok) throw new Error('Không thể tải bản xem trước đơn hàng');
+            return res.text();
+        })
+        .then(html => {
+            loadingEl.remove();
+
+            // Xóa modal xem trước cũ nếu có
+            const oldModal = document.getElementById('preview-order-modal');
+            if (oldModal) oldModal.remove();
+
+            // Đưa HTML modal mới vào container
+            container.innerHTML = html;
+
+            // Chạy các script của preview modal
+            const scripts = container.querySelectorAll('script');
+            scripts.forEach(s => {
+                const newScript = document.createElement('script');
+                if (s.src) {
+                    newScript.src = s.src;
+                } else {
+                    newScript.textContent = s.textContent;
+                }
+                document.body.appendChild(newScript);
+            });
+
+            // Kích hoạt hiển thị modal
+            if (typeof previewOrder === 'function') {
+                previewOrder();
+            } else {
+                const m = document.getElementById('preview-order-modal');
+                if (m) {
+                    m.style.display = 'flex';
+                    document.body.style.overflow = 'hidden';
+                }
+            }
+        })
+        .catch(err => {
+            loadingEl.remove();
+            alert(err.message || 'Lỗi khi tải bản xem trước');
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
         const filterCustomer = document.getElementById('filter_customer_id');
         if (typeof TomSelect !== 'undefined' && filterCustomer && !filterCustomer.tomselect) {

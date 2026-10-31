@@ -152,7 +152,7 @@ class ManufactureStepController extends Controller
             'product_code' => 'nullable|string',
             'wood_board_price_id' => 'nullable|integer',
             'notes' => 'nullable|string',
-            'action_type' => 'required|string|in:làm lệnh ép,xuất kho ván,ép đơn,ép dự trữ,rollback',
+            'action_type' => 'required|string|in:làm lệnh ép,xuất kho ván,ép đơn,ép dự trữ,rollback,complete',
         ]);
 
         $data = $request->all();

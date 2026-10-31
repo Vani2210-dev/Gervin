@@ -35,7 +35,7 @@
                         </div>
                         <div>
                             <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Kho xuất <span class="text-danger-500">*</span></label>
-                            <select name="warehouse_id" id="select_warehouse" class="form-select rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-rose-500" required>
+                            <select name="warehouse_id" id="select_warehouse" class="form-select rounded-lg w-full border border-neutral-300 px-3 py-2 text-xs font-semibold text-neutral-800 bg-white focus:border-rose-500" required>
                                 @foreach($warehouses as $wh)
                                     <option value="{{ $wh->id }}">{{ $wh->name }}</option>
                                 @endforeach
@@ -69,7 +69,7 @@
                     <div class="border border-neutral-200 rounded-xl overflow-hidden mb-6">
                         <div class="p-3 bg-neutral-100 border-b border-neutral-200 flex items-center justify-between">
                             <h6 class="font-bold text-neutral-800 text-xs uppercase mb-0">Danh sách vật tư xuất kho</h6>
-                            <button type="button" onclick="addItemRow()" class="btn btn-sm bg-rose-600 hover:bg-rose-700 text-white px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1 shadow-sm">
+                            <button type="button" onclick="addItemRow()" class="btn btn-sm btn-primary px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1 shadow-sm">
                                 <iconify-icon icon="ic:baseline-plus" class="text-sm"></iconify-icon> Thêm dòng
                             </button>
                         </div>
@@ -105,7 +105,7 @@
                         <a href="{{ route('inventory.issues.index') }}" class="btn border border-neutral-300 text-neutral-700 hover:bg-neutral-100 px-5 py-2 rounded-lg text-xs font-semibold">
                             Hủy bỏ
                         </a>
-                        <button type="submit" class="btn bg-rose-600 hover:bg-rose-700 text-white px-6 py-2 rounded-lg text-xs font-bold flex items-center gap-2 shadow-sm">
+                        <button type="submit" class="btn btn-primary px-6 py-2 rounded-lg text-xs font-bold flex items-center gap-2 shadow-sm">
                             <iconify-icon icon="solar:diskette-bold" class="text-base"></iconify-icon> Xác nhận Xuất kho
                         </button>
                     </div>
@@ -153,6 +153,7 @@
         background-color: #fff1f2 !important;
         color: #be123c !important;
     }
+    select.tomselected,
     select.material-tom-select.tomselected {
         display: none !important;
     }
@@ -408,15 +409,7 @@
     function initDefaultRows() {
         const whEl = document.getElementById("select_warehouse");
         if (whEl) {
-            if (typeof TomSelect !== "undefined" && !whEl.tomselect) {
-                const whTs = new TomSelect(whEl, {
-                    placeholder: "-- Chọn kho xuất --",
-                    allowEmptyOption: false
-                });
-                whTs.on('change', onWarehouseChange);
-            } else {
-                whEl.addEventListener('change', onWarehouseChange);
-            }
+            whEl.addEventListener('change', onWarehouseChange);
         }
         onWarehouseChange();
         addItemRow();

@@ -1268,10 +1268,18 @@
             }
         })();
 
-        // Tự động mở modal sửa tấm / bảo hành / bổ sung nếu url có ?open_rework=1 hoặc ?open_warranty=1 hoặc ?open_additional=1
+        // Tự động mở modal sửa tấm / bảo hành / bổ sung / xem trước nếu url có ?preview=1 hoặc ?open_rework=1...
         (function () {
             const params = new URLSearchParams(window.location.search);
-            if (params.get('open_rework') === '1') {
+            if (params.get('preview') === '1') {
+                window.addEventListener('load', function () {
+                    setTimeout(function () {
+                        if (typeof previewOrder === 'function') {
+                            previewOrder();
+                        }
+                    }, 200);
+                });
+            } else if (params.get('open_rework') === '1') {
                 window.addEventListener('load', function () {
                     setTimeout(function () {
                         if (typeof openReworkModal === 'function') {

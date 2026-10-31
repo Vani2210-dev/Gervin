@@ -12,6 +12,7 @@ class InventoryIssue extends Model
         'code',
         'date',
         'warehouse_id',
+        'order_id',
         'recipient',
         'deliverer',
         'reason',
@@ -41,5 +42,10 @@ class InventoryIssue extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function order(): BelongsTo
+    {
+        return $this->belongsTo(Order::class);
     }
 }

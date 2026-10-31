@@ -95,6 +95,25 @@ class PressingService
             }
         }
 
+        $pressingItems = PressingOrderItem::with('pressingOrder')->whereNotNull('status_logs')->get();
+        foreach ($pressingItems as $pi) {
+            $statusLogs = $pi->status_logs ?? [];
+            foreach ($statusLogs as $log) {
+                if (isset($log['action']) && in_array($log['action'], $pressingActions)) {
+                    $history->push((object)[
+                        'product_code' => $pi->piece_code,
+                        'product_name' => $pi->pressingOrder->material_name ?? 'Lệnh ép ván',
+                        'type' => 'pressing_order',
+                        'action' => $log['action'],
+                        'operator' => $log['operator'] ?? 'Hệ thống',
+                        'time' => $log['time'] ?? $pi->updated_at->toDateTimeString(),
+                        'notes' => $log['notes'] ?? '',
+                        'item_id' => $pi->id
+                    ]);
+                }
+            }
+        }
+
         // Include InventoryTransactions created from pressing (both stock pressing and direct order pressing)
         $pressingTxs = InventoryTransaction::whereIn('voucher_code', ['EP-KHO', 'EP-DON'])
             ->with(['woodBoard', 'boardPrice', 'creator'])
@@ -131,7 +150,7 @@ class PressingService
                 'action'       => $action,
                 'operator'     => $tx->creator?->name ?? 'Hệ thống',
                 'time'         => $tx->created_at ? $tx->created_at->toDateTimeString() : now()->toDateTimeString(),
-                'notes'        => $tx->notes ?? '+1 tấm vào kho',
+                'notes'        => $tx->notes ?? 'Hoàn thành ép ván',
                 'item_id'      => $tx->id,
             ]);
         }
@@ -451,50 +470,12 @@ class PressingService
         $logTime = now()->toDateTimeString();
         $operatorName = Auth::user()->name ?? 'Hệ thống';
 
-        $pressingActions = ['làm lệnh ép', 'xuất kho ván', 'ép đơn', 'ép dự trữ'];
+        $pressingActions = ['làm lệnh ép', 'xuất kho ván', 'ép đơn', 'ép dự trữ', 'complete'];
+        $isRollback = ($actionType === 'rollback');
+        $effectiveAction = $isRollback ? 'rollback' : 'ép đơn';
 
         // ═══════════════════════════════════════════════════════════════════
-        // CASE 1: ÉP DỰ TRỮ KHO (+1 TẤM VÀO KHO)
-        // ═══════════════════════════════════════════════════════════════════
-        if ($actionType === 'ép dự trữ') {
-            $boardOrPrice = $this->resolveWoodBoard($codeStr, $priceId);
-
-            if (!$boardOrPrice) {
-                return [
-                    'success' => false,
-                    'status_code' => 404,
-                    'message' => "Không tìm thấy loại ván dán mặt tương ứng với mã '{$codeStr}'. Vui lòng kiểm tra lại mã tem hoặc mã màu ván trong kho."
-                ];
-            }
-
-            $adj = $this->adjustWoodBoardStock(
-                $boardOrPrice,
-                1,
-                'EP-KHO',
-                $codeStr ?: ($boardOrPrice->code ?? null),
-                $notes ?: 'Ép dự trữ kho (+1 tấm)'
-            );
-
-            return [
-                'success' => true,
-                'status_code' => 200,
-                'is_bulk' => false,
-                'message' => "Đã ghi nhận ép dự trữ và +1 tấm vào kho cho {$adj['board_name']}. Tồn kho hiện tại: {$adj['new_stock']} tấm.",
-                'data' => [
-                    'product_code' => $boardOrPrice->code ?? $boardOrPrice->color_code ?? $codeStr,
-                    'product_name' => $adj['board_name'],
-                    'type'         => 'stock',
-                    'operator'     => $operatorName,
-                    'time'         => $logTime,
-                    'notes'        => $notes ?: 'Ép dự trữ kho (+1 tấm)',
-                    'action'       => 'ép dự trữ',
-                    'new_stock'    => $adj['new_stock']
-                ]
-            ];
-        }
-
-        // ═══════════════════════════════════════════════════════════════════
-        // CASE 3: TẤM ĐƠN LẺ THEO MÃ QR (ACRYLIC, GLASS, MIN LATE)
+        // CASE 1: TẤM ĐƠN LẺ THEO MÃ QR (ACRYLIC, GLASS, MIN LATE)
         // ═══════════════════════════════════════════════════════════════════
         $codeRecord = AcrylicOrderItemCode::where('product_id', $codeStr)->first();
         $type = 'acrylic';
@@ -521,25 +502,108 @@ class PressingService
             }
         }
 
-        // Direct scan of a wood board code while in "Ép theo đơn hàng"
-        if (!$codeRecord && $actionType === 'ép đơn') {
+        // ═══════════════════════════════════════════════════════════════════
+        // CASE 2: TEM TẤM LỆNH ÉP VÁN (PRESSING ORDER ITEM)
+        // ═══════════════════════════════════════════════════════════════════
+        $pressingItem = null;
+        if (!$codeRecord) {
+            $pressingItem = PressingOrderItem::with('pressingOrder')->where('piece_code', $codeStr)->first();
+            if ($pressingItem) {
+                $currentLogs = $pressingItem->status_logs ?? [];
+                if ($isRollback) {
+                    $newLogs = array_filter($currentLogs, fn($l) => !in_array($l['action'] ?? '', ['ép đơn', 'ép dự trữ', 'complete']));
+                    $newLogs[] = [
+                        'action'      => 'quay lại ép',
+                        'operator'    => $operatorName,
+                        'operator_id' => Auth::id(),
+                        'time'        => $logTime,
+                        'notes'       => $notes,
+                    ];
+                    $pressingItem->status = 'pending';
+                    $pressingItem->status_logs = array_values($newLogs);
+                    $pressingItem->save();
+                    $pressingItem->pressingOrder?->update(['status' => 'processing']);
+
+                    return [
+                        'success'     => true,
+                        'status_code' => 200,
+                        'is_bulk'     => false,
+                        'message'     => "Đã hoàn tác quy trình ép ván cho tấm lệnh {$codeStr}.",
+                        'data'        => [
+                            'product_code' => $codeStr,
+                            'product_name' => $pressingItem->pressingOrder?->material_name ?? 'Lệnh ép ván',
+                            'type'         => 'pressing_order',
+                            'operator'     => $operatorName,
+                            'time'         => $logTime,
+                            'notes'        => $notes ?: 'Quay lại ép',
+                            'action'       => 'quay lại ép',
+                        ]
+                    ];
+                } else {
+                    $currentLogs[] = [
+                        'action'      => 'ép đơn',
+                        'operator'    => $operatorName,
+                        'operator_id' => Auth::id(),
+                        'time'        => $logTime,
+                        'notes'       => $notes,
+                    ];
+                    $pressingItem->status = 'completed';
+                    $pressingItem->status_logs = $currentLogs;
+                    $pressingItem->save();
+
+                    // Check if parent order completed
+                    if ($pressingItem->pressingOrder) {
+                        $po = $pressingItem->pressingOrder;
+                        $totalDone = $po->items()->where('status', 'completed')->count();
+                        $po->qty_done = $totalDone;
+                        if ($totalDone >= $po->qty_needed) {
+                            $po->status = 'completed';
+                        }
+                        $po->save();
+                    }
+
+                    return [
+                        'success'     => true,
+                        'status_code' => 200,
+                        'is_bulk'     => false,
+                        'message'     => "Đã ghi nhận hoàn thành ép ván cho tấm lệnh {$codeStr}.",
+                        'data'        => [
+                            'product_code' => $codeStr,
+                            'product_name' => $pressingItem->pressingOrder?->material_name ?? 'Lệnh ép ván',
+                            'type'         => 'pressing_order',
+                            'operator'     => $operatorName,
+                            'time'         => $logTime,
+                            'notes'        => $notes ?: 'Hoàn thành ép ván',
+                            'action'       => 'ép đơn',
+                        ]
+                    ];
+                }
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════════
+        // CASE 3: QUÉT TRỰC TIẾP MÃ VÁN HOẶC MÃ MÀU
+        // ═══════════════════════════════════════════════════════════════════
+        if (!$codeRecord && !$pressingItem) {
             $directBoard = $this->resolveWoodBoard($codeStr, $priceId);
             if ($directBoard) {
-                $adj = $this->adjustWoodBoardStock($directBoard, 1, 'EP-DON', $codeStr, $notes ?: 'Ép theo đơn hàng (+1 tấm vào kho)');
+                $boardName = $directBoard instanceof WoodBoardPrice ? ($directBoard->name ?? $directBoard->code) : ($directBoard->color_code ?? 'Ván kho');
+                $actionLabel = $isRollback ? 'quay lại ép' : 'ép đơn';
+                $msg = $isRollback ? "Đã ghi nhận hoàn tác ép ván cho {$boardName}." : "Đã ghi nhận hoàn thành công đoạn ép ván cho {$boardName}.";
+
                 return [
-                    'success' => true,
+                    'success'     => true,
                     'status_code' => 200,
-                    'is_bulk' => false,
-                    'message' => "Đã ghi nhận ép theo đơn và nhập 1 tấm vào kho cho {$adj['board_name']}. Tồn kho hiện tại: {$adj['new_stock']} tấm.",
-                    'data' => [
+                    'is_bulk'     => false,
+                    'message'     => $msg,
+                    'data'        => [
                         'product_code' => $directBoard->code ?? $directBoard->color_code ?? $codeStr,
-                        'product_name' => $adj['board_name'],
+                        'product_name' => $boardName,
                         'type'         => 'stock',
                         'operator'     => $operatorName,
                         'time'         => $logTime,
-                        'notes'        => $notes ?: 'Ép theo đơn hàng (+1 tấm vào kho)',
-                        'action'       => 'ép đơn',
-                        'new_stock'    => $adj['new_stock']
+                        'notes'        => $notes ?: $msg,
+                        'action'       => $actionLabel,
                     ]
                 ];
             }
@@ -569,7 +633,7 @@ class PressingService
         // ─────────────────────────────────────────
         // ROLLBACK
         // ─────────────────────────────────────────
-        if ($actionType === 'rollback') {
+        if ($isRollback) {
             if (!$latestPressingLog || $latestPressingIndex === -1) {
                 return [
                     'success' => false,
@@ -578,7 +642,6 @@ class PressingService
                 ];
             }
 
-            $prevAction = $latestPressingLog['action'] ?? '';
             $currentStatus = array_slice($currentStatus, 0, $latestPressingIndex);
             $newLog = [
                 'action'      => 'quay lại ép',
@@ -591,33 +654,21 @@ class PressingService
             $codeRecord->status = $currentStatus;
             $codeRecord->save();
 
-            // Reverse stock
-            if ($prevAction === 'ép đơn') {
-                $board = $this->resolveWoodBoard($item, $priceId);
-                if ($board) {
-                    $supply = $item->orderSupply;
-                    $invAction = $supply?->inventory_action ?? 'add';
-                    $reverseQty = ($invAction === 'subtract') ? 1 : -1;
-                    $revVoucher = ($reverseQty > 0) ? 'EP-DON' : 'EP-KHO';
-                    $this->adjustWoodBoardStock($board, $reverseQty, $revVoucher, $codeRecord->product_id, "Hoàn tác ép đơn: {$codeRecord->product_id}");
-                }
-            }
-
             $msg = "Đã hoàn tác quy trình ép ván cho tấm {$codeStr}.";
         } else {
             // ─────────────────────────────────────────
             // COMPLETE ÉP ĐƠN
             // ─────────────────────────────────────────
-            if ($latestPressingLog && $latestPressingLog['action'] === $actionType) {
+            if ($latestPressingLog && in_array($latestPressingLog['action'], ['ép đơn', 'complete'])) {
                 return [
                     'success' => false,
                     'status_code' => 400,
-                    'message' => "Tấm ván này đã được ghi nhận bước \"" . ucwords($actionType) . "\" trước đó."
+                    'message' => "Tấm ván này đã được ghi nhận hoàn thành ép ván trước đó."
                 ];
             }
 
             $newLog = [
-                'action'      => $actionType,
+                'action'      => 'ép đơn',
                 'operator'    => $operatorName,
                 'operator_id' => Auth::id(),
                 'time'        => $logTime,
@@ -633,30 +684,7 @@ class PressingService
             }
             \App\Models\Order::markInProductionFromItem($item);
 
-            // Cân đối kho theo cấu hình Thêm kho / Trừ kho của vật tư
-            $boardInfo = '';
-            $board = $this->resolveWoodBoard($item, $priceId);
-            if ($board) {
-                $supply = $item->orderSupply;
-                $invAction = $supply?->inventory_action ?? 'add';
-                $isSubtract = ($invAction === 'subtract');
-
-                $qtyChange = $isSubtract ? -1 : 1;
-                $voucherCode = $isSubtract ? 'XUAT-KHO' : 'EP-DON';
-                $actionLabel = $isSubtract ? 'Đã trừ 1 tấm' : 'Đã nhập 1 tấm';
-                $actionNote = $isSubtract ? 'Trừ kho (-1 tấm)' : 'Nhập kho (+1 tấm)';
-
-                $adj = $this->adjustWoodBoardStock(
-                    $board,
-                    $qtyChange,
-                    $voucherCode,
-                    $codeRecord->product_id,
-                    "Ép đơn tấm {$codeRecord->product_id} [{$actionNote}]" . ($notes ? ": {$notes}" : '')
-                );
-                $boardInfo = " [{$actionLabel}: {$adj['board_name']} - Tồn kho: {$adj['new_stock']}]";
-            }
-
-            $msg = "Đã ghi nhận ép theo đơn cho tấm {$codeStr} thành công!{$boardInfo}";
+            $msg = "Đã ghi nhận hoàn thành ép ván cho tấm {$codeStr} thành công!";
         }
 
         $productName = $item->$nameField ?? '—';
@@ -673,7 +701,7 @@ class PressingService
                 'operator' => $operatorName,
                 'time' => $logTime,
                 'notes' => $notes ?? $msg,
-                'action' => $actionType === 'rollback' ? 'quay lại ép' : $actionType,
+                'action' => $isRollback ? 'quay lại ép' : 'ép đơn',
             ]
         ];
     }

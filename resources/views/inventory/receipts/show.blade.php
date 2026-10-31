@@ -26,6 +26,9 @@
                     <a href="{{ route('inventory.receipts.print', $receipt) }}" target="_blank" class="btn border border-neutral-300 text-neutral-700 hover:bg-neutral-100 px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2">
                         <iconify-icon icon="solar:printer-outline" class="text-base text-info-600"></iconify-icon> In phiếu A4
                     </a>
+                    <a href="{{ route('inventory.receipts.edit', $receipt) }}" class="btn bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 shadow-sm">
+                        <iconify-icon icon="solar:pen-new-square-bold" class="text-base"></iconify-icon> Sửa phiếu
+                    </a>
                     <a href="{{ route('inventory.receipts.create') }}" class="btn btn-primary px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 shadow-sm">
                         <iconify-icon icon="ic:baseline-plus" class="text-base"></iconify-icon> Tạo phiếu nhập mới
                     </a>

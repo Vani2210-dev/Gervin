@@ -47,7 +47,16 @@
                     @forelse($transactions as $t)
                         <tr class="hover:bg-neutral-50 transition-colors">
                             <td class="py-2 px-3 text-neutral-600">{{ $t->date ? $t->date->format('d/m/Y') : '-' }}</td>
-                            <td class="py-2 px-3 font-bold text-neutral-800">{{ $t->voucher_code }}</td>
+                            <td class="py-2 px-3 font-bold">
+                                @if($t->edit_url)
+                                    <a href="{{ $t->edit_url }}" target="_blank" class="inline-flex items-center gap-1 text-primary-600 hover:text-primary-800 hover:underline font-bold group" title="Mở tab mới chỉnh sửa phiếu {{ $t->voucher_code }}">
+                                        <span>{{ $t->voucher_code }}</span>
+                                        <iconify-icon icon="solar:arrow-right-up-linear" class="text-xs text-neutral-400 group-hover:text-primary-600 transition-colors"></iconify-icon>
+                                    </a>
+                                @else
+                                    <span class="text-neutral-800">{{ $t->voucher_code }}</span>
+                                @endif
+                            </td>
                             <td class="py-2 px-3">
                                 @if($t->type === 'receipt')
                                     <span class="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-1 rounded font-bold">Nhập kho</span>

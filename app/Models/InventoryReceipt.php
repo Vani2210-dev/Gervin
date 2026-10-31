@@ -12,6 +12,7 @@ class InventoryReceipt extends Model
         'code',
         'date',
         'warehouse_id',
+        'order_id',
         'supplier_name',
         'deliverer',
         'receiver',
@@ -36,6 +37,11 @@ class InventoryReceipt extends Model
     public function items(): HasMany
     {
         return $this->hasMany(InventoryReceiptItem::class, 'receipt_id');
+    }
+
+    public function order(): BelongsTo
+    {
+        return $this->belongsTo(Order::class);
     }
 
     public function creator(): BelongsTo

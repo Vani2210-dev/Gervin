@@ -4,6 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\InventoryReceipt;
+use App\Models\InventoryIssue;
+use App\Models\InventoryStocktake;
 
 class InventoryTransaction extends Model
 {
@@ -83,5 +86,46 @@ class InventoryTransaction extends Model
             return 'Chỉ dán viền (' . ($this->woodBoard?->price_group ?? 'Tiêu chuẩn') . ')';
         }
         return $this->woodBoard?->category ?? 'Tấm ván';
+    }
+
+    public function getEditUrlAttribute(): ?string
+    {
+        // 1. Phiếu Nhập Kho (PNK)
+        if ($this->type === 'receipt' || $this->reference_type === InventoryReceipt::class || str_starts_with((string)$this->voucher_code, 'PNK')) {
+            $receiptId = $this->reference_id;
+            if (!$receiptId || $this->reference_type !== InventoryReceipt::class) {
+                $receipt = InventoryReceipt::where('code', $this->voucher_code)->first(['id']);
+                $receiptId = $receipt?->id;
+            }
+            if ($receiptId) {
+                return route('inventory.receipts.edit', $receiptId);
+            }
+        }
+
+        // 2. Phiếu Xuất Kho (PXK)
+        if ($this->type === 'issue' || $this->reference_type === InventoryIssue::class || str_starts_with((string)$this->voucher_code, 'PXK')) {
+            $issueId = $this->reference_id;
+            if (!$issueId || $this->reference_type !== InventoryIssue::class) {
+                $issue = InventoryIssue::where('code', $this->voucher_code)->first(['id']);
+                $issueId = $issue?->id;
+            }
+            if ($issueId) {
+                return route('inventory.issues.edit', $issueId);
+            }
+        }
+
+        // 3. Phiếu Kiểm Kê (PKK)
+        if ($this->type === 'stocktake' || $this->reference_type === InventoryStocktake::class || str_starts_with((string)$this->voucher_code, 'PKK')) {
+            $stocktakeId = $this->reference_id;
+            if (!$stocktakeId || $this->reference_type !== InventoryStocktake::class) {
+                $stocktake = InventoryStocktake::where('code', $this->voucher_code)->first(['id']);
+                $stocktakeId = $stocktake?->id;
+            }
+            if ($stocktakeId) {
+                return route('inventory.stocktakes.show', $stocktakeId);
+            }
+        }
+
+        return null;
     }
 }

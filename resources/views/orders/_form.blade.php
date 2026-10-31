@@ -4016,11 +4016,16 @@ document.addEventListener('DOMContentLoaded', function() {
             const firstInput = supplyRow.querySelector('input:not([type="hidden"]), select');
             if (firstInput && firstInput.disabled) return;
 
+            const actionSelect = supplyRow.querySelector('.supply-inventory-action-select') || supplyRow.querySelector('[name*="[inventory_action]"]');
+            const warehouseSelect = supplyRow.querySelector('[name*="[warehouse_id]"]');
+
             const supply = {
                 id: supplyRow.getAttribute('data-supply-id') || null,
                 order_supply_code: supplyRow.querySelector('[name*="[order_supply_code]"]')?.value || '',
                 supply_name: supplyRow.querySelector('[name*="[supply_name]"]')?.value || '',
                 quantity: parseFloat(supplyRow.querySelector('[name*="[quantity]"]:not([name*="items"])')?.value) || 0,
+                inventory_action: actionSelect ? actionSelect.value : 'add',
+                warehouse_id: warehouseSelect ? warehouseSelect.value : null,
                 items: []
             };
 

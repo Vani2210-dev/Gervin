@@ -33,8 +33,11 @@ if(sidebarToggle) {
     // Chỉ toggle trên desktop (>=1024px)
     if (window.innerWidth >= 1024) {
       this.classList.toggle("active");
-      document.querySelector(".sidebar").classList.toggle("active");
-      document.querySelector(".dashboard-main").classList.toggle("active");
+      const sidebar = document.querySelector(".sidebar");
+      const isCollapsed = sidebar ? sidebar.classList.toggle("active") : false;
+      const dashMain = document.querySelector(".dashboard-main");
+      if (dashMain) dashMain.classList.toggle("active");
+      localStorage.setItem("sidebar-collapsed", isCollapsed ? "true" : "false");
     }
   });
 }
@@ -84,16 +87,26 @@ document.addEventListener("DOMContentLoaded", function () {
   function handleMobileSidebar() {
     var sidebar = document.querySelector(".sidebar");
     var dashMain = document.querySelector(".dashboard-main");
+    var toggleBtn = document.querySelector(".sidebar-toggle");
     if (!sidebar || !dashMain) return;
 
     if (window.innerWidth < 1024) {
       // Mobile: xóa active để sidebar dùng overlay mode
       sidebar.classList.remove("active");
       dashMain.classList.remove("active");
+      if (toggleBtn) toggleBtn.classList.remove("active");
     } else {
-      // Desktop: thêm lại active (collapsed icon-only mode)
-      sidebar.classList.add("active");
-      dashMain.classList.add("active");
+      // Desktop: áp dụng trạng thái từ localStorage (mở/đóng giữ nguyên sau F5)
+      var saved = localStorage.getItem("sidebar-collapsed");
+      if (saved === "false") {
+        sidebar.classList.remove("active");
+        dashMain.classList.remove("active");
+        if (toggleBtn) toggleBtn.classList.remove("active");
+      } else if (saved === "true") {
+        sidebar.classList.add("active");
+        dashMain.classList.add("active");
+        if (toggleBtn) toggleBtn.classList.add("active");
+      }
     }
   }
 

@@ -90,6 +90,9 @@
                                             <a href="{{ route('inventory.receipts.show', $r) }}" class="p-1 text-primary-600 hover:text-primary-800 text-base" title="Xem chi tiết">
                                                 <iconify-icon icon="solar:eye-bold"></iconify-icon>
                                             </a>
+                                            <a href="{{ route('inventory.receipts.edit', $r) }}" class="p-1 text-amber-600 hover:text-amber-800 text-base" title="Chỉnh sửa phiếu">
+                                                <iconify-icon icon="solar:pen-new-square-bold"></iconify-icon>
+                                            </a>
                                             <a href="{{ route('inventory.receipts.print', $r) }}" target="_blank" class="p-1 text-info-600 hover:text-info-800 text-base" title="In phiếu">
                                                 <iconify-icon icon="solar:printer-outline"></iconify-icon>
                                             </a>

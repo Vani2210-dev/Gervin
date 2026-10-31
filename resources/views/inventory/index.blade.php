@@ -127,18 +127,57 @@
                         </a>
                     @endif
 
-                    {{-- Warehouse Pills --}}
+                    {{-- Warehouse Pills (Tối đa 3 kho trực tiếp + Dropdown các kho còn lại) --}}
+                    @php
+                        $selectedWhModel = $selectedWarehouseId ? $warehouses->firstWhere('id', $selectedWarehouseId) : null;
+                        $maxDirectWh = 3;
+                        if ($warehouses->count() <= $maxDirectWh) {
+                            $visibleWarehouses = $warehouses;
+                            $otherWarehouses = collect();
+                        } else {
+                            $top3 = $warehouses->take($maxDirectWh);
+                            $isInTop3 = $selectedWhModel && $top3->contains('id', $selectedWhModel->id);
+                            if ($isInTop3 || !$selectedWhModel) {
+                                $visibleWarehouses = $top3;
+                                $otherWarehouses = $warehouses->slice($maxDirectWh);
+                            } else {
+                                $visibleWarehouses = $warehouses->take(2)->push($selectedWhModel);
+                                $otherWarehouses = $warehouses->reject(fn($w) => $visibleWarehouses->contains('id', $w->id));
+                            }
+                        }
+                    @endphp
                     <div class="bg-neutral-100 p-1 rounded-xl flex items-center gap-1 text-xs font-semibold">
                         <a href="{{ route('inventory.index', array_merge(request()->query(), ['warehouse_id' => ''])) }}"
                            class="px-3 py-1 rounded-lg transition-all {{ empty($selectedWarehouseId) ? 'bg-white text-neutral-900 shadow-2xs font-bold' : 'text-neutral-500 hover:text-neutral-900' }}">
                             Tất cả kho
                         </a>
-                        @foreach($warehouses as $wh)
+                        @foreach($visibleWarehouses as $wh)
                             <a href="{{ route('inventory.index', array_merge(request()->query(), ['warehouse_id' => $wh->id])) }}"
                                class="px-3 py-1 rounded-lg transition-all {{ (string)$selectedWarehouseId === (string)$wh->id ? ($wh->code === 'KHO-CHI' ? 'bg-amber-600 text-white shadow-2xs font-bold' : 'bg-primary-600 text-white shadow-2xs font-bold') : 'text-neutral-600 hover:text-neutral-900' }}">
                                 {{ $wh->name }}
                             </a>
                         @endforeach
+
+                        @if($otherWarehouses->count() > 0)
+                            <div class="relative inline-block" id="other_warehouses_dropdown_wrapper">
+                                <button type="button" 
+                                        onclick="toggleOtherWhDropdown(event)" 
+                                        class="px-3 py-1 rounded-lg transition-all flex items-center gap-1 text-neutral-600 hover:text-neutral-900 hover:bg-neutral-200">
+                                    <span>Kho khác ({{ $otherWarehouses->count() }})</span>
+                                    <iconify-icon icon="solar:alt-arrow-down-linear" class="text-xs"></iconify-icon>
+                                </button>
+                                <div id="other_warehouses_dropdown_menu" 
+                                     class="hidden absolute left-0 mt-2 w-56 bg-white border border-neutral-200 rounded-xl shadow-lg z-50 py-2 max-h-72 overflow-y-auto">
+                                    @foreach($otherWarehouses as $wh)
+                                        <a href="{{ route('inventory.index', array_merge(request()->query(), ['warehouse_id' => $wh->id])) }}"
+                                           class="px-4 py-2 block text-xs hover:bg-primary-50 hover:text-primary-700 transition-colors {{ (string)$selectedWarehouseId === (string)$wh->id ? 'font-bold text-primary-700 bg-primary-50' : 'text-neutral-700' }}">
+                                            <div class="font-semibold">{{ $wh->name }}</div>
+                                            <div class="text-[10px] text-neutral-400">{{ $wh->code }}</div>
+                                        </a>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
                     </div>
 
                     {{-- Status Pills (All / Low stock / Out of stock) --}}
@@ -159,7 +198,7 @@
 
                     {{-- Export Excel --}}
                                         {{-- Import Excel --}}
-                    <button type="button" onclick="openModal('importStockModal')" class="btn bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm">
+                    <button type="button" onclick="openImportStockModal('{{ $selectedWarehouseId }}')" class="btn bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm">
                         <iconify-icon icon="solar:file-excel-bold" class="text-base"></iconify-icon> Nhập Excel tồn kho
                     </button>
 
@@ -197,6 +236,8 @@
                         <tbody class="divide-y divide-neutral-100 bg-white">
                             @forelse($materials as $index => $m)
                                 @php
+                                    $isPriceModel = false;
+                                    $board = null;
                                     if ($isEdgeBandWarehouse) {
                                         $displaySku = $m->edge_band_code;
                                         $displayName = $m->edge_band_name;
@@ -206,7 +247,7 @@
                                         $categoryName = 'Chỉ dán viền';
                                         $displayUnit = $m->edge_band_unit ?: 'm';
                                         $displayCostPrice = (float)$m->edge_band_cost_price;
-                                        $displayStock = (float)$m->edge_band_current_stock;
+                                        $displayStock = isset($m->edge_band_warehouse_stock) ? (float)$m->edge_band_warehouse_stock : (float)$m->edge_band_current_stock;
                                         $displayMinStock = (float)$m->edge_band_min_stock;
                                         $lineValue = $displayStock * $displayCostPrice;
                                         $stockCardType = 'edge_band';
@@ -219,9 +260,9 @@
                                             'category'                => 'Chỉ dán viền',
                                             'unit'                    => $m->edge_band_unit ?: 'm',
                                             'cost_price'              => (float)$m->edge_band_cost_price,
-                                            'stock'                   => (float)$m->edge_band_current_stock,
+                                            'stock'                   => $displayStock,
                                             'min_stock'               => (float)$m->edge_band_min_stock,
-                                            'warehouse_id'            => $m->warehouse_id,
+                                            'warehouse_id'            => $selectedWarehouseId ?: ($m->warehouse_id ?? 2),
                                             'status'                  => $m->status,
                                             'notes'                   => $m->notes,
                                             'foil_name'                => $m->foil_name ?? '',
@@ -240,15 +281,26 @@
                                             ? ($m->code ?: ($color . ($m->type?->prefix ?? ''))) 
                                             : $m->color_code;
 
-                                        $typeName = $isPriceModel ? ($m->name ?: ($m->type?->name ?? 'Tấm Acrylic')) : $m->name;
-                                        $displayName = 'Tấm ' . $color . ($typeName ? ' - ' . $typeName : '');
+                                        if ($isPriceModel) {
+                                            $rawName = trim($m->name ?: ($m->type?->name ?? 'Tấm Acrylic'));
+                                            if (preg_match('/^Tấm\s+([^-\s]+)\s*-\s*Tấm\s+\1\s*-\s*(.+)$/ui', $rawName, $matches)) {
+                                                $rawName = 'Tấm ' . $matches[1] . ' - ' . $matches[2];
+                                            }
+                                            if (preg_match('/^tấm\s+/iu', $rawName) || ($color && stripos($rawName, $color) !== false)) {
+                                                $displayName = $rawName;
+                                            } else {
+                                                $displayName = 'Tấm ' . ($color ? $color . ' - ' : '') . $rawName;
+                                            }
+                                        } else {
+                                            $displayName = 'Tấm ' . $color;
+                                        }
                                         $colorTag = $color;
                                         $thickness = $isPriceModel ? $m->thickness : '';
                                         $originCode = $board?->origin_code ?: '—';
                                         $categoryName = $isPriceModel ? ($m->type?->name ?? $board?->price_group ?? 'Tấm cốt gỗ') : ($m->price_group ?: 'Tấm cốt gỗ');
                                         $displayUnit = $board?->unit ?: 'Tấm';
                                         $displayCostPrice = (float)($isPriceModel ? $m->price_board : $m->cost_price);
-                                        $displayStock = (float)($isPriceModel ? $m->stock : $m->total_stock);
+                                        $displayStock = isset($m->warehouse_stock) ? (float)$m->warehouse_stock : (float)($isPriceModel ? $m->stock : $m->total_stock);
                                         $displayMinStock = (float)($isPriceModel ? 5 : $m->min_stock);
                                         $lineValue = $displayStock * $displayCostPrice;
                                         $stockCardType = $isPriceModel ? 'price' : 'board';
@@ -263,7 +315,7 @@
                                             'cost_price'   => $displayCostPrice,
                                             'stock'        => $displayStock,
                                             'min_stock'    => $displayMinStock,
-                                            'warehouse_id' => $board?->warehouse_id,
+                                            'warehouse_id' => $selectedWarehouseId ?: ($board?->warehouse_id ?? 1),
                                             'status'       => $board?->status ?? 'active',
                                             'notes'        => $board?->notes,
                                             'foil_name'     => $isPriceModel ? ($m->foil_name ?: ($board?->foil_name ?: '')) : ($m->foil_name ?: ''),
@@ -285,19 +337,8 @@
                                     </td>
                                     <td class="py-3 px-4">
                                         <div class="font-bold text-neutral-900 text-xs">{{ $displayName }}</div>
-                                        <div class="flex items-center gap-2 mt-0.5 text-[11px] text-neutral-500 flex-wrap">
-                                            @if($colorTag)
-                                                <span class="inline-flex items-center gap-1 font-semibold text-primary-700 bg-primary-50 px-2 py-0.5 rounded border border-primary-200">
-                                                    Mã màu: <strong>{{ $colorTag }}</strong>
-                                                </span>
-                                            @endif
-                                            @if(!empty($thickness))
-                                                <span class="text-neutral-300">•</span>
-                                                <span class="text-neutral-500 font-medium">Độ dày: <strong>{{ $thickness }}</strong></span>
-                                            @endif
-                                        </div>
                                         @if(($m->notes ?? false) && !$isEdgeBandWarehouse)
-                                            <div class="text-[11px] text-neutral-400 truncate max-w-xs mt-0.5">{{ $m->notes }}</div>
+                                            <div class="text-[11px] text-neutral-400 truncate max-w-xs mt-1">{{ $m->notes }}</div>
                                         @endif
                                     </td>
                                                                         <td class="py-3 px-4 min-w-[240px]">
@@ -772,6 +813,21 @@
 
 @push('scripts')
 <script>
+    function toggleOtherWhDropdown(e) {
+        e.stopPropagation();
+        const menu = document.getElementById('other_warehouses_dropdown_menu');
+        if (menu) {
+            menu.classList.toggle('hidden');
+        }
+    }
+    document.addEventListener('click', function(e) {
+        const wrap = document.getElementById('other_warehouses_dropdown_wrapper');
+        const menu = document.getElementById('other_warehouses_dropdown_menu');
+        if (wrap && menu && !wrap.contains(e.target)) {
+            menu.classList.add('hidden');
+        }
+    });
+
     if (typeof window.openModal !== 'function') {
         window.openModal = function(id) {
             const el = document.getElementById(id);

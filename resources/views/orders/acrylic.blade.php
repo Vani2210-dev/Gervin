@@ -356,10 +356,12 @@
                         <input type="text" name="supplies[{{ $supplyIndex }}][supply_name]" class="form-control form-control-sm rounded-lg w-64 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Tên vật tư (ví dụ: Acrylic, Melamine...)" value="{{ $supply->supply_name }}">
                         <input type="number" name="supplies[{{ $supplyIndex }}][quantity]" class="form-control form-control-sm rounded-lg w-24 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="SL" min="0" step="any" value="{{ $supply->quantity ?? 0 }}">
                         @php
+                            $nhapKhoCust = $nhapKhoCustomer ?? \App\Models\Customer::getNhapKhoCustomer();
                             $isNKOrder = isset($acrylicOrder) && (
-                                $acrylicOrder->customer_id == ($nhapKhoCustomer?->id ?? -1) || 
+                                ($nhapKhoCust && $acrylicOrder->customer_id == $nhapKhoCust->id) || 
                                 str_contains(mb_strtolower($acrylicOrder->customer_name ?? ''), 'nhập kho') ||
-                                str_contains(mb_strtolower($acrylicOrder->customer_name ?? ''), 'nhap kho')
+                                str_contains(mb_strtolower($acrylicOrder->customer_name ?? ''), 'nhap kho') ||
+                                ($supply->inventory_action ?? 'add') === 'subtract'
                             );
                             $currentAction = $supply->inventory_action ?? 'add';
                         @endphp

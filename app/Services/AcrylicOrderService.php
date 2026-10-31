@@ -250,6 +250,8 @@ class AcrylicOrderService
             $this->savePaymentDetails($order, $request->payment_details ?? []);
         }
 
+        app(\App\Services\InventoryService::class)->syncOrderWarehouseReceiptAndIssue($order);
+
         return $order;
     }
 
@@ -310,6 +312,7 @@ class AcrylicOrderService
                 'supply_name'       => $supplyData['supply_name'] ?? 'Vật tư',
                 'quantity'          => $supplyData['quantity'] ?? 1,
                 'inventory_action'  => $supplyData['inventory_action'] ?? 'add',
+                'warehouse_id'      => $supplyData['warehouse_id'] ?? null,
             ]);
 
             if (!isset($supplyData['items']) || !is_array($supplyData['items'])) continue;

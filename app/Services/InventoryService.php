@@ -13,6 +13,9 @@ use App\Models\InventoryIssueItem;
 use App\Models\InventoryStocktake;
 use App\Models\InventoryStocktakeItem;
 use App\Models\InventoryTransaction;
+use App\Models\Order;
+use App\Models\OrderSupply;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
@@ -228,6 +231,238 @@ class InventoryService
     }
 
     /**
+     * Update Goods Receipt (PNK)
+     */
+    public function updateReceipt(InventoryReceipt $receipt, Warehouse $warehouse, array $data, array $items, $userId = null): InventoryReceipt
+    {
+        $this->ensureSchemaUpdated();
+
+        return DB::transaction(function () use ($receipt, $warehouse, $data, $items, $userId) {
+            $receipt->loadMissing('items');
+
+            // 1. Hoàn trả lại tồn kho cũ của các items trong phiếu
+            if ($receipt->status === 'completed') {
+                foreach ($receipt->items as $oldItem) {
+                    $oldQty = (float)($oldItem->quantity ?? 0);
+                    if ($oldQty <= 0) continue;
+
+                    if ($oldItem->item_type === 'edge_band') {
+                        if ($oldItem->wood_board_id) {
+                            $oldBoard = WoodBoard::find($oldItem->wood_board_id);
+                            if ($oldBoard) {
+                                $oldBoard->edge_band_current_stock = max(0, (float)$oldBoard->edge_band_current_stock - $oldQty);
+                                $oldBoard->save();
+                            }
+                        }
+                    } else {
+                        if ($oldItem->wood_board_price_id) {
+                            $oldBoardPrice = \App\Models\WoodBoardPrice::find($oldItem->wood_board_price_id);
+                            if ($oldBoardPrice) {
+                                $oldBoardPrice->stock = max(0, (float)$oldBoardPrice->stock - $oldQty);
+                                $oldBoardPrice->save();
+                            }
+                        }
+
+                        if ($oldItem->wood_board_id) {
+                            $oldBoard = WoodBoard::find($oldItem->wood_board_id);
+                            if ($oldBoard) {
+                                $oldBoard->current_stock = $oldBoard->prices()->sum('stock') ?: max(0, (float)$oldBoard->current_stock - $oldQty);
+                                $oldBoard->save();
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 2. Xóa các transactions cũ của phiếu này
+            InventoryTransaction::where(function ($q) use ($receipt) {
+                $q->where('reference_type', InventoryReceipt::class)
+                  ->where('reference_id', $receipt->id);
+            })->orWhere('voucher_code', $receipt->code)
+              ->delete();
+
+            // 3. Xóa các items cũ của phiếu
+            $receipt->items()->delete();
+
+            // 4. Cập nhật thông tin phiếu nhập
+            $code = !empty($data['code']) ? $data['code'] : $receipt->code;
+            $date = !empty($data['date']) ? $data['date'] : $receipt->date;
+
+            $receipt->update([
+                'code'          => $code,
+                'date'          => $date,
+                'warehouse_id'  => $warehouse->id,
+                'supplier_name' => $data['supplier_name'] ?? null,
+                'deliverer'     => $data['deliverer'] ?? null,
+                'receiver'      => $data['receiver'] ?? null,
+                'notes'         => $data['notes'] ?? null,
+            ]);
+
+            // 5. Thêm lại các items mới và cập nhật tồn kho & transactions mới
+            $totalQty = 0;
+            $totalAmount = 0;
+            $isEdgeBandWarehouse = ($warehouse->code === 'KHO-CHI') || (str_contains(mb_strtolower($warehouse->name), 'chỉ'));
+
+            foreach ($items as $item) {
+                $rawMatId = (string)($item['wood_board_id'] ?? $item['material_id'] ?? '');
+                $itemType = $item['item_type'] ?? null;
+                if (!$itemType) {
+                    if (str_starts_with($rawMatId, 'edge_') || str_starts_with($rawMatId, 'CHI-') || $isEdgeBandWarehouse) {
+                        $itemType = 'edge_band';
+                    } else {
+                        $itemType = 'board';
+                    }
+                }
+
+                $cleanId = str_replace(['edge_', 'board_', 'CHI-'], '', $rawMatId);
+
+                if ($itemType === 'edge_band') {
+                    $board = is_numeric($cleanId) 
+                        ? WoodBoard::find($cleanId) 
+                        : WoodBoard::where('color_code', $cleanId)->first();
+
+                    if (!$board) continue;
+
+                    $qty = (float)($item['quantity'] ?? 0);
+                    if ($qty <= 0) continue;
+
+                    $price = (float)($item['unit_price'] ?? ($board->edge_band_cost_price ?? 0));
+                    $lineTotal = $qty * $price;
+
+                    InventoryReceiptItem::create($this->sanitizeItemData('inventory_receipt_items', [
+                        'receipt_id'          => $receipt->id,
+                        'item_type'           => 'edge_band',
+                        'wood_board_id'       => $board->id,
+                        'wood_board_price_id' => null,
+                        'quantity'            => $qty,
+                        'unit_price'          => $price,
+                        'total_price'         => $lineTotal,
+                        'notes'               => $item['notes'] ?? null,
+                    ]));
+
+                    $board->edge_band_current_stock = (float)$board->edge_band_current_stock + $qty;
+                    if ($price > 0) {
+                        $board->edge_band_cost_price = $price;
+                    }
+                    $board->save();
+                    $stockAfter = $board->edge_band_current_stock;
+
+                    InventoryTransaction::create($this->sanitizeItemData('inventory_transactions', [
+                        'warehouse_id'        => $warehouse->id,
+                        'item_type'           => 'edge_band',
+                        'wood_board_id'       => $board->id,
+                        'wood_board_price_id' => null,
+                        'date'                => $date,
+                        'type'                => 'receipt',
+                        'voucher_code'        => $code,
+                        'reference_id'        => $receipt->id,
+                        'reference_type'      => InventoryReceipt::class,
+                        'in_qty'              => $qty,
+                        'out_qty'             => 0,
+                        'stock_after'         => $stockAfter,
+                        'unit_price'          => $price,
+                        'notes'               => $data['notes'] ?? ('Nhập kho chỉ theo phiếu ' . $code),
+                        'created_by'          => $userId,
+                    ]));
+
+                    $totalQty += $qty;
+                    $totalAmount += $lineTotal;
+                } else {
+                    $priceId = $item['wood_board_price_id'] ?? null;
+                    $boardId = is_numeric($cleanId) ? (int)$cleanId : null;
+
+                    $boardPrice = null;
+                    if ($priceId) {
+                        $boardPrice = \App\Models\WoodBoardPrice::find($priceId);
+                    } elseif ($boardId) {
+                        $maybePrice = \App\Models\WoodBoardPrice::find($boardId);
+                        if ($maybePrice) {
+                            $boardPrice = $maybePrice;
+                            $boardId = $maybePrice->wood_board_id;
+                        }
+                    }
+
+                    if ($boardPrice) {
+                        $boardId = $boardPrice->wood_board_id;
+                    }
+
+                    if (!$boardId && !$boardPrice) continue;
+
+                    $qty = (float)($item['quantity'] ?? 0);
+                    if ($qty <= 0) continue;
+
+                    $price = (float)($item['unit_price'] ?? ($boardPrice?->price_board ?? 0));
+                    $lineTotal = $qty * $price;
+
+                    InventoryReceiptItem::create($this->sanitizeItemData('inventory_receipt_items', [
+                        'receipt_id'          => $receipt->id,
+                        'item_type'           => 'board',
+                        'wood_board_id'       => $boardId,
+                        'wood_board_price_id' => $boardPrice?->id,
+                        'quantity'            => $qty,
+                        'unit_price'          => $price,
+                        'total_price'         => $lineTotal,
+                        'notes'               => $item['notes'] ?? null,
+                    ]));
+
+                    // Update WoodBoardPrice stock
+                    $stockAfter = 0;
+                    if ($boardPrice) {
+                        $boardPrice->stock += $qty;
+                        if ($price > 0) {
+                            $boardPrice->price_board = $price;
+                        }
+                        $boardPrice->save();
+                        $stockAfter = $boardPrice->stock;
+                    }
+
+                    // Update WoodBoard stock
+                    $board = WoodBoard::find($boardId);
+                    if ($board) {
+                        $board->current_stock = $board->prices()->sum('stock') ?: ($board->current_stock + $qty);
+                        if ($price > 0 && !$boardPrice) {
+                            $board->cost_price = $price;
+                        }
+                        $board->save();
+                        if (!$boardPrice) {
+                            $stockAfter = $board->current_stock;
+                        }
+                    }
+
+                    // Create stock transaction
+                    InventoryTransaction::create($this->sanitizeItemData('inventory_transactions', [
+                        'warehouse_id'        => $warehouse->id,
+                        'item_type'           => 'board',
+                        'wood_board_id'       => $boardId,
+                        'wood_board_price_id' => $boardPrice?->id,
+                        'date'                => $date,
+                        'type'                => 'receipt',
+                        'voucher_code'        => $code,
+                        'reference_id'        => $receipt->id,
+                        'reference_type'      => InventoryReceipt::class,
+                        'in_qty'              => $qty,
+                        'out_qty'             => 0,
+                        'stock_after'         => $stockAfter,
+                        'unit_price'          => $price,
+                        'notes'               => $data['notes'] ?? ('Nhập kho theo phiếu ' . $code),
+                        'created_by'          => $userId,
+                    ]));
+
+                    $totalQty += $qty;
+                    $totalAmount += $lineTotal;
+                }
+            }
+
+            $receipt->update([
+                'total_quantity' => $totalQty,
+                'total_amount'   => $totalAmount,
+            ]);
+
+            return $receipt;
+        });
+    }
+
+    /**
      * Create Goods Issue (PXK)
      */
     public function createIssue(Warehouse $warehouse, array $data, array $items, $userId = null): InventoryIssue
@@ -403,6 +638,225 @@ class InventoryService
             ]);
 
             return $issue;
+        });
+    }
+
+    public function updateIssue(InventoryIssue $issue, Warehouse $warehouse, array $data, array $items, $userId = null): InventoryIssue
+    {
+        $this->ensureSchemaUpdated();
+
+        return DB::transaction(function () use ($issue, $warehouse, $data, $items, $userId) {
+            $issue->loadMissing('items');
+
+            // 1. Hoàn trả lại tồn kho cũ của các items trong phiếu xuất (cộng lại tồn)
+            if ($issue->status === 'completed') {
+                foreach ($issue->items as $oldItem) {
+                    $oldQty = (float)($oldItem->quantity ?? 0);
+                    if ($oldQty <= 0) continue;
+
+                    if ($oldItem->item_type === 'edge_band') {
+                        if ($oldItem->wood_board_id) {
+                            $oldBoard = WoodBoard::find($oldItem->wood_board_id);
+                            if ($oldBoard) {
+                                $oldBoard->edge_band_current_stock = (float)$oldBoard->edge_band_current_stock + $oldQty;
+                                $oldBoard->save();
+                            }
+                        }
+                    } else {
+                        if ($oldItem->wood_board_price_id) {
+                            $oldBoardPrice = \App\Models\WoodBoardPrice::find($oldItem->wood_board_price_id);
+                            if ($oldBoardPrice) {
+                                $oldBoardPrice->stock = (float)$oldBoardPrice->stock + $oldQty;
+                                $oldBoardPrice->save();
+                            }
+                        }
+
+                        if ($oldItem->wood_board_id) {
+                            $oldBoard = WoodBoard::find($oldItem->wood_board_id);
+                            if ($oldBoard) {
+                                $oldBoard->current_stock = $oldBoard->prices()->sum('stock') ?: ((float)$oldBoard->current_stock + $oldQty);
+                                $oldBoard->save();
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 2. Xóa các transactions cũ của phiếu xuất này
+            InventoryTransaction::where(function ($q) use ($issue) {
+                $q->where('reference_type', InventoryIssue::class)
+                  ->where('reference_id', $issue->id);
+            })->orWhere('voucher_code', $issue->code)
+              ->delete();
+
+            // 3. Xóa các items cũ của phiếu
+            $issue->items()->delete();
+
+            // 4. Cập nhật thông tin phiếu xuất
+            $code = !empty($data['code']) ? $data['code'] : $issue->code;
+            $date = !empty($data['date']) ? $data['date'] : $issue->date;
+
+            $issue->update([
+                'code'          => $code,
+                'date'          => $date,
+                'warehouse_id'  => $warehouse->id,
+                'recipient'     => $data['recipient'] ?? 'Xưởng sản xuất Gervin',
+                'deliverer'     => $data['deliverer'] ?? null,
+                'reason'        => $data['reason'] ?? 'Xuất sản xuất',
+                'notes'         => $data['notes'] ?? null,
+            ]);
+
+            // 5. Thêm lại các items mới và trừ tồn kho & transactions mới
+            $totalQty = 0;
+            $totalAmount = 0;
+            $isEdgeBandWarehouse = ($warehouse->code === 'KHO-CHI') || (str_contains(mb_strtolower($warehouse->name), 'chỉ'));
+
+            foreach ($items as $item) {
+                $rawMatId = (string)($item['wood_board_id'] ?? $item['material_id'] ?? '');
+                $itemType = $item['item_type'] ?? null;
+                if (!$itemType) {
+                    if (str_starts_with($rawMatId, 'edge_') || str_starts_with($rawMatId, 'CHI-') || $isEdgeBandWarehouse) {
+                        $itemType = 'edge_band';
+                    } else {
+                        $itemType = 'board';
+                    }
+                }
+
+                $cleanId = str_replace(['edge_', 'board_', 'CHI-'], '', $rawMatId);
+
+                if ($itemType === 'edge_band') {
+                    $board = is_numeric($cleanId) 
+                        ? WoodBoard::find($cleanId) 
+                        : WoodBoard::where('color_code', $cleanId)->first();
+
+                    if (!$board) continue;
+
+                    $qty = (float)($item['quantity'] ?? 0);
+                    if ($qty <= 0) continue;
+
+                    $price = (float)($item['unit_price'] ?? ($board->edge_band_cost_price ?? 0));
+                    $lineTotal = $qty * $price;
+
+                    InventoryIssueItem::create($this->sanitizeItemData('inventory_issue_items', [
+                        'issue_id'            => $issue->id,
+                        'item_type'           => 'edge_band',
+                        'wood_board_id'       => $board->id,
+                        'wood_board_price_id' => null,
+                        'quantity'            => $qty,
+                        'unit_price'          => $price,
+                        'total_price'         => $lineTotal,
+                        'notes'               => $item['notes'] ?? null,
+                    ]));
+
+                    $board->edge_band_current_stock = max(0, (float)$board->edge_band_current_stock - $qty);
+                    $board->save();
+                    $stockAfter = $board->edge_band_current_stock;
+
+                    InventoryTransaction::create($this->sanitizeItemData('inventory_transactions', [
+                        'warehouse_id'        => $warehouse->id,
+                        'item_type'           => 'edge_band',
+                        'wood_board_id'       => $board->id,
+                        'wood_board_price_id' => null,
+                        'date'                => $date,
+                        'type'                => 'issue',
+                        'voucher_code'        => $code,
+                        'reference_id'        => $issue->id,
+                        'reference_type'      => InventoryIssue::class,
+                        'in_qty'              => 0,
+                        'out_qty'             => $qty,
+                        'stock_after'         => $stockAfter,
+                        'unit_price'          => $price,
+                        'notes'               => $data['notes'] ?? ('Xuất kho chỉ theo phiếu ' . $code),
+                        'created_by'          => $userId,
+                    ]));
+
+                    $totalQty += $qty;
+                    $totalAmount += $lineTotal;
+                } else {
+                    $priceId = $item['wood_board_price_id'] ?? null;
+                    $boardId = is_numeric($cleanId) ? (int)$cleanId : null;
+
+                    $boardPrice = null;
+                    if ($priceId) {
+                        $boardPrice = \App\Models\WoodBoardPrice::find($priceId);
+                    } elseif ($boardId) {
+                        $maybePrice = \App\Models\WoodBoardPrice::find($boardId);
+                        if ($maybePrice) {
+                            $boardPrice = $maybePrice;
+                        }
+                    }
+
+                    if ($boardPrice) {
+                        $boardId = $boardPrice->wood_board_id;
+                    }
+
+                    if (!$boardId && !$boardPrice) continue;
+
+                    $qty = (float)($item['quantity'] ?? 0);
+                    if ($qty <= 0) continue;
+
+                    $board = WoodBoard::find($boardId);
+                    $price = (float)($item['unit_price'] ?? ($boardPrice?->price_board ?? $board?->cost_price ?? 0));
+                    $lineTotal = $qty * $price;
+
+                    InventoryIssueItem::create($this->sanitizeItemData('inventory_issue_items', [
+                        'issue_id'            => $issue->id,
+                        'item_type'           => 'board',
+                        'wood_board_id'       => $boardId,
+                        'wood_board_price_id' => $boardPrice?->id,
+                        'quantity'            => $qty,
+                        'unit_price'          => $price,
+                        'total_price'         => $lineTotal,
+                        'notes'               => $item['notes'] ?? null,
+                    ]));
+
+                    // Update WoodBoardPrice stock
+                    $stockAfter = 0;
+                    if ($boardPrice) {
+                        $boardPrice->stock = max(0, $boardPrice->stock - $qty);
+                        $boardPrice->save();
+                        $stockAfter = $boardPrice->stock;
+                    }
+
+                    // Update WoodBoard stock
+                    if ($board) {
+                        $board->current_stock = $board->prices()->sum('stock') ?: max(0, $board->current_stock - $qty);
+                        $board->save();
+                        if (!$boardPrice) {
+                            $stockAfter = $board->current_stock;
+                        }
+                    }
+
+                    // Create stock transaction
+                    InventoryTransaction::create($this->sanitizeItemData('inventory_transactions', [
+                        'warehouse_id'        => $warehouse->id,
+                        'item_type'           => 'board',
+                        'wood_board_id'       => $boardId,
+                        'wood_board_price_id' => $boardPrice?->id,
+                        'date'                => $date,
+                        'type'                => 'issue',
+                        'voucher_code'        => $code,
+                        'reference_id'        => $issue->id,
+                        'reference_type'      => InventoryIssue::class,
+                        'in_qty'              => 0,
+                        'out_qty'             => $qty,
+                        'stock_after'         => $stockAfter,
+                        'unit_price'          => $price,
+                        'notes'               => $data['notes'] ?? ('Xuất kho theo phiếu ' . $code),
+                        'created_by'          => $userId,
+                    ]));
+
+                    $totalQty += $qty;
+                    $totalAmount += $lineTotal;
+                }
+            }
+
+            $issue->update([
+                'total_quantity' => $totalQty,
+                'total_amount'   => $totalAmount,
+            ]);
+
+            return $issue->fresh();
         });
     }
 
@@ -723,6 +1177,185 @@ class InventoryService
             $issue->items()->delete();
             $issue->delete();
         });
+    }
+
+    /**
+     * Đồng bộ Đơn nhập kho sang Phiếu Nhập kho (PNK) và Phiếu Xuất kho (PXK)
+     */
+    public function syncOrderWarehouseReceiptAndIssue(Order $order): void
+    {
+        $this->ensureSchemaUpdated();
+
+        // 1. Kiểm tra đơn hàng có phải là Đơn Nhập kho không
+        $isNhapKho = false;
+        $cust = $order->customer ?: ($order->customer_id ? \App\Models\Customer::find($order->customer_id) : null);
+        if ($cust && ($cust->customer_code === 'NK' || str_contains(mb_strtolower($cust->name), 'nhập kho') || str_contains(mb_strtolower($cust->name), 'nhap kho'))) {
+            $isNhapKho = true;
+        }
+        if (!$isNhapKho && $order->customer_name && (str_contains(mb_strtolower($order->customer_name), 'nhập kho') || str_contains(mb_strtolower($order->customer_name), 'nhap kho'))) {
+            $isNhapKho = true;
+        }
+        if (!$isNhapKho && $order->supplies()->where('inventory_action', 'subtract')->exists()) {
+            $isNhapKho = true;
+        }
+
+        // Tìm các phiếu nhập/xuất trước đó gắn với đơn này (qua order_id hoặc ghi chú)
+        $existingReceipt = InventoryReceipt::where('order_id', $order->id)
+            ->orWhere(function ($q) use ($order) {
+                $q->where('notes', 'like', "%[Đơn nhập kho #{$order->order_code}]%")
+                  ->orWhere('supplier_name', 'like', "%Đơn {$order->order_code}%");
+            })->first();
+
+        $existingIssue = InventoryIssue::where('order_id', $order->id)
+            ->orWhere(function ($q) use ($order) {
+                $q->where('notes', 'like', "%[Đơn nhập kho #{$order->order_code}]%")
+                  ->orWhere('recipient', 'like', "%Đơn {$order->order_code}%");
+            })->first();
+
+        // Nếu đơn không phải là Đơn Nhập kho HOẶC đang là đơn nháp (draft):
+        // Xóa hoàn trả tồn kho nếu trước đó từng tạo phiếu
+        if (!$isNhapKho || $order->status === 'draft') {
+            if ($existingReceipt) {
+                $this->deleteReceipt($existingReceipt);
+            }
+            if ($existingIssue) {
+                $this->deleteIssue($existingIssue);
+            }
+            return;
+        }
+
+        // 2. Tách vật tư theo hành vi: nhập kho (add) hoặc xuất kho (subtract)
+        $order->load(['supplies.items', 'supplies.glassItems', 'supplies.minLateItems']);
+        
+        $addItems = [];
+        $subtractItems = [];
+        $defaultWarehouse = Warehouse::where('code', 'KHO-VAN')->first() ?? Warehouse::first();
+        $targetWarehouseId = $defaultWarehouse?->id ?? 1;
+
+        foreach ($order->supplies as $supply) {
+            $action = $supply->inventory_action ?? 'add';
+            $code = trim($supply->order_supply_code ?: '');
+            $name = trim($supply->supply_name ?: '');
+            if (!$code && !$name) continue;
+
+            // Tính số lượng
+            $qty = (float)($supply->quantity ?? 0);
+            if ($qty <= 0) {
+                $childItemsCount = ($supply->items ? $supply->items->sum('quantity') : 0) 
+                    ?: (($supply->glassItems ? $supply->glassItems->sum('quantity') : 0) 
+                    ?: (($supply->minLateItems ? $supply->minLateItems->sum('quantity') : 0) ?: 0));
+                $qty = (float)$childItemsCount;
+            }
+            if ($qty <= 0) {
+                $qty = 1;
+            }
+
+            // Tìm mặt hàng trong kho
+            $boardPrice = WoodBoardPrice::where('code', $code)->first();
+            $woodBoard = null;
+            if (!$boardPrice && $code) {
+                $woodBoard = WoodBoard::where('color_code', $code)->first();
+            }
+            if (!$boardPrice && !$woodBoard && $name) {
+                $boardPrice = WoodBoardPrice::where('name', $name)->first();
+                if (!$boardPrice) {
+                    $woodBoard = WoodBoard::where('color_code', $name)->first();
+                }
+            }
+
+            if (!$boardPrice && !$woodBoard) {
+                // Tạo mới WoodBoard nếu chưa có
+                $woodBoard = WoodBoard::create([
+                    'color_code'    => $code ?: $name,
+                    'price_group'   => 'Acrylic Foil',
+                    'unit'          => 'Tấm',
+                    'cost_price'    => 0,
+                    'min_stock'     => 5,
+                    'initial_stock' => 0,
+                    'current_stock' => 0,
+                    'warehouse_id'  => $targetWarehouseId,
+                    'status'        => 'active',
+                ]);
+            }
+
+            $materialId = $boardPrice ? $boardPrice->id : $woodBoard->id;
+            $unitPrice = (float)($boardPrice ? $boardPrice->price_board : ($woodBoard ? $woodBoard->cost_price : 0));
+            $itemType = 'board';
+
+            if ($supply->warehouse_id) {
+                $targetWarehouseId = $supply->warehouse_id;
+            } elseif ($woodBoard && $woodBoard->warehouse_id) {
+                $targetWarehouseId = $woodBoard->warehouse_id;
+            }
+
+            $itemData = [
+                'material_id'         => $materialId,
+                'wood_board_id'       => $boardPrice ? $boardPrice->wood_board_id : $woodBoard->id,
+                'wood_board_price_id' => $boardPrice ? $boardPrice->id : null,
+                'item_type'           => $itemType,
+                'quantity'            => $qty,
+                'unit_price'          => $unitPrice,
+                'notes'               => "Từ đơn nhập kho {$order->order_code}",
+            ];
+
+            if ($action === 'subtract') {
+                $subtractItems[] = $itemData;
+            } else {
+                $addItems[] = $itemData;
+            }
+        }
+
+        $warehouse = Warehouse::find($targetWarehouseId) ?? $defaultWarehouse;
+        $orderDate = $order->order_date ? \Carbon\Carbon::parse($order->order_date)->format('Y-m-d') : date('Y-m-d');
+        $userId = Auth::id() ?: ($order->technical_approved_by ?: 1);
+
+        // 3. Xử lý PHIẾU NHẬP KHO (addItems)
+        if (!empty($addItems)) {
+            $receiptData = [
+                'order_id'      => $order->id,
+                'code'          => $existingReceipt ? $existingReceipt->code : $this->generateCode('PNK', 'inventory_receipts'),
+                'date'          => $orderDate,
+                'supplier_name' => "Đơn hàng {$order->order_code} (Khách: Nhập kho)",
+                'deliverer'     => $order->customer_name ?: 'Bộ phận sản xuất',
+                'receiver'      => Auth::user()->name ?? 'Thủ kho',
+                'notes'         => "Tự động tạo từ [Đơn nhập kho #{$order->order_code}]",
+            ];
+
+            if ($existingReceipt) {
+                $this->updateReceipt($existingReceipt, $warehouse, $receiptData, $addItems, $userId);
+                $existingReceipt->update(['order_id' => $order->id]);
+            } else {
+                $newReceipt = $this->createReceipt($warehouse, $receiptData, $addItems, $userId);
+                $newReceipt->update(['order_id' => $order->id]);
+            }
+        } else {
+            if ($existingReceipt) {
+                $this->deleteReceipt($existingReceipt);
+            }
+        }
+
+        // 4. Xử lý PHIẾU XUẤT KHO (subtractItems)
+        if (!empty($subtractItems)) {
+            $issueData = [
+                'order_id'   => $order->id,
+                'code'       => $existingIssue ? $existingIssue->code : $this->generateCode('PXK', 'inventory_issues'),
+                'date'       => $orderDate,
+                'recipient'  => "Đơn hàng {$order->order_code} (Khách: Nhập kho)",
+                'deliverer'  => Auth::user()->name ?? 'Thủ kho',
+                'reason'     => "Xuất kho theo [Đơn nhập kho #{$order->order_code}]",
+                'notes'      => "Tự động tạo từ [Đơn nhập kho #{$order->order_code}]",
+            ];
+
+            if ($existingIssue) {
+                $this->deleteIssue($existingIssue);
+            }
+            $newIssue = $this->createIssue($warehouse, $issueData, $subtractItems, $userId);
+            $newIssue->update(['order_id' => $order->id]);
+        } else {
+            if ($existingIssue) {
+                $this->deleteIssue($existingIssue);
+            }
+        }
     }
 
     /**
@@ -1068,7 +1701,7 @@ class InventoryService
     /**
      * Nhập tồn kho và thông tin từ file Excel Ton_Kho_Tam_Van_
      */
-    public function importStockFromExcel(string $filePath): array
+    public function importStockFromExcel(string $filePath, ?int $warehouseId = null): array
     {
         if (!file_exists($filePath)) {
             throw new \Exception("Không tìm thấy file: {$filePath}");
@@ -1078,7 +1711,10 @@ class InventoryService
         $sheet = $spreadsheet->getActiveSheet();
         $highestRow = $sheet->getHighestRow();
 
-        $warehouse = Warehouse::where('code', 'KHO-VAN')->first() ?? Warehouse::first();
+        $warehouse = $warehouseId ? Warehouse::find($warehouseId) : null;
+        if (!$warehouse) {
+            $warehouse = Warehouse::where('code', 'KHO-VAN')->first() ?? Warehouse::first();
+        }
         if (!$warehouse) {
             $warehouse = Warehouse::create([
                 'name' => 'Kho Tấm Ván',
@@ -1088,6 +1724,9 @@ class InventoryService
                 'description' => 'Kho ván gỗ công nghiệp phục vụ ép'
             ]);
         }
+
+        $isMainWarehouse = ($warehouse->code === 'KHO-VAN' || $warehouse->id == 1);
+        $isEdgeBandWarehouse = ($warehouse->code === 'KHO-CHI' || stripos($warehouse->name, 'chỉ') !== false || stripos($warehouse->item_name, 'chỉ') !== false);
 
         $types = WoodBoardType::all()->keyBy('name');
         $typeSuffixes = [
@@ -1103,7 +1742,7 @@ class InventoryService
         $createdCount = 0;
         $totalStock = 0;
 
-        DB::transaction(function () use ($sheet, $highestRow, $warehouse, $types, $typeSuffixes, &$updatedCount, &$createdCount, &$totalStock) {
+        DB::transaction(function () use ($sheet, $highestRow, $warehouse, $isMainWarehouse, $isEdgeBandWarehouse, $types, $typeSuffixes, &$updatedCount, &$createdCount, &$totalStock) {
             for ($r = 4; $r <= $highestRow; $r++) {
                 $sku = trim((string)$sheet->getCell('B' . $r)->getFormattedValue());
                 if (!$sku || stripos($sku, 'tổng') !== false) continue;
@@ -1125,7 +1764,68 @@ class InventoryService
                     $baseCode = explode('.', $sku)[0];
                 }
 
-                // Find or create WoodBoard
+                // 1. Nhập vào kho chỉ dán viền
+                if ($isEdgeBandWarehouse) {
+                    $board = WoodBoard::where('color_code', $baseCode)->first();
+                    if (!$board) {
+                        $board = WoodBoard::create([
+                            'color_code'              => $baseCode,
+                            'edge_band_code'          => 'CHI-' . $baseCode,
+                            'edge_band_name'          => 'Chỉ ' . $baseCode,
+                            'price_group'             => $group ?: 'Chỉ dán viền',
+                            'origin_code'             => $origin ?: null,
+                            'foil_name'               => $foilName ?: null,
+                            'unit'                    => 'Tấm',
+                            'edge_band_unit'          => 'm',
+                            'cost_price'              => 0,
+                            'min_stock'               => 5,
+                            'edge_band_min_stock'     => 50,
+                            'edge_band_cost_price'    => 0,
+                            'edge_band_current_stock' => ($warehouse->code === 'KHO-CHI' || $warehouse->id == 2) ? $stock : 0,
+                            'warehouse_id'            => $warehouse->id,
+                            'status'                  => 'active',
+                        ]);
+                        $createdCount++;
+                    } else {
+                        if (!empty($origin) && $board->origin_code !== $origin) $board->origin_code = $origin;
+                        if (!empty($foilName) && $board->foil_name !== $foilName) $board->foil_name = $foilName;
+                        $updatedCount++;
+                    }
+
+                    if ($warehouse->code === 'KHO-CHI' || $warehouse->id == 2) {
+                        $board->edge_band_current_stock = $stock;
+                        $board->save();
+                    } else {
+                        $currentEdgeWhStock = (float)\App\Models\InventoryTransaction::where('warehouse_id', $warehouse->id)
+                            ->where('wood_board_id', $board->id)
+                            ->where('item_type', 'edge_band')
+                            ->sum(DB::raw('in_qty - out_qty'));
+                        $diff = $stock - $currentEdgeWhStock;
+                        if ($diff != 0) {
+                            \App\Models\InventoryTransaction::create([
+                                'warehouse_id'        => $warehouse->id,
+                                'wood_board_id'       => $board->id,
+                                'item_type'           => 'edge_band',
+                                'date'                => now()->toDateString(),
+                                'type'                => 'initial',
+                                'voucher_code'        => 'CBK-' . strtoupper(\Illuminate\Support\Str::random(6)),
+                                'in_qty'              => $diff > 0 ? $diff : 0,
+                                'out_qty'             => $diff < 0 ? abs($diff) : 0,
+                                'stock_after'         => $stock,
+                                'unit_price'          => (float)$board->edge_band_cost_price,
+                                'notes'               => 'Nhập tồn kho từ Excel - Kho ' . $warehouse->name,
+                                'created_by'          => \Illuminate\Support\Facades\Auth::id(),
+                            ]);
+                            $board->edge_band_current_stock = max(0, (float)$board->edge_band_current_stock + $diff);
+                            $board->save();
+                        }
+                    }
+
+                    $totalStock += $stock;
+                    continue;
+                }
+
+                // 2. Nhập vào kho tấm ván (kho chính hoặc kho phụ)
                 $board = WoodBoard::where('color_code', $baseCode)->first();
                 if (!$board) {
                     $board = WoodBoard::create([
@@ -1136,9 +1836,9 @@ class InventoryService
                         'unit'          => $unit ?: 'Tấm',
                         'cost_price'    => 0,
                         'min_stock'     => 5,
-                        'initial_stock' => $stock,
-                        'current_stock' => $stock,
-                        'warehouse_id'  => $warehouse->id,
+                        'initial_stock' => $isMainWarehouse ? $stock : 0,
+                        'current_stock' => $isMainWarehouse ? $stock : 0,
+                        'warehouse_id'  => 1,
                         'status'        => 'active',
                     ]);
                 } else {
@@ -1177,11 +1877,9 @@ class InventoryService
                 // Update or create price
                 $price = WoodBoardPrice::where('code', $sku)->first();
                 if ($price) {
-                    $price->stock = $stock;
                     if ($name) $price->name = $name;
                     if ($foilName) $price->foil_name = $foilName;
                     if ($typeId && !$price->wood_board_type_id) $price->wood_board_type_id = $typeId;
-                    $price->save();
                     $updatedCount++;
                 } else {
                     $price = WoodBoardPrice::create([
@@ -1193,39 +1891,79 @@ class InventoryService
                         'thickness'          => '1.0',
                         'price_board'        => 0,
                         'price_m2'           => 0,
-                        'stock'              => $stock,
+                        'stock'              => 0,
                     ]);
                     $createdCount++;
+                }
+
+                if ($isMainWarehouse) {
+                    $otherWhSum = (float)\App\Models\InventoryTransaction::where('warehouse_id', '!=', $warehouse->id)
+                        ->where('wood_board_price_id', $price->id)
+                        ->sum(DB::raw('in_qty - out_qty'));
+                    $price->stock = $stock + $otherWhSum;
+                    $price->save();
+
+                    \App\Models\InventoryTransaction::where('warehouse_id', $warehouse->id)
+                        ->where('wood_board_price_id', $price->id)
+                        ->where('type', 'initial')
+                        ->delete();
+                } else {
+                    $currentWhStock = (float)\App\Models\InventoryTransaction::where('warehouse_id', $warehouse->id)
+                        ->where('wood_board_price_id', $price->id)
+                        ->sum(DB::raw('in_qty - out_qty'));
+                    $diff = $stock - $currentWhStock;
+
+                    if ($diff != 0) {
+                        \App\Models\InventoryTransaction::create([
+                            'warehouse_id'        => $warehouse->id,
+                            'wood_board_id'       => $price->wood_board_id,
+                            'wood_board_price_id' => $price->id,
+                            'item_type'           => 'board',
+                            'date'                => now()->toDateString(),
+                            'type'                => 'initial',
+                            'voucher_code'        => 'CBK-' . strtoupper(\Illuminate\Support\Str::random(6)),
+                            'in_qty'              => $diff > 0 ? $diff : 0,
+                            'out_qty'             => $diff < 0 ? abs($diff) : 0,
+                            'stock_after'         => $stock,
+                            'unit_price'          => (float)$price->price_board,
+                            'notes'               => 'Nhập tồn kho Excel - Kho ' . $warehouse->name,
+                            'created_by'          => \Illuminate\Support\Facades\Auth::id(),
+                        ]);
+                        $price->stock = max(0, (float)$price->stock + $diff);
+                        $price->save();
+                    }
                 }
 
                 $totalStock += $stock;
             }
 
-            // Ensure variants
-            $allBoards = WoodBoard::with('prices')->get();
-            $allTypes = WoodBoardType::all();
-            foreach ($allBoards as $board) {
-                $existingCodes = $board->prices->pluck('code')->toArray();
-                foreach ($allTypes as $type) {
-                    $suffix = $typeSuffixes[$type->id] ?? '';
-                    $expectedCode = $board->color_code . $suffix;
-                    if (!in_array($expectedCode, $existingCodes)) {
-                        WoodBoardPrice::create([
-                            'wood_board_id'      => $board->id,
-                            'wood_board_type_id' => $type->id,
-                            'code'               => $expectedCode,
-                            'name'               => "Tấm {$board->color_code} - {$type->name}",
-                            'foil_name'          => ($type->id == 1) ? $board->foil_name : null,
-                            'thickness'          => '1.0',
-                            'price_board'        => 0,
-                            'price_m2'           => 0,
-                            'stock'              => 0,
-                        ]);
-                        $createdCount++;
+            // Ensure variants cho các mã cốt nếu không phải kho chỉ
+            if (!$isEdgeBandWarehouse) {
+                $allBoards = WoodBoard::with('prices')->get();
+                $allTypes = WoodBoardType::all();
+                foreach ($allBoards as $board) {
+                    $existingCodes = $board->prices->pluck('code')->toArray();
+                    foreach ($allTypes as $type) {
+                        $suffix = $typeSuffixes[$type->id] ?? '';
+                        $expectedCode = $board->color_code . $suffix;
+                        if (!in_array($expectedCode, $existingCodes)) {
+                            WoodBoardPrice::create([
+                                'wood_board_id'      => $board->id,
+                                'wood_board_type_id' => $type->id,
+                                'code'               => $expectedCode,
+                                'name'               => "Tấm {$board->color_code} - {$type->name}",
+                                'foil_name'          => ($type->id == 1) ? $board->foil_name : null,
+                                'thickness'          => '1.0',
+                                'price_board'        => 0,
+                                'price_m2'           => 0,
+                                'stock'              => 0,
+                            ]);
+                            $createdCount++;
+                        }
                     }
+                    $board->current_stock = $board->prices()->sum('stock');
+                    $board->save();
                 }
-                $board->current_stock = $board->prices()->sum('stock');
-                $board->save();
             }
         });
 

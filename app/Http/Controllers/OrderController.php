@@ -227,6 +227,35 @@ class OrderController extends Controller
         return view('orders.show', compact('acrylicOrder', 'exportData', 'productionStats'));
     }
 
+    public function preview(Request $request, Order $order)
+    {
+        $user = auth()->user();
+        if ($user && !$user->canViewAllMarketGroups()) {
+            if (!$order->customer || !$order->customer->isAccessibleBy($user)) {
+                abort(403, 'Bạn không có quyền truy cập đơn hàng này.');
+            }
+        }
+
+        $order->load([
+            'supplies.items.codes',
+            'supplies.minLateItems.codes',
+            'supplies.glassItems.codes',
+            'paymentDetails',
+            'orderPayments.creator',
+            'accountantApprover',
+            'technicalApprover',
+            'rejecter'
+        ]);
+        $acrylicOrder = $order;
+        $exportData = $this->getExportData($order);
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return view('orders._preview_modal', compact('acrylicOrder', 'exportData'));
+        }
+
+        return redirect()->route('orders.show', ['order' => $order, 'preview' => 1]);
+    }
+
     public function exportExcel(Request $request)
     {
         $search = $request->input('search', '');
@@ -1103,6 +1132,15 @@ class OrderController extends Controller
             }
             $order->status = 'cancelled';
             $order->save();
+
+            $existingReceipt = \App\Models\InventoryReceipt::where('order_id', $order->id)->first();
+            if ($existingReceipt) {
+                app(\App\Services\InventoryService::class)->deleteReceipt($existingReceipt);
+            }
+            $existingIssue = \App\Models\InventoryIssue::where('order_id', $order->id)->first();
+            if ($existingIssue) {
+                app(\App\Services\InventoryService::class)->deleteIssue($existingIssue);
+            }
             try {
                 \App\Services\NotificationService::notifyOrderStatusChanged($order, 'cancelled');
             } catch (\Throwable $e) {}
@@ -1119,6 +1157,15 @@ class OrderController extends Controller
             if (!$order->customer || !$order->customer->isAccessibleBy($user)) {
                 abort(403, 'Bạn không có quyền truy cập đơn hàng này.');
             }
+        }
+
+        $existingReceipt = \App\Models\InventoryReceipt::where('order_id', $order->id)->first();
+        if ($existingReceipt) {
+            app(\App\Services\InventoryService::class)->deleteReceipt($existingReceipt);
+        }
+        $existingIssue = \App\Models\InventoryIssue::where('order_id', $order->id)->first();
+        if ($existingIssue) {
+            app(\App\Services\InventoryService::class)->deleteIssue($existingIssue);
         }
 
         $order->delete();
@@ -1147,7 +1194,16 @@ class OrderController extends Controller
             $deletedCount = 0;
 
             foreach ($orders as $order) {
-                $order->delete();
+                $existingReceipt = \App\Models\InventoryReceipt::where('order_id', $order->id)->first();
+        if ($existingReceipt) {
+            app(\App\Services\InventoryService::class)->deleteReceipt($existingReceipt);
+        }
+        $existingIssue = \App\Models\InventoryIssue::where('order_id', $order->id)->first();
+        if ($existingIssue) {
+            app(\App\Services\InventoryService::class)->deleteIssue($existingIssue);
+        }
+
+        $order->delete();
                 $deletedCount++;
             }
 

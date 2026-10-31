@@ -30,7 +30,7 @@
                         <iconify-icon icon="ion:search-outline" class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400"></iconify-icon>
                         <input type="text" name="search" value="{{ request('search') }}" class="form-control rounded-lg pl-9 pr-4 py-2 border-neutral-200 text-xs w-64 focus:border-primary-500" placeholder="Tìm số phiếu, người nhận...">
                     </form>
-                    <a href="{{ route('inventory.issues.create') }}" class="btn bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 shadow-sm">
+                    <a href="{{ route('inventory.issues.create') }}" class="btn btn-primary px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 shadow-sm">
                         <iconify-icon icon="ic:baseline-plus" class="text-base"></iconify-icon> Tạo phiếu xuất mới
                     </a>
                 </div>
@@ -45,10 +45,10 @@
                                 <th class="py-3 px-4 w-32">Mã phiếu</th>
                                 <th class="py-3 px-4 w-28">Ngày xuất</th>
                                 <th class="py-3 px-4 min-w-[180px]">Người / Bộ phận nhận</th>
-                                <th class="py-3 px-4 w-36">Lý do xuất</th>
-                                <th class="py-3 px-4 w-32">Kho xuất</th>
+                                <th class="py-3 px-4 w-36">Kho xuất</th>
                                 <th class="py-3 px-4 w-24 text-center">Số loại VT</th>
                                 <th class="py-3 px-4 w-32 text-right">Tổng số lượng</th>
+                                <th class="py-3 px-4 w-36 text-right">Tổng tiền</th>
                                 <th class="py-3 px-4 min-w-[160px]">Ghi chú</th>
                                 <th class="py-3 px-4 w-28 text-center">Thao tác</th>
                             </tr>
@@ -59,7 +59,7 @@
                                     <td class="py-3 px-4 text-center text-neutral-500 font-medium">
                                         {{ $issues->firstItem() + $index }}
                                     </td>
-                                    <td class="py-3 px-4 font-bold text-rose-600">
+                                    <td class="py-3 px-4 font-bold text-primary-600">
                                         <a href="{{ route('inventory.issues.show', $issue) }}" class="hover:underline">
                                             {{ $issue->code }}
                                         </a>
@@ -68,12 +68,10 @@
                                         {{ $issue->date ? $issue->date->format('d/m/Y') : '-' }}
                                     </td>
                                     <td class="py-3 px-4 font-semibold text-neutral-800">
-                                        {{ $issue->recipient ?: 'Xưởng sản xuất Gervin' }}
-                                    </td>
-                                    <td class="py-3 px-4 text-neutral-600">
-                                        <span class="bg-rose-50 text-rose-700 px-2 py-1 rounded text-[11px] font-semibold">
-                                            {{ $issue->reason ?: 'Xuất sản xuất' }}
-                                        </span>
+                                        <span class="block text-neutral-800 font-semibold">{{ $issue->recipient ?: 'Xưởng sản xuất Gervin' }}</span>
+                                        @if($issue->reason)
+                                            <span class="text-[11px] text-neutral-500 font-normal">{{ $issue->reason }}</span>
+                                        @endif
                                     </td>
                                     <td class="py-3 px-4 text-neutral-700">
                                         {{ $issue->warehouse->name ?? '-' }}
@@ -81,8 +79,11 @@
                                     <td class="py-3 px-4 text-center font-bold text-neutral-600">
                                         {{ $issue->items_count }}
                                     </td>
-                                    <td class="py-3 px-4 text-right font-black text-rose-700 text-sm">
+                                    <td class="py-3 px-4 text-right font-black text-emerald-700 text-sm">
                                         {{ fmod($issue->total_quantity, 1) == 0 ? number_format($issue->total_quantity, 0, ',', '.') : number_format($issue->total_quantity, 2, ',', '.') }}
+                                    </td>
+                                    <td class="py-3 px-4 text-right font-semibold text-neutral-800">
+                                        {{ $issue->total_amount > 0 ? number_format($issue->total_amount, 0, ',', '.') . 'đ' : '-' }}
                                     </td>
                                     <td class="py-3 px-4 text-neutral-500 truncate max-w-xs" title="{{ $issue->notes }}">
                                         {{ $issue->notes ?: '-' }}
@@ -91,6 +92,9 @@
                                         <div class="flex items-center justify-center gap-2">
                                             <a href="{{ route('inventory.issues.show', $issue) }}" class="p-1 text-primary-600 hover:text-primary-800 text-base" title="Xem chi tiết">
                                                 <iconify-icon icon="solar:eye-bold"></iconify-icon>
+                                            </a>
+                                            <a href="{{ route('inventory.issues.edit', $issue) }}" class="p-1 text-amber-600 hover:text-amber-800 text-base" title="Chỉnh sửa phiếu">
+                                                <iconify-icon icon="solar:pen-new-square-bold"></iconify-icon>
                                             </a>
                                             <a href="{{ route('inventory.issues.print', $issue) }}" target="_blank" class="p-1 text-info-600 hover:text-info-800 text-base" title="In phiếu">
                                                 <iconify-icon icon="solar:printer-outline"></iconify-icon>
