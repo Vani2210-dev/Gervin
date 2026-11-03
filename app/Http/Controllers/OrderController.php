@@ -41,6 +41,7 @@ class OrderController extends Controller
         $this->middleware('permission:edit order',   ['only' => ['edit', 'update']]);
         $this->middleware('permission:delete order', ['only' => ['destroy', 'bulkDestroy']]);
         $this->middleware('permission:approve order|edit order', ['only' => ['updateStatus']]);
+        $this->middleware('permission:view order|add order|edit order', ['only' => ['preview', 'previewLive']]);
     }
 
     public function index(Request $request)
@@ -254,6 +255,72 @@ class OrderController extends Controller
         }
 
         return redirect()->route('orders.show', ['order' => $order, 'preview' => 1]);
+    }
+
+    public function previewLive(Request $request)
+    {
+        $orderId = $request->input('order_id') ?: $request->input('draft_order_id');
+        $order = $orderId ? Order::find($orderId) : null;
+
+        if (!$order) {
+            return response()->json(['message' => 'Không tìm thấy đơn hàng cần xem trước.'], 404);
+        }
+
+        $user = auth()->user();
+        if ($user && !$user->canViewAllMarketGroups()) {
+            if ($order->customer && !$order->customer->isAccessibleBy($user)) {
+                return response()->json(['message' => 'Bạn không có quyền truy cập đơn hàng này.'], 403);
+            }
+        }
+
+        if ($request->filled('supplies_json')) {
+            $supplies = json_decode($request->input('supplies_json'), true);
+            if (is_array($supplies)) {
+                $supplies = $this->cleanEmptyStrings($supplies);
+                $request->merge(['supplies' => $supplies]);
+            }
+        }
+
+        // Không xử lý xóa file hoặc upload file thật khi chỉ đang xem trước
+        $request->request->remove('delete_attachments');
+
+        $type = $request->input('type') ?: $order->type;
+        $service = $this->serviceFor($type);
+
+        \Illuminate\Support\Facades\DB::beginTransaction();
+        try {
+            // Tạm thời áp dụng thay đổi từ form vào order và các relations (trong transaction)
+            $service->update($request, $order);
+
+            // Nạp lại các relations cần thiết cho view xem trước
+            $order->load([
+                'supplies.items.codes',
+                'supplies.minLateItems.codes',
+                'supplies.glassItems.codes',
+                'paymentDetails',
+                'orderPayments.creator',
+                'accountantApprover',
+                'technicalApprover',
+                'rejecter',
+                'customer'
+            ]);
+
+            $acrylicOrder = $order;
+            $exportData = $this->getExportData($order);
+            $isFromForm = true;
+
+            $html = view('orders._preview_modal', compact('acrylicOrder', 'exportData', 'isFromForm'))->render();
+
+            \Illuminate\Support\Facades\DB::rollBack();
+
+            return response($html, 200)->header('Content-Type', 'text/html');
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+            \Illuminate\Support\Facades\Log::error('previewLive error: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+            return response()->json([
+                'message' => 'Lỗi khi tạo bản xem trước: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function exportExcel(Request $request)

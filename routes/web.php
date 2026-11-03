@@ -352,6 +352,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('orders/bulk-export-data', [OrderController::class, 'bulkExportData'])->name('orders.bulk-export-data');
     Route::get('orders/create/{type}', [OrderController::class, 'createByType'])->name('orders.create.type');
     Route::post('orders/discard-draft', [OrderController::class, 'discardDraft'])->name('orders.discard-draft');
+    Route::post('orders/preview-live', [OrderController::class, 'previewLive'])->name('orders.preview-live');
     Route::post('orders/{order}/update-status', [OrderController::class, 'updateStatus'])->name('orders.update-status');
     Route::get('orders/{order}/production-stats', [OrderController::class, 'productionStats'])->name('orders.production-stats');
     Route::get('orders/image/{filename}', [OrderController::class, 'serveImage'])->name('orders.image');
