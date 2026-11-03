@@ -99,7 +99,7 @@
 
         <!-- Body (scrollable) -->
         <div class="flex-1 overflow-y-auto p-3 md:p-4 bg-neutral-100/50" style="min-height:0;" id="preview-order-scroll-container">
-            <div id="preview-order-capture-area" class="bg-white p-4 space-y-3 rounded-xl border border-neutral-300 shadow-sm w-full mx-auto" style="min-width: 1050px; max-width: 1240px;">
+            <div id="preview-order-capture-area" class="bg-white p-3 space-y-2 rounded-xl border border-neutral-300 shadow-sm w-full mx-auto" style="min-width: 1050px; max-width: 1240px;">
                 <!-- Header trên ảnh khi xuất -->
                 <div class="border-b-2 border-primary-500 pb-2 flex items-start justify-between gap-4">
                     <div class="flex items-center gap-3">
@@ -139,92 +139,63 @@
                         $fullCustomerDisplay = $acrylicOrder->customer_name ?: '—';
                     }
                 @endphp
-                <div class="bg-neutral-50/80 border border-neutral-300 rounded-lg p-3">
-                    <div class="grid grid-cols-12 gap-x-4 gap-y-2 text-xs">
-                        <div class="col-span-12 md:col-span-5 border-b md:border-b-0 md:border-r border-neutral-200 pb-2 md:pb-0 md:pr-3 space-y-1">
-                            <div class="flex items-center gap-2 font-bold text-neutral-800 text-xs mb-1">
-                                <iconify-icon icon="lucide:user" class="text-sm text-primary-600"></iconify-icon>
-                                <span>Khách hàng & Công trình</span>
-                            </div>
-                            <div class="flex justify-between items-start gap-2">
-                                <span class="text-neutral-500 font-medium shrink-0">Tên KH:</span>
-                                <span class="font-bold text-neutral-900 text-right">{{ $fullCustomerDisplay }}</span>
-                            </div>
-                            <div class="flex justify-between items-center gap-2">
-                                <span class="text-neutral-500 font-medium shrink-0">SĐT:</span>
-                                <span class="font-bold text-neutral-900 text-right">{{ $acrylicOrder->phone ?: '—' }}</span>
-                            </div>
-                            <div class="flex justify-between items-start gap-2">
-                                <span class="text-neutral-500 font-medium shrink-0">Địa chỉ:</span>
-                                <span class="font-bold text-neutral-900 text-right leading-tight">{{ $acrylicOrder->address ?: '—' }}</span>
-                            </div>
+                <!-- Thông tin chung (Gọn gàng, tối ưu diện tích in ấn) -->
+                <div class="border border-neutral-300 rounded-lg overflow-hidden bg-white shadow-2xs">
+                    <div class="bg-neutral-100/80 px-3 py-1 border-b border-neutral-200 flex items-center justify-between">
+                        <div class="flex items-center gap-1.5 font-bold text-xs text-neutral-800 uppercase tracking-wide">
+                            <iconify-icon icon="lucide:info" class="text-primary-600 text-sm"></iconify-icon>
+                            <span>Thông tin chung</span>
                         </div>
-
-                        <div class="col-span-12 md:col-span-3 border-b md:border-b-0 md:border-r border-neutral-200 pb-2 md:pb-0 md:px-3 space-y-1">
-                            <div class="flex items-center gap-2 font-bold text-neutral-800 text-xs mb-1">
-                                <iconify-icon icon="lucide:file-text" class="text-sm text-primary-600"></iconify-icon>
-                                <span>Thông tin Đơn hàng</span>
-                            </div>
-                            <div class="flex justify-between items-center gap-2">
-                                <span class="text-neutral-500 font-medium shrink-0">Mã đơn:</span>
-                                <span class="font-mono font-black text-primary-700">{{ $acrylicOrder->order_code }}</span>
-                            </div>
-                            <div class="flex justify-between items-center gap-2">
-                                <span class="text-neutral-500 font-medium shrink-0">Loại đơn:</span>
-                                <span class="font-bold text-neutral-900">{{ $typeLabel }}</span>
-                            </div>
-                            <div class="flex justify-between items-center gap-2">
-                                <span class="text-neutral-500 font-medium shrink-0">Ngày chốt:</span>
-                                <span class="font-bold text-neutral-900">{{ $orderDateFormatted }}</span>
-                            </div>
-                        </div>
-
-                        <div class="col-span-12 md:col-span-4 space-y-1 md:pl-3">
-                            <div class="flex items-center gap-2 font-bold text-neutral-800 text-xs mb-1">
-                                <iconify-icon icon="lucide:truck" class="text-sm text-primary-600"></iconify-icon>
-                                <span>Giao hàng & Trạng thái</span>
-                            </div>
-                            <div class="flex justify-between items-center gap-2">
-                                <span class="text-neutral-500 font-medium shrink-0">Hạn đơn:</span>
-                                <span class="font-bold text-danger-600">{{ $deadlineFormatted }} ({{ $acrylicOrder->delivery_days ? $acrylicOrder->delivery_days . ' ngày' : '—' }})</span>
-                            </div>
-                            <div class="flex justify-between items-center gap-2">
-                                <span class="text-neutral-500 font-medium shrink-0">Trạng thái:</span>
-                                <span class="font-bold text-neutral-900">{{ $statusText }}</span>
-                            </div>
-                            <div class="flex justify-between items-center gap-2">
-                                <span class="text-neutral-500 font-medium shrink-0">Đóng gói:</span>
-                                <span class="font-bold {{ $packingInfo['total_packages'] > 0 ? 'text-primary-700' : 'text-neutral-400' }}">
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 11.5px;">
+                        <tbody>
+                            <tr style="border-bottom: 1px solid #cbd5e1;">
+                                <td style="padding: 3.5px 6px; border-right: 1px solid #cbd5e1; background: #f8fafc; font-weight: 700; color: #475569; width: 9%; white-space: nowrap;">Khách hàng:</td>
+                                <td style="padding: 3.5px 6px; border-right: 1px solid #cbd5e1; font-weight: 700; color: #0f172a; width: 38%;">{{ $fullCustomerDisplay }}</td>
+                                <td style="padding: 3.5px 6px; border-right: 1px solid #cbd5e1; background: #f8fafc; font-weight: 700; color: #475569; width: 11%; white-space: nowrap;">Mã đơn / Loại:</td>
+                                <td style="padding: 3.5px 6px; border-right: 1px solid #cbd5e1; font-weight: 700; color: #0f172a; width: 22%;"><span class="font-mono text-primary-700 font-black">{{ $acrylicOrder->order_code }}</span> • {{ $typeLabel }}</td>
+                                <td style="padding: 3.5px 6px; border-right: 1px solid #cbd5e1; background: #f8fafc; font-weight: 700; color: #475569; width: 9%; white-space: nowrap;">Ngày chốt:</td>
+                                <td style="padding: 3.5px 6px; font-weight: 600; color: #0f172a; width: 11%; white-space: nowrap;">{{ $orderDateFormatted }}</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #cbd5e1;">
+                                <td style="padding: 3.5px 6px; border-right: 1px solid #cbd5e1; background: #f8fafc; font-weight: 700; color: #475569; white-space: nowrap;">Điện thoại:</td>
+                                <td style="padding: 3.5px 6px; border-right: 1px solid #cbd5e1; font-weight: 600; color: #0f172a;">{{ $acrylicOrder->phone ?: '—' }}</td>
+                                <td style="padding: 3.5px 6px; border-right: 1px solid #cbd5e1; background: #f8fafc; font-weight: 700; color: #475569; white-space: nowrap;">Hạn giao hàng:</td>
+                                <td style="padding: 3.5px 6px; border-right: 1px solid #cbd5e1; font-weight: 700; color: #dc2626;">{{ $deadlineFormatted }} {{ $acrylicOrder->delivery_days ? "({$acrylicOrder->delivery_days} ngày)" : '' }}</td>
+                                <td style="padding: 3.5px 6px; border-right: 1px solid #cbd5e1; background: #f8fafc; font-weight: 700; color: #475569; white-space: nowrap;">Trạng thái:</td>
+                                <td style="padding: 3.5px 6px; font-weight: 600; color: #0f172a; white-space: nowrap;">{{ $statusText }}</td>
+                            </tr>
+                            <tr style="{{ ($acrylicOrder->notes || $acrylicOrder->customer_policy) ? 'border-bottom: 1px solid #cbd5e1;' : '' }}">
+                                <td style="padding: 3.5px 6px; border-right: 1px solid #cbd5e1; background: #f8fafc; font-weight: 700; color: #475569; white-space: nowrap;">Địa chỉ:</td>
+                                <td style="padding: 3.5px 6px; border-right: 1px solid #cbd5e1; color: #0f172a;">{{ $acrylicOrder->address ?: '—' }}</td>
+                                <td style="padding: 3.5px 6px; border-right: 1px solid #cbd5e1; background: #f8fafc; font-weight: 700; color: #475569; white-space: nowrap;">Đóng gói:</td>
+                                <td colspan="3" style="padding: 3.5px 6px; color: #0f172a;">
                                     {{ $packingInfo['total_packages'] > 0 ? $packingInfo['total_packages'] . ' kiện' : 'Chưa đóng gói' }}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
+                                </td>
+                            </tr>
+                            @if($acrylicOrder->notes || $acrylicOrder->customer_policy)
+                                @if($acrylicOrder->notes && $acrylicOrder->customer_policy)
+                                    <tr>
+                                        <td style="padding: 3.5px 6px; border-right: 1px solid #cbd5e1; background: #fffbeb; font-weight: 700; color: #92400e; white-space: nowrap;">Ghi chú:</td>
+                                        <td style="padding: 3.5px 6px; border-right: 1px solid #cbd5e1; color: #78350f; font-weight: 600;">{{ $acrylicOrder->notes }}</td>
+                                        <td style="padding: 3.5px 6px; border-right: 1px solid #cbd5e1; background: #eff6ff; font-weight: 700; color: #1e40af; white-space: nowrap;">Chính sách:</td>
+                                        <td colspan="3" style="padding: 3.5px 6px; color: #1e3a8a; font-weight: 600;">{{ $acrylicOrder->customer_policy }}</td>
+                                    </tr>
+                                @elseif($acrylicOrder->notes)
+                                    <tr>
+                                        <td style="padding: 3.5px 6px; border-right: 1px solid #cbd5e1; background: #fffbeb; font-weight: 700; color: #92400e; white-space: nowrap;">Ghi chú:</td>
+                                        <td colspan="5" style="padding: 3.5px 6px; color: #78350f; font-weight: 600;">{{ $acrylicOrder->notes }}</td>
+                                    </tr>
+                                @else
+                                    <tr>
+                                        <td style="padding: 3.5px 6px; border-right: 1px solid #cbd5e1; background: #eff6ff; font-weight: 700; color: #1e40af; white-space: nowrap;">Chính sách:</td>
+                                        <td colspan="5" style="padding: 3.5px 6px; color: #1e3a8a; font-weight: 600;">{{ $acrylicOrder->customer_policy }}</td>
+                                    </tr>
+                                @endif
+                            @endif
+                        </tbody>
+                    </table>
                 </div>
-
-                <!-- Ghi chú & Chính sách KH (gọn gàng) -->
-                @if($acrylicOrder->notes || $acrylicOrder->customer_policy)
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                        @if($acrylicOrder->notes)
-                            <div class="bg-amber-50/70 border border-amber-200 rounded-lg p-2">
-                                <div class="flex items-center gap-2 mb-1 font-bold text-amber-800 uppercase text-[11px]">
-                                    <iconify-icon icon="lucide:sticky-note" class="text-xs text-amber-600"></iconify-icon>
-                                    <span>Ghi chú đơn hàng</span>
-                                </div>
-                                <p class="text-xs text-neutral-800 whitespace-pre-wrap m-0 leading-relaxed">{{ $acrylicOrder->notes }}</p>
-                            </div>
-                        @endif
-                        @if($acrylicOrder->customer_policy)
-                            <div class="bg-blue-50/70 border border-blue-200 rounded-lg p-2">
-                                <div class="flex items-center gap-2 mb-1 font-bold text-blue-800 uppercase text-[11px]">
-                                    <iconify-icon icon="lucide:shield" class="text-xs text-blue-600"></iconify-icon>
-                                    <span>Chính sách KH</span>
-                                </div>
-                                <p class="text-xs text-neutral-800 whitespace-pre-wrap m-0 leading-relaxed">{{ $acrylicOrder->customer_policy }}</p>
-                            </div>
-                        @endif
-                    </div>
-                @endif
 
                 <!-- Danh sách Vật tư & Sản phẩm -->
                 @if($acrylicOrder->supplies && $acrylicOrder->supplies->count() > 0)
@@ -1282,8 +1253,11 @@
     body.is-printing-order-preview #preview-order-print-container th,
     body.is-printing-order-preview #preview-order-print-container td {
         font-size: 11px !important;
-        padding: 5px 6px !important;
+        padding: 4px 6px !important;
         border: 1px solid #cbd5e1 !important;
+    }
+    body.is-printing-order-preview #preview-order-print-container .space-y-2 > :not([hidden]) ~ :not([hidden]) {
+        margin-top: 6px !important;
     }
     body.is-printing-order-preview #preview-order-print-container th {
         background-color: #f1f5f9 !important;

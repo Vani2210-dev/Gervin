@@ -672,6 +672,9 @@ async function previewOrder() {
     try {
         const formData = new FormData(form);
 
+        // Xóa _method nếu form có @method('PUT') để tránh kích hoạt method spoofing sang PUT orders/{order}
+        formData.delete('_method');
+
         // Đảm bảo có order_id
         if (!formData.get('order_id')) {
             formData.append('order_id', '{{ $acrylicOrder->id }}');
