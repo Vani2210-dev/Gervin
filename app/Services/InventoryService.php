@@ -53,11 +53,22 @@ class InventoryService
             $code = !empty($data['code']) ? $data['code'] : $this->generateCode('PNK', 'inventory_receipts');
             $date = !empty($data['date']) ? $data['date'] : date('Y-m-d');
 
+            $supplierId = !empty($data['supplier_id']) ? $data['supplier_id'] : null;
+            $supplierName = $data['supplier_name'] ?? null;
+            if ($supplierId) {
+                $sup = \App\Models\Supplier::find($supplierId);
+                if ($sup) {
+                    $supplierName = $sup->name;
+                }
+            }
+
             $receipt = InventoryReceipt::create([
+                'order_id' => $data['order_id'] ?? null,
                 'code' => $code,
                 'date' => $date,
                 'warehouse_id' => $warehouse->id,
-                'supplier_name' => $data['supplier_name'] ?? null,
+                'supplier_id' => $supplierId,
+                'supplier_name' => $supplierName,
                 'deliverer' => $data['deliverer'] ?? null,
                 'receiver' => $data['receiver'] ?? null,
                 'total_quantity' => 0,
@@ -288,15 +299,31 @@ class InventoryService
             $code = !empty($data['code']) ? $data['code'] : $receipt->code;
             $date = !empty($data['date']) ? $data['date'] : $receipt->date;
 
+            $oldSupplierId = $receipt->supplier_id;
+            $supplierId = array_key_exists('supplier_id', $data) ? ($data['supplier_id'] ?: null) : $receipt->supplier_id;
+            $supplierName = $data['supplier_name'] ?? $receipt->supplier_name;
+            if ($supplierId) {
+                $sup = \App\Models\Supplier::find($supplierId);
+                if ($sup) {
+                    $supplierName = $sup->name;
+                }
+            }
+
             $receipt->update([
+                'order_id'      => array_key_exists('order_id', $data) ? $data['order_id'] : $receipt->order_id,
                 'code'          => $code,
                 'date'          => $date,
                 'warehouse_id'  => $warehouse->id,
-                'supplier_name' => $data['supplier_name'] ?? null,
+                'supplier_id'   => $supplierId,
+                'supplier_name' => $supplierName,
                 'deliverer'     => $data['deliverer'] ?? null,
                 'receiver'      => $data['receiver'] ?? null,
                 'notes'         => $data['notes'] ?? null,
             ]);
+
+            if ($oldSupplierId && $oldSupplierId != $supplierId) {
+                \App\Models\Supplier::find($oldSupplierId)?->recalculateDebt();
+            }
 
             // 5. Thêm lại các items mới và cập nhật tồn kho & transactions mới
             $totalQty = 0;
@@ -474,6 +501,7 @@ class InventoryService
             $date = !empty($data['date']) ? $data['date'] : date('Y-m-d');
 
             $issue = InventoryIssue::create([
+                'order_id' => $data['order_id'] ?? null,
                 'code' => $code,
                 'date' => $date,
                 'warehouse_id' => $warehouse->id,
@@ -697,6 +725,7 @@ class InventoryService
             $date = !empty($data['date']) ? $data['date'] : $issue->date;
 
             $issue->update([
+                'order_id'      => array_key_exists('order_id', $data) ? $data['order_id'] : $issue->order_id,
                 'code'          => $code,
                 'date'          => $date,
                 'warehouse_id'  => $warehouse->id,
@@ -1184,178 +1213,75 @@ class InventoryService
      */
     public function syncOrderWarehouseReceiptAndIssue(Order $order): void
     {
-        $this->ensureSchemaUpdated();
+        // Tắt tự động tạo phiếu nhập/xuất kho từ đơn hàng theo yêu cầu người dùng
+        return;
+    }
 
-        // 1. Kiểm tra đơn hàng có phải là Đơn Nhập kho không
-        $isNhapKho = false;
-        $cust = $order->customer ?: ($order->customer_id ? \App\Models\Customer::find($order->customer_id) : null);
-        if ($cust && ($cust->customer_code === 'NK' || str_contains(mb_strtolower($cust->name), 'nhập kho') || str_contains(mb_strtolower($cust->name), 'nhap kho'))) {
-            $isNhapKho = true;
-        }
-        if (!$isNhapKho && $order->customer_name && (str_contains(mb_strtolower($order->customer_name), 'nhập kho') || str_contains(mb_strtolower($order->customer_name), 'nhap kho'))) {
-            $isNhapKho = true;
-        }
-        if (!$isNhapKho && $order->supplies()->where('inventory_action', 'subtract')->exists()) {
-            $isNhapKho = true;
-        }
-
-        // Tìm các phiếu nhập/xuất trước đó gắn với đơn này (qua order_id hoặc ghi chú)
-        $existingReceipt = InventoryReceipt::where('order_id', $order->id)
-            ->orWhere(function ($q) use ($order) {
-                $q->where('notes', 'like', "%[Đơn nhập kho #{$order->order_code}]%")
-                  ->orWhere('supplier_name', 'like', "%Đơn {$order->order_code}%");
-            })->first();
-
-        $existingIssue = InventoryIssue::where('order_id', $order->id)
-            ->orWhere(function ($q) use ($order) {
-                $q->where('notes', 'like', "%[Đơn nhập kho #{$order->order_code}]%")
-                  ->orWhere('recipient', 'like', "%Đơn {$order->order_code}%");
-            })->first();
-
-        // Nếu đơn không phải là Đơn Nhập kho HOẶC đang là đơn nháp (draft):
-        // Xóa hoàn trả tồn kho nếu trước đó từng tạo phiếu
-        if (!$isNhapKho || $order->status === 'draft') {
-            if ($existingReceipt) {
-                $this->deleteReceipt($existingReceipt);
-            }
-            if ($existingIssue) {
-                $this->deleteIssue($existingIssue);
-            }
-            return;
-        }
-
-        // 2. Tách vật tư theo hành vi: nhập kho (add) hoặc xuất kho (subtract)
-        $order->load(['supplies.items', 'supplies.glassItems', 'supplies.minLateItems']);
-        
-        $addItems = [];
-        $subtractItems = [];
-        $defaultWarehouse = Warehouse::where('code', 'KHO-VAN')->first() ?? Warehouse::first();
-        $targetWarehouseId = $defaultWarehouse?->id ?? 1;
+    /**
+     * Lấy danh sách vật tư từ đơn hàng để nạp vào form tạo Phiếu Nhập / Xuất kho
+     */
+    public function getOrderMaterialItems(Order $order): array
+    {
+        $order->loadMissing(['supplies.items', 'supplies.glassItems', 'supplies.minLateItems']);
+        $items = [];
 
         foreach ($order->supplies as $supply) {
-            $action = $supply->inventory_action ?? 'add';
             $code = trim($supply->order_supply_code ?: '');
             $name = trim($supply->supply_name ?: '');
             if (!$code && !$name) continue;
 
-            // Tính số lượng
             $qty = (float)($supply->quantity ?? 0);
             if ($qty <= 0) {
-                $childItemsCount = ($supply->items ? $supply->items->sum('quantity') : 0) 
+                $childCount = ($supply->items ? $supply->items->sum('quantity') : 0) 
                     ?: (($supply->glassItems ? $supply->glassItems->sum('quantity') : 0) 
                     ?: (($supply->minLateItems ? $supply->minLateItems->sum('quantity') : 0) ?: 0));
-                $qty = (float)$childItemsCount;
+                $qty = (float)$childCount;
             }
-            if ($qty <= 0) {
-                $qty = 1;
-            }
+            if ($qty <= 0) $qty = 1;
 
-            // Tìm mặt hàng trong kho
+            $isEdge = str_starts_with($code, 'CHI-') || str_contains(mb_strtolower($name), 'chỉ');
+
+            // Tìm trong WoodBoardPrice hoặc WoodBoard
             $boardPrice = WoodBoardPrice::where('code', $code)->first();
             $woodBoard = null;
             if (!$boardPrice && $code) {
                 $woodBoard = WoodBoard::where('color_code', $code)->first();
             }
-            if (!$boardPrice && !$woodBoard && $name) {
-                $boardPrice = WoodBoardPrice::where('name', $name)->first();
-                if (!$boardPrice) {
-                    $woodBoard = WoodBoard::where('color_code', $name)->first();
+            if (!$boardPrice && !$woodBoard && $supply->wood_board_id) {
+                $woodBoard = WoodBoard::find($supply->wood_board_id);
+            }
+
+            $materialId = '';
+            $unit = $isEdge ? 'm' : 'Tấm';
+            $price = 0;
+
+            if ($isEdge) {
+                $materialId = 'edge_' . ($woodBoard ? $woodBoard->id : ($supply->wood_board_id ?? 0));
+                $price = (float)($woodBoard->edge_band_cost_price ?? 0);
+            } else {
+                if ($boardPrice) {
+                    $materialId = 'board_' . $boardPrice->id;
+                    $price = (float)($boardPrice->price_board ?? 0);
+                } elseif ($woodBoard) {
+                    $materialId = 'board_' . $woodBoard->id;
+                    $price = (float)($woodBoard->cost_price ?? 0);
+                } else {
+                    $materialId = 'board_' . ($supply->wood_board_id ?? 0);
                 }
             }
 
-            if (!$boardPrice && !$woodBoard) {
-                // Tạo mới WoodBoard nếu chưa có
-                $woodBoard = WoodBoard::create([
-                    'color_code'    => $code ?: $name,
-                    'price_group'   => 'Acrylic Foil',
-                    'unit'          => 'Tấm',
-                    'cost_price'    => 0,
-                    'min_stock'     => 5,
-                    'initial_stock' => 0,
-                    'current_stock' => 0,
-                    'warehouse_id'  => $targetWarehouseId,
-                    'status'        => 'active',
-                ]);
-            }
-
-            $materialId = $boardPrice ? $boardPrice->id : $woodBoard->id;
-            $unitPrice = (float)($boardPrice ? $boardPrice->price_board : ($woodBoard ? $woodBoard->cost_price : 0));
-            $itemType = 'board';
-
-            if ($supply->warehouse_id) {
-                $targetWarehouseId = $supply->warehouse_id;
-            } elseif ($woodBoard && $woodBoard->warehouse_id) {
-                $targetWarehouseId = $woodBoard->warehouse_id;
-            }
-
-            $itemData = [
-                'material_id'         => $materialId,
-                'wood_board_id'       => $boardPrice ? $boardPrice->wood_board_id : $woodBoard->id,
-                'wood_board_price_id' => $boardPrice ? $boardPrice->id : null,
-                'item_type'           => $itemType,
-                'quantity'            => $qty,
-                'unit_price'          => $unitPrice,
-                'notes'               => "Từ đơn nhập kho {$order->order_code}",
+            $items[] = [
+                'material_id' => $materialId,
+                'code'        => $code,
+                'name'        => $name ?: ($boardPrice?->name ?? ($woodBoard ? 'Tấm ' . $woodBoard->color_code : $code)),
+                'quantity'    => $qty,
+                'unit_price'  => $price,
+                'unit'        => $unit,
+                'notes'       => "Từ đơn #{$order->order_code}",
             ];
-
-            if ($action === 'subtract') {
-                $subtractItems[] = $itemData;
-            } else {
-                $addItems[] = $itemData;
-            }
         }
 
-        $warehouse = Warehouse::find($targetWarehouseId) ?? $defaultWarehouse;
-        $orderDate = $order->order_date ? \Carbon\Carbon::parse($order->order_date)->format('Y-m-d') : date('Y-m-d');
-        $userId = Auth::id() ?: ($order->technical_approved_by ?: 1);
-
-        // 3. Xử lý PHIẾU NHẬP KHO (addItems)
-        if (!empty($addItems)) {
-            $receiptData = [
-                'order_id'      => $order->id,
-                'code'          => $existingReceipt ? $existingReceipt->code : $this->generateCode('PNK', 'inventory_receipts'),
-                'date'          => $orderDate,
-                'supplier_name' => "Đơn hàng {$order->order_code} (Khách: Nhập kho)",
-                'deliverer'     => $order->customer_name ?: 'Bộ phận sản xuất',
-                'receiver'      => Auth::user()->name ?? 'Thủ kho',
-                'notes'         => "Tự động tạo từ [Đơn nhập kho #{$order->order_code}]",
-            ];
-
-            if ($existingReceipt) {
-                $this->updateReceipt($existingReceipt, $warehouse, $receiptData, $addItems, $userId);
-                $existingReceipt->update(['order_id' => $order->id]);
-            } else {
-                $newReceipt = $this->createReceipt($warehouse, $receiptData, $addItems, $userId);
-                $newReceipt->update(['order_id' => $order->id]);
-            }
-        } else {
-            if ($existingReceipt) {
-                $this->deleteReceipt($existingReceipt);
-            }
-        }
-
-        // 4. Xử lý PHIẾU XUẤT KHO (subtractItems)
-        if (!empty($subtractItems)) {
-            $issueData = [
-                'order_id'   => $order->id,
-                'code'       => $existingIssue ? $existingIssue->code : $this->generateCode('PXK', 'inventory_issues'),
-                'date'       => $orderDate,
-                'recipient'  => "Đơn hàng {$order->order_code} (Khách: Nhập kho)",
-                'deliverer'  => Auth::user()->name ?? 'Thủ kho',
-                'reason'     => "Xuất kho theo [Đơn nhập kho #{$order->order_code}]",
-                'notes'      => "Tự động tạo từ [Đơn nhập kho #{$order->order_code}]",
-            ];
-
-            if ($existingIssue) {
-                $this->deleteIssue($existingIssue);
-            }
-            $newIssue = $this->createIssue($warehouse, $issueData, $subtractItems, $userId);
-            $newIssue->update(['order_id' => $order->id]);
-        } else {
-            if ($existingIssue) {
-                $this->deleteIssue($existingIssue);
-            }
-        }
+        return $items;
     }
 
     /**

@@ -793,18 +793,18 @@ function previewOrder() {
     if (orderPaidAmt > 0) {
         const orderRemainingAmt = Math.max(0, orderTotalNum - orderPaidAmt);
         paidSummaryHTML = `
-            <div class="mt-2.5 pt-2.5 border-t border-dashed border-primary-200/80 flex items-center justify-between text-xs">
-                <span class="text-neutral-600 font-medium">Đã thanh toán đơn này:</span>
-                <span class="font-bold text-emerald-600 font-mono text-sm">${Math.round(orderPaidAmt).toLocaleString('vi-VN')} đ</span>
+            <div class="mt-2 pt-2 border-t border-dashed border-neutral-200 flex items-center justify-between text-xs">
+                <span class="text-neutral-600 font-medium">Đã thanh toán:</span>
+                <span class="font-bold text-emerald-600 font-mono">${Math.round(orderPaidAmt).toLocaleString('vi-VN')} đ</span>
             </div>
             <div class="mt-1 flex items-center justify-between text-xs">
-                <span class="text-neutral-600 font-medium">Còn lại của đơn:</span>
-                <span class="font-bold text-rose-600 font-mono text-sm">${Math.round(orderRemainingAmt).toLocaleString('vi-VN')} đ</span>
+                <span class="text-neutral-600 font-medium">Còn lại:</span>
+                <span class="font-bold text-rose-600 font-mono">${Math.round(orderRemainingAmt).toLocaleString('vi-VN')} đ</span>
             </div>
         `;
     }
 
-    // Thông tin công nợ khách hàng (3 ô: Công nợ, Đã TT (hôm nay), Tổng công nợ - khớp 100% với _preview_modal.blade.php)
+    // Thông tin công nợ khách hàng (3 ô: Công nợ cũ, Đã TT, Tổng nợ - gọn gàng)
     let debtOld = 0;
     let debtTodayPaid = 0;
     let debtTotal = 0;
@@ -822,30 +822,30 @@ function previewOrder() {
     let debtSummaryHTML = '';
     if (debtOld > 0 || debtTodayPaid > 0 || debtTotal > 0) {
         debtSummaryHTML = `
-            <div class="mt-5 pt-4 border-t-2 border-dashed border-primary-200">
-                <div class="text-xs font-bold uppercase tracking-wider text-neutral-600 mb-2 flex items-center justify-between">
+            <div class="mt-2 pt-2 border-t border-neutral-200">
+                <div class="text-[11px] font-bold text-neutral-700 mb-1 flex items-center justify-between">
                     <span class="flex items-center gap-2 text-primary-700">
-                        <iconify-icon icon="lucide:wallet" class="text-base text-primary-600"></iconify-icon>
-                        <span>Thông tin công nợ khách hàng</span>
+                        <iconify-icon icon="lucide:wallet" class="text-sm text-primary-600"></iconify-icon>
+                        <span>Công nợ khách hàng</span>
                     </span>
-                    <span class="text-[11px] font-normal text-neutral-400 lowercase italic">(đồng bộ với bảng công nợ khi xuất excel)</span>
+                    <span class="text-[10px] font-normal text-neutral-400 italic">(đồng bộ với file excel)</span>
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div class="bg-white p-4 rounded-xl border border-neutral-200 shadow-xs flex flex-col justify-between">
-                        <span class="text-xs font-semibold text-neutral-500">Công nợ:</span>
-                        <span class="text-base font-bold text-neutral-800 mt-1 font-mono">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <div class="bg-white py-1 px-2 rounded border border-neutral-200 flex items-center justify-between text-xs">
+                        <span class="text-neutral-500 text-[11px]">Công nợ cũ:</span>
+                        <span class="font-bold text-neutral-800 font-mono">
                             ${Math.round(debtOld).toLocaleString('vi-VN')} đ
                         </span>
                     </div>
-                    <div class="bg-white p-4 rounded-xl border border-emerald-200 bg-emerald-50/40 shadow-xs flex flex-col justify-between">
-                        <span class="text-xs font-semibold text-emerald-700">Đã TT (hôm nay):</span>
-                        <span class="text-base font-bold text-emerald-600 mt-1 font-mono">
+                    <div class="bg-white py-1 px-2 rounded border border-emerald-200 bg-emerald-50/40 flex items-center justify-between text-xs">
+                        <span class="text-emerald-700 text-[11px]">Đã TT:</span>
+                        <span class="font-bold text-emerald-600 font-mono">
                             ${Math.round(debtTodayPaid).toLocaleString('vi-VN')} đ
                         </span>
                     </div>
-                    <div class="bg-white p-4 rounded-xl border border-rose-200 bg-rose-50/50 shadow-xs flex flex-col justify-between">
-                        <span class="text-xs font-bold text-rose-700">Tổng công nợ:</span>
-                        <span class="text-lg font-black text-rose-600 mt-1 font-mono">
+                    <div class="bg-white py-1 px-2 rounded border border-rose-200 bg-rose-50/50 flex items-center justify-between text-xs">
+                        <span class="text-rose-700 text-[11px] font-bold">Tổng nợ:</span>
+                        <span class="font-bold text-rose-600 font-mono">
                             ${Math.round(debtTotal).toLocaleString('vi-VN')} đ
                         </span>
                     </div>
@@ -1058,9 +1058,16 @@ function previewOrder() {
                     }
                     // Chiều vân
                     else if (titleLower.includes('chiều vân')) {
-                        if (cellVal === '0') cellVal = 'Không vân';
-                        else if (cellVal === '1') cellVal = 'Vân dọc';
-                        else if (cellVal === '2') cellVal = 'Vân ngang';
+                        const gVal = (cellVal || '').trim();
+                        if (gVal === '' || gVal === '0' || gVal === '0.00' || gVal === '0,00' || gVal === 'Không vân') {
+                            cellVal = 'Không vân';
+                        } else if (gVal === '1' || gVal.toLowerCase() === 'dọc' || gVal.toLowerCase().includes('vân dọc')) {
+                            cellVal = 'Vân dọc';
+                        } else if (gVal === '2' || gVal.toLowerCase() === 'ngang' || gVal.toLowerCase().includes('vân ngang')) {
+                            cellVal = 'Vân ngang';
+                        } else {
+                            cellVal = gVal;
+                        }
                     }
                     // Rộng (chiều rộng): dưới 55mm cảnh báo đỏ giống như trên form bình thường
                     else if (titleLower === 'rộng' || titleLower === 'bản rộng' || titleLower.startsWith('rộng')) {
@@ -1096,15 +1103,15 @@ function previewOrder() {
                     }
                 }
 
-                // Nếu giá trị là 0.00 hoặc 0 (trừ số lượng) thì để trống để hiển thị — như các cột khác
+                // Nếu giá trị là 0.00 hoặc 0 (trừ số lượng và chiều vân) thì để trống để hiển thị — như các cột khác
                 if (cellVal === '0.00' || cellVal === '0,00' || cellVal === '0' || cellVal === 0) {
                     const titleLower = col.title.toLowerCase();
-                    if (!titleLower.includes('số lượng') && titleLower !== 'sl' && titleLower !== 'sl cánh') {
+                    if (!titleLower.includes('số lượng') && titleLower !== 'sl' && titleLower !== 'sl cánh' && !titleLower.includes('chiều vân')) {
                         cellVal = '';
                     }
                 }
 
-                rowHTML += `<td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: ${align}; color: ${textColor}; font-weight: ${isBold ? '700' : 'normal'}; font-size: 13px; white-space: nowrap; ${bgColor ? `background-color: ${bgColor};` : ''}">${cellVal || '—'}</td>`;
+                rowHTML += `<td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: ${align}; color: ${textColor}; font-weight: ${isBold ? '700' : '600'}; font-size: 13px; white-space: nowrap; ${bgColor ? `background-color: ${bgColor};` : ''}">${cellVal || '—'}</td>`;
             });
             rowHTML += '</tr>';
             itemsHTML += rowHTML;
@@ -1140,7 +1147,7 @@ function previewOrder() {
                 color = '#059669';
             }
 
-            summaryRowHTML += `<td style="border: 1px solid #cbd5e1; padding: 8px 8px; text-align: ${align}; color: ${color}; font-size: 13px; font-weight: 700; white-space: nowrap;">${val}</td>`;
+            summaryRowHTML += `<td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: ${align}; color: ${color}; font-size: 13px; font-weight: 700; white-space: nowrap;">${val}</td>`;
         });
         summaryRowHTML += '</tr>';
 
@@ -1164,13 +1171,13 @@ function previewOrder() {
 
         suppliesHTML += `
             <div class="mb-6">
-                <div class="flex items-center gap-3 mb-2.5 pb-2 border-b border-neutral-200">
-                    <div class="p-1.5 ${iconBgClass} rounded-lg flex items-center justify-center font-bold">
+                <div class="flex items-center gap-3 mb-2 pb-2 border-b border-neutral-200">
+                    <div class="p-2 ${iconBgClass} rounded-lg flex items-center justify-center font-bold">
                         <iconify-icon icon="lucide:clipboard-list" class="text-base"></iconify-icon>
                     </div>
                     <span class="font-extrabold text-sm ${titleColorClass}" ${titleInlineStyle}>${supplyCode || 'Vật tư ' + (sIdx + 1)}</span>
                     ${supplyName ? `<span class="text-xs ${nameColorClass}" ${titleInlineStyle}>- ${supplyName}</span>` : ''}
-                    ${supplyQty ? `<span class="text-xs ${badgeClass} border px-2.5 py-0.5 rounded-full font-bold">SL tấm: ${supplyQty}</span>` : ''}
+                    ${supplyQty ? `<span class="text-xs ${badgeClass} border px-2 py-1 rounded-full font-bold">SL tấm: ${supplyQty}</span>` : ''}
                 </div>
                 <div class="overflow-x-auto rounded-lg border border-neutral-300">
                     <table class="w-full" style="border-collapse: collapse; min-width: 100%;">
@@ -1279,10 +1286,10 @@ function previewOrder() {
         if (!value || value === '—') return '';
         return `
             <div class="flex items-start gap-3 py-2">
-                <iconify-icon icon="${icon}" class="text-base text-neutral-400 mt-0.5 flex-shrink-0"></iconify-icon>
+                <iconify-icon icon="${icon}" class="text-base text-neutral-400 mt-1 flex-shrink-0"></iconify-icon>
                 <div>
                     <div class="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">${label}</div>
-                    <div class="text-sm font-medium text-neutral-800 mt-0.5">${value}</div>
+                    <div class="text-sm font-medium text-neutral-800 mt-1">${value}</div>
                 </div>
             </div>
         `;
@@ -1308,15 +1315,19 @@ function previewOrder() {
                         </div>
                         <div>
                             <h5 class="font-bold text-base text-neutral-800 m-0">Xem trước đơn hàng</h5>
-                            <p class="text-xs text-neutral-400 m-0 mt-0.5">${orderCode} • ${typeLabel}</p>
+                            <p class="text-xs text-neutral-400 m-0 mt-1">${orderCode} • ${typeLabel}</p>
                         </div>
                     </div>
                     <div class="flex items-center gap-2 flex-wrap">
-                        <button type="button" id="btn-copy-preview-header" onclick="copyPreviewOrderImage()" class="btn text-white px-3.5 py-2 rounded-lg text-xs font-bold shadow-sm transition-all flex items-center gap-1.5 hover:opacity-95" style="background:#0068FF; border:none;" title="Chụp ảnh đơn hàng và lưu vào bộ nhớ tạm (sang Zalo chỉ cần Ctrl + V)">
+                        <button type="button" onclick="printPreviewOrder()" class="btn text-white px-3 py-2 rounded-lg text-xs font-bold shadow-sm transition-all flex items-center gap-2 hover:opacity-95" style="background:#059669; border:none;" title="In đơn hàng ra giấy hoặc xuất PDF (khổ ngang A4)">
+                            <iconify-icon icon="lucide:printer" class="text-base"></iconify-icon>
+                            <span>In đơn (khổ ngang)</span>
+                        </button>
+                        <button type="button" id="btn-copy-preview-header" onclick="copyPreviewOrderImage()" class="btn text-white px-3 py-2 rounded-lg text-xs font-bold shadow-sm transition-all flex items-center gap-2 hover:opacity-95" style="background:#0068FF; border:none;" title="Chụp ảnh đơn hàng và lưu vào bộ nhớ tạm (sang Zalo chỉ cần Ctrl + V)">
                             <iconify-icon icon="lucide:copy" class="text-base"></iconify-icon>
                             <span>Copy ảnh gửi Zalo</span>
                         </button>
-                        <button type="button" onclick="downloadPreviewOrderImage()" class="btn bg-white hover:bg-neutral-50 text-neutral-600 px-3 py-2 rounded-lg text-xs font-semibold border border-neutral-300 shadow-xs transition-all flex items-center gap-1.5" title="Tải ảnh PNG đơn hàng về máy">
+                        <button type="button" onclick="downloadPreviewOrderImage()" class="btn bg-white hover:bg-neutral-50 text-neutral-600 px-3 py-2 rounded-lg text-xs font-semibold border border-neutral-300 shadow-xs transition-all flex items-center gap-2" title="Tải ảnh PNG đơn hàng về máy">
                             <iconify-icon icon="lucide:download" class="text-sm"></iconify-icon>
                             <span>Tải ảnh</span>
                         </button>
@@ -1328,83 +1339,119 @@ function previewOrder() {
                 </div>
 
                 <!-- Body (scrollable) -->
-                <div class="flex-1 overflow-y-auto p-4 md:p-6 bg-neutral-100/50" style="min-height:0;" id="preview-order-scroll-container">
-                    <div id="preview-order-capture-area" class="bg-white p-6 md:p-8 space-y-6 rounded-2xl border border-neutral-200 shadow-sm w-full mx-auto" style="min-width: 1100px;">
+                <div class="flex-1 overflow-y-auto p-3 md:p-5 bg-neutral-100/50" style="min-height:0;" id="preview-order-scroll-container">
+                    <div id="preview-order-capture-area" class="bg-white p-4 md:p-5 space-y-3 rounded-xl border border-neutral-300 shadow-sm w-full mx-auto" style="min-width: 1050px; max-width: 1240px;">
                         <!-- Header trên ảnh khi xuất -->
-                        <div class="border-b-2 border-primary-500 pb-5 flex items-start justify-between gap-6">
-                            <div class="flex items-center gap-4">
-                                <img src="{{ asset('logo.png') }}" alt="Gervin Wood" class="h-16 w-auto object-contain flex-shrink-0" style="max-height: 64px;" crossorigin="anonymous">
+                        <div class="border-b-2 border-primary-500 pb-3 flex items-start justify-between gap-4">
+                            <div class="flex items-center gap-3">
+                                <img src="{{ asset('logo.png') }}" alt="Gervin Wood" class="h-12 w-auto object-contain flex-shrink-0" style="max-height: 48px;" crossorigin="anonymous">
                                 <div>
-                                    <h3 class="font-black text-lg text-neutral-900 m-0 tracking-tight leading-tight uppercase">CÔNG TY TNHH GỖ GERVIN</h3>
-                                    <p class="text-xs text-neutral-600 m-0 mt-1 font-medium leading-relaxed">
-                                        Địa chỉ: Xóm 3, Hưng Thịnh, Hưng Nguyên, Nghệ An<br>
-                                        Hotline: <strong class="text-neutral-800 font-semibold">0967.181.786</strong> • Email: contact@gervinwood.com • Website: <strong class="text-primary-600">www.gervinwood.com</strong>
+                                    <h3 class="font-black text-base text-neutral-900 m-0 tracking-tight leading-tight uppercase">CÔNG TY TNHH GỖ GERVIN</h3>
+                                    <p class="text-[11px] text-neutral-600 m-0 mt-1 font-medium leading-tight">
+                                        Xóm 3, Hưng Thịnh, Hưng Nguyên, Nghệ An • Hotline: <strong class="text-neutral-800 font-bold">0967.181.786</strong> • Web: <strong class="text-primary-600">www.gervinwood.com</strong>
                                     </p>
                                 </div>
                             </div>
                             <div class="text-right flex-shrink-0">
-                                <div class="inline-block px-3 py-1 bg-primary-50 text-primary-700 border border-primary-200 rounded-lg font-bold text-xs uppercase tracking-wider mb-1.5">
+                                <div class="inline-block px-2 py-1 bg-primary-50 text-primary-700 border border-primary-200 rounded font-bold text-[11px] uppercase tracking-wider mb-1">
                                     BÁO GIÁ KIÊM ĐƠN ĐẶT HÀNG
                                 </div>
-                                <div class="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Mã đơn hàng</div>
-                                <div class="text-2xl font-black text-primary-600 font-mono tracking-tight leading-none">${orderCode}</div>
-                                <div class="text-xs text-neutral-500 mt-1 font-medium">Ngày chốt: ${formatDate(orderDate)}</div>
+                                <div class="text-lg font-black text-primary-600 font-mono tracking-tight leading-none">${orderCode}</div>
+                                <div class="text-[11px] text-neutral-500 mt-1 font-medium">Ngày chốt: ${formatDate(orderDate)}</div>
                             </div>
                         </div>
 
-                        <!-- Thông tin khách hàng & đơn hàng -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            <div class="bg-white border border-neutral-200 rounded-xl p-5 shadow-sm">
-                                <div class="flex items-center gap-2 mb-3 pb-3 border-b border-neutral-100">
-                                    <iconify-icon icon="lucide:user" class="text-lg text-primary-500"></iconify-icon>
-                                    <h6 class="font-bold text-sm text-neutral-800 m-0">Thông tin khách hàng & công trình</h6>
+                        <!-- Thông tin khách hàng & Đơn hàng (Gọn gàng, tối ưu diện tích) -->
+                        <div class="bg-neutral-50/80 border border-neutral-300 rounded-lg p-3">
+                            <div class="grid grid-cols-12 gap-x-4 gap-y-2 text-xs">
+                                <div class="col-span-12 md:col-span-5 border-b md:border-b-0 md:border-r border-neutral-200 pb-2 md:pb-0 md:pr-3 space-y-1">
+                                    <div class="flex items-center gap-2 font-bold text-neutral-800 text-xs mb-1">
+                                        <iconify-icon icon="lucide:user" class="text-sm text-primary-600"></iconify-icon>
+                                        <span>Khách hàng & Công trình</span>
+                                    </div>
+                                    <div class="flex justify-between items-start gap-2">
+                                        <span class="text-neutral-500 font-medium shrink-0">Tên KH:</span>
+                                        <span class="font-bold text-neutral-900 text-right">${combinedCustomerDisplay || '—'}</span>
+                                    </div>
+                                    <div class="flex justify-between items-center gap-2">
+                                        <span class="text-neutral-500 font-medium shrink-0">SĐT:</span>
+                                        <span class="font-bold text-neutral-900 text-right">${phone || '—'}</span>
+                                    </div>
+                                    <div class="flex justify-between items-start gap-2">
+                                        <span class="text-neutral-500 font-medium shrink-0">Địa chỉ:</span>
+                                        <span class="font-bold text-neutral-900 text-right leading-tight">${address || '—'}</span>
+                                    </div>
                                 </div>
-                                ${infoRow('Tên khách hàng', combinedCustomerDisplay, 'lucide:user')}
-                                ${infoRow('Số điện thoại', phone, 'lucide:phone')}
-                                ${infoRow('Địa chỉ', address, 'lucide:map-pin')}
-                            </div>
-                            <div class="bg-white border border-neutral-200 rounded-xl p-5 shadow-sm">
-                                <div class="flex items-center gap-2 mb-3 pb-3 border-b border-neutral-100">
-                                    <iconify-icon icon="lucide:file-text" class="text-lg text-primary-500"></iconify-icon>
-                                    <h6 class="font-bold text-sm text-neutral-800 m-0">Thông tin đơn hàng</h6>
+
+                                <div class="col-span-12 md:col-span-3 border-b md:border-b-0 md:border-r border-neutral-200 pb-2 md:pb-0 md:px-3 space-y-1">
+                                    <div class="flex items-center gap-2 font-bold text-neutral-800 text-xs mb-1">
+                                        <iconify-icon icon="lucide:file-text" class="text-sm text-primary-600"></iconify-icon>
+                                        <span>Thông tin Đơn hàng</span>
+                                    </div>
+                                    <div class="flex justify-between items-center gap-2">
+                                        <span class="text-neutral-500 font-medium shrink-0">Mã đơn:</span>
+                                        <span class="font-mono font-black text-primary-700">${orderCode}</span>
+                                    </div>
+                                    <div class="flex justify-between items-center gap-2">
+                                        <span class="text-neutral-500 font-medium shrink-0">Loại đơn:</span>
+                                        <span class="font-bold text-neutral-900">${typeLabel}</span>
+                                    </div>
+                                    <div class="flex justify-between items-center gap-2">
+                                        <span class="text-neutral-500 font-medium shrink-0">Ngày chốt:</span>
+                                        <span class="font-bold text-neutral-900">${formatDate(orderDate)}</span>
+                                    </div>
                                 </div>
-                                ${infoRow('Mã đơn hàng', orderCode, 'lucide:hash')}
-                                ${infoRow('Loại đơn', typeLabel, 'lucide:tag')}
-                                ${infoRow('Ngày chốt đơn', formatDate(orderDate), 'lucide:calendar')}
-                                ${infoRow('Số ngày giao', deliveryDays ? deliveryDays + ' ngày' : '', 'lucide:truck')}
-                                ${infoRow('Hạn đơn', formatDateOnly(deadline), 'lucide:clock')}
-                                ${statusText ? infoRow('Trạng thái', statusText, 'lucide:activity') : ''}
-                                ${infoRow('Số kiện đóng gói', packingText, 'lucide:package')}
+
+                                <div class="col-span-12 md:col-span-4 space-y-1 md:pl-3">
+                                    <div class="flex items-center gap-2 font-bold text-neutral-800 text-xs mb-1">
+                                        <iconify-icon icon="lucide:truck" class="text-sm text-primary-600"></iconify-icon>
+                                        <span>Giao hàng & Trạng thái</span>
+                                    </div>
+                                    <div class="flex justify-between items-center gap-2">
+                                        <span class="text-neutral-500 font-medium shrink-0">Hạn đơn:</span>
+                                        <span class="font-bold text-danger-600">${formatDateOnly(deadline)} ${deliveryDays ? `(${deliveryDays} ngày)` : ''}</span>
+                                    </div>
+                                    <div class="flex justify-between items-center gap-2">
+                                        <span class="text-neutral-500 font-medium shrink-0">Trạng thái:</span>
+                                        <span class="font-bold text-neutral-900">${statusText || 'Bình thường'}</span>
+                                    </div>
+                                    <div class="flex justify-between items-center gap-2">
+                                        <span class="text-neutral-500 font-medium shrink-0">Đóng gói:</span>
+                                        <span class="font-bold ${packingText && packingText !== 'Chưa đóng gói' ? 'text-primary-700' : 'text-neutral-400'}">
+                                            ${packingText || 'Chưa đóng gói'}
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        <!-- Ghi chú -->
+                        <!-- Ghi chú (gọn gàng) -->
                         ${(notes || customerPolicy) ? `
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                             ${notes ? `
-                            <div class="bg-amber-50/50 border border-amber-200 rounded-xl p-5">
-                                <div class="flex items-center gap-2 mb-2">
-                                    <iconify-icon icon="lucide:sticky-note" class="text-base text-amber-500"></iconify-icon>
-                                    <span class="font-bold text-xs text-amber-700 uppercase">Ghi chú đơn hàng</span>
+                            <div class="bg-amber-50/70 border border-amber-200 rounded-lg p-2">
+                                <div class="flex items-center gap-2 mb-1 font-bold text-amber-800 uppercase text-[11px]">
+                                    <iconify-icon icon="lucide:sticky-note" class="text-xs text-amber-600"></iconify-icon>
+                                    <span>Ghi chú đơn hàng</span>
                                 </div>
-                                <p class="text-sm text-neutral-700 whitespace-pre-wrap m-0">${notes}</p>
+                                <p class="text-xs text-neutral-800 whitespace-pre-wrap m-0 leading-relaxed">${notes}</p>
                             </div>` : ''}
                             ${customerPolicy ? `
-                            <div class="bg-blue-50/50 border border-blue-200 rounded-xl p-5">
-                                <div class="flex items-center gap-2 mb-2">
-                                    <iconify-icon icon="lucide:shield" class="text-base text-blue-500"></iconify-icon>
-                                    <span class="font-bold text-xs text-blue-700 uppercase">Chính sách KH</span>
+                            <div class="bg-blue-50/70 border border-blue-200 rounded-lg p-2">
+                                <div class="flex items-center gap-2 mb-1 font-bold text-blue-800 uppercase text-[11px]">
+                                    <iconify-icon icon="lucide:shield" class="text-xs text-blue-600"></iconify-icon>
+                                    <span>Chính sách KH</span>
                                 </div>
-                                <p class="text-sm text-neutral-700 whitespace-pre-wrap m-0">${customerPolicy}</p>
+                                <p class="text-xs text-neutral-800 whitespace-pre-wrap m-0 leading-relaxed">${customerPolicy}</p>
                             </div>` : ''}
                         </div>` : ''}
 
                         <!-- Vật tư & Sản phẩm -->
                         ${suppliesHTML ? `
-                        <div class="bg-white border border-neutral-200 rounded-xl p-5 shadow-sm">
-                            <div class="flex items-center gap-2 mb-4 pb-3 border-b border-neutral-100">
-                                <iconify-icon icon="lucide:package-open" class="text-lg text-primary-500"></iconify-icon>
-                                <h6 class="font-bold text-sm text-neutral-800 m-0">Danh sách Vật tư & Sản phẩm</h6>
+                        <div class="bg-white border border-neutral-300 rounded-xl p-3 shadow-2xs">
+                            <div class="flex items-center gap-2 mb-3 pb-2 border-b border-neutral-200">
+                                <iconify-icon icon="lucide:package-open" class="text-lg text-primary-600"></iconify-icon>
+                                <h6 class="font-black text-sm text-neutral-900 m-0 uppercase tracking-tight">Danh sách Vật tư & Sản phẩm</h6>
                             </div>
                             ${suppliesHTML}
                         </div>` : ''}
@@ -1420,13 +1467,13 @@ function previewOrder() {
                                 <table class="w-full">
                                     <thead>
                                         <tr class="bg-primary-50/50">
-                                            <th class="px-3 py-2.5 text-xs font-bold text-neutral-600 uppercase border border-neutral-100 text-center whitespace-nowrap">STT</th>
-                                            <th class="px-3 py-2.5 text-xs font-bold text-neutral-600 uppercase border border-neutral-100 text-center whitespace-nowrap">Mã</th>
-                                            <th class="px-3 py-2.5 text-xs font-bold text-neutral-600 uppercase border border-neutral-100 text-left whitespace-nowrap">Tên nội dung</th>
-                                            <th class="px-3 py-2.5 text-xs font-bold text-neutral-600 uppercase border border-neutral-100 text-center whitespace-nowrap">Đơn vị</th>
-                                            <th class="px-3 py-2.5 text-xs font-bold text-neutral-600 uppercase border border-neutral-100 text-center whitespace-nowrap">Số lượng</th>
-                                            <th class="px-3 py-2.5 text-xs font-bold text-neutral-600 uppercase border border-neutral-100 text-center whitespace-nowrap">Đơn giá</th>
-                                            <th class="px-3 py-2.5 text-xs font-bold text-neutral-600 uppercase border border-neutral-100 text-center whitespace-nowrap">Thành tiền</th>
+                                            <th class="px-3 py-2 text-xs font-bold text-neutral-600 uppercase border border-neutral-100 text-center whitespace-nowrap">STT</th>
+                                            <th class="px-3 py-2 text-xs font-bold text-neutral-600 uppercase border border-neutral-100 text-center whitespace-nowrap">Mã</th>
+                                            <th class="px-3 py-2 text-xs font-bold text-neutral-600 uppercase border border-neutral-100 text-left whitespace-nowrap">Tên nội dung</th>
+                                            <th class="px-3 py-2 text-xs font-bold text-neutral-600 uppercase border border-neutral-100 text-center whitespace-nowrap">Đơn vị</th>
+                                            <th class="px-3 py-2 text-xs font-bold text-neutral-600 uppercase border border-neutral-100 text-center whitespace-nowrap">Số lượng</th>
+                                            <th class="px-3 py-2 text-xs font-bold text-neutral-600 uppercase border border-neutral-100 text-center whitespace-nowrap">Đơn giá</th>
+                                            <th class="px-3 py-2 text-xs font-bold text-neutral-600 uppercase border border-neutral-100 text-center whitespace-nowrap">Thành tiền</th>
                                         </tr>
                                     </thead>
                                     <tbody>${paymentDetailsHTML}</tbody>
@@ -1434,103 +1481,112 @@ function previewOrder() {
                             </div>
                         </div>` : ''}
 
-                        <!-- Tóm tắt -->
-                        <div class="bg-gradient-to-r from-primary-50 to-emerald-50 border border-primary-200 rounded-xl p-5">
-                            <div class="flex items-center gap-2 mb-4 pb-3 border-b border-primary-100">
-                                <iconify-icon icon="lucide:receipt-text" class="text-lg text-primary-500"></iconify-icon>
-                                <h6 class="font-bold text-sm text-neutral-800 m-0">Tóm tắt đơn hàng</h6>
+                        <!-- Tóm tắt đơn hàng (Gọn gàng, hẹp) -->
+                        <div class="bg-neutral-50 border border-neutral-300 rounded-lg p-3">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <iconify-icon icon="lucide:receipt-text" class="text-base text-primary-600"></iconify-icon>
+                                    <span class="font-bold text-xs text-neutral-800 uppercase tracking-wide">Tóm tắt đơn hàng</span>
+                                </div>
+                                ${(typeof isWarehouseProductionOrder !== 'undefined' && isWarehouseProductionOrder) ? `
+                                    <span class="text-xs font-bold text-sky-700 bg-sky-100 px-2 py-1 rounded border border-sky-200">
+                                        Sản xuất nhập kho lưu trữ (Không tính tiền)
+                                    </span>
+                                ` : ''}
                             </div>
-                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                <div class="text-center p-3 bg-white/70 rounded-lg">
-                                    <div class="text-xs text-neutral-500 font-medium">Số sản phẩm</div>
-                                    <div class="text-lg font-bold text-neutral-800 mt-1">${totalItems}</div>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2">
+                                <div class="text-center py-1 px-2 bg-white rounded border border-neutral-200">
+                                    <div class="text-[11px] text-neutral-500 font-medium">Số sản phẩm</div>
+                                    <div class="text-base font-bold text-neutral-800">${totalItems}</div>
                                 </div>
-                                <div class="text-center p-3 bg-white/70 rounded-lg">
-                                    <div class="text-xs text-neutral-500 font-medium">Tổng số tấm</div>
-                                    <div class="text-lg font-bold text-neutral-800 mt-1">${totalSheets}</div>
+                                <div class="text-center py-1 px-2 bg-white rounded border border-neutral-200">
+                                    <div class="text-[11px] text-neutral-500 font-medium">Tổng số tấm</div>
+                                    <div class="text-base font-bold text-neutral-800">${totalSheets}</div>
                                 </div>
-                                <div class="text-center p-3 bg-white/70 rounded-lg">
-                                    <div class="text-xs text-neutral-500 font-medium">Tổng diện tích</div>
-                                    <div class="text-lg font-bold text-blue-600 mt-1">${totalAreaDisplay}</div>
+                                <div class="text-center py-1 px-2 bg-white rounded border border-neutral-200">
+                                    <div class="text-[11px] text-neutral-500 font-medium">Tổng diện tích</div>
+                                    <div class="text-base font-bold text-blue-600">${totalAreaDisplay}</div>
                                 </div>
-                                <div class="text-center p-3 bg-white/70 rounded-lg">
-                                    <div class="text-xs text-neutral-500 font-medium">Tổng tiền hàng</div>
-                                    <div class="text-lg font-bold text-neutral-800 mt-1">${totalAmountDisplay}</div>
+                                <div class="text-center py-1 px-2 bg-white rounded border border-neutral-200">
+                                    <div class="text-[11px] text-neutral-500 font-medium">Tổng tiền hàng</div>
+                                    <div class="text-base font-bold text-neutral-800">${totalAmountDisplay}</div>
                                 </div>
                             </div>
-                            ${discountHTML}
-                            ${vatHTML}
-                            <div class="mt-4 pt-4 border-t border-primary-100 flex items-center justify-between">
-                                <span class="font-bold text-sm text-neutral-800">Tổng thanh toán đơn này:</span>
-                                <span class="text-2xl font-extrabold text-primary-600">${grandTotal}</span>
-                            </div>
-                            ${paidSummaryHTML}
-                            ${debtSummaryHTML}
+                            ${(typeof isWarehouseProductionOrder === 'undefined' || !isWarehouseProductionOrder) ? `
+                                ${discountHTML}
+                                ${vatHTML}
+                                <div class="mt-2 pt-2 border-t border-neutral-200 flex items-center justify-between">
+                                    <span class="font-bold text-xs text-neutral-800">Tổng thanh toán:</span>
+                                    <span class="text-lg font-extrabold text-primary-700">${grandTotal}</span>
+                                </div>
+                                ${paidSummaryHTML}
+                                ${debtSummaryHTML}
+                            ` : ''}
                         </div>
 
                         <!-- Khối Lưu ý, Xác nhận chữ ký 3 bên & Điều khoản báo giá (đồng bộ với file Excel) -->
-                        <div class="mt-6 pt-4 border-t-2 border-neutral-300 space-y-4 text-neutral-800" style="font-family: 'Times New Roman', Times, serif;">
+                        <div class="mt-3 pt-3 border-t-2 border-neutral-300 space-y-2 text-neutral-800">
                             <!-- 1. Lưu ý nhận hàng -->
-                            <div class="p-4 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-950 leading-relaxed">
-                                <div class="font-bold text-sm mb-1 text-amber-900">Lưu ý:</div>
-                                <div class="space-y-1">
-                                    <p class="m-0">+ Khách hàng phải kiểm tra và xác nhận đã nhận đầy đủ số lượng, tình trạng bên ngoài của hàng như hàng không bị xước hoặc hư hỏng.</p>
-                                    <p class="m-0">+ Nếu khách hàng nhận hàng mà không kiểm tra hoặc bỏ qua bước kiểm tra và ký nhận thì bên cung cấp hàng không chịu trách nhiệm về việc hư hỏng hay thiếu sót hàng tính từ thời điểm giao xong hàng.</p>
+                            <div class="p-2 rounded-lg bg-amber-50/80 border border-amber-200 text-xs text-amber-950 leading-relaxed">
+                                <div class="font-bold text-xs mb-1 text-amber-900 flex items-center gap-1">
+                                    <iconify-icon icon="lucide:alert-circle" class="text-sm text-amber-600"></iconify-icon>
+                                    <span>Lưu ý nhận hàng:</span>
                                 </div>
+                                <p class="m-0 leading-normal">+ Khách hàng vui lòng kiểm tra và xác nhận đã nhận đầy đủ số lượng, tình trạng bên ngoài không bị trầy xước hư hỏng trước khi nhận hàng. Sau thời điểm giao xong hàng bên bán không chịu trách nhiệm về thiếu sót hoặc hư hỏng ngoại quan.</p>
                             </div>
 
                             <!-- 2. Khu vực chữ ký & Xét duyệt điện tử -->
-                            <div class="grid grid-cols-3 gap-4 text-center pt-2">
+                            <div class="grid grid-cols-3 gap-3 text-center pt-1">
                                 <!-- Cột 1: Bên mua -->
-                                <div class="p-4 rounded-xl border border-neutral-200 bg-neutral-50 flex flex-col justify-between" style="min-height: 160px;">
+                                <div class="p-2 rounded-lg border border-neutral-300 bg-neutral-50/60 flex flex-col justify-between" style="min-height: 105px;">
                                     <div>
-                                        <div class="font-bold text-sm uppercase tracking-wide text-neutral-900">Xác nhận bên mua hàng</div>
-                                        <div class="text-xs text-neutral-600 mt-2 italic leading-relaxed">
-                                            Ngày............đã nhận đủ số lượng và đã kiểm tra hàng không bị xước hoặc hư hỏng.
+                                        <div class="font-bold text-xs uppercase tracking-wide text-neutral-900">Bên mua hàng</div>
+                                        <div class="text-[11px] text-neutral-500 mt-1 italic leading-tight">
+                                            Đã nhận đủ số lượng & nguyên vẹn
                                         </div>
                                     </div>
-                                    <div class="text-xs text-neutral-400 italic pt-6 pb-2">(Ký, ghi rõ họ tên)</div>
+                                    <div class="text-[11px] text-neutral-400 italic pt-3 pb-1">(Ký, ghi rõ họ tên)</div>
                                 </div>
 
                                 <!-- Cột 2: Kỹ thuật duyệt -->
-                                <div class="p-4 rounded-xl border border-neutral-200 bg-neutral-50 flex flex-col justify-between" style="min-height: 160px;">
+                                <div class="p-2 rounded-lg border border-neutral-300 bg-neutral-50/60 flex flex-col justify-between" style="min-height: 105px;">
                                     <div>
-                                        <div class="font-bold text-sm uppercase tracking-wide text-neutral-900">Kỹ thuật duyệt</div>
+                                        <div class="font-bold text-xs uppercase tracking-wide text-neutral-900">Kỹ thuật duyệt</div>
                                     </div>
                                     ${technicalApproval.is_approved ? `
-                                        <div class="my-auto py-2 flex flex-col items-center justify-center">
-                                            <div class="px-4 py-2 rounded-xl text-center inline-block" style="border: 2px solid #2563eb; background-color: #eff6ff; transform: rotate(-2deg);">
-                                                <div class="text-[10px] font-black uppercase tracking-widest text-blue-700 flex items-center justify-center gap-1">
+                                        <div class="my-auto py-1 flex flex-col items-center justify-center">
+                                            <div class="px-3 py-1 rounded-lg text-center inline-block" style="border: 1.5px solid #2563eb; background-color: #eff6ff;">
+                                                <div class="text-[10px] font-black uppercase tracking-wider text-blue-700 flex items-center justify-center gap-1">
                                                     <iconify-icon icon="lucide:check-circle-2" class="text-xs text-blue-600"></iconify-icon>
-                                                    <span>ĐÃ DUYỆT SẢN XUẤT</span>
+                                                    <span>ĐÃ DUYỆT SX</span>
                                                 </div>
                                                 <div class="text-xs font-bold text-neutral-900 mt-1 uppercase">
                                                     ${technicalApproval.name || 'Kỹ thuật'}
                                                 </div>
                                                 ${technicalApproval.time ? `
-                                                    <div class="text-[10px] text-neutral-500 font-mono mt-0.5">
+                                                    <div class="text-[9px] text-neutral-500 font-mono">
                                                         ${technicalApproval.time}
                                                     </div>
                                                 ` : ''}
                                             </div>
                                         </div>
                                     ` : `
-                                        <div class="my-auto py-6 flex flex-col items-center justify-center">
+                                        <div class="my-auto py-2 flex flex-col items-center justify-center">
                                             <span class="text-xs text-neutral-400 italic">(Chờ duyệt)</span>
                                         </div>
                                     `}
-                                    <div class="text-[10px] text-neutral-400 pb-2">Xác nhận duyệt hệ thống</div>
+                                    <div class="text-[10px] text-neutral-400 pb-1">Xác nhận duyệt hệ thống</div>
                                 </div>
 
                                 <!-- Cột 3: Kế toán duyệt -->
-                                <div class="p-4 rounded-xl border border-neutral-200 bg-neutral-50 flex flex-col justify-between" style="min-height: 160px;">
+                                <div class="p-2 rounded-lg border border-neutral-300 bg-neutral-50/60 flex flex-col justify-between" style="min-height: 105px;">
                                     <div>
-                                        <div class="font-bold text-sm uppercase tracking-wide text-neutral-900">Kế toán duyệt</div>
+                                        <div class="font-bold text-xs uppercase tracking-wide text-neutral-900">Kế toán duyệt</div>
                                     </div>
                                     ${accountantApproval.is_approved ? `
-                                        <div class="my-auto py-2 flex flex-col items-center justify-center">
-                                            <div class="px-4 py-2 rounded-xl text-center inline-block" style="border: 2px solid #059669; background-color: #ecfdf5; transform: rotate(-2deg);">
-                                                <div class="text-[10px] font-black uppercase tracking-widest text-emerald-700 flex items-center justify-center gap-1">
+                                        <div class="my-auto py-1 flex flex-col items-center justify-center">
+                                            <div class="px-3 py-1 rounded-lg text-center inline-block" style="border: 1.5px solid #059669; background-color: #ecfdf5;">
+                                                <div class="text-[10px] font-black uppercase tracking-wider text-emerald-700 flex items-center justify-center gap-1">
                                                     <iconify-icon icon="lucide:check-circle-2" class="text-xs text-emerald-600"></iconify-icon>
                                                     <span>KẾ TOÁN ĐÃ DUYỆT</span>
                                                 </div>
@@ -1538,42 +1594,42 @@ function previewOrder() {
                                                     ${accountantApproval.name || 'Kế toán'}
                                                 </div>
                                                 ${accountantApproval.time ? `
-                                                    <div class="text-[10px] text-neutral-500 font-mono mt-0.5">
+                                                    <div class="text-[9px] text-neutral-500 font-mono">
                                                         ${accountantApproval.time}
                                                     </div>
                                                 ` : ''}
                                             </div>
                                         </div>
                                     ` : `
-                                        <div class="my-auto py-6 flex flex-col items-center justify-center">
+                                        <div class="my-auto py-2 flex flex-col items-center justify-center">
                                             <span class="text-xs text-neutral-400 italic">(Chờ duyệt)</span>
                                         </div>
                                     `}
-                                    <div class="text-[10px] text-neutral-400 pb-2">Xác nhận duyệt hệ thống</div>
+                                    <div class="text-[10px] text-neutral-400 pb-1">Xác nhận duyệt hệ thống</div>
                                 </div>
                             </div>
 
-                            <!-- 3. Các điều khoản thanh toán & bảo hành (5 điều) -->
-                            <div class="pt-3 text-xs space-y-2 text-neutral-700 leading-relaxed border-t border-neutral-200">
+                            <!-- 3. Các điều khoản thanh toán & bảo hành (5 điều ngắn gọn) -->
+                            <div class="pt-2 text-[11px] space-y-1 text-neutral-700 leading-normal border-t border-neutral-200">
                                 <div class="flex items-start gap-2">
-                                    <span class="font-bold text-neutral-900 w-4 shrink-0 text-center">1.</span>
-                                    <span>Đơn giá trên chưa bao gồm VAT. Đúng sai ±1 mm.</span>
+                                    <span class="font-bold text-neutral-900 w-3 shrink-0 text-center">1.</span>
+                                    <span>Đơn giá trên chưa bao gồm VAT. Đúng sai kích thước sản xuất ±1 mm.</span>
                                 </div>
                                 <div class="flex items-start gap-2">
-                                    <span class="font-bold text-neutral-900 w-4 shrink-0 text-center">2.</span>
-                                    <span>Ứng trước 50% tiền đơn hàng gia công, thanh toán 50% còn lại trước khi lấy hàng tại kho, giao hàng tại nhà máy bên bán sau 2 đến 3 ngày.</span>
+                                    <span class="font-bold text-neutral-900 w-3 shrink-0 text-center">2.</span>
+                                    <span>Ứng trước 50% tiền đơn hàng gia công, thanh toán 50% còn lại trước khi lấy hàng tại kho.</span>
                                 </div>
                                 <div class="flex items-start gap-2">
-                                    <span class="font-bold text-neutral-900 w-4 shrink-0 text-center">3.</span>
-                                    <span>Khi mua tấm Quý khách vui lòng thanh toán 100% tiền hàng trước khi chuyển hàng ra khỏi kho bên bán.</span>
+                                    <span class="font-bold text-neutral-900 w-3 shrink-0 text-center">3.</span>
+                                    <span>Khi mua tấm Quý khách vui lòng thanh toán 100% tiền hàng trước khi xuất kho bên bán.</span>
                                 </div>
                                 <div class="flex items-start gap-2">
-                                    <span class="font-bold text-neutral-900 w-4 shrink-0 text-center">4.</span>
-                                    <span>Quý khách có thể thanh toán bằng tiền mặt hoặc chuyển khoản vào một trong các tài khoản sau:</span>
+                                    <span class="font-bold text-neutral-900 w-3 shrink-0 text-center">4.</span>
+                                    <span>Thanh toán tiền mặt hoặc chuyển khoản theo thông tin ngân hàng của Công ty Gỗ Gervin.</span>
                                 </div>
                                 <div class="flex items-start gap-2">
-                                    <span class="font-bold text-neutral-900 w-4 shrink-0 text-center">5.</span>
-                                    <span>Bảo hành cong vênh, bong tróc 12 tháng, bảo trì vĩnh viễn. Không bảo hành mối và ngập nước.</span>
+                                    <span class="font-bold text-neutral-900 w-3 shrink-0 text-center">5.</span>
+                                    <span>Bảo hành cong vênh, bong tróc 12 tháng, bảo trì vĩnh viễn (không bảo hành ngập nước và mối mọt).</span>
                                 </div>
                             </div>
                         </div>
@@ -1593,18 +1649,22 @@ function previewOrder() {
                         <span>Bấm <strong>Copy ảnh gửi Zalo</strong>, sau đó mở chat với khách và ấn <strong>Ctrl + V</strong> để gửi ảnh ngay.</span>
                     </div>
                     <div class="flex items-center gap-2 flex-wrap">
-                        <button type="button" onclick="closePreviewOrder()" class="btn btn-outline-neutral px-5 py-2.5 rounded-lg text-sm font-semibold transition-all">Đóng</button>
-                        <button type="button" onclick="copyPreviewOrderImage()" class="btn text-white px-4 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all flex items-center gap-1.5 hover:opacity-95" style="background:#0068FF; border:none;" title="Copy ảnh để dán Ctrl + V vào Zalo">
+                        <button type="button" onclick="closePreviewOrder()" class="btn btn-outline-neutral px-5 py-2 rounded-lg text-sm font-semibold transition-all">Đóng</button>
+                        <button type="button" onclick="printPreviewOrder()" class="btn text-white px-5 py-2 rounded-lg text-sm font-semibold shadow-sm transition-all flex items-center gap-2 hover:opacity-95" style="background:#059669; border:none;" title="In đơn hàng ra giấy hoặc xuất PDF (khổ ngang A4)">
+                            <iconify-icon icon="lucide:printer" class="text-base"></iconify-icon>
+                            <span>In đơn (khổ ngang)</span>
+                        </button>
+                        <button type="button" onclick="copyPreviewOrderImage()" class="btn text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-sm transition-all flex items-center gap-2 hover:opacity-95" style="background:#0068FF; border:none;" title="Copy ảnh để dán Ctrl + V vào Zalo">
                             <iconify-icon icon="lucide:copy" class="text-base"></iconify-icon>
                             Copy ảnh gửi Zalo
                         </button>
                         @if(!isset($acrylicOrder) || $isDraftCreate || $acrylicOrder->status === 'draft')
-                        <button type="button" onclick="closePreviewOrder(); if (typeof closeOrderSuppliesPopup === 'function') closeOrderSuppliesPopup(); document.getElementById('order-form-action').value = 'draft'; document.getElementById('order-form').requestSubmit();" class="btn bg-amber-500 hover:bg-amber-600 text-white px-5 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all flex items-center gap-1.5">
+                        <button type="button" onclick="closePreviewOrder(); if (typeof closeOrderSuppliesPopup === 'function') closeOrderSuppliesPopup(); document.getElementById('order-form-action').value = 'draft'; document.getElementById('order-form').requestSubmit();" class="btn bg-amber-500 hover:bg-amber-600 text-white px-5 py-2 rounded-lg text-sm font-semibold shadow-sm transition-all flex items-center gap-2">
                             <iconify-icon icon="lucide:file-text" class="text-base"></iconify-icon>
                             Lưu nháp
                         </button>
                         @endif
-                        <button type="button" onclick="closePreviewOrder(); if (typeof closeOrderSuppliesPopup === 'function') closeOrderSuppliesPopup(); document.getElementById('order-form-action').value = 'save'; document.getElementById('order-form').requestSubmit();" class="btn btn-primary px-6 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all flex items-center gap-1.5">
+                        <button type="button" onclick="closePreviewOrder(); if (typeof closeOrderSuppliesPopup === 'function') closeOrderSuppliesPopup(); document.getElementById('order-form-action').value = 'save'; document.getElementById('order-form').requestSubmit();" class="btn btn-primary px-6 py-2 rounded-lg text-sm font-semibold shadow-sm transition-all flex items-center gap-2">
                             <iconify-icon icon="lucide:save" class="text-base"></iconify-icon>
                             {{ isset($acrylicOrder) && !$isDraftCreate && $acrylicOrder->status !== 'draft' ? 'Cập nhật đơn hàng' : 'Lưu đơn hàng' }}
                         </button>
@@ -1713,85 +1773,90 @@ async function getPreviewOrderImageBlob() {
     if (!captureEl) throw new Error('Không tìm thấy vùng nội dung đơn hàng để chụp');
 
     await ensureHtml2CanvasLoaded();
+    if (document.fonts && document.fonts.ready) {
+        await document.fonts.ready;
+    }
 
-    // 1. Tạo một bản sao (clone) ẩn ngoài màn hình để bung toàn bộ chiều rộng 1750px (đầy đủ 100% cột, không bị cắt và cực nét)
+    // Nhân bản chính xác khối xem trước người dùng đang nhìn thấy
     const clone = captureEl.cloneNode(true);
     clone.id = 'zalo-export-clone-node';
-    
-    // Đặt chiều rộng cố định 1750px để TẤT CẢ các cột bung ra thoải mái
-    clone.style.position = 'fixed';
-    clone.style.top = '0';
-    clone.style.left = '-99999px';
-    clone.style.width = '1750px';
-    clone.style.minWidth = '1750px';
-    clone.style.maxWidth = '1750px';
-    clone.style.height = 'auto';
-    clone.style.zIndex = '-999999';
-    clone.style.background = '#ffffff';
-    clone.style.padding = '35px 40px';
-    clone.style.boxSizing = 'border-box';
-    clone.style.boxShadow = 'none';
-    clone.style.borderRadius = '0';
 
-    // Bỏ tất cả các giới hạn cuộn và overflow trong clone để không bị cắt cột
-    clone.querySelectorAll('.overflow-x-auto, .overflow-y-auto, .overflow-hidden').forEach(el => {
+    // Thay thế các thẻ iconify-icon bằng SVG chuẩn để html2canvas vẽ sắc nét
+    const origIcons = captureEl.querySelectorAll('iconify-icon');
+    const cloneIcons = clone.querySelectorAll('iconify-icon');
+    origIcons.forEach((orig, idx) => {
+        const cloneIcon = cloneIcons[idx];
+        if (!cloneIcon) return;
+        const svg = orig.shadowRoot ? orig.shadowRoot.querySelector('svg') : orig.querySelector('svg');
+        if (svg) {
+            const svgClone = svg.cloneNode(true);
+            const computed = window.getComputedStyle(orig);
+            svgClone.style.width = computed.fontSize || '1em';
+            svgClone.style.height = computed.fontSize || '1em';
+            svgClone.style.display = 'inline-block';
+            svgClone.style.verticalAlign = '-0.125em';
+            cloneIcon.replaceWith(svgClone);
+        }
+    });
+
+    // Mở rộng các khối cuộn bảng để không bị cắt bớt cột
+    clone.querySelectorAll('.overflow-x-auto, .overflow-y-auto').forEach(el => {
         el.style.overflow = 'visible';
         el.style.width = '100%';
         el.style.maxWidth = 'none';
     });
 
-    // Tinh chỉnh bảng trong clone để hiển thị sắc nét từng đường viền và chữ
-    clone.querySelectorAll('table').forEach(tbl => {
-        tbl.style.width = '100%';
-        tbl.style.minWidth = '100%';
-        tbl.style.tableLayout = 'auto';
-        tbl.style.borderCollapse = 'collapse';
-        tbl.style.fontSize = '13.5px';
-    });
-    clone.querySelectorAll('th').forEach(th => {
-        th.style.padding = '10px 8px';
-        th.style.fontSize = '13px';
-        th.style.fontWeight = '700';
-        th.style.border = '1.5px solid #cbd5e1';
-        th.style.backgroundColor = '#f1f5f9';
-        th.style.color = '#0f172a';
-        th.style.whiteSpace = 'nowrap';
-    });
-    clone.querySelectorAll('td').forEach(td => {
-        td.style.padding = '8px 8px';
-        td.style.fontSize = '13px';
-        td.style.border = '1px solid #cbd5e1';
-        td.style.whiteSpace = 'nowrap';
-    });
+    // Chiều rộng tự nhiên khớp với khung xem trước (tối thiểu 1150px)
+    const targetWidth = Math.max(captureEl.scrollWidth, captureEl.offsetWidth, 1150);
 
-    document.body.appendChild(clone);
+    // Wrapper đặt tại (0, 0) dưới lớp modal (z-index: -9999).
+    // Tuyệt đối không đặt -99999px vì Chromium sẽ tắt DirectWrite subpixel hinting gây mờ chữ!
+    const wrapper = document.createElement('div');
+    wrapper.id = 'zalo-export-wrapper';
+    wrapper.style.position = 'fixed';
+    wrapper.style.top = '0';
+    wrapper.style.left = '0';
+    wrapper.style.width = targetWidth + 'px';
+    wrapper.style.zIndex = '-9999';
+    wrapper.style.pointerEvents = 'none';
+    wrapper.style.background = '#ffffff';
+    wrapper.style.overflow = 'visible';
 
-    // Chờ 80ms để trình duyệt render các font và layout hoàn tất
-    await new Promise(r => setTimeout(r, 80));
+    clone.style.width = targetWidth + 'px';
+    clone.style.minWidth = targetWidth + 'px';
+    clone.style.maxWidth = 'none';
+    clone.style.margin = '0';
+    // Giữ nguyên 100% padding, borders, backgrounds, font sizes như trên màn hình xem trước
+
+    wrapper.appendChild(clone);
+    document.body.appendChild(wrapper);
+
+    // Chờ 120ms để trình duyệt tính toán reflow và render font glyphs chuẩn xác
+    await new Promise(r => setTimeout(r, 120));
 
     try {
-        // Chụp với scale 2.5 trên bề rộng 1750px -> ảnh rộng ~4375px cực nét (Retina 300DPI)
         const canvas = await html2canvas(clone, {
-            scale: 2.5,
+            scale: 2, // Tỷ lệ số nguyên 2x (Retina) siêu sắc nét, không bị nhòe pixel do số lẻ
             useCORS: true,
             allowTaint: true,
             backgroundColor: '#ffffff',
             logging: false,
-            width: clone.scrollWidth,
-            height: clone.scrollHeight,
-            windowWidth: 1750,
+            scrollX: 0,
+            scrollY: 0,
+            x: 0,
+            y: 0,
         });
 
-        clone.remove();
+        wrapper.remove();
 
         return new Promise((resolve, reject) => {
             canvas.toBlob((blob) => {
                 if (blob) resolve(blob);
                 else reject(new Error('Không thể xuất ảnh từ canvas'));
-            }, 'image/png', 0.98);
+            }, 'image/png');
         });
     } catch (err) {
-        if (clone && clone.parentNode) clone.remove();
+        if (wrapper && wrapper.parentNode) wrapper.remove();
         throw err;
     }
 }
@@ -1857,6 +1922,88 @@ function downloadBlob(blob, fileName) {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
     }, 100);
+}
+
+function printPreviewOrder() {
+    const captureEl = document.getElementById('preview-order-capture-area');
+    if (!captureEl) {
+        alert('Không tìm thấy vùng nội dung đơn hàng để in');
+        return;
+    }
+
+    // Tạo hoặc lấy container in trực tiếp dưới body
+    let printContainer = document.getElementById('preview-order-print-container');
+    if (!printContainer) {
+        printContainer = document.createElement('div');
+        printContainer.id = 'preview-order-print-container';
+        document.body.appendChild(printContainer);
+    }
+
+    // Clone nội dung xem trước
+    printContainer.innerHTML = '';
+    const clone = captureEl.cloneNode(true);
+    clone.id = 'preview-order-print-area';
+    clone.style.minWidth = '100%';
+    clone.style.maxWidth = '100%';
+    clone.style.width = '100%';
+    clone.style.border = 'none';
+    clone.style.boxShadow = 'none';
+    clone.style.padding = '0';
+    clone.style.margin = '0';
+
+    clone.querySelectorAll('.overflow-x-auto, .overflow-y-auto, .overflow-hidden').forEach(el => {
+        el.style.overflow = 'visible';
+        el.style.width = '100%';
+        el.style.maxWidth = 'none';
+    });
+
+    clone.querySelectorAll('.truncate').forEach(el => {
+        el.classList.remove('truncate');
+    });
+
+    clone.querySelectorAll('table').forEach(tbl => {
+        tbl.style.width = '100%';
+        tbl.style.minWidth = '100%';
+        tbl.style.borderCollapse = 'collapse';
+    });
+
+    printContainer.appendChild(clone);
+
+    // Đánh dấu body đang in đơn hàng
+    document.body.classList.add('is-printing-order-preview');
+
+    // Đợi 50ms để DOM cập nhật rồi gọi lệnh in bản địa
+    setTimeout(() => {
+        window.print();
+    }, 50);
+
+    // Fallback dọn dẹp sau khi in
+    setTimeout(() => {
+        document.body.classList.remove('is-printing-order-preview');
+    }, 2000);
+}
+
+// Tự động dọn dẹp sau khi in hoặc hủy in
+window.addEventListener('afterprint', function() {
+    document.body.classList.remove('is-printing-order-preview');
+    const printContainer = document.getElementById('preview-order-print-container');
+    if (printContainer) {
+        printContainer.innerHTML = '';
+    }
+});
+
+// Bắt sự kiện phím tắt Ctrl + P khi đang mở modal xem trước
+if (!window.previewOrderPrintKeyHandlerAttached) {
+    window.previewOrderPrintKeyHandlerAttached = true;
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'p' || e.key === 'P')) {
+            const modal = document.getElementById('preview-order-modal');
+            if (modal && modal.style.display !== 'none' && getComputedStyle(modal).display !== 'none') {
+                e.preventDefault();
+                printPreviewOrder();
+            }
+        }
+    });
 }
 
 function updateOrderSummary() {
@@ -5857,6 +6004,78 @@ function submitQuickCreateCustomer(e) {
         outline: 2px solid #eab308 !important;
         outline-offset: -2px !important;
         box-shadow: none !important;
+    }
+    #preview-order-print-container {
+        display: none;
+    }
+
+    @media print {
+        @page {
+            size: A4 landscape;
+            margin: 6mm 8mm;
+        }
+        * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        body.is-printing-order-preview {
+            background: #ffffff !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            height: auto !important;
+            overflow: visible !important;
+        }
+        body.is-printing-order-preview > *:not(#preview-order-print-container) {
+            display: none !important;
+        }
+        body.is-printing-order-preview #preview-order-print-container {
+            display: block !important;
+            position: static !important;
+            width: 100% !important;
+            min-width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #ffffff !important;
+        }
+        body.is-printing-order-preview #preview-order-print-container #preview-order-print-area {
+            width: 100% !important;
+            min-width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: none !important;
+            box-shadow: none !important;
+        }
+        body.is-printing-order-preview #preview-order-print-container table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            page-break-inside: auto;
+        }
+        body.is-printing-order-preview #preview-order-print-container thead {
+            display: table-header-group !important;
+        }
+        body.is-printing-order-preview #preview-order-print-container tfoot {
+            display: table-footer-group !important;
+        }
+        body.is-printing-order-preview #preview-order-print-container tr {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+        }
+        body.is-printing-order-preview #preview-order-print-container th,
+        body.is-printing-order-preview #preview-order-print-container td {
+            font-size: 11px !important;
+            padding: 5px 6px !important;
+            border: 1px solid #cbd5e1 !important;
+        }
+        body.is-printing-order-preview #preview-order-print-container th {
+            background-color: #f1f5f9 !important;
+            font-weight: 700 !important;
+            color: #0f172a !important;
+        }
+        body.is-printing-order-preview #preview-order-print-container .avoid-break {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+        }
     }
 </style>
 

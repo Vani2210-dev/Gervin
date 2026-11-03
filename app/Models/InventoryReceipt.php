@@ -13,6 +13,7 @@ class InventoryReceipt extends Model
         'date',
         'warehouse_id',
         'order_id',
+        'supplier_id',
         'supplier_name',
         'deliverer',
         'receiver',
@@ -44,8 +45,28 @@ class InventoryReceipt extends Model
         return $this->belongsTo(Order::class);
     }
 
+    public function supplier(): BelongsTo
+    {
+        return $this->belongsTo(Supplier::class, 'supplier_id');
+    }
+
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    protected static function booted()
+    {
+        static::saved(function ($receipt) {
+            if ($receipt->supplier_id) {
+                $receipt->supplier?->recalculateDebt();
+            }
+        });
+
+        static::deleted(function ($receipt) {
+            if ($receipt->supplier_id) {
+                $receipt->supplier?->recalculateDebt();
+            }
+        });
     }
 }

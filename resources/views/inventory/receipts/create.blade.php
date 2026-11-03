@@ -42,8 +42,45 @@
                             </select>
                         </div>
                         <div>
-                            <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Nhà cung cấp / Nguồn</label>
-                            <input type="text" name="supplier_name" class="form-control rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500" placeholder="Vd: Nhà máy TQ, Đại lý...">
+                            <div class="flex items-center justify-between mb-1">
+                                <label class="form-label text-xs font-bold text-neutral-700 block mb-0">Nhà cung cấp (NCC)</label>
+                                <button type="button" onclick="openQuickSupplierModal()" class="text-[11px] text-primary-600 hover:text-primary-800 font-bold flex items-center gap-0.5">
+                                    <iconify-icon icon="ic:baseline-plus"></iconify-icon> Thêm mới NCC
+                                </button>
+                            </div>
+                            <select name="supplier_id" id="select_supplier" class="form-select rounded-lg w-full border border-neutral-300 px-3 py-2 text-xs font-semibold text-neutral-800 bg-white focus:border-primary-500 focus:ring-primary-500" onchange="onSupplierChanged(this)">
+                                <option value="">-- Chọn NCC (hoặc để trống) --</option>
+                                @foreach($suppliers ?? [] as $sup)
+                                    <option value="{{ $sup->id }}" data-name="{{ $sup->name }}" data-debt="{{ $sup->debt }}" {{ (string)old('supplier_id', request('supplier_id')) === (string)$sup->id ? 'selected' : '' }}>
+                                        [{{ $sup->code }}] {{ $sup->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <input type="hidden" name="supplier_name" id="input_supplier_name" value="{{ old('supplier_name') }}">
+                            <div id="supplier_debt_badge" class="mt-1 text-[11px] text-rose-600 font-bold hidden">
+                                Công nợ NCC hiện tại: <span id="supplier_debt_val">0</span>đ
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <label class="form-label text-xs font-bold text-neutral-700 block mb-0">Đơn hàng liên quan <span class="text-neutral-400 font-normal">(Tùy chọn)</span></label>
+                                <button type="button" id="btnLoadOrderItems" onclick="loadSelectedOrderSupplies()" class="text-[11px] text-primary-600 hover:text-primary-800 font-bold flex items-center gap-0.5 {{ empty($selectedOrder) ? 'hidden' : '' }}" title="Nạp danh sách vật tư từ đơn hàng này vào bảng bên dưới">
+                                    <iconify-icon icon="solar:download-square-bold"></iconify-icon> Nạp vật tư đơn
+                                </button>
+                            </div>
+                            <select name="order_id" id="select_order" class="form-select rounded-lg w-full border border-neutral-300 px-3 py-2 text-xs font-semibold text-neutral-800 bg-white focus:border-primary-500 focus:ring-primary-500" onchange="onOrderChanged(this)">
+                                <option value="">-- Không gắn đơn hàng --</option>
+                                @if(!empty($selectedOrder) && !$orders->contains('id', $selectedOrder->id))
+                                    <option value="{{ $selectedOrder->id }}" selected>
+                                        [{{ $selectedOrder->order_code }}] {{ $selectedOrder->customer_name ?: 'Khách hàng' }}
+                                    </option>
+                                @endif
+                                @foreach($orders ?? [] as $ord)
+                                    <option value="{{ $ord->id }}" {{ (string)old('order_id', request('order_id')) === (string)$ord->id ? 'selected' : '' }}>
+                                        [{{ $ord->order_code }}] {{ $ord->customer_name ?: 'Khách hàng' }} ({{ date('d/m/Y', strtotime($ord->order_date)) }})
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
                         <div>
                             <label class="form-label text-xs font-semibold text-neutral-700 mb-1 block">Người giao hàng</label>
@@ -53,9 +90,9 @@
                             <label class="form-label text-xs font-semibold text-neutral-700 mb-1 block">Người nhận (Thủ kho)</label>
                             <input type="text" name="receiver" value="{{ auth()->user()->name ?? 'Thủ kho' }}" class="form-control rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500">
                         </div>
-                        <div class="md:col-span-2">
+                        <div>
                             <label class="form-label text-xs font-semibold text-neutral-700 mb-1 block">Ghi chú phiếu nhập</label>
-                            <input type="text" name="notes" class="form-control rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500" placeholder="Nhập theo hóa đơn, container số...">
+                            <input type="text" name="notes" class="form-control rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500" placeholder="Nhập theo hóa đơn, container số..." value="{{ !empty($selectedOrder) ? 'Nhập kho cho đơn hàng #' . $selectedOrder->order_code : '' }}">
                         </div>
                     </div>
 
@@ -113,6 +150,57 @@
     </div>
 </div>
 
+{{-- MODAL THÊM NHANH NHÀ CUNG CẤP --}}
+<div id="quickSupplierModal" class="fixed inset-0 z-50 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-neutral-900 bg-opacity-50 transition-opacity" onclick="closeQuickSupplierModal()"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+        <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full">
+            <div class="p-4 border-b border-neutral-200 flex items-center justify-between bg-neutral-50">
+                <div class="flex items-center gap-2">
+                    <iconify-icon icon="solar:shop-2-bold" class="text-xl text-primary-600"></iconify-icon>
+                    <h5 class="font-bold text-neutral-800 text-sm mb-0">Thêm nhanh Nhà cung cấp</h5>
+                </div>
+                <button type="button" onclick="closeQuickSupplierModal()" class="text-neutral-400 hover:text-neutral-700 text-xl font-bold leading-none">&times;</button>
+            </div>
+
+            <form id="quickSupplierForm" onsubmit="handleQuickSupplierSubmit(event)" class="p-5 space-y-3">
+                <div>
+                    <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Tên Nhà cung cấp <span class="text-danger-500">*</span></label>
+                    <input type="text" id="quick_sup_name" class="form-control rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500 font-semibold" placeholder="VD: Gỗ An Cường" required>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Mã NCC (tùy chọn)</label>
+                        <input type="text" id="quick_sup_code" class="form-control rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500" placeholder="Tự sinh nếu trống">
+                    </div>
+                    <div>
+                        <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Số điện thoại</label>
+                        <input type="text" id="quick_sup_phone" class="form-control rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500" placeholder="09...">
+                    </div>
+                </div>
+                <div>
+                    <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Địa chỉ</label>
+                    <input type="text" id="quick_sup_address" class="form-control rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500" placeholder="Địa chỉ kho / trụ sở">
+                </div>
+                <div>
+                    <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Công nợ ban đầu (đ)</label>
+                    <input type="number" step="1000" id="quick_sup_initial_debt" value="0" class="form-control rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500 font-bold text-rose-600">
+                </div>
+                <div class="flex items-center justify-end gap-2 pt-3 border-t border-neutral-200">
+                    <button type="button" onclick="closeQuickSupplierModal()" class="btn border border-neutral-300 text-neutral-700 hover:bg-neutral-100 px-4 py-1.5 rounded-lg text-xs font-semibold">
+                        Hủy
+                    </button>
+                    <button type="submit" id="btnSubmitQuickSupplier" class="btn btn-primary px-4 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 shadow-sm">
+                        <iconify-icon icon="solar:check-circle-bold" class="text-sm"></iconify-icon> Lưu NCC
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <style>
     .material-ts-wrapper {
         width: 100% !important;
@@ -162,6 +250,7 @@
 <script>
     const WAREHOUSES = @json($warehouses);
     const MATERIALS = @json($materials);
+    const PREFILLED_ORDER_ITEMS = @json($orderItems ?? []);
 
     function getCurrentWarehouse() {
         const whSelect = document.getElementById('select_warehouse');
@@ -405,16 +494,169 @@
         document.getElementById('lblTotalAmount').textContent = totalAmount.toLocaleString('vi-VN') + 'đ';
     }
 
-    // Initialize 3 rows
+    // Initialize rows
     function initDefaultRows() {
         const whEl = document.getElementById("select_warehouse");
         if (whEl) {
             whEl.addEventListener('change', onWarehouseChange);
         }
         onWarehouseChange();
-        addItemRow();
-        addItemRow();
-        addItemRow();
+
+        if (PREFILLED_ORDER_ITEMS && PREFILLED_ORDER_ITEMS.length > 0) {
+            PREFILLED_ORDER_ITEMS.forEach(it => {
+                addItemRow(it.material_id, it.quantity, it.unit_price, it.notes || '');
+            });
+        } else {
+            addItemRow();
+            addItemRow();
+            addItemRow();
+        }
+
+        const supSelect = document.getElementById('select_supplier');
+        if (supSelect && supSelect.value) {
+            onSupplierChanged(supSelect);
+        }
+    }
+
+    // Order items loader
+    function onOrderChanged(selectEl) {
+        const btn = document.getElementById('btnLoadOrderItems');
+        if (btn) {
+            if (selectEl.value) {
+                btn.classList.remove('hidden');
+            } else {
+                btn.classList.add('hidden');
+            }
+        }
+    }
+
+    function loadSelectedOrderSupplies() {
+        const orderId = document.getElementById('select_order')?.value;
+        if (!orderId) {
+            alert('Vui lòng chọn đơn hàng trước.');
+            return;
+        }
+
+        const btn = document.getElementById('btnLoadOrderItems');
+        if (btn) btn.innerHTML = 'Đang tải...';
+
+        fetch(`/warehouses/orders/${orderId}/supplies`)
+            .then(res => res.json())
+            .then(data => {
+                if (btn) btn.innerHTML = '<iconify-icon icon="solar:download-square-bold"></iconify-icon> Nạp vật tư đơn';
+                if (data.success && data.items && data.items.length > 0) {
+                    const tbody = document.getElementById('itemsTableBody');
+                    if (tbody && tbody.children.length > 0) {
+                        const hasFilled = Array.from(tbody.querySelectorAll('.qty-input')).some(i => parseFloat(i.value) > 0);
+                        if (hasFilled && !confirm('Bạn có muốn xóa các dòng hiện tại để nạp lại vật tư từ đơn hàng ' + data.order_code + '?')) {
+                            data.items.forEach(it => {
+                                addItemRow(it.material_id, it.quantity, it.unit_price, it.notes || '');
+                            });
+                            return;
+                        }
+                    }
+
+                    if (tbody) tbody.innerHTML = '';
+                    data.items.forEach(it => {
+                        addItemRow(it.material_id, it.quantity, it.unit_price, it.notes || '');
+                    });
+                } else {
+                    alert('Đơn hàng ' + (data.order_code || '') + ' không có vật tư phù hợp để nạp.');
+                }
+            })
+            .catch(err => {
+                if (btn) btn.innerHTML = '<iconify-icon icon="solar:download-square-bold"></iconify-icon> Nạp vật tư đơn';
+                alert('Không thể tải vật tư từ đơn hàng.');
+            });
+    }
+
+    // Supplier functions
+    function onSupplierChanged(selectEl) {
+        const selectedOpt = selectEl.options[selectEl.selectedIndex];
+        const inputName = document.getElementById('input_supplier_name');
+        const badge = document.getElementById('supplier_debt_badge');
+        const debtVal = document.getElementById('supplier_debt_val');
+
+        if (!selectedOpt || !selectedOpt.value) {
+            if (badge) badge.classList.add('hidden');
+            return;
+        }
+
+        if (inputName) {
+            inputName.value = selectedOpt.getAttribute('data-name') || '';
+        }
+
+        const debt = parseFloat(selectedOpt.getAttribute('data-debt') || 0);
+        if (badge && debtVal) {
+            debtVal.textContent = Number(debt).toLocaleString('vi-VN');
+            if (debt > 0) {
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+    }
+
+    function openQuickSupplierModal() {
+        document.getElementById('quickSupplierModal').classList.remove('hidden');
+        document.getElementById('quick_sup_name').focus();
+    }
+
+    function closeQuickSupplierModal() {
+        document.getElementById('quickSupplierModal').classList.add('hidden');
+    }
+
+    function handleQuickSupplierSubmit(e) {
+        e.preventDefault();
+        const btn = document.getElementById('btnSubmitQuickSupplier');
+        btn.disabled = true;
+        btn.innerHTML = 'Đang lưu...';
+
+        const payload = {
+            name: document.getElementById('quick_sup_name').value,
+            code: document.getElementById('quick_sup_code').value,
+            phone: document.getElementById('quick_sup_phone').value,
+            address: document.getElementById('quick_sup_address').value,
+            initial_debt: document.getElementById('quick_sup_initial_debt').value,
+            _token: '{{ csrf_token() }}'
+        };
+
+        fetch('{{ route("suppliers.quick-store") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            btn.disabled = false;
+            btn.innerHTML = '<iconify-icon icon="solar:check-circle-bold" class="text-sm"></iconify-icon> Lưu NCC';
+
+            if (data.success && data.supplier) {
+                const s = data.supplier;
+                const selectEl = document.getElementById('select_supplier');
+                const opt = document.createElement('option');
+                opt.value = s.id;
+                opt.textContent = `[${s.code}] ${s.name}`;
+                opt.setAttribute('data-name', s.name);
+                opt.setAttribute('data-debt', s.debt);
+                selectEl.appendChild(opt);
+                selectEl.value = s.id;
+                onSupplierChanged(selectEl);
+                closeQuickSupplierModal();
+                document.getElementById('quickSupplierForm').reset();
+            } else {
+                alert(data.message || 'Có lỗi xảy ra khi tạo nhà cung cấp.');
+            }
+        })
+        .catch(err => {
+            btn.disabled = false;
+            btn.innerHTML = '<iconify-icon icon="solar:check-circle-bold" class="text-sm"></iconify-icon> Lưu NCC';
+            alert('Không thể kết nối đến máy chủ.');
+        });
     }
 
     if (document.readyState === 'loading') {

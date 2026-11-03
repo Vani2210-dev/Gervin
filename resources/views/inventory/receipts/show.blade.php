@@ -51,7 +51,15 @@
                     </div>
                     <div>
                         <span class="text-neutral-400 block mb-1">Nhà cung cấp / Nguồn:</span>
-                        <strong class="text-neutral-800 text-sm">{{ $receipt->supplier_name ?: 'NCC Nhà máy TQ' }}</strong>
+                        @if($receipt->supplier)
+                            <a href="{{ route('suppliers.show', $receipt->supplier) }}" class="font-bold text-primary-600 hover:text-primary-800 hover:underline flex items-center gap-1 text-sm">
+                                [{{ $receipt->supplier->code }}] {{ $receipt->supplier->name }}
+                                <iconify-icon icon="solar:arrow-right-up-bold" class="text-xs"></iconify-icon>
+                            </a>
+                            <span class="text-[11px] text-rose-600 font-bold block mt-0.5">Nợ hiện tại: {{ number_format($receipt->supplier->debt, 0, ',', '.') }}đ</span>
+                        @else
+                            <strong class="text-neutral-800 text-sm">{{ $receipt->supplier_name ?: 'Chưa xác định' }}</strong>
+                        @endif
                     </div>
                     <div>
                         <span class="text-neutral-400 block mb-1">Người nhận (Thủ kho):</span>
@@ -61,6 +69,15 @@
                         <span class="text-neutral-400 block mb-1">Người giao hàng:</span>
                         <strong class="text-neutral-800 text-sm">{{ $receipt->deliverer ?: '-' }}</strong>
                     </div>
+                    @if($receipt->order)
+                        <div>
+                            <span class="text-neutral-400 block mb-1">Đơn hàng liên quan:</span>
+                            <a href="{{ route('orders.show', $receipt->order) }}" class="font-bold text-primary-600 hover:text-primary-800 hover:underline flex items-center gap-1 text-sm">
+                                [{{ $receipt->order->order_code }}] {{ $receipt->order->customer_name ?: 'Khách hàng' }}
+                                <iconify-icon icon="solar:arrow-right-up-bold" class="text-xs"></iconify-icon>
+                            </a>
+                        </div>
+                    @endif
                     @if($receipt->notes)
                         <div class="md:col-span-4 pt-2 border-t border-neutral-200">
                             <span class="text-neutral-400">Ghi chú:</span>

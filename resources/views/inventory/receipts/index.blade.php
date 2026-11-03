@@ -63,12 +63,25 @@
                                         <a href="{{ route('inventory.receipts.show', $r) }}" class="hover:underline">
                                             {{ $r->code }}
                                         </a>
+                                        @if($r->order)
+                                            <div class="mt-1">
+                                                <a href="{{ route('orders.show', $r->order_id) }}" class="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded px-1.5 py-0.5" title="Đơn hàng liên kết">
+                                                    <iconify-icon icon="solar:document-text-bold" class="text-xs"></iconify-icon> {{ $r->order->code }}
+                                                </a>
+                                            </div>
+                                        @endif
                                     </td>
                                     <td class="py-3 px-4 text-neutral-700">
                                         {{ $r->date ? $r->date->format('d/m/Y') : '-' }}
                                     </td>
                                     <td class="py-3 px-4 font-semibold text-neutral-800">
-                                        {{ $r->supplier_name ?: 'NCC Nhà máy TQ' }}
+                                        @if($r->supplier)
+                                            <a href="{{ route('suppliers.show', $r->supplier) }}" class="font-bold text-primary-600 hover:text-primary-800 hover:underline">
+                                                [{{ $r->supplier->code }}] {{ $r->supplier->name }}
+                                            </a>
+                                        @else
+                                            {{ $r->supplier_name ?: 'NCC Nhà máy TQ' }}
+                                        @endif
                                     </td>
                                     <td class="py-3 px-4 text-neutral-700">
                                         {{ $r->warehouse->name ?? '-' }}

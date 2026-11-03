@@ -23,6 +23,7 @@ use App\Http\Controllers\QrCodeGeneratorController;
 use App\Http\Controllers\OrderSequenceController;
 use App\Http\Controllers\WarehouseController;
 use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\ManufactureStepController;
 use App\Http\Controllers\DispatchPackageController;
 use App\Http\Controllers\DeliveryPackageController;
@@ -255,6 +256,8 @@ Route::middleware(['auth'])->prefix('warehouses')->name('inventory.')->group(fun
     Route::get('/export-stock', [InventoryController::class, 'exportStock'])->name('export-stock');
     Route::post('/import-stock', [InventoryController::class, 'importStock'])->name('import-stock');
 
+    Route::get('/orders/{order}/supplies', [InventoryController::class, 'orderSupplies'])->name('orders.supplies');
+
     // 2. Receipts (Phiếu Nhập kho - PNK)
     Route::get('/receipts', [InventoryController::class, 'receipts'])->name('receipts.index');
     Route::get('/receipts/create', [InventoryController::class, 'createReceipt'])->name('receipts.create');
@@ -299,6 +302,14 @@ Route::middleware(['auth'])->prefix('warehouses')->name('inventory.')->group(fun
 Route::get('warehouses-redirect', function() {
     return redirect()->route('inventory.index');
 })->name('warehouses.index');
+
+// Suppliers & Payables (Quản lý Nhà cung cấp & Công nợ)
+Route::middleware(['auth'])->group(function () {
+    Route::post('suppliers/quick-store', [SupplierController::class, 'quickStore'])->name('suppliers.quick-store');
+    Route::post('suppliers/{supplier}/payments', [SupplierController::class, 'storePayment'])->name('suppliers.payments.store');
+    Route::delete('suppliers/{supplier}/payments/{payment}', [SupplierController::class, 'destroyPayment'])->name('suppliers.payments.destroy');
+    Route::resource('suppliers', SupplierController::class)->names('suppliers');
+});
 
 // Customers
 Route::middleware(['auth'])->group(function () {

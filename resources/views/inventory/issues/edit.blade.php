@@ -47,6 +47,22 @@
                             <input type="text" name="recipient" value="{{ old('recipient', $issue->recipient) }}" class="form-control rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-rose-500" required>
                         </div>
                         <div>
+                            <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Đơn hàng liên quan (Tùy chọn)</label>
+                            <select name="order_id" id="select_order" class="form-select rounded-lg w-full border border-neutral-300 px-3 py-2 text-xs font-semibold text-neutral-800 bg-white focus:border-rose-500">
+                                <option value="">-- Không gắn đơn hàng --</option>
+                                @if($issue->order && !$orders->contains('id', $issue->order->id))
+                                    <option value="{{ $issue->order->id }}" selected>
+                                        [{{ $issue->order->order_code }}] {{ $issue->order->customer_name ?: 'Khách hàng' }}
+                                    </option>
+                                @endif
+                                @foreach($orders ?? [] as $ord)
+                                    <option value="{{ $ord->id }}" {{ (string)old('order_id', $issue->order_id) === (string)$ord->id ? 'selected' : '' }}>
+                                        [{{ $ord->order_code }}] {{ $ord->customer_name ?: 'Khách hàng' }} ({{ date('d/m/Y', strtotime($ord->order_date)) }})
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
                             <label class="form-label text-xs font-semibold text-neutral-700 mb-1 block">Lý do xuất</label>
                             <select name="reason" class="form-select rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-rose-500">
                                 <option value="Xuất sản xuất" {{ old('reason', $issue->reason) === 'Xuất sản xuất' ? 'selected' : '' }}>Xuất sản xuất xưởng</option>
@@ -60,7 +76,7 @@
                             <label class="form-label text-xs font-semibold text-neutral-700 mb-1 block">Người xuất (Thủ kho)</label>
                             <input type="text" name="deliverer" value="{{ old('deliverer', $issue->deliverer) }}" class="form-control rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-rose-500">
                         </div>
-                        <div class="md:col-span-2">
+                        <div>
                             <label class="form-label text-xs font-semibold text-neutral-700 mb-1 block">Ghi chú phiếu xuất</label>
                             <input type="text" name="notes" value="{{ old('notes', $issue->notes) }}" class="form-control rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-rose-500" placeholder="Xuất theo lệnh sản xuất số, đơn hàng...">
                         </div>
@@ -338,8 +354,25 @@
             selectEl._tomSelect = ts;
 
             if (selectedMaterialId) {
-                ts.setValue(String(selectedMaterialId), true);
-                onMaterialSelected(rowIdx, selectedMaterialId);
+                const strId = String(selectedMaterialId);
+                if (!ts.options[strId]) {
+                    const foundMat = MATERIALS.find(m => String(m.id) === strId);
+                    if (foundMat) {
+                        ts.addOption({
+                            value: String(foundMat.id),
+                            code: foundMat.code || '',
+                            name: foundMat.name || '',
+                            origin_code: foundMat.origin_code || '',
+                            category: foundMat.category || '',
+                            unit: foundMat.unit || (foundMat.item_type === 'edge_band' ? 'm' : 'Tấm'),
+                            price: foundMat.cost_price || 0,
+                            stock: foundMat.current_stock || 0,
+                            item_type: foundMat.item_type
+                        });
+                    }
+                }
+                ts.setValue(strId, true);
+                onMaterialSelected(rowIdx, strId);
             }
         }
     }
@@ -413,6 +446,36 @@
         document.getElementById('lblTotalAmount').textContent = totalAmount.toLocaleString('vi-VN') + 'đ';
     }
 
+    function resolveMaterialId(it) {
+        if (!it) return '';
+        if (typeof it === 'string' && (it.startsWith('board_') || it.startsWith('edge_'))) {
+            return it;
+        }
+
+        const isEdge = it.item_type === 'edge_band';
+        if (isEdge) {
+            const match = MATERIALS.find(m => m.item_type === 'edge_band' && (m.wood_board_id == it.wood_board_id || m.raw_id == it.wood_board_id));
+            return match ? match.id : ('edge_' + it.wood_board_id);
+        }
+
+        // Board item
+        if (it.wood_board_price_id) {
+            const matchPrice = MATERIALS.find(m => m.item_type !== 'edge_band' && (m.wood_board_price_id == it.wood_board_price_id || m.id === 'board_' + it.wood_board_price_id));
+            if (matchPrice) return matchPrice.id;
+        }
+
+        if (it.wood_board_id) {
+            const matchBoard = MATERIALS.find(m => m.item_type !== 'edge_band' && (
+                (it.wood_board_price_id && m.wood_board_price_id == it.wood_board_price_id) ||
+                m.wood_board_id == it.wood_board_id ||
+                m.raw_id == it.wood_board_id
+            ));
+            if (matchBoard) return matchBoard.id;
+        }
+
+        return 'board_' + (it.wood_board_price_id || it.wood_board_id);
+    }
+
     // Initialize rows
     function initDefaultRows() {
         const whEl = document.getElementById("select_warehouse");
@@ -423,7 +486,7 @@
 
         if (INITIAL_ITEMS && INITIAL_ITEMS.length > 0) {
             INITIAL_ITEMS.forEach(it => {
-                const matId = it.wood_board_price_id || it.wood_board_id;
+                const matId = resolveMaterialId(it);
                 addItemRow(matId, it.quantity, it.unit_price, it.notes || '');
             });
         } else {

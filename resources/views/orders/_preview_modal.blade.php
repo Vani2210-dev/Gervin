@@ -74,15 +74,19 @@
                 </div>
                 <div>
                     <h5 class="font-bold text-base text-neutral-800 m-0">Xem trước đơn hàng</h5>
-                    <p class="text-xs text-neutral-400 m-0 mt-0.5">{{ $acrylicOrder->order_code }} • {{ $typeLabel }}</p>
+                    <p class="text-xs text-neutral-400 m-0 mt-1">{{ $acrylicOrder->order_code }} • {{ $typeLabel }}</p>
                 </div>
             </div>
             <div class="flex items-center gap-2 flex-wrap">
-                <button type="button" id="btn-copy-preview-header" onclick="copyPreviewOrderImage()" class="btn text-white px-3.5 py-2 rounded-lg text-xs font-bold shadow-sm transition-all flex items-center gap-1.5 hover:opacity-95" style="background:#0068FF; border:none;" title="Chụp ảnh đơn hàng và lưu vào bộ nhớ tạm (sang Zalo chỉ cần Ctrl + V)">
+                <button type="button" onclick="printPreviewOrder()" class="btn text-white px-3 py-2 rounded-lg text-xs font-bold shadow-sm transition-all flex items-center gap-2 hover:opacity-95" style="background:#059669; border:none;" title="In đơn hàng ra giấy hoặc xuất PDF (khổ ngang A4)">
+                    <iconify-icon icon="lucide:printer" class="text-base"></iconify-icon>
+                    <span>In đơn (khổ ngang)</span>
+                </button>
+                <button type="button" id="btn-copy-preview-header" onclick="copyPreviewOrderImage()" class="btn text-white px-3 py-2 rounded-lg text-xs font-bold shadow-sm transition-all flex items-center gap-2 hover:opacity-95" style="background:#0068FF; border:none;" title="Chụp ảnh đơn hàng và lưu vào bộ nhớ tạm (sang Zalo chỉ cần Ctrl + V)">
                     <iconify-icon icon="lucide:copy" class="text-base"></iconify-icon>
                     <span>Copy ảnh gửi Zalo</span>
                 </button>
-                <button type="button" onclick="downloadPreviewOrderImage()" class="btn bg-white hover:bg-neutral-50 text-neutral-600 px-3 py-2 rounded-lg text-xs font-semibold border border-neutral-300 shadow-xs transition-all flex items-center gap-1.5" title="Tải ảnh PNG đơn hàng về máy">
+                <button type="button" onclick="downloadPreviewOrderImage()" class="btn bg-white hover:bg-neutral-50 text-neutral-600 px-3 py-2 rounded-lg text-xs font-semibold border border-neutral-300 shadow-xs transition-all flex items-center gap-2" title="Tải ảnh PNG đơn hàng về máy">
                     <iconify-icon icon="lucide:download" class="text-sm"></iconify-icon>
                     <span>Tải ảnh</span>
                 </button>
@@ -94,133 +98,129 @@
         </div>
 
         <!-- Body (scrollable) -->
-        <div class="flex-1 overflow-y-auto p-4 md:p-6 bg-neutral-100/50" style="min-height:0;" id="preview-order-scroll-container">
-            <div id="preview-order-capture-area" class="bg-white p-6 md:p-8 space-y-6 rounded-2xl border border-neutral-200 shadow-sm w-full mx-auto" style="min-width: 1100px;">
+        <div class="flex-1 overflow-y-auto p-3 md:p-4 bg-neutral-100/50" style="min-height:0;" id="preview-order-scroll-container">
+            <div id="preview-order-capture-area" class="bg-white p-4 space-y-3 rounded-xl border border-neutral-300 shadow-sm w-full mx-auto" style="min-width: 1050px; max-width: 1240px;">
                 <!-- Header trên ảnh khi xuất -->
-                <div class="border-b-2 border-primary-500 pb-5 flex items-start justify-between gap-6">
-                    <div class="flex items-center gap-4">
-                        <img src="{{ asset('logo.png') }}" alt="Gervin Wood" class="h-16 w-auto object-contain flex-shrink-0" style="max-height: 64px;" crossorigin="anonymous">
+                <div class="border-b-2 border-primary-500 pb-2 flex items-start justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <img src="{{ asset('logo.png') }}" alt="Gervin Wood" class="h-12 w-auto object-contain flex-shrink-0" style="max-height: 48px;" crossorigin="anonymous">
                         <div>
-                            <h3 class="font-black text-lg text-neutral-900 m-0 tracking-tight leading-tight uppercase">CÔNG TY TNHH GỖ GERVIN</h3>
-                            <p class="text-xs text-neutral-600 m-0 mt-1 font-medium leading-relaxed">
-                                Địa chỉ: Xóm 3, Hưng Thịnh, Hưng Nguyên, Nghệ An<br>
-                                Hotline: <strong class="text-neutral-800 font-semibold">0967.181.786</strong> • Email: contact@gervinwood.com • Website: <strong class="text-primary-600">www.gervinwood.com</strong>
+                            <h3 class="font-black text-base text-neutral-900 m-0 tracking-tight leading-tight uppercase">CÔNG TY TNHH GỖ GERVIN</h3>
+                            <p class="text-[11px] text-neutral-600 m-0 mt-1 font-medium leading-tight">
+                                Xóm 3, Hưng Thịnh, Hưng Nguyên, Nghệ An • Hotline: <strong class="text-neutral-800 font-bold">0967.181.786</strong> • Web: <strong class="text-primary-600">www.gervinwood.com</strong>
                             </p>
                         </div>
                     </div>
                     <div class="text-right flex-shrink-0">
                         @if($acrylicOrder->isNhapKho())
-                            <div class="inline-block px-3 py-1 bg-sky-100 text-sky-800 border border-sky-300 rounded-lg font-bold text-xs uppercase tracking-wider mb-1.5">
+                            <div class="inline-block px-2 py-1 bg-sky-100 text-sky-800 border border-sky-300 rounded font-bold text-[11px] uppercase tracking-wider mb-1">
                                 ĐƠN SẢN XUẤT NHẬP KHO
                             </div>
                         @else
-                            <div class="inline-block px-3 py-1 bg-primary-50 text-primary-700 border border-primary-200 rounded-lg font-bold text-xs uppercase tracking-wider mb-1.5">
+                            <div class="inline-block px-2 py-1 bg-primary-50 text-primary-700 border border-primary-200 rounded font-bold text-[11px] uppercase tracking-wider mb-1">
                                 BÁO GIÁ KIÊM ĐƠN ĐẶT HÀNG
                             </div>
                         @endif
-                        <div class="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Mã đơn hàng</div>
-                        <div class="text-2xl font-black text-primary-600 font-mono tracking-tight leading-none">{{ $acrylicOrder->order_code }}</div>
-                        <div class="text-xs text-neutral-500 mt-1 font-medium">Ngày chốt: {{ $orderDateFormatted }}</div>
+                        <div class="text-lg font-black text-primary-600 font-mono tracking-tight leading-none">{{ $acrylicOrder->order_code }}</div>
+                        <div class="text-[11px] text-neutral-500 mt-1 font-medium">Ngày chốt: {{ $orderDateFormatted }}</div>
                     </div>
                 </div>
 
-                <!-- Thông tin khách hàng & đơn hàng -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <div class="bg-white border border-neutral-200 rounded-xl p-5 shadow-sm">
-                        <div class="flex items-center gap-2 mb-3 pb-3 border-b border-neutral-100">
-                            <iconify-icon icon="lucide:user" class="text-lg text-primary-500"></iconify-icon>
-                            <h6 class="font-bold text-sm text-neutral-800 m-0">Thông tin khách hàng & công trình</h6>
+                <!-- Thông tin khách hàng & Đơn hàng (Gọn gàng, tối ưu diện tích) -->
+                @php
+                    $fullCustomerDisplay = '';
+                    if ($acrylicOrder->isNhapKho()) {
+                        $fullCustomerDisplay = 'Nhập kho nội bộ Gervin';
+                    } elseif ($acrylicOrder->customer && $acrylicOrder->customer_name) {
+                        $fullCustomerDisplay = $acrylicOrder->customer->name . ($acrylicOrder->customer->customer_code ? ' (' . $acrylicOrder->customer->customer_code . ')' : '') . ' (' . $acrylicOrder->customer_name . ')';
+                    } elseif ($acrylicOrder->customer) {
+                        $fullCustomerDisplay = $acrylicOrder->customer->name . ($acrylicOrder->customer->customer_code ? ' (' . $acrylicOrder->customer->customer_code . ')' : '');
+                    } else {
+                        $fullCustomerDisplay = $acrylicOrder->customer_name ?: '—';
+                    }
+                @endphp
+                <div class="bg-neutral-50/80 border border-neutral-300 rounded-lg p-3">
+                    <div class="grid grid-cols-12 gap-x-4 gap-y-2 text-xs">
+                        <div class="col-span-12 md:col-span-5 border-b md:border-b-0 md:border-r border-neutral-200 pb-2 md:pb-0 md:pr-3 space-y-1">
+                            <div class="flex items-center gap-2 font-bold text-neutral-800 text-xs mb-1">
+                                <iconify-icon icon="lucide:user" class="text-sm text-primary-600"></iconify-icon>
+                                <span>Khách hàng & Công trình</span>
+                            </div>
+                            <div class="flex justify-between items-start gap-2">
+                                <span class="text-neutral-500 font-medium shrink-0">Tên KH:</span>
+                                <span class="font-bold text-neutral-900 text-right">{{ $fullCustomerDisplay }}</span>
+                            </div>
+                            <div class="flex justify-between items-center gap-2">
+                                <span class="text-neutral-500 font-medium shrink-0">SĐT:</span>
+                                <span class="font-bold text-neutral-900 text-right">{{ $acrylicOrder->phone ?: '—' }}</span>
+                            </div>
+                            <div class="flex justify-between items-start gap-2">
+                                <span class="text-neutral-500 font-medium shrink-0">Địa chỉ:</span>
+                                <span class="font-bold text-neutral-900 text-right leading-tight">{{ $acrylicOrder->address ?: '—' }}</span>
+                            </div>
                         </div>
-                        @php
-                            $fullCustomerDisplay = '';
-                            if ($acrylicOrder->isNhapKho()) {
-                                $fullCustomerDisplay = 'Nhập kho nội bộ Gervin';
-                            } elseif ($acrylicOrder->customer && $acrylicOrder->customer_name) {
-                                $fullCustomerDisplay = $acrylicOrder->customer->name . ($acrylicOrder->customer->customer_code ? ' (' . $acrylicOrder->customer->customer_code . ')' : '') . ' (' . $acrylicOrder->customer_name . ')';
-                            } elseif ($acrylicOrder->customer) {
-                                $fullCustomerDisplay = $acrylicOrder->customer->name . ($acrylicOrder->customer->customer_code ? ' (' . $acrylicOrder->customer->customer_code . ')' : '');
-                            } else {
-                                $fullCustomerDisplay = $acrylicOrder->customer_name ?: '—';
-                            }
-                        @endphp
-                        <div class="flex items-start justify-between py-1.5 border-b border-neutral-100 text-xs">
-                            <span class="text-neutral-500 flex items-center gap-1.5 font-medium"><iconify-icon icon="lucide:user" class="text-sm text-neutral-400"></iconify-icon>Tên khách hàng:</span>
-                            <span class="font-bold text-neutral-800 text-right">{{ $fullCustomerDisplay }}</span>
-                        </div>
-                        <div class="flex items-start justify-between py-1.5 border-b border-neutral-100 text-xs">
-                            <span class="text-neutral-500 flex items-center gap-1.5 font-medium"><iconify-icon icon="lucide:phone" class="text-sm text-neutral-400"></iconify-icon>Số điện thoại:</span>
-                            <span class="font-bold text-neutral-800 text-right">{{ $acrylicOrder->phone ?: '—' }}</span>
-                        </div>
-                        <div class="flex items-start justify-between py-1.5 text-xs">
-                            <span class="text-neutral-500 flex items-center gap-1.5 font-medium"><iconify-icon icon="lucide:map-pin" class="text-sm text-neutral-400"></iconify-icon>Địa chỉ:</span>
-                            <span class="font-bold text-neutral-800 text-right">{{ $acrylicOrder->address ?: '—' }}</span>
-                        </div>
-                    </div>
 
-                    <div class="bg-white border border-neutral-200 rounded-xl p-5 shadow-sm">
-                        <div class="flex items-center gap-2 mb-3 pb-3 border-b border-neutral-100">
-                            <iconify-icon icon="lucide:file-text" class="text-lg text-primary-500"></iconify-icon>
-                            <h6 class="font-bold text-sm text-neutral-800 m-0">Thông tin đơn hàng</h6>
+                        <div class="col-span-12 md:col-span-3 border-b md:border-b-0 md:border-r border-neutral-200 pb-2 md:pb-0 md:px-3 space-y-1">
+                            <div class="flex items-center gap-2 font-bold text-neutral-800 text-xs mb-1">
+                                <iconify-icon icon="lucide:file-text" class="text-sm text-primary-600"></iconify-icon>
+                                <span>Thông tin Đơn hàng</span>
+                            </div>
+                            <div class="flex justify-between items-center gap-2">
+                                <span class="text-neutral-500 font-medium shrink-0">Mã đơn:</span>
+                                <span class="font-mono font-black text-primary-700">{{ $acrylicOrder->order_code }}</span>
+                            </div>
+                            <div class="flex justify-between items-center gap-2">
+                                <span class="text-neutral-500 font-medium shrink-0">Loại đơn:</span>
+                                <span class="font-bold text-neutral-900">{{ $typeLabel }}</span>
+                            </div>
+                            <div class="flex justify-between items-center gap-2">
+                                <span class="text-neutral-500 font-medium shrink-0">Ngày chốt:</span>
+                                <span class="font-bold text-neutral-900">{{ $orderDateFormatted }}</span>
+                            </div>
                         </div>
-                        <div class="flex items-start justify-between py-1.5 border-b border-neutral-100 text-xs">
-                            <span class="text-neutral-500 flex items-center gap-1.5 font-medium"><iconify-icon icon="lucide:hash" class="text-sm text-neutral-400"></iconify-icon>Mã đơn hàng:</span>
-                            <span class="font-bold text-primary-600 font-mono text-right">{{ $acrylicOrder->order_code }}</span>
-                        </div>
-                        <div class="flex items-start justify-between py-1.5 border-b border-neutral-100 text-xs">
-                            <span class="text-neutral-500 flex items-center gap-1.5 font-medium"><iconify-icon icon="lucide:tag" class="text-sm text-neutral-400"></iconify-icon>Loại đơn:</span>
-                            <span class="font-bold text-neutral-800 text-right">{{ $typeLabel }}</span>
-                        </div>
-                        <div class="flex items-start justify-between py-1.5 border-b border-neutral-100 text-xs">
-                            <span class="text-neutral-500 flex items-center gap-1.5 font-medium"><iconify-icon icon="lucide:calendar" class="text-sm text-neutral-400"></iconify-icon>Ngày chốt đơn:</span>
-                            <span class="font-bold text-neutral-800 text-right">{{ $orderDateFormatted }}</span>
-                        </div>
-                        <div class="flex items-start justify-between py-1.5 border-b border-neutral-100 text-xs">
-                            <span class="text-neutral-500 flex items-center gap-1.5 font-medium"><iconify-icon icon="lucide:truck" class="text-sm text-neutral-400"></iconify-icon>Số ngày giao:</span>
-                            <span class="font-bold text-neutral-800 text-right">{{ $acrylicOrder->delivery_days ? $acrylicOrder->delivery_days . ' ngày' : '—' }}</span>
-                        </div>
-                        <div class="flex items-start justify-between py-1.5 border-b border-neutral-100 text-xs">
-                            <span class="text-neutral-500 flex items-center gap-1.5 font-medium"><iconify-icon icon="lucide:clock" class="text-sm text-neutral-400"></iconify-icon>Hạn đơn:</span>
-                            <span class="font-bold text-danger-600 text-right">{{ $deadlineFormatted }}</span>
-                        </div>
-                        <div class="flex items-start justify-between py-2 border-b border-neutral-100 text-xs">
-                            <span class="text-neutral-500 flex items-center gap-2 font-medium"><iconify-icon icon="lucide:activity" class="text-sm text-neutral-400"></iconify-icon>Trạng thái:</span>
-                            <span class="font-bold text-neutral-800 text-right">{{ $statusText }}</span>
-                        </div>
-                        <div class="flex items-start justify-between py-2 text-xs">
-                            <span class="text-neutral-500 flex items-center gap-2 font-medium"><iconify-icon icon="lucide:package" class="text-sm text-neutral-400"></iconify-icon>Số kiện đóng gói:</span>
-                            <span class="font-bold text-right {{ $packingInfo['total_packages'] > 0 ? 'text-primary-600' : 'text-neutral-400' }}">
-                                @if($packingInfo['total_packages'] > 0)
-                                    <span>{{ $packingInfo['total_packages'] }} kiện</span>
-                                    @if(!empty($packingInfo['package_names']))
-                                        <span class="text-[10px] text-neutral-500 font-normal block font-mono">({{ implode(', ', $packingInfo['package_names']) }})</span>
-                                    @endif
-                                @else
-                                    <span class="text-neutral-400 font-normal">Chưa đóng gói</span>
-                                @endif
-                            </span>
+
+                        <div class="col-span-12 md:col-span-4 space-y-1 md:pl-3">
+                            <div class="flex items-center gap-2 font-bold text-neutral-800 text-xs mb-1">
+                                <iconify-icon icon="lucide:truck" class="text-sm text-primary-600"></iconify-icon>
+                                <span>Giao hàng & Trạng thái</span>
+                            </div>
+                            <div class="flex justify-between items-center gap-2">
+                                <span class="text-neutral-500 font-medium shrink-0">Hạn đơn:</span>
+                                <span class="font-bold text-danger-600">{{ $deadlineFormatted }} ({{ $acrylicOrder->delivery_days ? $acrylicOrder->delivery_days . ' ngày' : '—' }})</span>
+                            </div>
+                            <div class="flex justify-between items-center gap-2">
+                                <span class="text-neutral-500 font-medium shrink-0">Trạng thái:</span>
+                                <span class="font-bold text-neutral-900">{{ $statusText }}</span>
+                            </div>
+                            <div class="flex justify-between items-center gap-2">
+                                <span class="text-neutral-500 font-medium shrink-0">Đóng gói:</span>
+                                <span class="font-bold {{ $packingInfo['total_packages'] > 0 ? 'text-primary-700' : 'text-neutral-400' }}">
+                                    {{ $packingInfo['total_packages'] > 0 ? $packingInfo['total_packages'] . ' kiện' : 'Chưa đóng gói' }}
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Ghi chú & Chính sách KH -->
+                <!-- Ghi chú & Chính sách KH (gọn gàng) -->
                 @if($acrylicOrder->notes || $acrylicOrder->customer_policy)
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                         @if($acrylicOrder->notes)
-                            <div class="bg-amber-50/50 border border-amber-200 rounded-xl p-5">
-                                <div class="flex items-center gap-2 mb-2">
-                                    <iconify-icon icon="lucide:sticky-note" class="text-base text-amber-500"></iconify-icon>
-                                    <span class="font-bold text-xs text-amber-700 uppercase">Ghi chú đơn hàng</span>
+                            <div class="bg-amber-50/70 border border-amber-200 rounded-lg p-2">
+                                <div class="flex items-center gap-2 mb-1 font-bold text-amber-800 uppercase text-[11px]">
+                                    <iconify-icon icon="lucide:sticky-note" class="text-xs text-amber-600"></iconify-icon>
+                                    <span>Ghi chú đơn hàng</span>
                                 </div>
-                                <p class="text-sm text-neutral-700 whitespace-pre-wrap m-0">{{ $acrylicOrder->notes }}</p>
+                                <p class="text-xs text-neutral-800 whitespace-pre-wrap m-0 leading-relaxed">{{ $acrylicOrder->notes }}</p>
                             </div>
                         @endif
                         @if($acrylicOrder->customer_policy)
-                            <div class="bg-blue-50/50 border border-blue-200 rounded-xl p-5">
-                                <div class="flex items-center gap-2 mb-2">
-                                    <iconify-icon icon="lucide:shield" class="text-base text-blue-500"></iconify-icon>
-                                    <span class="font-bold text-xs text-blue-700 uppercase">Chính sách KH</span>
+                            <div class="bg-blue-50/70 border border-blue-200 rounded-lg p-2">
+                                <div class="flex items-center gap-2 mb-1 font-bold text-blue-800 uppercase text-[11px]">
+                                    <iconify-icon icon="lucide:shield" class="text-xs text-blue-600"></iconify-icon>
+                                    <span>Chính sách KH</span>
                                 </div>
-                                <p class="text-sm text-neutral-700 whitespace-pre-wrap m-0">{{ $acrylicOrder->customer_policy }}</p>
+                                <p class="text-xs text-neutral-800 whitespace-pre-wrap m-0 leading-relaxed">{{ $acrylicOrder->customer_policy }}</p>
                             </div>
                         @endif
                     </div>
@@ -228,10 +228,10 @@
 
                 <!-- Danh sách Vật tư & Sản phẩm -->
                 @if($acrylicOrder->supplies && $acrylicOrder->supplies->count() > 0)
-                    <div class="bg-white border border-neutral-200 rounded-xl p-5 shadow-sm">
-                        <div class="flex items-center gap-2 mb-4 pb-3 border-b border-neutral-100">
-                            <iconify-icon icon="lucide:package-open" class="text-lg text-primary-500"></iconify-icon>
-                            <h6 class="font-bold text-sm text-neutral-800 m-0">Danh sách Vật tư & Sản phẩm</h6>
+                    <div class="bg-white border border-neutral-300 rounded-xl p-3 shadow-sm">
+                        <div class="flex items-center gap-2 mb-3 pb-2 border-b border-neutral-200">
+                            <iconify-icon icon="lucide:package-open" class="text-lg text-primary-600"></iconify-icon>
+                            <h6 class="font-black text-sm text-neutral-900 m-0 uppercase tracking-tight">Danh sách Vật tư & Sản phẩm</h6>
                         </div>
 
                         @foreach($acrylicOrder->supplies as $sIdx => $supply)
@@ -255,14 +255,14 @@
                                     }
                                 }
                             @endphp
-                            <div class="mb-6">
-                                <div class="flex items-center gap-3 mb-2.5 pb-2 border-b border-neutral-200">
-                                    <div class="p-1.5 {{ $hasPvc ? 'bg-emerald-100 text-emerald-800' : 'bg-primary-100 text-primary-700' }} rounded-lg flex items-center justify-center font-bold">
+                            <div class="mb-4">
+                                <div class="flex items-center gap-3 mb-2 pb-2 border-b border-neutral-200">
+                                    <div class="p-2 {{ $hasPvc ? 'bg-emerald-100 text-emerald-800' : 'bg-primary-100 text-primary-700' }} rounded-lg flex items-center justify-center font-bold">
                                         <iconify-icon icon="lucide:clipboard-list" class="text-base"></iconify-icon>
                                     </div>
                                     <span class="font-extrabold text-sm {{ $hasPvc ? 'text-emerald-800' : 'text-neutral-800' }}" {!! $hasPvc ? 'style="color: #166534 !important;"' : '' !!}>{{ $supply->order_supply_code ? '[' . $supply->order_supply_code . '] ' : '' }}{{ $supply->supply_name ?: 'Vật tư ' . ($sIdx + 1) }}</span>
                                     @if($supply->quantity)
-                                        <span class="text-xs {{ $hasPvc ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-primary-50 text-primary-700 border-primary-200' }} border px-2.5 py-0.5 rounded-full font-bold">SL tấm: {{ floatval($supply->quantity) == intval($supply->quantity) ? number_format($supply->quantity, 0, ',', '.') : number_format($supply->quantity, 2, ',', '.') }}</span>
+                                        <span class="text-xs {{ $hasPvc ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-primary-50 text-primary-700 border-primary-200' }} border px-2 py-1 rounded-full font-bold">SL tấm: {{ floatval($supply->quantity) == intval($supply->quantity) ? number_format($supply->quantity, 0, ',', '.') : number_format($supply->quantity, 2, ',', '.') }}</span>
                                     @endif
                                 </div>
 
@@ -311,9 +311,16 @@
                                                             $bevelVal = $item->edge_bevel;
                                                         }
 
-                                                        $grainText = 'Không vân';
-                                                        if ($item->grain_direction == 1) $grainText = 'Vân dọc';
-                                                        elseif ($item->grain_direction == 2) $grainText = 'Vân ngang';
+                                                        $grainVal = trim((string)($item->grain_direction ?? ''));
+                                                        if ($grainVal === '' || $grainVal === '0' || $grainVal === '0.00' || $grainVal === '0,00' || $grainVal === 'Không vân') {
+                                                            $grainText = 'Không vân';
+                                                        } elseif ($grainVal === '1' || strcasecmp($grainVal, 'dọc') === 0 || stripos($grainVal, 'vân dọc') !== false) {
+                                                            $grainText = 'Vân dọc';
+                                                        } elseif ($grainVal === '2' || strcasecmp($grainVal, 'ngang') === 0 || stripos($grainVal, 'vân ngang') !== false) {
+                                                            $grainText = 'Vân ngang';
+                                                        } else {
+                                                            $grainText = $grainVal;
+                                                        }
                                                     @endphp
                                                     <tr style="border-bottom: 1px solid #cbd5e1;">
                                                         <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: center; color: #64748b; font-size: 13px; white-space: nowrap;">{{ $iIdx + 1 }}</td>
@@ -566,33 +573,40 @@
                     </div>
                 @endif
 
-                <!-- Tóm tắt đơn hàng -->
-                <div class="bg-gradient-to-r from-primary-50 to-emerald-50 border border-primary-200 rounded-xl p-5">
-                    <div class="flex items-center gap-2 mb-4 pb-3 border-b border-primary-100">
-                        <iconify-icon icon="lucide:receipt-text" class="text-lg text-primary-500"></iconify-icon>
-                        <h6 class="font-bold text-sm text-neutral-800 m-0">Tóm tắt đơn hàng</h6>
+                <!-- Tóm tắt đơn hàng (Gọn gàng, hẹp) -->
+                <div class="bg-neutral-50 border border-neutral-300 rounded-lg p-3">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <iconify-icon icon="lucide:receipt-text" class="text-base text-primary-600"></iconify-icon>
+                            <span class="font-bold text-xs text-neutral-800 uppercase tracking-wide">Tóm tắt đơn hàng</span>
+                        </div>
+                        @if($acrylicOrder->isNhapKho())
+                            <span class="text-xs font-bold text-sky-700 bg-sky-100 px-2 py-1 rounded border border-sky-200">
+                                Sản xuất nhập kho lưu trữ (Không tính tiền)
+                            </span>
+                        @endif
                     </div>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div class="text-center p-3 bg-white/70 rounded-lg">
-                            <div class="text-xs text-neutral-500 font-medium">Số sản phẩm</div>
-                            <div class="text-lg font-bold text-neutral-800 mt-1">{{ $totalItems }}</div>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2">
+                        <div class="text-center py-1 px-2 bg-white rounded border border-neutral-200">
+                            <div class="text-[11px] text-neutral-500 font-medium">Số sản phẩm</div>
+                            <div class="text-base font-bold text-neutral-800">{{ $totalItems }}</div>
                         </div>
-                        <div class="text-center p-3 bg-white/70 rounded-lg">
-                            <div class="text-xs text-neutral-500 font-medium">Tổng số tấm</div>
-                            <div class="text-lg font-bold text-neutral-800 mt-1">{{ $totalSheets }}</div>
+                        <div class="text-center py-1 px-2 bg-white rounded border border-neutral-200">
+                            <div class="text-[11px] text-neutral-500 font-medium">Tổng số tấm</div>
+                            <div class="text-base font-bold text-neutral-800">{{ $totalSheets }}</div>
                         </div>
-                        <div class="text-center p-3 bg-white/70 rounded-lg">
-                            <div class="text-xs text-neutral-500 font-medium">Tổng diện tích</div>
-                            <div class="text-lg font-bold text-blue-600 mt-1">{{ number_format($totalArea, 2, ',', '.') }} m²</div>
+                        <div class="text-center py-1 px-2 bg-white rounded border border-neutral-200">
+                            <div class="text-[11px] text-neutral-500 font-medium">Tổng diện tích</div>
+                            <div class="text-base font-bold text-blue-600">{{ number_format($totalArea, 2, ',', '.') }} m²</div>
                         </div>
-                        <div class="text-center p-3 bg-white/70 rounded-lg">
-                            <div class="text-xs text-neutral-500 font-medium">Tổng tiền hàng</div>
-                            <div class="text-lg font-bold text-neutral-800 mt-1">{{ $acrylicOrder->isNhapKho() ? '0 đ' : number_format(round($subTotal, -3), 0, ',', '.') . ' đ' }}</div>
+                        <div class="text-center py-1 px-2 bg-white rounded border border-neutral-200">
+                            <div class="text-[11px] text-neutral-500 font-medium">Tổng tiền hàng</div>
+                            <div class="text-base font-bold text-neutral-800">{{ $acrylicOrder->isNhapKho() ? '0 đ' : number_format(round($subTotal, -3), 0, ',', '.') . ' đ' }}</div>
                         </div>
                     </div>
                     @if(!$acrylicOrder->isNhapKho())
                         @if($acrylicOrder->discount_percent > 0)
-                            <div class="mt-2 text-xs text-right font-medium text-danger-600">
+                            <div class="mt-1 text-xs text-right font-medium text-danger-600">
                                 Chiết khấu ({{ (float)$acrylicOrder->discount_percent }}%): -{{ number_format(round($discountAmt, -3), 0, ',', '.') }} đ
                             </div>
                         @endif
@@ -601,127 +615,120 @@
                                 VAT ({{ (float)$acrylicOrder->vat_percent }}%): +{{ number_format(round($vatAmt, -3), 0, ',', '.') }} đ
                             </div>
                         @endif
-                        <div class="mt-4 pt-4 border-t border-primary-100 flex items-center justify-between">
-                            <span class="font-bold text-sm text-neutral-800">Tổng thanh toán đơn này:</span>
-                            <span class="text-2xl font-extrabold text-primary-600">{{ number_format(round($acrylicOrder->total_amount, -3), 0, ',', '.') }} VNĐ</span>
+                        <div class="mt-2 pt-2 border-t border-neutral-200 flex items-center justify-between">
+                            <span class="font-bold text-xs text-neutral-800">Tổng thanh toán:</span>
+                            <span class="text-lg font-extrabold text-primary-700">{{ number_format(round($acrylicOrder->total_amount, -3), 0, ',', '.') }} VNĐ</span>
                         </div>
 
                         @if($orderPaidAmt > 0)
-                            <div class="mt-2.5 pt-2.5 border-t border-dashed border-primary-200/80 flex items-center justify-between text-xs">
-                                <span class="text-neutral-600 font-medium">Đã thanh toán đơn này:</span>
-                                <span class="font-bold text-emerald-600 font-mono text-sm">{{ number_format(round($orderPaidAmt, -3), 0, ',', '.') }} đ</span>
+                            <div class="mt-2 pt-2 border-t border-dashed border-neutral-200 flex items-center justify-between text-xs">
+                                <span class="text-neutral-600 font-medium">Đã thanh toán:</span>
+                                <span class="font-bold text-emerald-600 font-mono">{{ number_format(round($orderPaidAmt, -3), 0, ',', '.') }} đ</span>
                             </div>
                             <div class="mt-1 flex items-center justify-between text-xs">
-                                <span class="text-neutral-600 font-medium">Còn lại của đơn:</span>
-                                <span class="font-bold text-rose-600 font-mono text-sm">{{ number_format(round($orderRemainingAmt, -3), 0, ',', '.') }} đ</span>
+                                <span class="text-neutral-600 font-medium">Còn lại:</span>
+                                <span class="font-bold text-rose-600 font-mono">{{ number_format(round($orderRemainingAmt, -3), 0, ',', '.') }} đ</span>
                             </div>
                         @endif
 
-                        {{-- Khối thông tin công nợ khách hàng (đồng bộ với khi xuất Excel) --}}
+                        {{-- Khối thông tin công nợ khách hàng --}}
                         @if(!empty($debtInfo))
-                            <div class="mt-5 pt-4 border-t-2 border-dashed border-primary-200">
-                                <div class="text-xs font-bold uppercase tracking-wider text-neutral-600 mb-2 flex items-center justify-between">
+                            <div class="mt-2 pt-2 border-t border-neutral-200">
+                                <div class="text-[11px] font-bold text-neutral-700 mb-1 flex items-center justify-between">
                                     <span class="flex items-center gap-2 text-primary-700">
-                                        <iconify-icon icon="lucide:wallet" class="text-base text-primary-600"></iconify-icon>
-                                        <span>Thông tin công nợ khách hàng</span>
+                                        <iconify-icon icon="lucide:wallet" class="text-sm text-primary-600"></iconify-icon>
+                                        <span>Công nợ khách hàng</span>
                                     </span>
-                                    <span class="text-[11px] font-normal text-neutral-400 lowercase italic">(đồng bộ với bảng công nợ khi xuất excel)</span>
+                                    <span class="text-[10px] font-normal text-neutral-400 italic">(đồng bộ với file excel)</span>
                                 </div>
-                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                    <div class="bg-white p-4 rounded-xl border border-neutral-200 shadow-xs flex flex-col justify-between">
-                                        <span class="text-xs font-semibold text-neutral-500">Công nợ:</span>
-                                        <span class="text-base font-bold text-neutral-800 mt-1 font-mono">
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                    <div class="bg-white py-1 px-2 rounded border border-neutral-200 flex items-center justify-between text-xs">
+                                        <span class="text-neutral-500 text-[11px]">Công nợ cũ:</span>
+                                        <span class="font-bold text-neutral-800 font-mono">
                                             {{ number_format(round($debtInfo['old_debt'], -3), 0, ',', '.') }} đ
                                         </span>
                                     </div>
-                                    <div class="bg-white p-4 rounded-xl border border-emerald-200 bg-emerald-50/40 shadow-xs flex flex-col justify-between">
-                                        <span class="text-xs font-semibold text-emerald-700">Đã TT (hôm nay):</span>
-                                        <span class="text-base font-bold text-emerald-600 mt-1 font-mono">
+                                    <div class="bg-white py-1 px-2 rounded border border-emerald-200 bg-emerald-50/40 flex items-center justify-between text-xs">
+                                        <span class="text-emerald-700 text-[11px]">Đã TT:</span>
+                                        <span class="font-bold text-emerald-600 font-mono">
                                             {{ number_format(round($debtInfo['this_order_paid'], -3), 0, ',', '.') }} đ
                                         </span>
                                     </div>
-                                    <div class="bg-white p-4 rounded-xl border border-rose-200 bg-rose-50/50 shadow-xs flex flex-col justify-between">
-                                        <span class="text-xs font-bold text-rose-700">Tổng công nợ:</span>
-                                        <span class="text-lg font-black text-rose-600 mt-1 font-mono">
+                                    <div class="bg-white py-1 px-2 rounded border border-rose-200 bg-rose-50/50 flex items-center justify-between text-xs">
+                                        <span class="text-rose-700 text-[11px] font-bold">Tổng nợ:</span>
+                                        <span class="font-bold text-rose-600 font-mono">
                                             {{ number_format(round($debtInfo['total_combined_debt'], -3), 0, ',', '.') }} đ
                                         </span>
                                     </div>
                                 </div>
                             </div>
                         @endif
-                    @else
-                        <div class="mt-4 pt-4 border-t border-primary-100 flex items-center justify-between">
-                            <span class="font-bold text-sm text-neutral-800">Mục đích đơn hàng:</span>
-                            <span class="text-sm font-bold text-sky-700 bg-sky-100 px-3 py-1.5 rounded-lg border border-sky-200">
-                                Sản xuất nhập kho lưu trữ (Không tính tiền)
-                            </span>
-                        </div>
                     @endif
                 </div>
 
-                <!-- Khối Lưu ý, Xác nhận chữ ký 3 bên & Điều khoản báo giá (đồng bộ với file Excel) -->
-                <div class="mt-6 pt-4 border-t-2 border-neutral-300 space-y-4 text-neutral-800" style="font-family: 'Times New Roman', Times, serif;">
+                <!-- Khối Lưu ý, Xác nhận chữ ký 3 bên & Điều khoản báo giá (Gọn gàng) -->
+                <div class="mt-3 pt-3 border-t-2 border-neutral-300 space-y-2 text-neutral-800">
                     <!-- 1. Lưu ý nhận hàng -->
-                    <div class="p-4 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-950 leading-relaxed">
-                        <div class="font-bold text-sm mb-1 text-amber-900">Lưu ý:</div>
-                        <div class="space-y-1">
-                            <p class="m-0">+ Khách hàng phải kiểm tra và xác nhận đã nhận đầy đủ số lượng, tình trạng bên ngoài của hàng như hàng không bị xước hoặc hư hỏng.</p>
-                            <p class="m-0">+ Nếu khách hàng nhận hàng mà không kiểm tra hoặc bỏ qua bước kiểm tra và ký nhận thì bên cung cấp hàng không chịu trách nhiệm về việc hư hỏng hay thiếu sót hàng tính từ thời điểm giao xong hàng.</p>
+                    <div class="p-2 rounded-lg bg-amber-50/80 border border-amber-200 text-xs text-amber-950 leading-relaxed">
+                        <div class="font-bold text-xs mb-1 text-amber-900 flex items-center gap-1">
+                            <iconify-icon icon="lucide:alert-circle" class="text-sm text-amber-600"></iconify-icon>
+                            <span>Lưu ý nhận hàng:</span>
                         </div>
+                        <p class="m-0 leading-normal">+ Khách hàng vui lòng kiểm tra và xác nhận đã nhận đầy đủ số lượng, tình trạng bên ngoài không bị trầy xước hư hỏng trước khi nhận hàng. Sau thời điểm giao xong hàng bên bán không chịu trách nhiệm về thiếu sót hoặc hư hỏng ngoại quan.</p>
                     </div>
 
                     <!-- 2. Khu vực chữ ký & Xét duyệt điện tử -->
-                    <div class="grid grid-cols-3 gap-4 text-center pt-2">
+                    <div class="grid grid-cols-3 gap-3 text-center pt-1">
                         <!-- Cột 1: Bên mua -->
-                        <div class="p-4 rounded-xl border border-neutral-200 bg-neutral-50 flex flex-col justify-between" style="min-height: 160px;">
+                        <div class="p-2 rounded-lg border border-neutral-300 bg-neutral-50/60 flex flex-col justify-between" style="min-height: 105px;">
                             <div>
-                                <div class="font-bold text-sm uppercase tracking-wide text-neutral-900">Xác nhận bên mua hàng</div>
-                                <div class="text-xs text-neutral-600 mt-2 italic leading-relaxed">
-                                    Ngày............đã nhận đủ số lượng và đã kiểm tra hàng không bị xước hoặc hư hỏng.
+                                <div class="font-bold text-xs uppercase tracking-wide text-neutral-900">Bên mua hàng</div>
+                                <div class="text-[11px] text-neutral-500 mt-1 italic leading-tight">
+                                    Đã nhận đủ số lượng & nguyên vẹn
                                 </div>
                             </div>
-                            <div class="text-xs text-neutral-400 italic pt-6 pb-2">(Ký, ghi rõ họ tên)</div>
+                            <div class="text-[11px] text-neutral-400 italic pt-3 pb-1">(Ký, ghi rõ họ tên)</div>
                         </div>
 
                         <!-- Cột 2: Kỹ thuật duyệt -->
-                        <div class="p-4 rounded-xl border border-neutral-200 bg-neutral-50 flex flex-col justify-between" style="min-height: 160px;">
+                        <div class="p-2 rounded-lg border border-neutral-300 bg-neutral-50/60 flex flex-col justify-between" style="min-height: 105px;">
                             <div>
-                                <div class="font-bold text-sm uppercase tracking-wide text-neutral-900">Kỹ thuật duyệt</div>
+                                <div class="font-bold text-xs uppercase tracking-wide text-neutral-900">Kỹ thuật duyệt</div>
                             </div>
                             @if($acrylicOrder->technical_approved_by)
-                                <div class="my-auto py-2 flex flex-col items-center justify-center">
-                                    <div class="px-4 py-2 rounded-xl text-center inline-block" style="border: 2px solid #2563eb; background-color: #eff6ff; transform: rotate(-2deg);">
-                                        <div class="text-[10px] font-black uppercase tracking-widest text-blue-700 flex items-center justify-center gap-1">
+                                <div class="my-auto py-1 flex flex-col items-center justify-center">
+                                    <div class="px-3 py-1 rounded-lg text-center inline-block" style="border: 1.5px solid #2563eb; background-color: #eff6ff;">
+                                        <div class="text-[10px] font-black uppercase tracking-wider text-blue-700 flex items-center justify-center gap-1">
                                             <iconify-icon icon="lucide:check-circle-2" class="text-xs text-blue-600"></iconify-icon>
-                                            <span>ĐÃ DUYỆT SẢN XUẤT</span>
+                                            <span>ĐÃ DUYỆT SX</span>
                                         </div>
                                         <div class="text-xs font-bold text-neutral-900 mt-1 uppercase">
                                             {{ $acrylicOrder->technicalApprover?->name ?? 'Kỹ thuật' }}
                                         </div>
                                         @if($acrylicOrder->technical_approved_at)
-                                            <div class="text-[10px] text-neutral-500 font-mono mt-0.5">
+                                            <div class="text-[9px] text-neutral-500 font-mono">
                                                 {{ $acrylicOrder->technical_approved_at->format('H:i d/m/Y') }}
                                             </div>
                                         @endif
                                     </div>
                                 </div>
                             @else
-                                <div class="my-auto py-6 flex flex-col items-center justify-center">
+                                <div class="my-auto py-2 flex flex-col items-center justify-center">
                                     <span class="text-xs text-neutral-400 italic">(Chờ duyệt)</span>
                                 </div>
                             @endif
-                            <div class="text-[10px] text-neutral-400 pb-2">Xác nhận duyệt hệ thống</div>
+                            <div class="text-[10px] text-neutral-400 pb-1">Xác nhận duyệt hệ thống</div>
                         </div>
 
                         <!-- Cột 3: Kế toán duyệt -->
-                        <div class="p-4 rounded-xl border border-neutral-200 bg-neutral-50 flex flex-col justify-between" style="min-height: 160px;">
+                        <div class="p-2 rounded-lg border border-neutral-300 bg-neutral-50/60 flex flex-col justify-between" style="min-height: 105px;">
                             <div>
-                                <div class="font-bold text-sm uppercase tracking-wide text-neutral-900">Kế toán duyệt</div>
+                                <div class="font-bold text-xs uppercase tracking-wide text-neutral-900">Kế toán duyệt</div>
                             </div>
                             @if($acrylicOrder->accountant_approved_by)
-                                <div class="my-auto py-2 flex flex-col items-center justify-center">
-                                    <div class="px-4 py-2 rounded-xl text-center inline-block" style="border: 2px solid #059669; background-color: #ecfdf5; transform: rotate(-2deg);">
-                                        <div class="text-[10px] font-black uppercase tracking-widest text-emerald-700 flex items-center justify-center gap-1">
+                                <div class="my-auto py-1 flex flex-col items-center justify-center">
+                                    <div class="px-3 py-1 rounded-lg text-center inline-block" style="border: 1.5px solid #059669; background-color: #ecfdf5;">
+                                        <div class="text-[10px] font-black uppercase tracking-wider text-emerald-700 flex items-center justify-center gap-1">
                                             <iconify-icon icon="lucide:check-circle-2" class="text-xs text-emerald-600"></iconify-icon>
                                             <span>KẾ TOÁN ĐÃ DUYỆT</span>
                                         </div>
@@ -729,42 +736,42 @@
                                             {{ $acrylicOrder->accountantApprover?->name ?? 'Kế toán' }}
                                         </div>
                                         @if($acrylicOrder->accountant_approved_at)
-                                            <div class="text-[10px] text-neutral-500 font-mono mt-0.5">
+                                            <div class="text-[9px] text-neutral-500 font-mono">
                                                 {{ $acrylicOrder->accountant_approved_at->format('H:i d/m/Y') }}
                                             </div>
                                         @endif
                                     </div>
                                 </div>
                             @else
-                                <div class="my-auto py-6 flex flex-col items-center justify-center">
+                                <div class="my-auto py-2 flex flex-col items-center justify-center">
                                     <span class="text-xs text-neutral-400 italic">(Chờ duyệt)</span>
                                 </div>
                             @endif
-                            <div class="text-[10px] text-neutral-400 pb-2">Xác nhận duyệt hệ thống</div>
+                            <div class="text-[10px] text-neutral-400 pb-1">Xác nhận duyệt hệ thống</div>
                         </div>
                     </div>
 
-                    <!-- 3. Các điều khoản thanh toán & bảo hành (5 điều) -->
-                    <div class="pt-3 text-xs space-y-2 text-neutral-700 leading-relaxed border-t border-neutral-200">
+                    <!-- 3. Các điều khoản thanh toán & bảo hành (5 điều ngắn gọn) -->
+                    <div class="pt-2 text-[11px] space-y-1 text-neutral-700 leading-normal border-t border-neutral-200">
                         <div class="flex items-start gap-2">
-                            <span class="font-bold text-neutral-900 w-4 shrink-0 text-center">1.</span>
-                            <span>Đơn giá trên chưa bao gồm VAT. Đúng sai ±1 mm.</span>
+                            <span class="font-bold text-neutral-900 w-3 shrink-0 text-center">1.</span>
+                            <span>Đơn giá trên chưa bao gồm VAT. Đúng sai kích thước sản xuất ±1 mm.</span>
                         </div>
                         <div class="flex items-start gap-2">
-                            <span class="font-bold text-neutral-900 w-4 shrink-0 text-center">2.</span>
-                            <span>Ứng trước 50% tiền đơn hàng gia công, thanh toán 50% còn lại trước khi lấy hàng tại kho, giao hàng tại nhà máy bên bán sau 2 đến 3 ngày.</span>
+                            <span class="font-bold text-neutral-900 w-3 shrink-0 text-center">2.</span>
+                            <span>Ứng trước 50% tiền đơn hàng gia công, thanh toán 50% còn lại trước khi lấy hàng tại kho.</span>
                         </div>
                         <div class="flex items-start gap-2">
-                            <span class="font-bold text-neutral-900 w-4 shrink-0 text-center">3.</span>
-                            <span>Khi mua tấm Quý khách vui lòng thanh toán 100% tiền hàng trước khi chuyển hàng ra khỏi kho bên bán.</span>
+                            <span class="font-bold text-neutral-900 w-3 shrink-0 text-center">3.</span>
+                            <span>Khi mua tấm Quý khách vui lòng thanh toán 100% tiền hàng trước khi xuất kho bên bán.</span>
                         </div>
                         <div class="flex items-start gap-2">
-                            <span class="font-bold text-neutral-900 w-4 shrink-0 text-center">4.</span>
-                            <span>Quý khách có thể thanh toán bằng tiền mặt hoặc chuyển khoản vào một trong các tài khoản sau:</span>
+                            <span class="font-bold text-neutral-900 w-3 shrink-0 text-center">4.</span>
+                            <span>Thanh toán tiền mặt hoặc chuyển khoản theo thông tin ngân hàng của Công ty Gỗ Gervin.</span>
                         </div>
                         <div class="flex items-start gap-2">
-                            <span class="font-bold text-neutral-900 w-4 shrink-0 text-center">5.</span>
-                            <span>Bảo hành cong vênh, bong tróc 12 tháng, bảo trì vĩnh viễn. Không bảo hành mối và ngập nước.</span>
+                            <span class="font-bold text-neutral-900 w-3 shrink-0 text-center">5.</span>
+                            <span>Bảo hành cong vênh, bong tróc 12 tháng, bảo trì vĩnh viễn (không bảo hành ngập nước và mối mọt).</span>
                         </div>
                     </div>
                 </div>
@@ -785,6 +792,10 @@
             </div>
             <div class="flex items-center gap-2 flex-wrap">
                 <button type="button" onclick="closePreviewOrder()" class="btn btn-outline-neutral px-4 py-2 rounded-lg text-sm font-semibold transition-all">Đóng</button>
+                <button type="button" onclick="printPreviewOrder()" class="btn text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-sm transition-all flex items-center gap-2 hover:opacity-95" style="background:#059669; border:none;" title="In đơn hàng ra giấy hoặc xuất PDF (khổ ngang A4)">
+                    <iconify-icon icon="lucide:printer" class="text-base"></iconify-icon>
+                    <span>In đơn (khổ ngang)</span>
+                </button>
                 <button type="button" onclick="copyPreviewOrderImage()" class="btn text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-sm transition-all flex items-center gap-2 hover:opacity-95" style="background:#0068FF; border:none;" title="Copy ảnh để dán Ctrl + V vào Zalo">
                     <iconify-icon icon="lucide:copy" class="text-base"></iconify-icon>
                     <span>Copy ảnh gửi Zalo</span>
@@ -960,77 +971,90 @@
         if (!captureEl) throw new Error('Không tìm thấy vùng nội dung đơn hàng để chụp');
 
         await ensureHtml2CanvasLoaded();
+        if (document.fonts && document.fonts.ready) {
+            await document.fonts.ready;
+        }
 
+        // Nhân bản chính xác khối xem trước người dùng đang nhìn thấy
         const clone = captureEl.cloneNode(true);
         clone.id = 'zalo-export-clone-node';
-        clone.style.position = 'fixed';
-        clone.style.top = '0';
-        clone.style.left = '-99999px';
-        clone.style.width = '1750px';
-        clone.style.minWidth = '1750px';
-        clone.style.maxWidth = '1750px';
-        clone.style.height = 'auto';
-        clone.style.zIndex = '-999999';
-        clone.style.background = '#ffffff';
-        clone.style.padding = '35px 40px';
-        clone.style.boxSizing = 'border-box';
-        clone.style.boxShadow = 'none';
-        clone.style.borderRadius = '0';
 
-        clone.querySelectorAll('.overflow-x-auto, .overflow-y-auto, .overflow-hidden').forEach(el => {
+        // Thay thế các thẻ iconify-icon bằng SVG chuẩn để html2canvas vẽ sắc nét
+        const origIcons = captureEl.querySelectorAll('iconify-icon');
+        const cloneIcons = clone.querySelectorAll('iconify-icon');
+        origIcons.forEach((orig, idx) => {
+            const cloneIcon = cloneIcons[idx];
+            if (!cloneIcon) return;
+            const svg = orig.shadowRoot ? orig.shadowRoot.querySelector('svg') : orig.querySelector('svg');
+            if (svg) {
+                const svgClone = svg.cloneNode(true);
+                const computed = window.getComputedStyle(orig);
+                svgClone.style.width = computed.fontSize || '1em';
+                svgClone.style.height = computed.fontSize || '1em';
+                svgClone.style.display = 'inline-block';
+                svgClone.style.verticalAlign = '-0.125em';
+                cloneIcon.replaceWith(svgClone);
+            }
+        });
+
+        // Mở rộng các khối cuộn bảng để không bị cắt bớt cột
+        clone.querySelectorAll('.overflow-x-auto, .overflow-y-auto').forEach(el => {
             el.style.overflow = 'visible';
             el.style.width = '100%';
             el.style.maxWidth = 'none';
         });
 
-        clone.querySelectorAll('table').forEach(tbl => {
-            tbl.style.width = '100%';
-            tbl.style.minWidth = '100%';
-            tbl.style.tableLayout = 'auto';
-            tbl.style.borderCollapse = 'collapse';
-            tbl.style.fontSize = '13.5px';
-        });
-        clone.querySelectorAll('th').forEach(th => {
-            th.style.padding = '10px 8px';
-            th.style.fontSize = '13px';
-            th.style.fontWeight = '700';
-            th.style.border = '1.5px solid #cbd5e1';
-            th.style.backgroundColor = '#f1f5f9';
-            th.style.color = '#0f172a';
-            th.style.whiteSpace = 'nowrap';
-        });
-        clone.querySelectorAll('td').forEach(td => {
-            td.style.padding = '8px 8px';
-            td.style.fontSize = '13px';
-            td.style.border = '1px solid #cbd5e1';
-            td.style.whiteSpace = 'nowrap';
-        });
+        // Chiều rộng tự nhiên khớp với khung xem trước (tối thiểu 1150px)
+        const targetWidth = Math.max(captureEl.scrollWidth, captureEl.offsetWidth, 1150);
 
-        document.body.appendChild(clone);
-        await new Promise(r => setTimeout(r, 80));
+        // Wrapper đặt tại (0, 0) dưới lớp modal (z-index: -9999).
+        // Tuyệt đối không đặt -99999px vì Chromium sẽ tắt DirectWrite subpixel hinting gây mờ chữ!
+        const wrapper = document.createElement('div');
+        wrapper.id = 'zalo-export-wrapper';
+        wrapper.style.position = 'fixed';
+        wrapper.style.top = '0';
+        wrapper.style.left = '0';
+        wrapper.style.width = targetWidth + 'px';
+        wrapper.style.zIndex = '-9999';
+        wrapper.style.pointerEvents = 'none';
+        wrapper.style.background = '#ffffff';
+        wrapper.style.overflow = 'visible';
+
+        clone.style.width = targetWidth + 'px';
+        clone.style.minWidth = targetWidth + 'px';
+        clone.style.maxWidth = 'none';
+        clone.style.margin = '0';
+        // Giữ nguyên 100% padding, borders, backgrounds, font sizes như trên màn hình xem trước
+
+        wrapper.appendChild(clone);
+        document.body.appendChild(wrapper);
+
+        // Chờ 120ms để trình duyệt tính toán reflow và render font glyphs chuẩn xác
+        await new Promise(r => setTimeout(r, 120));
 
         try {
             const canvas = await html2canvas(clone, {
-                scale: 2.5,
+                scale: 2, // Tỷ lệ số nguyên 2x (Retina) siêu sắc nét, không bị nhòe pixel do số lẻ
                 useCORS: true,
                 allowTaint: true,
                 backgroundColor: '#ffffff',
                 logging: false,
-                width: clone.scrollWidth,
-                height: clone.scrollHeight,
-                windowWidth: 1750,
+                scrollX: 0,
+                scrollY: 0,
+                x: 0,
+                y: 0,
             });
 
-            clone.remove();
+            wrapper.remove();
 
             return new Promise((resolve, reject) => {
                 canvas.toBlob((blob) => {
                     if (blob) resolve(blob);
                     else reject(new Error('Không thể xuất ảnh từ canvas'));
-                }, 'image/png', 0.98);
+                }, 'image/png');
             });
         } catch (err) {
-            if (clone && clone.parentNode) clone.remove();
+            if (wrapper && wrapper.parentNode) wrapper.remove();
             throw err;
         }
     }
@@ -1097,4 +1121,161 @@
             URL.revokeObjectURL(url);
         }, 100);
     }
+
+    function printPreviewOrder() {
+        const captureEl = document.getElementById('preview-order-capture-area');
+        if (!captureEl) {
+            alert('Không tìm thấy vùng nội dung đơn hàng để in');
+            return;
+        }
+
+        // Tạo hoặc lấy container in trực tiếp dưới body
+        let printContainer = document.getElementById('preview-order-print-container');
+        if (!printContainer) {
+            printContainer = document.createElement('div');
+            printContainer.id = 'preview-order-print-container';
+            document.body.appendChild(printContainer);
+        }
+
+        // Clone nội dung xem trước
+        printContainer.innerHTML = '';
+        const clone = captureEl.cloneNode(true);
+        clone.id = 'preview-order-print-area';
+        clone.style.minWidth = '100%';
+        clone.style.maxWidth = '100%';
+        clone.style.width = '100%';
+        clone.style.border = 'none';
+        clone.style.boxShadow = 'none';
+        clone.style.padding = '0';
+        clone.style.margin = '0';
+
+        clone.querySelectorAll('.overflow-x-auto, .overflow-y-auto, .overflow-hidden').forEach(el => {
+            el.style.overflow = 'visible';
+            el.style.width = '100%';
+            el.style.maxWidth = 'none';
+        });
+
+        clone.querySelectorAll('.truncate').forEach(el => {
+            el.classList.remove('truncate');
+        });
+
+        clone.querySelectorAll('table').forEach(tbl => {
+            tbl.style.width = '100%';
+            tbl.style.minWidth = '100%';
+            tbl.style.borderCollapse = 'collapse';
+        });
+
+        printContainer.appendChild(clone);
+
+        // Đánh dấu body đang in đơn hàng
+        document.body.classList.add('is-printing-order-preview');
+
+        // Đợi 50ms để DOM cập nhật rồi gọi lệnh in bản địa
+        setTimeout(() => {
+            window.print();
+        }, 50);
+
+        // Fallback dọn dẹp sau khi in
+        setTimeout(() => {
+            document.body.classList.remove('is-printing-order-preview');
+        }, 2000);
+    }
+
+    // Tự động dọn dẹp sau khi in hoặc hủy in
+    window.addEventListener('afterprint', function() {
+        document.body.classList.remove('is-printing-order-preview');
+        const printContainer = document.getElementById('preview-order-print-container');
+        if (printContainer) {
+            printContainer.innerHTML = '';
+        }
+    });
+
+    // Bắt sự kiện phím tắt Ctrl + P khi đang mở modal xem trước
+    if (!window.previewOrderPrintKeyHandlerAttached) {
+        window.previewOrderPrintKeyHandlerAttached = true;
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && (e.key === 'p' || e.key === 'P')) {
+                const modal = document.getElementById('preview-order-modal');
+                if (modal && modal.style.display !== 'none' && getComputedStyle(modal).display !== 'none') {
+                    e.preventDefault();
+                    printPreviewOrder();
+                }
+            }
+        });
+    }
 </script>
+
+<style>
+#preview-order-print-container {
+    display: none;
+}
+
+@media print {
+    @page {
+        size: A4 landscape;
+        margin: 6mm 8mm;
+    }
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    body.is-printing-order-preview {
+        background: #ffffff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        height: auto !important;
+        overflow: visible !important;
+    }
+    body.is-printing-order-preview > *:not(#preview-order-print-container) {
+        display: none !important;
+    }
+    body.is-printing-order-preview #preview-order-print-container {
+        display: block !important;
+        position: static !important;
+        width: 100% !important;
+        min-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+    }
+    body.is-printing-order-preview #preview-order-print-container #preview-order-print-area {
+        width: 100% !important;
+        min-width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+    body.is-printing-order-preview #preview-order-print-container table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        page-break-inside: auto;
+    }
+    body.is-printing-order-preview #preview-order-print-container thead {
+        display: table-header-group !important;
+    }
+    body.is-printing-order-preview #preview-order-print-container tfoot {
+        display: table-footer-group !important;
+    }
+    body.is-printing-order-preview #preview-order-print-container tr {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+    body.is-printing-order-preview #preview-order-print-container th,
+    body.is-printing-order-preview #preview-order-print-container td {
+        font-size: 11px !important;
+        padding: 5px 6px !important;
+        border: 1px solid #cbd5e1 !important;
+    }
+    body.is-printing-order-preview #preview-order-print-container th {
+        background-color: #f1f5f9 !important;
+        font-weight: 700 !important;
+        color: #0f172a !important;
+    }
+    body.is-printing-order-preview #preview-order-print-container .avoid-break {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+}
+</style>

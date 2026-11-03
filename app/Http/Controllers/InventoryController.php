@@ -13,6 +13,8 @@ use App\Models\InventoryIssueItem;
 use App\Models\InventoryStocktake;
 use App\Models\InventoryStocktakeItem;
 use App\Models\InventoryTransaction;
+use App\Models\Supplier;
+use App\Models\Order;
 use App\Services\InventoryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -853,13 +855,17 @@ class InventoryController extends Controller
      */
     public function receipts(Request $request)
     {
-        $query = InventoryReceipt::with(['warehouse', 'creator'])->withCount('items');
+        $query = InventoryReceipt::with(['warehouse', 'creator', 'supplier', 'order'])->withCount('items');
         $this->applyDateFilter($query, $request, 'date');
 
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('code', 'like', "%{$search}%")
                   ->orWhere('supplier_name', 'like', "%{$search}%")
+                  ->orWhereHas('supplier', function ($sq) use ($search) {
+                      $sq->where('name', 'like', "%{$search}%")
+                         ->orWhere('code', 'like', "%{$search}%");
+                  })
                   ->orWhere('deliverer', 'like', "%{$search}%")
                   ->orWhere('receiver', 'like', "%{$search}%")
                   ->orWhere('notes', 'like', "%{$search}%");
@@ -876,8 +882,19 @@ class InventoryController extends Controller
         $warehouses = Warehouse::orderBy('name')->get();
         $materials = $this->getSelectableMaterials();
         $nextCode = $this->inventoryService->generateCode('PNK', 'inventory_receipts');
+        $suppliers = Supplier::where('status', 'active')->orderBy('name')->get();
 
-        return view('inventory.receipts.create', compact('warehouses', 'materials', 'nextCode'));
+        $selectedOrderId = $request->input('order_id');
+        $selectedOrder = $selectedOrderId ? Order::with(['customer', 'supplies'])->find($selectedOrderId) : null;
+        $orderItems = $selectedOrder ? $this->inventoryService->getOrderMaterialItems($selectedOrder) : [];
+
+        $orders = Order::select('id', 'order_code', 'customer_name', 'order_date')
+            ->whereNotIn('status', ['cancelled'])
+            ->orderByDesc('id')
+            ->take(100)
+            ->get();
+
+        return view('inventory.receipts.create', compact('warehouses', 'materials', 'nextCode', 'suppliers', 'orders', 'selectedOrder', 'orderItems'));
     }
 
     public function storeReceipt(Request $request)
@@ -895,7 +912,7 @@ class InventoryController extends Controller
 
         $receipt = $this->inventoryService->createReceipt(
             $warehouse,
-            $request->only(['code', 'date', 'supplier_name', 'deliverer', 'receiver', 'notes']),
+            $request->only(['order_id', 'code', 'date', 'supplier_id', 'supplier_name', 'deliverer', 'receiver', 'notes']),
             $request->input('items', []),
             Auth::id()
         );
@@ -905,17 +922,23 @@ class InventoryController extends Controller
 
     public function showReceipt(InventoryReceipt $receipt)
     {
-        $receipt->load(['warehouse', 'creator', 'items.woodBoard', 'items.boardPrice.type']);
+        $receipt->load(['order', 'warehouse', 'creator', 'supplier', 'items.woodBoard', 'items.boardPrice.type']);
         return view('inventory.receipts.show', compact('receipt'));
     }
 
     public function editReceipt(InventoryReceipt $receipt)
     {
-        $receipt->load(['items.woodBoard', 'items.boardPrice.type']);
+        $receipt->load(['order', 'supplier', 'items.woodBoard', 'items.boardPrice.type']);
         $warehouses = Warehouse::orderBy('name')->get();
         $materials = $this->getSelectableMaterials();
+        $suppliers = Supplier::orderBy('name')->get();
+        $orders = Order::select('id', 'order_code', 'customer_name', 'order_date')
+            ->whereNotIn('status', ['cancelled'])
+            ->orderByDesc('id')
+            ->take(100)
+            ->get();
 
-        return view('inventory.receipts.edit', compact('receipt', 'warehouses', 'materials'));
+        return view('inventory.receipts.edit', compact('receipt', 'warehouses', 'materials', 'suppliers', 'orders'));
     }
 
     public function updateReceipt(Request $request, InventoryReceipt $receipt)
@@ -934,7 +957,7 @@ class InventoryController extends Controller
         $receipt = $this->inventoryService->updateReceipt(
             $receipt,
             $warehouse,
-            $request->only(['code', 'date', 'supplier_name', 'deliverer', 'receiver', 'notes']),
+            $request->only(['order_id', 'code', 'date', 'supplier_id', 'supplier_name', 'deliverer', 'receiver', 'notes']),
             $request->input('items', []),
             Auth::id()
         );
@@ -960,7 +983,7 @@ class InventoryController extends Controller
      */
     public function issues(Request $request)
     {
-        $query = InventoryIssue::with(['warehouse', 'creator'])->withCount('items');
+        $query = InventoryIssue::with(['warehouse', 'creator', 'order'])->withCount('items');
         $this->applyDateFilter($query, $request, 'date');
 
         if ($search = $request->input('search')) {
@@ -983,7 +1006,17 @@ class InventoryController extends Controller
         $materials = $this->getSelectableMaterials();
         $nextCode = $this->inventoryService->generateCode('PXK', 'inventory_issues');
 
-        return view('inventory.issues.create', compact('warehouses', 'materials', 'nextCode'));
+        $selectedOrderId = $request->input('order_id');
+        $selectedOrder = $selectedOrderId ? Order::with(['customer', 'supplies'])->find($selectedOrderId) : null;
+        $orderItems = $selectedOrder ? $this->inventoryService->getOrderMaterialItems($selectedOrder) : [];
+
+        $orders = Order::select('id', 'order_code', 'customer_name', 'order_date')
+            ->whereNotIn('status', ['cancelled'])
+            ->orderByDesc('id')
+            ->take(100)
+            ->get();
+
+        return view('inventory.issues.create', compact('warehouses', 'materials', 'nextCode', 'orders', 'selectedOrder', 'orderItems'));
     }
 
     public function storeIssue(Request $request)
@@ -1000,7 +1033,7 @@ class InventoryController extends Controller
 
         $issue = $this->inventoryService->createIssue(
             $warehouse,
-            $request->only(['code', 'date', 'recipient', 'deliverer', 'reason', 'notes']),
+            $request->only(['order_id', 'code', 'date', 'recipient', 'deliverer', 'reason', 'notes']),
             $request->input('items', []),
             Auth::id()
         );
@@ -1010,17 +1043,22 @@ class InventoryController extends Controller
 
     public function showIssue(InventoryIssue $issue)
     {
-        $issue->load(['warehouse', 'creator', 'items.woodBoard', 'items.boardPrice.type']);
+        $issue->load(['order', 'warehouse', 'creator', 'items.woodBoard', 'items.boardPrice.type']);
         return view('inventory.issues.show', compact('issue'));
     }
 
     public function editIssue(InventoryIssue $issue)
     {
-        $issue->load(['items.woodBoard', 'items.boardPrice.type']);
+        $issue->load(['order', 'items.woodBoard', 'items.boardPrice.type']);
         $warehouses = Warehouse::orderBy('name')->get();
         $materials = $this->getSelectableMaterials();
+        $orders = Order::select('id', 'order_code', 'customer_name', 'order_date')
+            ->whereNotIn('status', ['cancelled'])
+            ->orderByDesc('id')
+            ->take(100)
+            ->get();
 
-        return view('inventory.issues.edit', compact('issue', 'warehouses', 'materials'));
+        return view('inventory.issues.edit', compact('issue', 'warehouses', 'materials', 'orders'));
     }
 
     public function updateIssue(Request $request, InventoryIssue $issue)
@@ -1038,12 +1076,24 @@ class InventoryController extends Controller
         $issue = $this->inventoryService->updateIssue(
             $issue,
             $warehouse,
-            $request->only(['code', 'date', 'recipient', 'deliverer', 'reason', 'notes']),
+            $request->only(['order_id', 'code', 'date', 'recipient', 'deliverer', 'reason', 'notes']),
             $request->input('items', []),
             Auth::id()
         );
 
         return redirect()->route('inventory.issues.show', $issue)->with('success', 'Cập nhật phiếu xuất kho ' . $issue->code . ' thành công!');
+    }
+
+    public function orderSupplies(Order $order)
+    {
+        $items = $this->inventoryService->getOrderMaterialItems($order);
+        return response()->json([
+            'success'       => true,
+            'order_id'      => $order->id,
+            'order_code'    => $order->order_code,
+            'customer_name' => $order->customer_name ?: ($order->customer?->name ?? ''),
+            'items'         => $items,
+        ]);
     }
 
     public function printIssue(InventoryIssue $issue)

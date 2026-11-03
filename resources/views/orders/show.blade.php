@@ -217,6 +217,19 @@
                             </span>
                         @endif
 
+                        {{-- Nút Tạo Phiếu Nhập / Xuất kho từ đơn hàng --}}
+                        <div class="inline-flex rounded-lg shadow-2xs border border-neutral-200 bg-white p-0.5" role="group">
+                            <a href="{{ route('inventory.receipts.create') }}?order_id={{ $acrylicOrder->id }}" class="px-3 py-1.5 rounded-md text-xs font-bold text-primary-700 hover:bg-primary-50 flex items-center gap-1 transition-all" title="Tạo phiếu nhập kho lấy vật tư từ đơn hàng này">
+                                <iconify-icon icon="solar:import-bold" class="text-sm text-primary-600"></iconify-icon>
+                                <span>Tạo PNK</span>
+                            </a>
+                            <div class="w-px bg-neutral-200 my-1"></div>
+                            <a href="{{ route('inventory.issues.create') }}?order_id={{ $acrylicOrder->id }}" class="px-3 py-1.5 rounded-md text-xs font-bold text-rose-700 hover:bg-rose-50 flex items-center gap-1 transition-all" title="Tạo phiếu xuất kho lấy vật tư từ đơn hàng này">
+                                <iconify-icon icon="solar:export-bold" class="text-sm text-rose-600"></iconify-icon>
+                                <span>Tạo PXK</span>
+                            </a>
+                        </div>
+
                         {{-- Nút Xem trước đơn hàng & Copy ảnh Zalo --}}
                         <button type="button" onclick="previewOrder()" class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200 transition-all shadow-xs flex items-center gap-1.5 cursor-pointer" title="Xem trước đơn hàng và chụp ảnh gửi Zalo">
                             <iconify-icon icon="lucide:eye" class="text-sm"></iconify-icon>
@@ -1222,6 +1235,66 @@
                         <iconify-icon icon="lucide:table-2" class="text-lg"></iconify-icon> Tải file xả tem Nesting (Kỹ thuật)
                     </button>
                 @endif
+
+                {{-- Khối Quản lý Kho: Phiếu Nhập / Xuất kho cho đơn hàng này --}}
+                <div class="w-full pt-3 mt-1 border-t border-neutral-200">
+                    <span class="text-xs font-bold uppercase tracking-wider text-neutral-500 mb-2 block flex items-center justify-between">
+                        <span>Kho & Vật tư</span>
+                        @php
+                            $linkedReceiptsCount = $acrylicOrder->receipts ? $acrylicOrder->receipts->count() : 0;
+                            $linkedIssuesCount = $acrylicOrder->issues ? $acrylicOrder->issues->count() : 0;
+                            $totalLinkedVouchers = $linkedReceiptsCount + $linkedIssuesCount;
+                        @endphp
+                        @if($totalLinkedVouchers > 0)
+                            <span class="bg-primary-50 text-primary-700 text-[10px] px-2 py-0.5 rounded-full font-bold">
+                                {{ $totalLinkedVouchers }} phiếu kho
+                            </span>
+                        @endif
+                    </span>
+                    <div class="grid grid-cols-2 gap-2">
+                        <a href="{{ route('inventory.receipts.create') }}?order_id={{ $acrylicOrder->id }}" 
+                           class="flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl text-xs font-bold bg-primary-50 text-primary-700 hover:bg-primary-100 border border-primary-200 transition-colors shadow-2xs text-center" 
+                           title="Tạo phiếu nhập kho lấy vật tư từ đơn hàng này">
+                            <iconify-icon icon="solar:import-bold" class="text-base text-primary-600"></iconify-icon>
+                            <span>Tạo PNK</span>
+                        </a>
+                        <a href="{{ route('inventory.issues.create') }}?order_id={{ $acrylicOrder->id }}" 
+                           class="flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl text-xs font-bold bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 transition-colors shadow-2xs text-center" 
+                           title="Tạo phiếu xuất kho lấy vật tư từ đơn hàng này">
+                            <iconify-icon icon="solar:export-bold" class="text-base text-rose-600"></iconify-icon>
+                            <span>Tạo PXK</span>
+                        </a>
+                    </div>
+
+                    {{-- Danh sách các phiếu kho đã tạo gắn với đơn này (nếu có) --}}
+                    @if($acrylicOrder->receipts && $acrylicOrder->receipts->isNotEmpty())
+                        <div class="mt-2 space-y-1">
+                            @foreach($acrylicOrder->receipts as $rc)
+                                <a href="{{ route('inventory.receipts.show', $rc) }}" class="flex items-center justify-between p-2 rounded-lg bg-emerald-50/50 hover:bg-emerald-100/60 border border-emerald-200 text-xs transition-colors" title="Xem chi tiết PNK">
+                                    <div class="flex items-center gap-1.5 min-w-0">
+                                        <iconify-icon icon="solar:import-outline" class="text-emerald-600 shrink-0"></iconify-icon>
+                                        <span class="font-bold text-emerald-800 truncate">{{ $rc->code }}</span>
+                                    </div>
+                                    <span class="text-neutral-500 text-[11px] shrink-0">{{ number_format($rc->total_quantity, 1) }} tấm &bull; {{ date('d/m', strtotime($rc->date)) }}</span>
+                                </a>
+                            @endforeach
+                        </div>
+                    @endif
+
+                    @if($acrylicOrder->issues && $acrylicOrder->issues->isNotEmpty())
+                        <div class="mt-2 space-y-1">
+                            @foreach($acrylicOrder->issues as $iss)
+                                <a href="{{ route('inventory.issues.show', $iss) }}" class="flex items-center justify-between p-2 rounded-lg bg-rose-50/50 hover:bg-rose-100/60 border border-rose-200 text-xs transition-colors" title="Xem chi tiết PXK">
+                                    <div class="flex items-center gap-1.5 min-w-0">
+                                        <iconify-icon icon="solar:export-outline" class="text-rose-600 shrink-0"></iconify-icon>
+                                        <span class="font-bold text-rose-800 truncate">{{ $iss->code }}</span>
+                                    </div>
+                                    <span class="text-neutral-500 text-[11px] shrink-0">{{ number_format($iss->total_quantity, 1) }} tấm &bull; {{ date('d/m', strtotime($iss->date)) }}</span>
+                                </a>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
             </div>
         </div>
     </div>

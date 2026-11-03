@@ -347,15 +347,21 @@ class Customer extends Model
         $endOfMonth = $cDate->copy()->endOfMonth()->toDateTimeString();
 
         // Lấy tất cả đơn hàng Acrylic hợp lệ trong tháng (loại trừ min_late, glass, flywood/service)
+        // Chỉ tính những đơn có các tấm có mã là GV (nếu không có mã nào GV thì tiền đơn đó không tính chiết khấu)
         $acrylicOrders = $this->orders()
             ->whereNotNhapKho()
             ->where('type', 'acrylic')
             ->whereNotIn('status', ['draft', 'cancelled'])
             ->whereBetween('order_date', [$startOfMonth, $endOfMonth])
+            ->with('supplies')
             ->orderBy('order_date', 'asc')
-            ->get();
+            ->get()
+            ->filter(function ($order) {
+                return $order->hasGvSupplies();
+            })
+            ->values();
 
-        // Tổng doanh số Acrylic trong tháng
+        // Tổng doanh số Acrylic (mã GV) trong tháng
         $acrylicRevenue = (float) $acrylicOrders->sum(function ($order) {
             return round($order->total_amount, -3);
         });
@@ -448,7 +454,7 @@ class Customer extends Model
             $paymentDate = now()->toDateString();
         }
 
-        $note = $customNote ?: ("Chiết khấu tháng " . $calc['month_label'] . " doanh số Acrylic " . number_format($calc['acrylic_revenue'], 0, ',', '.') . "đ (-" . $calc['discount_percent'] . "%)");
+        $note = $customNote ?: ("Chiết khấu tháng " . $calc['month_label'] . " doanh số Acrylic (mã GV) " . number_format($calc['acrylic_revenue'], 0, ',', '.') . "đ (-" . $calc['discount_percent'] . "%)");
 
         // Tạo bản ghi CustomerPayment -> Tự động giảm debt của khách hàng qua boot event
         $payment = \App\Models\CustomerPayment::create([

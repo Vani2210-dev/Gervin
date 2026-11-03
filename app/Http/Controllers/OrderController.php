@@ -218,7 +218,7 @@ class OrderController extends Controller
             }
         }
 
-        $order->load(['supplies.items.codes', 'supplies.minLateItems.codes', 'supplies.glassItems.codes', 'paymentDetails', 'orderPayments.creator', 'accountantApprover', 'technicalApprover', 'rejecter']);
+        $order->load(['supplies.items.codes', 'supplies.minLateItems.codes', 'supplies.glassItems.codes', 'paymentDetails', 'orderPayments.creator', 'accountantApprover', 'technicalApprover', 'rejecter', 'receipts', 'issues']);
         $order->checkAndMarkInProduction();
         $order->checkAndMarkCompleted();
         $acrylicOrder = $order;

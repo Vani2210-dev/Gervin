@@ -250,8 +250,6 @@ class AcrylicOrderService
             $this->savePaymentDetails($order, $request->payment_details ?? []);
         }
 
-        app(\App\Services\InventoryService::class)->syncOrderWarehouseReceiptAndIssue($order);
-
         return $order;
     }
 

@@ -61,6 +61,15 @@
                         <span class="text-neutral-400 block mb-1">Người xuất (Thủ kho):</span>
                         <strong class="text-neutral-800 text-sm">{{ $issue->deliverer ?: '-' }}</strong>
                     </div>
+                    @if($issue->order)
+                        <div>
+                            <span class="text-neutral-400 block mb-1">Đơn hàng liên quan:</span>
+                            <a href="{{ route('orders.show', $issue->order) }}" class="font-bold text-rose-600 hover:text-rose-800 hover:underline flex items-center gap-1 text-sm">
+                                [{{ $issue->order->order_code }}] {{ $issue->order->customer_name ?: 'Khách hàng' }}
+                                <iconify-icon icon="solar:arrow-right-up-bold" class="text-xs"></iconify-icon>
+                            </a>
+                        </div>
+                    @endif
                     @if($issue->notes)
                         <div class="md:col-span-4 pt-2 border-t border-neutral-200">
                             <span class="text-neutral-400">Ghi chú:</span>

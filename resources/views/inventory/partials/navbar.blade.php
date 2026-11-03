@@ -68,6 +68,12 @@
             <iconify-icon icon="solar:warehouse-outline" class="text-base"></iconify-icon>
             Danh sách Kho
         </a>
+
+        <a href="{{ route('suppliers.index') }}" 
+           class="flex items-center gap-2 px-4 py-3 border-b-2 transition-all {{ str_starts_with($currentRoute, 'suppliers') ? 'border-primary-600 text-primary-600 bg-white rounded-t-lg shadow-sm' : 'border-transparent text-neutral-600 hover:text-neutral-900 hover:border-neutral-300' }}">
+            <iconify-icon icon="solar:shop-2-bold" class="text-base"></iconify-icon>
+            Nhà cung cấp & Công nợ
+        </a>
     </div>
 </div>
 

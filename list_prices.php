@@ -3,10 +3,23 @@ require 'vendor/autoload.php';
 $app = require_once 'bootstrap/app.php';
 $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
-use App\Models\WoodBoardPrice;
+use App\Models\OrderSupply;
+use App\Models\Order;
 
-$prices = WoodBoardPrice::all();
-echo "Total wood_board_prices rows: " . $prices->count() . "\n";
-foreach ($prices as $p) {
-    echo "ID: {$p->id}, Board ID: {$p->wood_board_id}, Type ID: {$p->wood_board_type_id}, Code: {$p->code}, Name: {$p->name}, Thickness: {$p->thickness}, Price Board: {$p->price_board}, Price M2: {$p->price_m2}\n";
+$supplies = OrderSupply::all();
+$codes = $supplies->pluck('order_supply_code')->unique()->values();
+echo "Total unique supply codes in OrderSupply: " . count($codes) . "\n";
+foreach($codes as $c) {
+    echo " - '{$c}'\n";
 }
+
+$nonGvSupplies = OrderSupply::where(function($q) {
+    $q->whereNull('order_supply_code')
+      ->orWhere('order_supply_code', 'NOT LIKE', 'GV%');
+})->take(20)->get(['id', 'order_id', 'order_supply_code', 'supply_name']);
+
+echo "\nSample non-GV supplies:\n";
+foreach($nonGvSupplies as $s) {
+    echo "ID: {$s->id}, OrderID: {$s->order_id}, code: '{$s->order_supply_code}', name: '{$s->supply_name}'\n";
+}
+

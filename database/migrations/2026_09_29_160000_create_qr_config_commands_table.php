@@ -12,7 +12,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('qr_config_commands', function (Blueprint $table) {
+        if (!Schema::hasTable('qr_config_commands')) {
+            Schema::create('qr_config_commands', function (Blueprint $table) {
             $table->id();
             $table->integer('step')->default(1);
             $table->string('badge')->nullable();
@@ -84,6 +85,7 @@ return new class extends Migration
         ];
 
         DB::table('qr_config_commands')->insert($defaults);
+        }
     }
 
     /**

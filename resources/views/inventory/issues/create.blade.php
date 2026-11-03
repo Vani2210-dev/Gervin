@@ -46,6 +46,27 @@
                             <input type="text" name="recipient" value="Xưởng sản xuất Gervin" class="form-control rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-rose-500" required>
                         </div>
                         <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <label class="form-label text-xs font-bold text-neutral-700 block mb-0">Đơn hàng liên quan <span class="text-neutral-400 font-normal">(Tùy chọn)</span></label>
+                                <button type="button" id="btnLoadOrderItems" onclick="loadSelectedOrderSupplies()" class="text-[11px] text-rose-600 hover:text-rose-800 font-bold flex items-center gap-0.5 {{ empty($selectedOrder) ? 'hidden' : '' }}" title="Nạp danh sách vật tư từ đơn hàng này vào bảng bên dưới">
+                                    <iconify-icon icon="solar:download-square-bold"></iconify-icon> Nạp vật tư đơn
+                                </button>
+                            </div>
+                            <select name="order_id" id="select_order" class="form-select rounded-lg w-full border border-neutral-300 px-3 py-2 text-xs font-semibold text-neutral-800 bg-white focus:border-rose-500" onchange="onOrderChanged(this)">
+                                <option value="">-- Không gắn đơn hàng --</option>
+                                @if(!empty($selectedOrder) && !$orders->contains('id', $selectedOrder->id))
+                                    <option value="{{ $selectedOrder->id }}" selected>
+                                        [{{ $selectedOrder->order_code }}] {{ $selectedOrder->customer_name ?: 'Khách hàng' }}
+                                    </option>
+                                @endif
+                                @foreach($orders ?? [] as $ord)
+                                    <option value="{{ $ord->id }}" {{ (string)old('order_id', request('order_id')) === (string)$ord->id ? 'selected' : '' }}>
+                                        [{{ $ord->order_code }}] {{ $ord->customer_name ?: 'Khách hàng' }} ({{ date('d/m/Y', strtotime($ord->order_date)) }})
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
                             <label class="form-label text-xs font-semibold text-neutral-700 mb-1 block">Lý do xuất</label>
                             <select name="reason" class="form-select rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-rose-500">
                                 <option value="Xuất sản xuất">Xuất sản xuất xưởng</option>
@@ -59,9 +80,9 @@
                             <label class="form-label text-xs font-semibold text-neutral-700 mb-1 block">Người xuất (Thủ kho)</label>
                             <input type="text" name="deliverer" value="{{ auth()->user()->name ?? 'Thủ kho' }}" class="form-control rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-rose-500">
                         </div>
-                        <div class="md:col-span-2">
+                        <div>
                             <label class="form-label text-xs font-semibold text-neutral-700 mb-1 block">Ghi chú phiếu xuất</label>
-                            <input type="text" name="notes" class="form-control rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-rose-500" placeholder="Xuất theo lệnh sản xuất số, đơn hàng...">
+                            <input type="text" name="notes" class="form-control rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-rose-500" placeholder="Xuất theo lệnh sản xuất số, đơn hàng..." value="{{ !empty($selectedOrder) ? 'Xuất kho cho đơn hàng #' . $selectedOrder->order_code : '' }}">
                         </div>
                     </div>
 
@@ -164,6 +185,7 @@
 <script>
     const WAREHOUSES = @json($warehouses);
     const MATERIALS = @json($materials);
+    const PREFILLED_ORDER_ITEMS = @json($orderItems ?? []);
 
     function getCurrentWarehouse() {
         const whSelect = document.getElementById('select_warehouse');
@@ -405,16 +427,75 @@
         document.getElementById('lblTotalQty').textContent = totalQty.toLocaleString('vi-VN');
     }
 
-    // Initialize 3 rows
+    // Initialize rows
     function initDefaultRows() {
         const whEl = document.getElementById("select_warehouse");
         if (whEl) {
             whEl.addEventListener('change', onWarehouseChange);
         }
         onWarehouseChange();
-        addItemRow();
-        addItemRow();
-        addItemRow();
+
+        if (PREFILLED_ORDER_ITEMS && PREFILLED_ORDER_ITEMS.length > 0) {
+            PREFILLED_ORDER_ITEMS.forEach(it => {
+                addItemRow(it.material_id, it.quantity, it.notes || '');
+            });
+        } else {
+            addItemRow();
+            addItemRow();
+            addItemRow();
+        }
+    }
+
+    // Order items loader
+    function onOrderChanged(selectEl) {
+        const btn = document.getElementById('btnLoadOrderItems');
+        if (btn) {
+            if (selectEl.value) {
+                btn.classList.remove('hidden');
+            } else {
+                btn.classList.add('hidden');
+            }
+        }
+    }
+
+    function loadSelectedOrderSupplies() {
+        const orderId = document.getElementById('select_order')?.value;
+        if (!orderId) {
+            alert('Vui lòng chọn đơn hàng trước.');
+            return;
+        }
+
+        const btn = document.getElementById('btnLoadOrderItems');
+        if (btn) btn.innerHTML = 'Đang tải...';
+
+        fetch(`/warehouses/orders/${orderId}/supplies`)
+            .then(res => res.json())
+            .then(data => {
+                if (btn) btn.innerHTML = '<iconify-icon icon="solar:download-square-bold"></iconify-icon> Nạp vật tư đơn';
+                if (data.success && data.items && data.items.length > 0) {
+                    const tbody = document.getElementById('itemsTableBody');
+                    if (tbody && tbody.children.length > 0) {
+                        const hasFilled = Array.from(tbody.querySelectorAll('.qty-input')).some(i => parseFloat(i.value) > 0);
+                        if (hasFilled && !confirm('Bạn có muốn xóa các dòng hiện tại để nạp lại vật tư từ đơn hàng ' + data.order_code + '?')) {
+                            data.items.forEach(it => {
+                                addItemRow(it.material_id, it.quantity, it.notes || '');
+                            });
+                            return;
+                        }
+                    }
+
+                    if (tbody) tbody.innerHTML = '';
+                    data.items.forEach(it => {
+                        addItemRow(it.material_id, it.quantity, it.notes || '');
+                    });
+                } else {
+                    alert('Đơn hàng ' + (data.order_code || '') + ' không có vật tư phù hợp để nạp.');
+                }
+            })
+            .catch(err => {
+                if (btn) btn.innerHTML = '<iconify-icon icon="solar:download-square-bold"></iconify-icon> Nạp vật tư đơn';
+                alert('Không thể tải vật tư từ đơn hàng.');
+            });
     }
 
     if (document.readyState === 'loading') {

@@ -137,8 +137,13 @@ return new class extends Migration
                     SET iri.wood_board_id = wb.id
                 ");
 
+                try {
+                    Schema::table('inventory_receipt_items', function (Blueprint $table) {
+                        $table->dropForeign(['material_id']);
+                    });
+                } catch (\Throwable $e) {}
+
                 Schema::table('inventory_receipt_items', function (Blueprint $table) {
-                    $table->dropForeign(['material_id']);
                     $table->dropColumn('material_id');
                 });
             }
@@ -160,8 +165,13 @@ return new class extends Migration
                     SET iii.wood_board_id = wb.id
                 ");
 
+                try {
+                    Schema::table('inventory_issue_items', function (Blueprint $table) {
+                        $table->dropForeign(['material_id']);
+                    });
+                } catch (\Throwable $e) {}
+
                 Schema::table('inventory_issue_items', function (Blueprint $table) {
-                    $table->dropForeign(['material_id']);
                     $table->dropColumn('material_id');
                 });
             }
@@ -183,8 +193,13 @@ return new class extends Migration
                     SET isi.wood_board_id = wb.id
                 ");
 
+                try {
+                    Schema::table('inventory_stocktake_items', function (Blueprint $table) {
+                        $table->dropForeign(['material_id']);
+                    });
+                } catch (\Throwable $e) {}
+
                 Schema::table('inventory_stocktake_items', function (Blueprint $table) {
-                    $table->dropForeign(['material_id']);
                     $table->dropColumn('material_id');
                 });
             }
@@ -206,8 +221,13 @@ return new class extends Migration
                     SET it.wood_board_id = wb.id
                 ");
 
+                try {
+                    Schema::table('inventory_transactions', function (Blueprint $table) {
+                        $table->dropForeign(['material_id']);
+                    });
+                } catch (\Throwable $e) {}
+
                 Schema::table('inventory_transactions', function (Blueprint $table) {
-                    $table->dropForeign(['material_id']);
                     $table->dropColumn('material_id');
                 });
             }

@@ -43,8 +43,40 @@
                             </select>
                         </div>
                         <div>
-                            <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Nhà cung cấp / Nguồn</label>
-                            <input type="text" name="supplier_name" value="{{ old('supplier_name', $receipt->supplier_name) }}" class="form-control rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500" placeholder="Vd: Nhà máy TQ, Đại lý...">
+                            <div class="flex items-center justify-between mb-1">
+                                <label class="form-label text-xs font-bold text-neutral-700 block mb-0">Nhà cung cấp (NCC)</label>
+                                <button type="button" onclick="openQuickSupplierModal()" class="text-[11px] text-primary-600 hover:text-primary-800 font-bold flex items-center gap-0.5">
+                                    <iconify-icon icon="ic:baseline-plus"></iconify-icon> Thêm NCC
+                                </button>
+                            </div>
+                            <select name="supplier_id" id="select_supplier" class="form-select rounded-lg w-full border border-neutral-300 px-3 py-2 text-xs font-semibold text-neutral-800 bg-white focus:border-primary-500 focus:ring-primary-500" onchange="onSupplierChanged(this)">
+                                <option value="">-- Chọn NCC (hoặc nhập tự do) --</option>
+                                @foreach($suppliers as $sup)
+                                    <option value="{{ $sup->id }}" data-name="{{ $sup->name }}" data-debt="{{ $sup->debt }}" {{ (string)old('supplier_id', $receipt->supplier_id) === (string)$sup->id ? 'selected' : '' }}>
+                                        [{{ $sup->code }}] {{ $sup->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <input type="hidden" name="supplier_name" id="input_supplier_name" value="{{ old('supplier_name', $receipt->supplier_name) }}">
+                            <div id="supplier_debt_badge" class="mt-1 text-[11px] text-rose-600 font-bold {{ $receipt->supplier && $receipt->supplier->debt > 0 ? '' : 'hidden' }}">
+                                Công nợ NCC hiện tại: <span id="supplier_debt_val">{{ $receipt->supplier ? number_format($receipt->supplier->debt, 0, ',', '.') : 0 }}</span>đ
+                            </div>
+                        </div>
+                        <div>
+                            <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Đơn hàng liên quan (Tùy chọn)</label>
+                            <select name="order_id" id="select_order" class="form-select rounded-lg w-full border border-neutral-300 px-3 py-2 text-xs font-semibold text-neutral-800 bg-white focus:border-primary-500 focus:ring-primary-500">
+                                <option value="">-- Không gắn đơn hàng --</option>
+                                @if($receipt->order && !$orders->contains('id', $receipt->order->id))
+                                    <option value="{{ $receipt->order->id }}" selected>
+                                        [{{ $receipt->order->order_code }}] {{ $receipt->order->customer_name ?: 'Khách hàng' }}
+                                    </option>
+                                @endif
+                                @foreach($orders ?? [] as $ord)
+                                    <option value="{{ $ord->id }}" {{ (string)old('order_id', $receipt->order_id) === (string)$ord->id ? 'selected' : '' }}>
+                                        [{{ $ord->order_code }}] {{ $ord->customer_name ?: 'Khách hàng' }} ({{ date('d/m/Y', strtotime($ord->order_date)) }})
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
                         <div>
                             <label class="form-label text-xs font-semibold text-neutral-700 mb-1 block">Người giao hàng</label>
@@ -54,7 +86,7 @@
                             <label class="form-label text-xs font-semibold text-neutral-700 mb-1 block">Người nhận (Thủ kho)</label>
                             <input type="text" name="receiver" value="{{ old('receiver', $receipt->receiver) }}" class="form-control rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500">
                         </div>
-                        <div class="md:col-span-2">
+                        <div>
                             <label class="form-label text-xs font-semibold text-neutral-700 mb-1 block">Ghi chú phiếu nhập</label>
                             <input type="text" name="notes" value="{{ old('notes', $receipt->notes) }}" class="form-control rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500" placeholder="Nhập theo hóa đơn, container số...">
                         </div>
@@ -108,6 +140,57 @@
                             <iconify-icon icon="solar:diskette-bold" class="text-base"></iconify-icon> Lưu thay đổi phiếu nhập
                         </button>
                     </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- MODAL THÊM NHANH NHÀ CUNG CẤP --}}
+<div id="quickSupplierModal" class="fixed inset-0 z-50 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-neutral-900 bg-opacity-50 transition-opacity" onclick="closeQuickSupplierModal()"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+        <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full">
+            <div class="p-4 border-b border-neutral-200 flex items-center justify-between bg-neutral-50">
+                <div class="flex items-center gap-2">
+                    <iconify-icon icon="solar:shop-2-bold" class="text-xl text-primary-600"></iconify-icon>
+                    <h5 class="font-bold text-neutral-800 text-sm mb-0">Thêm nhanh Nhà cung cấp</h5>
+                </div>
+                <button type="button" onclick="closeQuickSupplierModal()" class="text-neutral-400 hover:text-neutral-700 text-xl font-bold leading-none">&times;</button>
+            </div>
+
+            <form id="quickSupplierForm" onsubmit="handleQuickSupplierSubmit(event)" class="p-5 space-y-3">
+                <div>
+                    <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Tên Nhà cung cấp <span class="text-danger-500">*</span></label>
+                    <input type="text" id="quick_sup_name" class="form-control rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500 font-semibold" placeholder="VD: Gỗ An Cường" required>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Mã NCC (tùy chọn)</label>
+                        <input type="text" id="quick_sup_code" class="form-control rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500" placeholder="Tự sinh nếu trống">
+                    </div>
+                    <div>
+                        <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Số điện thoại</label>
+                        <input type="text" id="quick_sup_phone" class="form-control rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500" placeholder="09...">
+                    </div>
+                </div>
+                <div>
+                    <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Địa chỉ</label>
+                    <input type="text" id="quick_sup_address" class="form-control rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500" placeholder="Địa chỉ kho / trụ sở">
+                </div>
+                <div>
+                    <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Công nợ ban đầu (đ)</label>
+                    <input type="number" step="1000" id="quick_sup_initial_debt" value="0" class="form-control rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500 font-bold text-rose-600">
+                </div>
+                <div class="flex items-center justify-end gap-2 pt-3 border-t border-neutral-200">
+                    <button type="button" onclick="closeQuickSupplierModal()" class="btn border border-neutral-300 text-neutral-700 hover:bg-neutral-100 px-4 py-1.5 rounded-lg text-xs font-semibold">
+                        Hủy
+                    </button>
+                    <button type="submit" id="btnSubmitQuickSupplier" class="btn btn-primary px-4 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 shadow-sm">
+                        <iconify-icon icon="solar:check-circle-bold" class="text-sm"></iconify-icon> Lưu NCC
+                    </button>
                 </div>
             </form>
         </div>
@@ -332,8 +415,25 @@
             selectEl._tomSelect = ts;
 
             if (selectedMaterialId) {
-                ts.setValue(String(selectedMaterialId), true);
-                onMaterialSelected(rowIdx, selectedMaterialId);
+                const strId = String(selectedMaterialId);
+                if (!ts.options[strId]) {
+                    const foundMat = MATERIALS.find(m => String(m.id) === strId);
+                    if (foundMat) {
+                        ts.addOption({
+                            value: String(foundMat.id),
+                            code: foundMat.code || '',
+                            name: foundMat.name || '',
+                            origin_code: foundMat.origin_code || '',
+                            category: foundMat.category || '',
+                            unit: foundMat.unit || (foundMat.item_type === 'edge_band' ? 'm' : 'Tấm'),
+                            price: foundMat.cost_price || 0,
+                            stock: foundMat.current_stock || 0,
+                            item_type: foundMat.item_type
+                        });
+                    }
+                }
+                ts.setValue(strId, true);
+                onMaterialSelected(rowIdx, strId);
             }
         }
     }
@@ -407,6 +507,36 @@
         document.getElementById('lblTotalAmount').textContent = totalAmount.toLocaleString('vi-VN') + 'đ';
     }
 
+    function resolveMaterialId(it) {
+        if (!it) return '';
+        if (typeof it === 'string' && (it.startsWith('board_') || it.startsWith('edge_'))) {
+            return it;
+        }
+
+        const isEdge = it.item_type === 'edge_band';
+        if (isEdge) {
+            const match = MATERIALS.find(m => m.item_type === 'edge_band' && (m.wood_board_id == it.wood_board_id || m.raw_id == it.wood_board_id));
+            return match ? match.id : ('edge_' + it.wood_board_id);
+        }
+
+        // Board item
+        if (it.wood_board_price_id) {
+            const matchPrice = MATERIALS.find(m => m.item_type !== 'edge_band' && (m.wood_board_price_id == it.wood_board_price_id || m.id === 'board_' + it.wood_board_price_id));
+            if (matchPrice) return matchPrice.id;
+        }
+
+        if (it.wood_board_id) {
+            const matchBoard = MATERIALS.find(m => m.item_type !== 'edge_band' && (
+                (it.wood_board_price_id && m.wood_board_price_id == it.wood_board_price_id) ||
+                m.wood_board_id == it.wood_board_id ||
+                m.raw_id == it.wood_board_id
+            ));
+            if (matchBoard) return matchBoard.id;
+        }
+
+        return 'board_' + (it.wood_board_price_id || it.wood_board_id);
+    }
+
     // Initialize rows
     function initDefaultRows() {
         const whEl = document.getElementById("select_warehouse");
@@ -417,12 +547,101 @@
 
         if (INITIAL_ITEMS && INITIAL_ITEMS.length > 0) {
             INITIAL_ITEMS.forEach(it => {
-                const matId = it.wood_board_price_id || it.wood_board_id;
+                const matId = resolveMaterialId(it);
                 addItemRow(matId, it.quantity, it.unit_price, it.notes || '');
             });
         } else {
             addItemRow();
         }
+    }
+
+    // Supplier functions
+    function onSupplierChanged(selectEl) {
+        const selectedOpt = selectEl.options[selectEl.selectedIndex];
+        const inputName = document.getElementById('input_supplier_name');
+        const badge = document.getElementById('supplier_debt_badge');
+        const debtVal = document.getElementById('supplier_debt_val');
+
+        if (!selectedOpt || !selectedOpt.value) {
+            if (badge) badge.classList.add('hidden');
+            return;
+        }
+
+        if (inputName) {
+            inputName.value = selectedOpt.getAttribute('data-name') || '';
+        }
+
+        const debt = parseFloat(selectedOpt.getAttribute('data-debt') || 0);
+        if (badge && debtVal) {
+            debtVal.textContent = Number(debt).toLocaleString('vi-VN');
+            if (debt > 0) {
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+    }
+
+    function openQuickSupplierModal() {
+        document.getElementById('quickSupplierModal').classList.remove('hidden');
+        document.getElementById('quick_sup_name').focus();
+    }
+
+    function closeQuickSupplierModal() {
+        document.getElementById('quickSupplierModal').classList.add('hidden');
+    }
+
+    function handleQuickSupplierSubmit(e) {
+        e.preventDefault();
+        const btn = document.getElementById('btnSubmitQuickSupplier');
+        btn.disabled = true;
+        btn.innerHTML = 'Đang lưu...';
+
+        const payload = {
+            name: document.getElementById('quick_sup_name').value,
+            code: document.getElementById('quick_sup_code').value,
+            phone: document.getElementById('quick_sup_phone').value,
+            address: document.getElementById('quick_sup_address').value,
+            initial_debt: document.getElementById('quick_sup_initial_debt').value,
+            _token: '{{ csrf_token() }}'
+        };
+
+        fetch('{{ route("suppliers.quick-store") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            btn.disabled = false;
+            btn.innerHTML = '<iconify-icon icon="solar:check-circle-bold" class="text-sm"></iconify-icon> Lưu NCC';
+
+            if (data.success && data.supplier) {
+                const s = data.supplier;
+                const selectEl = document.getElementById('select_supplier');
+                const opt = document.createElement('option');
+                opt.value = s.id;
+                opt.textContent = `[${s.code}] ${s.name}`;
+                opt.setAttribute('data-name', s.name);
+                opt.setAttribute('data-debt', s.debt);
+                selectEl.appendChild(opt);
+                selectEl.value = s.id;
+                onSupplierChanged(selectEl);
+                closeQuickSupplierModal();
+                document.getElementById('quickSupplierForm').reset();
+            } else {
+                alert(data.message || 'Có lỗi xảy ra khi tạo nhà cung cấp.');
+            }
+        })
+        .catch(err => {
+            btn.disabled = false;
+            btn.innerHTML = '<iconify-icon icon="solar:check-circle-bold" class="text-sm"></iconify-icon> Lưu NCC';
+            alert('Không thể kết nối đến máy chủ.');
+        });
     }
 
     if (document.readyState === 'loading') {

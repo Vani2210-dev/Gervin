@@ -961,7 +961,7 @@
                         {{ number_format($monthlyDiscountCalc['acrylic_revenue'], 0, ',', '.') }}₫
                     </h3>
                     <span class="text-xs text-neutral-500 block">
-                        {{ $monthlyDiscountCalc['acrylic_count'] }} đơn Acrylic (không tính Min Late, Kính)
+                        {{ $monthlyDiscountCalc['acrylic_count'] }} đơn Acrylic mã GV (không tính Min Late, Kính, đơn không có mã GV)
                     </span>
                 </div>
 
@@ -1051,7 +1051,7 @@
                         Danh sách đơn hàng Acrylic trong tháng {{ $monthlyDiscountCalc['month_label'] }} ({{ $monthlyDiscountCalc['acrylic_count'] }} đơn)
                     </span>
                     <span class="text-xs text-neutral-400 italic">
-                        Chỉ tính đơn hàng Acrylic hợp lệ (chuyển SX, đang SX, hoàn thành). Đơn Min Late, Cánh kính đã tự động loại trừ.
+                        Chỉ tính đơn hàng Acrylic có mã tấm GV hợp lệ (chuyển SX, đang SX, hoàn thành). Đơn không có mã GV, Min Late, Cánh kính đã tự động loại trừ.
                     </span>
                 </div>
 
@@ -1062,6 +1062,7 @@
                                 <th class="w-12 text-center py-2.5">STT</th>
                                 <th class="py-2.5">Mã đơn</th>
                                 <th class="py-2.5">Tên công trình</th>
+                                <th class="py-2.5 text-center">Mã tấm (GV)</th>
                                 <th class="w-32 text-center py-2.5">Ngày chốt</th>
                                 <th class="w-28 text-center py-2.5">Phân loại</th>
                                 <th class="w-32 text-center py-2.5">Trạng thái</th>
@@ -1070,6 +1071,9 @@
                         </thead>
                         <tbody>
                             @forelse($monthlyDiscountCalc['acrylic_orders'] as $idx => $order)
+                            @php
+                                $gvCodes = method_exists($order, 'getGvSupplyCodes') ? $order->getGvSupplyCodes() : [];
+                            @endphp
                             <tr class="hover:bg-neutral-50/50">
                                 <td class="text-center font-semibold text-neutral-500 py-2">{{ $idx + 1 }}</td>
                                 <td class="py-2">
@@ -1078,6 +1082,19 @@
                                     </a>
                                 </td>
                                 <td class="py-2 font-medium text-neutral-800">{{ $order->customer_name ?: '—' }}</td>
+                                <td class="text-center py-2">
+                                    @if(!empty($gvCodes))
+                                        <div class="flex flex-wrap gap-1 justify-center">
+                                            @foreach($gvCodes as $code)
+                                                <span class="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                    {{ $code }}
+                                                </span>
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        <span class="text-neutral-400">—</span>
+                                    @endif
+                                </td>
                                 <td class="text-center py-2 text-neutral-600">
                                     {{ $order->order_date ? \Carbon\Carbon::parse($order->order_date)->format('d/m/Y') : '—' }}
                                 </td>
@@ -1097,8 +1114,8 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="7" class="text-center py-8 text-neutral-400">
-                                    Khách hàng không có đơn hàng Acrylic nào trong tháng {{ $monthlyDiscountCalc['month_label'] }}.
+                                <td colspan="8" class="text-center py-8 text-neutral-400">
+                                    Khách hàng không có đơn hàng Acrylic mang mã tấm GV nào trong tháng {{ $monthlyDiscountCalc['month_label'] }}.
                                 </td>
                             </tr>
                             @endforelse
@@ -1106,7 +1123,7 @@
                         @if($monthlyDiscountCalc['acrylic_count'] > 0)
                         <tfoot class="bg-neutral-50 font-bold border-t border-neutral-200">
                             <tr>
-                                <td colspan="6" class="text-right py-2.5 text-neutral-700">Tổng doanh số Acrylic tính chiết khấu:</td>
+                                <td colspan="7" class="text-right py-2.5 text-neutral-700">Tổng doanh số Acrylic (mã GV) tính chiết khấu:</td>
                                 <td class="text-right py-2.5 text-primary-700 text-sm">
                                     {{ number_format($monthlyDiscountCalc['acrylic_revenue'], 0, ',', '.') }}₫
                                 </td>
@@ -1566,7 +1583,7 @@
                             Các mốc doanh số & tỷ lệ chiết khấu (%)
                         </span>
                         <span class="text-xs text-neutral-400">
-                            Chỉ tính doanh số Acrylic (đã loại trừ Min Late và Cánh kính)
+                            Chỉ tính doanh số Acrylic có mã tấm GV (đã loại trừ đơn không có mã GV, Min Late và Cánh kính)
                         </span>
                     </div>
                     <button type="button" onclick="addDiscountTierRow()"

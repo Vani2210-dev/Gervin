@@ -194,6 +194,9 @@
                     <li>
                         <a href="{{ route('inventory.index') }}"><i class="ri-circle-fill circle-icon text-primary-600 w-auto"></i> Tồn kho & Vật tư</a>
                     </li>
+                    <li>
+                        <a href="{{ route('suppliers.index') }}"><i class="ri-circle-fill circle-icon text-indigo-600 w-auto"></i> Nhà cung cấp & Công nợ</a>
+                    </li>
                     @endcan
 
                     @can('view dc stock')

@@ -162,6 +162,16 @@ class Order extends Model
         return $this->belongsTo(Customer::class);
     }
 
+    public function receipts()
+    {
+        return $this->hasMany(\App\Models\InventoryReceipt::class, 'order_id')->orderBy('date', 'desc');
+    }
+
+    public function issues()
+    {
+        return $this->hasMany(\App\Models\InventoryIssue::class, 'order_id')->orderBy('date', 'desc');
+    }
+
     public function items()
     {
         return $this->hasManyThrough(AcrylicOrderItem::class, OrderSupply::class, 'order_id', 'order_supply_id');
@@ -371,6 +381,58 @@ class Order extends Model
         }
         $cName = mb_strtolower(trim($this->customer_name ?? ''));
         return in_array($cName, ['nhập kho', 'nhap kho'], true);
+    }
+
+    /**
+     * Kiểm tra đơn hàng có ít nhất một tấm (vật tư) có mã GV hay không.
+     * Dùng để xét điều kiện chiết khấu tháng.
+     */
+    public function hasGvSupplies(): bool
+    {
+        $supplies = $this->relationLoaded('supplies') ? $this->supplies : $this->supplies()->get();
+
+        if ($supplies->isEmpty()) {
+            return false;
+        }
+
+        foreach ($supplies as $supply) {
+            $code = trim($supply->order_supply_code ?? '');
+            $name = trim($supply->supply_name ?? '');
+
+            // Nếu mã tấm có chứa 'GV' (ví dụ: GV01, GV28.TP, GV-05, ...)
+            if ($code !== '' && stripos($code, 'GV') !== false) {
+                return true;
+            }
+
+            // Hoặc trường hợp mã để trống nhưng tên vật tư ghi rõ mã GV (ví dụ: Tấm GV01...)
+            if ($code === '' && $name !== '' && preg_match('/(?:^|[^a-zA-Z0-9])GV(?:\d+|[^a-zA-Z0-9]|$)/i', $name)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Lấy danh sách các mã tấm GV của đơn hàng
+     */
+    public function getGvSupplyCodes(): array
+    {
+        $supplies = $this->relationLoaded('supplies') ? $this->supplies : $this->supplies()->get();
+        $gvCodes = [];
+
+        foreach ($supplies as $supply) {
+            $code = trim($supply->order_supply_code ?? '');
+            $name = trim($supply->supply_name ?? '');
+
+            if ($code !== '' && stripos($code, 'GV') !== false) {
+                $gvCodes[] = $code;
+            } elseif ($code === '' && $name !== '' && preg_match('/(?:^|[^a-zA-Z0-9])(GV\d+[^\s,]*)/i', $name, $matches)) {
+                $gvCodes[] = $matches[1];
+            }
+        }
+
+        return array_values(array_unique($gvCodes));
     }
 
     public function scopeWhereNhapKho($query)
