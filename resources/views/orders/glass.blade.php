@@ -1000,7 +1000,7 @@ function removeGlassOrderItem(button) {
 
 function updateGlassRowIndexes() {
     const orderCode = document.getElementById('order-code-input')?.value || '';
-    let globalPieceIndex = 1;
+    const pieceIndexBySupply = {};
     let globalItemIndex = 1;
 
     document.querySelectorAll('#glass-supplies-container .order-supply-row').forEach((supplyRow, supplyIndex) => {
@@ -1021,8 +1021,9 @@ function updateGlassRowIndexes() {
             const qty = parseInt(quantityInput?.value) || 1;
 
             if (!isAccessory) {
-                // Base code for the item (first piece index)
-                const baseCode = `${orderCode}.${supplyCode}.${globalPieceIndex}`;
+                // Base code for the item (first piece index, đánh số riêng theo từng vật tư)
+                const pieceStart = pieceIndexBySupply[supplyCode] || 1;
+                const baseCode = `${orderCode}.${supplyCode}.${pieceStart}`;
                 const productCodeInput = row.querySelector('.product-code-input');
                 if (productCodeInput) {
                     productCodeInput.value = baseCode;
@@ -1034,7 +1035,7 @@ function updateGlassRowIndexes() {
                     idsContainer.remove();
                 }
 
-                globalPieceIndex += qty;
+                pieceIndexBySupply[supplyCode] = pieceStart + qty;
             } else {
                 const idsContainer = row.querySelector('.product-ids-container');
                 if (idsContainer) {

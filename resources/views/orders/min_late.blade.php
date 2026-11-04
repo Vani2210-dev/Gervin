@@ -887,7 +887,7 @@ function removeMinLateOrderItem(button) {
 
 function updateMinLateRowIndexes() {
     const orderCode = document.getElementById('order-code-input')?.value || '';
-    let globalPieceIndex = 1;
+    const pieceIndexBySupply = {};
     let globalItemIndex = 1;
 
     document.querySelectorAll('#min-late-supplies-container .order-supply-row').forEach((supplyRow, supplyIndex) => {
@@ -904,8 +904,9 @@ function updateMinLateRowIndexes() {
             const quantityInput = row.querySelector('input[name*="[quantity]"]');
             const qty = parseInt(quantityInput?.value) || 1;
 
-            // Base code for the item (first piece index)
-            const baseCode = `${orderCode}.${supplyCode}.${globalPieceIndex}`;
+            // Base code for the item (first piece index, đánh số riêng theo từng vật tư)
+            const pieceStart = pieceIndexBySupply[supplyCode] || 1;
+            const baseCode = `${orderCode}.${supplyCode}.${pieceStart}`;
             const productCodeInput = row.querySelector('.product-code-input');
             if (productCodeInput) {
                 productCodeInput.value = baseCode;
@@ -935,7 +936,7 @@ function updateMinLateRowIndexes() {
                 }
             });
 
-            globalPieceIndex += qty;
+            pieceIndexBySupply[supplyCode] = pieceStart + qty;
             globalItemIndex++;
         });
     });

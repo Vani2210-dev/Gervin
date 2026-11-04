@@ -997,7 +997,7 @@ function removeOrderItem(button) {
 
 function updateAcrylicRowIndexes() {
     const orderCode = document.getElementById('order-code-input')?.value || '';
-    let globalPieceIndex = 1;
+    const pieceIndexBySupply = {};
     let globalItemIndex = 1;
 
     document.querySelectorAll('#order-supplies-container .order-supply-row').forEach((supplyRow, supplyIndex) => {
@@ -1020,18 +1020,19 @@ function updateAcrylicRowIndexes() {
             const qty = parseInt(quantityInput?.value) || 1;
 
             if (isLaborRow) {
-                // Labor rows: clear the product-code-input (no mã tấm), do NOT advance globalPieceIndex
+                // Labor rows: clear the product-code-input (no mã tấm), do NOT advance piece index
                 const productCodeInput = row.querySelector('.product-code-input');
                 if (productCodeInput) productCodeInput.value = '';
                 // Apply amber styling as visual cue
                 row.classList.add('bg-amber-50/60');
                 row.dataset.isLabor = '1';
             } else {
-                // Normal rows: assign mã tấm
-                const baseCode = `${orderCode}.${supplyCode}.${globalPieceIndex}`;
+                // Normal rows: assign mã tấm (đánh số riêng theo từng vật tư)
+                const pieceStart = pieceIndexBySupply[supplyCode] || 1;
+                const baseCode = `${orderCode}.${supplyCode}.${pieceStart}`;
                 const productCodeInput = row.querySelector('.product-code-input');
                 if (productCodeInput) productCodeInput.value = baseCode;
-                globalPieceIndex += qty;
+                pieceIndexBySupply[supplyCode] = pieceStart + qty;
             }
 
             // Remove product_ids container if it exists

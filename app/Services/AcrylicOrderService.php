@@ -301,7 +301,7 @@ class AcrylicOrderService
      */
     protected function saveSuppliesAndItems(Order $order, array $suppliesData): void
     {
-        $globalPieceIndex = 1;
+        $pieceIndexByPrefix = [];
         $isRework = $order->relation_type === 'rework';
         foreach ($suppliesData as $supplyData) {
             $orderSupply = OrderSupply::create([
@@ -365,16 +365,18 @@ class AcrylicOrderService
                     $supplyCodePart = $orderSupply->order_supply_code ?? '';
                     $prefix = $order->order_code . ($supplyCodePart !== '' ? '.' . $supplyCodePart : '');
 
+                    // Đánh số riêng theo từng vật tư (prefix): mỗi vật tư reset về 1
+                    $startIndex = $pieceIndexByPrefix[$prefix] ?? 1;
                     $qty = intval($item['quantity']) ?: 1;
                     for ($i = 0; $i < $qty; $i++) {
                         $orderItem->codes()->create([
-                            'product_id' => $prefix . '.' . ($globalPieceIndex + $i),
+                            'product_id' => $prefix . '.' . ($startIndex + $i),
                             'status'     => [],
                         ]);
                     }
-                    $globalPieceIndex += $qty;
+                    $pieceIndexByPrefix[$prefix] = $startIndex + $qty;
                 }
-                // else: labor row — no codes, globalPieceIndex unchanged
+                // else: labor row — no codes, piece index unchanged
             }
         }
     }

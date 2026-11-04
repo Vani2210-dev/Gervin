@@ -303,7 +303,7 @@ class GlassOrderService
      */
     protected function saveSuppliesAndItems(Order $order, array $suppliesData): void
     {
-        $globalPieceIndex = 1;
+        $pieceIndexByPrefix = [];
         foreach ($suppliesData as $supplyData) {
             $orderSupply = OrderSupply::create([
                 'order_id'          => $order->id,
@@ -348,14 +348,16 @@ class GlassOrderService
                 $supplyCodePart = $orderSupply->order_supply_code ?? '';
                 $prefix = $order->order_code . ($supplyCodePart !== '' ? '.' . $supplyCodePart : '');
 
+                // Đánh số riêng theo từng vật tư (prefix): mỗi vật tư reset về 1
+                $startIndex = $pieceIndexByPrefix[$prefix] ?? 1;
                 $qty = intval($wingQuantity) ?: 1;
                 for ($i = 0; $i < $qty; $i++) {
                     $orderItem->codes()->create([
-                        'product_id' => $prefix . '.' . ($globalPieceIndex + $i),
+                        'product_id' => $prefix . '.' . ($startIndex + $i),
                         'status'     => [],
                     ]);
                 }
-                $globalPieceIndex += $qty;
+                $pieceIndexByPrefix[$prefix] = $startIndex + $qty;
             }
         }
     }
