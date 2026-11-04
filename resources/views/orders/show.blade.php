@@ -54,6 +54,32 @@
         $deliveredPlates = $productionStats['delivered_plates'] ?? 0;
         $totalPackages = $productionStats['total_packages'] ?? 0;
         $completedPackages = $productionStats['completed_packages'] ?? 0;
+
+        $allOrderPlateProductIds = [];
+        foreach ($acrylicOrder->supplies as $s) {
+            $itemsList = match($acrylicOrder->type) {
+                'min_late', 'Flywood' => $s->minLateItems,
+                'glass' => $s->glassItems,
+                default => $s->items,
+            };
+            foreach ($itemsList as $it) {
+                foreach ($it->codes as $cd) {
+                    if (!empty($cd->product_id)) {
+                        $allOrderPlateProductIds[] = (string) $cd->product_id;
+                    }
+                }
+            }
+        }
+        $packageItemsMap = [];
+        if (!empty($allOrderPlateProductIds)) {
+            $pkgItems = \App\Models\PackingPackageItem::with('package')
+                ->whereIn('item_code_id', $allOrderPlateProductIds)
+                ->where('is_packaged', true)
+                ->get();
+            foreach ($pkgItems as $pi) {
+                $packageItemsMap[(string) $pi->item_code_id] = $pi;
+            }
+        }
     @endphp
 
     {{-- Khối thống kê tiến độ: Chưa SX, Đang SX, Đã đóng gói, Khách đã nhận --}}
@@ -516,121 +542,20 @@
                     </div>
 
                     <div class="p-6">
-                        <div class="overflow-x-auto">
-                            @if(in_array($acrylicOrder->type, ['min_late', 'Flywood']))
-                                {{-- Min Late items - expand to individual sheets with status --}}
-                                <table class="table bordered-table sm-table mb-0 w-full text-xs">
-                                    <thead>
-                                        <tr>
-                                            <th scope="col" class="w-14 text-center">STT</th>
-                                            <th scope="col" class="w-60 text-left">Mã tấm</th>
-                                            <th scope="col" class="w-44 text-center">Giai đoạn</th>
-                                            <th scope="col" class="w-48 text-left">Người thực hiện</th>
-                                            <th scope="col" class="text-left">Ghi chú</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @php $globalMinLateIndex = 0; @endphp
-                                        @forelse($supply->minLateItems as $item)
-                                            @php
-                                                $codes = $item->codes;
-                                                $hasAnyCode = $codes->count() > 0;
-                                                $rowCount = $hasAnyCode ? $codes->count() : 1;
-                                            @endphp
-                                            @for($sheetIdx = 0; $sheetIdx < $rowCount; $sheetIdx++)
-                                                @php
-                                                    $globalMinLateIndex++;
-                                                    $code = $hasAnyCode ? $codes[$sheetIdx] : null;
-                                                    $productId = $code ? $code->product_id : ($item->product_code ?? '—');
-                                                    $statusLog = $code ? ($code->status ?? []) : [];
-                                                @endphp
-                                                <tr>
-                                                    <td class="text-center font-semibold text-neutral-500">{{ $globalMinLateIndex }}</td>
-                                                    <td><span class="text-neutral-700 text-xs font-mono font-medium">{{ $productId }}</span></td>
-                                                    <td class="text-center py-2">
-                                                        @if(!empty($statusLog))
-                                                            <div class="flex flex-col gap-1.5 items-center justify-center">
-                                                                @foreach($statusLog as $log)
-                                                                    @php
-                                                                        $act = $log['action'] ?? '—';
-                                                                        $actLower = mb_strtolower($act);
-                                                                        $badgeClass = 'bg-primary-50 text-primary-700 border border-primary-200';
-                                                                        if (str_contains($actLower, 'lỗi') || str_contains($actLower, 'hỏng')) {
-                                                                            $badgeClass = 'bg-rose-50 text-rose-700 border border-rose-200';
-                                                                        } elseif (str_contains($actLower, 'hoàn thành') || str_contains($actLower, 'đạt') || str_contains($actLower, 'qc')) {
-                                                                            $badgeClass = 'bg-emerald-50 text-emerald-700 border border-emerald-200';
-                                                                        } elseif (str_contains($actLower, 'ép')) {
-                                                                            $badgeClass = 'bg-amber-50 text-amber-800 border border-amber-200';
-                                                                        } elseif (str_contains($actLower, 'dán') || str_contains($actLower, 'cạnh')) {
-                                                                            $badgeClass = 'bg-indigo-50 text-indigo-700 border border-indigo-200';
-                                                                        } elseif (str_contains($actLower, 'cnc') || str_contains($actLower, 'cắt')) {
-                                                                            $badgeClass = 'bg-cyan-50 text-cyan-700 border border-cyan-200';
-                                                                        } elseif (str_contains($actLower, 'đóng gói')) {
-                                                                            $badgeClass = 'bg-teal-50 text-teal-700 border border-teal-200';
-                                                                        } elseif (str_contains($actLower, 'chờ')) {
-                                                                            $badgeClass = 'bg-neutral-100 text-neutral-500 border border-neutral-200';
-                                                                        }
-                                                                    @endphp
-                                                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold {{ $badgeClass }}" title="{{ $log['operator'] ?? '' }} ({{ $log['time'] ?? '' }})">
-                                                                        {{ $act }}
-                                                                    </span>
-                                                                @endforeach
-                                                            </div>
-                                                        @else
-                                                            <span class="text-neutral-400 text-xs">—</span>
-                                                        @endif
-                                                    </td>
-                                                    <td class="text-xs text-neutral-600 py-2">
-                                                        @if(!empty($statusLog))
-                                                            <div class="flex flex-col gap-1.5">
-                                                                @foreach($statusLog as $log)
-                                                                    @php
-                                                                        $op = $log['operator'] ?? '—';
-                                                                        $time = !empty($log['time']) ? date('H:i d/m', strtotime($log['time'])) : '';
-                                                                    @endphp
-                                                                    <div class="flex items-center gap-1.5 min-h-[22px]">
-                                                                        <span class="font-medium text-neutral-800 truncate max-w-[140px]">{{ $op }}</span>
-                                                                        @if($time)
-                                                                            <span class="text-[10px] text-neutral-400 font-mono">({{ $time }})</span>
-                                                                        @endif
-                                                                    </div>
-                                                                @endforeach
-                                                            </div>
-                                                        @else
-                                                            <span class="text-neutral-400 text-xs">—</span>
-                                                        @endif
-                                                    </td>
-                                                    <td class="text-xs text-neutral-500 py-2">
-                                                        @if(!empty($statusLog))
-                                                            <div class="flex flex-col gap-1.5">
-                                                                @foreach($statusLog as $log)
-                                                                    @php
-                                                                        $logNote = $log['notes'] ?? '';
-                                                                    @endphp
-                                                                    <div class="min-h-[22px] flex items-center text-neutral-600 truncate">
-                                                                        {{ $logNote ?: ($item->notes ?? '—') }}
-                                                                    </div>
-                                                                @endforeach
-                                                            </div>
-                                                        @else
-                                                            <span class="text-neutral-500 text-xs">{{ $item->notes ?? '—' }}</span>
-                                                        @endif
-                                                    </td>
-                                                </tr>
-                                            @endfor
-                                        @empty
-                                            <tr>
-                                                <td colspan="5" class="text-center text-neutral-400 py-4">Chưa có sản phẩm nào</td>
-                                            </tr>
-                                        @endforelse
-                                    </tbody>
-                                </table>
-                            @elseif($acrylicOrder->type === 'glass')
-                                @php
-                                    $isAccessory = ($supply->supply_name === 'Phụ kiện');
-                                @endphp
-                                @if($isAccessory)
-                                    {{-- Bảng chi tiết Phụ kiện --}}
+                        @if(in_array($acrylicOrder->type, ['min_late', 'Flywood']))
+                            {{-- Min Late items - horizontal stage columns --}}
+                            @include('orders._plate_progress_table', [
+                                'items' => $supply->minLateItems,
+                                'codeLabel' => 'Mã tấm',
+                                'packageItemsMap' => $packageItemsMap
+                            ])
+                        @elseif($acrylicOrder->type === 'glass')
+                            @php
+                                $isAccessory = ($supply->supply_name === 'Phụ kiện');
+                            @endphp
+                            @if($isAccessory)
+                                {{-- Bảng chi tiết Phụ kiện --}}
+                                <div class="overflow-x-auto border border-neutral-200 rounded-xl">
                                     <table class="table bordered-table sm-table mb-0 w-full text-xs">
                                         <thead>
                                             <tr>
@@ -663,225 +588,23 @@
                                             @endforelse
                                         </tbody>
                                     </table>
-                                @else
-                                    {{-- Glass items - expand to individual sheets with status --}}
-                                    <table class="table bordered-table sm-table mb-0 w-full text-xs">
-                                        <thead>
-                                            <tr>
-                                                <th scope="col" class="w-14 text-center">STT</th>
-                                                <th scope="col" class="w-60 text-left">Mã cánh</th>
-                                                <th scope="col" class="w-44 text-center">Giai đoạn</th>
-                                                <th scope="col" class="w-48 text-left">Người thực hiện</th>
-                                                <th scope="col" class="text-left">Ghi chú</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @php $globalGlassIndex = 0; @endphp
-                                            @forelse($supply->glassItems as $item)
-                                                @php
-                                                    $codes = $item->codes;
-                                                    $hasAnyCode = $codes->count() > 0;
-                                                    $rowCount = $hasAnyCode ? $codes->count() : 1;
-                                                @endphp
-                                                @for($sheetIdx = 0; $sheetIdx < $rowCount; $sheetIdx++)
-                                                    @php
-                                                        $globalGlassIndex++;
-                                                        $code = $hasAnyCode ? $codes[$sheetIdx] : null;
-                                                        $productId = $code ? $code->product_id : ($item->product_code ?? '—');
-                                                        $statusLog = $code ? ($code->status ?? []) : [];
-                                                    @endphp
-                                                    <tr>
-                                                        <td class="text-center font-semibold text-neutral-500">{{ $globalGlassIndex }}</td>
-                                                        <td><span class="text-neutral-700 text-xs font-mono font-medium">{{ $productId }}</span></td>
-                                                        <td class="text-center py-2">
-                                                            @if(!empty($statusLog))
-                                                                <div class="flex flex-col gap-1.5 items-center justify-center">
-                                                                    @foreach($statusLog as $log)
-                                                                        @php
-                                                                            $act = $log['action'] ?? '—';
-                                                                            $actLower = mb_strtolower($act);
-                                                                            $badgeClass = 'bg-primary-50 text-primary-700 border border-primary-200';
-                                                                            if (str_contains($actLower, 'lỗi') || str_contains($actLower, 'hỏng')) {
-                                                                                $badgeClass = 'bg-rose-50 text-rose-700 border border-rose-200';
-                                                                            } elseif (str_contains($actLower, 'hoàn thành') || str_contains($actLower, 'đạt') || str_contains($actLower, 'qc')) {
-                                                                                $badgeClass = 'bg-emerald-50 text-emerald-700 border border-emerald-200';
-                                                                            } elseif (str_contains($actLower, 'ép')) {
-                                                                                $badgeClass = 'bg-amber-50 text-amber-800 border border-amber-200';
-                                                                            } elseif (str_contains($actLower, 'dán') || str_contains($actLower, 'cạnh')) {
-                                                                                $badgeClass = 'bg-indigo-50 text-indigo-700 border border-indigo-200';
-                                                                            } elseif (str_contains($actLower, 'cnc') || str_contains($actLower, 'cắt')) {
-                                                                                $badgeClass = 'bg-cyan-50 text-cyan-700 border border-cyan-200';
-                                                                            } elseif (str_contains($actLower, 'đóng gói')) {
-                                                                                $badgeClass = 'bg-teal-50 text-teal-700 border border-teal-200';
-                                                                            } elseif (str_contains($actLower, 'chờ')) {
-                                                                                $badgeClass = 'bg-neutral-100 text-neutral-500 border border-neutral-200';
-                                                                            }
-                                                                        @endphp
-                                                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold {{ $badgeClass }}" title="{{ $log['operator'] ?? '' }} ({{ $log['time'] ?? '' }})">
-                                                                            {{ $act }}
-                                                                        </span>
-                                                                    @endforeach
-                                                                </div>
-                                                            @else
-                                                                <span class="text-neutral-400 text-xs">—</span>
-                                                            @endif
-                                                        </td>
-                                                        <td class="text-xs text-neutral-600 py-2">
-                                                            @if(!empty($statusLog))
-                                                                <div class="flex flex-col gap-1.5">
-                                                                    @foreach($statusLog as $log)
-                                                                        @php
-                                                                            $op = $log['operator'] ?? '—';
-                                                                            $time = !empty($log['time']) ? date('H:i d/m', strtotime($log['time'])) : '';
-                                                                        @endphp
-                                                                        <div class="flex items-center gap-1.5 min-h-[22px]">
-                                                                            <span class="font-medium text-neutral-800 truncate max-w-[140px]">{{ $op }}</span>
-                                                                            @if($time)
-                                                                                <span class="text-[10px] text-neutral-400 font-mono">({{ $time }})</span>
-                                                                            @endif
-                                                                        </div>
-                                                                    @endforeach
-                                                                </div>
-                                                            @else
-                                                                <span class="text-neutral-400 text-xs">—</span>
-                                                            @endif
-                                                        </td>
-                                                        <td class="text-xs text-neutral-500 py-2">
-                                                            @if(!empty($statusLog))
-                                                                <div class="flex flex-col gap-1.5">
-                                                                    @foreach($statusLog as $log)
-                                                                        @php
-                                                                            $logNote = $log['notes'] ?? '';
-                                                                        @endphp
-                                                                        <div class="min-h-[22px] flex items-center text-neutral-600 truncate">
-                                                                            {{ $logNote ?: ($item->notes ?? '—') }}
-                                                                        </div>
-                                                                    @endforeach
-                                                                </div>
-                                                            @else
-                                                                <span class="text-neutral-500 text-xs">{{ $item->notes ?? '—' }}</span>
-                                                            @endif
-                                                        </td>
-                                                    </tr>
-                                                @endfor
-                                            @empty
-                                                <tr>
-                                                    <td colspan="5" class="text-center text-neutral-400 py-4">Chưa có sản phẩm nào</td>
-                                                </tr>
-                                            @endforelse
-                                        </tbody>
-                                    </table>
-                                @endif
+                                </div>
                             @else
-                                {{-- Acrylic items - expand to individual sheets with status --}}
-                                <table class="table bordered-table sm-table mb-0 w-full text-xs">
-                                    <thead>
-                                        <tr>
-                                            <th scope="col" class="w-14 text-center">STT</th>
-                                            <th scope="col" class="w-60 text-left">Mã tấm</th>
-                                            <th scope="col" class="w-44 text-center">Giai đoạn</th>
-                                            <th scope="col" class="w-48 text-left">Người thực hiện</th>
-                                            <th scope="col" class="text-left">Ghi chú</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @php $globalSheetIndex = 0; @endphp
-                                        @forelse($supply->items as $item)
-                                            @php
-                                                $codes = $item->codes;
-                                                $hasAnyCode = $codes->count() > 0;
-                                                $rowCount = $hasAnyCode ? $codes->count() : 1;
-                                            @endphp
-                                            @for($sheetIdx = 0; $sheetIdx < $rowCount; $sheetIdx++)
-                                                @php
-                                                    $globalSheetIndex++;
-                                                    $code = $hasAnyCode ? $codes[$sheetIdx] : null;
-                                                    $productId = $code ? $code->product_id : ($item->product_code ?? '—');
-                                                    $statusLog = $code ? ($code->status ?? []) : [];
-                                                @endphp
-                                                <tr>
-                                                    <td class="text-center font-semibold text-neutral-500">{{ $globalSheetIndex }}</td>
-                                                    <td><span class="text-neutral-700 text-xs font-mono font-medium">{{ $productId }}</span></td>
-                                                    <td class="text-center py-2">
-                                                        @if(!empty($statusLog))
-                                                            <div class="flex flex-col gap-1.5 items-center justify-center">
-                                                                @foreach($statusLog as $log)
-                                                                    @php
-                                                                        $act = $log['action'] ?? '—';
-                                                                        $actLower = mb_strtolower($act);
-                                                                        $badgeClass = 'bg-primary-50 text-primary-700 border border-primary-200';
-                                                                        if (str_contains($actLower, 'lỗi') || str_contains($actLower, 'hỏng')) {
-                                                                            $badgeClass = 'bg-rose-50 text-rose-700 border border-rose-200';
-                                                                        } elseif (str_contains($actLower, 'hoàn thành') || str_contains($actLower, 'đạt') || str_contains($actLower, 'qc')) {
-                                                                            $badgeClass = 'bg-emerald-50 text-emerald-700 border border-emerald-200';
-                                                                        } elseif (str_contains($actLower, 'ép')) {
-                                                                            $badgeClass = 'bg-amber-50 text-amber-800 border border-amber-200';
-                                                                        } elseif (str_contains($actLower, 'dán') || str_contains($actLower, 'cạnh')) {
-                                                                            $badgeClass = 'bg-indigo-50 text-indigo-700 border border-indigo-200';
-                                                                        } elseif (str_contains($actLower, 'cnc') || str_contains($actLower, 'cắt')) {
-                                                                            $badgeClass = 'bg-cyan-50 text-cyan-700 border border-cyan-200';
-                                                                        } elseif (str_contains($actLower, 'đóng gói')) {
-                                                                            $badgeClass = 'bg-teal-50 text-teal-700 border border-teal-200';
-                                                                        } elseif (str_contains($actLower, 'chờ')) {
-                                                                            $badgeClass = 'bg-neutral-100 text-neutral-500 border border-neutral-200';
-                                                                        }
-                                                                    @endphp
-                                                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold {{ $badgeClass }}" title="{{ $log['operator'] ?? '' }} ({{ $log['time'] ?? '' }})">
-                                                                        {{ $act }}
-                                                                    </span>
-                                                                @endforeach
-                                                            </div>
-                                                        @else
-                                                            <span class="text-neutral-400 text-xs">—</span>
-                                                        @endif
-                                                    </td>
-                                                    <td class="text-xs text-neutral-600 py-2">
-                                                        @if(!empty($statusLog))
-                                                            <div class="flex flex-col gap-1.5">
-                                                                @foreach($statusLog as $log)
-                                                                    @php
-                                                                        $op = $log['operator'] ?? '—';
-                                                                        $time = !empty($log['time']) ? date('H:i d/m', strtotime($log['time'])) : '';
-                                                                    @endphp
-                                                                    <div class="flex items-center gap-1.5 min-h-[22px]">
-                                                                        <span class="font-medium text-neutral-800 truncate max-w-[140px]">{{ $op }}</span>
-                                                                        @if($time)
-                                                                            <span class="text-[10px] text-neutral-400 font-mono">({{ $time }})</span>
-                                                                        @endif
-                                                                    </div>
-                                                                @endforeach
-                                                            </div>
-                                                        @else
-                                                            <span class="text-neutral-400 text-xs">—</span>
-                                                        @endif
-                                                    </td>
-                                                    <td class="text-xs text-neutral-500 py-2">
-                                                        @if(!empty($statusLog))
-                                                            <div class="flex flex-col gap-1.5">
-                                                                @foreach($statusLog as $log)
-                                                                    @php
-                                                                        $logNote = $log['notes'] ?? '';
-                                                                    @endphp
-                                                                    <div class="min-h-[22px] flex items-center text-neutral-600 truncate">
-                                                                        {{ $logNote ?: ($item->notes ?? '—') }}
-                                                                    </div>
-                                                                @endforeach
-                                                            </div>
-                                                        @else
-                                                            <span class="text-neutral-500 text-xs">{{ $item->notes ?? '—' }}</span>
-                                                        @endif
-                                                    </td>
-                                                </tr>
-                                            @endfor
-                                        @empty
-                                            <tr>
-                                                <td colspan="5" class="text-center text-neutral-400 py-4">Chưa có sản phẩm nào</td>
-                                            </tr>
-                                        @endforelse
-                                    </tbody>
-                                </table>
+                                {{-- Glass items - horizontal stage columns --}}
+                                @include('orders._plate_progress_table', [
+                                    'items' => $supply->glassItems,
+                                    'codeLabel' => 'Mã cánh',
+                                    'packageItemsMap' => $packageItemsMap
+                                ])
                             @endif
-                        </div>
+                        @else
+                            {{-- Acrylic items - horizontal stage columns --}}
+                            @include('orders._plate_progress_table', [
+                                'items' => $supply->items,
+                                'codeLabel' => 'Mã tấm',
+                                'packageItemsMap' => $packageItemsMap
+                            ])
+                        @endif
                     </div>
                 </div>
             @endforeach

@@ -305,8 +305,14 @@ Route::get('warehouses-redirect', function() {
 
 // Suppliers & Payables (Quản lý Nhà cung cấp & Công nợ)
 Route::middleware(['auth'])->group(function () {
+    Route::get('suppliers/check-code', [SupplierController::class, 'checkCode'])->name('suppliers.check-code');
+    Route::get('suppliers/export', [SupplierController::class, 'exportExcel'])->name('suppliers.export');
+    Route::get('suppliers/{supplier}/receipts/export', [SupplierController::class, 'exportReceiptsExcel'])->name('suppliers.receipts.export');
+    Route::get('suppliers/{supplier}/payments/export', [SupplierController::class, 'exportPaymentsExcel'])->name('suppliers.payments.export');
+    Route::post('suppliers/quick-create', [SupplierController::class, 'quickCreate'])->name('suppliers.quick-create');
     Route::post('suppliers/quick-store', [SupplierController::class, 'quickStore'])->name('suppliers.quick-store');
     Route::post('suppliers/{supplier}/payments', [SupplierController::class, 'storePayment'])->name('suppliers.payments.store');
+    Route::put('suppliers/{supplier}/payments/{payment}', [SupplierController::class, 'updatePayment'])->name('suppliers.payments.update');
     Route::delete('suppliers/{supplier}/payments/{payment}', [SupplierController::class, 'destroyPayment'])->name('suppliers.payments.destroy');
     Route::resource('suppliers', SupplierController::class)->names('suppliers');
 });

@@ -213,7 +213,8 @@ class PackingPackageController extends Controller
             'product_code' => 'required|string|max:255',
         ]);
 
-        $found = $this->findItemCode(trim($validated['product_code']));
+        $cleanProductCode = $this->sanitizeProductCode($validated['product_code']);
+        $found = $this->findItemCode($cleanProductCode);
 
         if (! $found) {
             if ($request->expectsJson()) {
@@ -564,8 +565,22 @@ class PackingPackageController extends Controller
             ->with('success', 'Xóa kiện đóng gói thành công.');
     }
 
+    /**
+     * Chuẩn hóa mã tấm: loại bỏ dấu _ và các ký tự sau dấu _ do phần mềm nesting Wood xuất ra
+     * Ví dụ: 5213.GV40.TP.016_16 -> 5213.GV40.TP.016
+     */
+    private function sanitizeProductCode(?string $code): string
+    {
+        $code = trim((string) $code);
+        if (str_contains($code, '_')) {
+            $code = explode('_', $code)[0];
+        }
+        return trim($code);
+    }
+
     private function findItemCode(string $productCode): ?array
     {
+        $productCode = $this->sanitizeProductCode($productCode);
         foreach ([
             [
                 'class' => AcrylicOrderItemCode::class,

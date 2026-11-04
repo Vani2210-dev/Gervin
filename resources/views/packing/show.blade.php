@@ -330,6 +330,15 @@
         const packageItemDeleteToken = ' . json_encode(csrf_token()) . ';
         let packingIsSubmitting = false;
 
+        function sanitizeProductCode(code) {
+            if (!code) return "";
+            code = code.trim();
+            if (code.includes("_")) {
+                code = code.split("_")[0].trim();
+            }
+            return code;
+        }
+
         function toggleSubmitButton() {
             const productCodeInput = document.getElementById("product_code");
             const submitBtn = document.getElementById("packingSubmitBtn");
@@ -351,7 +360,7 @@
                 { facingMode: "environment" },
                 { fps: 10, qrbox: { width: 250, height: 250 } },
                 (decodedText) => {
-                    document.getElementById("product_code").value = decodedText;
+                    document.getElementById("product_code").value = sanitizeProductCode(decodedText);
                     toggleSubmitButton();
                     stopScanning();
                     playScanBeep();
@@ -415,10 +424,12 @@
                 return;
             }
 
-            const code = productCodeInput.value.trim();
+            const rawCode = productCodeInput.value.trim();
+            const code = sanitizeProductCode(rawCode);
             if (!code) {
                 return;
             }
+            productCodeInput.value = code;
 
             // Chặn gửi trùng khi quét hoặc nhập liên tiếp.
             packingIsSubmitting = true;

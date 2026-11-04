@@ -59,6 +59,15 @@
             </li>
             @endcan
 
+            @if(auth()->check() && (auth()->user()->can('view warehouse') || auth()->user()->can('view customer') || auth()->user()->hasRole('Admin')))
+            <li>
+                <a href="{{ route('suppliers.index') }}">
+                    <iconify-icon icon="mdi:truck-delivery-outline" class="menu-icon"></iconify-icon>
+                    <span>Nhà cung cấp & Công nợ</span>
+                </a>
+            </li>
+            @endif
+
             @can('view order')
             <li>
                 <a href="{{ route('orders.index') }}">
@@ -193,9 +202,6 @@
                     @can('view warehouse')
                     <li>
                         <a href="{{ route('inventory.index') }}"><i class="ri-circle-fill circle-icon text-primary-600 w-auto"></i> Tồn kho & Vật tư</a>
-                    </li>
-                    <li>
-                        <a href="{{ route('suppliers.index') }}"><i class="ri-circle-fill circle-icon text-indigo-600 w-auto"></i> Nhà cung cấp & Công nợ</a>
                     </li>
                     @endcan
 
