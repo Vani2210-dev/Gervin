@@ -6,7 +6,7 @@
 @endphp
 
 <div class="overflow-x-auto border border-neutral-200 rounded-xl shadow-xs">
-    <table class="table bordered-table sm-table mb-0 w-full min-w-[1380px] text-xs">
+    <table class="table bordered-table sm-table mb-0 w-full min-w-[1480px] text-xs">
         <thead>
             <tr class="bg-neutral-100 text-neutral-700">
                 <th scope="col" class="w-[52px] min-w-[52px] max-w-[52px] text-center sticky left-0 z-20 bg-neutral-100 shadow-[1px_0_0_0_#e5e7eb]">
@@ -14,6 +14,9 @@
                 </th>
                 <th scope="col" class="w-64 min-w-[240px] max-w-[260px] text-left sticky left-[52px] z-20 bg-neutral-100 border-r border-neutral-200 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.12)]">
                     {{ $codeLabel }}
+                </th>
+                <th scope="col" class="w-32 min-w-[110px] text-center bg-neutral-100">
+                    Kích thước
                 </th>
                 <th scope="col" class="w-40 min-w-[150px] text-center bg-neutral-100">
                     1. Ép ván
@@ -45,6 +48,18 @@
                     $codes = $item->codes;
                     $hasAnyCode = $codes->count() > 0;
                     $rowCount = $hasAnyCode ? $codes->count() : 1;
+
+                    $h = null;
+                    $w = null;
+                    if (isset($item->height) && isset($item->width)) {
+                        $h = $item->height;
+                        $w = $item->width;
+                    } elseif (isset($item->size)) {
+                        $s = is_array($item->size) ? $item->size : json_decode($item->size, true);
+                        $h = $s['height'] ?? $s['dai'] ?? $s['dài'] ?? null;
+                        $w = $s['width'] ?? $s['rong'] ?? $s['rộng'] ?? null;
+                    }
+                    $dimStr = ($h && $w) ? (floatval($h) . ' x ' . floatval($w)) : (($h || $w) ? (string) floatval($h ?: $w) : '—');
                 @endphp
                 @for($sheetIdx = 0; $sheetIdx < $rowCount; $sheetIdx++)
                     @php
@@ -96,6 +111,20 @@
                             <span class="text-neutral-900 text-xs font-mono font-semibold block break-all">{{ $productId }}</span>
                             @if(!empty($item->product_name) && $item->product_name !== $productId)
                                 <span class="text-[11px] text-neutral-500 block truncate" title="{{ $item->product_name }}">{{ $item->product_name }}</span>
+                            @endif
+                            @if($dimStr !== '—')
+                                <span class="text-[11px] text-neutral-500 font-mono block mt-0.5">KT: {{ $dimStr }}</span>
+                            @endif
+                        </td>
+
+                        {{-- Kích thước --}}
+                        <td class="text-center py-2 px-2.5 align-middle bg-white group-hover:bg-neutral-50">
+                            @if($dimStr !== '—')
+                                <span class="inline-flex items-center px-2 py-0.5 rounded bg-neutral-100 text-neutral-800 font-mono font-semibold text-xs whitespace-nowrap">
+                                    {{ $dimStr }}
+                                </span>
+                            @else
+                                <span class="text-neutral-300 font-mono text-xs">—</span>
                             @endif
                         </td>
 
@@ -414,7 +443,7 @@
                 @endfor
             @empty
                 <tr>
-                    <td colspan="9" class="text-center text-neutral-400 py-6">Chưa có sản phẩm nào</td>
+                    <td colspan="10" class="text-center text-neutral-400 py-6">Chưa có sản phẩm nào</td>
                 </tr>
             @endforelse
         </tbody>

@@ -616,28 +616,47 @@ class PackingPackageController extends Controller
         $productName = '—';
         $orderCode = '—';
         $type = '—';
+        $height = null;
+        $width = null;
 
         if ($code instanceof AcrylicOrderItemCode) {
             $item = $code->acrylicOrderItem;
             $productName = $item?->product_name ?? '—';
             $orderCode = $item?->orderSupply?->order?->order_code ?? '—';
             $type = 'Acrylic';
+            $height = $item?->height;
+            $width = $item?->width;
         } elseif ($code instanceof GlassOrderItemCode) {
             $item = $code->glassOrderItem;
             $productName = $item?->product_name ?? '—';
             $orderCode = $item?->orderSupply?->order?->order_code ?? '—';
             $type = 'Glass';
+            $height = $item?->height;
+            $width = $item?->width;
         } elseif ($code instanceof MinLateOrderItemCode) {
             $item = $code->minLateOrderItem;
             $productName = $item?->name ?? '—';
             $orderCode = $item?->orderSupply?->order?->order_code ?? '—';
             $type = 'Min-late';
+            $size = $item?->size;
+            if (is_string($size)) {
+                $size = json_decode($size, true);
+            }
+            if (is_array($size)) {
+                $height = $size['height'] ?? $size['dai'] ?? $size['dài'] ?? null;
+                $width = $size['width'] ?? $size['rong'] ?? $size['rộng'] ?? null;
+            }
         }
+
+        $dimension = ($height && $width)
+            ? (floatval($height) . ' x ' . floatval($width))
+            : (($height || $width) ? (string) floatval($height ?: $width) : '—');
 
         return (object) [
             'id' => $packageItem->id,
             'product_code' => $code?->product_id ?? '—',
             'product_name' => $productName,
+            'dimension' => $dimension,
             'order_code' => $orderCode,
             'type' => $type,
             'is_packaged' => $packageItem->is_packaged,
@@ -715,11 +734,13 @@ class PackingPackageController extends Controller
                 // Acrylic
                 foreach ($order->supplies as $supply) {
                     foreach ($supply->items as $item) {
+                        $dim = ($item->height && $item->width) ? (floatval($item->height) . ' x ' . floatval($item->width)) : '—';
                         foreach ($item->codes as $code) {
                             $isScanned = in_array($code->product_id, $scannedProductCodes);
                             $allPlates[] = [
                                 'product_code' => $code->product_id,
                                 'product_name' => $item->product_name ?? '—',
+                                'dimension' => $dim,
                                 'type' => 'Acrylic',
                                 'is_scanned' => $isScanned,
                             ];
@@ -727,11 +748,13 @@ class PackingPackageController extends Controller
                     }
                     // Glass
                     foreach ($supply->glassItems as $item) {
+                        $dim = ($item->height && $item->width) ? (floatval($item->height) . ' x ' . floatval($item->width)) : '—';
                         foreach ($item->codes as $code) {
                             $isScanned = in_array($code->product_id, $scannedProductCodes);
                             $allPlates[] = [
                                 'product_code' => $code->product_id,
                                 'product_name' => $item->product_name ?? '—',
+                                'dimension' => $dim,
                                 'type' => 'Kính',
                                 'is_scanned' => $isScanned,
                             ];
@@ -739,11 +762,19 @@ class PackingPackageController extends Controller
                     }
                     // Min Late
                     foreach ($supply->minLateItems as $item) {
+                        $size = $item->size;
+                        if (is_string($size)) {
+                            $size = json_decode($size, true);
+                        }
+                        $h = is_array($size) ? ($size['height'] ?? $size['dai'] ?? $size['dài'] ?? null) : null;
+                        $w = is_array($size) ? ($size['width'] ?? $size['rong'] ?? $size['rộng'] ?? null) : null;
+                        $dim = ($h && $w) ? (floatval($h) . ' x ' . floatval($w)) : '—';
                         foreach ($item->codes as $code) {
                             $isScanned = in_array($code->product_id, $scannedProductCodes);
                             $allPlates[] = [
                                 'product_code' => $code->product_id,
                                 'product_name' => $item->product_name ?? $item->name ?? '—',
+                                'dimension' => $dim,
                                 'type' => 'Min-late',
                                 'is_scanned' => $isScanned,
                             ];

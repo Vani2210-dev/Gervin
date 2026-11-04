@@ -202,6 +202,7 @@
                                 <tr class="packing-package-page__items-head-row">
                                     <th scope="col" class="packing-package-page__items-head-cell packing-package-page__items-head-cell--code border-r border-neutral-200 last:border-r-0 px-5 py-3 text-secondary-light font-semibold">Mã linh kiện</th>
                                     <th scope="col" class="packing-package-page__items-head-cell packing-package-page__items-head-cell--name border-r border-neutral-200 last:border-r-0 px-5 py-3 text-secondary-light font-semibold">Tên linh kiện</th>
+                                    <th scope="col" class="packing-package-page__items-head-cell packing-package-page__items-head-cell--dimension border-r border-neutral-200 last:border-r-0 px-5 py-3 text-secondary-light font-semibold text-center">Kích thước</th>
                                     <th scope="col" class="packing-package-page__items-head-cell packing-package-page__items-head-cell--type border-r border-neutral-200 last:border-r-0 px-5 py-3 text-secondary-light font-semibold">Loại</th>
                                     <th scope="col" class="packing-package-page__items-head-cell packing-package-page__items-head-cell--order-code border-r border-neutral-200 last:border-r-0 px-5 py-3 text-secondary-light font-semibold">Mã đơn</th>
                                     <th scope="col" class="packing-package-page__items-head-cell packing-package-page__items-head-cell--time border-r border-neutral-200 last:border-r-0 px-5 py-3 text-secondary-light font-semibold">Thời gian thêm</th>
@@ -219,6 +220,15 @@
                                             </span>
                                         </td>
                                         <td class="packing-package-page__items-cell packing-package-page__items-cell--name border-r border-neutral-200 last:border-r-0 px-5 py-3 font-semibold {{ $item->is_packaged ? 'text-neutral-900' : 'text-neutral-500' }}">{{ $item->product_name }}</td>
+                                        <td class="packing-package-page__items-cell packing-package-page__items-cell--dimension border-r border-neutral-200 last:border-r-0 px-5 py-3 text-center">
+                                            @if(!empty($item->dimension) && $item->dimension !== '—')
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded bg-neutral-100 text-neutral-800 font-mono font-semibold text-xs whitespace-nowrap">
+                                                    {{ $item->dimension }}
+                                                </span>
+                                            @else
+                                                <span class="text-neutral-400 font-mono text-xs">—</span>
+                                            @endif
+                                        </td>
                                         <td class="packing-package-page__items-cell packing-package-page__items-cell--type border-r border-neutral-200 last:border-r-0 px-5 py-3 text-secondary-light">{{ $item->type }}</td>
                                         <td class="packing-package-page__items-cell packing-package-page__items-cell--order-code border-r border-neutral-200 last:border-r-0 px-5 py-3 text-secondary-light">{{ $item->order_code }}</td>
                                         <td class="packing-package-page__items-cell packing-package-page__items-cell--time border-r border-neutral-200 last:border-r-0 px-5 py-3 text-secondary-light">

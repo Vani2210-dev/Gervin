@@ -72,7 +72,7 @@ async function generateNestingWorkbook(orderData, suppliesData, filename) {
     }
 
     const wb = new ExcelJS.Workbook();
-    const wsName = filename.toLowerCase().includes('phao') ? 'Nesting Phào' : 'Nesting';
+    const wsName = 'Panels for cutting';
     const ws = wb.addWorksheet(wsName);
 
     const thinBorder = {
@@ -261,146 +261,103 @@ async function generateNestingWorkbook(orderData, suppliesData, filename) {
         });
     });
 
-    // Sheet 2: Kho DC (sheet DC phía sau, luôn vào chung trong file nesting)
-    const wsDc = wb.addWorksheet('Kho DC', {
+    // Sheet 2: Stock boards (từ Kho DC)
+    const wsDc = wb.addWorksheet('Stock boards', {
         views: [{ showGridLines: true }]
     });
 
-        // 8 cột cơ bản (không có cột ID/STT)
-        const dcCols = [
-            { col: 'A', width: 34 }, // Tên vật tư
-            { col: 'B', width: 22 }, // Mã ván / SKU
-            { col: 'C', width: 14 }, // Chiều vân
-            { col: 'D', width: 14 }, // Cao
-            { col: 'E', width: 14 }, // Rộng
-            { col: 'F', width: 14 }, // Số lượng
-            { col: 'G', width: 14 }, // Vị trí
-            { col: 'H', width: 26 }, // Ghi chú
-        ];
-        dcCols.forEach(c => { wsDc.getColumn(c.col).width = c.width; });
+    // 6 cột theo chuẩn nesting: Material, Texture, Height, Width, Amount, Note
+    const dcCols = [
+        { col: 'A', width: 34 }, // Material
+        { col: 'B', width: 14 }, // Texture
+        { col: 'C', width: 14 }, // Height
+        { col: 'D', width: 14 }, // Width
+        { col: 'E', width: 14 }, // Amount
+        { col: 'F', width: 28 }, // Note
+    ];
+    dcCols.forEach(c => { wsDc.getColumn(c.col).width = c.width; });
 
-        // Dòng 1: Tiêu đề cột cơ bản nhất, không cần banner gộp ô
-        const dcHeaders = [
-            'Tên vật tư',
-            'Mã ván / SKU',
-            'Chiều vân',
-            'Cao',
-            'Rộng',
-            'Số lượng',
-            'Vị trí',
-            'Ghi chú'
-        ];
-        const r1Dc = wsDc.getRow(1);
-        r1Dc.height = 24;
-        dcHeaders.forEach((h, i) => {
-            const cell = r1Dc.getCell(i + 1);
-            cell.value = h;
-            cell.font = { name: 'Times New Roman', size: 11, bold: true };
-            cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
-            cell.fill = hdrFill;
-            cell.border = thinBorder;
-        });
+    // Dòng 1: Tiêu đề cột
+    const dcHeaders = [
+        'Material',
+        'Texture',
+        'Height',
+        'Width',
+        'Amount',
+        'Note'
+    ];
+    const r1Dc = wsDc.getRow(1);
+    r1Dc.height = 24;
+    dcHeaders.forEach((h, i) => {
+        const cell = r1Dc.getCell(i + 1);
+        cell.value = h;
+        cell.font = { name: 'Times New Roman', size: 11, bold: true };
+        cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+        cell.fill = hdrFill;
+        cell.border = thinBorder;
+    });
 
-        const rawDcMatches = orderData.dc_stock_matches || [];
-        const seenCurDc = new Set();
-        const dcMatches = [];
-        rawDcMatches.forEach(m => {
-            const key = m.dc_id
-                ? `id_${m.dc_id}`
-                : `${m.dc_board_code}_${m.dc_height}_${m.dc_width}_${m.dc_location}_${m.dc_note || ''}`;
-            if (!seenCurDc.has(key)) {
-                seenCurDc.add(key);
-                dcMatches.push(m);
-            }
-        });
-        let curDcRow = 2;
-
-        if (dcMatches.length > 0) {
-            dcMatches.forEach(m => {
-                const row = wsDc.getRow(curDcRow);
-                row.height = 20;
-
-                // Tên vật tư
-                row.getCell(1).value = m.supply_name || '—';
-                row.getCell(1).alignment = { horizontal: 'left', vertical: 'middle' };
-
-                // Mã ván / SKU
-                row.getCell(2).value = m.dc_board_code || m.supply_code || '—';
-                row.getCell(2).alignment = { horizontal: 'center', vertical: 'middle' };
-
-                // Chiều vân: strictly 0 hoặc 2
-                const gdVal = (m.grain_direction === 2 || m.grain_direction === '2' || m.grain_direction === 'Vân dọc' || m.grain_direction === 'Vân ngang') ? 2 : 0;
-                row.getCell(3).value = gdVal;
-                row.getCell(3).alignment = { horizontal: 'center', vertical: 'middle' };
-
-                // Cao
-                row.getCell(4).value = parseInt(m.dc_height) || 0;
-                row.getCell(4).numFmt = '#,##0';
-                row.getCell(4).alignment = { horizontal: 'right', vertical: 'middle' };
-
-                // Rộng
-                row.getCell(5).value = parseInt(m.dc_width) || 0;
-                row.getCell(5).numFmt = '#,##0';
-                row.getCell(5).alignment = { horizontal: 'right', vertical: 'middle' };
-
-                // Số lượng
-                row.getCell(6).value = parseInt(m.dc_quantity) || 1;
-                row.getCell(6).numFmt = '#,##0';
-                row.getCell(6).alignment = { horizontal: 'center', vertical: 'middle' };
-
-                // Vị trí
-                row.getCell(7).value = m.dc_location || '—';
-                row.getCell(7).font = { name: 'Times New Roman', size: 11, bold: true, color: { argb: 'FF0D9488' } };
-                row.getCell(7).alignment = { horizontal: 'center', vertical: 'middle' };
-
-                // Ghi chú
-                row.getCell(8).value = m.dc_note || '';
-                row.getCell(8).alignment = { horizontal: 'left', vertical: 'middle' };
-
-                for (let c = 1; c <= 8; c++) {
-                    const cell = row.getCell(c);
-                    if (c !== 7) {
-                        cell.font = { name: 'Times New Roman', size: 11 };
-                    }
-                    cell.border = thinBorder;
-                }
-
-                curDcRow++;
-            });
-
-            // Dòng tổng cộng số tấm
-            const sumRow = wsDc.getRow(curDcRow);
-            sumRow.height = 22;
-            wsDc.mergeCells(`A${curDcRow}:E${curDcRow}`);
-            sumRow.getCell(1).value = 'TỔNG CỘNG SỐ TẤM DƯ TRONG KHO:';
-            sumRow.getCell(1).font = { name: 'Times New Roman', size: 11, bold: true };
-            sumRow.getCell(1).alignment = { horizontal: 'right', vertical: 'middle' };
-
-            const totalQty = dcMatches.reduce((sum, item) => sum + (parseInt(item.dc_quantity) || 0), 0);
-            sumRow.getCell(6).value = totalQty;
-            sumRow.getCell(6).font = { name: 'Times New Roman', size: 11, bold: true, color: { argb: 'FFDC2626' } };
-            sumRow.getCell(6).numFmt = '#,##0';
-            sumRow.getCell(6).alignment = { horizontal: 'center', vertical: 'middle' };
-
-            for (let c = 1; c <= 8; c++) {
-                const cell = sumRow.getCell(c);
-                cell.border = {
-                    top: { style: 'thin', color: { argb: 'FF9CA3AF' } },
-                    bottom: { style: 'double', color: { argb: 'FF1F2937' } }
-                };
-            }
-        } else {
-            const emptyRow = wsDc.getRow(curDcRow);
-            emptyRow.height = 26;
-            wsDc.mergeCells(`A${curDcRow}:H${curDcRow}`);
-            const emptyCell = emptyRow.getCell(1);
-            emptyCell.value = 'Không tìm thấy tấm dư nào trong kho DC phù hợp với đơn hàng.';
-            emptyCell.font = { name: 'Times New Roman', size: 11, italic: true, color: { argb: 'FF6B7280' } };
-            emptyCell.alignment = { horizontal: 'center', vertical: 'middle' };
-            for (let c = 1; c <= 8; c++) {
-                emptyRow.getCell(c).border = thinBorder;
-            }
+    const rawDcMatches = orderData.dc_stock_matches || [];
+    const seenCurDc = new Set();
+    const dcMatches = [];
+    rawDcMatches.forEach(m => {
+        const key = m.dc_id
+            ? `id_${m.dc_id}`
+            : `${m.dc_board_code}_${m.dc_height}_${m.dc_width}_${m.dc_location}_${m.dc_note || ''}`;
+        if (!seenCurDc.has(key)) {
+            seenCurDc.add(key);
+            dcMatches.push(m);
         }
+    });
+    let curDcRow = 2;
+
+    if (dcMatches.length > 0) {
+        dcMatches.forEach(m => {
+            const row = wsDc.getRow(curDcRow);
+            row.height = 20;
+
+            // 1. Material
+            const matName = getMaterialName({ order_supply_code: m.supply_code, supply_name: m.supply_name }) || m.supply_name || '—';
+            row.getCell(1).value = matName;
+            row.getCell(1).alignment = { horizontal: 'left', vertical: 'middle' };
+
+            // 2. Texture: strictly 0 hoặc 2
+            const gdVal = (m.grain_direction === 2 || m.grain_direction === '2' || m.grain_direction === 'Vân dọc' || m.grain_direction === 'Vân ngang') ? 2 : 0;
+            row.getCell(2).value = gdVal;
+            row.getCell(2).alignment = { horizontal: 'center', vertical: 'middle' };
+
+            // 3. Height
+            row.getCell(3).value = parseInt(m.dc_height) || 0;
+            row.getCell(3).numFmt = '#,##0';
+            row.getCell(3).alignment = { horizontal: 'right', vertical: 'middle' };
+
+            // 4. Width
+            row.getCell(4).value = parseInt(m.dc_width) || 0;
+            row.getCell(4).numFmt = '#,##0';
+            row.getCell(4).alignment = { horizontal: 'right', vertical: 'middle' };
+
+            // 5. Amount
+            row.getCell(5).value = parseInt(m.dc_quantity) || 1;
+            row.getCell(5).numFmt = '#,##0';
+            row.getCell(5).alignment = { horizontal: 'center', vertical: 'middle' };
+
+            // 6. Note (kèm location nếu có để dễ nhận diện trong xưởng)
+            let noteVal = (m.dc_note || '').trim();
+            if (m.dc_location && m.dc_location !== '—' && m.dc_location.trim() !== '') {
+                noteVal = noteVal ? `[${m.dc_location.trim()}] ${noteVal}` : m.dc_location.trim();
+            }
+            row.getCell(6).value = noteVal;
+            row.getCell(6).alignment = { horizontal: 'left', vertical: 'middle' };
+
+            for (let c = 1; c <= 6; c++) {
+                const cell = row.getCell(c);
+                cell.font = { name: 'Times New Roman', size: 11 };
+                cell.border = thinBorder;
+            }
+
+            curDcRow++;
+        });
+    }
 
     const buf = await wb.xlsx.writeBuffer();
     const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
