@@ -143,11 +143,21 @@
                                 <select name="customer_id" id="customer-select" class="" onchange="fillCustomerInfo(this.value)">
                                     <option value="">-- Chọn khách hàng --</option>
                                     @foreach($allowedCustomers as $customer)
-                                    <option value="{{ $customer->id }}" data-market-group-id="{{ $customer->market_group_id }}" {{ isset($acrylicOrder) && $acrylicOrder?->customer_id == $customer->id ? 'selected' : '' }}>
+                                    <option value="{{ $customer->id }}" data-market-group-id="{{ $customer->market_group_id }}" data-default-discount="{{ (float)($customer->default_discount_percent ?? 0) }}" {{ isset($acrylicOrder) && $acrylicOrder?->customer_id == $customer->id ? 'selected' : '' }}>
                                         {{ $customer->customer_code }} - {{ $customer->name }} {{ $customer->marketGroup ? '('.$customer->marketGroup->name.')' : '' }}
                                     </option>
                                     @endforeach
                                 </select>
+                                <div id="customer-discount-info-bar" class="hidden mt-1.5 flex items-center justify-between text-xs text-neutral-500">
+                                    <div class="flex items-center gap-1.5">
+                                        <iconify-icon icon="solar:badge-percent-bold-duotone" class="text-emerald-600 text-sm"></iconify-icon>
+                                        <span>CK mặc định: <strong id="customer-default-discount-text" class="text-emerald-700 font-bold">0%</strong></span>
+                                    </div>
+                                    <a id="customer-discount-link" href="#" target="_blank" class="text-primary-600 hover:text-primary-700 hover:underline inline-flex items-center gap-1 font-semibold" title="Mở trang hồ sơ khách hàng để cài đặt chiết khấu">
+                                        <span>Cài đặt tại <span id="customer-discount-link-text">/customers</span></span>
+                                        <iconify-icon icon="lucide:external-link" class="text-[11px]"></iconify-icon>
+                                    </a>
+                                </div>
                             </div>
                             <div class="form-group">
                                 <label class="form-label font-semibold text-xs text-neutral-500 uppercase tracking-wider mb-2 block">Nhóm thị trường</label>
@@ -236,7 +246,16 @@
                                     <span class="font-semibold text-neutral-800" id="total-amount">0 VNĐ</span>
                                 </div>
                                 <div class="flex justify-between items-center text-sm mt-2">
-                                    <span class="text-neutral-500 font-medium flex items-center">Chiết khấu (%):</span>
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="text-neutral-500 font-medium flex items-center">Chiết khấu (%):</span>
+                                        <button type="button" id="btn-save-customer-discount" onclick="saveCurrentDiscountToCustomer()" class="text-[11px] text-primary-600 hover:text-primary-800 font-semibold inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-primary-50 hover:bg-primary-100 transition hidden" title="Lưu tỷ lệ % này làm chiết khấu mặc định cho khách hàng">
+                                            <iconify-icon icon="lucide:bookmark-check" class="text-xs"></iconify-icon>
+                                            <span>Lưu vào KH</span>
+                                        </button>
+                                        <a id="btn-open-customer-discount-tab" href="#" target="_blank" class="text-neutral-400 hover:text-primary-600 transition inline-flex items-center hidden" title="Mở trang chiết khấu của khách hàng (?tab=discount)">
+                                            <iconify-icon icon="lucide:external-link" class="text-xs"></iconify-icon>
+                                        </a>
+                                    </div>
                                     <input type="number" name="discount_percent" id="discount_percent" value="{{ old('discount_percent', $acrylicOrder->discount_percent ?? 0) }}" class="form-control text-right w-20 h-7 text-sm px-2 py-1" min="0" max="100" step="0.01" oninput="if(typeof updateOrderSummary === 'function') updateOrderSummary();">
                                 </div>
                                 <div class="flex justify-between items-center text-sm">
@@ -585,12 +604,128 @@ function selectNhapKhoCustomer() {
 
 window.allAllowedCustomers = @json($allowedCustomers ?? \App\Models\Customer::all());
 
+function updateCustomerDiscountUI(customerId) {
+    const customers = window.allAllowedCustomers || [];
+    const customer = customers.find(c => c.id == customerId);
+
+    const discountInfoBar = document.getElementById('customer-discount-info-bar');
+    const discountLink = document.getElementById('customer-discount-link');
+    const discountLinkText = document.getElementById('customer-discount-link-text');
+    const defaultDiscountText = document.getElementById('customer-default-discount-text');
+    const btnSaveCustomerDiscount = document.getElementById('btn-save-customer-discount');
+    const btnOpenCustomerDiscountTab = document.getElementById('btn-open-customer-discount-tab');
+
+    if (customer && customer.id) {
+        const defPct = parseFloat(customer.default_discount_percent) || 0;
+        if (discountInfoBar) discountInfoBar.classList.remove('hidden');
+        if (discountLink) discountLink.href = `/customers/${customer.id}?tab=discount`;
+        if (discountLinkText) discountLinkText.textContent = `/customers/${customer.id}`;
+        if (defaultDiscountText) defaultDiscountText.textContent = defPct + '%';
+        if (btnSaveCustomerDiscount) {
+            btnSaveCustomerDiscount.classList.remove('hidden');
+            btnSaveCustomerDiscount.title = `Lưu mức % này làm chiết khấu mặc định cho khách hàng [${customer.name}]`;
+        }
+        if (btnOpenCustomerDiscountTab) {
+            btnOpenCustomerDiscountTab.href = `/customers/${customer.id}?tab=discount`;
+            btnOpenCustomerDiscountTab.classList.remove('hidden');
+            btnOpenCustomerDiscountTab.title = `Mở cài đặt chiết khấu của khách hàng (/customers/${customer.id}?tab=discount)`;
+        }
+    } else {
+        if (discountInfoBar) discountInfoBar.classList.add('hidden');
+        if (btnSaveCustomerDiscount) btnSaveCustomerDiscount.classList.add('hidden');
+        if (btnOpenCustomerDiscountTab) btnOpenCustomerDiscountTab.classList.add('hidden');
+    }
+}
+
+function saveCurrentDiscountToCustomer() {
+    const customerSelect = document.getElementById('customer-select');
+    const customerId = customerSelect ? customerSelect.value : null;
+    if (!customerId || !/^\d+$/.test(customerId)) {
+        alert('Vui lòng chọn khách hàng hợp lệ trước khi lưu chiết khấu mặc định.');
+        return;
+    }
+
+    const discountInput = document.getElementById('discount_percent');
+    const discountVal = discountInput ? (parseFloat(discountInput.value) || 0) : 0;
+
+    const customers = window.allAllowedCustomers || [];
+    const customer = customers.find(c => c.id == customerId);
+    const customerName = customer ? customer.name : ('#' + customerId);
+
+    const btn = document.getElementById('btn-save-customer-discount');
+    const originalContent = btn ? btn.innerHTML : '';
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<iconify-icon icon="lucide:loader-2" class="animate-spin text-xs"></iconify-icon> <span>Đang lưu...</span>';
+    }
+
+    fetch(`/customers/${customerId}/default-discount`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || document.querySelector('input[name="_token"]')?.value
+        },
+        body: JSON.stringify({
+            default_discount_percent: discountVal
+        })
+    })
+    .then(res => {
+        if (!res.ok) throw new Error('Không thể lưu chiết khấu');
+        return res.json();
+    })
+    .then(data => {
+        if (customer) {
+            customer.default_discount_percent = discountVal;
+        }
+        if (customerSelect) {
+            const opt = customerSelect.querySelector(`option[value="${customerId}"]`);
+            if (opt) opt.setAttribute('data-default-discount', discountVal);
+        }
+
+        const defText = document.getElementById('customer-default-discount-text');
+        if (defText) defText.textContent = discountVal + '%';
+
+        if (btn) {
+            btn.innerHTML = '<iconify-icon icon="lucide:check" class="text-xs text-emerald-600"></iconify-icon> <span class="text-emerald-700">Đã lưu!</span>';
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.innerHTML = originalContent;
+            }, 2500);
+        }
+
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: 'success',
+                title: 'Đã lưu chiết khấu mặc định',
+                html: `Đã lưu <b>${discountVal}%</b> làm chiết khấu mặc định cho khách hàng <b>${customerName}</b> (/customers/${customerId})!`,
+                timer: 2500,
+                showConfirmButton: false,
+                toast: true,
+                position: 'top-end'
+            });
+        } else {
+            alert(`Đã lưu ${discountVal}% làm chiết khấu mặc định cho khách hàng ${customerName}!`);
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert('Lỗi: ' + err.message);
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalContent;
+        }
+    });
+}
+
 function fillCustomerInfo(customerId) {
     @if(auth()->check())
     const customers = window.allAllowedCustomers || @json($allowedCustomers ?? \App\Models\Customer::all());
     const customer = customers.find(c => c.id == customerId);
     const cNameInput = document.querySelector('input[name="customer_name"]');
     const mgSelect = document.getElementById('market_group_select');
+
+    updateCustomerDiscountUI(customerId);
 
     if (customer) {
         const isNK = (customer.customer_code === 'NK' || customer.customer_code === 'NHAPKHO' || (customer.name && customer.name.toLowerCase().includes('nhập kho')));
@@ -611,6 +746,17 @@ function fillCustomerInfo(customerId) {
         const policyEl = document.querySelector('textarea[name="customer_policy"]');
         if (policyEl) {
             policyEl.value = customer.policy || '';
+        }
+
+        // Tự động áp dụng chiết khấu mặc định nếu tạo đơn mới hoặc nếu ô chiết khấu đang là 0
+        const isEditOrder = @json($isEdit);
+        const discountInput = document.getElementById('discount_percent');
+        const defPct = parseFloat(customer.default_discount_percent) || 0;
+        if (discountInput && (!isEditOrder || parseFloat(discountInput.value) === 0)) {
+            if (defPct > 0) {
+                discountInput.value = defPct;
+                if (typeof updateOrderSummary === 'function') updateOrderSummary();
+            }
         }
     } else if (customerId && !/^\d+$/.test(customerId)) {
         if (cNameInput && !cNameInput.value.trim()) {
@@ -2149,6 +2295,9 @@ document.addEventListener('DOMContentLoaded', function() {
             // Check debt on page load for existing selected customer
             if (customerSelect.value) {
                 fetchCustomerDebt(customerSelect.value);
+                if (typeof updateCustomerDiscountUI === 'function') {
+                    updateCustomerDiscountUI(customerSelect.value);
+                }
             }
         }
 

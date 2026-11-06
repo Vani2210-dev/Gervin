@@ -244,6 +244,10 @@
                     <span id="tab-badge-discount" class="px-2 py-0.5 rounded-full text-xs font-extrabold {{ $currTab === 'discount' ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-800' }}">
                         Đạt {{ $monthlyDiscountCalc['discount_percent'] }}%
                     </span>
+                @elseif((float)($customer->default_discount_percent ?? 0) > 0)
+                    <span id="tab-badge-discount" class="px-2 py-0.5 rounded-full text-xs font-extrabold {{ $currTab === 'discount' ? 'bg-white/20 text-white' : 'bg-emerald-100 text-emerald-800' }}">
+                        CK {{ (float)$customer->default_discount_percent }}%
+                    </span>
                 @endif
             </button>
         </div>
@@ -835,6 +839,46 @@
     {{-- TAB 4: CHÍNH SÁCH CHIẾT KHẤU THÁNG & CÔNG NỢ            --}}
     {{-- ======================================================== --}}
     <div id="tab-pane-discount" class="space-y-6 {{ $currTab === 'discount' ? '' : 'hidden' }}">
+
+        {{-- 0. Chiết khấu mặc định đơn hàng --}}
+        <div class="bg-white rounded-2xl p-6 border border-neutral-200/80 shadow-xs space-y-4">
+            <div class="flex items-center justify-between border-b border-neutral-100 pb-4 flex-wrap gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl shrink-0">
+                        <iconify-icon icon="solar:badge-percent-bold-duotone"></iconify-icon>
+                    </div>
+                    <div>
+                        <h6 class="font-bold text-base text-neutral-800 m-0">Chiết khấu mặc định đơn hàng</h6>
+                        <span class="text-xs text-neutral-400">Tỷ lệ % chiết khấu này sẽ tự động điền vào ô Chiết khấu (%) mỗi khi tạo đơn hàng mới cho khách hàng</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-xs text-neutral-500 font-medium">Mức chiết khấu hiện tại:</span>
+                    <span class="px-3 py-1 rounded-xl text-sm font-extrabold {{ (float)($customer->default_discount_percent ?? 0) > 0 ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-neutral-100 text-neutral-600' }}">
+                        {{ (float)($customer->default_discount_percent ?? 0) }}%
+                    </span>
+                </div>
+            </div>
+
+            @can('edit customer')
+            <form method="POST" action="{{ route('customers.default-discount.save', $customer) }}" class="flex items-end gap-3 flex-wrap">
+                @csrf
+                <div class="w-64">
+                    <label class="text-xs font-semibold text-neutral-700 block mb-1.5">Tỷ lệ chiết khấu mặc định (%)</label>
+                    <div class="relative">
+                        <input type="number" name="default_discount_percent" value="{{ (float)($customer->default_discount_percent ?? 0) }}" min="0" max="100" step="0.01" required
+                               class="form-control rounded-xl text-sm py-2 px-3 w-full border border-neutral-300 font-bold text-emerald-600 pr-8"
+                               placeholder="Ví dụ: 5 hoặc 10">
+                        <span class="absolute right-3 top-2.5 text-xs font-bold text-neutral-400 pointer-events-none">%</span>
+                    </div>
+                </div>
+                <button type="submit" class="btn bg-primary-600 hover:bg-primary-700 text-white px-5 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2 transition shadow-xs">
+                    <iconify-icon icon="lucide:save" class="text-sm"></iconify-icon>
+                    Lưu chiết khấu mặc định
+                </button>
+            </form>
+            @endcan
+        </div>
 
         {{-- 1. Cấu hình chính sách chiết khấu của khách hàng --}}
         <div class="bg-white rounded-2xl p-6 border border-neutral-200/80 shadow-xs space-y-4">

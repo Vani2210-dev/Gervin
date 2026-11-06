@@ -363,6 +363,31 @@ class CustomerController extends Controller
             ->with('success', 'Cập nhật chính sách chiết khấu tháng thành công!');
     }
 
+    public function saveDefaultDiscount(Request $request, Customer $customer)
+    {
+        abort_unless($customer->isAccessibleBy(auth()->user()), 403, 'Bạn không có quyền thao tác với khách hàng này.');
+
+        $request->validate([
+            'default_discount_percent' => 'required|numeric|min:0|max:100',
+        ]);
+
+        $percent = round((float) $request->default_discount_percent, 2);
+        $customer->update(['default_discount_percent' => $percent]);
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Đã lưu {$percent}% làm chiết khấu mặc định cho khách hàng {$customer->name}!",
+                'default_discount_percent' => $percent,
+                'customer_id' => $customer->id,
+                'customer_name' => $customer->name,
+            ]);
+        }
+
+        return redirect()->route('customers.show', ['customer' => $customer->id, 'tab' => 'discount'])
+            ->with('success', "Đã cập nhật chiết khấu mặc định: {$percent}% thành công!");
+    }
+
     public function applyMonthlyDiscount(Request $request, Customer $customer)
     {
         abort_unless($customer->isAccessibleBy(auth()->user()), 403, 'Bạn không có quyền thao tác với khách hàng này.');
@@ -856,6 +881,7 @@ class CustomerController extends Controller
             'initial_debt'        => 'nullable|numeric|min:0',
             'debt_limit'          => 'nullable|numeric|min:0',
             'policy'              => 'nullable|string',
+            'default_discount_percent' => 'nullable|numeric|min:0|max:100',
             'market_group_id'     => 'nullable|exists:market_groups,id',
         ]);
 
@@ -907,6 +933,7 @@ class CustomerController extends Controller
             'debt'                => $request->initial_debt ?? 0,
             'debt_limit'          => $request->debt_limit ?? 0,
             'policy'              => $request->policy,
+            'default_discount_percent' => $request->has('default_discount_percent') ? (float)$request->default_discount_percent : $customer->default_discount_percent,
             'photos'              => $photos,
             'market_group_id'     => $targetMarketGroupId,
         ]);
@@ -961,6 +988,7 @@ class CustomerController extends Controller
             'initial_debt'        => 'nullable|numeric|min:0',
             'debt_limit'          => 'nullable|numeric|min:0',
             'policy'              => 'nullable|string',
+            'default_discount_percent' => 'nullable|numeric|min:0|max:100',
             'market_group_id'     => 'nullable|exists:market_groups,id',
         ]);
 
@@ -1017,6 +1045,7 @@ class CustomerController extends Controller
             'sale_proposal'       => $request->sale_proposal,
             'debt_limit'          => $request->debt_limit ?? 0,
             'policy'              => $request->policy,
+            'default_discount_percent' => $request->has('default_discount_percent') ? (float)$request->default_discount_percent : $customer->default_discount_percent,
             'photos'              => $photos,
             'market_group_id'     => $request->market_group_id ?? $customer->market_group_id,
         ];

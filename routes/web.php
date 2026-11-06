@@ -327,6 +327,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('customers/{customer}/overview', [CustomerController::class, 'overview'])->name('customers.overview');
     Route::post('customers/quick-create', [CustomerController::class, 'quickCreate'])->name('customers.quick-create');
     Route::post('customers/{customer}/monthly-discount-policy', [CustomerController::class, 'saveMonthlyDiscountPolicy'])->name('customers.monthly-discount-policy.save');
+    Route::post('customers/{customer}/default-discount', [CustomerController::class, 'saveDefaultDiscount'])->name('customers.default-discount.save');
     Route::post('customers/{customer}/apply-monthly-discount', [CustomerController::class, 'applyMonthlyDiscount'])->name('customers.apply-monthly-discount');
     Route::post('customers/{customer}/cancel-monthly-discount', [CustomerController::class, 'cancelMonthlyDiscount'])->name('customers.cancel-monthly-discount');
 
