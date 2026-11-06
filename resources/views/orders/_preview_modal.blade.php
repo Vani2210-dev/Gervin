@@ -49,7 +49,8 @@
 
     $discountAmt = $acrylicOrder->discount_amount ?? 0;
     $vatAmt = $acrylicOrder->vat_amount ?? 0;
-    $subTotal = $acrylicOrder->total_amount + $discountAmt - $vatAmt;
+    $additionalDiscountAmt = $acrylicOrder->additional_discount_amount ?? 0;
+    $subTotal = $acrylicOrder->total_amount + $discountAmt - $vatAmt + $additionalDiscountAmt;
 
     // Order specific payment
     $orderPaidAmt = $acrylicOrder->orderPayments ? $acrylicOrder->orderPayments->sum('amount') : 0;
@@ -584,6 +585,11 @@
                         @if($acrylicOrder->vat_percent > 0)
                             <div class="mt-1 text-xs text-right font-medium text-neutral-700">
                                 VAT ({{ (float)$acrylicOrder->vat_percent }}%): +{{ number_format(round($vatAmt, -3), 0, ',', '.') }} đ
+                            </div>
+                        @endif
+                        @if(($acrylicOrder->additional_discount_percent ?? 0) > 0)
+                            <div class="mt-1 text-xs text-right font-medium text-danger-600">
+                                Chiết khấu thêm ({{ (float)$acrylicOrder->additional_discount_percent }}%): -{{ number_format(round($additionalDiscountAmt, -3), 0, ',', '.') }} đ
                             </div>
                         @endif
                         <div class="mt-2 pt-2 border-t border-neutral-200 flex items-center justify-between">

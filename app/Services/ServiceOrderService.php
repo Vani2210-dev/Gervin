@@ -89,9 +89,13 @@ class ServiceOrderService
         $subTotal = $this->calculateTotalAmount($request->payment_details ?? []);
         $discountPercent = floatval($request->discount_percent ?? 0);
         $vatPercent = floatval($request->vat_percent ?? 0);
+        $additionalDiscountPercent = floatval($request->additional_discount_percent ?? 0);
+
         $discountAmount = round($subTotal * ($discountPercent / 100), -3);
         $vatAmount = round(($subTotal - $discountAmount) * ($vatPercent / 100), -3);
-        $totalAmount = $subTotal - $discountAmount + $vatAmount;
+        $preTotalAmount = $subTotal - $discountAmount + $vatAmount;
+        $additionalDiscountAmount = round($preTotalAmount * ($additionalDiscountPercent / 100), -3);
+        $totalAmount = $preTotalAmount - $additionalDiscountAmount;
 
         // Auto-create or link customer
         $customerId = $request->customer_id ?: null;
@@ -143,6 +147,8 @@ class ServiceOrderService
             'discount_amount' => $discountAmount,
             'vat_percent'     => $vatPercent,
             'vat_amount'      => $vatAmount,
+            'additional_discount_percent' => $additionalDiscountPercent,
+            'additional_discount_amount'  => $additionalDiscountAmount,
             'total_amount'    => $totalAmount,
             'status'          => $isDraftSave
                 ? 'draft'

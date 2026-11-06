@@ -132,11 +132,14 @@ class MinLateOrderService
             $discountAmount = 0;
             $vatPercent = 0;
             $vatAmount = 0;
+            $additionalDiscountPercent = 0;
+            $additionalDiscountAmount = 0;
             $totalAmount = 0;
         } else {
             $subTotal = $this->calculateTotalAmount($request->payment_details ?? []);
             $discountPercent = (float) $request->input('discount_percent', 0);
             $vatPercent = (float) $request->input('vat_percent', 0);
+            $additionalDiscountPercent = (float) $request->input('additional_discount_percent', 0);
             
             $rawDiscountAmount = $subTotal * ($discountPercent / 100);
             $discountAmount = round($rawDiscountAmount, -3);
@@ -144,7 +147,11 @@ class MinLateOrderService
             $rawVatAmount = ($subTotal - $discountAmount) * ($vatPercent / 100);
             $vatAmount = round($rawVatAmount, -3);
 
-            $totalAmount = $subTotal - $discountAmount + $vatAmount;
+            $preTotalAmount = $subTotal - $discountAmount + $vatAmount;
+            $rawAdditionalDiscountAmount = $preTotalAmount * ($additionalDiscountPercent / 100);
+            $additionalDiscountAmount = round($rawAdditionalDiscountAmount, -3);
+
+            $totalAmount = $preTotalAmount - $additionalDiscountAmount;
         }
 
         // Auto-create or link customer if customer_name filled but no customer_id
@@ -197,6 +204,8 @@ class MinLateOrderService
             'discount_amount' => $discountAmount,
             'vat_percent'     => $vatPercent,
             'vat_amount'      => $vatAmount,
+            'additional_discount_percent' => $additionalDiscountPercent,
+            'additional_discount_amount'  => $additionalDiscountAmount,
             'total_amount'    => $totalAmount,
             'status'          => $isDraftSave
                 ? 'draft'

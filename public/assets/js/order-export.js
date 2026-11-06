@@ -524,7 +524,7 @@ async function exportToExcel(customData = null, returnBlob = false) {
             totalRow.getCell(11).font = { name: 'Times New Roman', size: 11, bold: true };
             totalRow.getCell(11).alignment = { horizontal: 'center', vertical: 'middle' };
 
-            const subTotalAcrylic = parseFloat(orderData.total_amount) + parseFloat(orderData.discount_amount || 0) - parseFloat(orderData.vat_amount || 0);
+            const subTotalAcrylic = parseFloat(orderData.total_amount) + parseFloat(orderData.discount_amount || 0) - parseFloat(orderData.vat_amount || 0) + parseFloat(orderData.additional_discount_amount || 0);
             totalRow.getCell(12).value = Math.round(subTotalAcrylic / 1000) * 1000;
             totalRow.getCell(12).font = { name: 'Times New Roman', size: 11, bold: true };
             totalRow.getCell(12).numFmt = '#,##0';
@@ -577,6 +577,28 @@ async function exportToExcel(customData = null, returnBlob = false) {
                 };
             }
             currentRow++;
+
+            // Additional Discount
+            if (parseFloat(orderData.additional_discount_percent || 0) > 0 || parseFloat(orderData.additional_discount_amount || 0) > 0) {
+                const addDiscountRow = worksheet.getRow(currentRow);
+                addDiscountRow.height = 22;
+                addDiscountRow.getCell(11).value = `Chiết khấu thêm (${parseFloat(orderData.additional_discount_percent || 0)}%):`;
+                addDiscountRow.getCell(11).font = { name: 'Times New Roman', size: 11, bold: true };
+                addDiscountRow.getCell(11).alignment = { horizontal: 'center', vertical: 'middle' };
+
+                addDiscountRow.getCell(12).value = -Math.round(parseFloat(orderData.additional_discount_amount || 0) / 1000) * 1000;
+                addDiscountRow.getCell(12).font = { name: 'Times New Roman', size: 11, bold: true, color: { argb: 'FFDC2626' } };
+                addDiscountRow.getCell(12).numFmt = '#,##0';
+                addDiscountRow.getCell(12).alignment = { horizontal: 'center', vertical: 'middle' };
+
+                for (let c = 1; c <= 13; c++) {
+                    addDiscountRow.getCell(c).border = {
+                        top: { style: 'thin', color: { argb: 'FF9CA3AF' } },
+                        bottom: { style: 'thin', color: { argb: 'FF9CA3AF' } }
+                    };
+                }
+                currentRow++;
+            }
 
             // TỔNG THANH TOÁN
             const finalTotalRow = worksheet.getRow(currentRow);
@@ -971,7 +993,7 @@ async function exportToExcel(customData = null, returnBlob = false) {
             totalRow.getCell(12).font = { name: 'Times New Roman', size: 11, bold: true };
             totalRow.getCell(12).alignment = { horizontal: 'center', vertical: 'middle' };
 
-            const subTotal1 = parseFloat(orderData.total_amount) + parseFloat(orderData.discount_amount) - parseFloat(orderData.vat_amount);
+            const subTotal1 = parseFloat(orderData.total_amount) + parseFloat(orderData.discount_amount || 0) - parseFloat(orderData.vat_amount || 0) + parseFloat(orderData.additional_discount_amount || 0);
             totalRow.getCell(13).value = Math.round(subTotal1 / 1000) * 1000;
             totalRow.getCell(13).font = { name: 'Times New Roman', size: 11, bold: true };
             totalRow.getCell(13).numFmt = '#,##0';
@@ -1026,6 +1048,29 @@ async function exportToExcel(customData = null, returnBlob = false) {
                 };
             }
             currentRow++;
+
+            // Additional Discount
+            if (parseFloat(orderData.additional_discount_percent || 0) > 0 || parseFloat(orderData.additional_discount_amount || 0) > 0) {
+                const addDiscountRow = worksheet.getRow(currentRow);
+                addDiscountRow.height = 22;
+                worksheet.mergeCells(`K${currentRow}:L${currentRow}`);
+                addDiscountRow.getCell(11).value = `Chiết khấu thêm (${parseFloat(orderData.additional_discount_percent || 0)}%):`;
+                addDiscountRow.getCell(11).font = { name: 'Times New Roman', size: 11, bold: true };
+                addDiscountRow.getCell(11).alignment = { horizontal: 'center', vertical: 'middle' };
+
+                addDiscountRow.getCell(13).value = -Math.round(parseFloat(orderData.additional_discount_amount || 0) / 1000) * 1000;
+                addDiscountRow.getCell(13).font = { name: 'Times New Roman', size: 11, bold: true, color: { argb: 'FFDC2626' } };
+                addDiscountRow.getCell(13).numFmt = '#,##0';
+                addDiscountRow.getCell(13).alignment = { horizontal: 'center', vertical: 'middle' };
+
+                for (let c = 1; c <= 14; c++) {
+                    addDiscountRow.getCell(c).border = {
+                        top: { style: 'thin', color: { argb: 'FF9CA3AF' } },
+                        bottom: { style: 'thin', color: { argb: 'FF9CA3AF' } }
+                    };
+                }
+                currentRow++;
+            }
 
             // Add TỔNG THANH TOÁN
             const finalTotalRow = worksheet.getRow(currentRow);
@@ -1712,7 +1757,7 @@ async function exportToExcel(customData = null, returnBlob = false) {
                 sumRow.getCell(16).font = { name: 'Times New Roman', size: 11, bold: true };
                 sumRow.getCell(16).alignment = { horizontal: 'center', vertical: 'middle' };
 
-                const subTotal2 = parseFloat(orderData.total_amount) + parseFloat(orderData.discount_amount) - parseFloat(orderData.vat_amount);
+                const subTotal2 = parseFloat(orderData.total_amount) + parseFloat(orderData.discount_amount || 0) - parseFloat(orderData.vat_amount || 0) + parseFloat(orderData.additional_discount_amount || 0);
                 sumRow.getCell(17).value = Math.round(subTotal2 / 1000) * 1000;
                 sumRow.getCell(17).font = { name: 'Times New Roman', size: 11, bold: true };
                 sumRow.getCell(17).numFmt = '#,##0';
@@ -1765,6 +1810,28 @@ async function exportToExcel(customData = null, returnBlob = false) {
                     };
                 }
                 currentRow++;
+
+                // Additional Discount
+                if (parseFloat(orderData.additional_discount_percent || 0) > 0 || parseFloat(orderData.additional_discount_amount || 0) > 0) {
+                    const addDiscountRow = worksheet.getRow(currentRow);
+                    addDiscountRow.height = 22;
+                    addDiscountRow.getCell(16).value = `Chiết khấu thêm (${parseFloat(orderData.additional_discount_percent || 0)}%):`;
+                    addDiscountRow.getCell(16).font = { name: 'Times New Roman', size: 11, bold: true };
+                    addDiscountRow.getCell(16).alignment = { horizontal: 'center', vertical: 'middle' };
+
+                    addDiscountRow.getCell(17).value = -Math.round(parseFloat(orderData.additional_discount_amount || 0) / 1000) * 1000;
+                    addDiscountRow.getCell(17).font = { name: 'Times New Roman', size: 11, bold: true, color: { argb: 'FFDC2626' } };
+                    addDiscountRow.getCell(17).numFmt = '#,##0';
+                    addDiscountRow.getCell(17).alignment = { horizontal: 'center', vertical: 'middle' };
+
+                    for (let c = 1; c <= maxCol; c++) {
+                        addDiscountRow.getCell(c).border = {
+                            top: { style: 'thin', color: { argb: 'FF9CA3AF' } },
+                            bottom: { style: 'thin', color: { argb: 'FF9CA3AF' } }
+                        };
+                    }
+                    currentRow++;
+                }
                 // Payment summary: TỔNG THANH TOÁN
                 const remainRow = worksheet.getRow(currentRow);
                 remainRow.height = 22;
@@ -1792,7 +1859,7 @@ async function exportToExcel(customData = null, returnBlob = false) {
                 sumRow.getCell(16).font = { name: 'Times New Roman', size: 11, bold: true };
                 sumRow.getCell(16).alignment = { horizontal: 'center', vertical: 'middle' };
 
-                const subTotal2 = parseFloat(orderData.total_amount) + parseFloat(orderData.discount_amount || 0) - parseFloat(orderData.vat_amount || 0);
+                const subTotal2 = parseFloat(orderData.total_amount) + parseFloat(orderData.discount_amount || 0) - parseFloat(orderData.vat_amount || 0) + parseFloat(orderData.additional_discount_amount || 0);
                 sumRow.getCell(17).value = Math.round(subTotal2 / 1000) * 1000;
                 sumRow.getCell(17).font = { name: 'Times New Roman', size: 11, bold: true };
                 sumRow.getCell(17).numFmt = '#,##0';
@@ -1845,6 +1912,28 @@ async function exportToExcel(customData = null, returnBlob = false) {
                     };
                 }
                 currentRow++;
+
+                // Additional Discount
+                if (parseFloat(orderData.additional_discount_percent || 0) > 0 || parseFloat(orderData.additional_discount_amount || 0) > 0) {
+                    const addDiscountRow = worksheet.getRow(currentRow);
+                    addDiscountRow.height = 22;
+                    addDiscountRow.getCell(16).value = `Chiết khấu thêm (${parseFloat(orderData.additional_discount_percent || 0)}%):`;
+                    addDiscountRow.getCell(16).font = { name: 'Times New Roman', size: 11, bold: true };
+                    addDiscountRow.getCell(16).alignment = { horizontal: 'center', vertical: 'middle' };
+
+                    addDiscountRow.getCell(17).value = -Math.round(parseFloat(orderData.additional_discount_amount || 0) / 1000) * 1000;
+                    addDiscountRow.getCell(17).font = { name: 'Times New Roman', size: 11, bold: true, color: { argb: 'FFDC2626' } };
+                    addDiscountRow.getCell(17).numFmt = '#,##0';
+                    addDiscountRow.getCell(17).alignment = { horizontal: 'center', vertical: 'middle' };
+
+                    for (let c = 1; c <= maxCol; c++) {
+                        addDiscountRow.getCell(c).border = {
+                            top: { style: 'thin', color: { argb: 'FF9CA3AF' } },
+                            bottom: { style: 'thin', color: { argb: 'FF9CA3AF' } }
+                        };
+                    }
+                    currentRow++;
+                }
 
                 // Payment summary: TỔNG THANH TOÁN
                 const remainRow = worksheet.getRow(currentRow);

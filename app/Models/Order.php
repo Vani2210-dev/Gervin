@@ -119,6 +119,8 @@ class Order extends Model
         'discount_amount',
         'vat_percent',
         'vat_amount',
+        'additional_discount_percent',
+        'additional_discount_amount',
         'total_amount',
         'status',
         'attachments',

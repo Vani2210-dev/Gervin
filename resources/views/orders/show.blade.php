@@ -736,7 +736,8 @@
                         @php
                             $discountAmt = $acrylicOrder->discount_amount ?? 0;
                             $vatAmt = $acrylicOrder->vat_amount ?? 0;
-                            $subTotal = $acrylicOrder->total_amount + $discountAmt - $vatAmt;
+                            $additionalDiscountAmt = $acrylicOrder->additional_discount_amount ?? 0;
+                            $subTotal = $acrylicOrder->total_amount + $discountAmt - $vatAmt + $additionalDiscountAmt;
                         @endphp
                         
                         <div class="flex justify-between items-center text-sm">
@@ -760,6 +761,15 @@
                             <span class="text-neutral-500">VAT ({{ (float)$acrylicOrder->vat_percent }}%):</span>
                             <span class="font-semibold text-neutral-800">
                                 +{{ number_format(round($vatAmt, -3), 0, ',', '.') }} VNĐ
+                            </span>
+                        </div>
+                        @endif
+
+                        @if(($acrylicOrder->additional_discount_percent ?? 0) > 0)
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="text-neutral-500">CK thêm ({{ (float)$acrylicOrder->additional_discount_percent }}%):</span>
+                            <span class="font-semibold text-danger-600">
+                                -{{ number_format(round($additionalDiscountAmt, -3), 0, ',', '.') }} VNĐ
                             </span>
                         </div>
                         @endif
