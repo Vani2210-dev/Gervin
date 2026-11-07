@@ -386,6 +386,40 @@ class Order extends Model
     }
 
     /**
+     * Tên hiển thị đầy đủ của khách hàng: Tên khách hàng (Mã KH) (Tên công trình).
+     * Khớp 100% giữa xem trước đơn hàng (_preview_modal) và xuất file Excel (order-export.js).
+     */
+    public function getFullCustomerDisplay(): string
+    {
+        if ($this->isNhapKho()) {
+            return 'Nhập kho nội bộ Gervin';
+        }
+
+        $customer = $this->customer;
+        $projectName = trim($this->customer_name ?? '');
+
+        if ($customer && $projectName !== '') {
+            $cName = trim($customer->name ?? '');
+            $codeStr = $customer->customer_code ? ' (' . $customer->customer_code . ')' : '';
+            if ($cName !== '' && mb_strtolower($cName) === mb_strtolower($projectName)) {
+                return $cName . $codeStr;
+            }
+            return $cName . $codeStr . ' (' . $projectName . ')';
+        }
+
+        if ($customer) {
+            return $customer->name . ($customer->customer_code ? ' (' . $customer->customer_code . ')' : '');
+        }
+
+        return $projectName ?: '—';
+    }
+
+    public function getFullCustomerDisplayAttribute(): string
+    {
+        return $this->getFullCustomerDisplay();
+    }
+
+    /**
      * Kiểm tra đơn hàng có ít nhất một tấm (vật tư) có mã GV hay không.
      * Dùng để xét điều kiện chiết khấu tháng.
      */

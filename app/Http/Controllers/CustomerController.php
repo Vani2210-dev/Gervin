@@ -889,9 +889,7 @@ class CustomerController extends Controller
         if ($request->filled('customer_code')) {
             $customerCode = trim($request->customer_code);
         } else {
-            $lastCustomer = Customer::orderBy('id', 'desc')->first();
-            $nextNumber = $lastCustomer ? intval(substr($lastCustomer->customer_code, 2)) + 1 : 1;
-            $customerCode = 'KH' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+            $customerCode = $this->generateNextCustomerCode();
         }
 
         $partnerCompetitors = $request->partner_competitors;
@@ -933,7 +931,7 @@ class CustomerController extends Controller
             'debt'                => $request->initial_debt ?? 0,
             'debt_limit'          => $request->debt_limit ?? 0,
             'policy'              => $request->policy,
-            'default_discount_percent' => $request->has('default_discount_percent') ? (float)$request->default_discount_percent : $customer->default_discount_percent,
+            'default_discount_percent' => $request->filled('default_discount_percent') ? (float)$request->default_discount_percent : 0,
             'photos'              => $photos,
             'market_group_id'     => $targetMarketGroupId,
         ]);
@@ -1233,9 +1231,7 @@ class CustomerController extends Controller
         if ($request->filled('customer_code')) {
             $customerCode = trim($request->customer_code);
         } else {
-            $lastCustomer = Customer::orderBy('id', 'desc')->first();
-            $nextNumber   = $lastCustomer ? intval(substr($lastCustomer->customer_code, 2)) + 1 : 1;
-            $customerCode = 'KH' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+            $customerCode = $this->generateNextCustomerCode();
         }
 
         $customer = Customer::create([
@@ -1412,6 +1408,26 @@ class CustomerController extends Controller
             ],
             'histories' => $histories,
         ]);
+    }
+
+    private function generateNextCustomerCode(): string
+    {
+        $lastCustomer = Customer::where('customer_code', 'LIKE', 'KH%')
+            ->orderByRaw('CAST(SUBSTRING(customer_code, 3) AS UNSIGNED) DESC')
+            ->first();
+
+        $nextNumber = 1;
+        if ($lastCustomer && preg_match('/^KH(\d+)$/i', $lastCustomer->customer_code, $matches)) {
+            $nextNumber = intval($matches[1]) + 1;
+        }
+
+        $code = 'KH' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+        while (Customer::where('customer_code', $code)->exists()) {
+            $nextNumber++;
+            $code = 'KH' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+        }
+
+        return $code;
     }
 }
 

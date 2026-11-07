@@ -129,16 +129,7 @@
 
                 <!-- Thông tin khách hàng & Đơn hàng (Gọn gàng, tối ưu diện tích) -->
                 @php
-                    $fullCustomerDisplay = '';
-                    if ($acrylicOrder->isNhapKho()) {
-                        $fullCustomerDisplay = 'Nhập kho nội bộ Gervin';
-                    } elseif ($acrylicOrder->customer && $acrylicOrder->customer_name) {
-                        $fullCustomerDisplay = $acrylicOrder->customer->name . ($acrylicOrder->customer->customer_code ? ' (' . $acrylicOrder->customer->customer_code . ')' : '') . ' (' . $acrylicOrder->customer_name . ')';
-                    } elseif ($acrylicOrder->customer) {
-                        $fullCustomerDisplay = $acrylicOrder->customer->name . ($acrylicOrder->customer->customer_code ? ' (' . $acrylicOrder->customer->customer_code . ')' : '');
-                    } else {
-                        $fullCustomerDisplay = $acrylicOrder->customer_name ?: '—';
-                    }
+                    $fullCustomerDisplay = $acrylicOrder->full_customer_display;
                 @endphp
                 <!-- Thông tin chung (Gọn gàng, tối ưu diện tích in ấn) -->
                 <div class="border border-neutral-300 rounded-lg overflow-hidden bg-white shadow-2xs">

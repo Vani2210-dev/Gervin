@@ -14,6 +14,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             'orders/discard-draft',
             'scan',
+            'qrcode',
+            'qrcode/*',
         ]);
 
         $middleware->alias([

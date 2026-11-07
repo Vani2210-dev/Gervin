@@ -219,7 +219,7 @@ class OrderController extends Controller
             }
         }
 
-        $order->load(['supplies.items.codes', 'supplies.minLateItems.codes', 'supplies.glassItems.codes', 'paymentDetails', 'orderPayments.creator', 'accountantApprover', 'technicalApprover', 'rejecter', 'receipts', 'issues']);
+        $order->load(['supplies.items.codes', 'supplies.minLateItems.codes', 'supplies.glassItems.codes', 'paymentDetails', 'orderPayments.creator', 'accountantApprover', 'technicalApprover', 'rejecter', 'receipts', 'issues', 'customer']);
         $order->checkAndMarkInProduction();
         $order->checkAndMarkCompleted();
         $acrylicOrder = $order;
@@ -245,7 +245,8 @@ class OrderController extends Controller
             'orderPayments.creator',
             'accountantApprover',
             'technicalApprover',
-            'rejecter'
+            'rejecter',
+            'customer'
         ]);
         $acrylicOrder = $order;
         $exportData = $this->getExportData($order);
@@ -530,11 +531,17 @@ class OrderController extends Controller
 
     public function getExportData(Order $acrylicOrder)
     {
+        $fullCustomerDisplay = $acrylicOrder->full_customer_display;
+
         return [
             'order_code' => $acrylicOrder->order_code,
             'created_at' => $acrylicOrder->created_at->format('d/m/Y H:i'),
             'type' => $acrylicOrder->type,
-            'customer_name' => $acrylicOrder->customer_name,
+            'customer_name' => $fullCustomerDisplay,
+            'full_customer_display' => $fullCustomerDisplay,
+            'project_name' => $acrylicOrder->customer_name,
+            'customer_company_name' => $acrylicOrder->customer ? $acrylicOrder->customer->name : null,
+            'customer_code' => $acrylicOrder->customer ? $acrylicOrder->customer->customer_code : null,
             'phone' => $acrylicOrder->phone,
             'order_date' => $acrylicOrder->order_date ? \Carbon\Carbon::parse($acrylicOrder->order_date)->format('Y-m-d H:i:s') : null,
             'deadline' => $acrylicOrder->deadline ? \Carbon\Carbon::parse($acrylicOrder->deadline)->format('Y-m-d H:i:s') : null,

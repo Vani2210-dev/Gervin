@@ -240,9 +240,14 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('minlate-prices', MinLatePriceController::class)->names('minlate_prices');
 });
 
-// QR Code
-Route::middleware(['auth'])->prefix('qrcode')->name('qrcode.')->group(function () {
+// QR Code & Measurement API
+Route::prefix('qrcode')->name('qrcode.')->group(function () {
     Route::get('/', [QrCodeGeneratorController::class, 'index'])->name('index');
+    Route::post('/', [QrCodeGeneratorController::class, 'storeMeasurement'])->name('store');
+    Route::match(['get', 'post'], '/measurement', [QrCodeGeneratorController::class, 'storeMeasurement'])->name('measurement');
+    Route::match(['get', 'post'], '/measure', [QrCodeGeneratorController::class, 'storeMeasurement'])->name('measure');
+    Route::get('/measurements', [QrCodeGeneratorController::class, 'measurementsList'])->name('measurements.list');
+    Route::get('/{code}', [QrCodeGeneratorController::class, 'lookupByParam'])->name('lookup.param')->where('code', '.*');
 });
 
 // Inventory & Warehouses (KiotViet / MISA Architecture)

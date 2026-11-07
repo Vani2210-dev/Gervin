@@ -1973,6 +1973,28 @@ async function exportToExcel(customData = null, returnBlob = false) {
             });
         });
 
+        // Specific manual auto-fit for merged customer row
+        const custText = 'Khách hàng: ' + (orderData.customer_name || '');
+        let custRowNumber = 8;
+        let custMergedWidth = 96.5;
+
+        if (orderData.type === 'glass') {
+            custRowNumber = 9;
+            custMergedWidth = 133.6;
+        } else if (orderData.type === 'min_late') {
+            custRowNumber = 8;
+            custMergedWidth = 176.3;
+        }
+
+        const custRowHeight = estimateRowHeight(custText, custMergedWidth);
+        worksheet.getRow(custRowNumber).height = Math.max(18, custRowHeight);
+        if (orderData.type === 'glass') {
+            const worksheet2 = workbook.getWorksheet('Đặt kính');
+            if (worksheet2) {
+                worksheet2.getRow(9).height = Math.max(18, custRowHeight);
+            }
+        }
+
         // Specific manual auto-fit for merged address row
         const addressText = 'Địa chỉ: ' + (orderData.address || '');
         let addressRowNumber = 9;
