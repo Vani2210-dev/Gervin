@@ -151,7 +151,7 @@
                             </tr>
                             <tr style="border-bottom: 1px solid #cbd5e1;">
                                 <td style="padding: 3.5px 6px; border-right: 1px solid #cbd5e1; background: #f8fafc; font-weight: 700; color: #475569; white-space: nowrap;">Điện thoại:</td>
-                                <td style="padding: 3.5px 6px; border-right: 1px solid #cbd5e1; font-weight: 600; color: #0f172a;">{{ $acrylicOrder->phone ?: '—' }}</td>
+                                <td style="padding: 3.5px 6px; border-right: 1px solid #cbd5e1; font-weight: 600; color: #0f172a;">{{ $acrylicOrder->phone ?: ($acrylicOrder->customer?->phone ?: '—') }}</td>
                                 <td style="padding: 3.5px 6px; border-right: 1px solid #cbd5e1; background: #f8fafc; font-weight: 700; color: #475569; white-space: nowrap;">Hạn giao hàng:</td>
                                 <td style="padding: 3.5px 6px; border-right: 1px solid #cbd5e1; font-weight: 700; color: #dc2626;">{{ $deadlineFormatted }} {{ $acrylicOrder->delivery_days ? "({$acrylicOrder->delivery_days} ngày)" : '' }}</td>
                                 <td style="padding: 3.5px 6px; border-right: 1px solid #cbd5e1; background: #f8fafc; font-weight: 700; color: #475569; white-space: nowrap;">Trạng thái:</td>

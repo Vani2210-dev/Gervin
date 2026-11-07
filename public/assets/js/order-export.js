@@ -252,6 +252,10 @@ async function exportToExcel(customData = null, returnBlob = false) {
             worksheet.getRow(9).height = 18;
             worksheet.mergeCells('C9:J9');
             setCell(9, 3, `Địa chỉ: ${orderData.address || ''}`, false, 'left', 10);
+            setCell(9, 12, 'Điện thoại:', true, 'right', 10);
+            worksheet.getCell('M9').value = orderData.phone || '—';
+            worksheet.getCell('M9').font = { name: 'Times New Roman', size: 10, bold: true };
+            worksheet.getCell('M9').alignment = { horizontal: 'left', vertical: 'middle' };
 
             worksheet.getRow(10).height = 18;
             worksheet.mergeCells('C10:M10');
@@ -818,6 +822,10 @@ async function exportToExcel(customData = null, returnBlob = false) {
             worksheet.getRow(10).height = 18;
             worksheet.mergeCells('B10:I10');
             setCell(10, 2, `Địa chỉ: ${orderData.address || ''}`, false, 'left', 10);
+            setCell(10, 13, 'Điện thoại:', true, 'right', 10);
+            worksheet.getCell('N10').value = orderData.phone || '—';
+            worksheet.getCell('N10').font = { name: 'Times New Roman', size: 10, bold: true };
+            worksheet.getCell('N10').alignment = { horizontal: 'left', vertical: 'middle' };
 
             worksheet.getRow(11).height = 20;
             worksheet.mergeCells('A11:N11');
@@ -1179,6 +1187,10 @@ async function exportToExcel(customData = null, returnBlob = false) {
             worksheet2.getRow(10).height = 18;
             worksheet2.mergeCells('B10:H10');
             setCellOnSheet(worksheet2, 10, 2, `Địa chỉ: ${orderData.address || ''}`, false, 'left', 10);
+            setCellOnSheet(worksheet2, 10, 9, 'Điện thoại:', true, 'right', 10);
+            worksheet2.getCell('J10').value = orderData.phone || '—';
+            worksheet2.getCell('J10').font = { name: 'Times New Roman', size: 10, bold: true };
+            worksheet2.getCell('J10').alignment = { horizontal: 'left', vertical: 'middle' };
 
             // Double Row Headers (Row 12 & 13)
             worksheet2.getRow(12).height = 24;
@@ -1421,6 +1433,10 @@ async function exportToExcel(customData = null, returnBlob = false) {
             worksheet.getRow(9).height = 18;
             worksheet.mergeCells('C9:O9');
             setCell(9, 3, `Địa chỉ: ${orderData.address || ''}`, false, 'left', 10);
+            setCell(9, 16, 'Điện thoại:', true, 'right', 10);
+            worksheet.getCell('Q9').value = orderData.phone || '—';
+            worksheet.getCell('Q9').font = { name: 'Times New Roman', size: 10, bold: true };
+            worksheet.getCell('Q9').alignment = { horizontal: 'left', vertical: 'middle' };
 
             worksheet.getRow(10).height = 20;
             worksheet.mergeCells('C10:R10');

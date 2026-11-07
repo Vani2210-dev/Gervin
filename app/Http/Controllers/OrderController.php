@@ -454,7 +454,8 @@ class OrderController extends Controller
             $sheet->setCellValue('C' . $row, $typeLabels[$o->type] ?? ($o->type ?: '—'));
             $sheet->setCellValue('D' . $row, $isNK ? 'Nhập kho Gervin' : ($o->customer ? $o->customer->name : '—'));
             $sheet->setCellValue('E' . $row, $o->customer_name ?: '—');
-            $sheet->setCellValueExplicit('F' . $row, (string) ($o->phone ?? ''), \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+            $rowPhone = $o->phone ?: ($o->customer ? $o->customer->phone : '');
+            $sheet->setCellValueExplicit('F' . $row, (string) ($rowPhone ?? ''), \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
             $sheet->setCellValue('G' . $row, $o->order_date ? \Carbon\Carbon::parse($o->order_date)->format('d/m/Y H:i') : '—');
             $sheet->setCellValue('H' . $row, $o->deadline ? \Carbon\Carbon::parse($o->deadline)->format('d/m/Y H:i') : '—');
             $sheet->setCellValue('I' . $row, $sheets > 0 ? $sheets : 0);
@@ -542,10 +543,10 @@ class OrderController extends Controller
             'project_name' => $acrylicOrder->customer_name,
             'customer_company_name' => $acrylicOrder->customer ? $acrylicOrder->customer->name : null,
             'customer_code' => $acrylicOrder->customer ? $acrylicOrder->customer->customer_code : null,
-            'phone' => $acrylicOrder->phone,
+            'phone' => $acrylicOrder->phone ?: ($acrylicOrder->customer ? $acrylicOrder->customer->phone : ''),
             'order_date' => $acrylicOrder->order_date ? \Carbon\Carbon::parse($acrylicOrder->order_date)->format('Y-m-d H:i:s') : null,
             'deadline' => $acrylicOrder->deadline ? \Carbon\Carbon::parse($acrylicOrder->deadline)->format('Y-m-d H:i:s') : null,
-            'address' => $acrylicOrder->address,
+            'address' => $acrylicOrder->address ?: ($acrylicOrder->customer ? $acrylicOrder->customer->address : ''),
             'notes' => $acrylicOrder->notes,
             'relation_type' => $acrylicOrder->relation_type,
             'parent_id' => $acrylicOrder->parent_id,
