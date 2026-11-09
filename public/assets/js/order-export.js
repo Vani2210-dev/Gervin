@@ -1012,8 +1012,10 @@ async function exportToExcel(customData = null, returnBlob = false) {
             // Calculate glass totals (loại bỏ công giả dày)
             let totalQtyGlass = 0;
             let totalAreaGlass = 0;
+            let totalPriceGlass = 0;
             orderData.supplies.forEach(supply => {
                 supply.items.forEach(item => {
+                    totalPriceGlass += parseFloat(item.total_price) || 0;
                     const isLabor = isLaborItem(item);
                     if (!isLabor) {
                         totalQtyGlass += parseInt(item.wing_quantity) || 0;
@@ -1022,37 +1024,154 @@ async function exportToExcel(customData = null, returnBlob = false) {
                 });
             });
 
-            // Grand total row
-            const totalRow = worksheet.getRow(currentRow);
-            totalRow.height = 22;
-
-            // Total wings quantity
-            totalRow.getCell(10).value = totalQtyGlass;
-            totalRow.getCell(10).font = { name: 'Times New Roman', size: 11, bold: true };
-            totalRow.getCell(10).alignment = { horizontal: 'center', vertical: 'middle' };
-
-            // Total wings area
-            totalRow.getCell(11).value = totalAreaGlass > 0 ? parseFloat(totalAreaGlass.toFixed(2)) : '—';
-            totalRow.getCell(11).font = { name: 'Times New Roman', size: 11, bold: true };
-            totalRow.getCell(11).alignment = { horizontal: 'center', vertical: 'middle' };
-
-            totalRow.getCell(12).value = "TỔNG TIỀN HÀNG:";
-            totalRow.getCell(12).font = { name: 'Times New Roman', size: 11, bold: true };
-            totalRow.getCell(12).alignment = { horizontal: 'center', vertical: 'middle' };
-
             const subTotal1 = parseFloat(orderData.total_amount) + parseFloat(orderData.discount_amount || 0) - parseFloat(orderData.vat_amount || 0) + parseFloat(orderData.additional_discount_amount || 0);
-            totalRow.getCell(13).value = Math.round(subTotal1 / 1000) * 1000;
-            totalRow.getCell(13).font = { name: 'Times New Roman', size: 11, bold: true };
-            totalRow.getCell(13).numFmt = '#,##0';
-            totalRow.getCell(13).alignment = { horizontal: 'center', vertical: 'middle' };
 
-            for (let c = 1; c <= 14; c++) {
-                totalRow.getCell(c).border = {
-                    top: { style: 'thin', color: { argb: 'FF9CA3AF' } },
-                    bottom: { style: 'thin', color: { argb: 'FF9CA3AF' } }
+            const hasGlassPaymentDetails = orderData.payment_details && orderData.payment_details.length > 0;
+
+            if (hasGlassPaymentDetails) {
+                // Supplies total row
+                const suppliesTotalRow = worksheet.getRow(currentRow);
+                suppliesTotalRow.height = 22;
+
+                suppliesTotalRow.getCell(2).value = "TỔNG CỘNG";
+                suppliesTotalRow.getCell(2).font = { name: 'Times New Roman', size: 11, bold: true };
+                suppliesTotalRow.getCell(2).alignment = { horizontal: 'center', vertical: 'middle' };
+
+                suppliesTotalRow.getCell(10).value = totalQtyGlass;
+                suppliesTotalRow.getCell(10).font = { name: 'Times New Roman', size: 11, bold: true };
+                suppliesTotalRow.getCell(10).alignment = { horizontal: 'center', vertical: 'middle' };
+
+                suppliesTotalRow.getCell(11).value = totalAreaGlass > 0 ? parseFloat(totalAreaGlass.toFixed(2)) : '—';
+                suppliesTotalRow.getCell(11).font = { name: 'Times New Roman', size: 11, bold: true };
+                suppliesTotalRow.getCell(11).alignment = { horizontal: 'center', vertical: 'middle' };
+
+                suppliesTotalRow.getCell(13).value = Math.round(totalPriceGlass / 1000) * 1000;
+                suppliesTotalRow.getCell(13).font = { name: 'Times New Roman', size: 11, bold: true };
+                suppliesTotalRow.getCell(13).numFmt = '#,##0';
+                suppliesTotalRow.getCell(13).alignment = { horizontal: 'center', vertical: 'middle' };
+
+                for (let c = 1; c <= 14; c++) {
+                    suppliesTotalRow.getCell(c).border = thinBorder;
+                }
+                currentRow++;
+
+                // Payment Details Block
+                worksheet.getRow(currentRow).height = 12;
+                currentRow++;
+
+                const payHeaderRow = worksheet.getRow(currentRow);
+                payHeaderRow.height = 24;
+
+                payHeaderRow.getCell(1).value = '';
+                payHeaderRow.getCell(2).value = 'Tính giá bán sản phẩm, dịch vụ:';
+                payHeaderRow.getCell(9).value = 'Đơn vị';
+                payHeaderRow.getCell(10).value = 'Số lượng';
+                payHeaderRow.getCell(12).value = 'Đơn giá';
+                payHeaderRow.getCell(13).value = 'THÀNH TIỀN';
+
+                const payHeaderFill = {
+                    type: 'pattern',
+                    pattern: 'solid',
+                    fgColor: { argb: 'FF366092' }
                 };
+                const pCols = [1, 2, 9, 10, 12, 13];
+                pCols.forEach(c => {
+                    const cell = payHeaderRow.getCell(c);
+                    cell.font = { name: 'Times New Roman', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+                    cell.fill = payHeaderFill;
+                    cell.alignment = { horizontal: 'center', vertical: 'middle' };
+                });
+
+                for (let c = 1; c <= 14; c++) {
+                    const cell = payHeaderRow.getCell(c);
+                    cell.border = thinBorder;
+                    if (!pCols.includes(c)) {
+                        cell.fill = payHeaderFill;
+                    }
+                }
+                currentRow++;
+
+                orderData.payment_details.forEach((detail, detailIdx) => {
+                    const row = worksheet.getRow(currentRow);
+                    row.height = 20;
+
+                    row.getCell(1).value = detailIdx + 1;
+                    row.getCell(2).value = detail.name;
+                    row.getCell(9).value = detail.unit || 'tấm';
+
+                    const qtyVal = parseFloat((parseFloat(detail.quantity) || 0).toFixed(2));
+                    row.getCell(10).value = qtyVal;
+                    row.getCell(10).numFmt = Number.isInteger(qtyVal) ? '#,##0' : '#,##0.00';
+                    row.getCell(12).value = parseFloat((parseFloat(detail.price) || 0).toFixed(2));
+                    row.getCell(12).numFmt = '#,##0';
+                    row.getCell(13).value = parseFloat((parseFloat(detail.total) || 0).toFixed(2));
+                    row.getCell(13).numFmt = '#,##0';
+                    row.getCell(13).font = { name: 'Times New Roman', size: 11, bold: true };
+
+                    row.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
+                    row.getCell(2).alignment = { horizontal: 'left', vertical: 'middle' };
+                    row.getCell(9).alignment = { horizontal: 'center', vertical: 'middle' };
+                    row.getCell(10).alignment = { horizontal: 'center', vertical: 'middle' };
+                    row.getCell(12).alignment = { horizontal: 'center', vertical: 'middle' };
+                    row.getCell(13).alignment = { horizontal: 'center', vertical: 'middle' };
+
+                    for (let c = 1; c <= 14; c++) {
+                        const cell = row.getCell(c);
+                        if (c !== 13) cell.font = { name: 'Times New Roman', size: 11 };
+                        cell.border = thinBorder;
+                    }
+                    currentRow++;
+                });
+
+                // Grand total row after payment details
+                const totalRow = worksheet.getRow(currentRow);
+                totalRow.height = 22;
+                totalRow.getCell(12).value = "TỔNG TIỀN HÀNG:";
+                totalRow.getCell(12).font = { name: 'Times New Roman', size: 11, bold: true };
+                totalRow.getCell(12).alignment = { horizontal: 'center', vertical: 'middle' };
+                totalRow.getCell(13).value = Math.round(subTotal1 / 1000) * 1000;
+                totalRow.getCell(13).font = { name: 'Times New Roman', size: 11, bold: true };
+                totalRow.getCell(13).numFmt = '#,##0';
+                totalRow.getCell(13).alignment = { horizontal: 'center', vertical: 'middle' };
+                for (let c = 1; c <= 14; c++) {
+                    totalRow.getCell(c).border = {
+                        top: { style: 'thin', color: { argb: 'FF9CA3AF' } },
+                        bottom: { style: 'thin', color: { argb: 'FF9CA3AF' } }
+                    };
+                }
+                currentRow++;
+            } else {
+                // Grand total row directly
+                const totalRow = worksheet.getRow(currentRow);
+                totalRow.height = 22;
+
+                // Total wings quantity
+                totalRow.getCell(10).value = totalQtyGlass;
+                totalRow.getCell(10).font = { name: 'Times New Roman', size: 11, bold: true };
+                totalRow.getCell(10).alignment = { horizontal: 'center', vertical: 'middle' };
+
+                // Total wings area
+                totalRow.getCell(11).value = totalAreaGlass > 0 ? parseFloat(totalAreaGlass.toFixed(2)) : '—';
+                totalRow.getCell(11).font = { name: 'Times New Roman', size: 11, bold: true };
+                totalRow.getCell(11).alignment = { horizontal: 'center', vertical: 'middle' };
+
+                totalRow.getCell(12).value = "TỔNG TIỀN HÀNG:";
+                totalRow.getCell(12).font = { name: 'Times New Roman', size: 11, bold: true };
+                totalRow.getCell(12).alignment = { horizontal: 'center', vertical: 'middle' };
+
+                totalRow.getCell(13).value = Math.round(subTotal1 / 1000) * 1000;
+                totalRow.getCell(13).font = { name: 'Times New Roman', size: 11, bold: true };
+                totalRow.getCell(13).numFmt = '#,##0';
+                totalRow.getCell(13).alignment = { horizontal: 'center', vertical: 'middle' };
+
+                for (let c = 1; c <= 14; c++) {
+                    totalRow.getCell(c).border = {
+                        top: { style: 'thin', color: { argb: 'FF9CA3AF' } },
+                        bottom: { style: 'thin', color: { argb: 'FF9CA3AF' } }
+                    };
+                }
+                currentRow++;
             }
-            currentRow++;
 
             // Discount
             const discountRow = worksheet.getRow(currentRow);

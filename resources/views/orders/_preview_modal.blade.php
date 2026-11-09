@@ -25,14 +25,23 @@
         $customerName = 'Nhập kho nội bộ Gervin';
     }
 
+    $previewPaymentDetails = collect();
+    if (isset($acrylicOrder->paymentDetails) && $acrylicOrder->paymentDetails->count() > 0) {
+        $previewPaymentDetails = $acrylicOrder->paymentDetails;
+    } elseif (!empty($exportData['payment_details'])) {
+        $previewPaymentDetails = collect($exportData['payment_details'])->map(fn($d) => (object)$d);
+    }
+
     $totalItems = $acrylicOrder->supplies->flatMap(function ($s) use ($acrylicOrder) {
         if ($acrylicOrder->type === 'min_late') return $s->minLateItems;
         if ($acrylicOrder->type === 'glass') return $s->glassItems;
         return $s->items->filter(fn($i) => ($i->product_name ?? '') !== 'Công giả dày');
     })->sum(fn($i) => $i->quantity ?? $i->wing_quantity ?? 0);
 
-    if ($acrylicOrder->type === 'service' && $totalItems == 0) {
-        $totalItems = $acrylicOrder->paymentDetails ? $acrylicOrder->paymentDetails->sum('quantity') : 0;
+    $pdTotalQty = $previewPaymentDetails->sum(fn($d) => floatval(is_object($d) ? ($d->quantity ?? 0) : ($d['quantity'] ?? 0)));
+
+    if ($totalItems == 0 && $pdTotalQty > 0) {
+        $totalItems = $pdTotalQty;
     }
 
     $totalSheets = $acrylicOrder->supplies->sum(function ($s) use ($acrylicOrder) {
@@ -41,6 +50,14 @@
         }
         return $s->quantity ?? 0;
     });
+
+    if ($totalSheets == 0 && $pdTotalQty > 0) {
+        $sheetCount = $previewPaymentDetails->filter(function($p) {
+            $unit = trim(mb_strtolower(is_object($p) ? ($p->unit ?? '') : ($p['unit'] ?? '')));
+            return $unit === 'tấm' || empty($unit);
+        })->sum(fn($d) => floatval(is_object($d) ? ($d->quantity ?? 0) : ($d['quantity'] ?? 0)));
+        $totalSheets = $sheetCount > 0 ? $sheetCount : $pdTotalQty;
+    }
 
     $totalArea = $acrylicOrder->supplies->flatMap(function ($s) use ($acrylicOrder) {
         if ($acrylicOrder->type === 'glass') return $s->glassItems;
@@ -492,7 +509,7 @@
                 @endif
 
                 <!-- Chi tiết hóa đơn dịch vụ & Vật tư bổ sung -->
-                @if($acrylicOrder->paymentDetails && $acrylicOrder->paymentDetails->count() > 0)
+                @if($previewPaymentDetails && $previewPaymentDetails->count() > 0)
                     <div class="bg-white border border-neutral-200 rounded-xl p-5 shadow-sm">
                         <div class="flex items-center gap-2 mb-4 pb-3 border-b border-neutral-100">
                             <iconify-icon icon="lucide:receipt" class="text-lg text-primary-500"></iconify-icon>
@@ -512,15 +529,22 @@
                                 </thead>
                                 <tbody>
                                     @php $sumPayTotal = 0; @endphp
-                                    @foreach($acrylicOrder->paymentDetails as $pIdx => $pDetail)
-                                        @php $sumPayTotal += (float)($pDetail->total ?? 0); @endphp
+                                    @foreach($previewPaymentDetails as $pIdx => $pDetail)
+                                        @php
+                                            $pName = is_object($pDetail) ? ($pDetail->name ?? '') : ($pDetail['name'] ?? '');
+                                            $pUnit = is_object($pDetail) ? ($pDetail->unit ?? '') : ($pDetail['unit'] ?? '');
+                                            $pQty = floatval(is_object($pDetail) ? ($pDetail->quantity ?? 0) : ($pDetail['quantity'] ?? 0));
+                                            $pPrice = floatval(is_object($pDetail) ? ($pDetail->price ?? 0) : ($pDetail['price'] ?? 0));
+                                            $pTotal = floatval(is_object($pDetail) ? ($pDetail->total ?? 0) : ($pDetail['total'] ?? 0));
+                                            $sumPayTotal += $pTotal;
+                                        @endphp
                                         <tr style="border-bottom: 1px solid #cbd5e1;">
                                             <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: center; color: #64748b; font-size: 13px; white-space: nowrap;">{{ $pIdx + 1 }}</td>
-                                            <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: left; color: #0f172a; font-size: 13px; font-weight: 600; white-space: nowrap;">{{ $pDetail->name }}</td>
-                                            <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: center; color: #0f172a; font-size: 13px; white-space: nowrap;">{{ $pDetail->unit ?: '—' }}</td>
-                                            <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: center; color: #0f172a; font-size: 13px; font-weight: 700; white-space: nowrap;">{{ floatval($pDetail->quantity) == intval($pDetail->quantity) ? number_format($pDetail->quantity, 0, ',', '.') : number_format($pDetail->quantity, 2, ',', '.') }}</td>
-                                            <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: right; color: #0f172a; font-size: 13px; font-weight: 600; white-space: nowrap;">{{ number_format($pDetail->price, 0, ',', '.') }} đ</td>
-                                            <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: right; color: #059669; font-size: 13px; font-weight: 700; white-space: nowrap;">{{ number_format($pDetail->total, 0, ',', '.') }} đ</td>
+                                            <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: left; color: #0f172a; font-size: 13px; font-weight: 600; white-space: nowrap;">{{ $pName }}</td>
+                                            <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: center; color: #0f172a; font-size: 13px; white-space: nowrap;">{{ $pUnit ?: '—' }}</td>
+                                            <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: center; color: #0f172a; font-size: 13px; font-weight: 700; white-space: nowrap;">{{ floatval($pQty) == intval($pQty) ? number_format($pQty, 0, ',', '.') : number_format($pQty, 2, ',', '.') }}</td>
+                                            <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: right; color: #0f172a; font-size: 13px; font-weight: 600; white-space: nowrap;">{{ number_format($pPrice, 0, ',', '.') }} đ</td>
+                                            <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: right; color: #059669; font-size: 13px; font-weight: 700; white-space: nowrap;">{{ number_format($pTotal, 0, ',', '.') }} đ</td>
                                         </tr>
                                     @endforeach
                                 </tbody>

@@ -423,15 +423,19 @@ class AcrylicOrderService
     {
         foreach ($paymentDetailsData as $detail) {
             if (empty($detail['name'])) continue;
+
+            $rawPrice = is_string($detail['price'] ?? 0) ? str_replace('.', '', $detail['price']) : ($detail['price'] ?? 0);
+            $rawPriceOnly = is_string($detail['price_only'] ?? 0) ? str_replace('.', '', $detail['price_only']) : ($detail['price_only'] ?? 0);
+            $rawTotal = is_string($detail['total'] ?? 0) ? str_replace('.', '', $detail['total']) : ($detail['total'] ?? 0);
             
             \App\Models\PaymentDetail::create([
                 'order_id'   => $order->id,
                 'name'       => $detail['name'],
                 'unit'       => $detail['unit'] ?? null,
                 'quantity'   => $detail['quantity'] ?? 0,
-                'price'      => round($detail['price'] ?? 0),
-                'price_only' => round($detail['price_only'] ?? 0),
-                'total'      => round(str_replace('.', '', $detail['total'] ?? 0)),
+                'price'      => round(floatval($rawPrice)),
+                'price_only' => round(floatval($rawPriceOnly)),
+                'total'      => round(floatval($rawTotal)),
                 'formula'    => $detail['formula'] ?? null,
             ]);
         }
