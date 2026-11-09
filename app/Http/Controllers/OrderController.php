@@ -278,9 +278,11 @@ class OrderController extends Controller
             $supplies = json_decode($request->input('supplies_json'), true);
             if (is_array($supplies)) {
                 $supplies = $this->cleanEmptyStrings($supplies);
+                $supplies = $this->sanitizeSuppliesFormulas($supplies);
                 $request->merge(['supplies' => $supplies]);
             }
         }
+        $this->sanitizePaymentDetailsFormulas($request);
 
         // Không xử lý xóa file hoặc upload file thật khi chỉ đang xem trước
         $request->request->remove('delete_attachments');
@@ -826,9 +828,11 @@ class OrderController extends Controller
             $supplies = json_decode($request->input('supplies_json'), true);
             if (is_array($supplies)) {
                 $supplies = $this->cleanEmptyStrings($supplies);
+                $supplies = $this->sanitizeSuppliesFormulas($supplies);
                 $request->merge(['supplies' => $supplies]);
             }
         }
+        $this->sanitizePaymentDetailsFormulas($request);
 
         $request->validate([
             'draft_order_id' => 'required|integer',
@@ -964,9 +968,11 @@ class OrderController extends Controller
             $supplies = json_decode($request->input('supplies_json'), true);
             if (is_array($supplies)) {
                 $supplies = $this->cleanEmptyStrings($supplies);
+                $supplies = $this->sanitizeSuppliesFormulas($supplies);
                 $request->merge(['supplies' => $supplies]);
             }
         }
+        $this->sanitizePaymentDetailsFormulas($request);
 
         $wasDraftBefore = $order->status === 'draft';
         $isDraftSave = $request->input('action') === 'draft' || ($request->status === 'draft' && $order->status === 'draft');
@@ -1536,6 +1542,72 @@ class OrderController extends Controller
     /**
      * Recursively convert empty string elements to null in request arrays.
      */
+    protected function evaluateFormulaString($expr)
+    {
+        if (!is_string($expr)) return $expr;
+        $expr = trim($expr);
+        if (str_starts_with($expr, '=')) {
+            $expr = trim(substr($expr, 1));
+        }
+        $expr = preg_replace('/(\d+),(\d+)/', '$1.$2', $expr);
+        if (!preg_match('/^[\d+\-*\/().\s]+$/', $expr)) {
+            return null;
+        }
+        try {
+            $res = eval("return ($expr);");
+            return is_numeric($res) ? round((float)$res, 6) : null;
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    protected function sanitizeSuppliesFormulas(array $supplies): array
+    {
+        foreach ($supplies as &$supply) {
+            if (isset($supply['quantity']) && is_string($supply['quantity']) && str_starts_with(trim($supply['quantity']), '=')) {
+                $rawQ = trim($supply['quantity']);
+                $supply['formula'] = is_array($supply['formula'] ?? null) ? $supply['formula'] : [];
+                $supply['formula']['quantity'] = $rawQ;
+                $calc = $this->evaluateFormulaString($rawQ);
+                $supply['quantity'] = ($calc !== null) ? $calc : 0;
+            }
+
+            if (!isset($supply['items']) || !is_array($supply['items'])) continue;
+            foreach ($supply['items'] as &$item) {
+                $numericFields = ['wing_area', 'molding_length', 'height', 'width', 'quantity', 'wing_quantity', 'unit_price', 'total_price', 'area_m2'];
+                foreach ($numericFields as $field) {
+                    if (isset($item[$field]) && is_string($item[$field]) && str_starts_with(trim($item[$field]), '=')) {
+                        $rawF = trim($item[$field]);
+                        $item['formula'] = is_array($item['formula'] ?? null) ? $item['formula'] : [];
+                        $item['formula'][$field] = $rawF;
+                        $calc = $this->evaluateFormulaString($rawF);
+                        $item[$field] = ($calc !== null) ? $calc : null;
+                    }
+                }
+            }
+        }
+        return $supplies;
+    }
+
+    protected function sanitizePaymentDetailsFormulas(Request $request): void
+    {
+        if ($request->has('payment_details') && is_array($request->payment_details)) {
+            $details = $request->payment_details;
+            foreach ($details as &$detail) {
+                foreach (['quantity', 'price', 'price_only'] as $field) {
+                    if (isset($detail[$field]) && is_string($detail[$field]) && str_starts_with(trim($detail[$field]), '=')) {
+                        $rawF = trim($detail[$field]);
+                        $detail['formula'] = is_array($detail['formula'] ?? null) ? $detail['formula'] : [];
+                        $detail['formula'][$field] = $rawF;
+                        $calc = $this->evaluateFormulaString($rawF);
+                        $detail[$field] = ($calc !== null) ? $calc : 0;
+                    }
+                }
+            }
+            $request->merge(['payment_details' => $details]);
+        }
+    }
+
     private function cleanEmptyStrings(array $array): array
     {
         foreach ($array as $key => $value) {

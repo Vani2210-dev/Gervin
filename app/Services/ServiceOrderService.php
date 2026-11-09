@@ -37,6 +37,7 @@ class ServiceOrderService
             'payment_details.*.price'    => 'nullable|numeric|min:0',
             'payment_details.*.price_only'=> 'nullable|numeric|min:0',
             'payment_details.*.total'    => 'nullable|string',
+            'payment_details.*.formula'  => 'nullable',
         ];
     }
 
@@ -229,6 +230,7 @@ class ServiceOrderService
                 'unit'       => $detail['unit'] ?? '',
                 'quantity'   => floatval($detail['quantity'] ?? 1),
                 'price'      => floatval($rawPrice),
+                'formula'    => $detail['formula'] ?? null,
                 'price_only' => floatval($rawPriceOnly),
                 'total'      => floatval($rawTotal),
             ]);

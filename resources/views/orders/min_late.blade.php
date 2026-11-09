@@ -262,7 +262,11 @@
                         </div>
                         <input type="text" name="supplies[{{ $supplyIndex }}][order_supply_code]" class="order-supply-code-input form-control form-control-sm rounded-lg w-40 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Mã vật tư" value="{{ $supply->order_supply_code ?? '' }}">
                         <input type="text" name="supplies[{{ $supplyIndex }}][supply_name]" class="form-control form-control-sm rounded-lg w-64 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Tên vật tư (ví dụ: Acrylic, Melamine...)" value="{{ $supply->supply_name }}">
-                        <input type="number" name="supplies[{{ $supplyIndex }}][quantity]" class="form-control form-control-sm rounded-lg w-24 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="SL" min="0" step="any" value="{{ $supply->quantity ?? 0 }}">
+                        @php
+                            $supplyFormulas = is_array($supply->formula) ? $supply->formula : (json_decode($supply->formula ?? '[]', true) ?: []);
+                        @endphp
+                        <input type="text" name="supplies[{{ $supplyIndex }}][quantity]" class="form-control form-control-sm rounded-lg w-24 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="SL" value="{{ $supply->quantity ?? 0 }}" autocomplete="off" @if(!empty($supplyFormulas['quantity'])) data-formula="{{ $supplyFormulas['quantity'] }}" title="Công thức: {{ $supplyFormulas['quantity'] }}" @endif>
+                        <input type="hidden" name="supplies[{{ $supplyIndex }}][formula]" class="supply-formula-input" value="{{ !empty($supplyFormulas) ? json_encode($supplyFormulas) : '' }}">
                         @php
                             $isNKOrder = isset($acrylicOrder) && (
                                 $acrylicOrder->customer_id == ($nhapKhoCustomer?->id ?? -1) || 
@@ -363,7 +367,11 @@
                                 $oldHeight = isset($oldSizeParts[0]) ? trim($oldSizeParts[0]) : '';
                                 $oldWidth = isset($oldSizeParts[1]) ? trim($oldSizeParts[1]) : '';
                             @endphp
+                            @php
+                                $itemFormulas = is_array($item->formula) ? $item->formula : (json_decode($item->formula ?? '[]', true) ?: []);
+                            @endphp
                             <tr class="order-item-row" data-item-id="{{ $item->id }}">
+                                <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][formula]" class="row-formula-input" value="{{ !empty($itemFormulas) ? json_encode($itemFormulas) : '' }}">
                                 <td style="width: 45px; min-width: 45px; " class="sticky-stt-td text-center align-middle border border-neutral-200">
                                     <span class="row-index font-semibold text-neutral-500">{{ $itemIndex + 1 }}</span>
                                 </td>
@@ -385,13 +393,13 @@
                                     </td>
                                 @endif
                                 <td style="width: 200px; min-width: 200px; " class="border border-neutral-200">
-                                    <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][height]" class="form-control form-control-sm rounded-lg border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500 bg-yellow-50/30 text-center px-1 py-1 h-8 text-xs" placeholder="Cao (vân)" step="any" value="{{ $size['height'] ?? '' }}">
+                                    <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][height]" class="form-control form-control-sm rounded-lg border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500 bg-yellow-50/30 text-center px-1 py-1 h-8 text-xs" placeholder="Cao (vân)" value="{{ $size['height'] ?? '' }}" autocomplete="off" @if(!empty($itemFormulas['height'])) data-formula="{{ $itemFormulas['height'] }}" title="Công thức: {{ $itemFormulas['height'] }}" @endif>
                                 </td>
                                 <td style="width: 200px; min-width: 200px; " class="border border-neutral-200">
-                                    <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][width]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Rộng" step="any" value="{{ $size['width'] ?? '' }}">
+                                    <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][width]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Rộng" value="{{ $size['width'] ?? '' }}" autocomplete="off" @if(!empty($itemFormulas['width'])) data-formula="{{ $itemFormulas['width'] }}" title="Công thức: {{ $itemFormulas['width'] }}" @endif>
                                 </td>
                                 <td style="width: 70px; min-width: 70px; " class="border border-neutral-200">
-                                    <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Số lượng" min="1" required value="{{ $item->quantity }}">
+                                    <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Số lượng" required value="{{ $item->quantity }}" autocomplete="off" @if(!empty($itemFormulas['quantity'])) data-formula="{{ $itemFormulas['quantity'] }}" title="Công thức: {{ $itemFormulas['quantity'] }}" @endif>
                                 </td>
                                 <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
                                     <div class="w-full h-full" style="position: relative;">
@@ -574,7 +582,8 @@ function addMinLateOrderSupply() {
                 </div>
                 <input type="text" name="supplies[${minLateSupplyIndex}][order_supply_code]" class="order-supply-code-input form-control form-control-sm rounded-lg w-40 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Mã vật tư">
                 <input type="text" name="supplies[${minLateSupplyIndex}][supply_name]" class="form-control form-control-sm rounded-lg w-64 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Tên vật tư (ví dụ: Acrylic, Melamine...)">
-                <input type="number" name="supplies[${minLateSupplyIndex}][quantity]" class="form-control form-control-sm rounded-lg w-24 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="SL" min="0" step="any" value="0">
+                <input type="text" name="supplies[${minLateSupplyIndex}][quantity]" class="form-control form-control-sm rounded-lg w-24 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="SL" value="0" autocomplete="off">
+                <input type="hidden" name="supplies[${minLateSupplyIndex}][formula]" class="supply-formula-input" value="">
                 <div class="supply-inventory-action-wrap items-center gap-2" style="${(typeof window.isNhapKhoSelected === 'function' && window.isNhapKhoSelected()) ? 'display: flex;' : 'display: none;'}">
                     <select name="supplies[${minLateSupplyIndex}][inventory_action]" class="supply-inventory-action-select form-select form-select-sm rounded-lg text-xs font-bold border transition-colors bg-emerald-50 text-emerald-700 border-emerald-300" onchange="updateSupplyInventoryActionStyle(this)">
                         <option value="add" selected>+ Thêm kho</option>
@@ -711,6 +720,7 @@ function addMinLateOrderItem(button, isInitial = false, insertAfterRow = null) {
         </td>
         <td style="width: 160px; min-width: 160px; " class="border border-neutral-200">
             <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][product_code]" class="product-code-input form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs font-semibold text-neutral-600" readonly>
+            <input type="hidden" name="supplies[${supplyIndex}][items][${itemIndex}][formula]" class="row-formula-input" value="">
         </td>
         <td style="min-width: 180px;" class="border border-neutral-200">
             <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][product_name]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Tên sản phẩm" value="${lastData ? lastData.product_name : ''}">
@@ -727,13 +737,13 @@ function addMinLateOrderItem(button, isInitial = false, insertAfterRow = null) {
         </td>
         ` : ''}
         <td style="width: 200px; min-width: 200px; " class="border border-neutral-200">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][height]" class="form-control form-control-sm rounded-lg border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500 bg-yellow-50/30 text-center px-1 py-1 h-8 text-xs" placeholder="Cao (vân)" step="any" value="${defaultHeight}">
+            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][height]" class="form-control form-control-sm rounded-lg border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500 bg-yellow-50/30 text-center px-1 py-1 h-8 text-xs" placeholder="Cao (vân)" value="${defaultHeight}" autocomplete="off">
         </td>
         <td style="width: 200px; min-width: 200px; " class="border border-neutral-200">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][width]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Rộng" step="any" value="${defaultWidth}">
+            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][width]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Rộng" value="${defaultWidth}" autocomplete="off">
         </td>
         <td style="width: 70px; min-width: 70px; " class="border border-neutral-200">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Số lượng" min="1" required value="${lastData ? lastData.quantity : '1'}">
+            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Số lượng" required value="${lastData ? lastData.quantity : '1'}" autocomplete="off">
         </td>
         <td style="width: 70px; min-width: 70px; " class="border border-neutral-200">
             <div class="w-full h-full" style="position: relative;">

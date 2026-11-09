@@ -29,6 +29,7 @@ class MinLateOrderItem extends Model
         'direction',
         'notes',
         'old_size',
+        'formula',
     ];
 
     protected $casts = [
@@ -41,7 +42,24 @@ class MinLateOrderItem extends Model
         'ban_rong_17_39' => 'float',
         'ban_rong_25_35' => 'float',
         'beveled_handle' => 'float',
+        'formula' => 'array',
     ];
+
+    public function setFormulaAttribute($value)
+    {
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $value = $decoded;
+            }
+        }
+        $this->attributes['formula'] = !empty($value) ? json_encode($value, JSON_UNESCAPED_UNICODE) : null;
+    }
+
+    public function getFormulasAttribute()
+    {
+        return is_array($this->formula) ? $this->formula : (json_decode($this->formula ?? '[]', true) ?: []);
+    }
 
     public function orderSupply()
     {

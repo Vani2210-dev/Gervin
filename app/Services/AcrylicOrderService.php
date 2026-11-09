@@ -35,6 +35,7 @@ class AcrylicOrderService
             'supplies.*.order_supply_code'   => 'nullable|string|max:255',
             'supplies.*.supply_name'         => 'nullable|string|max:255',
             'supplies.*.quantity'            => 'nullable|numeric|min:0',
+            'supplies.*.formula'             => 'nullable',
             'supplies.*.items'               => 'nullable|array',
             'supplies.*.items.*.id'                   => 'nullable|integer',
             'supplies.*.items.*.product_code'        => 'nullable|string|max:50',
@@ -68,12 +69,14 @@ class AcrylicOrderService
             'supplies.*.items.*.mill_width_2'         => 'nullable|integer',
             'supplies.*.items.*.mill_depth_2'         => 'nullable|integer',
             'supplies.*.items.*.is_labor'              => 'nullable|in:0,1',
+            'supplies.*.items.*.formula'               => 'nullable',
             'payment_details'                          => 'nullable|array',
             'payment_details.*.name'                   => 'required|string|max:255',
             'payment_details.*.unit'                   => 'nullable|string|max:100',
             'payment_details.*.quantity'               => 'nullable|numeric|min:0',
             'payment_details.*.price'                  => 'required|numeric|min:0',
             'payment_details.*.total'                  => 'required|string',
+            'payment_details.*.formula'                => 'nullable',
         ];
     }
 
@@ -320,6 +323,7 @@ class AcrylicOrderService
                 'quantity'          => $this->calculateSupplyNonLaborQuantity($supplyData),
                 'inventory_action'  => $supplyData['inventory_action'] ?? 'add',
                 'warehouse_id'      => $supplyData['warehouse_id'] ?? null,
+                'formula'           => $supplyData['formula'] ?? null,
             ]);
 
             if (!isset($supplyData['items']) || !is_array($supplyData['items'])) continue;
@@ -361,6 +365,7 @@ class AcrylicOrderService
                     'mill_width_2'        => isset($item['mill_width_2'])  && $item['mill_width_2']  !== '' ? intval($item['mill_width_2'])  : null,
                     'mill_depth_2'        => isset($item['mill_depth_2'])  && $item['mill_depth_2']  !== '' ? intval($item['mill_depth_2'])  : null,
                     'old_size'            => $item['old_size'] ?? null,
+                    'formula'             => $item['formula'] ?? null,
                 ]);
 
                 // Labor rows (Công giả dày) do NOT get item codes — they are billing-only rows
@@ -427,6 +432,7 @@ class AcrylicOrderService
                 'price'      => round($detail['price'] ?? 0),
                 'price_only' => round($detail['price_only'] ?? 0),
                 'total'      => round(str_replace('.', '', $detail['total'] ?? 0)),
+                'formula'    => $detail['formula'] ?? null,
             ]);
         }
     }

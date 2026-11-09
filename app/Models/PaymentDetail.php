@@ -16,6 +16,7 @@ class PaymentDetail extends Model
         'price',
         'price_only',
         'total',
+        'formula',
     ];
 
     protected $casts = [
@@ -23,7 +24,24 @@ class PaymentDetail extends Model
         'price' => 'float',
         'price_only' => 'float',
         'total' => 'float',
+        'formula' => 'array',
     ];
+
+    public function setFormulaAttribute($value)
+    {
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $value = $decoded;
+            }
+        }
+        $this->attributes['formula'] = !empty($value) ? json_encode($value, JSON_UNESCAPED_UNICODE) : null;
+    }
+
+    public function getFormulasAttribute()
+    {
+        return is_array($this->formula) ? $this->formula : (json_decode($this->formula ?? '[]', true) ?: []);
+    }
 
     public function order()
     {

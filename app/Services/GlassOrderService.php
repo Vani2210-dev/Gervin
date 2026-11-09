@@ -35,6 +35,7 @@ class GlassOrderService
             'supplies.*.order_supply_code'   => 'nullable|string|max:255',
             'supplies.*.supply_name'         => 'nullable|string|max:255',
             'supplies.*.quantity'            => 'nullable|numeric|min:0',
+            'supplies.*.formula'             => 'nullable',
             'supplies.*.items'               => 'nullable|array',
             'supplies.*.items.*.id'                   => 'nullable|integer',
             'supplies.*.items.*.product_name'        => 'nullable|string|max:255',
@@ -47,6 +48,7 @@ class GlassOrderService
             'supplies.*.items.*.width'               => 'nullable|numeric|min:0',
             'supplies.*.items.*.unit'                => 'nullable|string|max:50',
             'supplies.*.items.*.wing_quantity'       => 'required|integer|min:1',
+            'supplies.*.items.*.formula'             => 'nullable',
             'supplies.*.items.*.area_m2'             => 'nullable|numeric|min:0',
             'supplies.*.items.*.unit_price'          => 'required|numeric|min:0',
             'supplies.*.items.*.notes'               => 'nullable|string',
@@ -56,6 +58,7 @@ class GlassOrderService
             'payment_details.*.quantity'               => 'nullable|numeric|min:0',
             'payment_details.*.price'                  => 'required|numeric|min:0',
             'payment_details.*.total'                  => 'required|string',
+            'payment_details.*.formula'                => 'nullable',
         ];
     }
 
@@ -303,6 +306,7 @@ class GlassOrderService
                 'price'      => round($detail['price'] ?? 0),
                 'price_only' => round($detail['price_only'] ?? 0),
                 'total'      => round(str_replace('.', '', $detail['total'] ?? 0)),
+                'formula'    => $detail['formula'] ?? null,
             ]);
         }
     }
@@ -321,6 +325,7 @@ class GlassOrderService
                 'quantity'          => $supplyData['quantity'] ?? 1,
                 'inventory_action'  => $supplyData['inventory_action'] ?? 'add',
                 'warehouse_id'      => $supplyData['warehouse_id'] ?? null,
+                'formula'           => $supplyData['formula'] ?? null,
             ]);
 
             if (!isset($supplyData['items']) || !is_array($supplyData['items'])) continue;
@@ -349,6 +354,7 @@ class GlassOrderService
                     'total_price'            => $totalPrice,
                     'notes'                  => $item['notes'] ?? null,
                     'old_size'               => $item['old_size'] ?? null,
+                    'formula'                => $item['formula'] ?? null,
                 ]);
 
                 // Always regenerate codes from order_code + supply_code + global sequential index

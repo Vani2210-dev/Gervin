@@ -141,7 +141,11 @@
                     <tbody id="payment-details-container">
                         @if(isset($acrylicOrder) && isset($acrylicOrder->paymentDetails) && $acrylicOrder->paymentDetails->count() > 0)
                             @foreach($acrylicOrder->paymentDetails as $detailIndex => $detail)
+                            @php
+                                $detailFormulas = is_array($detail->formula) ? $detail->formula : (json_decode($detail->formula ?? '[]', true) ?: []);
+                            @endphp
                             <tr class="payment-detail-row">
+                                <input type="hidden" name="payment_details[{{ $detailIndex }}][formula]" class="row-formula-input" value="{{ !empty($detailFormulas) ? json_encode($detailFormulas) : '' }}">
                                 <td style="width: 50px; min-width: 50px; padding: 0 !important;" class="sticky-stt-td text-center align-middle border border-neutral-200">
                                     <span class="detail-index font-semibold text-neutral-500">{{ $detailIndex + 1 }}</span>
                                 </td>
@@ -209,14 +213,14 @@
                                     <input type="text" name="payment_details[{{ $detailIndex }}][unit]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs w-full" placeholder="tấm, m², bộ..." value="{{ $detail->unit }}">
                                 </td>
                                 <td style="width: 100px; min-width: 100px; padding: 0 !important;" class="border border-neutral-200">
-                                    <input type="number" name="payment_details[{{ $detailIndex }}][quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs payment-quantity-input w-full" placeholder="1" step="any" value="{{ $detail->quantity }}">
+                                    <input type="text" name="payment_details[{{ $detailIndex }}][quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs payment-quantity-input w-full" placeholder="1" value="{{ $detail->quantity }}" autocomplete="off" @if(!empty($detailFormulas['quantity'])) data-formula="{{ $detailFormulas['quantity'] }}" title="Công thức: {{ $detailFormulas['quantity'] }}" @endif>
                                 </td>
                                 <td style="width: 140px; min-width: 140px; padding: 0 !important;" class="border border-neutral-200">
-                                    <input type="number" name="payment_details[{{ $detailIndex }}][price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs w-full" placeholder="0" min="0" step="any" required value="{{ $detail->price }}">
+                                    <input type="text" name="payment_details[{{ $detailIndex }}][price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs w-full" placeholder="0" required value="{{ $detail->price }}" autocomplete="off" @if(!empty($detailFormulas['price'])) data-formula="{{ $detailFormulas['price'] }}" title="Công thức: {{ $detailFormulas['price'] }}" @endif>
                                 </td>
                                 @if($isMinLateOrder)
                                 <td style="width: 120px; min-width: 120px; padding: 0 !important;" class="border border-neutral-200">
-                                    <input type="number" name="payment_details[{{ $detailIndex }}][price_only]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs w-full" placeholder="0" min="0" step="any" value="{{ $detail->price_only }}">
+                                    <input type="text" name="payment_details[{{ $detailIndex }}][price_only]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs w-full" placeholder="0" value="{{ $detail->price_only }}" autocomplete="off" @if(!empty($detailFormulas['price_only'])) data-formula="{{ $detailFormulas['price_only'] }}" title="Công thức: {{ $detailFormulas['price_only'] }}" @endif>
                                 </td>
                                 @else
                                 <input type="hidden" name="payment_details[{{ $detailIndex }}][price_only]" value="{{ $detail->price_only ?? 0 }}">
@@ -331,6 +335,7 @@ function addPaymentDetail() {
     const newRow = document.createElement('tr');
     newRow.className = 'payment-detail-row';
     newRow.innerHTML = `
+        <input type="hidden" name="payment_details[${paymentDetailIndex}][formula]" class="row-formula-input" value="">
         <td style="width: 50px; min-width: 50px; padding: 0 !important;" class="sticky-stt-td text-center align-middle border border-neutral-200">
             <span class="detail-index font-semibold text-neutral-500">${paymentDetailIndex + 1}</span>
         </td>
@@ -346,14 +351,14 @@ function addPaymentDetail() {
             <input type="text" name="payment_details[${paymentDetailIndex}][unit]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs w-full" placeholder="tấm, m², bộ...">
         </td>
         <td style="width: 100px; min-width: 100px; padding: 0 !important;" class="border border-neutral-200">
-            <input type="number" name="payment_details[${paymentDetailIndex}][quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs payment-quantity-input w-full" placeholder="1" step="any" value="1">
+            <input type="text" name="payment_details[${paymentDetailIndex}][quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs payment-quantity-input w-full" placeholder="1" value="1" autocomplete="off">
         </td>
         <td style="width: 140px; min-width: 140px; padding: 0 !important;" class="border border-neutral-200">
-            <input type="number" name="payment_details[${paymentDetailIndex}][price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs w-full" placeholder="0" min="0" step="any" required value="0">
+            <input type="text" name="payment_details[${paymentDetailIndex}][price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs w-full" placeholder="0" required value="0" autocomplete="off">
         </td>
         ${isMinLateOrderType ? `
         <td style="width: 120px; min-width: 120px; padding: 0 !important;" class="border border-neutral-200">
-            <input type="number" name="payment_details[${paymentDetailIndex}][price_only]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs w-full" placeholder="0" min="0" step="any" value="0">
+            <input type="text" name="payment_details[${paymentDetailIndex}][price_only]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs w-full" placeholder="0" value="0" autocomplete="off">
         </td>` : `
         <input type="hidden" name="payment_details[${paymentDetailIndex}][price_only]" value="0">
         `}

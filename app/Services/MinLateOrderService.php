@@ -36,6 +36,7 @@ class MinLateOrderService
             'supplies.*.order_supply_code'   => 'nullable|string|max:255',
             'supplies.*.supply_name'         => 'nullable|string|max:255',
             'supplies.*.quantity'            => 'nullable|numeric|min:0',
+            'supplies.*.formula'             => 'nullable',
             'supplies.*.items'               => 'nullable|array',
             'supplies.*.items.*.id'                   => 'nullable|integer',
             'supplies.*.items.*.product_code'        => 'nullable|string|max:50',
@@ -44,6 +45,7 @@ class MinLateOrderService
             'supplies.*.items.*.height'              => 'nullable|numeric|min:0',
             'supplies.*.items.*.width'               => 'nullable|numeric|min:0',
             'supplies.*.items.*.quantity'            => 'required|integer|min:1',
+            'supplies.*.items.*.formula'             => 'nullable',
             'supplies.*.items.*.edge_gluing'         => 'nullable|array',
             'supplies.*.items.*.bevel'                 => 'nullable|string',
             'supplies.*.items.*.straight_paste_length' => 'nullable|numeric|min:0',
@@ -63,6 +65,7 @@ class MinLateOrderService
             'payment_details.*.price'                  => 'required|numeric|min:0',
             'payment_details.*.price_only'             => 'nullable|numeric|min:0',
             'payment_details.*.total'                  => 'required|numeric|min:0',
+            'payment_details.*.formula'                => 'nullable',
         ];
     }
 
@@ -299,6 +302,7 @@ class MinLateOrderService
                 'price'      => round($detail['price'] ?? 0),
                 'price_only' => round($detail['price_only'] ?? 0),
                 'total'      => round(str_replace('.', '', $detail['total'] ?? 0)),
+                'formula'    => $detail['formula'] ?? null,
             ]);
         }
     }
@@ -317,6 +321,7 @@ class MinLateOrderService
                 'quantity'          => $supplyData['quantity'] ?? 1,
                 'inventory_action'  => $supplyData['inventory_action'] ?? 'add',
                 'warehouse_id'      => $supplyData['warehouse_id'] ?? null,
+                'formula'           => $supplyData['formula'] ?? null,
             ]);
 
             if (!isset($supplyData['items']) || !is_array($supplyData['items'])) continue;
@@ -343,6 +348,7 @@ class MinLateOrderService
                     'direction'             => $item['direction'] ?? null,
                     'notes'                 => $item['notes'] ?? null,
                     'old_size'              => $item['old_size'] ?? null,
+                    'formula'               => $item['formula'] ?? null,
                 ]);
 
                 // Always regenerate codes from order_code + supply_code + global sequential index

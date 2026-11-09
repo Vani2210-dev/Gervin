@@ -44,6 +44,7 @@ class AcrylicOrderItem extends Model
         'mill_width_2',
         'mill_depth_2',
         'old_size',
+        'formula',
     ];
 
     protected $casts = [
@@ -53,7 +54,24 @@ class AcrylicOrderItem extends Model
         'molding_length' => 'float',
         'unit_price' => 'float',
         'total_price' => 'float',
+        'formula' => 'array',
     ];
+
+    public function setFormulaAttribute($value)
+    {
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $value = $decoded;
+            }
+        }
+        $this->attributes['formula'] = !empty($value) ? json_encode($value, JSON_UNESCAPED_UNICODE) : null;
+    }
+
+    public function getFormulasAttribute()
+    {
+        return is_array($this->formula) ? $this->formula : (json_decode($this->formula ?? '[]', true) ?: []);
+    }
 
     public function orderSupply()
     {

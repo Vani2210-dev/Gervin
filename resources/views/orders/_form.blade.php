@@ -353,6 +353,7 @@
 
             {{-- Bottom Section: Full Width Bảng danh sách vật tư --}}
             <div class="w-full mt-6">
+
                 <div class="space-y-6">
                     @if($currentOrderType === 'acrylic')
                         @include('orders.acrylic')
@@ -3108,13 +3109,25 @@ document.addEventListener('DOMContentLoaded', function() {
             const actionSelect = supplyRow.querySelector('.supply-inventory-action-select') || supplyRow.querySelector('[name*="[inventory_action]"]');
             const warehouseSelect = supplyRow.querySelector('[name*="[warehouse_id]"]');
 
+            const supplyQtyInp = supplyRow.querySelector('[name*="[quantity]"]:not([name*="items"])');
+            let supplyFormulaVal = null;
+            if (supplyQtyInp && supplyQtyInp.dataset.formula) {
+                supplyFormulaVal = { quantity: supplyQtyInp.dataset.formula };
+            } else {
+                const sFormulaInp = supplyRow.querySelector('input.supply-formula-input');
+                if (sFormulaInp && sFormulaInp.value) {
+                    try { supplyFormulaVal = JSON.parse(sFormulaInp.value); } catch(e) {}
+                }
+            }
+
             const supply = {
                 id: supplyRow.getAttribute('data-supply-id') || null,
                 order_supply_code: supplyRow.querySelector('[name*="[order_supply_code]"]')?.value || '',
                 supply_name: supplyRow.querySelector('[name*="[supply_name]"]')?.value || '',
-                quantity: parseFloat(supplyRow.querySelector('[name*="[quantity]"]:not([name*="items"])')?.value) || 0,
+                quantity: parseFloat(supplyQtyInp?.value) || 0,
                 inventory_action: actionSelect ? actionSelect.value : 'add',
                 warehouse_id: warehouseSelect ? warehouseSelect.value : null,
+                formula: supplyFormulaVal,
                 items: []
             };
 
@@ -3141,6 +3154,16 @@ document.addEventListener('DOMContentLoaded', function() {
                         const key = match[1];
                         let val = input.value;
                         
+                        // Nếu giá trị đang là biểu thức dạng =... thì tự động tính giá trị số để lưu vào cột số
+                        if (typeof val === 'string' && val.trim().startsWith('=')) {
+                            const calc = (typeof window.evaluateExcelFormula === 'function') 
+                                ? window.evaluateExcelFormula(val) 
+                                : null;
+                            if (calc !== null) {
+                                val = calc;
+                            }
+                        }
+
                         // Parse values based on input type
                         if (input.type === 'number') {
                             val = val === '' ? '' : parseFloat(val);
@@ -3176,6 +3199,30 @@ document.addEventListener('DOMContentLoaded', function() {
                         height: item.height,
                         width: item.width
                     };
+                }
+
+                // Thu thập công thức từ các ô trong dòng sản phẩm này
+                const itemFormulas = {};
+                itemRow.querySelectorAll('input, textarea').forEach(inp => {
+                    if (inp.dataset.formula) {
+                        if (inp.classList.contains('display-area-input')) {
+                            itemFormulas['area_m2'] = inp.dataset.formula;
+                        } else {
+                            const n = inp.getAttribute('name') || '';
+                            const match = n.match(/\[([a-zA-Z0-9_]+)\]$/);
+                            if (match && match[1] !== 'formula') {
+                                itemFormulas[match[1]] = inp.dataset.formula;
+                            }
+                        }
+                    }
+                });
+                if (Object.keys(itemFormulas).length > 0) {
+                    item.formula = itemFormulas;
+                } else {
+                    const rowFormulaInp = itemRow.querySelector('input.row-formula-input');
+                    if (rowFormulaInp && rowFormulaInp.value) {
+                        try { item.formula = JSON.parse(rowFormulaInp.value); } catch(e) {}
+                    }
                 }
 
                 supply.items.push(item);
@@ -3289,7 +3336,9 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 targetEl.focus();
                 if (targetEl.tagName === 'INPUT' || targetEl.tagName === 'TEXTAREA') {
-                    targetEl.select();
+                    if (!targetEl.dataset.formula) {
+                        targetEl.select();
+                    }
                 }
             }
         }
@@ -4381,8 +4430,16 @@ function submitQuickCreateCustomer(e) {
 
                 fillTargetCells.forEach(inp => {
                     inp.value = fillVal;
+                    if (fillSourceCell.dataset.formula) {
+                        inp.dataset.formula = fillSourceCell.dataset.formula;
+                        inp.title = fillSourceCell.title || `Công thức: ${inp.dataset.formula}`;
+                    } else if (inp.dataset.formula) {
+                        delete inp.dataset.formula;
+                        inp.removeAttribute('title');
+                    }
                     inp.dispatchEvent(new Event('input', { bubbles: true }));
                     inp.dispatchEvent(new Event('change', { bubbles: true }));
+                    syncRowFormulasToHiddenInput(inp.closest('tr'));
                 });
 
                 if (typeof updateOrderSummary === 'function') updateOrderSummary();
@@ -4503,6 +4560,7 @@ function submitQuickCreateCustomer(e) {
 
             selectedCells.forEach(cell => {
                 cell.value = singleVal;
+                processFormulaForInput(cell, false);
                 cell.dispatchEvent(new Event('input', { bubbles: true }));
                 cell.dispatchEvent(new Event('change', { bubbles: true }));
             });
@@ -4552,6 +4610,7 @@ function submitQuickCreateCustomer(e) {
                             newValue: val.trim()
                         });
                         inp.value = val.trim();
+                        processFormulaForInput(inp, false);
                         inp.dispatchEvent(new Event('input', { bubbles: true }));
                         inp.dispatchEvent(new Event('change', { bubbles: true }));
                         pastedCells.push(inp);
@@ -4717,6 +4776,348 @@ function submitQuickCreateCustomer(e) {
     // Cập nhật lại vị trí handle khi cuộn bảng hoặc màn hình
     window.addEventListener('scroll', updateFillHandlePosition, true);
     window.addEventListener('resize', updateFillHandlePosition);
+
+    // ========================================================
+    // HỆ THỐNG TÍNH TOÁN CÔNG THỨC DẠNG EXCEL TRONG BẢNG (VÍ DỤ: =720*1/1000)
+    // ========================================================
+    function evaluateExcelFormula(rawVal) {
+        if (rawVal === null || rawVal === undefined) return null;
+        let str = String(rawVal).trim();
+        if (!str) return null;
+
+        const startsWithEqual = str.startsWith('=');
+        if (startsWithEqual) {
+            str = str.substring(1).trim();
+        }
+
+        // Nếu không bắt đầu bằng '=' thì phải chứa toán tử tính toán (+, -, *, /)
+        if (!startsWithEqual && !/[+\-*/]/.test(str)) {
+            return null;
+        }
+
+        // Chuẩn hóa dấu phẩy thập phân kiểu Việt Nam (ví dụ: 1,5 -> 1.5, 0,72 -> 0.72)
+        str = str.replace(/(\d+),(\d+)/g, '$1.$2');
+
+        // Chỉ cho phép các ký tự an toàn: số, +, -, *, /, (, ), ., khoảng trắng
+        if (!/^[\d+\-*/().\s]+$/.test(str)) {
+            return null;
+        }
+
+        try {
+            const calc = Function('"use strict"; return (' + str + ')')();
+            if (typeof calc === 'number' && !isNaN(calc) && isFinite(calc)) {
+                return parseFloat(calc.toFixed(6));
+            }
+        } catch (e) {
+            return null;
+        }
+        return null;
+    }
+
+    function isFormulaEligibleInput(input) {
+        if (!input || input.readOnly || input.disabled || input.type === 'hidden') return false;
+        const row = input.closest('tr.order-item-row, tr.payment-detail-row, .order-supply-row');
+        if (!row) return false;
+        const name = input.name || '';
+        const isExplicitText = name.includes('[product_name]') || name.includes('[name]') || 
+                               name.includes('[product_code]') || name.includes('[notes]') || 
+                               name.includes('[unit]');
+        if (isExplicitText && !String(input.value || '').trim().startsWith('=')) {
+            return false;
+        }
+        return true;
+    }
+
+    // Lấy công thức mặc định (sẵn có) cho các ô tính toán nếu người dùng chưa tự nhập công thức riêng
+    function getDefaultFormulaForInput(input) {
+        if (!input) return null;
+        const row = input.closest('tr.order-item-row');
+        if (!row) return null;
+
+        const name = input.getAttribute('name') || '';
+        const isDisplayArea = input.classList.contains('display-area-input');
+        
+        // 1. Cánh (m2) trong đơn Acrylic
+        if (name.includes('[wing_area]')) {
+            const h = parseFloat(row.querySelector('input[name*="[height]"]')?.value) || 0;
+            const w = parseFloat(row.querySelector('input[name*="[width]"]')?.value) || 0;
+            const q = parseFloat(row.querySelector('input[name*="[quantity]"]')?.value) || 1;
+            const prodName = row.querySelector('input[name*="[product_name]"]')?.value?.trim();
+            
+            if (prodName === 'Công giả dày' && h > 0) {
+                return (q > 1) ? `=${h}*${q}/1000` : `=${h}/1000`;
+            }
+            if (h > 0 && w > 0) {
+                return (q > 1) ? `=${h}*${w}*${q}/1000000` : `=${h}*${w}/1000000`;
+            }
+        }
+
+        // 2. Phào (m) trong đơn Acrylic
+        if (name.includes('[molding_length]')) {
+            const h = parseFloat(row.querySelector('input[name*="[height]"]')?.value) || 0;
+            const q = parseFloat(row.querySelector('input[name*="[quantity]"]')?.value) || 1;
+            const currentVal = parseFloat(input.value) || 0;
+            if (h > 0 && currentVal > 0) {
+                return (q > 1) ? `=${h}*${q}/1000` : `=${h}/1000`;
+            }
+        }
+
+        // 3. Khối lượng (m2) trong đơn Nhôm kính
+        if (isDisplayArea || name.includes('[area_m2]')) {
+            const h = parseFloat(row.querySelector('input[name*="[height]"]')?.value) || 0;
+            const w = parseFloat(row.querySelector('input[name*="[width]"]')?.value) || 0;
+            const q = parseFloat(row.querySelector('input[name*="[wing_quantity]"]')?.value) || 1;
+            if (h > 0 && w > 0) {
+                return (q > 1) ? `=${h}*${w}*${q}/1000000` : `=${h}*${w}/1000000`;
+            }
+        }
+
+        return null;
+    }
+
+    function syncRowFormulasToHiddenInput(row) {
+        if (!row) return;
+        const isSupply = row.classList.contains('order-supply-row');
+        const formulas = {};
+        
+        if (isSupply) {
+            const supplyQty = row.querySelector('[name*="[quantity]"]:not([name*="items"])');
+            if (supplyQty && supplyQty.dataset.formula) {
+                formulas['quantity'] = supplyQty.dataset.formula;
+            }
+            let hidden = row.querySelector('input.supply-formula-input');
+            if (hidden) {
+                hidden.value = Object.keys(formulas).length > 0 ? JSON.stringify(formulas) : '';
+            }
+            return;
+        }
+
+        row.querySelectorAll('input, textarea').forEach(inp => {
+            if (inp.dataset.formula) {
+                if (inp.classList.contains('display-area-input')) {
+                    formulas['area_m2'] = inp.dataset.formula;
+                } else {
+                    const n = inp.getAttribute('name') || '';
+                    const match = n.match(/\[([a-zA-Z0-9_]+)\]$/);
+                    if (match && match[1] !== 'formula') {
+                        formulas[match[1]] = inp.dataset.formula;
+                    }
+                }
+            }
+        });
+
+        let hidden = row.querySelector('input.row-formula-input');
+        if (hidden) {
+            hidden.value = Object.keys(formulas).length > 0 ? JSON.stringify(formulas) : '';
+        }
+    }
+
+    function initFormulasFromHiddenInputs(container = document) {
+        container.querySelectorAll('input.row-formula-input, input.supply-formula-input').forEach(hidden => {
+            if (!hidden.value) return;
+            try {
+                const parsed = JSON.parse(hidden.value);
+                if (!parsed || typeof parsed !== 'object') return;
+                const row = hidden.closest('tr.order-item-row, tr.payment-detail-row, .order-supply-row');
+                if (!row) return;
+
+                for (const [key, formulaStr] of Object.entries(parsed)) {
+                    if (!formulaStr) continue;
+                    let targetInp = null;
+                    if (row.classList.contains('order-supply-row')) {
+                        targetInp = row.querySelector('[name*="[quantity]"]:not([name*="items"])');
+                    } else if (key === 'area_m2' && row.querySelector('.display-area-input')) {
+                        targetInp = row.querySelector('.display-area-input');
+                    } else {
+                        targetInp = row.querySelector(`input[name*="[${key}]"], textarea[name*="[${key}]"]`);
+                    }
+                    if (targetInp) {
+                        targetInp.dataset.formula = formulaStr;
+                        targetInp.title = `Công thức: ${formulaStr} = ${targetInp.value}`;
+                        if (key === 'wing_area' || key === 'area_m2' || key === 'molding_length') {
+                            targetInp.dataset.manual = '1';
+                        }
+                    }
+                }
+            } catch (err) {}
+        });
+    }
+
+    function processFormulaForInput(input, triggerEvents = true) {
+        if (!isFormulaEligibleInput(input)) return false;
+        const rawVal = input.value;
+        const evaluated = evaluateExcelFormula(rawVal);
+        const row = input.closest('tr.order-item-row, tr.payment-detail-row, .order-supply-row');
+        const wasEditing = input.dataset.isEditing === '1';
+
+        if (evaluated !== null) {
+            input.dataset.formula = rawVal.trim();
+            input.title = `Công thức: ${rawVal.trim()} = ${evaluated}`;
+            input.value = evaluated;
+
+            if (input.name && (input.name.includes('[wing_area]') || input.name.includes('[molding_length]') || input.name.includes('[area_m2]')) || input.classList.contains('display-area-input')) {
+                input.dataset.manual = '1';
+            }
+
+            if (input.classList.contains('display-area-input')) {
+                const realInput = input.previousElementSibling;
+                if (realInput && realInput.classList.contains('real-area-input')) {
+                    realInput.value = evaluated;
+                }
+            }
+
+            if (triggerEvents) {
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+                input.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+            if (row) syncRowFormulasToHiddenInput(row);
+            return true;
+        } else {
+            // Chỉ xóa công thức nếu người dùng đang trực tiếp sửa ô này và cố tình xóa hoặc nhập đè số thông thường
+            if (wasEditing && input.dataset.formula && !String(rawVal || '').trim().startsWith('=')) {
+                delete input.dataset.formula;
+                input.removeAttribute('title');
+                if (row) syncRowFormulasToHiddenInput(row);
+            }
+        }
+        return false;
+    }
+
+    function convertTableNumberInputsToText(container = document) {
+        const inputs = container.querySelectorAll(
+            'table.bordered-table tbody tr.order-item-row td input[type="number"], ' +
+            'table.bordered-table tbody tr.payment-detail-row td input[type="number"], ' +
+            '.order-supply-row input[type="number"]'
+        );
+        inputs.forEach(inp => {
+            inp.type = 'text';
+            inp.setAttribute('autocomplete', 'off');
+            inp.setAttribute('inputmode', 'text');
+        });
+    }
+
+    // Khi người dùng BẤM VÀO Ô: Nếu ô CÓ CÔNG THỨC (hoặc có công thức tính sẵn) thì hiện công thức ra ngay trong ô để sửa
+    function showFormulaInCell(input) {
+        if (!input || !isFormulaEligibleInput(input)) return;
+
+        // Nếu ô chưa có công thức, kiểm tra xem có công thức tính sẵn (cánh m2, phào m, m2 kính...) không
+        if (!input.dataset.formula) {
+            const defFormula = getDefaultFormulaForInput(input);
+            if (defFormula) {
+                input.dataset.formula = defFormula;
+                input.title = `Công thức: ${defFormula}`;
+            }
+        }
+
+        if (input.dataset.formula && input.value !== input.dataset.formula) {
+            input.value = input.dataset.formula;
+            input.dataset.isEditing = '1';
+            // Không bôi đen (select) toàn bộ để người dùng có thể nhấp chuột hoặc xem bình thường
+            try {
+                const len = input.value.length;
+                input.setSelectionRange(len, len);
+            } catch (e) {}
+        }
+    }
+
+    document.addEventListener('focusin', function(e) {
+        const input = e.target;
+        if (input && isFormulaEligibleInput(input)) {
+            showFormulaInCell(input);
+        }
+    });
+
+    document.addEventListener('click', function(e) {
+        const input = e.target.closest('table.bordered-table tbody tr.order-item-row td input:not([type="hidden"]), table.bordered-table tbody tr.payment-detail-row td input:not([type="hidden"])');
+        if (input) {
+            showFormulaInCell(input);
+        }
+    });
+
+    // Khi người dùng RỜI KHỎI Ô (blur / focusout): Tính toán ra số kết quả và lưu lại công thức
+    document.addEventListener('focusout', function(e) {
+        const input = e.target;
+        if (input && isFormulaEligibleInput(input)) {
+            processFormulaForInput(input, true);
+            delete input.dataset.isEditing;
+        }
+    });
+
+    // Khi nhấn Enter trong ô: Tính toán ngay và chuyển xuống ô bên dưới (chuẩn Excel)
+    document.addEventListener('keydown', function(e) {
+        const input = e.target;
+        if (!input || !isFormulaEligibleInput(input)) return;
+
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            processFormulaForInput(input, true);
+            delete input.dataset.isEditing;
+
+            // Chuyển tiêu điểm xuống ô tiếp theo cùng cột
+            const td = input.closest('td');
+            const tr = td?.closest('tr');
+            if (td && tr) {
+                const colIdx = Array.from(tr.children).indexOf(td);
+                const nextTr = tr.nextElementSibling;
+                if (nextTr && (nextTr.classList.contains('order-item-row') || nextTr.classList.contains('payment-detail-row'))) {
+                    const nextInput = nextTr.children[colIdx]?.querySelector('input:not([type="hidden"]), select, textarea');
+                    if (nextInput) {
+                        nextInput.focus();
+                    }
+                }
+            }
+        } else if (e.key === 'Tab' && !e.shiftKey) {
+            processFormulaForInput(input, true);
+            delete input.dataset.isEditing;
+        }
+    }, true);
+
+    // Chuyển đổi inputs và khôi phục công thức khi tải trang
+    function initializeFormulaSystem(root = document) {
+        convertTableNumberInputsToText(root);
+        initFormulasFromHiddenInputs(root);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => initializeFormulaSystem(document));
+    } else {
+        initializeFormulaSystem(document);
+    }
+
+    // Theo dõi DOM thêm dòng mới để chuyển đổi type="number" sang type="text" và đọc công thức nếu có
+    const formulaObserver = new MutationObserver((mutations) => {
+        let hasNew = false;
+        for (const m of mutations) {
+            if (m.addedNodes.length > 0) {
+                hasNew = true;
+                break;
+            }
+        }
+        if (hasNew) {
+            convertTableNumberInputsToText(document);
+            initFormulasFromHiddenInputs(document);
+        }
+    });
+    formulaObserver.observe(document.body, { childList: true, subtree: true });
+
+    // Quét toàn bộ công thức trước khi submit form và đồng bộ vào hidden inputs
+    document.addEventListener('submit', function(e) {
+        // Chỉ tính toán đối với ô mà người dùng đang đứng gõ dở biểu thức bắt đầu bằng '='
+        document.querySelectorAll('tr.order-item-row input, tr.payment-detail-row input, .order-supply-row input').forEach(inp => {
+            if (inp.value && String(inp.value).trim().startsWith('=')) {
+                inp.dataset.isEditing = '1';
+                processFormulaForInput(inp, false);
+                delete inp.dataset.isEditing;
+            }
+        });
+        document.querySelectorAll('tr.order-item-row, tr.payment-detail-row, .order-supply-row').forEach(row => {
+            syncRowFormulasToHiddenInput(row);
+        });
+    }, true);
+
+    window.evaluateExcelFormula = evaluateExcelFormula;
+    window.processFormulaForInput = processFormulaForInput;
+    window.convertTableNumberInputsToText = convertTableNumberInputsToText;
 
     window.clearExcelRowSelection = clearExcelRowSelection;
     window.deleteExcelSelectedRows = deleteSelectedRows;
@@ -4886,6 +5287,14 @@ function submitQuickCreateCustomer(e) {
         outline: 2px solid #ef4444 !important;
         outline-offset: -2px !important;
         box-shadow: none !important;
+    }
+
+    /* Huy hiệu góc tam giác xanh cho ô có công thức chuẩn Excel */
+    input[data-formula] {
+        background-image: linear-gradient(135deg, transparent calc(100% - 6px), #2563eb calc(100% - 6px)) !important;
+        background-repeat: no-repeat !important;
+        background-position: top right !important;
+        border-bottom: 2px solid #3b82f6 !important;
     }
 
     /* Kính và CNC màu vàng */

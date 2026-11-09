@@ -390,7 +390,11 @@
                         @else
                             <input type="text" name="supplies[{{ $supplyIndex }}][supply_name]" class="form-control form-control-sm rounded-lg w-64 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Tên vật tư (ví dụ: Acrylic, Melamine...)" value="{{ $supply->supply_name }}">
                         @endif
-                        <input type="number" name="supplies[{{ $supplyIndex }}][quantity]" class="form-control form-control-sm rounded-lg w-24 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="SL" min="0" step="any" value="{{ $supply->quantity ?? 0 }}">
+                        @php
+                            $supplyFormulas = is_array($supply->formula) ? $supply->formula : (json_decode($supply->formula ?? '[]', true) ?: []);
+                        @endphp
+                        <input type="text" name="supplies[{{ $supplyIndex }}][quantity]" class="form-control form-control-sm rounded-lg w-24 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="SL" value="{{ $supply->quantity ?? 0 }}" autocomplete="off" @if(!empty($supplyFormulas['quantity'])) data-formula="{{ $supplyFormulas['quantity'] }}" title="Công thức: {{ $supplyFormulas['quantity'] }}" @endif>
+                        <input type="hidden" name="supplies[{{ $supplyIndex }}][formula]" class="supply-formula-input" value="{{ !empty($supplyFormulas) ? json_encode($supplyFormulas) : '' }}">
                         @php
                             $isNKOrder = isset($acrylicOrder) && (
                                 $acrylicOrder->customer_id == ($nhapKhoCustomer?->id ?? -1) || 
@@ -472,7 +476,11 @@
                                     $oldHeight = isset($oldSizeParts[0]) ? trim($oldSizeParts[0]) : '';
                                     $oldWidth = isset($oldSizeParts[1]) ? trim($oldSizeParts[1]) : '';
                                 @endphp
+                                @php
+                                    $itemFormulas = is_array($item->formula) ? $item->formula : (json_decode($item->formula ?? '[]', true) ?: []);
+                                @endphp
                                 <tr class="order-item-row" data-item-id="{{ $item->id }}">
+                                    <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][formula]" class="row-formula-input" value="{{ !empty($itemFormulas) ? json_encode($itemFormulas) : '' }}">
                                     <td style="width: 45px; min-width: 45px; " class="sticky-stt-td text-center align-middle border border-neutral-200">
                                         <span class="row-index font-semibold text-neutral-500">{{ $itemIndex + 1 }}</span>
                                     </td>
@@ -506,11 +514,11 @@
                                             <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][wing_opening_direction]" class="actual-wing-direction" value="{{ $item->wing_opening_direction }}">
                                             <div class="flex items-center gap-1 w-1/2" title="Số lượng cánh mở Trái">
                                                 <span class="text-[11px] text-neutral-500 font-semibold wing-direction-label">Trái:</span>
-                                                <input type="number" class="qty-left form-control form-control-sm rounded-md border-neutral-300 focus:border-primary-500 text-xs px-1 w-full h-7 text-center" placeholder="SL" min="0" oninput="updateWingDirection(this)">
+                                                <input type="text" class="qty-left form-control form-control-sm rounded-md border-neutral-300 focus:border-primary-500 text-xs px-1 w-full h-7 text-center" placeholder="SL" autocomplete="off" oninput="updateWingDirection(this)">
                                             </div>
                                             <div class="flex items-center gap-1 w-1/2" title="Số lượng cánh mở Phải">
                                                 <span class="text-[11px] text-neutral-500 font-semibold wing-direction-label">Phải:</span>
-                                                <input type="number" class="qty-right form-control form-control-sm rounded-md border-neutral-300 focus:border-primary-500 text-xs px-1 w-full h-7 text-center" placeholder="SL" min="0" oninput="updateWingDirection(this)">
+                                                <input type="text" class="qty-right form-control form-control-sm rounded-md border-neutral-300 focus:border-primary-500 text-xs px-1 w-full h-7 text-center" placeholder="SL" autocomplete="off" oninput="updateWingDirection(this)">
                                             </div>
                                         </div>
                                     </td>
@@ -529,16 +537,16 @@
                                         </td>
                                     @endif
                                     <td style="width: 200px; min-width: 200px; " class="border border-neutral-200 {{ $isAccessory ? 'hidden' : '' }}">
-                                        <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][height]" class="form-control form-control-sm rounded-lg border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500 bg-yellow-50/30 text-center px-1 py-1 h-8 text-xs" placeholder="Dài cánh (mm)" step="any" value="{{ $item->height }}">
+                                        <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][height]" class="form-control form-control-sm rounded-lg border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500 bg-yellow-50/30 text-center px-1 py-1 h-8 text-xs" placeholder="Dài cánh (mm)" value="{{ $item->height }}" autocomplete="off" @if(!empty($itemFormulas['height'])) data-formula="{{ $itemFormulas['height'] }}" title="Công thức: {{ $itemFormulas['height'] }}" @endif>
                                     </td>
                                     <td style="width: 200px; min-width: 200px; " class="border border-neutral-200 {{ $isAccessory ? 'hidden' : '' }}">
-                                        <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][width]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Rộng cánh (mm)" step="any" value="{{ $item->width }}">
+                                        <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][width]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Rộng cánh (mm)" value="{{ $item->width }}" autocomplete="off" @if(!empty($itemFormulas['width'])) data-formula="{{ $itemFormulas['width'] }}" title="Công thức: {{ $itemFormulas['width'] }}" @endif>
                                     </td>
                                     <td style="width: 100px; min-width: 100px; " class="border border-neutral-200 {{ $isAccessory ? 'hidden' : '' }}">
                                         <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][unit]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs px-1" placeholder="Đơn vị" value="{{ $item->unit ?? 'Bộ' }}">
                                     </td>
                                     <td style="width: 70px; min-width: 70px; " class="border border-neutral-200">
-                                        <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][wing_quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Số lượng" min="1" required value="{{ $item->wing_quantity ?? 1 }}">
+                                        <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][wing_quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Số lượng" required value="{{ $item->wing_quantity ?? 1 }}" autocomplete="off" @if(!empty($itemFormulas['wing_quantity'])) data-formula="{{ $itemFormulas['wing_quantity'] }}" title="Công thức: {{ $itemFormulas['wing_quantity'] }}" @endif>
                                     </td>
                                     <td style="width: 100px; min-width: 100px; " class="border border-neutral-200 relative {{ $isAccessory ? 'hidden' : '' }}">
                                         <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][area_m2]" class="real-area-input" value="{{ $item->area_m2 }}">
@@ -546,12 +554,14 @@
                                             placeholder="Khối lượng (m2)" 
                                             value="{{ ((float)($item->area_m2 ?? 0) > 0) ? number_format($item->area_m2, 2, '.', '') : '' }}"
                                             {{ $isLaborRow ? 'readonly disabled bg-neutral-100' : '' }}
-                                            onfocus="if(!this.hasAttribute('readonly')){ this.value = this.previousElementSibling.value; }"
-                                            onblur="if(!this.hasAttribute('readonly')){ if(this.value && !isNaN(this.value)){ this.previousElementSibling.value = this.value; this.value = Number(this.value).toFixed(2); } else { this.previousElementSibling.value = ''; this.value = ''; } }"
-                                            oninput="if(!this.hasAttribute('readonly')){ this.previousElementSibling.value = this.value; calculateGlassTotalPrice(this.closest('.order-item-row'), 'area'); }">
+                                            autocomplete="off"
+                                            @if(!empty($itemFormulas['area_m2'])) data-formula="{{ $itemFormulas['area_m2'] }}" title="Công thức: {{ $itemFormulas['area_m2'] }}" data-manual="1" @endif
+                                            onfocus="if(!this.hasAttribute('readonly')){ this.value = this.dataset.formula || this.previousElementSibling.value; }"
+                                            onblur="if(!this.hasAttribute('readonly')){ const calc = (typeof window.evaluateExcelFormula === 'function' ? window.evaluateExcelFormula(this.value) : null); const finalVal = calc !== null ? calc : this.value; if(finalVal && !isNaN(finalVal)){ this.previousElementSibling.value = finalVal; this.value = Number(finalVal).toFixed(2); } else { this.previousElementSibling.value = ''; this.value = ''; delete this.dataset.manual; delete this.dataset.formula; this.removeAttribute('title'); } }"
+                                            oninput="if(!this.hasAttribute('readonly')){ if(this.value.trim() !== '') { this.dataset.manual = '1'; } else { delete this.dataset.manual; delete this.dataset.formula; this.removeAttribute('title'); } this.previousElementSibling.value = this.value; calculateGlassTotalPrice(this.closest('.order-item-row'), 'area'); }">
                                     </td>
                                     <td style="width: 110px; min-width: 110px; " class="border border-neutral-200">
-                                        <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][unit_price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Đơn giá" min="0" step="any" required value="{{ $item->unit_price }}">
+                                        <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][unit_price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Đơn giá" required value="{{ $item->unit_price }}" autocomplete="off" @if(!empty($itemFormulas['unit_price'])) data-formula="{{ $itemFormulas['unit_price'] }}" title="Công thức: {{ $itemFormulas['unit_price'] }}" @endif>
                                     </td>
                                     <td style="width: 120px; min-width: 120px; " class="border border-neutral-200">
                                         <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][total_price]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center px-1 py-1 h-8 text-xs" placeholder="Thành tiền" readonly value="{{ number_format($item->total_price, 0, ',', '.') }}">
@@ -646,7 +656,8 @@ function addGlassOrderSupply(isAccessory = false) {
             <span class="badge bg-neutral-200 text-neutral-800 font-bold px-3 py-1.5 rounded-lg text-xs uppercase tracking-wider">Phụ kiện</span>
             <input type="hidden" name="supplies[${glassSupplyIndex}][order_supply_code]" value="">
             <input type="hidden" name="supplies[${glassSupplyIndex}][supply_name]" value="Phụ kiện">
-            <input type="number" name="supplies[${glassSupplyIndex}][quantity]" class="form-control form-control-sm rounded-lg w-24 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="SL" min="0" step="0.01" value="0">
+            <input type="text" name="supplies[${glassSupplyIndex}][quantity]" class="form-control form-control-sm rounded-lg w-24 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="SL" value="0" autocomplete="off">
+            <input type="hidden" name="supplies[${glassSupplyIndex}][formula]" class="supply-formula-input" value="">
         `;
     } else {
         headerHtml = `
@@ -655,7 +666,7 @@ function addGlassOrderSupply(isAccessory = false) {
                 ${(window.glassPricesData || []).filter(p => p.code).map(p => `<option value="${p.code}">${p.code}</option>`).join('')}
             </select>
             <input type="text" name="supplies[${glassSupplyIndex}][supply_name]" class="form-control form-control-sm rounded-lg w-64 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Tên vật tư (ví dụ: Acrylic, Melamine...)">
-            <input type="number" name="supplies[${glassSupplyIndex}][quantity]" class="form-control form-control-sm rounded-lg w-24 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="SL" min="0" step="0.01" value="0">
+            <input type="text" name="supplies[${glassSupplyIndex}][quantity]" class="form-control form-control-sm rounded-lg w-24 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="SL" value="0" autocomplete="off">
         `;
     }
 
@@ -857,6 +868,7 @@ function addGlassOrderItem(button, isInitial = false, insertAfterRow = null) {
         <td style="width: 160px; min-width: 160px; " class="border border-neutral-200">
             <input type="hidden" name="supplies[${supplyIndex}][items][${itemIndex}][id]" value="">
             <input type="hidden" name="supplies[${supplyIndex}][items][${itemIndex}][old_size]" value="${lastData ? lastData.old_size || '' : ''}">
+            <input type="hidden" name="supplies[${supplyIndex}][items][${itemIndex}][formula]" class="row-formula-input" value="">
             ${productCodeCellHtml}
         </td>
         <td style="min-width: 220px;" class="border border-neutral-200">
@@ -870,11 +882,11 @@ function addGlassOrderItem(button, isInitial = false, insertAfterRow = null) {
                 <input type="hidden" name="supplies[${supplyIndex}][items][${itemIndex}][wing_opening_direction]" class="actual-wing-direction" value="${lastData ? lastData.wing_opening_direction : ''}">
                 <div class="flex items-center gap-1 w-1/2" title="Số lượng cánh mở Trái">
                     <span class="text-[11px] text-neutral-500 font-semibold wing-direction-label">Trái:</span>
-                    <input type="number" class="qty-left form-control form-control-sm rounded-md border-neutral-300 focus:border-primary-500 text-xs px-1 w-full h-7 text-center" placeholder="SL" min="0" oninput="updateWingDirection(this)">
+                    <input type="text" class="qty-left form-control form-control-sm rounded-md border-neutral-300 focus:border-primary-500 text-xs px-1 w-full h-7 text-center" placeholder="SL" autocomplete="off" oninput="updateWingDirection(this)">
                 </div>
                 <div class="flex items-center gap-1 w-1/2" title="Số lượng cánh mở Phải">
                     <span class="text-[11px] text-neutral-500 font-semibold wing-direction-label">Phải:</span>
-                    <input type="number" class="qty-right form-control form-control-sm rounded-md border-neutral-300 focus:border-primary-500 text-xs px-1 w-full h-7 text-center" placeholder="SL" min="0" oninput="updateWingDirection(this)">
+                    <input type="text" class="qty-right form-control form-control-sm rounded-md border-neutral-300 focus:border-primary-500 text-xs px-1 w-full h-7 text-center" placeholder="SL" autocomplete="off" oninput="updateWingDirection(this)">
                 </div>
             </div>
         </td>
@@ -893,16 +905,16 @@ function addGlassOrderItem(button, isInitial = false, insertAfterRow = null) {
         </td>
         ` : ''}
         <td style="width: 200px; min-width: 200px; " class="border border-neutral-200 ${isAccessory ? 'hidden' : ''}">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][height]" class="form-control form-control-sm rounded-lg border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500 bg-yellow-50/30 text-center px-1 py-1 h-8 text-xs" placeholder="Dài cánh (mm)" step="any" value="${defaultHeight}">
+            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][height]" class="form-control form-control-sm rounded-lg border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500 bg-yellow-50/30 text-center px-1 py-1 h-8 text-xs" placeholder="Dài cánh (mm)" value="${defaultHeight}" autocomplete="off">
         </td>
         <td style="width: 200px; min-width: 200px; " class="border border-neutral-200 ${isAccessory ? 'hidden' : ''}">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][width]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Rộng cánh (mm)" step="any" value="${defaultWidth}">
+            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][width]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Rộng cánh (mm)" value="${defaultWidth}" autocomplete="off">
         </td>
         <td style="width: 100px; min-width: 100px; " class="border border-neutral-200 ${isAccessory ? 'hidden' : ''}">
             <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][unit]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs px-1" placeholder="Đơn vị" value="${lastData ? lastData.unit : (isAccessory ? 'Cái' : 'Bộ')}">
         </td>
         <td style="width: 70px; min-width: 70px; " class="border border-neutral-200">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][wing_quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="${isAccessory ? 'Số lượng' : 'Số lượng cánh'}" min="1" required value="${lastData ? lastData.wing_quantity : '1'}">
+            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][wing_quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="${isAccessory ? 'Số lượng' : 'Số lượng cánh'}" required value="${lastData ? lastData.wing_quantity : '1'}" autocomplete="off">
         </td>
         <td style="width: 100px; min-width: 100px; " class="border border-neutral-200 relative ${isAccessory ? 'hidden' : ''}">
             <input type="hidden" name="supplies[${supplyIndex}][items][${itemIndex}][area_m2]" class="real-area-input" value="${lastData?.area_m2 || ''}">
@@ -910,12 +922,13 @@ function addGlassOrderItem(button, isInitial = false, insertAfterRow = null) {
                 placeholder="Khối lượng (m2)" 
                 value="${lastData?.area_m2 ? Number(lastData.area_m2).toFixed(2) : ''}" 
                 ${isAccessory ? 'readonly disabled bg-neutral-100' : ''}
-                onfocus="if(!this.hasAttribute('readonly')){ this.value = this.previousElementSibling.value; }"
-                onblur="if(!this.hasAttribute('readonly')){ if(this.value && !isNaN(this.value)){ this.previousElementSibling.value = this.value; this.value = Number(this.value).toFixed(2); } else { this.previousElementSibling.value = ''; this.value = ''; } }"
-                oninput="if(!this.hasAttribute('readonly')){ this.previousElementSibling.value = this.value; calculateGlassTotalPrice(this.closest('.order-item-row'), 'area'); }">
+                autocomplete="off"
+                onfocus="if(!this.hasAttribute('readonly')){ this.value = this.dataset.formula || this.previousElementSibling.value; }"
+                onblur="if(!this.hasAttribute('readonly')){ const calc = (typeof window.evaluateExcelFormula === 'function' ? window.evaluateExcelFormula(this.value) : null); const finalVal = calc !== null ? calc : this.value; if(finalVal && !isNaN(finalVal)){ this.previousElementSibling.value = finalVal; this.value = Number(finalVal).toFixed(2); } else { this.previousElementSibling.value = ''; this.value = ''; delete this.dataset.manual; delete this.dataset.formula; this.removeAttribute('title'); } }"
+                oninput="if(!this.hasAttribute('readonly')){ if(this.value.trim() !== '') { this.dataset.manual = '1'; } else { delete this.dataset.manual; delete this.dataset.formula; this.removeAttribute('title'); } this.previousElementSibling.value = this.value; calculateGlassTotalPrice(this.closest('.order-item-row'), 'area'); }">
         </td>
         <td style="width: 110px; min-width: 110px; " class="border border-neutral-200">
-            <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][unit_price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Đơn giá" min="0" step="any" required value="${unitPriceToUse}">
+            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][unit_price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Đơn giá" required value="${unitPriceToUse}" autocomplete="off">
         </td>
         <td style="width: 120px; min-width: 120px; " class="border border-neutral-200">
             <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][total_price]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center px-1 py-1 h-8 text-xs" placeholder="Thành tiền" readonly value="${lastData && lastData.total_price > 0 ? parseFloat(lastData.total_price).toLocaleString('vi-VN') : ''}">
@@ -1340,14 +1353,23 @@ function calculateGlassTotalPrice(row, sourceEvent) {
     const width = parseFloat(widthInput.value) || 0;
     
     if (sourceEvent !== 'area') {
-        let area = 0;
-        if (height > 0 && width > 0 && wingQty > 0) {
-            area = (height * width * wingQty) / 1000000;
-        }
-        areaInput.value = area > 0 ? area : '';
         const displayAreaInput = row.querySelector('.display-area-input');
-        if (displayAreaInput) {
-            displayAreaInput.value = area > 0 ? area.toFixed(2) : '';
+        if (!displayAreaInput || !displayAreaInput.dataset.manual) {
+            let area = 0;
+            if (height > 0 && width > 0 && wingQty > 0) {
+                area = (height * width * wingQty) / 1000000;
+            }
+            areaInput.value = area > 0 ? area : '';
+            if (displayAreaInput) {
+                displayAreaInput.value = area > 0 ? area.toFixed(2) : '';
+                if (height > 0 && width > 0 && wingQty > 0) {
+                    displayAreaInput.dataset.formula = (wingQty > 1) ? `=${height}*${width}*${wingQty}/1000000` : `=${height}*${width}/1000000`;
+                    displayAreaInput.title = `Công thức: ${displayAreaInput.dataset.formula}`;
+                } else {
+                    delete displayAreaInput.dataset.formula;
+                    displayAreaInput.removeAttribute('title');
+                }
+            }
         }
     }
     
