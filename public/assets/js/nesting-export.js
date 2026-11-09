@@ -1,3 +1,15 @@
+function isLaborItem(item) {
+    if (!item) return false;
+    const name = (item.product_name || item.name || '').trim();
+    const notes = (item.notes || '').toLowerCase();
+    const isLabor = item.is_labor === 1 || item.is_labor === true || item.is_labor === '1';
+    return isLabor ||
+           name === 'Công giả dày' ||
+           name.toLowerCase() === 'công giả dày' ||
+           name.toLowerCase().includes('giả dày') ||
+           notes.includes('giả dày');
+}
+
 function parseMullionMillingDetails(itemName) {
     const res = {
         offsetLeft: null, offsetRight: null, offsetTop: null, offsetBottom: null,
@@ -153,6 +165,9 @@ async function generateNestingWorkbook(orderData, suppliesData, filename) {
     let rowIdx = 3;
     const custLabel = orderData.customer_name || '';
     const orderLabel = orderData.order_code || '';
+    const projectLabel = (orderData.project_name && String(orderData.project_name).trim() !== '')
+        ? orderData.project_name.trim()
+        : (orderData.order_code || '');
 
     suppliesData.forEach(supply => {
         (supply.items || []).forEach(item => {
@@ -213,12 +228,16 @@ async function generateNestingWorkbook(orderData, suppliesData, filename) {
                 row.height = 18;
 
                 const itemCust = item.customer_name || supply.customer_name || custLabel;
-                const itemOrder = item.order_code || supply.order_code || orderLabel;
+                const itemProject = (item.project_name && String(item.project_name).trim() !== '')
+                    ? item.project_name.trim()
+                    : ((supply.project_name && String(supply.project_name).trim() !== '')
+                        ? supply.project_name.trim()
+                        : projectLabel);
 
                 const vals = [
                     'V',                                                      // A Cắt
                     itemCust,                                                 // B Sản phẩm
-                    itemOrder,                                                // C Đơn hàng
+                    itemProject,                                              // C Đơn hàng (Tên công trình)
                     sttCode,                                                  // D STT
                     (item.notes && String(item.notes).trim() !== '') ? item.notes.trim() : '.', // E Tên (Detail Name) - Lấy từ Ghi chú (trống thì điền '.')
                     getMaterialName(supply),                                  // F Vật liệu: [Mã màu không hậu tố] [Tên vật liệu]
@@ -386,11 +405,11 @@ async function exportNestingFiles(customData = null, returnBlobs = false) {
 
     (orderData.supplies || []).forEach(supply => {
         const allItems = supply.items || [];
-        const nestItems = allItems.filter(i => (parseFloat(i.height) || 0) > 70 && (parseFloat(i.width) || 0) > 70);
-        const phaoItems = allItems.filter(i => (parseFloat(i.height) || 0) <= 70 || (parseFloat(i.width) || 0) <= 70);
+        const nestItems = allItems.filter(i => !isLaborItem(i) && (parseFloat(i.height) || 0) > 70 && (parseFloat(i.width) || 0) > 70);
+        const phaoItems = allItems.filter(i => !isLaborItem(i) && (parseFloat(i.height) || 0) > 0 && (parseFloat(i.width) || 0) > 0 && ((parseFloat(i.height) || 0) <= 70 || (parseFloat(i.width) || 0) <= 70));
 
-        if (nestItems.length) nestingSupplies.push({ ...supply, items: nestItems });
-        if (phaoItems.length) phaoSupplies.push({ ...supply, items: phaoItems });
+        if (nestItems.length) nestingSupplies.push({ ...supply, order_code: orderData.order_code, customer_name: orderData.customer_name, project_name: orderData.project_name || '', items: nestItems });
+        if (phaoItems.length) phaoSupplies.push({ ...supply, order_code: orderData.order_code, customer_name: orderData.customer_name, project_name: orderData.project_name || '', items: phaoItems });
     });
 
     const code = orderData.order_code || 'DH';
@@ -435,14 +454,15 @@ async function exportManufactureNestingFiles(moCode, ordersData) {
             const enrichedItems = allItems.map(item => ({
                 ...item,
                 order_code: orderData.order_code,
-                customer_name: orderData.customer_name
+                customer_name: orderData.customer_name,
+                project_name: orderData.project_name || ''
             }));
 
-            const nestItems = enrichedItems.filter(i => (parseFloat(i.height) || 0) > 70 && (parseFloat(i.width) || 0) > 70);
-            const phaoItems = enrichedItems.filter(i => (parseFloat(i.height) || 0) <= 70 || (parseFloat(i.width) || 0) <= 70);
+            const nestItems = enrichedItems.filter(i => !isLaborItem(i) && (parseFloat(i.height) || 0) > 70 && (parseFloat(i.width) || 0) > 70);
+            const phaoItems = enrichedItems.filter(i => !isLaborItem(i) && (parseFloat(i.height) || 0) > 0 && (parseFloat(i.width) || 0) > 0 && ((parseFloat(i.height) || 0) <= 70 || (parseFloat(i.width) || 0) <= 70));
 
-            if (nestItems.length) nestingSupplies.push({ ...supply, order_code: orderData.order_code, customer_name: orderData.customer_name, items: nestItems });
-            if (phaoItems.length) phaoSupplies.push({ ...supply, order_code: orderData.order_code, customer_name: orderData.customer_name, items: phaoItems });
+            if (nestItems.length) nestingSupplies.push({ ...supply, order_code: orderData.order_code, customer_name: orderData.customer_name, project_name: orderData.project_name || '', items: nestItems });
+            if (phaoItems.length) phaoSupplies.push({ ...supply, order_code: orderData.order_code, customer_name: orderData.customer_name, project_name: orderData.project_name || '', items: phaoItems });
         });
     });
 
@@ -526,17 +546,19 @@ async function exportBulkNestingFiles(ordersData, returnBlobs = false) {
             const enrichedItems = allItems.map(item => ({
                 ...item,
                 order_code: orderData.order_code,
-                customer_name: orderData.customer_name
+                customer_name: orderData.customer_name,
+                project_name: orderData.project_name || ''
             }));
 
-            const nestItems = enrichedItems.filter(i => (parseFloat(i.height) || 0) > 70 && (parseFloat(i.width) || 0) > 70);
-            const phaoItems = enrichedItems.filter(i => (parseFloat(i.height) || 0) <= 70 || (parseFloat(i.width) || 0) <= 70);
+            const nestItems = enrichedItems.filter(i => !isLaborItem(i) && (parseFloat(i.height) || 0) > 70 && (parseFloat(i.width) || 0) > 70);
+            const phaoItems = enrichedItems.filter(i => !isLaborItem(i) && (parseFloat(i.height) || 0) > 0 && (parseFloat(i.width) || 0) > 0 && ((parseFloat(i.height) || 0) <= 70 || (parseFloat(i.width) || 0) <= 70));
 
             if (nestItems.length > 0) {
                 allNestingSupplies.push({
                     ...supply,
                     order_code: orderData.order_code,
                     customer_name: orderData.customer_name,
+                    project_name: orderData.project_name || '',
                     items: nestItems
                 });
             }
@@ -546,6 +568,7 @@ async function exportBulkNestingFiles(ordersData, returnBlobs = false) {
                     ...supply,
                     order_code: orderData.order_code,
                     customer_name: orderData.customer_name,
+                    project_name: orderData.project_name || '',
                     items: phaoItems
                 });
             }
@@ -578,6 +601,7 @@ async function exportBulkNestingFiles(ordersData, returnBlobs = false) {
         const dummyOrder = {
             order_code: acrylicOrders.length === 1 ? (acrylicOrders[0].order_code || 'DH') : 'GOP',
             customer_name: acrylicOrders.length === 1 ? (acrylicOrders[0].customer_name || '') : 'Nhiều khách hàng',
+            project_name: acrylicOrders.length === 1 ? (acrylicOrders[0].project_name || '') : 'Nhiều công trình',
             dc_stock_matches: allDcMatches
         };
 
@@ -604,6 +628,7 @@ async function exportBulkNestingFiles(ordersData, returnBlobs = false) {
         const dummyOrder = {
             order_code: acrylicOrders.length === 1 ? (acrylicOrders[0].order_code || 'DH') : 'GOP-PHAO',
             customer_name: acrylicOrders.length === 1 ? (acrylicOrders[0].customer_name || '') : 'Nhiều khách hàng',
+            project_name: acrylicOrders.length === 1 ? (acrylicOrders[0].project_name || '') : 'Nhiều công trình',
             dc_stock_matches: allDcMatches
         };
 

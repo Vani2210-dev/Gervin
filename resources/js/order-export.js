@@ -44,6 +44,26 @@ function getMaterialName(supply) {
     return colorCode || name || '';
 }
 
+function isLaborItem(item) {
+    if (!item) return false;
+    const name = (item.product_name || item.name || '').trim();
+    const notes = (item.notes || '').toLowerCase();
+    const isLabor = item.is_labor === 1 || item.is_labor === true || item.is_labor === '1';
+    return isLabor ||
+           name === 'Công giả dày' ||
+           name.toLowerCase() === 'công giả dày' ||
+           name.toLowerCase().includes('giả dày') ||
+           notes.includes('giả dày');
+}
+
+function formatGrainText(val) {
+    const s = String(val ?? '').trim();
+    if (s === '' || s === '0' || s === '0.00' || s === '0,00' || s === 'Không vân') return 'Không vân';
+    if (s === '1' || s.toLowerCase() === 'dọc' || s.toLowerCase().includes('vân dọc')) return 'Vân dọc';
+    if (s === '2' || s.toLowerCase() === 'ngang' || s.toLowerCase().includes('vân ngang')) return 'Vân ngang';
+    return s || '—';
+}
+
 async function exportToExcel(customData = null, returnBlob = false) {
     let btn = null;
     let originalHtml = '';
@@ -317,8 +337,11 @@ async function exportToExcel(customData = null, returnBlob = false) {
                 let sumMolding = 0;
                 let sumPrice = 0;
                 supply.items.forEach(item => {
-                    sumQty += parseFloat(item.quantity) || 0;
-                    sumArea += parseFloat(item.wing_area) || 0;
+                    const isLabor = isLaborItem(item);
+                    if (!isLabor) {
+                        sumQty += parseFloat(item.quantity) || 0;
+                        sumArea += parseFloat(item.wing_area) || 0;
+                    }
                     sumMolding += parseFloat(item.molding_length) || 0;
                     sumPrice += parseFloat(item.total_price) || 0;
                 });
@@ -328,10 +351,10 @@ async function exportToExcel(customData = null, returnBlob = false) {
                 supplyRow.getCell(6).numFmt = Number.isInteger(sQtyVal) ? '#,##0' : '#,##0.00';
                 supplyRow.getCell(6).alignment = { horizontal: 'center', vertical: 'middle' };
 
-                supplyRow.getCell(9).value = parseFloat(sumArea.toFixed(2));
+                supplyRow.getCell(9).value = sumArea > 0 ? parseFloat(sumArea.toFixed(2)) : '—';
                 supplyRow.getCell(9).alignment = { horizontal: 'center', vertical: 'middle' };
 
-                supplyRow.getCell(10).value = parseFloat(sumMolding.toFixed(2));
+                supplyRow.getCell(10).value = sumMolding > 0 ? parseFloat(sumMolding.toFixed(2)) : '—';
                 supplyRow.getCell(10).alignment = { horizontal: 'center', vertical: 'middle' };
 
                 supplyRow.getCell(12).value = Math.round(sumPrice / 1000) * 1000;
@@ -350,6 +373,8 @@ async function exportToExcel(customData = null, returnBlob = false) {
                     const itemRow = worksheet.getRow(currentRow);
                     itemRow.height = 20;
 
+                    const isLabor = isLaborItem(item);
+
                     itemRow.getCell(1).value = itemIdx + 1;
                     itemRow.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
 
@@ -359,10 +384,12 @@ async function exportToExcel(customData = null, returnBlob = false) {
                     itemRow.getCell(3).value = item.product_name || '';
                     itemRow.getCell(3).alignment = { horizontal: 'center', vertical: 'middle' };
 
-                    itemRow.getCell(4).value = parseFloat((parseFloat(item.height) || 0).toFixed(2));
+                    const hVal = parseFloat(item.height) || 0;
+                    itemRow.getCell(4).value = hVal > 0 ? parseFloat(hVal.toFixed(2)) : '—';
                     itemRow.getCell(4).alignment = { horizontal: 'center', vertical: 'middle' };
 
-                    itemRow.getCell(5).value = parseFloat((parseFloat(item.width) || 0).toFixed(2));
+                    const wVal = parseFloat(item.width) || 0;
+                    itemRow.getCell(5).value = wVal > 0 ? parseFloat(wVal.toFixed(2)) : '—';
                     itemRow.getCell(5).alignment = { horizontal: 'center', vertical: 'middle' };
 
                     const iQtyVal = parseFloat((parseFloat(item.quantity) || 1).toFixed(2));
@@ -374,13 +401,15 @@ async function exportToExcel(customData = null, returnBlob = false) {
                     itemRow.getCell(7).value = (edgeBevel === 'Vát 0' || edgeBevel === '0') ? '—' : edgeBevel;
                     itemRow.getCell(7).alignment = { horizontal: 'center', vertical: 'middle' };
 
-                    itemRow.getCell(8).value = item.grain_direction !== null ? String(item.grain_direction) : '—';
+                    itemRow.getCell(8).value = isLabor ? '—' : formatGrainText(item.grain_direction);
                     itemRow.getCell(8).alignment = { horizontal: 'center', vertical: 'middle' };
 
-                    itemRow.getCell(9).value = parseFloat((parseFloat(item.wing_area) || 0).toFixed(2));
+                    const wAreaVal = parseFloat(item.wing_area) || 0;
+                    itemRow.getCell(9).value = wAreaVal > 0 ? parseFloat(wAreaVal.toFixed(2)) : '—';
                     itemRow.getCell(9).alignment = { horizontal: 'center', vertical: 'middle' };
 
-                    itemRow.getCell(10).value = parseFloat((parseFloat(item.molding_length) || 0).toFixed(2));
+                    const moldVal = parseFloat(item.molding_length) || 0;
+                    itemRow.getCell(10).value = moldVal > 0 ? parseFloat(moldVal.toFixed(2)) : '—';
                     itemRow.getCell(10).alignment = { horizontal: 'center', vertical: 'middle' };
 
                     itemRow.getCell(11).value = parseFloat(item.unit_price) || 0;
@@ -403,15 +432,18 @@ async function exportToExcel(customData = null, returnBlob = false) {
                 });
             });
 
-            // Calculate acrylic totals
+            // Calculate acrylic totals (loại bỏ công giả dày khỏi số lượng và tổng diện tích m2, giống như xem trước đơn)
             let totalQtyAcrylic = 0;
             let totalAreaAcrylic = 0;
             let totalMoldingAcrylic = 0;
             let totalPriceAcrylic = 0;
             orderData.supplies.forEach(supply => {
                 supply.items.forEach(item => {
-                    totalQtyAcrylic += parseFloat(item.quantity) || 0;
-                    totalAreaAcrylic += parseFloat(item.wing_area) || 0;
+                    const isLabor = isLaborItem(item);
+                    if (!isLabor) {
+                        totalQtyAcrylic += parseFloat(item.quantity) || 0;
+                        totalAreaAcrylic += parseFloat(item.wing_area) || 0;
+                    }
                     totalMoldingAcrylic += parseFloat(item.molding_length) || 0;
                     totalPriceAcrylic += parseFloat(item.total_price) || 0;
                 });
@@ -432,11 +464,11 @@ async function exportToExcel(customData = null, returnBlob = false) {
             suppliesTotalRow.getCell(6).font = { name: 'Times New Roman', size: 11, bold: true };
             suppliesTotalRow.getCell(6).alignment = { horizontal: 'center', vertical: 'middle' };
 
-            suppliesTotalRow.getCell(9).value = parseFloat(totalAreaAcrylic.toFixed(2));
+            suppliesTotalRow.getCell(9).value = totalAreaAcrylic > 0 ? parseFloat(totalAreaAcrylic.toFixed(2)) : '—';
             suppliesTotalRow.getCell(9).font = { name: 'Times New Roman', size: 11, bold: true };
             suppliesTotalRow.getCell(9).alignment = { horizontal: 'center', vertical: 'middle' };
 
-            suppliesTotalRow.getCell(10).value = parseFloat(totalMoldingAcrylic.toFixed(2));
+            suppliesTotalRow.getCell(10).value = totalMoldingAcrylic > 0 ? parseFloat(totalMoldingAcrylic.toFixed(2)) : '—';
             suppliesTotalRow.getCell(10).font = { name: 'Times New Roman', size: 11, bold: true };
             suppliesTotalRow.getCell(10).alignment = { horizontal: 'center', vertical: 'middle' };
 
@@ -716,6 +748,7 @@ async function exportToExcel(customData = null, returnBlob = false) {
 
             orderData.supplies.forEach(supply => {
                 supply.items.forEach(item => {
+                    if (isLaborItem(item)) return; // Bỏ qua công giả dày, không tính vào xả tem cắt CNC
                     const row = ws2.getRow(bazisRow);
 
                     // Determine edge banding symbols from edge_bevel (e.g. 'Vát 0' or 'Vát 2')
@@ -890,15 +923,18 @@ async function exportToExcel(customData = null, returnBlob = false) {
                 let sumArea = 0;
                 let sumPrice = 0;
                 supply.items.forEach(item => {
-                    sumQty += parseInt(item.wing_quantity) || 0;
-                    sumArea += parseFloat(item.area_m2) || 0;
+                    const isLabor = isLaborItem(item);
+                    if (!isLabor) {
+                        sumQty += parseInt(item.wing_quantity) || 0;
+                        sumArea += parseFloat(item.area_m2) || 0;
+                    }
                     sumPrice += parseFloat(item.total_price) || 0;
                 });
 
                 supplyRow.getCell(10).value = sumQty;
                 supplyRow.getCell(10).alignment = { horizontal: 'center', vertical: 'middle' };
 
-                supplyRow.getCell(11).value = parseFloat(sumArea.toFixed(2));
+                supplyRow.getCell(11).value = sumArea > 0 ? parseFloat(sumArea.toFixed(2)) : '—';
                 supplyRow.getCell(11).alignment = { horizontal: 'center', vertical: 'middle' };
 
                 supplyRow.getCell(13).value = Math.round(sumPrice / 1000) * 1000;
@@ -973,13 +1009,16 @@ async function exportToExcel(customData = null, returnBlob = false) {
                 });
             });
 
-            // Calculate glass totals
+            // Calculate glass totals (loại bỏ công giả dày)
             let totalQtyGlass = 0;
             let totalAreaGlass = 0;
             orderData.supplies.forEach(supply => {
                 supply.items.forEach(item => {
-                    totalQtyGlass += parseInt(item.wing_quantity) || 0;
-                    totalAreaGlass += parseFloat(item.area_m2) || 0;
+                    const isLabor = isLaborItem(item);
+                    if (!isLabor) {
+                        totalQtyGlass += parseInt(item.wing_quantity) || 0;
+                        totalAreaGlass += parseFloat(item.area_m2) || 0;
+                    }
                 });
             });
 
@@ -993,7 +1032,7 @@ async function exportToExcel(customData = null, returnBlob = false) {
             totalRow.getCell(10).alignment = { horizontal: 'center', vertical: 'middle' };
 
             // Total wings area
-            totalRow.getCell(11).value = parseFloat(totalAreaGlass.toFixed(2));
+            totalRow.getCell(11).value = totalAreaGlass > 0 ? parseFloat(totalAreaGlass.toFixed(2)) : '—';
             totalRow.getCell(11).font = { name: 'Times New Roman', size: 11, bold: true };
             totalRow.getCell(11).alignment = { horizontal: 'center', vertical: 'middle' };
 
@@ -1248,6 +1287,7 @@ async function exportToExcel(customData = null, returnBlob = false) {
                 let sumQty2 = 0;
                 let sumArea2 = 0;
                 supply.items.forEach(item => {
+                    if (isLaborItem(item)) return;
                     sumQty2 += parseInt(item.wing_quantity) || 0;
 
                     let originalHeight = parseFloat(item.height) || 0;
@@ -1277,6 +1317,7 @@ async function exportToExcel(customData = null, returnBlob = false) {
 
                 // Loop items
                 supply.items.forEach((item, itemIdx) => {
+                    if (isLaborItem(item)) return;
                     const itemRow = worksheet2.getRow(currentRow2);
                     itemRow.height = 20;
 
@@ -1344,6 +1385,7 @@ async function exportToExcel(customData = null, returnBlob = false) {
             orderData.supplies.forEach(supply => {
                 if (supply.supply_name === 'Phụ kiện') return;
                 supply.items.forEach(item => {
+                    if (isLaborItem(item)) return;
                     sumQty2 += parseInt(item.wing_quantity) || 0;
 
                     let originalHeight = parseFloat(item.height) || 0;
@@ -1510,7 +1552,10 @@ async function exportToExcel(customData = null, returnBlob = false) {
                 let sumCNC = 0;
 
                 supply.items.forEach(item => {
-                    sumQty += parseInt(item.quantity) || 0;
+                    const isLabor = isLaborItem(item);
+                    if (!isLabor) {
+                        sumQty += parseInt(item.quantity) || 0;
+                    }
                     sumStraightPaste += parseFloat(item.straight_paste_length) || 0;
                     sumBeveledPaste += parseFloat(item.beveled_length) || 0;
                     sumRong2535 += parseFloat(item.ban_rong_25_35) || 0;
@@ -1615,7 +1660,10 @@ async function exportToExcel(customData = null, returnBlob = false) {
 
             orderData.supplies.forEach(supply => {
                 supply.items.forEach(item => {
-                    sumQtyMinLate += parseInt(item.quantity) || 0;
+                    const isLabor = isLaborItem(item);
+                    if (!isLabor) {
+                        sumQtyMinLate += parseInt(item.quantity) || 0;
+                    }
                     sumStraightPasteMinLate += parseFloat(item.straight_paste_length) || 0;
                     sumBeveledPasteMinLate += parseFloat(item.beveled_length) || 0;
                     sumRong2535MinLate += parseFloat(item.ban_rong_25_35) || 0;
