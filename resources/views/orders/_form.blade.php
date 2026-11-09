@@ -1093,6 +1093,7 @@ function updateOrderSummary() {
             });
         }
     } else {
+        let suppliesAmount = 0;
         const rows = document.querySelectorAll('.order-item-row');
         rows.forEach(row => {
             const isLabor = row.dataset.isLabor === '1' ||
@@ -1114,7 +1115,7 @@ function updateOrderSummary() {
 
                 // Tiền công vẫn được cộng vào tổng tiền đơn hàng!
                 if (!window.isReworkOrder && !window.isWarrantyOrder) {
-                    totalAmount += totalPrice;
+                    suppliesAmount += totalPrice;
                 }
 
                 // BỎ RA: Không cộng số tấm, số sản phẩm, diện tích m2 của công giả dày vào tổng sản lượng của đơn!
@@ -1130,17 +1131,19 @@ function updateOrderSummary() {
             }
         });
 
-        // Also add total amount from payment details (for acrylic orders, nếu không phải đơn bảo hành)
+        // Also add total amount from payment details (for acrylic/glass orders, nếu không phải đơn bảo hành)
+        let paymentDetailsAmount = 0;
         if (!window.isWarrantyOrder) {
             const detailRows = document.querySelectorAll('.payment-detail-row');
             detailRows.forEach(row => {
                 const totalInput = row.querySelector('input[name*="total"]');
                 if (totalInput && !totalInput.disabled) {
                     const rawTotal = totalInput.value ? totalInput.value.replace(/\./g, '') : 0;
-                    totalAmount += parseFloat(rawTotal) || 0;
+                    paymentDetailsAmount += parseFloat(rawTotal) || 0;
                 }
             });
         }
+        totalAmount = suppliesAmount + paymentDetailsAmount;
     }
     
     if (window.isWarrantyOrder) {
@@ -1170,17 +1173,43 @@ function updateOrderSummary() {
     const vatPercent = vatPercentEl ? (parseFloat(vatPercentEl.value) || 0) : 0;
     const additionalDiscountPercent = additionalDiscountPercentEl ? (parseFloat(additionalDiscountPercentEl.value) || 0) : 0;
 
-    const rawDiscountAmount = roundedTotalAmount * (discountPercent / 100);
+    // Chiết khấu chỉ áp dụng cho mấy dòng phía trên (Danh sách Vật tư & Sản phẩm), KHÔNG chiết khấu cho Vật tư bổ sung
+    let suppliesOnlyAmount = 0;
+    let paymentDetailsOnlyAmount = 0;
+    if (!window.isWarrantyOrder) {
+        if (orderType === 'min_late') {
+            suppliesOnlyAmount = roundedTotalAmount;
+        } else {
+            document.querySelectorAll('.order-item-row').forEach(row => {
+                const priceInput = row.querySelector('input[name*="total_price"]');
+                const qtyInput = row.querySelector('input[name*="quantity"]');
+                if (qtyInput && !qtyInput.disabled && priceInput) {
+                    const rawPrice = priceInput.value ? priceInput.value.replace(/\./g, '') : 0;
+                    suppliesOnlyAmount += parseFloat(rawPrice) || 0;
+                }
+            });
+            document.querySelectorAll('.payment-detail-row').forEach(row => {
+                const totalInput = row.querySelector('input[name*="total"]');
+                if (totalInput && !totalInput.disabled) {
+                    const rawTotal = totalInput.value ? totalInput.value.replace(/\./g, '') : 0;
+                    paymentDetailsOnlyAmount += parseFloat(rawTotal) || 0;
+                }
+            });
+        }
+    }
+
+    const rawDiscountAmount = suppliesOnlyAmount * (discountPercent / 100);
     const discountAmount = Math.round(rawDiscountAmount / 1000) * 1000;
     
-    const rawVatAmount = (roundedTotalAmount - discountAmount) * (vatPercent / 100);
-    const vatAmount = Math.round(rawVatAmount / 1000) * 1000;
-    
-    const preTotalAmount = roundedTotalAmount - discountAmount + vatAmount;
-    const rawAdditionalDiscountAmount = preTotalAmount * (additionalDiscountPercent / 100);
+    const suppliesAfterDiscount = Math.max(0, suppliesOnlyAmount - discountAmount);
+    const rawAdditionalDiscountAmount = suppliesAfterDiscount * (additionalDiscountPercent / 100);
     const additionalDiscountAmount = Math.round(rawAdditionalDiscountAmount / 1000) * 1000;
 
-    const finalTotalAmount = preTotalAmount - additionalDiscountAmount;
+    const taxableTotal = (suppliesOnlyAmount - discountAmount - additionalDiscountAmount) + paymentDetailsOnlyAmount;
+    const rawVatAmount = Math.max(0, taxableTotal) * (vatPercent / 100);
+    const vatAmount = Math.round(rawVatAmount / 1000) * 1000;
+
+    const finalTotalAmount = taxableTotal + vatAmount;
 
     if (discountAmountEl) discountAmountEl.textContent = '-' + discountAmount.toLocaleString('vi-VN') + ' VNĐ';
     if (vatAmountEl) vatAmountEl.textContent = '+' + vatAmount.toLocaleString('vi-VN') + ' VNĐ';

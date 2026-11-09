@@ -133,22 +133,27 @@ class GlassOrderService
             $additionalDiscountAmount = 0;
             $totalAmount = 0;
         } else {
-            $subTotal = $this->calculateTotalAmount($request->supplies ?? [], $request->payment_details ?? [], $isRework);
+            $suppliesTotal = $this->calculateSuppliesTotal($request->supplies ?? [], $isRework);
+            $paymentDetailsTotal = $this->calculatePaymentDetailsTotal($request->payment_details ?? []);
+            $subTotal = $suppliesTotal + $paymentDetailsTotal;
+
             $discountPercent = (float) $request->input('discount_percent', 0);
             $vatPercent = (float) $request->input('vat_percent', 0);
             $additionalDiscountPercent = (float) $request->input('additional_discount_percent', 0);
             
-            $rawDiscountAmount = $subTotal * ($discountPercent / 100);
+            // Chiết khấu chỉ áp dụng cho mấy dòng phía trên (Danh sách Cánh Kính / Vật tư), không chiết khấu cho Vật tư bổ sung
+            $rawDiscountAmount = $suppliesTotal * ($discountPercent / 100);
             $discountAmount = round($rawDiscountAmount, -3);
 
-            $rawVatAmount = ($subTotal - $discountAmount) * ($vatPercent / 100);
-            $vatAmount = round($rawVatAmount, -3);
-
-            $preTotalAmount = $subTotal - $discountAmount + $vatAmount;
-            $rawAdditionalDiscountAmount = $preTotalAmount * ($additionalDiscountPercent / 100);
+            $suppliesAfterDiscount = max(0, $suppliesTotal - $discountAmount);
+            $rawAdditionalDiscountAmount = $suppliesAfterDiscount * ($additionalDiscountPercent / 100);
             $additionalDiscountAmount = round($rawAdditionalDiscountAmount, -3);
 
-            $totalAmount = $preTotalAmount - $additionalDiscountAmount;
+            $taxableTotal = ($suppliesTotal - $discountAmount - $additionalDiscountAmount) + $paymentDetailsTotal;
+            $rawVatAmount = max(0, $taxableTotal) * ($vatPercent / 100);
+            $vatAmount = round($rawVatAmount, -3);
+
+            $totalAmount = $taxableTotal + $vatAmount;
         }
 
         // Auto-create or link customer if customer_name filled but no customer_id
@@ -268,26 +273,48 @@ class GlassOrderService
     }
 
     /**
-     * Calculate total amount helper.
+     * Calculate supplies total helper (mấy dòng phía trên - Danh sách Cánh Kính / Vật tư).
      */
-    protected function calculateTotalAmount(array $supplies, array $paymentDetails, bool $isRework = false): float
+    protected function calculateSuppliesTotal(array $supplies, bool $isRework = false): float
     {
-        $totalAmount = 0;
+        $total = 0;
         if (!$isRework) {
             foreach ($supplies as $supply) {
                 if (!isset($supply['items']) || !is_array($supply['items'])) continue;
                 foreach ($supply['items'] as $item) {
-                    $itemTotal = isset($item['total_price']) ? floatval(str_replace('.', '', $item['total_price'])) : ($item['unit_price'] * ($item['area_m2'] ?: $item['wing_quantity']));
-                    $totalAmount += $itemTotal;
+                    $itemTotal = isset($item['total_price']) ? floatval(str_replace('.', '', $item['total_price'])) : (($item['unit_price'] ?? 0) * ($item['area_m2'] ?: ($item['wing_quantity'] ?? 0)));
+                    $total += $itemTotal;
                 }
             }
         }
+        return $total;
+    }
+
+    /**
+     * Calculate payment details total helper (dưới này - Chi tiết hóa đơn dịch vụ & Vật tư bổ sung).
+     */
+    protected function calculatePaymentDetailsTotal(array $paymentDetails): float
+    {
+        $total = 0;
         foreach ($paymentDetails as $detail) {
             if (empty($detail['name'])) continue;
-            $detailTotal = isset($detail['total']) ? floatval(str_replace('.', '', $detail['total'])) : (($detail['price'] ?? 0) * ($detail['quantity'] ?? 0));
-            $totalAmount += $detailTotal;
+            $rawTotal = isset($detail['total']) ? (is_string($detail['total']) ? str_replace('.', '', $detail['total']) : $detail['total']) : 0;
+            $detailTotal = floatval($rawTotal);
+            if ($detailTotal == 0 && !empty($detail['price']) && !empty($detail['quantity'])) {
+                $rawPrice = is_string($detail['price']) ? str_replace('.', '', $detail['price']) : $detail['price'];
+                $detailTotal = floatval($rawPrice) * floatval($detail['quantity']);
+            }
+            $total += $detailTotal;
         }
-        return round($totalAmount, -3);
+        return $total;
+    }
+
+    /**
+     * Calculate total amount helper.
+     */
+    protected function calculateTotalAmount(array $supplies, array $paymentDetails, bool $isRework = false): float
+    {
+        return round($this->calculateSuppliesTotal($supplies, $isRework) + $this->calculatePaymentDetailsTotal($paymentDetails), -3);
     }
 
     /**
