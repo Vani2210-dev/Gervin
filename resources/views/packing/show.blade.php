@@ -78,7 +78,7 @@
                 @endcan
 
                 <button type="button"
-                    onclick="ZebraPacking.openModal(@json($zebraPrintData))"
+                    onclick="ZebraPacking.openModal()"
                     class="packing-package-page__zebra-print-button btn bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-lg font-semibold inline-flex items-center gap-2 shadow-sm transition-colors">
                     <iconify-icon icon="lucide:printer" class="text-lg"></iconify-icon>
                     In tem Zebra (60x60)
@@ -108,7 +108,7 @@
                 @endcan
 
                 <button type="button"
-                    onclick="ZebraPacking.openModal(@json($zebraPrintData))"
+                    onclick="ZebraPacking.openModal()"
                     class="btn bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white border border-emerald-200 px-4 py-2.5 rounded-lg font-semibold inline-flex items-center gap-2 transition-colors shadow-sm">
                     <iconify-icon icon="lucide:printer" class="text-lg"></iconify-icon>
                     In tem Zebra
@@ -351,6 +351,7 @@
     <script src="' . asset('assets/js/qrcode.js') . '"></script>
     <script src="' . asset('assets/js/zebra-packing-label.js') . '"></script>
     <script>
+        window.zebraPackageData = ' . json_encode($zebraPrintData) . ';
         let html5QrCode = null;
         const canDeletePackageItems = ' . json_encode($showDeleteColumn) . ';
         const packageItemDeleteToken = ' . json_encode(csrf_token()) . ';

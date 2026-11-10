@@ -370,7 +370,11 @@
 
         // Mở Modal xem trước và in tem Zebra
         openModal: function (pkgData) {
-            this.currentPackageData = pkgData;
+            this.currentPackageData = pkgData || this.currentPackageData || window.zebraPackageData;
+            if (!this.currentPackageData) {
+                console.error('Chưa có dữ liệu kiện đóng gói.');
+                return;
+            }
             let modal = document.getElementById('zebraPrintModal');
             if (!modal) {
                 modal = this.createModalElement();

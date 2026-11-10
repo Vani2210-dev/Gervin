@@ -314,7 +314,7 @@
     <div class="print-toolbar">
         <p class="print-toolbar__title">Tem dán kiện: {{ $package->name }} (100x100mm)</p>
         <div class="print-toolbar__actions">
-            <button type="button" class="print-toolbar__button" style="background:#059669; border:1px solid #047857;" onclick="ZebraPacking.openModal(@json($zebraPrintData))">In máy Zebra (60x60mm)</button>
+            <button type="button" class="print-toolbar__button" style="background:#059669; border:1px solid #047857;" onclick="ZebraPacking.openModal()">In máy Zebra (60x60mm)</button>
             <button type="button" class="print-toolbar__button" onclick="window.print()">In tem (A4/100x100)</button>
             <button type="button" class="print-toolbar__button print-toolbar__button--light" onclick="window.close()">Đóng</button>
         </div>
@@ -394,10 +394,11 @@
     <script src="{{ asset('assets/js/qrcode.js') }}"></script>
     <script src="{{ asset('assets/js/zebra-packing-label.js') }}"></script>
     <script>
+        window.zebraPackageData = @json($zebraPrintData);
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('zebra') === '1') {
             window.onload = function () {
-                ZebraPacking.openModal(@json($zebraPrintData));
+                ZebraPacking.openModal();
             };
         } else {
             window.onload = function () {
