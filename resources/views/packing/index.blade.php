@@ -244,11 +244,9 @@
                                                 <iconify-icon icon="lucide:eye" class="packing-page__completed-view-icon text-base"></iconify-icon>
                                             </a>
 
-                                            <!-- Nút In tem dán -->
-                                            <a href="{{ route('processes.packing.print', $package) }}"
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-100 hover:bg-indigo-600 hover:text-white hover:border-indigo-600 transition-colors inline-flex items-center justify-center shadow-sm"
+                                            <!-- Nút Xem chi tiết kiện / In tem -->
+                                            <a href="{{ route('processes.packing.show', $package) }}"
+                                                class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 transition-colors inline-flex items-center justify-center shadow-sm"
                                                 title="In tem kiện">
                                                 <iconify-icon icon="lucide:printer" class="text-base"></iconify-icon>
                                             </a>

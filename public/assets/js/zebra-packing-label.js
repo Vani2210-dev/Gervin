@@ -323,6 +323,134 @@
             };
         },
 
+        // In tem trực tiếp qua trình duyệt (Khổ 60x60mm, chuẩn nét 300 DPI)
+        printViaBrowser: function (pkgData, quantity = 1) {
+            const data = pkgData || this.currentPackageData;
+            if (!data) {
+                alert('Không có dữ liệu kiện đóng gói.');
+                return;
+            }
+
+            const rasterResult = this.rasterize(data);
+            const dataUrl = rasterResult.previewDataUrl;
+            const qty = Math.max(1, Math.min(50, Number(quantity) || 1));
+
+            let iframe = document.getElementById('zebraPrintHiddenIframe');
+            if (iframe) {
+                iframe.remove();
+            }
+            iframe = document.createElement('iframe');
+            iframe.id = 'zebraPrintHiddenIframe';
+            iframe.style.position = 'fixed';
+            iframe.style.right = '0';
+            iframe.style.bottom = '0';
+            iframe.style.width = '0';
+            iframe.style.height = '0';
+            iframe.style.border = '0';
+            iframe.style.visibility = 'hidden';
+            document.body.appendChild(iframe);
+
+            let pagesHtml = '';
+            for (let i = 0; i < qty; i++) {
+                pagesHtml += `<div class="zp-print-page"><img class="zp-print-img" src="${dataUrl}" alt="Tem ${i + 1}"></div>`;
+            }
+
+            const doc = iframe.contentWindow.document;
+            doc.open();
+            doc.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="utf-8">
+                    <title>In tem Zebra - ${data.packageCode || ''}</title>
+                    <style>
+                        @page {
+                            size: 60mm 60mm;
+                            margin: 0;
+                        }
+                        *, *:before, *:after {
+                            box-sizing: border-box;
+                            margin: 0;
+                            padding: 0;
+                        }
+                        html, body {
+                            margin: 0;
+                            padding: 0;
+                            background: #ffffff;
+                            width: 60mm;
+                            -webkit-print-color-adjust: exact !important;
+                            print-color-adjust: exact !important;
+                        }
+                        .zp-print-page {
+                            width: 60mm;
+                            height: 60mm;
+                            page-break-after: always;
+                            page-break-inside: avoid;
+                            break-after: page;
+                            break-inside: avoid;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            overflow: hidden;
+                            margin: 0;
+                            padding: 0;
+                        }
+                        .zp-print-page:last-child {
+                            page-break-after: auto;
+                            break-after: auto;
+                        }
+                        .zp-print-img {
+                            width: 60mm;
+                            height: 60mm;
+                            display: block;
+                            margin: 0;
+                            padding: 0;
+                            image-rendering: -webkit-optimize-contrast;
+                            image-rendering: crisp-edges;
+                            image-rendering: pixelated;
+                        }
+                    </style>
+                </head>
+                <body>
+                    ${pagesHtml}
+                </body>
+                </html>
+            `);
+            doc.close();
+
+            const imgs = iframe.contentWindow.document.querySelectorAll('img');
+            let loaded = 0;
+            const total = imgs.length;
+
+            const triggerPrint = () => {
+                setTimeout(() => {
+                    try {
+                        iframe.contentWindow.focus();
+                        iframe.contentWindow.print();
+                    } catch (e) {
+                        console.error('Lỗi khi mở hộp thoại in:', e);
+                        window.print();
+                    }
+                }, 200);
+            };
+
+            if (total === 0) {
+                triggerPrint();
+            } else {
+                imgs.forEach((img) => {
+                    if (img.complete) {
+                        loaded++;
+                        if (loaded === total) triggerPrint();
+                    } else {
+                        img.onload = img.onerror = () => {
+                            loaded++;
+                            if (loaded === total) triggerPrint();
+                        };
+                    }
+                });
+            }
+        },
+
         // Gửi lệnh in đến máy in Zebra qua API Gervin
         printDirect: async function (packageId, quantity = 1, pkgData = null) {
             if (this.isPrinting) {
@@ -420,30 +548,17 @@
             }
         },
 
-        testConnectionInModal: async function () {
+        testConnectionInModal: function () {
             const statusBadge = document.getElementById('zebraModalStatusBadge');
             const statusText = document.getElementById('zebraModalStatusText');
             if (!statusBadge || !statusText) return;
 
-            statusBadge.className = 'zp-status-badge checking';
-            statusText.textContent = `Kiểm tra ${this.settings.host}:${this.settings.port}...`;
-
-            try {
-                const res = await this.checkConnection();
-                if (res.connected) {
-                    statusBadge.className = 'zp-status-badge online';
-                    statusText.textContent = `Đã kết nối (${res.ms || 3} ms)`;
-                } else {
-                    statusBadge.className = 'zp-status-badge offline';
-                    statusText.textContent = `Không kết nối (${this.settings.host})`;
-                }
-            } catch (e) {
-                statusBadge.className = 'zp-status-badge offline';
-                statusText.textContent = `Không kết nối (${this.settings.host})`;
-            }
+            // Luồng in trình duyệt nội bộ luôn sẵn sàng
+            statusBadge.className = 'zp-status-badge online';
+            statusText.textContent = 'Sẵn sàng in (60×60 mm)';
         },
 
-        executePrintFromModal: async function () {
+        executePrintFromModal: function () {
             if (!this.currentPackageData) return;
             const printBtn = document.getElementById('zebraModalPrintBtn');
             const qtyInput = document.getElementById('zebraModalQuantity');
@@ -451,8 +566,35 @@
 
             if (printBtn) {
                 printBtn.disabled = true;
-                printBtn.innerHTML = `<iconify-icon icon="lucide:loader-2" class="animate-spin"></iconify-icon> Đang gửi in...`;
+                printBtn.innerHTML = `<iconify-icon icon="lucide:loader-2" class="animate-spin"></iconify-icon> Đang mở lệnh in...`;
             }
+
+            try {
+                this.printViaBrowser(this.currentPackageData, qty);
+                if (typeof window.showToast === 'function') {
+                    window.showToast(`Đang mở lệnh in ${qty} tem Zebra (60x60mm)...`, 'success');
+                }
+                this.closeModal();
+            } catch (err) {
+                console.error(err);
+                if (typeof window.showToast === 'function') {
+                    window.showToast('Lỗi: ' + err.message, 'error');
+                } else {
+                    alert('Lỗi: ' + err.message);
+                }
+            } finally {
+                if (printBtn) {
+                    printBtn.disabled = false;
+                    printBtn.innerHTML = `<iconify-icon icon="lucide:printer"></iconify-icon> In ngay tem Zebra (60x60)`;
+                }
+            }
+        },
+
+        // Dự phòng: gửi lệnh in RAW ZPL trực tiếp qua socket máy chủ
+        executeServerPrintFromModal: async function () {
+            if (!this.currentPackageData) return;
+            const qtyInput = document.getElementById('zebraModalQuantity');
+            const qty = parseInt(qtyInput ? qtyInput.value : '1', 10) || 1;
 
             try {
                 const result = await this.printDirect(this.currentPackageData.packageId, qty);
@@ -466,12 +608,7 @@
                 if (typeof window.showToast === 'function') {
                     window.showToast(err.message, 'error');
                 } else {
-                    alert('Lỗi: ' + err.message);
-                }
-            } finally {
-                if (printBtn) {
-                    printBtn.disabled = false;
-                    printBtn.innerHTML = `<iconify-icon icon="lucide:printer"></iconify-icon> In ngay tem Zebra`;
+                    alert('Lỗi máy chủ in: ' + err.message);
                 }
             }
         },
@@ -800,7 +937,7 @@
                                 </span>
                                 <div>
                                     <h5 class="zp-title">In tem Zebra ZT411</h5>
-                                    <p class="zp-subtitle">Khổ tem 60 x 60 mm · 300 DPI · In trực tiếp qua LAN/Wi-Fi</p>
+                                    <p class="zp-subtitle">Khổ tem 60 x 60 mm · 300 DPI · In trực tiếp từ trình duyệt</p>
                                 </div>
                             </div>
                             <button type="button" onclick="ZebraPacking.closeModal()" class="zp-close-btn" title="Đóng">
@@ -822,9 +959,9 @@
                                 <div>
                                     <div class="zp-row-header">
                                         <span class="zp-label-sm">Mã kiện</span>
-                                        <span id="zebraModalStatusBadge" class="zp-status-badge checking">
+                                        <span id="zebraModalStatusBadge" class="zp-status-badge online">
                                             <span class="zp-dot"></span>
-                                            <span id="zebraModalStatusText">Kiểm tra kết nối...</span>
+                                            <span id="zebraModalStatusText">Sẵn sàng in (60×60 mm)</span>
                                         </span>
                                     </div>
                                     <div id="zebraModalPackageCode" class="zp-package-code">261110001</div>
@@ -846,10 +983,10 @@
 
                                 <div class="zp-printer-card">
                                     <div class="zp-printer-card-top">
-                                        <span>Máy in: <strong>Zebra ZT411</strong></span>
-                                        <button type="button" onclick="ZebraPacking.testConnectionInModal()" class="zp-retry-link">Thử kết nối lại</button>
+                                        <span>Máy in: <strong>Zebra ZT411 (60 × 60 mm)</strong></span>
+                                        <button type="button" onclick="ZebraPacking.executeServerPrintFromModal()" class="zp-retry-link" style="font-size:11px; color:#6b7280;" title="Gửi ZPL qua socket máy chủ nếu đang mở đường hầm SSH">In qua máy chủ (ZPL)</button>
                                     </div>
-                                    <div class="zp-printer-card-sub">IP: ${this.settings.host}:${this.settings.port} · Direct Thermal</div>
+                                    <div class="zp-printer-card-sub">In trực tiếp từ trình duyệt đến máy in qua Wi-Fi xưởng · 300 DPI</div>
                                 </div>
                             </div>
                         </div>
@@ -858,7 +995,7 @@
                             <button type="button" onclick="ZebraPacking.closeModal()" class="zp-cancel-btn">Hủy</button>
                             <button type="button" id="zebraModalPrintBtn" onclick="ZebraPacking.executePrintFromModal()" class="zp-print-btn">
                                 <iconify-icon icon="lucide:printer"></iconify-icon>
-                                In ngay tem Zebra
+                                In ngay tem Zebra (60x60)
                             </button>
                         </div>
                     </div>

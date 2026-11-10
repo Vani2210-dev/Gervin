@@ -86,14 +86,6 @@
                     <iconify-icon icon="lucide:printer" class="text-lg"></iconify-icon>
                     In tem Zebra (60x60)
                 </button>
-
-                <a href="{{ route('processes.packing.print', $package) }}"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="packing-package-page__print-button packing-package-page__header-print-button btn bg-neutral-100 hover:bg-neutral-200 text-neutral-800 border border-neutral-300 px-4 py-2.5 rounded-lg font-semibold inline-flex items-center gap-2 shadow-sm transition-colors">
-                    <iconify-icon icon="lucide:external-link" class="text-lg"></iconify-icon>
-                    Mẫu tem 100x100
-                </a>
             </div>
         @else
             <div class="flex items-center gap-2">
@@ -352,7 +344,7 @@
     $script = '
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="' . asset('assets/js/qrcode.js') . '"></script>
-    <script src="' . asset('assets/js/zebra-packing-label.js') . '"></script>
+    <script src="' . asset('assets/js/zebra-packing-label.js') . '?v=' . filemtime(public_path('assets/js/zebra-packing-label.js')) . '"></script>
     <script>
         window.zebraPackageData = ' . json_encode($zebraPrintData) . ';
         let html5QrCode = null;

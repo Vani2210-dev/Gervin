@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Log;
 class ZebraPrinterService
 {
     const DEFAULT_SETTINGS = [
-        'host'      => '192.168.1.67',
+        'host'      => '127.0.0.1', // Mặc định qua đường hầm SSH (tự động thử 192.168.1.67 nếu chạy trực tiếp)
         'port'      => 9100,
         'timeout'   => 3,
         'dpi'       => 300,
@@ -91,21 +91,34 @@ class ZebraPrinterService
     }
 
     /**
-     * Mở socket TCP đến máy in Zebra
+     * Mở socket TCP đến máy in Zebra (hỗ trợ tự động fallback giữa 127.0.0.1 qua SSH tunnel và 192.168.1.67 qua LAN)
      */
     protected function openSocket(array $settings)
     {
-        $host = trim($settings['host']);
-        $port = (int)$settings['port'];
-        $timeout = (float)$settings['timeout'];
+        $primaryHost = trim($settings['host'] ?? '127.0.0.1');
+        $port = (int) ($settings['port'] ?? 9100);
+        $timeout = (float) ($settings['timeout'] ?? 3);
 
-        $socket = @stream_socket_client("tcp://{$host}:{$port}", $errno, $errstr, $timeout);
-        if (!$socket) {
-            throw new RuntimeException("Không thể kết nối đến máy in {$host}:{$port}. Lỗi ({$errno}): {$errstr}. Vui lòng kiểm tra nguồn và kết nối mạng máy in.");
+        $candidateHosts = [$primaryHost];
+        $fallbackHost = ($primaryHost === '127.0.0.1' || $primaryHost === 'localhost') ? '192.168.1.67' : '127.0.0.1';
+        if (!in_array($fallbackHost, $candidateHosts, true)) {
+            $candidateHosts[] = $fallbackHost;
         }
 
-        stream_set_timeout($socket, (int)$timeout);
-        return $socket;
+        $lastErrno = 0;
+        $lastErrstr = '';
+
+        foreach ($candidateHosts as $host) {
+            $socket = @stream_socket_client("tcp://{$host}:{$port}", $errno, $errstr, $timeout);
+            if ($socket) {
+                stream_set_timeout($socket, (int)$timeout);
+                return $socket;
+            }
+            $lastErrno = $errno;
+            $lastErrstr = $errstr;
+        }
+
+        throw new RuntimeException("Không thể kết nối đến máy in {$primaryHost}:{$port}. Lỗi ({$lastErrno}): {$lastErrstr}. Vui lòng kiểm tra đường hầm SSH hoặc kết nối Wi-Fi máy in.");
     }
 
     /**

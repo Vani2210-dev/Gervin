@@ -132,73 +132,7 @@ class PackingPackageController extends Controller
 
     public function print(PackingPackage $package)
     {
-        if ($package->status !== 'completed') {
-            return redirect()
-                ->route('processes.packing.show', $package)
-                ->with('error', 'Chỉ có thể in tem khi kiện đã hoàn tất.');
-        }
-
-        $package->load(['packer', 'items.itemCode']);
-
-        $codes = $package->items->map(fn($item) => $item->itemCode)->filter();
-        $this->loadMorphCodeRelations($codes);
-
-        // Hàm print chỉ cần danh sách đã format, không phải paginator nên không gọi withQueryString().
-        $items = $package->items->map(function (PackingPackageItem $packageItem) {
-            return $this->formatPackageItem($packageItem);
-        });
-
-        // Khi in tem chỉ lấy dữ liệu từ linh kiện đã quét, bỏ qua item nháp/placeholder.
-        $scannedItems = $items->where('is_packaged', true);
-        $printItems = $scannedItems->isNotEmpty() ? $scannedItems : $items;
-        $printPackageItems = $package->items->where('is_packaged', true);
-        $printPackageItems = $printPackageItems->isNotEmpty() ? $printPackageItems : $package->items;
-        // Lấy thông tin khách hàng theo đơn đầu tiên có linh kiện được in trên tem.
-        $packageOrder = $this->resolvePackageOrder($printPackageItems);
-
-        $totalItems = $printItems->count();
-        $orderCode = $printItems->first()?->order_code ?? '-';
-        $typeSummary = $printItems->pluck('type')->filter()->unique()->values()->implode(', ') ?: '-';
-
-        // Trích xuất mã STT của các tấm trong kiện theo thứ tự quét
-        $plateSttList = $printItems->map(function ($it) {
-            $codeStr = trim($it->product_code ?? '');
-            if (preg_match('/\.(\d+)$/', $codeStr, $matches)) {
-                return $matches[1];
-            }
-            $parts = explode('.', $codeStr);
-            $last = end($parts);
-            return $last ?: $codeStr;
-        })->filter(fn($val) => $val !== '' && $val !== '-' && $val !== '—')->values();
-
-        $plateSttString = $plateSttList->implode(', ');
-
-        $packageCode = (string) ($package->name ?: $package->id);
-
-        // QR dùng trực tiếp mã kiện đang lưu trong database.
-        $qrSvg = QrCode::format('svg')
-            ->size(180)
-            ->margin(1)
-            ->encoding('UTF-8')
-            ->errorCorrection('H')
-            ->generate($packageCode);
-        $qrSvg = str_replace('<?xml version="1.0" encoding="UTF-8"?>', '', $qrSvg);
-
-        $zebraPrintData = $this->getPackagePrintData($package);
-
-        return view('packing.print', [
-            'package' => $package,
-            'totalItems' => $totalItems,
-            'orderCode' => $orderCode,
-            'typeSummary' => $typeSummary,
-            'packageCode' => $packageCode,
-            'qrSvg' => $qrSvg,
-            'customerName' => $packageOrder?->customer_name ?? '—',
-            'customerPhone' => $packageOrder?->phone ?? '—',
-            'deliveryAddress' => $packageOrder?->address ?? '—',
-            'plateSttString' => $plateSttString,
-            'zebraPrintData' => $zebraPrintData,
-        ]);
+        return redirect()->route('processes.packing.show', $package);
     }
 
     public function storeItem(Request $request, PackingPackage $package)
