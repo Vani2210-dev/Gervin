@@ -46,28 +46,15 @@ function parseMullionMillingDetails(itemName) {
 }
 
 /**
- * Format material name for Nesting: prepend base color code (without suffix) before supply name.
- * E.g.: code "GV103.BA" + name "Acrylic Foil" -> "GV103 Acrylic Foil"
+ * Lấy tên vật liệu cho Nesting: lấy trực tiếp tên vật tư (supply_name), không ghép thêm mã màu phía trước.
  */
 function getMaterialName(supply) {
     if (!supply) return '';
-    const rawCode = (supply.order_supply_code || '').trim();
     const name = (supply.supply_name || '').trim();
-
-    // Lấy mã màu cơ sở (bỏ hậu tố sau dấu . hoặc _ như .BA, .TP, .PVC, .2M...)
-    let colorCode = '';
-    if (rawCode) {
-        colorCode = rawCode.split('.')[0].split('_')[0].trim();
+    if (name) {
+        return name;
     }
-
-    if (colorCode && name) {
-        if (name.toLowerCase().startsWith(colorCode.toLowerCase())) {
-            return name;
-        }
-        return `${colorCode} ${name}`;
-    }
-
-    return colorCode || name || '';
+    return (supply.order_supply_code || '').trim();
 }
 
 /**

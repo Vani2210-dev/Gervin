@@ -24,24 +24,16 @@ function estimateRowHeight(text, mergedWidth) {
     return Math.max(18, totalLines * 16);
 }
 
+/**
+ * Lấy tên vật liệu cho Nesting: lấy trực tiếp tên vật tư (supply_name), không ghép thêm mã màu phía trước.
+ */
 function getMaterialName(supply) {
     if (!supply) return '';
-    const rawCode = (supply.order_supply_code || '').trim();
     const name = (supply.supply_name || '').trim();
-
-    let colorCode = '';
-    if (rawCode) {
-        colorCode = rawCode.split('.')[0].split('_')[0].trim();
+    if (name) {
+        return name;
     }
-
-    if (colorCode && name) {
-        if (name.toLowerCase().startsWith(colorCode.toLowerCase())) {
-            return name;
-        }
-        return `${colorCode} ${name}`;
-    }
-
-    return colorCode || name || '';
+    return (supply.order_supply_code || '').trim();
 }
 
 function isLaborItem(item) {

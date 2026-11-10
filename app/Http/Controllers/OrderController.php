@@ -336,6 +336,11 @@ class OrderController extends Controller
     {
         $code = trim((string)$request->query('code', ''));
         $orderId = $request->query('order_id');
+        $isNhapKho = filter_var($request->query('is_nhap_kho'), FILTER_VALIDATE_BOOLEAN);
+        if ($isNhapKho && $code !== '') {
+            $code = Order::formatNhapKhoOrderCode($code);
+        }
+
         if ($code === '') {
             return response()->json([
                 'exists' => false,
@@ -833,8 +838,18 @@ class OrderController extends Controller
             return redirect()->route('orders.show', $order)->with('error', $msg);
         }
 
+        $isNhapKho = $this->isRequestNhapKho($request, $order);
+        if ($isNhapKho && !empty($order->order_code) && !preg_match('/[._-]?NK$/i', $order->order_code)) {
+            $order->order_code = Order::formatNhapKhoOrderCode($order->order_code);
+            $order->saveQuietly();
+        }
+
         if ($request->filled('order_code')) {
             $customCode = trim((string)$request->order_code);
+            if ($isNhapKho) {
+                $customCode = Order::formatNhapKhoOrderCode($customCode);
+                $request->merge(['order_code' => $customCode]);
+            }
             $exists = Order::where('order_code', $customCode)
                 ->where('id', '!=', $order->id)
                 ->exists();
@@ -845,6 +860,9 @@ class OrderController extends Controller
                     ->with('error', "Mã đơn hàng '{$customCode}' đã tồn tại trong hệ thống. Vui lòng nhập mã khác.");
             }
             $order->order_code = $customCode;
+            $order->save();
+        } elseif ($isNhapKho && !preg_match('/[._-]?NK$/i', $order->order_code)) {
+            $order->order_code = Order::formatNhapKhoOrderCode($order->order_code);
             $order->save();
         }
         $order->load(['supplies.items', 'supplies.minLateItems', 'supplies.glassItems', 'paymentDetails']);
@@ -881,9 +899,14 @@ class OrderController extends Controller
         ]);
 
         $draftOrder = Order::where('status', 'draft')->findOrFail($request->draft_order_id);
+        $isNhapKho = $this->isRequestNhapKho($request, $draftOrder);
 
         if ($request->filled('order_code')) {
             $customCode = trim((string)$request->order_code);
+            if ($isNhapKho) {
+                $customCode = Order::formatNhapKhoOrderCode($customCode);
+                $request->merge(['order_code' => $customCode]);
+            }
             $exists = Order::where('order_code', $customCode)
                 ->where('id', '!=', $draftOrder->id)
                 ->exists();
@@ -894,6 +917,9 @@ class OrderController extends Controller
                     ->with('error', "Mã đơn hàng '{$customCode}' đã tồn tại trong hệ thống. Vui lòng nhập mã khác.");
             }
             $draftOrder->order_code = $customCode;
+            $draftOrder->save();
+        } elseif ($isNhapKho && !preg_match('/[._-]?NK$/i', $draftOrder->order_code)) {
+            $draftOrder->order_code = Order::formatNhapKhoOrderCode($draftOrder->order_code);
             $draftOrder->save();
         }
 
@@ -996,8 +1022,18 @@ class OrderController extends Controller
             return redirect()->route('orders.show', $order)->with('error', $msg);
         }
 
+        $isNhapKho = $this->isRequestNhapKho($request, $order);
+        if ($isNhapKho && !empty($order->order_code) && !preg_match('/[._-]?NK$/i', $order->order_code)) {
+            $order->order_code = Order::formatNhapKhoOrderCode($order->order_code);
+            $order->saveQuietly();
+        }
+
         if ($request->filled('order_code')) {
             $customCode = trim((string)$request->order_code);
+            if ($isNhapKho) {
+                $customCode = Order::formatNhapKhoOrderCode($customCode);
+                $request->merge(['order_code' => $customCode]);
+            }
             $exists = Order::where('order_code', $customCode)
                 ->where('id', '!=', $order->id)
                 ->exists();
@@ -1008,6 +1044,9 @@ class OrderController extends Controller
                     ->with('error', "Mã đơn hàng '{$customCode}' đã tồn tại trong hệ thống. Vui lòng nhập mã khác.");
             }
             $order->order_code = $customCode;
+            $order->save();
+        } elseif ($isNhapKho && !preg_match('/[._-]?NK$/i', $order->order_code)) {
+            $order->order_code = Order::formatNhapKhoOrderCode($order->order_code);
             $order->save();
         }
 
@@ -1494,6 +1533,31 @@ class OrderController extends Controller
         return response()->json(['ok' => true]);
     }
 
+    protected function isRequestNhapKho(Request $request, ?Order $order = null): bool
+    {
+        if ($request->filled('customer_id')) {
+            $cust = \App\Models\Customer::find($request->customer_id);
+            if ($cust && (
+                in_array(strtoupper($cust->customer_code ?? ''), ['NK', 'NHAPKHO'], true) ||
+                in_array(mb_strtolower(trim($cust->name ?? '')), ['nhập kho', 'nhap kho'], true)
+            )) {
+                return true;
+            }
+        }
+        $cName = mb_strtolower(trim((string)$request->input('customer_name', '')));
+        if (in_array($cName, ['nhập kho', 'nhap kho'], true)) {
+            return true;
+        }
+        if ($order && $order->isNhapKho()) {
+            return true;
+        }
+        $code = trim((string)$request->input('order_code', ''));
+        if ($code !== '' && preg_match('/[._-]?NK$/i', $code)) {
+            return true;
+        }
+        return false;
+    }
+
     private function generateOrderCode(): string
     {
         $yearPrefix = now()->format('y'); // '26'
@@ -1507,6 +1571,10 @@ class OrderController extends Controller
         $maxNumber = 0;
         foreach ($orders as $code) {
             $code = trim((string)$code);
+            // Bỏ qua các mã đơn nhập kho có hậu tố NK để không chiếm số thứ tự của đơn hàng thường
+            if (preg_match('/[._-]?NK$/i', $code)) {
+                continue;
+            }
             // 1. Dạng 26.5178 hoặc 26.1 hoặc 26_5178
             if (preg_match('/^' . preg_quote($yearPrefix, '/') . '[._](\d+)$/', $code, $matches)) {
                 $num = intval($matches[1]);

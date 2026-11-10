@@ -569,6 +569,29 @@ window.isNhapKhoSelected = function() {
     return false;
 };
 
+window.ensureOrderCodeHasNK = function(isNK) {
+    const codeInput = document.getElementById('order-code-input');
+    if (!codeInput) return;
+    let val = codeInput.value.trim();
+    if (!val) return;
+
+    if (isNK) {
+        if (!/[._-]?NK$/i.test(val)) {
+            codeInput.value = val + (val.endsWith('.') ? 'NK' : '.NK');
+            if (typeof window.checkOrderCode === 'function') {
+                window.checkOrderCode(codeInput.value);
+            }
+        }
+    } else {
+        if (/[._-]NK$/i.test(val)) {
+            codeInput.value = val.replace(/[._-]NK$/i, '');
+            if (typeof window.checkOrderCode === 'function') {
+                window.checkOrderCode(codeInput.value);
+            }
+        }
+    }
+};
+
 window.applyNhapKhoToAllItems = function() {
     const itemRows = document.querySelectorAll('.order-item-row');
     itemRows.forEach(row => {
@@ -610,6 +633,9 @@ function selectNhapKhoCustomer() {
         const cNameInput = document.querySelector('input[name="customer_name"]');
         if (cNameInput) {
             cNameInput.value = 'Nhập kho';
+        }
+        if (typeof window.ensureOrderCodeHasNK === 'function') {
+            window.ensureOrderCodeHasNK(true);
         }
         if (typeof window.applyNhapKhoToAllItems === 'function') {
             window.applyNhapKhoToAllItems();
@@ -747,6 +773,9 @@ function fillCustomerInfo(customerId) {
 
     if (customer) {
         const isNK = (customer.customer_code === 'NK' || customer.customer_code === 'NHAPKHO' || (customer.name && customer.name.toLowerCase().includes('nhập kho')));
+        if (typeof window.ensureOrderCodeHasNK === 'function') {
+            window.ensureOrderCodeHasNK(isNK);
+        }
         if (cNameInput && (!cNameInput.value.trim() || cNameInput.value.startsWith('Đơn nháp') || isNK)) {
             cNameInput.value = customer.name;
         }
@@ -5463,7 +5492,8 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        const url = '{{ route("orders.check-code") }}?code=' + encodeURIComponent(trimmed) + (currentOrderId ? '&order_id=' + currentOrderId : '');
+        const isNK = typeof window.isNhapKhoSelected === 'function' && window.isNhapKhoSelected();
+        const url = '{{ route("orders.check-code") }}?code=' + encodeURIComponent(trimmed) + (currentOrderId ? '&order_id=' + currentOrderId : '') + (isNK ? '&is_nhap_kho=1' : '');
         fetch(url)
             .then(res => res.json())
             .then(data => {
@@ -5486,6 +5516,15 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(() => {});
     }
 
+    window.checkOrderCode = checkOrderCode;
+
+    // Tự động kiểm tra và thêm hậu tố .NK nếu đơn hàng hiện tại là đơn nhập kho
+    if (typeof window.isNhapKhoSelected === 'function' && window.isNhapKhoSelected()) {
+        if (typeof window.ensureOrderCodeHasNK === 'function') {
+            window.ensureOrderCodeHasNK(true);
+        }
+    }
+
     codeInput.addEventListener('input', function() {
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
@@ -5494,8 +5533,24 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     codeInput.addEventListener('blur', function() {
-        checkOrderCode(this.value);
+        const isNK = typeof window.isNhapKhoSelected === 'function' && window.isNhapKhoSelected();
+        if (isNK && typeof window.ensureOrderCodeHasNK === 'function') {
+            window.ensureOrderCodeHasNK(true);
+        } else {
+            checkOrderCode(this.value);
+        }
     });
+
+    // Lắng nghe thay đổi tên công trình/khách hàng để phát hiện Nhập kho
+    const cNameInput = document.querySelector('input[name="customer_name"]');
+    if (cNameInput) {
+        cNameInput.addEventListener('input', function() {
+            const isNK = typeof window.isNhapKhoSelected === 'function' && window.isNhapKhoSelected();
+            if (typeof window.ensureOrderCodeHasNK === 'function') {
+                window.ensureOrderCodeHasNK(isNK);
+            }
+        });
+    }
 
     // Ngăn phím Enter vô tình kích hoạt các nút Hủy đơn / Chuyển SX
     codeInput.addEventListener('keydown', function(e) {
@@ -5507,6 +5562,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (form) {
         form.addEventListener('submit', function(e) {
+            const isNK = typeof window.isNhapKhoSelected === 'function' && window.isNhapKhoSelected();
+            if (isNK && typeof window.ensureOrderCodeHasNK === 'function') {
+                window.ensureOrderCodeHasNK(true);
+            }
             if (isCodeDuplicate) {
                 e.preventDefault();
                 alert('Mã đơn hàng "' + codeInput.value.trim() + '" đã tồn tại trong hệ thống. Vui lòng nhập mã khác!');

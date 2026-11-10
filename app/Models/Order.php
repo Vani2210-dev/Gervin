@@ -10,6 +10,14 @@ class Order extends Model
 
     protected static function booted()
     {
+        static::saving(function ($order) {
+            if ($order->isNhapKho() && !empty($order->order_code)) {
+                if (!preg_match('/[._-]?NK$/i', trim($order->order_code))) {
+                    $order->order_code = static::formatNhapKhoOrderCode($order->order_code);
+                }
+            }
+        });
+
         static::created(function ($order) {
             $order->adjustCustomerDebtOnCreate();
         });
@@ -382,7 +390,28 @@ class Order extends Model
             return true;
         }
         $cName = mb_strtolower(trim($this->customer_name ?? ''));
-        return in_array($cName, ['nhập kho', 'nhap kho'], true);
+        if (in_array($cName, ['nhập kho', 'nhap kho'], true)) {
+            return true;
+        }
+        if (!empty($this->order_code) && preg_match('/[._-]?NK$/i', trim($this->order_code))) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Tự động thêm hậu tố .NK vào mã đơn nhập kho nếu chưa có (tránh trùng với đơn thường).
+     */
+    public static function formatNhapKhoOrderCode(?string $code): string
+    {
+        $code = trim((string)$code);
+        if ($code === '') {
+            return '';
+        }
+        if (preg_match('/[._-]?NK$/i', $code)) {
+            return $code;
+        }
+        return $code . (str_ends_with($code, '.') ? 'NK' : '.NK');
     }
 
     /**
@@ -502,7 +531,9 @@ class Order extends Model
             $q->whereHas('customer', function ($cq) {
                 $cq->whereIn('customer_code', ['NK', 'NHAPKHO'])
                    ->orWhereRaw('LOWER(TRIM(name)) IN (?, ?)', ['nhập kho', 'nhap kho']);
-            })->orWhereRaw('LOWER(TRIM(customer_name)) IN (?, ?)', ['nhập kho', 'nhap kho']);
+            })->orWhereRaw('LOWER(TRIM(customer_name)) IN (?, ?)', ['nhập kho', 'nhap kho'])
+              ->orWhere('order_code', 'like', '%.NK')
+              ->orWhere('order_code', 'like', '%NK');
         });
     }
 
@@ -515,6 +546,12 @@ class Order extends Model
             })->where(function ($sub) {
                 $sub->whereNull('customer_name')
                     ->orWhereRaw('LOWER(TRIM(customer_name)) NOT IN (?, ?)', ['nhập kho', 'nhap kho']);
+            })->where(function ($subCode) {
+                $subCode->whereNull('order_code')
+                    ->orWhere(function ($cQ) {
+                        $cQ->where('order_code', 'not like', '%.NK')
+                           ->where('order_code', 'not like', '%NK');
+                    });
             });
         });
     }
