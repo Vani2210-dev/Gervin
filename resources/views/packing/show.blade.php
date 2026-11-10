@@ -14,6 +14,9 @@
 @endphp
 
 @section('content')
+    <script>
+        window.zebraPackageData = @json($zebraPrintData);
+    </script>
     <style>
         #packingSubmitBtn:disabled {
             opacity: 0.45 !important;

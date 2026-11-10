@@ -373,8 +373,14 @@
             this.currentPackageData = pkgData || this.currentPackageData || window.zebraPackageData;
             if (!this.currentPackageData) {
                 console.error('Chưa có dữ liệu kiện đóng gói.');
+                if (typeof window.showToast === 'function') {
+                    window.showToast('Không tìm thấy dữ liệu kiện đóng gói.', 'error');
+                } else {
+                    alert('Không tìm thấy dữ liệu kiện đóng gói.');
+                }
                 return;
             }
+            const data = this.currentPackageData;
             let modal = document.getElementById('zebraPrintModal');
             if (!modal) {
                 modal = this.createModalElement();
@@ -383,7 +389,7 @@
 
             // Cập nhật thông tin kiện trong modal
             const codeEl = document.getElementById('zebraModalPackageCode');
-            if (codeEl) codeEl.textContent = pkgData.packageCode || pkgData.packageId || '—';
+            if (codeEl) codeEl.textContent = data.packageCode || data.packageId || '—';
 
             const qtyInput = document.getElementById('zebraModalQuantity');
             if (qtyInput) qtyInput.value = '1';

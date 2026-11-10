@@ -6,6 +6,9 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Tem dán kiện - {{ $package->name }}</title>
     <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+    <script>
+        window.zebraPackageData = @json($zebraPrintData);
+    </script>
     <style>
         @page {
             size: 100mm 100mm;
