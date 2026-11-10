@@ -420,6 +420,31 @@ class Order extends Model
     }
 
     /**
+     * Tên khách hàng rút gọn (chỉ Tên KH + Mã KH nếu có, không kèm Tên công trình).
+     * Dùng cho cột Sản phẩm (Product Name) trong file xuất Nesting và Nesting Phào.
+     */
+    public function getCustomerShortDisplay(): string
+    {
+        if ($this->isNhapKho()) {
+            return 'Nhập kho nội bộ Gervin';
+        }
+
+        $customer = $this->customer;
+        if ($customer) {
+            $cName = trim($customer->name ?? '');
+            $codeStr = $customer->customer_code ? ' (' . $customer->customer_code . ')' : '';
+            return $cName . $codeStr;
+        }
+
+        return trim($this->customer_name ?? '') ?: '—';
+    }
+
+    public function getCustomerShortDisplayAttribute(): string
+    {
+        return $this->getCustomerShortDisplay();
+    }
+
+    /**
      * Kiểm tra đơn hàng có ít nhất một tấm (vật tư) có mã GV hay không.
      * Dùng để xét điều kiện chiết khấu tháng.
      */

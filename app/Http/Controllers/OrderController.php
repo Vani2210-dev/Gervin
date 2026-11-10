@@ -283,6 +283,12 @@ class OrderController extends Controller
             }
         }
         $this->sanitizePaymentDetailsFormulas($request);
+        if ($request->has('payment_details') && is_array($request->payment_details)) {
+            $filteredDetails = array_values(array_filter($request->payment_details, function ($item) {
+                return is_array($item) && !empty(trim($item['name'] ?? ''));
+            }));
+            $request->merge(['payment_details' => $filteredDetails]);
+        }
 
         // Không xử lý xóa file hoặc upload file thật khi chỉ đang xem trước
         $request->request->remove('delete_attachments');
@@ -324,6 +330,30 @@ class OrderController extends Controller
                 'message' => 'Lỗi khi tạo bản xem trước: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    public function checkCode(Request $request)
+    {
+        $code = trim((string)$request->query('code', ''));
+        $orderId = $request->query('order_id');
+        if ($code === '') {
+            return response()->json([
+                'exists' => false,
+                'message' => 'Mã trống'
+            ]);
+        }
+
+        $query = Order::where('order_code', $code);
+        if ($orderId) {
+            $query->where('id', '!=', $orderId);
+        }
+        $exists = $query->exists();
+
+        return response()->json([
+            'exists'  => $exists,
+            'code'    => $code,
+            'message' => $exists ? "Mã đơn hàng '{$code}' đã tồn tại trong hệ thống!" : 'Mã hợp lệ'
+        ]);
     }
 
     public function exportExcel(Request $request)
@@ -535,6 +565,7 @@ class OrderController extends Controller
     public function getExportData(Order $acrylicOrder)
     {
         $fullCustomerDisplay = $acrylicOrder->full_customer_display;
+        $customerShortName = $acrylicOrder->customer_short_display;
 
         return [
             'order_code' => $acrylicOrder->order_code,
@@ -542,6 +573,7 @@ class OrderController extends Controller
             'type' => $acrylicOrder->type,
             'customer_name' => $fullCustomerDisplay,
             'full_customer_display' => $fullCustomerDisplay,
+            'customer_short_name' => $customerShortName,
             'project_name' => $acrylicOrder->customer_name,
             'customer_company_name' => $acrylicOrder->customer ? $acrylicOrder->customer->name : null,
             'customer_code' => $acrylicOrder->customer ? $acrylicOrder->customer->customer_code : null,
@@ -807,7 +839,10 @@ class OrderController extends Controller
                 ->where('id', '!=', $order->id)
                 ->exists();
             if ($exists) {
-                return redirect()->back()->withInput()->with('error', "Mã đơn hàng '{$customCode}' đã tồn tại trong hệ thống. Vui lòng nhập mã khác.");
+                return redirect()->back()
+                    ->withInput()
+                    ->withErrors(['order_code' => "Mã đơn hàng '{$customCode}' đã tồn tại trong hệ thống. Vui lòng nhập mã khác."])
+                    ->with('error', "Mã đơn hàng '{$customCode}' đã tồn tại trong hệ thống. Vui lòng nhập mã khác.");
             }
             $order->order_code = $customCode;
             $order->save();
@@ -833,6 +868,12 @@ class OrderController extends Controller
             }
         }
         $this->sanitizePaymentDetailsFormulas($request);
+        if ($request->has('payment_details') && is_array($request->payment_details)) {
+            $filteredDetails = array_values(array_filter($request->payment_details, function ($item) {
+                return is_array($item) && !empty(trim($item['name'] ?? ''));
+            }));
+            $request->merge(['payment_details' => $filteredDetails]);
+        }
 
         $request->validate([
             'draft_order_id' => 'required|integer',
@@ -847,7 +888,10 @@ class OrderController extends Controller
                 ->where('id', '!=', $draftOrder->id)
                 ->exists();
             if ($exists) {
-                return redirect()->back()->withInput()->with('error', "Mã đơn hàng '{$customCode}' đã tồn tại trong hệ thống. Vui lòng nhập mã khác.");
+                return redirect()->back()
+                    ->withInput()
+                    ->withErrors(['order_code' => "Mã đơn hàng '{$customCode}' đã tồn tại trong hệ thống. Vui lòng nhập mã khác."])
+                    ->with('error', "Mã đơn hàng '{$customCode}' đã tồn tại trong hệ thống. Vui lòng nhập mã khác.");
             }
             $draftOrder->order_code = $customCode;
             $draftOrder->save();
@@ -958,7 +1002,10 @@ class OrderController extends Controller
                 ->where('id', '!=', $order->id)
                 ->exists();
             if ($exists) {
-                return redirect()->back()->withInput()->with('error', "Mã đơn hàng '{$customCode}' đã tồn tại trong hệ thống. Vui lòng nhập mã khác.");
+                return redirect()->back()
+                    ->withInput()
+                    ->withErrors(['order_code' => "Mã đơn hàng '{$customCode}' đã tồn tại trong hệ thống. Vui lòng nhập mã khác."])
+                    ->with('error', "Mã đơn hàng '{$customCode}' đã tồn tại trong hệ thống. Vui lòng nhập mã khác.");
             }
             $order->order_code = $customCode;
             $order->save();
@@ -973,6 +1020,12 @@ class OrderController extends Controller
             }
         }
         $this->sanitizePaymentDetailsFormulas($request);
+        if ($request->has('payment_details') && is_array($request->payment_details)) {
+            $filteredDetails = array_values(array_filter($request->payment_details, function ($item) {
+                return is_array($item) && !empty(trim($item['name'] ?? ''));
+            }));
+            $request->merge(['payment_details' => $filteredDetails]);
+        }
 
         $wasDraftBefore = $order->status === 'draft';
         $isDraftSave = $request->input('action') === 'draft' || ($request->status === 'draft' && $order->status === 'draft');
@@ -1012,7 +1065,7 @@ class OrderController extends Controller
         }
 
         if ($request->status === 'transferred' && !$order->accountant_approved_by) {
-            return redirect()->back()->with('error', 'Đơn hàng cần được Kế toán duyệt trước khi Kỹ thuật duyệt chuyển sản xuất.');
+            return redirect()->back()->withInput()->with('error', 'Đơn hàng cần được Kế toán duyệt trước khi Kỹ thuật duyệt chuyển sản xuất.');
         }
 
         $request->validate($rules);

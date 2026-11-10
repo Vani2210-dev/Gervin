@@ -359,6 +359,7 @@ Route::middleware(['auth'])->group(function () {
     })->name('manufactures.sequence.export');
 
     Route::get('orders/export', [OrderController::class, 'exportExcel'])->name('orders.export');
+    Route::get('orders/check-code', [OrderController::class, 'checkCode'])->name('orders.check-code');
     Route::match(['POST', 'PUT'], 'orders/preview-live', [OrderController::class, 'previewLive'])->name('orders.preview-live');
     Route::resource('orders', OrderController::class)->names('orders');
     Route::post('orders/bulk-destroy', [OrderController::class, 'bulkDestroy'])->name('orders.bulk-destroy');

@@ -67,6 +67,22 @@
                     </div>
                 </div>
             @endif
+            @if (session('error'))
+                <div class="mb-4 p-4 rounded-xl border border-danger-200 bg-danger-50 text-danger-700 shadow-sm">
+                    <div class="flex items-center gap-2 font-bold">
+                        <iconify-icon icon="solar:danger-triangle-bold" class="text-xl text-danger-600"></iconify-icon>
+                        <span>{{ session('error') }}</span>
+                    </div>
+                </div>
+            @endif
+            @if (session('success'))
+                <div class="mb-4 p-4 rounded-xl border border-success-200 bg-success-50 text-success-700 shadow-sm">
+                    <div class="flex items-center gap-2 font-bold">
+                        <iconify-icon icon="solar:check-circle-bold" class="text-xl text-success-600"></iconify-icon>
+                        <span>{{ session('success') }}</span>
+                    </div>
+                </div>
+            @endif
             @if ($errors->any())
                 <div class="mb-4 p-4 rounded-xl border border-danger-200 bg-danger-50 text-danger-600 shadow-sm">
                     <div class="flex items-center gap-2 mb-2 font-bold text-danger-800">
@@ -99,8 +115,9 @@
                                     class="form-control rounded-lg border-neutral-300 font-bold text-neutral-800 focus:border-primary-500 focus:ring-primary-500 text-sm" 
                                     placeholder="VD: 26.5178" 
                                     value="{{ old('order_code', isset($acrylicOrder) ? $acrylicOrder->order_code : ($nextOrderCode ?? '')) }}" required>
+                                <div id="order_code_status_msg" class="text-xs mt-1 font-semibold hidden"></div>
                                 @error('order_code')
-                                    <div class="text-danger-500 text-xs mt-1">{{ $message }}</div>
+                                    <div class="text-danger-500 text-xs mt-1 font-semibold">{{ $message }}</div>
                                 @enderror
                             </div>
                             <div class="form-group">
@@ -5424,5 +5441,81 @@ function submitQuickCreateCustomer(e) {
 </style>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<script>
+// Kiểm tra trùng mã đơn hàng thời gian thực
+document.addEventListener('DOMContentLoaded', function() {
+    const codeInput = document.getElementById('order-code-input');
+    const msgEl = document.getElementById('order_code_status_msg');
+    const form = document.getElementById('order-form');
+    if (!codeInput) return;
+
+    let debounceTimer = null;
+    let isCodeDuplicate = false;
+    const currentOrderId = '{{ isset($acrylicOrder) ? $acrylicOrder->id : "" }}';
+
+    function checkOrderCode(code) {
+        const trimmed = (code || '').trim();
+        if (!trimmed) {
+            isCodeDuplicate = false;
+            if (msgEl) { msgEl.classList.add('hidden'); msgEl.textContent = ''; }
+            codeInput.classList.remove('border-danger-500', 'focus:border-danger-500', 'focus:ring-danger-500');
+            return;
+        }
+
+        const url = '{{ route("orders.check-code") }}?code=' + encodeURIComponent(trimmed) + (currentOrderId ? '&order_id=' + currentOrderId : '');
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                if (data.exists) {
+                    isCodeDuplicate = true;
+                    if (msgEl) {
+                        msgEl.textContent = data.message || 'Mã đơn hàng "' + trimmed + '" đã tồn tại!';
+                        msgEl.className = 'text-xs mt-1 font-semibold text-danger-600 block';
+                    }
+                    codeInput.classList.add('border-danger-500', 'focus:border-danger-500', 'focus:ring-danger-500');
+                } else {
+                    isCodeDuplicate = false;
+                    if (msgEl) {
+                        msgEl.classList.add('hidden');
+                        msgEl.textContent = '';
+                    }
+                    codeInput.classList.remove('border-danger-500', 'focus:border-danger-500', 'focus:ring-danger-500');
+                }
+            })
+            .catch(() => {});
+    }
+
+    codeInput.addEventListener('input', function() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            checkOrderCode(this.value);
+        }, 350);
+    });
+
+    codeInput.addEventListener('blur', function() {
+        checkOrderCode(this.value);
+    });
+
+    // Ngăn phím Enter vô tình kích hoạt các nút Hủy đơn / Chuyển SX
+    codeInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            this.blur();
+        }
+    });
+
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            if (isCodeDuplicate) {
+                e.preventDefault();
+                alert('Mã đơn hàng "' + codeInput.value.trim() + '" đã tồn tại trong hệ thống. Vui lòng nhập mã khác!');
+                codeInput.focus();
+                return false;
+            }
+        });
+    }
+});
+</script>
 
 

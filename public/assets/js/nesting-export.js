@@ -71,6 +71,32 @@ function getMaterialName(supply) {
 }
 
 /**
+ * Rút gọn Tên khách hàng (chỉ lấy Tên KH + Mã KH nếu có, không kèm Tên công trình)
+ * Cột "Đơn hàng" đã có Tên công trình nên cột "Sản phẩm" chỉ cần Tên KH.
+ */
+function getShortCustomerName(data, projectName) {
+    if (!data) return '';
+    if (data.customer_short_name && String(data.customer_short_name).trim() !== '') {
+        return String(data.customer_short_name).trim();
+    }
+    if (data.customer_company_name && String(data.customer_company_name).trim() !== '') {
+        const cName = String(data.customer_company_name).trim();
+        const cCode = data.customer_code ? String(data.customer_code).trim() : '';
+        return cCode ? `${cName} (${cCode})` : cName;
+    }
+    let raw = String(data.customer_name || data.full_customer_display || '').trim();
+    if (!raw) return '';
+
+    const proj = String(projectName || data.project_name || '').trim();
+    if (proj) {
+        const escapedProj = proj.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(`\\s*\\(${escapedProj}\\)$`, 'i');
+        raw = raw.replace(regex, '').trim();
+    }
+    return raw;
+}
+
+/**
  * Build one BAZIS-PM nesting workbook and trigger download.
  * @param {Object} orderData   - Full order export data (window.orderExportData)
  * @param {Array}  suppliesData - Filtered supplies (each with their .items subset)
@@ -163,11 +189,11 @@ async function generateNestingWorkbook(orderData, suppliesData, filename) {
 
     // Data rows
     let rowIdx = 3;
-    const custLabel = orderData.customer_name || '';
-    const orderLabel = orderData.order_code || '';
     const projectLabel = (orderData.project_name && String(orderData.project_name).trim() !== '')
         ? orderData.project_name.trim()
         : (orderData.order_code || '');
+    const custLabel = getShortCustomerName(orderData, projectLabel);
+    const orderLabel = orderData.order_code || '';
 
     suppliesData.forEach(supply => {
         (supply.items || []).forEach(item => {
@@ -227,16 +253,19 @@ async function generateNestingWorkbook(orderData, suppliesData, filename) {
                 const row = ws.getRow(rowIdx++);
                 row.height = 18;
 
-                const itemCust = item.customer_name || supply.customer_name || custLabel;
                 const itemProject = (item.project_name && String(item.project_name).trim() !== '')
                     ? item.project_name.trim()
                     : ((supply.project_name && String(supply.project_name).trim() !== '')
                         ? supply.project_name.trim()
                         : projectLabel);
 
+                const itemCust = getShortCustomerName(item, itemProject)
+                    || getShortCustomerName(supply, itemProject)
+                    || custLabel;
+
                 const vals = [
                     'V',                                                      // A Cắt
-                    itemCust,                                                 // B Sản phẩm
+                    itemCust,                                                 // B Sản phẩm (Chỉ Tên KH)
                     itemProject,                                              // C Đơn hàng (Tên công trình)
                     sttCode,                                                  // D STT
                     (item.notes && String(item.notes).trim() !== '') ? item.notes.trim() : '.', // E Tên (Detail Name) - Lấy từ Ghi chú (trống thì điền '.')
@@ -402,14 +431,33 @@ async function exportNestingFiles(customData = null, returnBlobs = false) {
 
     const nestingSupplies = [];
     const phaoSupplies = [];
+    const shortCust = getShortCustomerName(orderData, orderData.project_name);
 
     (orderData.supplies || []).forEach(supply => {
         const allItems = supply.items || [];
         const nestItems = allItems.filter(i => !isLaborItem(i) && (parseFloat(i.height) || 0) > 70 && (parseFloat(i.width) || 0) > 70);
         const phaoItems = allItems.filter(i => !isLaborItem(i) && (parseFloat(i.height) || 0) > 0 && (parseFloat(i.width) || 0) > 0 && ((parseFloat(i.height) || 0) <= 70 || (parseFloat(i.width) || 0) <= 70));
 
-        if (nestItems.length) nestingSupplies.push({ ...supply, order_code: orderData.order_code, customer_name: orderData.customer_name, project_name: orderData.project_name || '', items: nestItems });
-        if (phaoItems.length) phaoSupplies.push({ ...supply, order_code: orderData.order_code, customer_name: orderData.customer_name, project_name: orderData.project_name || '', items: phaoItems });
+        if (nestItems.length) nestingSupplies.push({
+            ...supply,
+            order_code: orderData.order_code,
+            customer_name: shortCust || orderData.customer_name,
+            customer_short_name: shortCust,
+            customer_company_name: orderData.customer_company_name,
+            customer_code: orderData.customer_code,
+            project_name: orderData.project_name || '',
+            items: nestItems
+        });
+        if (phaoItems.length) phaoSupplies.push({
+            ...supply,
+            order_code: orderData.order_code,
+            customer_name: shortCust || orderData.customer_name,
+            customer_short_name: shortCust,
+            customer_company_name: orderData.customer_company_name,
+            customer_code: orderData.customer_code,
+            project_name: orderData.project_name || '',
+            items: phaoItems
+        });
     });
 
     const code = orderData.order_code || 'DH';
@@ -448,21 +496,43 @@ async function exportManufactureNestingFiles(moCode, ordersData) {
 
     ordersData.forEach(orderData => {
         if (orderData.type !== 'acrylic' || !orderData.supplies) return;
+        const shortCust = getShortCustomerName(orderData, orderData.project_name);
         orderData.supplies.forEach(supply => {
             const allItems = supply.items || [];
             // Gắn thông tin đơn hàng và khách hàng vào từng item/supply
             const enrichedItems = allItems.map(item => ({
                 ...item,
                 order_code: orderData.order_code,
-                customer_name: orderData.customer_name,
+                customer_name: shortCust || orderData.customer_name,
+                customer_short_name: shortCust,
+                customer_company_name: orderData.customer_company_name,
+                customer_code: orderData.customer_code,
                 project_name: orderData.project_name || ''
             }));
 
             const nestItems = enrichedItems.filter(i => !isLaborItem(i) && (parseFloat(i.height) || 0) > 70 && (parseFloat(i.width) || 0) > 70);
             const phaoItems = enrichedItems.filter(i => !isLaborItem(i) && (parseFloat(i.height) || 0) > 0 && (parseFloat(i.width) || 0) > 0 && ((parseFloat(i.height) || 0) <= 70 || (parseFloat(i.width) || 0) <= 70));
 
-            if (nestItems.length) nestingSupplies.push({ ...supply, order_code: orderData.order_code, customer_name: orderData.customer_name, project_name: orderData.project_name || '', items: nestItems });
-            if (phaoItems.length) phaoSupplies.push({ ...supply, order_code: orderData.order_code, customer_name: orderData.customer_name, project_name: orderData.project_name || '', items: phaoItems });
+            if (nestItems.length) nestingSupplies.push({
+                ...supply,
+                order_code: orderData.order_code,
+                customer_name: shortCust || orderData.customer_name,
+                customer_short_name: shortCust,
+                customer_company_name: orderData.customer_company_name,
+                customer_code: orderData.customer_code,
+                project_name: orderData.project_name || '',
+                items: nestItems
+            });
+            if (phaoItems.length) phaoSupplies.push({
+                ...supply,
+                order_code: orderData.order_code,
+                customer_name: shortCust || orderData.customer_name,
+                customer_short_name: shortCust,
+                customer_company_name: orderData.customer_company_name,
+                customer_code: orderData.customer_code,
+                project_name: orderData.project_name || '',
+                items: phaoItems
+            });
         });
     });
 
@@ -528,6 +598,7 @@ async function exportBulkNestingFiles(ordersData, returnBlobs = false) {
     const seenDcKeys = new Set();
 
     acrylicOrders.forEach(orderData => {
+        const shortCust = getShortCustomerName(orderData, orderData.project_name);
         // Thu thập Kho DC
         (orderData.dc_stock_matches || []).forEach(m => {
             const key = m.dc_id
@@ -546,7 +617,10 @@ async function exportBulkNestingFiles(ordersData, returnBlobs = false) {
             const enrichedItems = allItems.map(item => ({
                 ...item,
                 order_code: orderData.order_code,
-                customer_name: orderData.customer_name,
+                customer_name: shortCust || orderData.customer_name,
+                customer_short_name: shortCust,
+                customer_company_name: orderData.customer_company_name,
+                customer_code: orderData.customer_code,
                 project_name: orderData.project_name || ''
             }));
 
@@ -557,7 +631,10 @@ async function exportBulkNestingFiles(ordersData, returnBlobs = false) {
                 allNestingSupplies.push({
                     ...supply,
                     order_code: orderData.order_code,
-                    customer_name: orderData.customer_name,
+                    customer_name: shortCust || orderData.customer_name,
+                    customer_short_name: shortCust,
+                    customer_company_name: orderData.customer_company_name,
+                    customer_code: orderData.customer_code,
                     project_name: orderData.project_name || '',
                     items: nestItems
                 });
@@ -567,7 +644,10 @@ async function exportBulkNestingFiles(ordersData, returnBlobs = false) {
                 allPhaoSupplies.push({
                     ...supply,
                     order_code: orderData.order_code,
-                    customer_name: orderData.customer_name,
+                    customer_name: shortCust || orderData.customer_name,
+                    customer_short_name: shortCust,
+                    customer_company_name: orderData.customer_company_name,
+                    customer_code: orderData.customer_code,
                     project_name: orderData.project_name || '',
                     items: phaoItems
                 });
@@ -598,9 +678,13 @@ async function exportBulkNestingFiles(ordersData, returnBlobs = false) {
 
     // 1. Gộp TOÀN BỘ tấm Nesting chính (> 70x70) của TẤT CẢ các đơn vào 1 file Nesting duy nhất
     if (finalNestingSupplies.length > 0) {
+        const firstCust = acrylicOrders.length === 1 ? getShortCustomerName(acrylicOrders[0], acrylicOrders[0].project_name) : 'Nhiều khách hàng';
         const dummyOrder = {
             order_code: acrylicOrders.length === 1 ? (acrylicOrders[0].order_code || 'DH') : 'GOP',
-            customer_name: acrylicOrders.length === 1 ? (acrylicOrders[0].customer_name || '') : 'Nhiều khách hàng',
+            customer_name: firstCust,
+            customer_short_name: firstCust,
+            customer_company_name: acrylicOrders.length === 1 ? (acrylicOrders[0].customer_company_name || '') : '',
+            customer_code: acrylicOrders.length === 1 ? (acrylicOrders[0].customer_code || '') : '',
             project_name: acrylicOrders.length === 1 ? (acrylicOrders[0].project_name || '') : 'Nhiều công trình',
             dc_stock_matches: allDcMatches
         };
@@ -625,9 +709,13 @@ async function exportBulkNestingFiles(ordersData, returnBlobs = false) {
 
     // 2. Gộp TOÀN BỘ tấm phào (<= 70) của TẤT CẢ các đơn vào 1 file Nesting Phào duy nhất
     if (finalPhaoSupplies.length > 0) {
+        const firstCust = acrylicOrders.length === 1 ? getShortCustomerName(acrylicOrders[0], acrylicOrders[0].project_name) : 'Nhiều khách hàng';
         const dummyOrder = {
             order_code: acrylicOrders.length === 1 ? (acrylicOrders[0].order_code || 'DH') : 'GOP-PHAO',
-            customer_name: acrylicOrders.length === 1 ? (acrylicOrders[0].customer_name || '') : 'Nhiều khách hàng',
+            customer_name: firstCust,
+            customer_short_name: firstCust,
+            customer_company_name: acrylicOrders.length === 1 ? (acrylicOrders[0].customer_company_name || '') : '',
+            customer_code: acrylicOrders.length === 1 ? (acrylicOrders[0].customer_code || '') : '',
             project_name: acrylicOrders.length === 1 ? (acrylicOrders[0].project_name || '') : 'Nhiều công trình',
             dc_stock_matches: allDcMatches
         };
