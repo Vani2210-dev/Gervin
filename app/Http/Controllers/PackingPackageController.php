@@ -948,10 +948,13 @@ class PackingPackageController extends Controller
             $result = $zebraService->checkConnection(!empty($customSettings) ? $customSettings : null);
             return response()->json($result);
         } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Zebra connection check: ' . $e->getMessage());
             return response()->json([
                 'connected' => false,
-                'message'   => 'Không thể kết nối máy in: ' . $e->getMessage(),
-            ], 500);
+                'host'      => $request->input('host') ?? '192.168.1.67',
+                'port'      => (int) ($request->input('port') ?? 9100),
+                'message'   => $e->getMessage(),
+            ], 200);
         }
     }
 }

@@ -299,7 +299,8 @@
                 margin: 0;
             }
 
-            .print-toolbar {
+            .print-toolbar,
+            #zebraPrintModal {
                 display: none !important;
             }
 

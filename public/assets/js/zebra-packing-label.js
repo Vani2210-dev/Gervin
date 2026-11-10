@@ -90,9 +90,6 @@
                 body: JSON.stringify(customSettings || this.settings)
             });
             const data = await res.json();
-            if (!res.ok || !data.connected) {
-                throw new Error(data.message || 'Không thể kết nối máy in');
-            }
             return data;
         },
 
@@ -216,7 +213,7 @@
             // 1. Tạo Canvas Master độ phân giải cao 1200x1200
             const master = document.createElement('canvas');
             master.width = master.height = 1200;
-            const m = master.getContext('2d');
+            const m = master.getContext('2d', { willReadFrequently: true });
 
             m.fillStyle = '#fff';
             m.fillRect(0, 0, 1200, 1200);
@@ -278,7 +275,7 @@
 
             const printCanvas = document.createElement('canvas');
             printCanvas.width = printCanvas.height = totalDots;
-            const pCtx = printCanvas.getContext('2d');
+            const pCtx = printCanvas.getContext('2d', { willReadFrequently: true });
 
             pCtx.fillStyle = '#fff';
             pCtx.fillRect(0, 0, totalDots, totalDots);
@@ -428,15 +425,20 @@
             const statusText = document.getElementById('zebraModalStatusText');
             if (!statusBadge || !statusText) return;
 
-            statusBadge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200';
+            statusBadge.className = 'zp-status-badge checking';
             statusText.textContent = `Kiểm tra ${this.settings.host}:${this.settings.port}...`;
 
             try {
                 const res = await this.checkConnection();
-                statusBadge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200';
-                statusText.textContent = `Đã kết nối (${res.ms} ms)`;
+                if (res.connected) {
+                    statusBadge.className = 'zp-status-badge online';
+                    statusText.textContent = `Đã kết nối (${res.ms || 3} ms)`;
+                } else {
+                    statusBadge.className = 'zp-status-badge offline';
+                    statusText.textContent = `Không kết nối (${this.settings.host})`;
+                }
             } catch (e) {
-                statusBadge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200';
+                statusBadge.className = 'zp-status-badge offline';
                 statusText.textContent = `Không kết nối (${this.settings.host})`;
             }
         },
@@ -449,7 +451,7 @@
 
             if (printBtn) {
                 printBtn.disabled = true;
-                printBtn.innerHTML = `<iconify-icon icon="lucide:loader-2" class="text-lg animate-spin"></iconify-icon> Đang gửi in...`;
+                printBtn.innerHTML = `<iconify-icon icon="lucide:loader-2" class="animate-spin"></iconify-icon> Đang gửi in...`;
             }
 
             try {
@@ -469,7 +471,7 @@
             } finally {
                 if (printBtn) {
                     printBtn.disabled = false;
-                    printBtn.innerHTML = `<iconify-icon icon="lucide:printer" class="text-lg"></iconify-icon> In ngay tem Zebra`;
+                    printBtn.innerHTML = `<iconify-icon icon="lucide:printer"></iconify-icon> In ngay tem Zebra`;
                 }
             }
         },
@@ -478,81 +480,384 @@
             const wrap = document.createElement('div');
             wrap.id = 'zebraPrintModal';
             wrap.style.display = 'none';
-            wrap.style.position = 'fixed';
-            wrap.style.inset = '0';
-            wrap.style.zIndex = '9999999';
 
             wrap.innerHTML = `
-                <div style="position:absolute; inset:0; background:rgba(0,0,0,0.55);" onclick="ZebraPacking.closeModal()"></div>
-                <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; padding:1rem; pointer-events:none;">
-                    <div style="position:relative; background:#fff; border-radius:0.75rem; box-shadow:0 20px 60px rgba(0,0,0,0.3); width:100%; max-width:540px; pointer-events:auto; overflow:hidden;">
-                        <div class="px-6 py-4 border-b border-neutral-200 flex items-center justify-between bg-neutral-50">
-                            <div class="flex items-center gap-3">
-                                <span class="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-700 border border-emerald-200 flex items-center justify-center font-bold">
-                                    <iconify-icon icon="lucide:printer" class="text-xl"></iconify-icon>
+                <style>
+                    #zebraPrintModal {
+                        position: fixed;
+                        inset: 0;
+                        z-index: 99999999;
+                        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+                        color: #111827;
+                        line-height: 1.4;
+                    }
+                    #zebraPrintModal * { box-sizing: border-box; }
+                    #zebraPrintModal .zp-overlay {
+                        position: absolute;
+                        inset: 0;
+                        background: rgba(0, 0, 0, 0.6);
+                        backdrop-filter: blur(2px);
+                    }
+                    #zebraPrintModal .zp-wrap {
+                        position: absolute;
+                        inset: 0;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        padding: 16px;
+                        pointer-events: none;
+                    }
+                    #zebraPrintModal .zp-card {
+                        position: relative;
+                        background: #ffffff;
+                        border-radius: 12px;
+                        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+                        width: 100%;
+                        max-width: 540px;
+                        pointer-events: auto;
+                        overflow: hidden;
+                        display: flex;
+                        flex-direction: column;
+                    }
+                    #zebraPrintModal .zp-header {
+                        padding: 14px 20px;
+                        background: #f9fafb;
+                        border-bottom: 1px solid #e5e7eb;
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                    }
+                    #zebraPrintModal .zp-header-left {
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                    }
+                    #zebraPrintModal .zp-icon-badge {
+                        width: 40px;
+                        height: 40px;
+                        border-radius: 10px;
+                        background: #d1fae5;
+                        color: #047857;
+                        border: 1px solid #a7f3d0;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 22px;
+                    }
+                    #zebraPrintModal .zp-title {
+                        font-size: 16px;
+                        font-weight: 700;
+                        color: #111827;
+                        margin: 0;
+                    }
+                    #zebraPrintModal .zp-subtitle {
+                        font-size: 12px;
+                        color: #6b7280;
+                        margin: 2px 0 0;
+                    }
+                    #zebraPrintModal .zp-close-btn {
+                        background: none;
+                        border: none;
+                        cursor: pointer;
+                        color: #9ca3af;
+                        font-size: 24px;
+                        line-height: 1;
+                        padding: 4px;
+                        border-radius: 6px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    }
+                    #zebraPrintModal .zp-close-btn:hover {
+                        color: #111827;
+                        background: #f3f4f6;
+                    }
+                    #zebraPrintModal .zp-body {
+                        padding: 20px;
+                        display: flex;
+                        flex-direction: row;
+                        gap: 20px;
+                        align-items: flex-start;
+                    }
+                    #zebraPrintModal .zp-preview-box {
+                        width: 180px;
+                        height: 180px;
+                        flex-shrink: 0;
+                        background: #f9fafb;
+                        border: 2px dashed #d1d5db;
+                        border-radius: 10px;
+                        padding: 4px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    }
+                    #zebraPrintModal .zp-preview-img {
+                        max-width: 100%;
+                        max-height: 100%;
+                        object-fit: contain;
+                        border-radius: 6px;
+                        background: #ffffff;
+                    }
+                    #zebraPrintModal .zp-preview-hint {
+                        font-size: 11px;
+                        color: #6b7280;
+                        text-align: center;
+                        margin-top: 6px;
+                    }
+                    #zebraPrintModal .zp-content-box {
+                        flex: 1;
+                        min-width: 0;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 14px;
+                    }
+                    #zebraPrintModal .zp-row-header {
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        margin-bottom: 2px;
+                    }
+                    #zebraPrintModal .zp-label-sm {
+                        font-size: 11px;
+                        font-weight: 700;
+                        text-transform: uppercase;
+                        letter-spacing: 0.5px;
+                        color: #6b7280;
+                    }
+                    #zebraPrintModal .zp-status-badge {
+                        display: inline-flex;
+                        align-items: center;
+                        gap: 6px;
+                        padding: 3px 10px;
+                        border-radius: 9999px;
+                        font-size: 12px;
+                        font-weight: 600;
+                    }
+                    #zebraPrintModal .zp-status-badge.online {
+                        background: #ecfdf5;
+                        color: #065f46;
+                        border: 1px solid #a7f3d0;
+                    }
+                    #zebraPrintModal .zp-status-badge.offline {
+                        background: #fef2f2;
+                        color: #991b1b;
+                        border: 1px solid #fecaca;
+                    }
+                    #zebraPrintModal .zp-status-badge.checking {
+                        background: #fffbeb;
+                        color: #92400e;
+                        border: 1px solid #fde68a;
+                    }
+                    #zebraPrintModal .zp-dot {
+                        width: 7px;
+                        height: 7px;
+                        border-radius: 50%;
+                    }
+                    #zebraPrintModal .zp-status-badge.online .zp-dot { background: #10b981; }
+                    #zebraPrintModal .zp-status-badge.offline .zp-dot { background: #ef4444; }
+                    #zebraPrintModal .zp-status-badge.checking .zp-dot { background: #f59e0b; }
+                    #zebraPrintModal .zp-package-code {
+                        font-size: 22px;
+                        font-weight: 900;
+                        font-family: monospace;
+                        color: #111827;
+                        letter-spacing: 0.5px;
+                    }
+                    #zebraPrintModal .zp-field-label {
+                        display: block;
+                        font-size: 12px;
+                        font-weight: 600;
+                        color: #374151;
+                        margin-bottom: 6px;
+                    }
+                    #zebraPrintModal .zp-qty-group {
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        flex-wrap: wrap;
+                    }
+                    #zebraPrintModal .zp-qty-stepper {
+                        display: inline-flex;
+                        align-items: center;
+                        border: 1px solid #d1d5db;
+                        border-radius: 8px;
+                        overflow: hidden;
+                        background: #fff;
+                    }
+                    #zebraPrintModal .zp-qty-btn {
+                        width: 34px;
+                        height: 34px;
+                        background: #f3f4f6;
+                        border: none;
+                        font-size: 16px;
+                        font-weight: bold;
+                        cursor: pointer;
+                        color: #374151;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    }
+                    #zebraPrintModal .zp-qty-btn:hover { background: #e5e7eb; }
+                    #zebraPrintModal .zp-qty-input {
+                        width: 50px;
+                        height: 34px;
+                        border: none;
+                        text-align: center;
+                        font-weight: 700;
+                        font-size: 14px;
+                        color: #111827;
+                        outline: none;
+                    }
+                    #zebraPrintModal .zp-chip {
+                        padding: 6px 12px;
+                        border-radius: 6px;
+                        border: 1px solid #e5e7eb;
+                        background: #f9fafb;
+                        font-size: 12px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        color: #374151;
+                    }
+                    #zebraPrintModal .zp-chip:hover {
+                        background: #f3f4f6;
+                        border-color: #d1d5db;
+                    }
+                    #zebraPrintModal .zp-printer-card {
+                        padding: 10px 12px;
+                        border-radius: 8px;
+                        background: #f9fafb;
+                        border: 1px solid #e5e7eb;
+                        font-size: 12px;
+                    }
+                    #zebraPrintModal .zp-printer-card-top {
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                    }
+                    #zebraPrintModal .zp-retry-link {
+                        color: #0284c7;
+                        background: none;
+                        border: none;
+                        cursor: pointer;
+                        font-weight: 600;
+                        font-size: 12px;
+                        text-decoration: underline;
+                        padding: 0;
+                    }
+                    #zebraPrintModal .zp-printer-card-sub {
+                        color: #6b7280;
+                        font-size: 11px;
+                        margin-top: 3px;
+                    }
+                    #zebraPrintModal .zp-footer {
+                        padding: 14px 20px;
+                        background: #f9fafb;
+                        border-top: 1px solid #e5e7eb;
+                        display: flex;
+                        align-items: center;
+                        justify-content: flex-end;
+                        gap: 10px;
+                    }
+                    #zebraPrintModal .zp-cancel-btn {
+                        padding: 8px 16px;
+                        border-radius: 8px;
+                        border: 1px solid #d1d5db;
+                        background: #ffffff;
+                        color: #374151;
+                        font-weight: 600;
+                        font-size: 13px;
+                        cursor: pointer;
+                    }
+                    #zebraPrintModal .zp-cancel-btn:hover { background: #f3f4f6; }
+                    #zebraPrintModal .zp-print-btn {
+                        padding: 9px 20px;
+                        border-radius: 8px;
+                        border: none;
+                        background: #059669;
+                        color: #ffffff;
+                        font-weight: 700;
+                        font-size: 13px;
+                        cursor: pointer;
+                        display: inline-flex;
+                        align-items: center;
+                        gap: 8px;
+                        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+                    }
+                    #zebraPrintModal .zp-print-btn:hover { background: #047857; }
+                    #zebraPrintModal .zp-print-btn:disabled {
+                        opacity: 0.6;
+                        cursor: not-allowed;
+                    }
+                </style>
+
+                <div class="zp-overlay" onclick="ZebraPacking.closeModal()"></div>
+                <div class="zp-wrap">
+                    <div class="zp-card">
+                        <div class="zp-header">
+                            <div class="zp-header-left">
+                                <span class="zp-icon-badge">
+                                    <iconify-icon icon="lucide:printer"></iconify-icon>
                                 </span>
                                 <div>
-                                    <h5 class="text-lg font-bold text-neutral-900 mb-0">In tem Zebra ZT411</h5>
-                                    <p class="text-xs text-neutral-500 mb-0">Khổ tem 60 x 60 mm · 300 DPI · In trực tiếp qua LAN/Wi-Fi</p>
+                                    <h5 class="zp-title">In tem Zebra ZT411</h5>
+                                    <p class="zp-subtitle">Khổ tem 60 x 60 mm · 300 DPI · In trực tiếp qua LAN/Wi-Fi</p>
                                 </div>
                             </div>
-                            <button type="button" onclick="ZebraPacking.closeModal()" class="text-neutral-400 hover:text-neutral-900 text-2xl leading-none">
+                            <button type="button" onclick="ZebraPacking.closeModal()" class="zp-close-btn" title="Đóng">
                                 <iconify-icon icon="lucide:x"></iconify-icon>
                             </button>
                         </div>
 
-                        <div class="p-6">
-                            <div class="flex flex-col sm:flex-row items-center gap-6">
-                                <!-- Preview Canvas Box -->
-                                <div class="shrink-0 text-center">
-                                    <div class="w-48 h-48 border-2 border-dashed border-neutral-300 rounded-lg p-1 bg-neutral-100 flex items-center justify-center shadow-inner">
-                                        <img id="zebraModalPreviewImg" class="w-full h-full object-contain rounded" alt="Xem trước tem">
+                        <div class="zp-body">
+                            <!-- Preview Box -->
+                            <div style="text-align: center;">
+                                <div class="zp-preview-box">
+                                    <img id="zebraModalPreviewImg" class="zp-preview-img" alt="Xem trước tem">
+                                </div>
+                                <div class="zp-preview-hint">Khổ tem thực tế 60 × 60 mm</div>
+                            </div>
+
+                            <!-- Controls & Status -->
+                            <div class="zp-content-box">
+                                <div>
+                                    <div class="zp-row-header">
+                                        <span class="zp-label-sm">Mã kiện</span>
+                                        <span id="zebraModalStatusBadge" class="zp-status-badge checking">
+                                            <span class="zp-dot"></span>
+                                            <span id="zebraModalStatusText">Kiểm tra kết nối...</span>
+                                        </span>
                                     </div>
-                                    <span class="text-xs text-neutral-500 mt-1 block">Khổ in thực tế 60 × 60 mm</span>
+                                    <div id="zebraModalPackageCode" class="zp-package-code">261110001</div>
                                 </div>
 
-                                <!-- Controls & Status -->
-                                <div class="flex-1 w-full space-y-4">
-                                    <div>
-                                        <div class="flex items-center justify-between mb-1">
-                                            <span class="text-xs font-semibold text-neutral-500 uppercase tracking-wider">Mã kiện</span>
-                                            <span id="zebraModalStatusBadge" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-neutral-100 text-neutral-700">
-                                                <span class="w-1.5 h-1.5 rounded-full bg-neutral-400"></span>
-                                                <span id="zebraModalStatusText">Kiểm tra kết nối...</span>
-                                            </span>
+                                <div>
+                                    <label class="zp-field-label">Số lượng tem cần in</label>
+                                    <div class="zp-qty-group">
+                                        <div class="zp-qty-stepper">
+                                            <button type="button" onclick="ZebraPacking.changeQuantity(-1)" class="zp-qty-btn">−</button>
+                                            <input type="number" id="zebraModalQuantity" min="1" max="50" value="1" class="zp-qty-input">
+                                            <button type="button" onclick="ZebraPacking.changeQuantity(1)" class="zp-qty-btn">+</button>
                                         </div>
-                                        <div id="zebraModalPackageCode" class="text-xl font-black text-neutral-900 font-mono tracking-wide">261110001</div>
+                                        <button type="button" onclick="document.getElementById('zebraModalQuantity').value = '1'" class="zp-chip">1 tem</button>
+                                        <button type="button" onclick="document.getElementById('zebraModalQuantity').value = '2'" class="zp-chip">2 tem</button>
+                                        <button type="button" onclick="document.getElementById('zebraModalQuantity').value = '3'" class="zp-chip">3 tem</button>
                                     </div>
+                                </div>
 
-                                    <div>
-                                        <label class="block text-xs font-semibold text-neutral-600 mb-1.5">Số lượng tem cần in</label>
-                                        <div class="flex items-center gap-2">
-                                            <div class="flex items-center border border-neutral-300 rounded-lg overflow-hidden bg-white">
-                                                <button type="button" onclick="ZebraPacking.changeQuantity(-1)" class="px-3 py-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold transition-colors">−</button>
-                                                <input type="number" id="zebraModalQuantity" min="1" max="50" value="1" class="w-16 text-center border-0 py-2 font-bold text-neutral-900 focus:ring-0">
-                                                <button type="button" onclick="ZebraPacking.changeQuantity(1)" class="px-3 py-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold transition-colors">+</button>
-                                            </div>
-                                            <button type="button" onclick="document.getElementById('zebraModalQuantity').value = '1'" class="px-2.5 py-1.5 text-xs font-semibold rounded bg-neutral-100 hover:bg-neutral-200 text-neutral-700">1 tem</button>
-                                            <button type="button" onclick="document.getElementById('zebraModalQuantity').value = '2'" class="px-2.5 py-1.5 text-xs font-semibold rounded bg-neutral-100 hover:bg-neutral-200 text-neutral-700">2 tem</button>
-                                            <button type="button" onclick="document.getElementById('zebraModalQuantity').value = '3'" class="px-2.5 py-1.5 text-xs font-semibold rounded bg-neutral-100 hover:bg-neutral-200 text-neutral-700">3 tem</button>
-                                        </div>
+                                <div class="zp-printer-card">
+                                    <div class="zp-printer-card-top">
+                                        <span>Máy in: <strong>Zebra ZT411</strong></span>
+                                        <button type="button" onclick="ZebraPacking.testConnectionInModal()" class="zp-retry-link">Thử kết nối lại</button>
                                     </div>
-
-                                    <div class="text-xs text-neutral-500 bg-neutral-50 p-2.5 rounded-lg border border-neutral-200">
-                                        <div class="flex items-center justify-between">
-                                            <span>Máy in: <strong>Zebra ZT411</strong></span>
-                                            <button type="button" onclick="ZebraPacking.testConnectionInModal()" class="text-primary-600 hover:underline font-semibold">Thử kết nối lại</button>
-                                        </div>
-                                        <div class="text-neutral-400 mt-0.5">IP: ${this.settings.host}:${this.settings.port} · Direct Thermal</div>
-                                    </div>
+                                    <div class="zp-printer-card-sub">IP: ${this.settings.host}:${this.settings.port} · Direct Thermal</div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="px-6 py-4 border-t border-neutral-200 bg-neutral-50 flex items-center justify-end gap-3">
-                            <button type="button" onclick="ZebraPacking.closeModal()" class="px-4 py-2 rounded-lg font-semibold text-neutral-600 hover:bg-neutral-200 transition-colors text-sm">Hủy</button>
-                            <button type="button" id="zebraModalPrintBtn" onclick="ZebraPacking.executePrintFromModal()" class="btn bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-lg font-semibold inline-flex items-center gap-2 shadow-sm transition-colors text-sm">
-                                <iconify-icon icon="lucide:printer" class="text-lg"></iconify-icon>
+                        <div class="zp-footer">
+                            <button type="button" onclick="ZebraPacking.closeModal()" class="zp-cancel-btn">Hủy</button>
+                            <button type="button" id="zebraModalPrintBtn" onclick="ZebraPacking.executePrintFromModal()" class="zp-print-btn">
+                                <iconify-icon icon="lucide:printer"></iconify-icon>
                                 In ngay tem Zebra
                             </button>
                         </div>
