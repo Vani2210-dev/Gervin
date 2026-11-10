@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Tem dán kiện - {{ $package->name }}</title>
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
     <style>
         @page {
             size: 100mm 100mm;
@@ -312,7 +314,8 @@
     <div class="print-toolbar">
         <p class="print-toolbar__title">Tem dán kiện: {{ $package->name }} (100x100mm)</p>
         <div class="print-toolbar__actions">
-            <button type="button" class="print-toolbar__button" onclick="window.print()">In tem</button>
+            <button type="button" class="print-toolbar__button" style="background:#059669; border:1px solid #047857;" onclick="ZebraPacking.openModal(@json($zebraPrintData))">In máy Zebra (60x60mm)</button>
+            <button type="button" class="print-toolbar__button" onclick="window.print()">In tem (A4/100x100)</button>
             <button type="button" class="print-toolbar__button print-toolbar__button--light" onclick="window.close()">Đóng</button>
         </div>
     </div>
@@ -388,10 +391,19 @@
         </section>
     </main>
 
+    <script src="{{ asset('assets/js/qrcode.js') }}"></script>
+    <script src="{{ asset('assets/js/zebra-packing-label.js') }}"></script>
     <script>
-        window.onload = function () {
-            window.print();
-        };
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('zebra') === '1') {
+            window.onload = function () {
+                ZebraPacking.openModal(@json($zebraPrintData));
+            };
+        } else {
+            window.onload = function () {
+                window.print();
+            };
+        }
     </script>
 </body>
 </html>

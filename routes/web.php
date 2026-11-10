@@ -420,6 +420,11 @@ Route::middleware(['auth'])->prefix('processes')->name('processes.')->group(func
     Route::post('/qc/complete', [ManufactureStepController::class, 'completeQc'])->name('qc.complete');
     Route::get('/packing', [PackingPackageController::class, 'index'])->name('packing');
     Route::post('/packing', [PackingPackageController::class, 'store'])->name('packing.store');
+    // Zebra Printer Integration for Packing Labels
+    Route::get('/packing/printer/settings', [PackingPackageController::class, 'getPrinterSettings'])->name('packing.printer.settings');
+    Route::post('/packing/printer/settings', [PackingPackageController::class, 'savePrinterSettings'])->name('packing.printer.save-settings');
+    Route::post('/packing/printer/check', [PackingPackageController::class, 'checkPrinterConnection'])->name('packing.printer.check');
+    Route::post('/packing/{package}/print-zebra', [PackingPackageController::class, 'printZebra'])->name('packing.print-zebra');
     Route::get('/packing/{package}', [PackingPackageController::class, 'show'])->name('packing.show');
     Route::get('/packing/{package}/print', [PackingPackageController::class, 'print'])->name('packing.print');
     Route::post('/packing/{package}/items', [PackingPackageController::class, 'storeItem'])->name('packing.items.store');

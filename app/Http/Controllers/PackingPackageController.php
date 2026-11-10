@@ -7,6 +7,7 @@ use App\Models\GlassOrderItemCode;
 use App\Models\MinLateOrderItemCode;
 use App\Models\PackingPackage;
 use App\Models\PackingPackageItem;
+use App\Services\ZebraPrinterService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
@@ -15,8 +16,8 @@ class PackingPackageController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:view packing')->only(['index', 'show', 'print']);
-        $this->middleware('permission:add packing')->only(['store', 'storeItem', 'update', 'reopen']);
+        $this->middleware('permission:view packing')->only(['index', 'show', 'print', 'printZebra', 'getPrinterSettings', 'checkPrinterConnection']);
+        $this->middleware('permission:add packing')->only(['store', 'storeItem', 'update', 'reopen', 'savePrinterSettings']);
         $this->middleware('permission:delete packing')->only(['destroyItem', 'destroy']);
         $this->middleware('permission:complete packing')->only(['complete']);
     }
@@ -124,8 +125,9 @@ class PackingPackageController extends Controller
         })->withQueryString();
 
         $ordersData = $this->getPackageOrdersData($package);
+        $zebraPrintData = $this->getPackagePrintData($package);
 
-        return view('packing.show', compact('package', 'packageItems', 'ordersData', 'perPage'));
+        return view('packing.show', compact('package', 'packageItems', 'ordersData', 'perPage', 'zebraPrintData'));
     }
 
     public function print(PackingPackage $package)
@@ -182,6 +184,8 @@ class PackingPackageController extends Controller
             ->generate($packageCode);
         $qrSvg = str_replace('<?xml version="1.0" encoding="UTF-8"?>', '', $qrSvg);
 
+        $zebraPrintData = $this->getPackagePrintData($package);
+
         return view('packing.print', [
             'package' => $package,
             'totalItems' => $totalItems,
@@ -193,6 +197,7 @@ class PackingPackageController extends Controller
             'customerPhone' => $packageOrder?->phone ?? '—',
             'deliveryAddress' => $packageOrder?->address ?? '—',
             'plateSttString' => $plateSttString,
+            'zebraPrintData' => $zebraPrintData,
         ]);
     }
 
@@ -817,6 +822,136 @@ class PackingPackageController extends Controller
         $minLateCodes = $codes->filter(fn($code) => $code instanceof MinLateOrderItemCode);
         if ($minLateCodes->isNotEmpty()) {
             \Illuminate\Database\Eloquent\Collection::make($minLateCodes)->load('minLateOrderItem.orderSupply.order');
+        }
+    }
+
+    /**
+     * Chuẩn bị dữ liệu in tem kiện cho máy in nhãn Zebra (60x60mm)
+     */
+    public function getPackagePrintData(PackingPackage $package): array
+    {
+        if (!$package->relationLoaded('packer') || !$package->relationLoaded('items')) {
+            $package->load(['packer', 'items.itemCode']);
+        }
+
+        $codes = $package->items->map(fn($item) => $item->itemCode)->filter();
+        $this->loadMorphCodeRelations($codes);
+
+        $items = $package->items->map(function (PackingPackageItem $packageItem) {
+            return $this->formatPackageItem($packageItem);
+        });
+
+        $scannedItems = $items->where('is_packaged', true);
+        $printItems = $scannedItems->isNotEmpty() ? $scannedItems : $items;
+        $printPackageItems = $package->items->where('is_packaged', true);
+        $printPackageItems = $printPackageItems->isNotEmpty() ? $printPackageItems : $package->items;
+        $packageOrder = $this->resolvePackageOrder($printPackageItems);
+
+        $totalItems = $printItems->count();
+        $orderCode = $printItems->first()?->order_code ?? '-';
+        $typeSummary = $printItems->pluck('type')->filter()->unique()->values()->implode(', ') ?: '-';
+
+        $plateSttList = $printItems->map(function ($it) {
+            $codeStr = trim($it->product_code ?? '');
+            if (preg_match('/\.(\d+)$/', $codeStr, $matches)) {
+                return $matches[1];
+            }
+            $parts = explode('.', $codeStr);
+            $last = end($parts);
+            return $last ?: $codeStr;
+        })->filter(fn($val) => $val !== '' && $val !== '-' && $val !== '—')->values();
+
+        $plateSttString = $plateSttList->implode(', ');
+        $packageCode = (string) ($package->name ?: $package->id);
+
+        return [
+            'packageId'       => $package->id,
+            'packageCode'     => $packageCode,
+            'orderCode'       => $orderCode !== '—' ? $orderCode : '-',
+            'typeSummary'     => $typeSummary !== '—' ? $typeSummary : '-',
+            'totalItems'      => $totalItems,
+            'plateSttString'  => $plateSttString,
+            'customerName'    => $packageOrder?->customer_name ?? '—',
+            'customerPhone'   => $packageOrder?->phone ?? '—',
+            'deliveryAddress' => $packageOrder?->address ?? '—',
+            'packedAt'        => optional($package->updated_at)->format('H:i d/m/Y') ?? now()->format('H:i d/m/Y'),
+            'packedBy'        => $package->packer?->name ?? (Auth::user()?->name ?? 'Gervin Wood'),
+        ];
+    }
+
+    /**
+     * Gửi lệnh in tem đến máy in Zebra qua RAW TCP Socket
+     */
+    public function printZebra(Request $request, PackingPackage $package, ZebraPrinterService $zebraService)
+    {
+        $validated = $request->validate([
+            'hex' => 'required|string',
+            'quantity' => 'nullable|integer|min:1|max:100',
+            'renderSettings' => 'nullable|string',
+        ]);
+
+        $quantity = (int) ($validated['quantity'] ?? 1);
+        $customSettings = null;
+        if (!empty($validated['renderSettings'])) {
+            $customSettings = json_decode($validated['renderSettings'], true);
+        }
+
+        try {
+            $result = $zebraService->printLabelHex($validated['hex'], $quantity, $customSettings);
+            return response()->json($result);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi in máy Zebra: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Lấy cài đặt máy in Zebra
+     */
+    public function getPrinterSettings(ZebraPrinterService $zebraService)
+    {
+        return response()->json([
+            'success'  => true,
+            'settings' => $zebraService->getSettings(),
+        ]);
+    }
+
+    /**
+     * Lưu cài đặt máy in Zebra
+     */
+    public function savePrinterSettings(Request $request, ZebraPrinterService $zebraService)
+    {
+        try {
+            $settings = $zebraService->saveSettings($request->all());
+            return response()->json([
+                'success'  => true,
+                'message'  => 'Đã lưu cấu hình máy in Zebra thành công.',
+                'settings' => $settings,
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    /**
+     * Kiểm tra trạng thái kết nối tới máy in Zebra qua TCP Socket
+     */
+    public function checkPrinterConnection(Request $request, ZebraPrinterService $zebraService)
+    {
+        try {
+            $customSettings = $request->all();
+            $result = $zebraService->checkConnection(!empty($customSettings) ? $customSettings : null);
+            return response()->json($result);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'connected' => false,
+                'message'   => 'Không thể kết nối máy in: ' . $e->getMessage(),
+            ], 500);
         }
     }
 }

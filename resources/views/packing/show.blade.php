@@ -77,12 +77,19 @@
                     @endif
                 @endcan
 
+                <button type="button"
+                    onclick="ZebraPacking.openModal(@json($zebraPrintData))"
+                    class="packing-package-page__zebra-print-button btn bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-lg font-semibold inline-flex items-center gap-2 shadow-sm transition-colors">
+                    <iconify-icon icon="lucide:printer" class="text-lg"></iconify-icon>
+                    In tem Zebra (60x60)
+                </button>
+
                 <a href="{{ route('processes.packing.print', $package) }}"
                     target="_blank"
                     rel="noopener noreferrer"
-                    class="packing-package-page__print-button packing-package-page__header-print-button btn bg-primary-600 hover:bg-primary-700 text-white px-5 py-2.5 rounded-lg font-semibold inline-flex items-center gap-2 shadow-sm">
-                    <iconify-icon icon="lucide:printer" class="packing-package-page__print-icon packing-package-page__header-print-icon text-lg"></iconify-icon>
-                    In tem dán
+                    class="packing-package-page__print-button packing-package-page__header-print-button btn bg-neutral-100 hover:bg-neutral-200 text-neutral-800 border border-neutral-300 px-4 py-2.5 rounded-lg font-semibold inline-flex items-center gap-2 shadow-sm transition-colors">
+                    <iconify-icon icon="lucide:external-link" class="text-lg"></iconify-icon>
+                    Mẫu tem 100x100
                 </a>
             </div>
         @else
@@ -99,6 +106,13 @@
                         </form>
                     @endif
                 @endcan
+
+                <button type="button"
+                    onclick="ZebraPacking.openModal(@json($zebraPrintData))"
+                    class="btn bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white border border-emerald-200 px-4 py-2.5 rounded-lg font-semibold inline-flex items-center gap-2 transition-colors shadow-sm">
+                    <iconify-icon icon="lucide:printer" class="text-lg"></iconify-icon>
+                    In tem Zebra
+                </button>
 
                 @if($showCompleteButton)
                     <form method="POST" action="{{ route('processes.packing.complete', $package) }}" onsubmit="return confirm('Hoàn tất đóng gói kiện này?')" class="packing-package-page__complete-form packing-package-page__header-complete-form shrink-0">
@@ -334,6 +348,8 @@
 @php
     $script = '
     <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="' . asset('assets/js/qrcode.js') . '"></script>
+    <script src="' . asset('assets/js/zebra-packing-label.js') . '"></script>
     <script>
         let html5QrCode = null;
         const canDeletePackageItems = ' . json_encode($showDeleteColumn) . ';
