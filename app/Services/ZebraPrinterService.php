@@ -120,12 +120,13 @@ class ZebraPrinterService
      */
     public function agentPoll(array $payload): array
     {
+        $settings = $this->getSettings();
         $agentStatus = [
             'station_name' => $payload['station_name'] ?? 'Trạm Đóng Gói Gervin',
             'seen_at'      => time(),
             'ready'        => !empty($payload['ready']),
-            'printer_ip'   => $payload['printer_ip'] ?? '192.168.1.94',
-            'printer_port' => (int) ($payload['printer_port'] ?? 9100),
+            'printer_ip'   => $settings['host'] ?? '192.168.1.94',
+            'printer_port' => (int) ($settings['port'] ?? 9100),
             'message'      => $payload['message'] ?? 'Zebra ZT411 sẵn sàng tại xưởng',
         ];
         $path = $this->getAgentStatusFilePath();
@@ -154,9 +155,11 @@ class ZebraPrinterService
         }
 
         return [
-            'success' => true,
-            'has_job' => $assignedJob !== null,
-            'job'     => $assignedJob,
+            'success'      => true,
+            'printer_host' => $settings['host'] ?? '192.168.1.94',
+            'printer_port' => (int) ($settings['port'] ?? 9100),
+            'has_job'      => $assignedJob !== null,
+            'job'          => $assignedJob,
         ];
     }
 
@@ -523,7 +526,7 @@ class ZebraPrinterService
                     'port'       => $settings['port'],
                     'ms'         => 0,
                     'agent_info' => $agent,
-                    'message'    => "Trạm xưởng Online: Gervin Zebra Agent đang chạy ({$agent['station_name']}) · Máy in {$agent['printer_ip']}:{$agent['printer_port']} sẵn sàng nhận lệnh in từ Cloud.",
+                    'message'    => "Trạm xưởng Online: Gervin Zebra Agent đang chạy ({$agent['station_name']}) · Máy in {$settings['host']}:{$settings['port']} sẵn sàng nhận lệnh in từ Cloud.",
                 ];
             }
 
