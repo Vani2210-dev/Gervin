@@ -88,7 +88,7 @@
                     Máy in
                 </button>
                 <button type="button"
-                    onclick="ZebraPacking.openModal()"
+                    onclick="ZebraPacking.openForPackage({{ $package->id }})"
                     class="packing-package-page__zebra-print-button btn bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-lg font-semibold inline-flex items-center gap-2 shadow-sm transition-colors">
                     <iconify-icon icon="lucide:printer" class="text-lg"></iconify-icon>
                     In tem Zebra (60x60)
@@ -117,7 +117,7 @@
                     Máy in
                 </button>
                 <button type="button"
-                    onclick="ZebraPacking.openModal()"
+                    onclick="ZebraPacking.openForPackage({{ $package->id }})"
                     class="btn bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white border border-emerald-200 px-4 py-2.5 rounded-lg font-semibold inline-flex items-center gap-2 transition-colors shadow-sm">
                     <iconify-icon icon="lucide:printer" class="text-lg"></iconify-icon>
                     In tem Zebra
@@ -616,5 +616,8 @@
                 });
             }
         });
-    </script>';
+    </script>
+    <script src="' . asset('assets/js/qrcode.js') . '"></script>
+    <script src="' . asset('assets/js/zebra-packing-label.js') . '?v=' . filemtime(public_path('assets/js/zebra-packing-label.js')) . '"></script>
+    ';
 @endphp

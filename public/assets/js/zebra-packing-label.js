@@ -30,6 +30,8 @@
                 Object.assign(this.settings, customSettings);
             }
 
+            this.ensureStylesInjected();
+
             this.logoImage = new Image();
             this.logoImage.crossOrigin = 'anonymous';
             this.logoImage.onload = () => {
@@ -42,6 +44,386 @@
             this.logoImage.src = '/assets/images/company-logo-black.png';
 
             this.loadSettings();
+        },
+
+        ensureStylesInjected: function () {
+            if (document.getElementById('zebraPackingUniversalStyles')) return;
+            const style = document.createElement('style');
+            style.id = 'zebraPackingUniversalStyles';
+            style.textContent = `
+                /* CSS Hệ thống Popup Máy in Zebra ZT411 - Gervin Wood */
+                .zebra-modal-root {
+                    position: fixed !important;
+                    inset: 0 !important;
+                    z-index: 99999999 !important;
+                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+                    color: #0f172a !important;
+                    line-height: 1.5 !important;
+                }
+                .zebra-modal-root * {
+                    box-sizing: border-box !important;
+                }
+                .zebra-modal-root .zp-overlay {
+                    position: fixed !important;
+                    inset: 0 !important;
+                    background-color: rgba(15, 23, 42, 0.68) !important;
+                    backdrop-filter: blur(3px) !important;
+                    -webkit-backdrop-filter: blur(3px) !important;
+                    z-index: 1 !important;
+                }
+                .zebra-modal-root .zp-wrap {
+                    position: fixed !important;
+                    inset: 0 !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    padding: 16px !important;
+                    pointer-events: none !important;
+                    z-index: 2 !important;
+                }
+                .zebra-modal-root .zp-card {
+                    pointer-events: auto !important;
+                    position: relative !important;
+                    background-color: #ffffff !important;
+                    border-radius: 14px !important;
+                    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(0, 0, 0, 0.08) !important;
+                    width: 100% !important;
+                    display: flex !important;
+                    flex-direction: column !important;
+                    overflow: hidden !important;
+                    border: 1px solid #e2e8f0 !important;
+                }
+                .zebra-modal-root .zp-header {
+                    padding: 14px 20px !important;
+                    background-color: #f8fafc !important;
+                    border-bottom: 1px solid #e2e8f0 !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: space-between !important;
+                    flex-shrink: 0 !important;
+                }
+                .zebra-modal-root .zp-header-left {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 12px !important;
+                }
+                .zebra-modal-root .zp-icon-badge {
+                    width: 40px !important;
+                    height: 40px !important;
+                    border-radius: 10px !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    font-size: 22px !important;
+                    flex-shrink: 0 !important;
+                }
+                .zebra-modal-root .zp-title {
+                    font-size: 16px !important;
+                    font-weight: 700 !important;
+                    color: #0f172a !important;
+                    margin: 0 !important;
+                    line-height: 1.3 !important;
+                }
+                .zebra-modal-root .zp-subtitle {
+                    font-size: 12px !important;
+                    color: #64748b !important;
+                    margin: 2px 0 0 !important;
+                }
+                .zebra-modal-root .zp-close-btn {
+                    background: none !important;
+                    border: none !important;
+                    cursor: pointer !important;
+                    color: #94a3b8 !important;
+                    font-size: 22px !important;
+                    line-height: 1 !important;
+                    padding: 6px !important;
+                    border-radius: 8px !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    transition: background 0.15s, color 0.15s !important;
+                }
+                .zebra-modal-root .zp-close-btn:hover {
+                    color: #0f172a !important;
+                    background-color: #e2e8f0 !important;
+                }
+                .zebra-modal-root .zp-body-scroll {
+                    padding: 20px !important;
+                    overflow-y: auto !important;
+                    max-height: calc(85vh - 130px) !important;
+                    background-color: #ffffff !important;
+                }
+                .zebra-modal-root .zp-body {
+                    padding: 20px !important;
+                    display: flex !important;
+                    flex-direction: row !important;
+                    gap: 20px !important;
+                    align-items: flex-start !important;
+                    background-color: #ffffff !important;
+                }
+                .zebra-modal-root .zp-footer {
+                    padding: 14px 20px !important;
+                    background-color: #f8fafc !important;
+                    border-top: 1px solid #e2e8f0 !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: space-between !important;
+                    flex-shrink: 0 !important;
+                    gap: 10px !important;
+                }
+                .zebra-modal-root .zp-cancel-btn {
+                    padding: 8px 16px !important;
+                    border-radius: 8px !important;
+                    border: 1px solid #cbd5e1 !important;
+                    background-color: #ffffff !important;
+                    color: #334155 !important;
+                    font-weight: 600 !important;
+                    font-size: 13px !important;
+                    cursor: pointer !important;
+                    transition: background 0.15s !important;
+                }
+                .zebra-modal-root .zp-cancel-btn:hover {
+                    background-color: #f1f5f9 !important;
+                }
+
+                /* Print Modal Controls */
+                .zebra-modal-root .zp-preview-box {
+                    width: 180px !important;
+                    height: 180px !important;
+                    flex-shrink: 0 !important;
+                    background-color: #f8fafc !important;
+                    border: 2px dashed #cbd5e1 !important;
+                    border-radius: 10px !important;
+                    padding: 4px !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                }
+                .zebra-modal-root .zp-preview-img {
+                    max-width: 100% !important;
+                    max-height: 100% !important;
+                    object-fit: contain !important;
+                    border-radius: 6px !important;
+                    background-color: #ffffff !important;
+                }
+                .zebra-modal-root .zp-preview-hint {
+                    font-size: 11px !important;
+                    color: #64748b !important;
+                    text-align: center !important;
+                    margin-top: 6px !important;
+                    font-weight: 600 !important;
+                }
+                .zebra-modal-root .zp-content-box {
+                    flex: 1 !important;
+                    min-width: 0 !important;
+                    display: flex !important;
+                    flex-direction: column !important;
+                    gap: 14px !important;
+                }
+                .zebra-modal-root .zp-row-header {
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: space-between !important;
+                    margin-bottom: 2px !important;
+                }
+                .zebra-modal-root .zp-label-sm {
+                    font-size: 11px !important;
+                    font-weight: 700 !important;
+                    text-transform: uppercase !important;
+                    letter-spacing: 0.5px !important;
+                    color: #64748b !important;
+                }
+                .zebra-modal-root .zp-status-badge {
+                    display: inline-flex !important;
+                    align-items: center !important;
+                    gap: 6px !important;
+                    padding: 3px 10px !important;
+                    border-radius: 9999px !important;
+                    font-size: 11px !important;
+                    font-weight: 600 !important;
+                }
+                .zebra-modal-root .zp-status-badge.online {
+                    background-color: #ecfdf5 !important;
+                    color: #065f46 !important;
+                    border: 1px solid #a7f3d0 !important;
+                }
+                .zebra-modal-root .zp-status-badge.offline {
+                    background-color: #fef2f2 !important;
+                    color: #991b1b !important;
+                    border: 1px solid #fecaca !important;
+                }
+                .zebra-modal-root .zp-status-badge.checking {
+                    background-color: #fffbeb !important;
+                    color: #92400e !important;
+                    border: 1px solid #fde68a !important;
+                }
+                .zebra-modal-root .zp-dot {
+                    width: 7px !important;
+                    height: 7px !important;
+                    border-radius: 50% !important;
+                }
+                .zebra-modal-root .zp-status-badge.online .zp-dot { background-color: #10b981 !important; }
+                .zebra-modal-root .zp-status-badge.offline .zp-dot { background-color: #ef4444 !important; }
+                .zebra-modal-root .zp-status-badge.checking .zp-dot { background-color: #f59e0b !important; }
+                .zebra-modal-root .zp-package-code {
+                    font-size: 22px !important;
+                    font-weight: 900 !important;
+                    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+                    color: #0f172a !important;
+                    letter-spacing: 0.5px !important;
+                }
+                .zebra-modal-root .zp-field-label {
+                    display: block !important;
+                    font-size: 12px !important;
+                    font-weight: 600 !important;
+                    color: #334155 !important;
+                    margin-bottom: 6px !important;
+                }
+                .zebra-modal-root .zp-qty-group {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 6px !important;
+                    flex-wrap: wrap !important;
+                }
+                .zebra-modal-root .zp-qty-stepper {
+                    display: inline-flex !important;
+                    align-items: center !important;
+                    border: 1px solid #cbd5e1 !important;
+                    border-radius: 8px !important;
+                    overflow: hidden !important;
+                    background-color: #ffffff !important;
+                }
+                .zebra-modal-root .zp-qty-btn {
+                    width: 34px !important;
+                    height: 34px !important;
+                    background-color: #f1f5f9 !important;
+                    border: none !important;
+                    font-size: 16px !important;
+                    font-weight: bold !important;
+                    cursor: pointer !important;
+                    color: #334155 !important;
+                }
+                .zebra-modal-root .zp-qty-btn:hover { background-color: #e2e8f0 !important; }
+                .zebra-modal-root .zp-qty-input {
+                    width: 45px !important;
+                    height: 34px !important;
+                    border: none !important;
+                    text-align: center !important;
+                    font-weight: 700 !important;
+                    font-size: 14px !important;
+                    outline: none !important;
+                    background-color: #ffffff !important;
+                    color: #0f172a !important;
+                }
+                .zebra-modal-root .zp-chip {
+                    padding: 6px 10px !important;
+                    border-radius: 6px !important;
+                    border: 1px solid #cbd5e1 !important;
+                    background-color: #f8fafc !important;
+                    font-size: 12px !important;
+                    font-weight: 600 !important;
+                    cursor: pointer !important;
+                    color: #334155 !important;
+                }
+                .zebra-modal-root .zp-chip:hover {
+                    background-color: #f1f5f9 !important;
+                    border-color: #94a3b8 !important;
+                }
+                .zebra-modal-root .zp-printer-card {
+                    padding: 10px 12px !important;
+                    border-radius: 8px !important;
+                    background-color: #f8fafc !important;
+                    border: 1px solid #e2e8f0 !important;
+                    font-size: 12px !important;
+                }
+                .zebra-modal-root .zp-printer-card-top {
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: space-between !important;
+                }
+                .zebra-modal-root .zp-print-btn {
+                    padding: 10px 20px !important;
+                    border-radius: 8px !important;
+                    border: none !important;
+                    background-color: #059669 !important;
+                    color: #ffffff !important;
+                    font-weight: 700 !important;
+                    font-size: 13px !important;
+                    cursor: pointer !important;
+                    display: inline-flex !important;
+                    align-items: center !important;
+                    gap: 8px !important;
+                    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+                }
+                .zebra-modal-root .zp-print-btn:hover { background-color: #047857 !important; }
+                .zebra-modal-root .zp-print-btn:disabled { opacity: 0.6 !important; cursor: not-allowed !important; }
+
+                /* Settings Modal Specific Controls */
+                .zebra-modal-root .zp-diag-alert {
+                    padding: 12px 14px !important;
+                    border-radius: 8px !important;
+                    font-size: 12px !important;
+                    margin-bottom: 14px !important;
+                    line-height: 1.5 !important;
+                }
+                .zebra-modal-root .zp-diag-alert-info { background-color: #eff6ff !important; color: #1e40af !important; border: 1px solid #bfdbfe !important; }
+                .zebra-modal-root .zp-diag-alert-success { background-color: #ecfdf5 !important; color: #065f46 !important; border: 1px solid #a7f3d0 !important; }
+                .zebra-modal-root .zp-diag-alert-warning { background-color: #fffbeb !important; color: #92400e !important; border: 1px solid #fde68a !important; }
+                .zebra-modal-root .zp-diag-alert-danger { background-color: #fef2f2 !important; color: #991b1b !important; border: 1px solid #fecaca !important; }
+                .zebra-modal-root .zp-form-grid {
+                    display: grid !important;
+                    grid-template-columns: repeat(2, 1fr) !important;
+                    gap: 12px !important;
+                }
+                .zebra-modal-root .zp-input {
+                    width: 100% !important;
+                    border: 1px solid #cbd5e1 !important;
+                    border-radius: 6px !important;
+                    padding: 7px 10px !important;
+                    font-size: 13px !important;
+                    background-color: #ffffff !important;
+                    color: #0f172a !important;
+                    outline: none !important;
+                }
+                .zebra-modal-root .zp-input:focus {
+                    border-color: #3b82f6 !important;
+                    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+                }
+                .zebra-modal-root .zp-label {
+                    display: block !important;
+                    font-size: 12px !important;
+                    font-weight: 600 !important;
+                    color: #475569 !important;
+                    margin-bottom: 4px !important;
+                }
+                .zebra-modal-root .zp-btn {
+                    display: inline-flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    gap: 6px !important;
+                    padding: 8px 14px !important;
+                    border-radius: 8px !important;
+                    font-size: 13px !important;
+                    font-weight: 600 !important;
+                    cursor: pointer !important;
+                    transition: all 0.15s ease !important;
+                    border: 1px solid transparent !important;
+                    text-decoration: none !important;
+                }
+                .zebra-modal-root .zp-btn-primary { background-color: #2563eb !important; color: #ffffff !important; }
+                .zebra-modal-root .zp-btn-primary:hover { background-color: #1d4ed8 !important; }
+                .zebra-modal-root .zp-btn-default { background-color: #ffffff !important; border-color: #cbd5e1 !important; color: #334155 !important; }
+                .zebra-modal-root .zp-btn-default:hover { background-color: #f1f5f9 !important; border-color: #94a3b8 !important; }
+                .zebra-modal-root .zp-btn-danger-outline { background-color: #ffffff !important; border-color: #fca5a5 !important; color: #b91c1c !important; }
+                .zebra-modal-root .zp-btn-danger-outline:hover { background-color: #fef2f2 !important; border-color: #f87171 !important; }
+
+                @media (max-width: 640px) {
+                    .zebra-modal-root .zp-body { flex-direction: column !important; align-items: stretch !important; }
+                    .zebra-modal-root .zp-form-grid { grid-template-columns: 1fr !important; }
+                    .zebra-modal-root .zp-preview-box { margin: 0 auto !important; }
+                }
+            `;
+            document.head.appendChild(style);
         },
 
         getCsrfToken: function () {
@@ -819,119 +1201,19 @@
         },
 
         createPrintModalElement: function () {
+            this.ensureStylesInjected();
             const wrap = document.createElement('div');
             wrap.id = 'zebraPrintModal';
+            wrap.className = 'zebra-modal-root';
             wrap.style.display = 'none';
 
             wrap.innerHTML = `
-                <style>
-                    #zebraPrintModal {
-                        position: fixed; inset: 0; z-index: 99999999;
-                        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-                        color: #111827; line-height: 1.4;
-                    }
-                    #zebraPrintModal * { box-sizing: border-box; }
-                    #zebraPrintModal .zp-overlay {
-                        position: absolute; inset: 0; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(2px);
-                    }
-                    #zebraPrintModal .zp-wrap {
-                        position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-                        padding: 16px; pointer-events: none;
-                    }
-                    #zebraPrintModal .zp-card {
-                        position: relative; background: #ffffff; border-radius: 14px;
-                        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4); width: 100%; max-width: 560px;
-                        pointer-events: auto; overflow: hidden; display: flex; flex-direction: column;
-                    }
-                    #zebraPrintModal .zp-header {
-                        padding: 14px 20px; background: #f9fafb; border-bottom: 1px solid #e5e7eb;
-                        display: flex; align-items: center; justify-content: space-between;
-                    }
-                    #zebraPrintModal .zp-header-left { display: flex; align-items: center; gap: 12px; }
-                    #zebraPrintModal .zp-icon-badge {
-                        width: 42px; height: 42px; border-radius: 10px; background: #ecfdf5;
-                        color: #059669; border: 1px solid #a7f3d0; display: flex;
-                        align-items: center; justify-content: center; font-size: 24px;
-                    }
-                    #zebraPrintModal .zp-title { font-size: 16px; font-weight: 700; color: #111827; margin: 0; }
-                    #zebraPrintModal .zp-subtitle { font-size: 12px; color: #6b7280; margin: 2px 0 0; }
-                    #zebraPrintModal .zp-close-btn {
-                        background: none; border: none; cursor: pointer; color: #9ca3af;
-                        font-size: 24px; line-height: 1; padding: 4px; border-radius: 6px;
-                        display: flex; align-items: center; justify-content: center;
-                    }
-                    #zebraPrintModal .zp-close-btn:hover { color: #111827; background: #f3f4f6; }
-                    #zebraPrintModal .zp-body {
-                        padding: 20px; display: flex; flex-direction: row; gap: 20px; align-items: flex-start;
-                    }
-                    #zebraPrintModal .zp-preview-box {
-                        width: 180px; height: 180px; flex-shrink: 0; background: #f9fafb;
-                        border: 2px dashed #d1d5db; border-radius: 10px; padding: 4px;
-                        display: flex; align-items: center; justify-content: center;
-                    }
-                    #zebraPrintModal .zp-preview-img {
-                        max-width: 100%; max-height: 100%; object-fit: contain;
-                        border-radius: 6px; background: #ffffff;
-                    }
-                    #zebraPrintModal .zp-preview-hint { font-size: 11px; color: #6b7280; text-align: center; margin-top: 6px; font-weight: 600; }
-                    #zebraPrintModal .zp-content-box { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 14px; }
-                    #zebraPrintModal .zp-row-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; }
-                    #zebraPrintModal .zp-label-sm { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280; }
-                    #zebraPrintModal .zp-status-badge {
-                        display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px;
-                        border-radius: 9999px; font-size: 11px; font-weight: 600;
-                    }
-                    #zebraPrintModal .zp-status-badge.online { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
-                    #zebraPrintModal .zp-status-badge.offline { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
-                    #zebraPrintModal .zp-status-badge.checking { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
-                    #zebraPrintModal .zp-dot { width: 7px; height: 7px; border-radius: 50%; }
-                    #zebraPrintModal .zp-status-badge.online .zp-dot { background: #10b981; }
-                    #zebraPrintModal .zp-status-badge.offline .zp-dot { background: #ef4444; }
-                    #zebraPrintModal .zp-status-badge.checking .zp-dot { background: #f59e0b; }
-                    #zebraPrintModal .zp-package-code {
-                        font-size: 22px; font-weight: 900; font-family: monospace; color: #111827; letter-spacing: 0.5px;
-                    }
-                    #zebraPrintModal .zp-field-label { display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 6px; }
-                    #zebraPrintModal .zp-qty-group { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-                    #zebraPrintModal .zp-qty-stepper {
-                        display: inline-flex; align-items: center; border: 1px solid #d1d5db; border-radius: 8px; overflow: hidden; background: #fff;
-                    }
-                    #zebraPrintModal .zp-qty-btn {
-                        width: 34px; height: 34px; background: #f3f4f6; border: none; font-size: 16px; font-weight: bold; cursor: pointer; color: #374151;
-                    }
-                    #zebraPrintModal .zp-qty-btn:hover { background: #e5e7eb; }
-                    #zebraPrintModal .zp-qty-input { width: 45px; height: 34px; border: none; text-align: center; font-weight: 700; font-size: 14px; outline: none; }
-                    #zebraPrintModal .zp-chip {
-                        padding: 6px 10px; border-radius: 6px; border: 1px solid #e5e7eb; background: #f9fafb; font-size: 12px; font-weight: 600; cursor: pointer; color: #374151;
-                    }
-                    #zebraPrintModal .zp-chip:hover { background: #f3f4f6; border-color: #d1d5db; }
-                    #zebraPrintModal .zp-printer-card {
-                        padding: 10px 12px; border-radius: 8px; background: #f9fafb; border: 1px solid #e5e7eb; font-size: 12px;
-                    }
-                    #zebraPrintModal .zp-printer-card-top { display: flex; align-items: center; justify-content: space-between; }
-                    #zebraPrintModal .zp-footer {
-                        padding: 14px 20px; background: #f9fafb; border-top: 1px solid #e5e7eb;
-                        display: flex; align-items: center; justify-content: space-between; gap: 10px;
-                    }
-                    #zebraPrintModal .zp-cancel-btn {
-                        padding: 8px 16px; border-radius: 8px; border: 1px solid #d1d5db; background: #ffffff; color: #374151; font-weight: 600; font-size: 13px; cursor: pointer;
-                    }
-                    #zebraPrintModal .zp-cancel-btn:hover { background: #f3f4f6; }
-                    #zebraPrintModal .zp-print-btn {
-                        padding: 10px 20px; border-radius: 8px; border: none; background: #059669; color: #ffffff;
-                        font-weight: 700; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
-                        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-                    }
-                    #zebraPrintModal .zp-print-btn:hover { background: #047857; }
-                    #zebraPrintModal .zp-print-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-                </style>
-
                 <div class="zp-overlay" onclick="ZebraPacking.closeModal()"></div>
                 <div class="zp-wrap">
-                    <div class="zp-card">
+                    <div class="zp-card" style="max-width: 580px;">
                         <div class="zp-header">
                             <div class="zp-header-left">
-                                <span class="zp-icon-badge">
+                                <span class="zp-icon-badge" style="background-color: #ecfdf5; color: #059669; border: 1px solid #a7f3d0;">
                                     <iconify-icon icon="lucide:printer"></iconify-icon>
                                 </span>
                                 <div>
@@ -946,7 +1228,7 @@
 
                         <div class="zp-body">
                             <!-- Preview Box -->
-                            <div style="text-align: center;">
+                            <div style="text-align: center; flex-shrink: 0;">
                                 <div class="zp-preview-box">
                                     <img id="zebraModalPreviewImg" class="zp-preview-img" alt="Xem trước tem">
                                 </div>
@@ -984,25 +1266,25 @@
                                 <div class="zp-printer-card">
                                     <div class="zp-printer-card-top">
                                         <span>Máy in: <strong>Zebra ZT411 (<span id="zebraModalPrinterIp">192.168.1.67:9100</span>)</strong></span>
-                                        <button type="button" onclick="ZebraPacking.openSettingsModal()" class="text-primary-600 hover:underline font-semibold" style="font-size:11px; background:none; border:none; cursor:pointer;">
+                                        <button type="button" onclick="ZebraPacking.openSettingsModal()" style="font-size:11px; color:#2563eb; background:none; border:none; cursor:pointer; font-weight:600; text-decoration:underline;">
                                             ⚙ Cài đặt máy in
                                         </button>
                                     </div>
-                                    <div class="text-[11px] text-neutral-500 mt-1">Nhiệt trực tiếp (Direct Thermal, không ribbon) · Cổng RAW TCP 9100</div>
+                                    <div style="font-size:11px; color:#64748b; margin-top:4px;">Nhiệt trực tiếp (Direct Thermal, không ribbon) · Cổng RAW TCP 9100</div>
                                 </div>
                             </div>
                         </div>
 
                         <div class="zp-footer">
                             <div>
-                                <button type="button" onclick="ZebraPacking.printViaBrowser()" class="text-neutral-500 hover:text-neutral-800 text-xs font-semibold underline bg-transparent border-0 cursor-pointer" title="In bằng hộp thoại in trình duyệt nếu máy in mạng chưa sẵn sàng">
+                                <button type="button" onclick="ZebraPacking.printViaBrowser()" style="color:#64748b; font-size:12px; font-weight:600; text-decoration:underline; background:transparent; border:0; cursor:pointer;" title="In bằng hộp thoại in trình duyệt nếu máy in mạng chưa sẵn sàng">
                                     In qua trình duyệt (Dự phòng)
                                 </button>
                             </div>
-                            <div class="flex items-center gap-2">
+                            <div style="display: flex; align-items: center; gap: 8px;">
                                 <button type="button" onclick="ZebraPacking.closeModal()" class="zp-cancel-btn">Đóng</button>
                                 <button type="button" id="zebraModalPrintBtn" onclick="ZebraPacking.executePrintFromModal()" class="zp-print-btn">
-                                    <iconify-icon icon="lucide:printer" class="text-lg"></iconify-icon>
+                                    <iconify-icon icon="lucide:printer" style="font-size:18px;"></iconify-icon>
                                     In ngay qua máy in Zebra (LAN)
                                 </button>
                             </div>
@@ -1014,42 +1296,19 @@
         },
 
         createSettingsModalElement: function () {
+            this.ensureStylesInjected();
             const wrap = document.createElement('div');
             wrap.id = 'zebraSettingsModal';
+            wrap.className = 'zebra-modal-root';
             wrap.style.display = 'none';
 
             wrap.innerHTML = `
-                <style>
-                    #zebraSettingsModal {
-                        position: fixed; inset: 0; z-index: 999999999;
-                        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-                        color: #111827; line-height: 1.4;
-                    }
-                    #zebraSettingsModal * { box-sizing: border-box; }
-                    #zebraSettingsModal .zp-diag-alert {
-                        padding: 10px 14px; border-radius: 8px; font-size: 12px; margin-bottom: 14px;
-                    }
-                    #zebraSettingsModal .zp-diag-alert-info { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
-                    #zebraSettingsModal .zp-diag-alert-success { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
-                    #zebraSettingsModal .zp-diag-alert-warning { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
-                    #zebraSettingsModal .zp-diag-alert-danger { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
-                    #zebraSettingsModal .zp-form-grid {
-                        display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;
-                    }
-                    #zebraSettingsModal .zp-input {
-                        width: 100%; border: 1px solid #d1d5db; border-radius: 6px; padding: 6px 10px; font-size: 13px;
-                    }
-                    #zebraSettingsModal .zp-label {
-                        display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 4px;
-                    }
-                </style>
-
                 <div class="zp-overlay" onclick="ZebraPacking.closeSettingsModal()"></div>
                 <div class="zp-wrap">
-                    <div class="zp-card" style="max-width: 620px; max-height: 90vh; overflow-y: auto;">
+                    <div class="zp-card" style="max-width: 640px;">
                         <div class="zp-header">
                             <div class="zp-header-left">
-                                <span class="zp-icon-badge" style="background: #e0f2fe; color: #0284c7; border-color: #bae6fd;">
+                                <span class="zp-icon-badge" style="background-color: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd;">
                                     <iconify-icon icon="lucide:settings"></iconify-icon>
                                 </span>
                                 <div>
@@ -1062,7 +1321,7 @@
                             </button>
                         </div>
 
-                        <div style="padding: 20px;">
+                        <div class="zp-body-scroll">
                             <div id="zebraSettingsCheckResult" class="zp-diag-alert zp-diag-alert-info">
                                 Đang kiểm tra kết nối tới máy in…
                             </div>
@@ -1112,12 +1371,12 @@
                                     </div>
                                 </div>
 
-                                <div class="mt-4 flex items-center justify-between border-t border-neutral-200 pt-4">
-                                    <button type="button" onclick="ZebraPacking.handleSettingsCheckConnection()" class="btn bg-neutral-100 hover:bg-neutral-200 text-neutral-800 text-xs font-semibold px-3 py-2 rounded-lg flex items-center gap-1.5">
+                                <div style="margin-top: 16px; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #e2e8f0; padding-top: 16px;">
+                                    <button type="button" onclick="ZebraPacking.handleSettingsCheckConnection()" class="zp-btn zp-btn-default">
                                         <iconify-icon icon="lucide:refresh-cw"></iconify-icon>
                                         Kiểm tra lại kết nối
                                     </button>
-                                    <button type="submit" class="btn bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold px-4 py-2 rounded-lg flex items-center gap-1.5">
+                                    <button type="submit" class="zp-btn zp-btn-primary">
                                         <iconify-icon icon="lucide:check"></iconify-icon>
                                         Lưu cấu hình
                                     </button>
@@ -1125,37 +1384,46 @@
                             </form>
 
                             <!-- Khối Chẩn đoán & Khôi phục lỗi in (như ver-1) -->
-                            <div class="mt-6 border-t border-neutral-200 pt-4">
-                                <h6 class="text-xs font-bold text-neutral-800 uppercase tracking-wider mb-2">Công cụ chẩn đoán & khôi phục máy in</h6>
-                                <p class="text-xs text-neutral-500 mb-3">Nếu máy in ra hàng loạt tem toàn mã HEX hoặc chữ số vô nghĩa, sử dụng các nút dưới đây:</p>
-                                <div class="flex flex-wrap gap-2">
-                                    <button type="button" onclick="ZebraPacking.handleSimpleTest()" class="btn bg-white hover:bg-neutral-50 border border-neutral-300 text-neutral-700 text-xs font-semibold px-3 py-2 rounded-lg">
+                            <div style="margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 16px;">
+                                <h6 style="font-size: 12px; font-weight: 700; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 6px;">
+                                    Công cụ chẩn đoán & khôi phục máy in
+                                </h6>
+                                <p style="font-size: 12px; color: #64748b; margin: 0 0 12px;">
+                                    Nếu máy in ra hàng loạt tem toàn mã HEX hoặc chữ số vô nghĩa, sử dụng các nút dưới đây:
+                                </p>
+                                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                    <button type="button" onclick="ZebraPacking.handleSimpleTest()" class="zp-btn zp-btn-default" title="Gửi 1 tem mẫu in chữ ZPL">
                                         1. In thử chữ ZPL (1 tem)
                                     </button>
-                                    <button type="button" onclick="ZebraPacking.handleExitDiagnostics()" class="btn bg-white hover:bg-neutral-50 border border-neutral-300 text-neutral-700 text-xs font-semibold px-3 py-2 rounded-lg" title="Gửi ~JE để máy in thoát Communication Diagnostics">
+                                    <button type="button" onclick="ZebraPacking.handleExitDiagnostics()" class="zp-btn zp-btn-default" title="Gửi ~JE để máy in thoát Communication Diagnostics">
                                         2. Thoát Diagnostic (~JE)
                                     </button>
-                                    <button type="button" onclick="ZebraPacking.handleRecoverZpl()" class="btn bg-white hover:bg-rose-50 border border-rose-300 text-rose-700 text-xs font-semibold px-3 py-2 rounded-lg" title="Chọn Virtual Device NONE, chuyển ZPL và hủy lệnh chờ">
+                                    <button type="button" onclick="ZebraPacking.handleRecoverZpl()" class="zp-btn zp-btn-danger-outline" title="Chọn Virtual Device NONE, chuyển ZPL và hủy lệnh chờ">
                                         3. Khôi phục ZPL (Tắt APL-E)
                                     </button>
                                 </div>
                             </div>
 
                             <!-- Lịch sử in gần nhất -->
-                            <div class="mt-6 border-t border-neutral-200 pt-4">
-                                <div class="flex items-center justify-between mb-2">
-                                    <h6 class="text-xs font-bold text-neutral-800 uppercase tracking-wider">Lịch sử gửi lệnh in</h6>
-                                    <button type="button" onclick="ZebraPacking.refreshHistoryInModal()" class="text-primary-600 hover:underline text-xs font-semibold">
+                            <div style="margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 16px;">
+                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                                    <h6 style="font-size: 12px; font-weight: 700; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px; margin: 0;">
+                                        Lịch sử gửi lệnh in
+                                    </h6>
+                                    <button type="button" onclick="ZebraPacking.refreshHistoryInModal()" style="font-size: 12px; color: #2563eb; background: none; border: none; font-weight: 600; cursor: pointer;">
                                         Làm mới
                                     </button>
                                 </div>
-                                <div id="zebraSettingsHistoryList" class="border border-neutral-200 rounded-lg max-h-40 overflow-y-auto bg-white">
-                                    <div class="p-4 text-center text-xs text-neutral-400">Đang tải lịch sử…</div>
+                                <div id="zebraSettingsHistoryList" style="border: 1px solid #e2e8f0; border-radius: 8px; max-height: 160px; overflow-y: auto; background-color: #ffffff;">
+                                    <div style="padding: 16px; text-align: center; font-size: 12px; color: #94a3b8;">Đang tải lịch sử…</div>
                                 </div>
                             </div>
                         </div>
 
                         <div class="zp-footer">
+                            <div style="font-size: 11px; color: #64748b;">
+                                Cấu hình lưu trong session · Mặc định ZT411 300DPI Direct Thermal
+                            </div>
                             <button type="button" onclick="ZebraPacking.closeSettingsModal()" class="zp-cancel-btn">Đóng</button>
                         </div>
                     </div>
