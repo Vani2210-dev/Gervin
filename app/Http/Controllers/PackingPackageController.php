@@ -1015,107 +1015,24 @@ class PackingPackageController extends Controller
     {
         $settings = $zebraService->getSettings();
         $printerHost = $settings['host'] ?? '192.168.1.94';
-        $printerPort = $settings['port'] ?? 9100;
-        $baseUrl = $request->getSchemeAndHttpHost();
+        $printerPort = (string) ($settings['port'] ?? 9100);
+        $baseUrl = rtrim($request->getSchemeAndHttpHost(), '/');
 
-        $script = <<<BAT
-@echo off
-chcp 65001 >nul
-title Gervin Wood - Zebra ZT411 Print Agent
-color 0A
-cls
+        $path = public_path('tools/Gervin-Zebra-Agent.bat');
+        if (!file_exists($path)) {
+            $path = base_path('Gervin-Zebra-Agent.bat');
+        }
 
-:: Tu dong don dep moi tien trinh Agent hoac PowerShell poll cu dang chay ngam truoc khi khoi dong
-powershell -NoProfile -Command "Get-CimInstance Win32_Process | Where-Object { ($_.CommandLine -like '*Gervin-Zebra-Agent*' -or $_.CommandLine -like '*processes/packing/printer/agent/poll*') -and $_.ProcessId -ne \$PID } | ForEach-Object { Stop-Process -Id \$_.ProcessId -Force -ErrorAction SilentlyContinue }" >nul 2>&1
-
-echo ======================================================================
-echo    GERVIN WOOD - PRINT AGENT KET NOI MAY IN ZEBRA QUA LAN XUONG
-echo ======================================================================
-echo  Server:        $baseUrl
-echo  May in Zebra:  $printerHost:$printerPort
-echo  Thoat chuong trinh: Bam phim [Q] hoac [Ctrl + C] bat ky luc nao de TAT
-echo ======================================================================
-echo.
-
-powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-"\$agentTag = 'Gervin-Zebra-Agent';" ^
-"try { [Console]::TreatControlCAsInput = \$true } catch {}" ^
-"\$server = '$baseUrl';" ^
-"\$printerHost = '$printerHost';" ^
-"\$printerPort = $printerPort;" ^
-"Write-Host '[1/2] Kiem tra ket noi mang toi may in Zebra: ' \$printerHost ':' \$printerPort -ForegroundColor Cyan;" ^
-"try {" ^
-"    \$testClient = New-Object System.Net.Sockets.TcpClient;" ^
-"    \$async = \$testClient.BeginConnect(\$printerHost, \$printerPort, \$null, \$null);" ^
-"    if (\$async.AsyncWaitHandle.WaitOne(3000)) {" ^
-"        \$testClient.EndConnect(\$async);" ^
-"        \$testClient.Close();" ^
-"        Write-Host ('[OK] Ket noi may in Zebra thanh cong: ' + \$printerHost + ':' + \$printerPort) -ForegroundColor Green;" ^
-"    } else {" ^
-"        \$testClient.Close();" ^
-"        Write-Host ('[CANH BAO] Khong thay may in Zebra tai ' + \$printerHost + ':' + \$printerPort + '. Kiem tra IP, nguon may in va day mang LAN.') -ForegroundColor Yellow;" ^
-"    }" ^
-"} catch {" ^
-"    Write-Host ('[CANH BAO] Loi ket noi may in Zebra: ' + \$_.Exception.Message) -ForegroundColor Yellow;" ^
-"}" ^
-"Write-Host '[2/2] Dang ket noi toi Server: ' \$server -ForegroundColor Cyan;" ^
-"Write-Host '>> BAM PHIM [Q] HOAC [Ctrl + C] DE TAT TOAN BO AGENT <<' -ForegroundColor White;" ^
-"\$hasAnnouncedOnline = \$false;" ^
-"while (\$true) {" ^
-"    if ([Console]::KeyAvailable) {" ^
-"        \$key = [Console]::ReadKey(\$true);" ^
-"        if (\$key.Key -eq 'Q' -or \$key.Key -eq 'Escape' -or (\$key.Key -eq 'C' -and (\$key.Modifiers -band [ConsoleModifiers]::Control))) {" ^
-"            Write-Host '`n[DA TAT] Ban da tat Agent thanh cong. Giai phong bo nho!' -ForegroundColor Yellow;" ^
-"            exit 0;" ^
-"        }" ^
-"    }" ^
-"    try {" ^
-"        \$body = @{" ^
-"            station_name = \$env:COMPUTERNAME;" ^
-"            ready = \$true;" ^
-"            printer_ip = \$printerHost;" ^
-"            printer_port = \$printerPort;" ^
-"            message = 'Zebra ZT411 san sang tai xuong'" ^
-"        } | ConvertTo-Json;" ^
-"        \$resp = Invoke-RestMethod -Uri (\$server + '/processes/packing/printer/agent/poll') -Method Post -ContentType 'application/json' -Body \$body -TimeoutSec 10;" ^
-"        if (-not \$hasAnnouncedOnline) {" ^
-"            Write-Host ('[KET NOI SERVER THANH CONG] Da ket noi toi ' + \$server + '. Agent dang chay va san sang nhan lenh in!') -ForegroundColor Green;" ^
-"            \$hasAnnouncedOnline = \$true;" ^
-"        }" ^
-"        if (\$resp.has_job -and \$resp.job) {" ^
-"            \$job = \$resp.job;" ^
-"            Write-Host ('[' + (Get-Date -Format 'HH:mm:ss') + '] NHAN LENH IN: ' + \$job.id + ' (' + \$job.quantity + ' tem). Dang gui toi ' + \$job.host + '...') -ForegroundColor Yellow;" ^
-"            try {" ^
-"                \$client = New-Object System.Net.Sockets.TcpClient;" ^
-"                \$client.SendTimeout = 8000;" ^
-"                \$client.Connect(\$job.host, [int]\$job.port);" ^
-"                \$stream = \$client.GetStream();" ^
-"                \$bytes = [System.Text.Encoding]::UTF8.GetBytes(\$job.zpl);" ^
-"                \$stream.Write(\$bytes, 0, \$bytes.Length);" ^
-"                \$stream.Flush();" ^
-"                \$stream.Close();" ^
-"                \$client.Close();" ^
-"                Write-Host ('[' + (Get-Date -Format 'HH:mm:ss') + '] IN THANH CONG: ' + \$bytes.Length + ' bytes da gui den may in ' + \$job.host + '. May in dang nha tem!') -ForegroundColor Green;" ^
-"                \$ackBody = @{ id = \$job.id; status = 'sent'; message = ('Da in ' + \$job.quantity + ' tem qua LAN xuong (' + \$job.host + ')'); bytes = \$bytes.Length } | ConvertTo-Json;" ^
-"                Invoke-RestMethod -Uri (\$server + '/processes/packing/printer/agent/ack') -Method Post -ContentType 'application/json' -Body \$ackBody -TimeoutSec 10 | Out-Null;" ^
-"            } catch {" ^
-"                \$errMsg = \$_.Exception.Message;" ^
-"                Write-Host ('[' + (Get-Date -Format 'HH:mm:ss') + '] LOI IN LAN: ' + \$errMsg) -ForegroundColor Red;" ^
-"                \$ackBody = @{ id = \$job.id; status = 'failed'; message = ('Loi gui LAN: ' + \$errMsg); bytes = 0 } | ConvertTo-Json;" ^
-"                Invoke-RestMethod -Uri (\$server + '/processes/packing/printer/agent/ack') -Method Post -ContentType 'application/json' -Body \$ackBody -TimeoutSec 10 | Out-Null;" ^
-"            }" ^
-"        }" ^
-"    } catch {" ^
-"        \$statusErr = \$_.Exception.Message;" ^
-"        Write-Host ('[' + (Get-Date -Format 'HH:mm:ss') + '] Loi ket noi server: ' + \$statusErr + '. Thu lai sau 3s...') -ForegroundColor Red;" ^
-"        \$hasAnnouncedOnline = \$false;" ^
-"        Start-Sleep -Seconds 3;" ^
-"    }" ^
-"    Start-Sleep -Milliseconds 1200;" ^
-"}"
-
-exit 0
-BAT;
+        if (file_exists($path)) {
+            $script = file_get_contents($path);
+            $script = str_replace(
+                ['https://gervinwood.vn', '192.168.1.94', '9100'],
+                [$baseUrl, $printerHost, $printerPort],
+                $script
+            );
+        } else {
+            $script = "@echo off\r\necho Khong tim thay file mau Gervin-Zebra-Agent.bat\r\npause\r\n";
+        }
 
         return response($script, 200, [
             'Content-Type'        => 'application/x-bat',
@@ -1128,24 +1045,12 @@ BAT;
      */
     public function downloadKillAgentScript()
     {
-        $script = <<<BAT
-@echo off
-chcp 65001 >nul
-title Tat Toan Bo Gervin Zebra Agent
-color 0C
-cls
-echo ======================================================================
-echo    GERVIN WOOD - TAT TOAN BO TIEN TRINH ZEBRA AGENT CHAY NGAM
-echo ======================================================================
-echo.
+        $path = public_path('tools/Tat-Agent.bat');
+        if (!file_exists($path)) {
+            $path = base_path('Tat-Agent.bat');
+        }
 
-powershell -NoProfile -Command "Write-Host 'Dang tim va tat cac tien trinh Agent...' -ForegroundColor Yellow; \$count = 0; Get-CimInstance Win32_Process | Where-Object { (\$_.CommandLine -like '*Gervin-Zebra-Agent*' -or \$_.CommandLine -like '*processes/packing/printer/agent/poll*') -and \$_.ProcessId -ne \$PID } | ForEach-Object { Stop-Process -Id \$_.ProcessId -Force -ErrorAction SilentlyContinue; \$count++ }; if (\$count -gt 0) { Write-Host ('[THANH CONG] Da tat ' + \$count + ' tien trinh Agent chay ngam. Giai phong RAM va CPU!') -ForegroundColor Green; } else { Write-Host '[THONG BAO] Khong co tien trinh Agent nao dang chay ngam.' -ForegroundColor Yellow; }"
-
-echo.
-echo Cua so se tu dong dong sau 2 giay...
-timeout /t 2 >nul
-exit 0
-BAT;
+        $script = file_exists($path) ? file_get_contents($path) : "@echo off\r\necho Khong tim thay Tat-Agent.bat\r\npause\r\n";
 
         return response($script, 200, [
             'Content-Type'        => 'application/x-bat',
