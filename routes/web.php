@@ -432,11 +432,6 @@ Route::middleware(['auth'])->prefix('processes')->name('processes.')->group(func
     Route::post('/packing/printer/exit-diagnostics', [PackingPackageController::class, 'exitDiagnostics'])->name('packing.printer.exit-diagnostics');
     Route::post('/packing/printer/recover-zpl', [PackingPackageController::class, 'recoverZpl'])->name('packing.printer.recover-zpl');
     Route::get('/packing/printer/history', [PackingPackageController::class, 'getPrinterHistory'])->name('packing.printer.history');
-    Route::post('/packing/printer/agent/poll', [PackingPackageController::class, 'agentPoll'])->name('packing.printer.agent.poll');
-    Route::post('/packing/printer/agent/ack', [PackingPackageController::class, 'agentAck'])->name('packing.printer.agent.ack');
-    Route::get('/packing/printer/agent/job/{id}', [PackingPackageController::class, 'getAgentJobStatus'])->name('packing.printer.agent.job');
-    Route::get('/packing/printer/agent/status', [PackingPackageController::class, 'getAgentStatus'])->name('packing.printer.agent.status');
-    Route::get('/packing/printer/agent/download', [PackingPackageController::class, 'downloadAgentScript'])->name('packing.printer.agent.download');
     Route::get('/packing/{package}/print-data', [PackingPackageController::class, 'getPackagePrintDataJson'])->name('packing.print-data');
     Route::post('/packing/{package}/print-zebra', [PackingPackageController::class, 'printZebra'])->name('packing.print-zebra');
     Route::get('/packing/{package}', [PackingPackageController::class, 'show'])->name('packing.show');
@@ -467,6 +462,15 @@ Route::middleware(['auth'])->prefix('processes')->name('processes.')->group(func
 
 // Public API Endpoint for physical QR/barcode scanner devices
 Route::match(['get', 'post'], '/scan', [QrScanController::class, 'receiveScan'])->name('qr-scans.receive');
+
+// Public API Endpoints for local Zebra Print Agent (Máy tính tại xưởng)
+Route::prefix('processes/packing/printer/agent')->group(function () {
+    Route::post('/poll', [PackingPackageController::class, 'agentPoll'])->name('processes.packing.printer.agent.poll');
+    Route::post('/ack', [PackingPackageController::class, 'agentAck'])->name('processes.packing.printer.agent.ack');
+    Route::get('/job/{id}', [PackingPackageController::class, 'getAgentJobStatus'])->name('processes.packing.printer.agent.job');
+    Route::get('/status', [PackingPackageController::class, 'getAgentStatus'])->name('processes.packing.printer.agent.status');
+    Route::get('/download', [PackingPackageController::class, 'downloadAgentScript'])->name('processes.packing.printer.agent.download');
+});
 
 // DC Stock (Kho tấm dư sau cắt CNC)
 use App\Http\Controllers\DcStockController;
