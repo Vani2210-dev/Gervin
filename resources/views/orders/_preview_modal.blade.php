@@ -78,6 +78,14 @@
 
     // Tra cứu thông tin đóng gói từ mục processes/packing
     $packingInfo = $acrylicOrder->getPackingInfo();
+
+    // Danh sách hình ảnh đã tải (tệp đính kèm)
+    $orderAttachments = [];
+    if (!empty($acrylicOrder->attachments)) {
+        $orderAttachments = is_array($acrylicOrder->attachments)
+            ? $acrylicOrder->attachments
+            : (json_decode($acrylicOrder->attachments, true) ?? []);
+    }
 @endphp
 
 <!-- Preview Order Modal -->
@@ -96,6 +104,10 @@
                 </div>
             </div>
             <div class="flex items-center gap-2 flex-wrap">
+                <button type="button" id="preview-header-attachments-btn" onclick="document.getElementById('preview-order-attachments-section')?.scrollIntoView({behavior:'smooth'})" class="btn bg-primary-50 hover:bg-primary-100 text-primary-700 border border-primary-200 px-3 py-2 rounded-lg text-xs font-bold shadow-xs transition-all flex items-center gap-1.5" style="{{ count($orderAttachments) == 0 ? 'display:none;' : '' }}" title="Cuộn xuống xem hình ảnh đã tải">
+                    <iconify-icon icon="lucide:paperclip" class="text-sm text-primary-600"></iconify-icon>
+                    <span>Ảnh đã tải (<span id="preview-header-attachments-count">{{ count($orderAttachments) }}</span>)</span>
+                </button>
                 <button type="button" onclick="printPreviewOrder()" class="btn text-white px-3 py-2 rounded-lg text-xs font-bold shadow-sm transition-all flex items-center gap-2 hover:opacity-95" style="background:#059669; border:none;" title="In đơn hàng ra giấy hoặc xuất PDF (khổ ngang A4)">
                     <iconify-icon icon="lucide:printer" class="text-base"></iconify-icon>
                     <span>In đơn (khổ ngang)</span>
@@ -778,6 +790,80 @@
                     <span>Phiếu xuất lúc: {{ now()->format('d/m/Y H:i') }}</span>
                 </div>
             </div>
+
+            <!-- Mục Hình ảnh đã tải (Đặt ngoài #preview-order-capture-area để KHÔNG chụp vào ảnh gửi Zalo) -->
+            <div id="preview-order-attachments-section" class="bg-white p-4 mt-3 rounded-xl border border-neutral-300 shadow-sm w-full mx-auto" style="min-width: 1050px; max-width: 1240px; {{ count($orderAttachments) == 0 ? 'display:none;' : '' }}">
+                <div class="flex items-center justify-between border-b border-neutral-200 pb-3 mb-3">
+                    <div class="flex items-center gap-2.5">
+                        <span class="w-8 h-8 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center">
+                            <iconify-icon icon="lucide:image" class="text-lg"></iconify-icon>
+                        </span>
+                        <div>
+                            <h6 class="font-bold text-sm text-neutral-800 m-0">Hình ảnh đã tải (<span id="preview-attachments-count-text">{{ count($orderAttachments) }}</span> ảnh)</h6>
+                            <p class="text-[11px] text-neutral-400 m-0">Bấm vào ảnh để mở xem chi tiết · Có thể kéo thả di chuyển ảnh tự do khắp màn hình</p>
+                        </div>
+                    </div>
+                    <span class="text-[11px] font-semibold text-neutral-500 bg-neutral-100 px-2.5 py-1 rounded-full border border-neutral-200">
+                        Không chụp vào ảnh gửi Zalo
+                    </span>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3" id="preview-attachments-grid">
+                    @foreach($orderAttachments as $idx => $imgFile)
+                        @php
+                            $fname = basename($imgFile);
+                            $imgUrl = route('orders.image', ['filename' => $fname]);
+                        @endphp
+                        <div class="group relative border border-neutral-200 hover:border-primary-400 rounded-xl p-2 bg-neutral-50/50 hover:bg-neutral-50 transition-all cursor-pointer shadow-xs hover:shadow-md existing-preview-attachment"
+                             data-filename="{{ $fname }}"
+                             onclick="openPreviewImageModal('preview-img-modal-{{ $idx }}')">
+                            <div class="w-full aspect-square rounded-lg overflow-hidden bg-white border border-neutral-200 flex items-center justify-center relative">
+                                <img src="{{ $imgUrl }}" alt="{{ $fname }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" loading="lazy">
+                                <div class="absolute inset-0 bg-black/0 group-hover:bg-black/25 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                    <span class="w-8 h-8 rounded-full bg-white text-primary-600 flex items-center justify-center shadow-md">
+                                        <iconify-icon icon="lucide:maximize-2" class="text-base"></iconify-icon>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="mt-2 flex items-center justify-between gap-1">
+                                <p class="text-[11px] font-semibold text-neutral-700 truncate m-0 flex-1" title="{{ $fname }}">{{ $fname }}</p>
+                                <span class="text-[11px] text-primary-600 font-bold shrink-0 hover:underline">Xem</span>
+                            </div>
+                        </div>
+
+                        {{-- Modal Popup xem ảnh trần có thể kéo thả tự do --}}
+                        <div id="preview-img-modal-{{ $idx }}"
+                             class="preview-image-draggable-modal"
+                             style="display:none; position:fixed; inset:0; z-index:100000005 !important; pointer-events:none;">
+                            <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; padding:1rem; pointer-events:none;">
+                                <div data-modal-content style="position:relative; width:fit-content; pointer-events:auto;">
+                                    <div class="relative preview-drag-handle cursor-grab select-none" style="filter: drop-shadow(0 25px 40px rgba(0,0,0,0.5));">
+                                        {{-- Nút X đóng ở góc phải trên --}}
+                                        <button type="button"
+                                                onclick="closePreviewImageModal('preview-img-modal-{{ $idx }}')"
+                                                class="absolute -top-3 -right-3 z-30 w-8 h-8 bg-white rounded-full shadow-xl flex items-center justify-center text-neutral-600 hover:text-red-600 hover:bg-red-50 transition-colors border border-neutral-300 cursor-pointer"
+                                                title="Đóng ảnh (hoặc phím Esc)">
+                                            <iconify-icon icon="lucide:x" class="text-base"></iconify-icon>
+                                        </button>
+
+                                        {{-- Tên file ảnh góc trái trên --}}
+                                        <div class="absolute top-2 left-2 z-20 bg-black/65 backdrop-blur-xs text-white text-[11px] font-medium px-2.5 py-1 rounded-md truncate max-w-[320px] pointer-events-none">
+                                            {{ $fname }}
+                                        </div>
+
+                                        {{-- Ảnh trần - có thể kéo di chuyển tự do bằng chuột --}}
+                                        <img src="{{ $imgUrl }}"
+                                             class="rounded-xl block border-2 border-white bg-white"
+                                             style="max-width:85vw; max-height:82vh; object-fit:contain; pointer-events:auto; user-select:none; -webkit-user-drag:none;"
+                                             draggable="false"
+                                             alt="{{ $fname }}">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
         </div>
 
         <!-- Footer -->
@@ -872,6 +958,8 @@
         phone: {!! json_encode($acrylicOrder->phone ?: ($acrylicOrder->customer?->phone ?? '')) !!}
     };
 
+    let previewImgTopZIndex = 100000010;
+
     function openPreviewModal() {
         let modal = document.getElementById('preview-order-modal');
         if (modal) {
@@ -880,11 +968,31 @@
             }
             modal.style.display = 'flex';
             document.body.style.overflow = 'hidden';
+            syncFormAttachmentsToPreview();
         }
     }
 
     if (typeof window.previewOrder !== 'function' || !window.isOrderFormPage) {
         window.previewOrder = openPreviewModal;
+    }
+
+    function openPreviewImageModal(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        previewImgTopZIndex++;
+        el.style.zIndex = previewImgTopZIndex;
+        el.style.display = 'block';
+        const modalBody = el.querySelector('[data-modal-content]');
+        if (modalBody) {
+            modalBody.style.transform = '';
+            modalBody.removeAttribute('data-drag-x');
+            modalBody.removeAttribute('data-drag-y');
+        }
+    }
+
+    function closePreviewImageModal(id) {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
     }
 
     function closePreviewOrder() {
@@ -893,13 +1001,176 @@
             modal.style.display = 'none';
             document.body.style.overflow = '';
         }
+        document.querySelectorAll('.preview-image-draggable-modal').forEach(function(el) {
+            el.style.display = 'none';
+        });
     }
 
-    // Đóng bằng phím Escape
+    // Đồng bộ ảnh đã tải & ảnh mới từ form chỉnh sửa sang bản xem trước (nếu đang ở trang form /orders/{id}/edit)
+    function syncFormAttachmentsToPreview() {
+        if (!window.isOrderFormPage) return;
+
+        // 1. Ẩn các ảnh cũ đã bị xóa trên form
+        const deleteInput = document.getElementById('delete-attachments');
+        let deletedFiles = [];
+        if (deleteInput && deleteInput.value) {
+            try {
+                deletedFiles = JSON.parse(deleteInput.value);
+                if (!Array.isArray(deletedFiles)) deletedFiles = [];
+            } catch (e) {
+                deletedFiles = [];
+            }
+        }
+        if (deletedFiles.length > 0) {
+            document.querySelectorAll('#preview-attachments-grid .existing-preview-attachment').forEach(card => {
+                const fname = card.getAttribute('data-filename');
+                if (fname && deletedFiles.some(d => d.includes(fname) || fname.includes(d))) {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        // 2. Bổ sung các ảnh mới chọn (chưa bấm lưu vào DB) vào mục xem trước
+        const newPreviewItems = document.querySelectorAll('#new-attachments-preview > div');
+        const previewGrid = document.getElementById('preview-attachments-grid');
+        if (previewGrid && newPreviewItems.length > 0) {
+            newPreviewItems.forEach((item, idx) => {
+                const img = item.querySelector('img');
+                const nameEl = item.querySelector('p');
+                if (!img || !img.src) return;
+                const imgSrc = img.src;
+                const fileName = nameEl ? nameEl.textContent.trim() : `Ảnh mới ${idx + 1}`;
+                const newModalId = `preview-new-img-modal-${idx}`;
+
+                if (!document.getElementById(newModalId)) {
+                    // Card thumbnail ảnh mới
+                    const card = document.createElement('div');
+                    card.className = 'group relative border border-emerald-300 hover:border-emerald-500 rounded-xl p-2 bg-emerald-50/30 hover:bg-emerald-50 transition-all cursor-pointer shadow-xs hover:shadow-md new-preview-attachment';
+                    card.onclick = () => openPreviewImageModal(newModalId);
+                    card.innerHTML = `
+                        <div class="w-full aspect-square rounded-lg overflow-hidden bg-white border border-emerald-200 flex items-center justify-center relative">
+                            <img src="${imgSrc}" alt="${fileName}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" loading="lazy">
+                            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/25 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                <span class="w-8 h-8 rounded-full bg-white text-emerald-600 flex items-center justify-center shadow-md">
+                                    <iconify-icon icon="lucide:maximize-2" class="text-base"></iconify-icon>
+                                </span>
+                            </div>
+                            <span class="absolute top-1 left-1 bg-emerald-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-xs">Mới</span>
+                        </div>
+                        <div class="mt-2 flex items-center justify-between gap-1">
+                            <p class="text-[11px] font-semibold text-neutral-700 truncate m-0 flex-1" title="${fileName}">${fileName}</p>
+                            <span class="text-[11px] text-emerald-600 font-bold shrink-0 hover:underline">Xem</span>
+                        </div>
+                    `;
+                    previewGrid.appendChild(card);
+
+                    // Modal popup trần có thể kéo thả cho ảnh mới
+                    const modalDiv = document.createElement('div');
+                    modalDiv.id = newModalId;
+                    modalDiv.className = 'preview-image-draggable-modal';
+                    modalDiv.style.cssText = 'display:none; position:fixed; inset:0; z-index:100000005 !important; pointer-events:none;';
+                    modalDiv.innerHTML = `
+                        <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; padding:1rem; pointer-events:none;">
+                            <div data-modal-content style="position:relative; width:fit-content; pointer-events:auto;">
+                                <div class="relative preview-drag-handle cursor-grab select-none" style="filter: drop-shadow(0 25px 40px rgba(0,0,0,0.5));">
+                                    <button type="button"
+                                            onclick="closePreviewImageModal('${newModalId}')"
+                                            class="absolute -top-3 -right-3 z-30 w-8 h-8 bg-white rounded-full shadow-xl flex items-center justify-center text-neutral-600 hover:text-red-600 hover:bg-red-50 transition-colors border border-neutral-300 cursor-pointer"
+                                            title="Đóng ảnh (hoặc phím Esc)">
+                                        <iconify-icon icon="lucide:x" class="text-base"></iconify-icon>
+                                    </button>
+                                    <div class="absolute top-2 left-2 z-20 bg-black/65 backdrop-blur-xs text-white text-[11px] font-medium px-2.5 py-1 rounded-md truncate max-w-[320px] pointer-events-none flex items-center gap-1.5">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                                        <span>${fileName}</span>
+                                    </div>
+                                    <img src="${imgSrc}"
+                                         class="rounded-xl block border-2 border-white bg-white"
+                                         style="max-width:85vw; max-height:82vh; object-fit:contain; pointer-events:auto; user-select:none; -webkit-user-drag:none;"
+                                         draggable="false"
+                                         alt="${fileName}">
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    document.body.appendChild(modalDiv);
+                }
+            });
+        }
+
+        // 3. Cập nhật lại số lượng ảnh thực tế hiển thị
+        const visibleCards = Array.from(document.querySelectorAll('#preview-attachments-grid > div')).filter(el => el.style.display !== 'none');
+        const totalCount = visibleCards.length;
+
+        const section = document.getElementById('preview-order-attachments-section');
+        const headerBtn = document.getElementById('preview-header-attachments-btn');
+        const countBadge = document.getElementById('preview-attachments-count-text');
+        const headerCount = document.getElementById('preview-header-attachments-count');
+
+        if (countBadge) countBadge.textContent = totalCount;
+        if (headerCount) headerCount.textContent = totalCount;
+
+        if (totalCount > 0) {
+            if (section) section.style.display = 'block';
+            if (headerBtn) headerBtn.style.display = 'inline-flex';
+        } else {
+            if (section) section.style.display = 'none';
+            if (headerBtn) headerBtn.style.display = 'none';
+        }
+    }
+
+    // Đóng bằng phím Escape (ưu tiên đóng ảnh trước, sau đó đóng modal)
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
+            const openImgModals = Array.from(document.querySelectorAll('.preview-image-draggable-modal')).filter(el => el.style.display !== 'none');
+            if (openImgModals.length > 0) {
+                openImgModals.forEach(el => el.style.display = 'none');
+                return;
+            }
             closePreviewOrder();
         }
+    });
+
+    // Kéo thả di chuyển tự do ảnh trần xem trước
+    document.addEventListener('mousedown', function(e) {
+        // Nâng z-index lên trên cùng khi người dùng bấm vào bất kỳ cửa sổ ảnh nào
+        const draggableModal = e.target.closest('.preview-image-draggable-modal');
+        if (draggableModal) {
+            previewImgTopZIndex++;
+            draggableModal.style.zIndex = previewImgTopZIndex;
+        }
+
+        const handle = e.target.closest('.preview-drag-handle');
+        if (!handle) return;
+        if (e.target.closest('button')) return; // Bỏ qua nếu bấm nút X
+
+        e.preventDefault();
+        const modalBody = handle.closest('[data-modal-content]') || handle.parentElement;
+        if (!modalBody) return;
+
+        handle.style.cursor = 'grabbing';
+        const startX = e.clientX;
+        const startY = e.clientY;
+        const currentX = parseFloat(modalBody.getAttribute('data-drag-x')) || 0;
+        const currentY = parseFloat(modalBody.getAttribute('data-drag-y')) || 0;
+
+        function onMouseMove(moveEvent) {
+            const dx = moveEvent.clientX - startX;
+            const dy = moveEvent.clientY - startY;
+            const newX = currentX + dx;
+            const newY = currentY + dy;
+            modalBody.style.transform = `translate(${newX}px, ${newY}px)`;
+            modalBody.setAttribute('data-drag-x', newX);
+            modalBody.setAttribute('data-drag-y', newY);
+        }
+
+        function onMouseUp() {
+            handle.style.cursor = 'grab';
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+        }
+
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
     });
 
     function showPreviewToast(message, type = 'success') {
