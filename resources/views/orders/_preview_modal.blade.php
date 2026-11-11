@@ -800,7 +800,7 @@
                         </span>
                         <div>
                             <h6 class="font-bold text-sm text-neutral-800 m-0">Hình ảnh đã tải (<span id="preview-attachments-count-text">{{ count($orderAttachments) }}</span> ảnh)</h6>
-                            <p class="text-[11px] text-neutral-400 m-0">Bấm vào ảnh để mở xem chi tiết · Có thể kéo thả di chuyển ảnh tự do khắp màn hình</p>
+                            <p class="text-[11px] text-neutral-400 m-0">Bấm ảnh để mở · Kéo chuột di chuyển tự do · <strong>Ctrl + Lăn chuột</strong> phóng to/thu nhỏ · <strong>Nhấp đúp</strong> về gốc · <strong>Ctrl + Alt</strong> ẩn/hiện nhanh</p>
                         </div>
                     </div>
                     <span class="text-[11px] font-semibold text-neutral-500 bg-neutral-100 px-2.5 py-1 rounded-full border border-neutral-200">
@@ -831,7 +831,7 @@
                             </div>
                         </div>
 
-                        {{-- Modal Popup xem ảnh trần có thể kéo thả tự do --}}
+                        {{-- Modal Popup xem ảnh trần có thể kéo thả tự do & phóng to bằng Ctrl + lăn chuột --}}
                         <div id="preview-img-modal-{{ $idx }}"
                              class="preview-image-draggable-modal"
                              style="display:none; position:fixed; inset:0; z-index:100000005 !important; pointer-events:none;">
@@ -851,11 +851,12 @@
                                             {{ $fname }}
                                         </div>
 
-                                        {{-- Ảnh trần - có thể kéo di chuyển tự do bằng chuột --}}
+                                        {{-- Ảnh trần - có thể kéo di chuyển tự do bằng chuột & Ctrl + lăn chuột phóng to --}}
                                         <img src="{{ $imgUrl }}"
-                                             class="rounded-xl block border-2 border-white bg-white"
+                                             class="modal-image-viewer rounded-xl block border-2 border-white bg-white"
                                              style="max-width:85vw; max-height:82vh; object-fit:contain; pointer-events:auto; user-select:none; -webkit-user-drag:none;"
                                              draggable="false"
+                                             title="Kéo chuột để di chuyển • Ctrl + Lăn chuột để phóng to/thu nhỏ • Nhấp đúp để reset về ban đầu"
                                              alt="{{ $fname }}">
                                     </div>
                                 </div>
@@ -988,6 +989,12 @@
             modalBody.removeAttribute('data-drag-x');
             modalBody.removeAttribute('data-drag-y');
         }
+        // Reset kích thước ảnh về mặc định khi mở lại
+        el.querySelectorAll('.modal-image-viewer').forEach(function(img) {
+            img.style.width = '';
+            img.style.maxWidth = '85vw';
+            img.style.maxHeight = '82vh';
+        });
     }
 
     function closePreviewImageModal(id) {
@@ -1084,9 +1091,10 @@
                                         <span>${fileName}</span>
                                     </div>
                                     <img src="${imgSrc}"
-                                         class="rounded-xl block border-2 border-white bg-white"
+                                         class="modal-image-viewer rounded-xl block border-2 border-white bg-white"
                                          style="max-width:85vw; max-height:82vh; object-fit:contain; pointer-events:auto; user-select:none; -webkit-user-drag:none;"
                                          draggable="false"
+                                         title="Kéo chuột để di chuyển • Ctrl + Lăn chuột để phóng to/thu nhỏ • Nhấp đúp để reset về ban đầu"
                                          alt="${fileName}">
                                 </div>
                             </div>
@@ -1172,6 +1180,88 @@
         document.addEventListener('mousemove', onMouseMove);
         document.addEventListener('mouseup', onMouseUp);
     });
+
+    // ========================================================
+    // TÍNH NĂNG ZOOM VÀ CO GIÃN ẢNH (GIỐNG TRANG EDIT ĐƠN HÀNG)
+    // ========================================================
+    if (!window.previewImageInteractionHandlersAttached) {
+        window.previewImageInteractionHandlersAttached = true;
+
+        // 1. Ctrl + lăn chuột để co giãn kích thước ảnh (thay đổi width trực tiếp)
+        document.addEventListener('wheel', function(e) {
+            // Kiểm tra xem chuột có nằm trên popup ảnh xem trước không
+            const draggableModal = e.target.closest('.preview-image-draggable-modal');
+            if (!draggableModal || !e.ctrlKey) return;
+
+            const img = draggableModal.querySelector('.modal-image-viewer');
+            if (!img) return;
+
+            // Ngăn trình duyệt zoom toàn bộ trang
+            e.preventDefault();
+            e.stopImmediatePropagation();
+
+            // Lấy chiều rộng hiện tại (width đang set hoặc kích thước thật trên màn hình)
+            let currentWidth = parseInt(img.style.width) || img.offsetWidth;
+
+            // Tăng/giảm 60px mỗi lần lăn chuột
+            if (e.deltaY < 0) {
+                currentWidth += 60;
+            } else {
+                currentWidth -= 60;
+            }
+
+            // Giới hạn: nhỏ nhất 80px, lớn nhất 95% viewport width
+            currentWidth = Math.max(80, Math.min(currentWidth, window.innerWidth * 0.95));
+
+            img.style.width = currentWidth + 'px';
+            img.style.maxWidth = 'none';
+            img.style.maxHeight = 'none';
+        }, { passive: false, capture: true });
+
+        // 2. Double-click để reset kích thước ảnh về mặc định
+        document.addEventListener('dblclick', function(e) {
+            const draggableModal = e.target.closest('.preview-image-draggable-modal');
+            if (!draggableModal) return;
+            if (e.target.closest('button')) return; // Bỏ qua nếu bấm nút X
+
+            const img = draggableModal.querySelector('.modal-image-viewer');
+            if (!img) return;
+
+            e.stopImmediatePropagation();
+            img.style.width = '';
+            img.style.maxWidth = '85vw';
+            img.style.maxHeight = '82vh';
+        }, { capture: true });
+
+        // 3. Phím tắt Ctrl+Alt: ẩn/hiện nhanh tất cả popup ảnh đang mở để đối chiếu thông tin đơn hàng
+        let previewHiddenModals = [];
+        document.addEventListener('keydown', function(e) {
+            const isToggleShortcut = (e.key === 'Alt' && e.ctrlKey) || (e.key === 'Control' && e.altKey);
+            if (!isToggleShortcut) return;
+
+            if (previewHiddenModals.length > 0) {
+                previewHiddenModals.forEach(function(modal) {
+                    modal.style.display = 'block';
+                });
+                previewHiddenModals = [];
+                return;
+            }
+
+            const openModals = [];
+            document.querySelectorAll('.preview-image-draggable-modal').forEach(function(modal) {
+                if (modal.style.display !== 'none') {
+                    openModals.push(modal);
+                }
+            });
+
+            if (openModals.length === 0) return;
+
+            openModals.forEach(function(modal) {
+                modal.style.display = 'none';
+                previewHiddenModals.push(modal);
+            });
+        });
+    }
 
     function showPreviewToast(message, type = 'success') {
         let container = document.getElementById('preview-toast-container');
