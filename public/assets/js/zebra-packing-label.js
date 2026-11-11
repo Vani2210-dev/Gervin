@@ -992,7 +992,7 @@
                 if (res.connected && res.ready) {
                     if (statusBadge && statusText) {
                         statusBadge.className = 'zp-status-badge online';
-                        statusText.textContent = `Online (${res.ms}ms) · Sẵn sàng`;
+                        statusText.textContent = res.via_agent ? 'Trạm xưởng Online (Agent)' : `Online (${res.ms}ms) · Sẵn sàng`;
                     }
                     this.updateStatusDot(true);
                 } else if (res.connected) {
@@ -1030,18 +1030,63 @@
 
             try {
                 const result = await this.printDirect(this.currentPackageData.packageId, qty);
-                this.toast(result.message || `Đã gửi thành công ${qty} tem đến máy in Zebra!`, 'success');
-                this.updateStatusDot(true);
-                this.closeModal();
+                if (result.queued && result.jobId) {
+                    this.toast(result.message || 'Đã gửi lệnh in tới trạm xưởng. Đang chờ máy in nhả tem…', 'info');
+                    if (printBtn) {
+                        printBtn.innerHTML = `<iconify-icon icon="lucide:loader-2" class="animate-spin text-lg"></iconify-icon> Trạm xưởng đang in tem…`;
+                    }
+                    await this.trackJobStatus(result.jobId, qty);
+                } else {
+                    this.toast(result.message || `Đã gửi thành công ${qty} tem đến máy in Zebra!`, 'success');
+                    this.updateStatusDot(true);
+                    this.closeModal();
+                }
             } catch (err) {
                 this.toast('Lỗi in Zebra: ' + err.message, 'error');
                 this.updateStatusDot(false);
             } finally {
                 if (printBtn) {
                     printBtn.disabled = false;
-                    printBtn.innerHTML = `<iconify-icon icon="lucide:printer" class="text-lg"></iconify-icon> In ngay qua máy in Zebra (LAN)`;
+                    printBtn.innerHTML = `<iconify-icon icon="lucide:printer" style="font-size:18px;"></iconify-icon> In ngay qua máy in Zebra`;
                 }
             }
+        },
+
+        trackJobStatus: async function (jobId, qty) {
+            let attempts = 0;
+            const maxAttempts = 15;
+            return new Promise((resolve) => {
+                const timer = setInterval(async () => {
+                    attempts++;
+                    try {
+                        const res = await fetch(`/processes/packing/printer/agent/job/${jobId}`);
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (data.status === 'sent') {
+                                clearInterval(timer);
+                                this.toast(`Đã in thành công ${qty} tem tại máy in Zebra xưởng!`, 'success');
+                                this.updateStatusDot(true);
+                                this.closeModal();
+                                resolve(true);
+                                return;
+                            }
+                            if (data.status === 'failed') {
+                                clearInterval(timer);
+                                this.toast(`Lỗi tại máy in xưởng: ${data.message}`, 'error');
+                                resolve(false);
+                                return;
+                            }
+                        }
+                    } catch (e) {}
+
+                    if (attempts >= maxAttempts) {
+                        clearInterval(timer);
+                        this.toast(`Lệnh in ${qty} tem đã lưu vào hàng đợi; máy in xưởng sẽ in ngay khi kết nối.`, 'warning');
+                        this.closeModal();
+                        resolve(false);
+                    }
+                }, 1000);
+            });
         },
 
         // Mở modal cấu hình & chẩn đoán máy in Zebra
@@ -1081,15 +1126,15 @@
                 const res = await this.checkConnection();
                 if (res.connected && res.ready) {
                     resultBox.className = 'zp-diag-alert zp-diag-alert-success';
-                    resultBox.innerHTML = `<strong>Kết nối thành công (${res.ms} ms)</strong>: Máy in sẵn sàng, Virtual Device = NONE, ZPL II, cảm biến giấy/ribbon bình thường.`;
+                    resultBox.innerHTML = `<strong>Kết nối thành công</strong>: ${res.message}`;
                     this.updateStatusDot(true);
                 } else if (res.connected) {
                     resultBox.className = 'zp-diag-alert zp-diag-alert-warning';
-                    resultBox.innerHTML = `<strong>Cảnh báo (${res.ms} ms)</strong>: ${res.message}`;
+                    resultBox.innerHTML = `<strong>Cảnh báo</strong>: ${res.message}`;
                     this.updateStatusDot(true);
                 } else {
                     resultBox.className = 'zp-diag-alert zp-diag-alert-danger';
-                    resultBox.innerHTML = `<strong>Không thể kết nối (${this.settings.host}:${this.settings.port})</strong>: ${res.message}. Kiểm tra máy in đã cắm mạng LAN/Wi-Fi và bật nguồn.`;
+                    resultBox.innerHTML = `<strong>Không thể kết nối</strong>: ${res.message}`;
                     this.updateStatusDot(false);
                 }
             } catch (err) {
@@ -1326,11 +1371,30 @@
                                 Đang kiểm tra kết nối tới máy in…
                             </div>
 
+                            <!-- Khối Hỗ trợ in qua Cloud Server (gervinwood.vn) -->
+                            <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px 14px; margin-bottom: 16px;">
+                                <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
+                                    <div>
+                                        <div style="font-size: 13px; font-weight: 700; color: #166534; display: flex; align-items: center; gap: 6px;">
+                                            <iconify-icon icon="lucide:radio" style="font-size: 16px;"></iconify-icon>
+                                            In qua mạng xưởng khi dùng Server (gervinwood.vn)
+                                        </div>
+                                        <div style="font-size: 11px; color: #15803d; margin-top: 2px;">
+                                            Chạy file Agent tại máy tính xưởng để tự động nhận lệnh in qua mạng LAN.
+                                        </div>
+                                    </div>
+                                    <a href="/processes/packing/printer/agent/download" class="zp-btn zp-btn-primary" style="padding: 6px 12px; font-size: 12px; text-decoration: none;">
+                                        <iconify-icon icon="lucide:download" style="font-size: 14px;"></iconify-icon>
+                                        Tải Gervin-Zebra-Agent.bat
+                                    </a>
+                                </div>
+                            </div>
+
                             <form id="zebraSettingsForm" onsubmit="ZebraPacking.handleSettingsSave(event)">
                                 <div class="zp-form-grid">
                                     <div>
                                         <label class="zp-label">Địa chỉ IP máy in</label>
-                                        <input type="text" name="host" class="zp-input" required placeholder="192.168.1.67">
+                                        <input type="text" name="host" class="zp-input" required placeholder="192.168.1.94">
                                     </div>
                                     <div>
                                         <label class="zp-label">Cổng TCP (RAW)</label>

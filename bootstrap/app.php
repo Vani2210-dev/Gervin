@@ -16,6 +16,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'scan',
             'qrcode',
             'qrcode/*',
+            'processes/packing/printer/agent/*',
+            'api/zebra-agent/*',
         ]);
 
         $middleware->alias([

@@ -962,4 +962,85 @@ class PackingPackageController extends Controller
             'history' => $zebraService->getHistory(),
         ]);
     }
+
+    /**
+     * Print Agent tại máy xưởng gửi heartbeat và nhận lệnh in
+     */
+    public function agentPoll(Request $request, ZebraPrinterService $zebraService)
+    {
+        $payload = $request->all();
+        $result = $zebraService->agentPoll($payload);
+        return response()->json($result);
+    }
+
+    /**
+     * Print Agent tại máy xưởng xác nhận đã in xong
+     */
+    public function agentAck(Request $request, ZebraPrinterService $zebraService)
+    {
+        $jobId = (string) $request->input('id', '');
+        $status = (string) $request->input('status', 'sent');
+        $message = (string) $request->input('message', 'In thành công');
+        $bytes = (int) $request->input('bytes', 0);
+
+        $result = $zebraService->agentAck($jobId, $status, $message, $bytes);
+        return response()->json($result);
+    }
+
+    /**
+     * Kiểm tra trạng thái của một lệnh in (cho trình duyệt polling)
+     */
+    public function getAgentJobStatus(string $id, ZebraPrinterService $zebraService)
+    {
+        $status = $zebraService->getJobStatus($id);
+        return response()->json($status);
+    }
+
+    /**
+     * Kiểm tra trạng thái của Agent xưởng (online hay offline)
+     */
+    public function getAgentStatus(ZebraPrinterService $zebraService)
+    {
+        $status = $zebraService->getAgentStatus();
+        return response()->json([
+            'success' => true,
+            'agent'   => $status,
+        ]);
+    }
+
+    /**
+     * Tải file Gervin-Zebra-Agent.bat cấu hình sẵn URL server cho máy tính xưởng
+     */
+    public function downloadAgentScript(Request $request, ZebraPrinterService $zebraService)
+    {
+        $settings = $zebraService->getSettings();
+        $printerHost = $settings['host'] ?? '192.168.1.94';
+        $printerPort = $settings['port'] ?? 9100;
+        $baseUrl = $request->getSchemeAndHttpHost();
+
+        $script = <<<BAT
+@echo off
+chcp 65001 >nul
+title Gervin Wood - Zebra ZT411 Print Agent
+color 0A
+cls
+echo ======================================================================
+echo    GERVIN WOOD - PRINT AGENT KET NOI MAY IN ZEBRA QUA LAN XUONG
+echo ======================================================================
+echo  Server:        $baseUrl
+echo  May in Zebra:  $printerHost:$printerPort
+echo  Trang thai:    Dang chay tu dong, giu nguyen cua so nay khi lam viec.
+echo ======================================================================
+echo.
+
+powershell -NoProfile -ExecutionPolicy Bypass -Command "\$server = '$baseUrl'; \$printerHost = '$printerHost'; \$printerPort = $printerPort; Write-Host '[BAT DAU] Dang ket noi server: ' \$server; while (\$true) { try { \$body = @{ station_name = \$env:COMPUTERNAME; ready = \$true; printer_ip = \$printerHost; printer_port = \$printerPort; message = 'Zebra ZT411 san sang tai xuong' } | ConvertTo-Json; \$resp = Invoke-RestMethod -Uri (\$server + '/processes/packing/printer/agent/poll') -Method Post -ContentType 'application/json' -Body \$body -TimeoutSec 10; if (\$resp.has_job -and \$resp.job) { \$job = \$resp.job; Write-Host ('[' + (Get-Date -Format 'HH:mm:ss') + '] NHAN LENH IN: ' + \$job.id + ' (' + \$job.quantity + ' tem)'); try { \$client = New-Object System.Net.Sockets.TcpClient; \$client.SendTimeout = 8000; \$client.Connect(\$job.host, [int]\$job.port); \$stream = \$client.GetStream(); \$bytes = [System.Text.Encoding]::UTF8.GetBytes(\$job.zpl); \$stream.Write(\$bytes, 0, \$bytes.Length); \$stream.Flush(); \$stream.Close(); \$client.Close(); Write-Host ('[' + (Get-Date -Format 'HH:mm:ss') + '] IN THANH CONG: ' + \$bytes.Length + ' bytes da gui den ' + \$job.host) -ForegroundColor Green; \$ackBody = @{ id = \$job.id; status = 'sent'; message = 'Da in ' + \$job.quantity + ' tem qua LAN xuong (' + \$job.host + ')'; bytes = \$bytes.Length } | ConvertTo-Json; Invoke-RestMethod -Uri (\$server + '/processes/packing/printer/agent/ack') -Method Post -ContentType 'application/json' -Body \$ackBody -TimeoutSec 10 | Out-Null; } catch { \$errMsg = \$_.Exception.Message; Write-Host ('[' + (Get-Date -Format 'HH:mm:ss') + '] LOI IN LAN: ' + \$errMsg) -ForegroundColor Red; \$ackBody = @{ id = \$job.id; status = 'failed'; message = 'Loi gui LAN: ' + \$errMsg; bytes = 0 } | ConvertTo-Json; Invoke-RestMethod -Uri (\$server + '/processes/packing/printer/agent/ack') -Method Post -ContentType 'application/json' -Body \$ackBody -TimeoutSec 10 | Out-Null; } } } catch { Start-Sleep -Seconds 2 } Start-Sleep -Milliseconds 1200 }"
+
+pause
+BAT;
+
+        return response($script, 200, [
+            'Content-Type'        => 'application/x-bat',
+            'Content-Disposition' => 'attachment; filename="Gervin-Zebra-Agent.bat"',
+        ]);
+    }
 }

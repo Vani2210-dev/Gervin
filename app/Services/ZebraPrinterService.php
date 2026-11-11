@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Log;
 class ZebraPrinterService
 {
     const DEFAULT_SETTINGS = [
-        'host'      => '192.168.1.67', // Mặc định địa chỉ máy in Zebra tại xưởng
+        'host'      => '192.168.1.94', // Địa chỉ máy in Zebra ZT411 tại xưởng
         'port'      => 9100,
         'timeout'   => 3,
         'dpi'       => 300,
@@ -21,6 +21,193 @@ class ZebraPrinterService
         'offsetY'   => 0,
         'labelSize' => 60, // Khổ tem thực tế 60 x 60 mm
     ];
+
+    protected function getQueueFilePath(): string
+    {
+        return storage_path('app/zebra_queue.json');
+    }
+
+    protected function getAgentStatusFilePath(): string
+    {
+        return storage_path('app/zebra_agent_status.json');
+    }
+
+    /**
+     * Lấy trạng thái của Print Agent tại máy xưởng
+     */
+    public function getAgentStatus(): array
+    {
+        $path = $this->getAgentStatusFilePath();
+        if (file_exists($path)) {
+            $data = json_decode(file_get_contents($path), true);
+            if (is_array($data)) {
+                $lastSeen = (int) ($data['seen_at'] ?? 0);
+                $isOnline = (time() - $lastSeen) <= 30;
+                return array_merge($data, [
+                    'online'      => $isOnline,
+                    'seconds_ago' => time() - $lastSeen,
+                ]);
+            }
+        }
+        return [
+            'online'     => false,
+            'ready'      => false,
+            'seen_at'    => null,
+            'printer_ip' => null,
+            'message'    => 'Chưa có Gervin Zebra Agent nào kết nối.',
+        ];
+    }
+
+    /**
+     * Đọc danh sách hàng đợi in
+     */
+    public function readQueue(): array
+    {
+        $path = $this->getQueueFilePath();
+        if (file_exists($path)) {
+            $data = json_decode(file_get_contents($path), true);
+            if (is_array($data)) {
+                return $data;
+            }
+        }
+        return ['jobs' => []];
+    }
+
+    /**
+     * Ghi danh sách hàng đợi in
+     */
+    public function writeQueue(array $queue): void
+    {
+        $path = $this->getQueueFilePath();
+        $dir = dirname($path);
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0755, true);
+        }
+        file_put_contents($path, json_encode($queue, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    }
+
+    /**
+     * Đưa một lệnh in vào hàng đợi cho Agent xưởng
+     */
+    public function enqueueJob(string $zpl, int $quantity, array $settings, string $kind = 'label'): array
+    {
+        $queue = $this->readQueue();
+        $id = uniqid('job_', true);
+        $job = [
+            'id'         => $id,
+            'time'       => date('c'),
+            'host'       => $settings['host'] ?? '192.168.1.94',
+            'port'       => (int) ($settings['port'] ?? 9100),
+            'quantity'   => $quantity,
+            'kind'       => $kind,
+            'status'     => 'queued', // queued -> claimed -> sent / failed
+            'zpl'        => $zpl,
+            'message'    => 'Đang chờ máy tính xưởng nhận lệnh...',
+            'created_at' => time(),
+        ];
+        $queue['jobs'][$id] = $job;
+
+        if (count($queue['jobs']) > 50) {
+            $queue['jobs'] = array_slice($queue['jobs'], -50, 50, true);
+        }
+
+        $this->writeQueue($queue);
+        return $job;
+    }
+
+    /**
+     * Agent tại xưởng gửi heartbeat và nhận job đang chờ
+     */
+    public function agentPoll(array $payload): array
+    {
+        $agentStatus = [
+            'station_name' => $payload['station_name'] ?? 'Trạm Đóng Gói Gervin',
+            'seen_at'      => time(),
+            'ready'        => !empty($payload['ready']),
+            'printer_ip'   => $payload['printer_ip'] ?? '192.168.1.94',
+            'printer_port' => (int) ($payload['printer_port'] ?? 9100),
+            'message'      => $payload['message'] ?? 'Zebra ZT411 sẵn sàng tại xưởng',
+        ];
+        $path = $this->getAgentStatusFilePath();
+        $dir = dirname($path);
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0755, true);
+        }
+        file_put_contents($path, json_encode($agentStatus, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+
+        $queue = $this->readQueue();
+        $assignedJob = null;
+
+        foreach ($queue['jobs'] as $id => &$job) {
+            if ($job['status'] === 'queued') {
+                $job['status'] = 'claimed';
+                $job['claimed_at'] = time();
+                $job['message'] = 'Trạm xưởng đang in...';
+                $assignedJob = $job;
+                break;
+            }
+        }
+        unset($job);
+
+        if ($assignedJob) {
+            $this->writeQueue($queue);
+        }
+
+        return [
+            'success' => true,
+            'has_job' => $assignedJob !== null,
+            'job'     => $assignedJob,
+        ];
+    }
+
+    /**
+     * Agent tại xưởng báo cáo kết quả hoàn thành in
+     */
+    public function agentAck(string $jobId, string $status, string $message, int $bytes = 0): array
+    {
+        $queue = $this->readQueue();
+        if (isset($queue['jobs'][$jobId])) {
+            $queue['jobs'][$jobId]['status'] = $status;
+            $queue['jobs'][$jobId]['message'] = $message;
+            $queue['jobs'][$jobId]['bytes'] = $bytes;
+            $queue['jobs'][$jobId]['completed_at'] = time();
+            unset($queue['jobs'][$jobId]['zpl']);
+
+            $job = $queue['jobs'][$jobId];
+            $this->writeQueue($queue);
+
+            $this->recordHistory([
+                'time'     => date('c'),
+                'host'     => "{$job['host']}:{$job['port']}",
+                'quantity' => $job['quantity'] ?? 1,
+                'status'   => $status,
+                'bytes'    => $bytes,
+                'message'  => $message . ' (qua Agent xưởng)',
+            ]);
+
+            return ['success' => true, 'job' => $job];
+        }
+
+        return ['success' => false, 'message' => 'Lệnh in không tồn tại.'];
+    }
+
+    /**
+     * Lấy trạng thái của 1 job in
+     */
+    public function getJobStatus(string $jobId): array
+    {
+        $queue = $this->readQueue();
+        if (isset($queue['jobs'][$jobId])) {
+            $job = $queue['jobs'][$jobId];
+            return [
+                'success' => true,
+                'status'  => $job['status'] ?? 'unknown',
+                'message' => $job['message'] ?? '',
+                'bytes'   => $job['bytes'] ?? 0,
+            ];
+        }
+        return ['success' => false, 'status' => 'not_found', 'message' => 'Không tìm thấy lệnh in.'];
+    }
 
     /**
      * Đường dẫn file lưu cấu hình máy in Zebra trong storage
@@ -280,48 +467,77 @@ class ZebraPrinterService
         $settings = $customSettings ? array_merge($this->getSettings(), $customSettings) : $this->getSettings();
         $start = microtime(true);
 
-        $socket = $this->openSocket($settings);
-        fclose($socket);
-
-        $mode = [];
-        $modeOk = true;
-        $modeError = null;
-
         try {
-            $mode = $this->printerModeStatus($settings);
-            $this->requireZplMode($mode);
-        } catch (\Throwable $e) {
-            $modeOk = false;
-            $modeError = $e->getMessage();
+            $socket = $this->openSocket($settings);
+            fclose($socket);
+
+            $mode = [];
+            $modeOk = true;
+            $modeError = null;
+
+            try {
+                $mode = $this->printerModeStatus($settings);
+                $this->requireZplMode($mode);
+            } catch (\Throwable $e) {
+                $modeOk = false;
+                $modeError = $e->getMessage();
+            }
+
+            $readyOk = true;
+            $readyError = null;
+            try {
+                $this->requirePrinterReady($settings);
+            } catch (\Throwable $e) {
+                $readyOk = false;
+                $readyError = $e->getMessage();
+            }
+
+            $ms = (int)round((microtime(true) - $start) * 1000);
+            $isFullyReady = $modeOk && $readyOk;
+            $statusMsg = $isFullyReady
+                ? "Máy in sẵn sàng (trực tiếp LAN): ZPL II, Virtual Device NONE ({$ms} ms)."
+                : "Đã kết nối TCP LAN ({$ms} ms), nhưng cảnh báo: " . ($modeError ?: $readyError);
+
+            return [
+                'connected'  => true,
+                'ready'      => $isFullyReady,
+                'via_agent'  => false,
+                'host'       => $settings['host'],
+                'port'       => $settings['port'],
+                'ms'         => $ms,
+                'mode'       => $mode,
+                'modeError'  => $modeError,
+                'readyError' => $readyError,
+                'message'    => $statusMsg,
+            ];
+        } catch (\Throwable $directEx) {
+            // Khi không kết nối trực tiếp được (như Cloud VPS trên Internet gọi vào IP 192.168.1.94 nội bộ)
+            // Kiểm tra xem Print Agent tại xưởng có đang Online không
+            $agent = $this->getAgentStatus();
+            if ($agent['online']) {
+                return [
+                    'connected'  => true,
+                    'ready'      => $agent['ready'] ?? true,
+                    'via_agent'  => true,
+                    'host'       => $settings['host'],
+                    'port'       => $settings['port'],
+                    'ms'         => 0,
+                    'agent_info' => $agent,
+                    'message'    => "Trạm xưởng Online: Gervin Zebra Agent đang chạy ({$agent['station_name']}) · Máy in {$agent['printer_ip']}:{$agent['printer_port']} sẵn sàng nhận lệnh in từ Cloud.",
+                ];
+            }
+
+            // Cả kết nối trực tiếp lẫn Agent xưởng đều chưa có
+            return [
+                'connected'  => false,
+                'ready'      => false,
+                'via_agent'  => false,
+                'host'       => $settings['host'],
+                'port'       => $settings['port'],
+                'ms'         => 0,
+                'message'    => "Không kết nối được ({$settings['host']}:{$settings['port']}): " . $directEx->getMessage() . " Hãy bật file 'Gervin Zebra Agent' trên máy tính xưởng để in qua mạng LAN xưởng, hoặc bấm 'In qua trình duyệt (Dự phòng)'.",
+            ];
         }
-
-        $readyOk = true;
-        $readyError = null;
-        try {
-            $this->requirePrinterReady($settings);
-        } catch (\Throwable $e) {
-            $readyOk = false;
-            $readyError = $e->getMessage();
-        }
-
-        $ms = (int)round((microtime(true) - $start) * 1000);
-
-        $isFullyReady = $modeOk && $readyOk;
-        $statusMsg = $isFullyReady
-            ? "Máy in sẵn sàng: ZPL II, Virtual Device NONE, không lỗi giấy/PAUSE ({$ms} ms)."
-            : "Đã kết nối TCP ({$ms} ms), nhưng cảnh báo: " . ($modeError ?: $readyError);
-
-        return [
-            'connected'  => true,
-            'ready'      => $isFullyReady,
-            'host'       => $settings['host'],
-            'port'       => $settings['port'],
-            'ms'         => $ms,
-            'mode'       => $mode,
-            'modeError'  => $modeError,
-            'readyError' => $readyError,
-            'message'    => $statusMsg,
-        ];
     }
 
     /**
@@ -356,27 +572,43 @@ class ZebraPrinterService
     public function printSimpleTest(?array $customSettings = null): array
     {
         $settings = $customSettings ? array_merge($this->getSettings(), $customSettings) : $this->getSettings();
-        $mode = $this->printerModeStatus($settings);
-        $this->requireZplMode($mode);
-        $this->requirePrinterReady($settings);
-
         $zpl = $this->simpleTestZpl($settings);
-        $bytes = $this->sendZpl($settings, $zpl);
 
-        $this->recordHistory([
-            'time'     => date('c'),
-            'host'     => "{$settings['host']}:{$settings['port']}",
-            'quantity' => 1,
-            'status'   => 'sent',
-            'bytes'    => $bytes,
-            'message'  => 'In thử chữ ZPL OK thành công',
-        ]);
+        try {
+            $mode = $this->printerModeStatus($settings);
+            $this->requireZplMode($mode);
+            $this->requirePrinterReady($settings);
 
-        return [
-            'success'   => true,
-            'bytes'     => $bytes,
-            'message'   => 'Đã gửi 1 tem thử chữ ZEBRA ZPL OK đến máy in thành công!'
-        ];
+            $bytes = $this->sendZpl($settings, $zpl);
+
+            $this->recordHistory([
+                'time'     => date('c'),
+                'host'     => "{$settings['host']}:{$settings['port']}",
+                'quantity' => 1,
+                'status'   => 'sent',
+                'bytes'    => $bytes,
+                'message'  => 'In thử chữ ZPL OK thành công (trực tiếp LAN)',
+            ]);
+
+            return [
+                'success'   => true,
+                'queued'    => false,
+                'bytes'     => $bytes,
+                'message'   => 'Đã gửi 1 tem thử chữ ZEBRA ZPL OK đến máy in thành công!'
+            ];
+        } catch (\Throwable $directEx) {
+            $agent = $this->getAgentStatus();
+            if ($agent['online']) {
+                $job = $this->enqueueJob($zpl, 1, $settings, 'simple-test');
+                return [
+                    'success'  => true,
+                    'queued'   => true,
+                    'jobId'    => $job['id'],
+                    'message'  => 'Đã gửi 1 tem thử vào hàng đợi Trạm Xưởng (Agent đang chạy và sẽ in ngay)!',
+                ];
+            }
+            throw new RuntimeException("Không thể in thử: " . $directEx->getMessage() . " Hãy bật 'Gervin Zebra Agent' tại xưởng hoặc kiểm tra kết nối.");
+        }
     }
 
     /**
@@ -517,37 +749,61 @@ class ZebraPrinterService
     }
 
     /**
-     * In tem từ dữ liệu ảnh đơn sắc hex
+     * In tem từ dữ liệu ảnh đơn sắc hex (Hỗ trợ cả in trực tiếp LAN và in qua Agent Xưởng khi chạy trên Cloud)
      */
     public function printLabelHex(string $hex, int $quantity = 1, ?array $customSettings = null): array
     {
         $settings = $customSettings ? array_merge($this->getSettings(), $customSettings) : $this->getSettings();
+        $qty = max(1, min(100, $quantity));
 
-        // 1. Kiểm tra trạng thái máy in trước khi in
-        $mode = $this->printerModeStatus($settings);
-        $this->requireZplMode($mode);
-        $this->requirePrinterReady($settings);
+        // 1. Tạo chuỗi ZPL
+        $zpl = $this->makeZpl($settings, $hex, $qty);
 
-        // 2. Tạo mã ZPL và gửi qua TCP
-        $zpl = $this->makeZpl($settings, $hex, $quantity);
-        $bytesSent = $this->sendZpl($settings, $zpl);
+        // 2. Thử in trực tiếp qua TCP Socket LAN (chạy khi ở môi trường local cùng mạng)
+        try {
+            $mode = $this->printerModeStatus($settings);
+            $this->requireZplMode($mode);
+            $this->requirePrinterReady($settings);
 
-        $this->recordHistory([
-            'time'     => date('c'),
-            'host'     => "{$settings['host']}:{$settings['port']}",
-            'quantity' => $quantity,
-            'status'   => 'sent',
-            'bytes'    => $bytesSent,
-            'message'  => "Đã in {$quantity} tem thành công",
-        ]);
+            $bytesSent = $this->sendZpl($settings, $zpl);
 
-        return [
-            'success'   => true,
-            'host'      => $settings['host'],
-            'port'      => $settings['port'],
-            'quantity'  => $quantity,
-            'bytesSent' => $bytesSent,
-            'message'   => "Đã gửi thành công {$quantity} tem đến máy in Zebra ({$settings['host']}:{$settings['port']}) qua LAN!",
-        ];
+            $this->recordHistory([
+                'time'     => date('c'),
+                'host'     => "{$settings['host']}:{$settings['port']}",
+                'quantity' => $qty,
+                'status'   => 'sent',
+                'bytes'    => $bytesSent,
+                'message'  => "Đã in {$qty} tem thành công (trực tiếp LAN)",
+            ]);
+
+            return [
+                'success'   => true,
+                'queued'    => false,
+                'host'      => $settings['host'],
+                'port'      => $settings['port'],
+                'quantity'  => $qty,
+                'bytesSent' => $bytesSent,
+                'message'   => "Đã gửi thành công {$qty} tem đến máy in Zebra ({$settings['host']}:{$settings['port']}) qua LAN!",
+            ];
+        } catch (\Throwable $directEx) {
+            // 3. Nếu kết nối trực tiếp thất bại (trên Cloud VPS không nhìn thấy IP xưởng 192.168.1.94)
+            // Kiểm tra xem Gervin Zebra Agent tại máy xưởng có đang Online không
+            $agent = $this->getAgentStatus();
+            if ($agent['online']) {
+                $job = $this->enqueueJob($zpl, $qty, $settings, 'label');
+                return [
+                    'success'   => true,
+                    'queued'    => true,
+                    'jobId'     => $job['id'],
+                    'host'      => $settings['host'],
+                    'port'      => $settings['port'],
+                    'quantity'  => $qty,
+                    'message'   => "Đã chuyển lệnh in {$qty} tem vào hàng đợi Trạm Xưởng (Print Agent đang xử lý và máy in sẽ nhả tem ngay)!",
+                ];
+            }
+
+            // 4. Cả trực tiếp lẫn Agent xưởng đều không kết nối được
+            throw new RuntimeException("Máy chủ Cloud không kết nối được tới máy in nội bộ ({$settings['host']}:{$settings['port']}): " . $directEx->getMessage() . " Vui lòng bật file 'Gervin Zebra Agent' trên máy tính xưởng để in tự động, hoặc bấm 'In qua trình duyệt (Dự phòng)'.");
+        }
     }
 }

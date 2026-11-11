@@ -432,6 +432,11 @@ Route::middleware(['auth'])->prefix('processes')->name('processes.')->group(func
     Route::post('/packing/printer/exit-diagnostics', [PackingPackageController::class, 'exitDiagnostics'])->name('packing.printer.exit-diagnostics');
     Route::post('/packing/printer/recover-zpl', [PackingPackageController::class, 'recoverZpl'])->name('packing.printer.recover-zpl');
     Route::get('/packing/printer/history', [PackingPackageController::class, 'getPrinterHistory'])->name('packing.printer.history');
+    Route::post('/packing/printer/agent/poll', [PackingPackageController::class, 'agentPoll'])->name('packing.printer.agent.poll');
+    Route::post('/packing/printer/agent/ack', [PackingPackageController::class, 'agentAck'])->name('packing.printer.agent.ack');
+    Route::get('/packing/printer/agent/job/{id}', [PackingPackageController::class, 'getAgentJobStatus'])->name('packing.printer.agent.job');
+    Route::get('/packing/printer/agent/status', [PackingPackageController::class, 'getAgentStatus'])->name('packing.printer.agent.status');
+    Route::get('/packing/printer/agent/download', [PackingPackageController::class, 'downloadAgentScript'])->name('packing.printer.agent.download');
     Route::get('/packing/{package}/print-data', [PackingPackageController::class, 'getPackagePrintDataJson'])->name('packing.print-data');
     Route::post('/packing/{package}/print-zebra', [PackingPackageController::class, 'printZebra'])->name('packing.print-zebra');
     Route::get('/packing/{package}', [PackingPackageController::class, 'show'])->name('packing.show');
