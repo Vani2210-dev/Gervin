@@ -470,6 +470,7 @@ Route::prefix('processes/packing/printer/agent')->group(function () {
     Route::get('/job/{id}', [PackingPackageController::class, 'getAgentJobStatus'])->name('processes.packing.printer.agent.job');
     Route::get('/status', [PackingPackageController::class, 'getAgentStatus'])->name('processes.packing.printer.agent.status');
     Route::get('/download', [PackingPackageController::class, 'downloadAgentScript'])->name('processes.packing.printer.agent.download');
+    Route::get('/download-kill', [PackingPackageController::class, 'downloadKillAgentScript'])->name('processes.packing.printer.agent.download_kill');
 });
 
 // DC Stock (Kho tấm dư sau cắt CNC)

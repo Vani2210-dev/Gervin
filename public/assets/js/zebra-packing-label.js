@@ -422,6 +422,43 @@
                     .zebra-modal-root .zp-form-grid { grid-template-columns: 1fr !important; }
                     .zebra-modal-root .zp-preview-box { margin: 0 auto !important; }
                 }
+
+                /* Toast Thông báo không chặn màn hình */
+                #zebraPackingToastContainer {
+                    position: fixed !important;
+                    top: 20px !important;
+                    right: 20px !important;
+                    z-index: 1000000000 !important;
+                    display: flex !important;
+                    flex-direction: column !important;
+                    gap: 8px !important;
+                    pointer-events: none !important;
+                }
+                .zp-toast-pill {
+                    pointer-events: auto !important;
+                    min-width: 220px !important;
+                    max-width: 420px !important;
+                    padding: 9px 15px !important;
+                    border-radius: 9px !important;
+                    font-size: 13px !important;
+                    font-weight: 600 !important;
+                    color: #ffffff !important;
+                    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.28), 0 1px 3px rgba(0,0,0,0.12) !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 8px !important;
+                    opacity: 0;
+                    transform: translateY(-8px);
+                    transition: opacity 0.2s ease, transform 0.2s ease !important;
+                }
+                .zp-toast-pill.show {
+                    opacity: 1 !important;
+                    transform: translateY(0) !important;
+                }
+                .zp-toast-pill.zp-toast-success { background-color: #059669 !important; }
+                .zp-toast-pill.zp-toast-error { background-color: #dc2626 !important; }
+                .zp-toast-pill.zp-toast-warning { background-color: #d97706 !important; }
+                .zp-toast-pill.zp-toast-info { background-color: #0284c7 !important; }
             `;
             document.head.appendChild(style);
         },
@@ -430,12 +467,40 @@
             return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
         },
 
-        toast: function (msg, type = 'info') {
-            if (typeof window.showToast === 'function') {
-                window.showToast(msg, type);
-            } else {
-                alert(msg);
+        toast: function (msg, type = 'info', duration = 2500) {
+            this.ensureStylesInjected();
+
+            let container = document.getElementById('zebraPackingToastContainer');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'zebraPackingToastContainer';
+                document.body.appendChild(container);
             }
+
+            const pill = document.createElement('div');
+            pill.className = `zp-toast-pill zp-toast-${type}`;
+
+            let iconName = 'lucide:info';
+            if (type === 'success') iconName = 'lucide:check-circle';
+            else if (type === 'error') iconName = 'lucide:alert-circle';
+            else if (type === 'warning') iconName = 'lucide:alert-triangle';
+
+            pill.innerHTML = `
+                <iconify-icon icon="${iconName}" style="font-size:18px; flex-shrink:0;"></iconify-icon>
+                <span style="flex:1; line-height: 1.4;">${msg}</span>
+            `;
+
+            container.appendChild(pill);
+            requestAnimationFrame(() => {
+                pill.classList.add('show');
+            });
+
+            setTimeout(() => {
+                pill.classList.remove('show');
+                setTimeout(() => {
+                    if (pill.parentNode) pill.remove();
+                }, 250);
+            }, duration);
         },
 
         loadSettings: async function () {
@@ -917,10 +982,146 @@
             }
         },
 
+        // In nhanh 1 tem trực tiếp (Bấm là in luôn - không mở modal, không alert phiền phức)
+        quickPrint: async function (packageId, buttonEl, evt) {
+            if (evt && evt.shiftKey) {
+                // Nếu giữ phím Shift thì mở modal xem trước
+                return this.openModalForPackage(packageId);
+            }
+
+            if (this.isPrinting) {
+                this.toast('Đang có lệnh in khác, vui lòng chờ giây lát.', 'warning');
+                return;
+            }
+
+            let originalHtml = '';
+            if (buttonEl) {
+                originalHtml = buttonEl.innerHTML;
+                buttonEl.disabled = true;
+                buttonEl.innerHTML = '<iconify-icon icon="lucide:loader-2" class="animate-spin text-base"></iconify-icon>';
+            }
+
+            try {
+                // 1. Nạp dữ liệu kiện nhanh
+                const res = await fetch(`/processes/packing/${packageId}/print-data`, {
+                    headers: { 'Accept': 'application/json' }
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success || !data.printData) {
+                    throw new Error(data.message || 'Không thể tải dữ liệu kiện.');
+                }
+
+                const pkgData = data.printData;
+                this.currentPackageData = pkgData;
+
+                // 2. Chuyển đổi ZPL Hex Bitmap
+                const rasterResult = this.rasterize(pkgData);
+
+                // 3. Gửi lệnh in (1 tem)
+                this.isPrinting = true;
+                const postRes = await fetch(`/processes/packing/${packageId}/print-zebra`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': this.getCsrfToken()
+                    },
+                    body: JSON.stringify({
+                        hex: rasterResult.hex,
+                        quantity: 1,
+                        renderSettings: JSON.stringify(rasterResult.settings)
+                    })
+                });
+
+                const result = await postRes.json();
+                if (!postRes.ok || !result.success) {
+                    throw new Error(result.message || 'Lỗi gửi lệnh in tem Zebra.');
+                }
+
+                // 4. Nếu qua Cloud Queue: đợi Agent xác nhận ngầm
+                if (result.queued && result.jobId) {
+                    const confirmed = await this.trackJobStatusSilent(result.jobId, 1);
+                    if (confirmed) {
+                        if (buttonEl) {
+                            buttonEl.innerHTML = '<iconify-icon icon="lucide:check" class="text-base text-emerald-600 font-bold"></iconify-icon>';
+                        }
+                        this.toast(`Đã in tem kiện ${pkgData.packageCode || '#' + packageId}!`, 'success');
+                        this.updateStatusDot(true);
+                    } else {
+                        if (buttonEl) {
+                            buttonEl.innerHTML = '<iconify-icon icon="lucide:check" class="text-base text-amber-500 font-bold"></iconify-icon>';
+                        }
+                        this.toast(`Lệnh in đã vào hàng đợi xưởng.`, 'warning');
+                    }
+                } else {
+                    // Trực tiếp LAN
+                    if (buttonEl) {
+                        buttonEl.innerHTML = '<iconify-icon icon="lucide:check" class="text-base text-emerald-600 font-bold"></iconify-icon>';
+                    }
+                    this.toast(`Đã in tem kiện ${pkgData.packageCode || '#' + packageId}!`, 'success');
+                    this.updateStatusDot(true);
+                }
+            } catch (err) {
+                if (buttonEl) {
+                    buttonEl.innerHTML = '<iconify-icon icon="lucide:alert-circle" class="text-base text-rose-600"></iconify-icon>';
+                }
+                this.toast('Lỗi in: ' + err.message, 'error');
+                this.updateStatusDot(false);
+            } finally {
+                this.isPrinting = false;
+                if (buttonEl) {
+                    setTimeout(() => {
+                        buttonEl.disabled = false;
+                        buttonEl.innerHTML = originalHtml;
+                    }, 1500);
+                }
+            }
+        },
+
+        // Theo dõi trạng thái in của Cloud Agent trong nền (không popup, không alert)
+        trackJobStatusSilent: async function (jobId, qty) {
+            let attempts = 0;
+            const maxAttempts = 12;
+            return new Promise((resolve) => {
+                const timer = setInterval(async () => {
+                    attempts++;
+                    try {
+                        const res = await fetch(`/processes/packing/printer/agent/job/${jobId}`);
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (data.status === 'sent') {
+                                clearInterval(timer);
+                                resolve(true);
+                                return;
+                            }
+                            if (data.status === 'failed') {
+                                clearInterval(timer);
+                                resolve(false);
+                                return;
+                            }
+                        }
+                    } catch (e) {}
+
+                    if (attempts >= maxAttempts) {
+                        clearInterval(timer);
+                        resolve(false);
+                    }
+                }, 1000);
+            });
+        },
+
+        // Alias tương thích
+        openForPackage: function (packageId, buttonEl, evt) {
+            return this.quickPrint(packageId, buttonEl, evt);
+        },
+
+        printPackage: function (packageId, buttonEl, evt) {
+            return this.quickPrint(packageId, buttonEl, evt);
+        },
+
         // Mở Modal in tem bằng packageId (tự động fetch print-data)
         openModalForPackage: async function (packageId) {
             try {
-                this.toast('Đang nạp dữ liệu tem kiện #' + packageId + '...', 'info');
                 const res = await fetch(`/processes/packing/${packageId}/print-data`, {
                     headers: { 'Accept': 'application/json' }
                 });
@@ -1031,7 +1232,6 @@
             try {
                 const result = await this.printDirect(this.currentPackageData.packageId, qty);
                 if (result.queued && result.jobId) {
-                    this.toast(result.message || 'Đã gửi lệnh in tới trạm xưởng. Đang chờ máy in nhả tem…', 'info');
                     if (printBtn) {
                         printBtn.innerHTML = `<iconify-icon icon="lucide:loader-2" class="animate-spin text-lg"></iconify-icon> Trạm xưởng đang in tem…`;
                     }
@@ -1153,7 +1353,6 @@
             const newSettings = Object.fromEntries(formData.entries());
 
             try {
-                this.toast('Đang lưu cài đặt máy in…', 'info');
                 await this.saveSettings(newSettings);
                 this.toast('Đã lưu cấu hình máy in Zebra thành công!', 'success');
                 this.handleSettingsCheckConnection();
@@ -1166,7 +1365,6 @@
         handleSimpleTest: async function () {
             if (!confirm('Gửi 1 tem in thử chữ ZEBRA ZPL OK đến máy in?')) return;
             try {
-                this.toast('Đang gửi 1 tem in thử…', 'info');
                 const res = await this.simpleTest();
                 this.toast(res.message || 'In thử thành công!', 'success');
                 this.refreshHistoryInModal();
@@ -1177,7 +1375,6 @@
 
         handleExitDiagnostics: async function () {
             try {
-                this.toast('Đang gửi lệnh thoát Diagnostic (~JE)…', 'info');
                 const res = await this.exitDiagnostics();
                 this.toast(res.message, 'success');
             } catch (err) {
@@ -1188,7 +1385,6 @@
         handleRecoverZpl: async function () {
             if (!confirm('Khôi phục ZPL: Chuyển Virtual Device = NONE, tắt Diagnostic, đặt Language = ZPL và hủy hàng đợi. Bạn có chắc chắn?')) return;
             try {
-                this.toast('Đang gửi lệnh khôi phục ZPL…', 'info');
                 const res = await this.recoverZpl();
                 this.toast(res.message, 'success');
                 this.refreshHistoryInModal();
@@ -1383,10 +1579,16 @@
                                             Chạy file Agent tại máy tính xưởng để tự động nhận lệnh in qua mạng LAN.
                                         </div>
                                     </div>
-                                    <a href="/processes/packing/printer/agent/download" class="zp-btn zp-btn-primary" style="padding: 6px 12px; font-size: 12px; text-decoration: none;">
-                                        <iconify-icon icon="lucide:download" style="font-size: 14px;"></iconify-icon>
-                                        Tải Gervin-Zebra-Agent.bat
-                                    </a>
+                                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                        <a href="/processes/packing/printer/agent/download" class="zp-btn zp-btn-primary" style="padding: 6px 12px; font-size: 12px; text-decoration: none;" title="Bấm Q hoặc Ctrl+C để tắt nhanh khi chạy">
+                                            <iconify-icon icon="lucide:download" style="font-size: 14px;"></iconify-icon>
+                                            Tải Gervin-Zebra-Agent.bat
+                                        </a>
+                                        <a href="/processes/packing/printer/agent/download-kill" class="zp-btn zp-btn-danger" style="padding: 6px 12px; font-size: 12px; text-decoration: none;" title="Nhấp đúp để tắt sạch mọi Agent chạy ngầm">
+                                            <iconify-icon icon="lucide:power" style="font-size: 14px;"></iconify-icon>
+                                            Tải Tat-Agent.bat
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
 

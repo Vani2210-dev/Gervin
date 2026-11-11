@@ -141,9 +141,9 @@
 
                                             <!-- Nút In tem kiện Zebra -->
                                             <button type="button"
-                                                onclick="ZebraPacking.openModalForPackage({{ $package->id }})"
+                                                onclick="ZebraPacking.quickPrint({{ $package->id }}, this, event)"
                                                 class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 transition-colors inline-flex items-center justify-center shadow-sm"
-                                                title="In tem kiện Zebra (60x60)">
+                                                title="In ngay tem kiện Zebra (Bấm để in luôn · Giữ Shift để xem trước)">
                                                 <iconify-icon icon="lucide:printer" class="text-base"></iconify-icon>
                                             </button>
 
@@ -262,9 +262,9 @@
 
                                             <!-- Nút In tem kiện Zebra -->
                                             <button type="button"
-                                                onclick="ZebraPacking.openModalForPackage({{ $package->id }})"
+                                                onclick="ZebraPacking.quickPrint({{ $package->id }}, this, event)"
                                                 class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 transition-colors inline-flex items-center justify-center shadow-sm"
-                                                title="In tem kiện Zebra (60x60)">
+                                                title="In ngay tem kiện Zebra (Bấm để in luôn · Giữ Shift để xem trước)">
                                                 <iconify-icon icon="lucide:printer" class="text-base"></iconify-icon>
                                             </button>
 

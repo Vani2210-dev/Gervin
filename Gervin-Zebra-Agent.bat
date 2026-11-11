@@ -3,16 +3,22 @@ chcp 65001 >nul
 title Gervin Wood - Zebra ZT411 Print Agent
 color 0A
 cls
+
+:: Tu dong don dep moi tien trinh Agent cu dang chay ngam truoc khi khoi dong
+powershell -NoProfile -Command "Get-CimInstance Win32_Process | Where-Object { ($_.CommandLine -like '*Gervin-Zebra-Agent*' -or $_.CommandLine -like '*processes/packing/printer/agent/poll*') -and $_.ProcessId -ne $PID } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }" >nul 2>&1
+
 echo ======================================================================
 echo    GERVIN WOOD - PRINT AGENT KET NOI MAY IN ZEBRA QUA LAN XUONG
 echo ======================================================================
 echo  Server:        https://gervinwood.vn
 echo  May in Zebra:  192.168.1.94:9100
-echo  Huong dan:     Giu nguyen cua so nay khi lam viec de nhan lenh in.
+echo  Thoat chuong trinh: Bam phim [Q] hoac [Ctrl + C] bat ky luc nao de TAT
 echo ======================================================================
 echo.
 
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+"$agentTag = 'Gervin-Zebra-Agent';" ^
+"try { [Console]::TreatControlCAsInput = $true } catch {}" ^
 "$server = 'https://gervinwood.vn';" ^
 "$printerHost = '192.168.1.94';" ^
 "$printerPort = 9100;" ^
@@ -32,8 +38,16 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command ^
 "    Write-Host ('[CANH BAO] Loi ket noi may in Zebra: ' + $_.Exception.Message) -ForegroundColor Yellow;" ^
 "}" ^
 "Write-Host '[2/2] Dang ket noi toi Server: ' $server -ForegroundColor Cyan;" ^
+"Write-Host '>> BAM PHIM [Q] HOAC [Ctrl + C] DE TAT TOAN BO AGENT <<' -ForegroundColor White;" ^
 "$hasAnnouncedOnline = $false;" ^
 "while ($true) {" ^
+"    if ([Console]::KeyAvailable) {" ^
+"        $key = [Console]::ReadKey($true);" ^
+"        if ($key.Key -eq 'Q' -or $key.Key -eq 'Escape' -or ($key.Key -eq 'C' -and ($key.Modifiers -band [ConsoleModifiers]::Control))) {" ^
+"            Write-Host '`n[DA TAT] Ban da bam tat Agent. Giai phong bo nho thanh cong!' -ForegroundColor Yellow;" ^
+"            exit 0;" ^
+"        }" ^
+"    }" ^
 "    try {" ^
 "        $body = @{" ^
 "            station_name = $env:COMPUTERNAME;" ^
@@ -79,4 +93,4 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command ^
 "    Start-Sleep -Milliseconds 1200;" ^
 "}"
 
-pause
+exit 0

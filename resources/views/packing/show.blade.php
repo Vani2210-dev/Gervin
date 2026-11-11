@@ -88,8 +88,16 @@
                     Máy in
                 </button>
                 <button type="button"
-                    onclick="ZebraPacking.openForPackage({{ $package->id }})"
-                    class="packing-package-page__zebra-print-button btn bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-lg font-semibold inline-flex items-center gap-2 shadow-sm transition-colors">
+                    onclick="ZebraPacking.openModalForPackage({{ $package->id }})"
+                    class="btn bg-white hover:bg-neutral-50 text-neutral-600 border border-neutral-200 px-3 py-2.5 rounded-lg font-semibold inline-flex items-center gap-1.5 shadow-sm transition-colors"
+                    title="Xem trước tem kiện đóng gói">
+                    <iconify-icon icon="lucide:eye" class="text-base text-neutral-500"></iconify-icon>
+                    Xem tem
+                </button>
+                <button type="button"
+                    onclick="ZebraPacking.quickPrint({{ $package->id }}, this, event)"
+                    class="packing-package-page__zebra-print-button btn bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-lg font-semibold inline-flex items-center gap-2 shadow-sm transition-colors"
+                    title="In ngay tem kiện Zebra (Bấm để in luôn · Giữ Shift để xem trước)">
                     <iconify-icon icon="lucide:printer" class="text-lg"></iconify-icon>
                     In tem Zebra (60x60)
                 </button>
@@ -117,8 +125,16 @@
                     Máy in
                 </button>
                 <button type="button"
-                    onclick="ZebraPacking.openForPackage({{ $package->id }})"
-                    class="btn bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white border border-emerald-200 px-4 py-2.5 rounded-lg font-semibold inline-flex items-center gap-2 transition-colors shadow-sm">
+                    onclick="ZebraPacking.openModalForPackage({{ $package->id }})"
+                    class="btn bg-white hover:bg-neutral-50 text-neutral-600 border border-neutral-200 px-3 py-2.5 rounded-lg font-semibold inline-flex items-center gap-1.5 shadow-sm transition-colors"
+                    title="Xem trước tem kiện đóng gói">
+                    <iconify-icon icon="lucide:eye" class="text-base text-neutral-500"></iconify-icon>
+                    Xem tem
+                </button>
+                <button type="button"
+                    onclick="ZebraPacking.quickPrint({{ $package->id }}, this, event)"
+                    class="btn bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white border border-emerald-200 px-4 py-2.5 rounded-lg font-semibold inline-flex items-center gap-2 transition-colors shadow-sm"
+                    title="In ngay tem kiện Zebra (Bấm để in luôn · Giữ Shift để xem trước)">
                     <iconify-icon icon="lucide:printer" class="text-lg"></iconify-icon>
                     In tem Zebra
                 </button>
