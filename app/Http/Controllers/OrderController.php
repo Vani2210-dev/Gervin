@@ -1736,16 +1736,34 @@ class OrderController extends Controller
         $supplies = $request->input('supplies', []);
         if (!is_array($supplies)) return $totals;
 
+        $cleanNum = function($v) {
+            if ($v === null || $v === '') return 0.0;
+            if (is_numeric($v)) return (float)$v;
+            if (is_string($v)) {
+                $s = trim($v);
+                if (substr_count($s, '.') > 1) {
+                    $s = str_replace('.', '', $s);
+                } elseif (substr_count($s, '.') === 1) {
+                    $parts = explode('.', $s);
+                    if (strlen($parts[1]) === 3 && (intval($parts[0]) >= 10 || $parts[1] === '000')) {
+                        $s = str_replace('.', '', $s);
+                    }
+                }
+                return (float)str_replace(',', '.', $s);
+            }
+            return 0.0;
+        };
+
         foreach ($supplies as $supply) {
             $items = $supply['items'] ?? [];
             if (!is_array($items)) continue;
 
             foreach ($items as $item) {
                 // A: thickness, B: height, C: width, D: quantity
-                $thk = (float)($item['thickness'] ?? 0);
-                $h = (float)($item['height'] ?? ($item['size']['height'] ?? 0));
-                $w = (float)($item['width'] ?? ($item['size']['width'] ?? 0));
-                $qty = (float)($item['quantity'] ?? $item['wing_quantity'] ?? 0);
+                $thk = $cleanNum($item['thickness'] ?? 0);
+                $h = $cleanNum($item['height'] ?? ($item['size']['height'] ?? 0));
+                $w = $cleanNum($item['width'] ?? ($item['size']['width'] ?? 0));
+                $qty = $cleanNum($item['quantity'] ?? $item['wing_quantity'] ?? 0);
 
                 $totals['A'] = ($totals['A'] ?? 0) + $thk;
                 $totals['B'] = ($totals['B'] ?? 0) + $h;
@@ -1754,27 +1772,27 @@ class OrderController extends Controller
 
                 if (isset($item['straight_paste_length'])) {
                     // Min Late: E to N
-                    $totals['E'] = ($totals['E'] ?? 0) + (float)$item['straight_paste_length'];
-                    $totals['F'] = ($totals['F'] ?? 0) + (float)($item['beveled_length'] ?? 0);
-                    $totals['G'] = ($totals['G'] ?? 0) + (float)($item['vat_moi_length'] ?? 0);
-                    $totals['H'] = ($totals['H'] ?? 0) + (float)($item['ban_rong_40_59'] ?? 0);
-                    $totals['I'] = ($totals['I'] ?? 0) + (float)($item['ban_rong_17_39'] ?? 0);
-                    $totals['J'] = ($totals['J'] ?? 0) + (float)($item['ban_rong_25_35'] ?? 0);
-                    $totals['K'] = ($totals['K'] ?? 0) + (float)($item['beveled_handle'] ?? 0);
-                    $totals['L'] = ($totals['L'] ?? 0) + (float)($item['cnc'] ?? 0);
-                    $totals['M'] = ($totals['M'] ?? 0) + (float)($item['unit_price'] ?? 0);
-                    $totals['N'] = ($totals['N'] ?? 0) + (float)($item['total_price'] ?? 0);
+                    $totals['E'] = ($totals['E'] ?? 0) + $cleanNum($item['straight_paste_length']);
+                    $totals['F'] = ($totals['F'] ?? 0) + $cleanNum($item['beveled_length'] ?? 0);
+                    $totals['G'] = ($totals['G'] ?? 0) + $cleanNum($item['vat_moi_length'] ?? 0);
+                    $totals['H'] = ($totals['H'] ?? 0) + $cleanNum($item['ban_rong_40_59'] ?? 0);
+                    $totals['I'] = ($totals['I'] ?? 0) + $cleanNum($item['ban_rong_17_39'] ?? 0);
+                    $totals['J'] = ($totals['J'] ?? 0) + $cleanNum($item['ban_rong_25_35'] ?? 0);
+                    $totals['K'] = ($totals['K'] ?? 0) + $cleanNum($item['beveled_handle'] ?? 0);
+                    $totals['L'] = ($totals['L'] ?? 0) + $cleanNum($item['cnc'] ?? 0);
+                    $totals['M'] = ($totals['M'] ?? 0) + $cleanNum($item['unit_price'] ?? 0);
+                    $totals['N'] = ($totals['N'] ?? 0) + $cleanNum($item['total_price'] ?? 0);
                 } elseif (isset($item['wing_area'])) {
                     // Acrylic: E to H
-                    $totals['E'] = ($totals['E'] ?? 0) + (float)($item['wing_area'] ?? 0);
-                    $totals['F'] = ($totals['F'] ?? 0) + (float)($item['molding_length'] ?? 0);
-                    $totals['G'] = ($totals['G'] ?? 0) + (float)($item['unit_price'] ?? $item['price'] ?? 0);
-                    $totals['H'] = ($totals['H'] ?? 0) + (float)($item['total_price'] ?? 0);
+                    $totals['E'] = ($totals['E'] ?? 0) + $cleanNum($item['wing_area'] ?? 0);
+                    $totals['F'] = ($totals['F'] ?? 0) + $cleanNum($item['molding_length'] ?? 0);
+                    $totals['G'] = ($totals['G'] ?? 0) + $cleanNum($item['unit_price'] ?? $item['price'] ?? 0);
+                    $totals['H'] = ($totals['H'] ?? 0) + $cleanNum($item['total_price'] ?? 0);
                 } elseif (isset($item['area_m2']) || isset($item['weight'])) {
                     // Glass: E to G
-                    $totals['E'] = ($totals['E'] ?? 0) + (float)($item['area_m2'] ?? $item['weight'] ?? 0);
-                    $totals['F'] = ($totals['F'] ?? 0) + (float)($item['unit_price'] ?? $item['price'] ?? 0);
-                    $totals['G'] = ($totals['G'] ?? 0) + (float)($item['total_price'] ?? 0);
+                    $totals['E'] = ($totals['E'] ?? 0) + $cleanNum($item['area_m2'] ?? $item['weight'] ?? 0);
+                    $totals['F'] = ($totals['F'] ?? 0) + $cleanNum($item['unit_price'] ?? $item['price'] ?? 0);
+                    $totals['G'] = ($totals['G'] ?? 0) + $cleanNum($item['total_price'] ?? 0);
                 }
             }
         }

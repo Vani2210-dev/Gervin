@@ -300,7 +300,8 @@ class AcrylicOrderService
             foreach ($supplies as $supply) {
                 if (!isset($supply['items']) || !is_array($supply['items'])) continue;
                 foreach ($supply['items'] as $item) {
-                    $itemTotal = isset($item['total_price']) ? floatval(str_replace('.', '', $item['total_price'])) : (($item['unit_price'] ?? 0) * ($item['quantity'] ?? 0));
+                    $rawTotal = is_string($item['total_price'] ?? null) ? str_replace('.', '', $item['total_price']) : ($item['total_price'] ?? null);
+                    $itemTotal = ($rawTotal !== null && $rawTotal !== '') ? floatval($rawTotal) : ((floatval($item['unit_price'] ?? 0)) * (floatval($item['quantity'] ?? 0)));
                     $total += $itemTotal;
                 }
             }
@@ -355,9 +356,10 @@ class AcrylicOrderService
 
             if (!isset($supplyData['items']) || !is_array($supplyData['items'])) continue;
             foreach ($supplyData['items'] as $item) {
-                $unitPrice = round($item['unit_price'] ?? 0);
-                $totalPrice = isset($item['total_price']) ? floatval(str_replace('.', '', $item['total_price'])) : (($item['unit_price'] ?? 0) * ($item['quantity'] ?? 0));
-                $totalPrice = round($totalPrice);
+                $rawUnitPrice = is_string($item['unit_price'] ?? null) ? str_replace('.', '', $item['unit_price']) : ($item['unit_price'] ?? 0);
+                $unitPrice = round(floatval($rawUnitPrice));
+                $rawTotalPrice = is_string($item['total_price'] ?? null) ? str_replace('.', '', $item['total_price']) : ($item['total_price'] ?? null);
+                $totalPrice = ($rawTotalPrice !== null && $rawTotalPrice !== '') ? round(floatval($rawTotalPrice)) : round($unitPrice * (floatval($item['quantity'] ?? 0)));
                 
                 $orderItem = AcrylicOrderItem::create([
                     'order_supply_id'    => $orderSupply->id,

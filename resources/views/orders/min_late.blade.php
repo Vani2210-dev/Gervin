@@ -1179,8 +1179,9 @@ function calculateMinLateTotalPrice(row) {
     const parseFn = typeof window.parseInputValue === 'function' ? window.parseInputValue : (el => parseFloat(el?.value) || 0);
     const unitPrice = parseFn(unitPriceEl);
     const quantity = parseFn(row.querySelector('input[name*="[quantity]"]'));
-    const totalPrice = unitPrice * quantity;
-    totalPriceEl.value = Math.round(totalPrice);
+    const totalPrice = Math.round(unitPrice * quantity);
+    totalPriceEl.value = totalPrice > 0 ? totalPrice.toLocaleString('vi-VN') : 0;
+    totalPriceEl.setAttribute('data-exact-value', totalPrice > 0 ? totalPrice : 0);
     updateOrderSummary();
 }
 

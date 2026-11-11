@@ -957,22 +957,165 @@ async function previewOrder() {
 // ========================================================
 // HỆ THỐNG ĐỌC VÀ TÍNH TOÁN GIÁ TRỊ INPUT / CÔNG THỨC EXCEL
 // ========================================================
+window.parseSmartNumber = function(str, fieldHint) {
+    if (typeof str === 'number') return isNaN(str) ? 0 : str;
+    if (typeof str !== 'string') return 0;
+    let s = str.trim();
+    if (!s) return 0;
+    
+    // Loại bỏ ký tự tiền tệ, khoảng trắng thừa
+    s = s.replace(/[^\d.,\-]/g, '');
+    if (!s || s === '-') return 0;
+    
+    fieldHint = (fieldHint || '').toLowerCase();
+    const isCurrencyField = fieldHint.includes('unit_price') || 
+                            fieldHint.includes('total_price') || 
+                            (fieldHint.includes('price') && !fieldHint.includes('quantity')) ||
+                            fieldHint.includes('total') ||
+                            fieldHint.includes('amount') ||
+                            fieldHint.includes('thành tiền') ||
+                            fieldHint.includes('đơn giá');
+                            
+    const isDimensionField = fieldHint.includes('area') || 
+                             fieldHint.includes('wing_area') || 
+                             fieldHint.includes('area_m2') || 
+                             fieldHint.includes('length') || 
+                             fieldHint.includes('ban_rong') || 
+                             fieldHint.includes('weight') || 
+                             fieldHint.includes('molding');
+
+    // Case 1: Có cả dấu chấm '.' và dấu phẩy ','
+    if (s.includes('.') && s.includes(',')) {
+        const lastDot = s.lastIndexOf('.');
+        const lastComma = s.lastIndexOf(',');
+        if (lastDot > lastComma) {
+            // Dạng US: 1,250,000.50
+            s = s.replace(/,/g, '');
+        } else {
+            // Dạng VN: 1.250.000,50
+            s = s.replace(/\./g, '').replace(/,/g, '.');
+        }
+        const num = parseFloat(s);
+        return isNaN(num) ? 0 : num;
+    }
+    
+    // Case 2: Chỉ có dấu chấm '.'
+    if (s.includes('.')) {
+        const parts = s.split('.');
+        if (parts.length > 2) {
+            // Nhiều dấu chấm: 1.500.000 -> hàng nghìn
+            s = s.replace(/\./g, '');
+            const num = parseFloat(s);
+            return isNaN(num) ? 0 : num;
+        }
+        
+        const before = parts[0].replace('-', '');
+        const after = parts[1];
+        
+        // Bắt đầu bằng 0 (0.45, 0.045, 0.500) -> 100% là số thập phân
+        if (before === '0' || before === '') {
+            const num = parseFloat(s);
+            return isNaN(num) ? 0 : num;
+        }
+        
+        // Không phải 3 chữ số sau dấu chấm (1.5, 1.25, 2.88) -> 100% là số thập phân
+        if (after.length !== 3) {
+            const num = parseFloat(s);
+            return isNaN(num) ? 0 : num;
+        }
+        
+        // Trường diện tích / chiều dài / kích thước luôn là số thập phân (1.500 m2 / m)
+        if (isDimensionField) {
+            const num = parseFloat(s);
+            return isNaN(num) ? 0 : num;
+        }
+        
+        // Nếu là tiền tệ hoặc trước >= 2 chữ số (10.000, 150.000) hoặc đuôi '000' (1.000, 5.000) -> Tiền tệ VN
+        if (isCurrencyField || before.length >= 2 || after === '000') {
+            s = s.replace(/\./g, '');
+            const num = parseFloat(s);
+            return isNaN(num) ? 0 : num;
+        }
+        
+        const num = parseFloat(s);
+        return isNaN(num) ? 0 : num;
+    }
+    
+    // Case 3: Chỉ có dấu phẩy ','
+    if (s.includes(',')) {
+        const parts = s.split(',');
+        if (parts.length > 2) {
+            // Nhiều dấu phẩy: 1,500,000 -> hàng nghìn
+            s = s.replace(/,/g, '');
+            const num = parseFloat(s);
+            return isNaN(num) ? 0 : num;
+        }
+        
+        const before = parts[0].replace('-', '');
+        const after = parts[1];
+        
+        // Bắt đầu bằng 0 (0,45, 0,045) hoặc sau không phải 3 chữ số (1,5, 12,5) -> số thập phân
+        if (before === '0' || before === '' || after.length !== 3 || isDimensionField) {
+            s = s.replace(/,/g, '.');
+            const num = parseFloat(s);
+            return isNaN(num) ? 0 : num;
+        }
+        
+        if (isCurrencyField || before.length >= 2 || after === '000') {
+            s = s.replace(/,/g, '');
+            const num = parseFloat(s);
+            return isNaN(num) ? 0 : num;
+        }
+        
+        s = s.replace(/,/g, '.');
+        const num = parseFloat(s);
+        return isNaN(num) ? 0 : num;
+    }
+    
+    // Case 4: Không có dấu chấm hay phẩy
+    const num = parseFloat(s);
+    return isNaN(num) ? 0 : num;
+};
+
 window.parseInputValue = function(input) {
-    if (!input) return 0;
-    let val = input.value;
-    if (typeof val === 'string') {
-        val = val.trim();
-        if (val.startsWith('=')) {
-            const evalFn = typeof window.evaluateExcelFormula === 'function' ? window.evaluateExcelFormula : (typeof evaluateExcelFormula === 'function' ? evaluateExcelFormula : null);
-            if (evalFn) {
-                const evalVal = evalFn(val);
-                if (evalVal !== null && !isNaN(evalVal)) return evalVal;
+    if (input === null || input === undefined) return 0;
+    if (typeof input === 'number') return isNaN(input) ? 0 : input;
+
+    const isElement = typeof input === 'object' && input !== null && ('value' in input || input.nodeType === 1);
+    let val = isElement ? input.value : input;
+
+    if (typeof val === 'number') return isNaN(val) ? 0 : val;
+    if (typeof val !== 'string') return 0;
+    val = val.trim();
+    if (!val) return 0;
+
+    // 1. Nếu bắt đầu bằng '=' (công thức Excel)
+    if (val.startsWith('=')) {
+        const evalFn = typeof window.evaluateExcelFormula === 'function' ? window.evaluateExcelFormula : (typeof evaluateExcelFormula === 'function' ? evaluateExcelFormula : null);
+        if (evalFn) {
+            const evalVal = evalFn(val);
+            if (evalVal !== null && !isNaN(evalVal)) return parseFloat(evalVal);
+        }
+    }
+
+    // 2. Nếu element có data-exact-value số thực hợp lệ
+    if (isElement && input.hasAttribute && input.hasAttribute('data-exact-value')) {
+        const rawExact = input.getAttribute('data-exact-value');
+        if (rawExact !== null && rawExact !== '') {
+            const numExact = parseFloat(rawExact);
+            if (!isNaN(numExact)) {
+                // Kiểm tra xem value hiện tại có đồng nhất với exact value không
+                const cleanCurrent = val.replace(/[^\d.,\-]/g, '');
+                if (cleanCurrent !== '' && (Math.abs(numExact - parseFloat(cleanCurrent)) < 0.001 || cleanCurrent === rawExact || cleanCurrent === String(numExact))) {
+                    return numExact;
+                }
             }
         }
-        val = val.replace(/\./g, '').replace(/,/g, '.');
     }
-    const num = parseFloat(input.getAttribute('data-exact-value') || val);
-    return isNaN(num) ? 0 : num;
+
+    // 3. Phân tích chuỗi số thông minh
+    const hint = isElement ? (input.name || input.id || input.className || input.getAttribute('placeholder') || '') : '';
+    return window.parseSmartNumber(val, hint);
 };
 
 window.getOrderColumnTotals = function() {
@@ -982,8 +1125,8 @@ window.getOrderColumnTotals = function() {
         if (col) {
             let val = td.hasAttribute('data-summary-raw') ? parseFloat(td.getAttribute('data-summary-raw')) : NaN;
             if (isNaN(val)) {
-                let text = (td.textContent || '').replace(/[^\d.,]/g, '').replace(/\./g, '').replace(/,/g, '.');
-                val = parseFloat(text) || 0;
+                let text = (td.textContent || '').replace(/[^\d.,\-]/g, '');
+                val = typeof window.parseSmartNumber === 'function' ? window.parseSmartNumber(text) : (parseFloat(text) || 0);
             }
             totals[col] = (totals[col] || 0) + (isNaN(val) ? 0 : val);
         }
@@ -1102,6 +1245,7 @@ function _doUpdateOrderSummary() {
                 const currentVal = typeof window.parseInputValue === 'function' ? window.parseInputValue(inp) : (parseFloat(inp.value) || 0);
                 if (evaluated !== null && Math.abs(currentVal - evaluated) > 0.0001) {
                     inp.value = evaluated;
+                    inp.setAttribute('data-exact-value', evaluated);
                     inp.title = `Công thức: ${f} = ${evaluated}`;
                     const row = inp.closest('tr.payment-detail-row');
                     if (row && typeof calculatePaymentDetailRowTotal === 'function') {
@@ -1207,7 +1351,7 @@ function _doUpdateOrderSummary() {
             detailRows.forEach(row => {
                 const totalInput = row.querySelector('input[name*="total"]');
                 if (totalInput && !totalInput.disabled) {
-                    const rawTotal = totalInput.value ? totalInput.value.replace(/\./g, '') : 0;
+                    const rawTotal = typeof window.parseInputValue === 'function' ? window.parseInputValue(totalInput) : (parseFloat(totalInput.value ? totalInput.value.replace(/\./g, '') : 0) || 0);
                     totalAmount += parseFloat(rawTotal) || 0;
                 }
             });
@@ -1227,11 +1371,10 @@ function _doUpdateOrderSummary() {
             const heightInput = row.querySelector('input[name*="[height]"]');
             const widthInput = row.querySelector('input[name*="[width]"]');
             if (qtyInput && !qtyInput.disabled) {
-                const quantity = parseFloat(qtyInput.value) || 0;
-                const rawPrice = priceInput ? priceInput.value.replace(/\./g, '') : 0;
-                const totalPrice = parseFloat(rawPrice) || 0;
-                const height = parseFloat(heightInput ? heightInput.value : 0) || 0;
-                const width = parseFloat(widthInput ? widthInput.value : 0) || 0;
+                const quantity = typeof window.parseInputValue === 'function' ? window.parseInputValue(qtyInput) : (parseFloat(qtyInput.value) || 0);
+                const totalPrice = typeof window.parseInputValue === 'function' ? window.parseInputValue(priceInput) : (parseFloat(priceInput ? priceInput.value.replace(/\./g, '') : 0) || 0);
+                const height = typeof window.parseInputValue === 'function' ? window.parseInputValue(heightInput) : (parseFloat(heightInput ? heightInput.value : 0) || 0);
+                const width = typeof window.parseInputValue === 'function' ? window.parseInputValue(widthInput) : (parseFloat(widthInput ? widthInput.value : 0) || 0);
 
                 // Tiền công vẫn được cộng vào tổng tiền đơn hàng!
                 if (!window.isReworkOrder && !window.isWarrantyOrder) {
@@ -1258,7 +1401,7 @@ function _doUpdateOrderSummary() {
             detailRows.forEach(row => {
                 const totalInput = row.querySelector('input[name*="total"]');
                 if (totalInput && !totalInput.disabled) {
-                    const rawTotal = totalInput.value ? totalInput.value.replace(/\./g, '') : 0;
+                    const rawTotal = typeof window.parseInputValue === 'function' ? window.parseInputValue(totalInput) : (parseFloat(totalInput.value ? totalInput.value.replace(/\./g, '') : 0) || 0);
                     paymentDetailsAmount += parseFloat(rawTotal) || 0;
                 }
             });
@@ -3314,7 +3457,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
 
                         // Parse values based on input type
-                        if (input.type === 'number') {
+                        const numericKeys = ['quantity', 'wing_quantity', 'height', 'width', 'thickness', 'unit_price', 'total_price', 'price', 'total', 'wing_area', 'molding_length', 'area_m2', 'weight', 'straight_paste_length', 'beveled_length', 'vat_moi_length', 'ban_rong_40_59', 'ban_rong_17_39', 'ban_rong_25_35', 'beveled_handle', 'cnc'];
+                        if (numericKeys.includes(key)) {
+                            val = (val === '' || val === null || val === undefined) ? '' : (typeof window.parseInputValue === 'function' ? window.parseInputValue(input) : (parseFloat(val) || 0));
+                        } else if (input.type === 'number') {
                             val = val === '' ? '' : parseFloat(val);
                         } else if (input.type === 'hidden' && (key === 'is_labor' || key.startsWith('offset_') || key.startsWith('mill_'))) {
                             val = val === '' ? null : parseInt(val);
@@ -4936,8 +5082,8 @@ function submitQuickCreateCustomer(e) {
             if (col) {
                 let val = td.hasAttribute('data-summary-raw') ? parseFloat(td.getAttribute('data-summary-raw')) : NaN;
                 if (isNaN(val)) {
-                    let text = (td.textContent || '').replace(/[^\d.,]/g, '').replace(/\./g, '').replace(/,/g, '.');
-                    val = parseFloat(text) || 0;
+                    let text = (td.textContent || '').replace(/[^\d.,\-]/g, '');
+                    val = typeof window.parseSmartNumber === 'function' ? window.parseSmartNumber(text) : (parseFloat(text) || 0);
                 }
                 totals[col] = (totals[col] || 0) + (isNaN(val) ? 0 : val);
             }

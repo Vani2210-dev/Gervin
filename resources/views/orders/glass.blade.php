@@ -1367,7 +1367,9 @@ function calculateGlassTotalPrice(row, sourceEvent) {
             if (height > 0 && width > 0 && wingQty > 0) {
                 area = (height * width * wingQty) / 1000000;
             }
-            areaInput.value = area > 0 ? area : '';
+            areaInput.value = area > 0 ? (area >= 1 ? area.toFixed(3).replace(/\.?0+$/, '') : area.toFixed(4).replace(/\.?0+$/, '')) : '';
+            if (area > 0) areaInput.setAttribute('data-exact-value', area);
+            else areaInput.removeAttribute('data-exact-value');
             if (displayAreaInput) {
                 displayAreaInput.value = area > 0 ? area.toFixed(2) : '';
                 if (height > 0 && width > 0 && wingQty > 0) {
@@ -1382,11 +1384,12 @@ function calculateGlassTotalPrice(row, sourceEvent) {
     }
     
     const currentArea = parseFn(areaInput);
-    const totalPrice = currentArea * unitPrice;
+    const totalPrice = Math.round(currentArea * unitPrice);
     
     const totalPriceInput = row.querySelector('input[name*="[total_price]"]');
     if (totalPriceInput) {
-        totalPriceInput.value = totalPrice > 0 ? totalPrice.toLocaleString('vi-VN') : '';
+        totalPriceInput.value = totalPrice > 0 ? totalPrice.toLocaleString('vi-VN') : 0;
+        totalPriceInput.setAttribute('data-exact-value', totalPrice > 0 ? totalPrice : 0);
     }
     updateOrderSummary();
 }
@@ -1930,7 +1933,7 @@ function confirmGlassExcelImport() {
                 const el = newRow.querySelector('input[name*="[total_price]"]');
                 if (el) {
                     el.value = formattedTotal;
-                    el.setAttribute('data-exact-value', formattedTotal);
+                    el.setAttribute('data-exact-value', item.total_price);
                 }
             } else {
                 calculateGlassTotalPrice(newRow);

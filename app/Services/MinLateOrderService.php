@@ -280,8 +280,8 @@ class MinLateOrderService
     {
         $totalAmount = 0;
         foreach ($paymentDetails as $detail) {
-            $rawTotal = str_replace('.', '', $detail['total'] ?? 0);
-            $totalAmount += round($rawTotal);
+            $rawTotal = is_string($detail['total'] ?? 0) ? str_replace('.', '', $detail['total']) : ($detail['total'] ?? 0);
+            $totalAmount += round(floatval($rawTotal));
         }
         return round($totalAmount, -3);
     }

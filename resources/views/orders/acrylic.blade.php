@@ -1412,7 +1412,9 @@ function calculateTotalPrice(row, sourceEvent) {
             if (height > 0 && quantity > 0) {
                 wingArea = (height * quantity) / 1000;
             }
-            wingAreaInput.value = wingArea > 0 ? wingArea : '';
+            wingAreaInput.value = wingArea > 0 ? (wingArea >= 1 ? wingArea.toFixed(3).replace(/\.?0+$/, '') : wingArea.toFixed(4).replace(/\.?0+$/, '')) : '';
+            if (wingArea > 0) wingAreaInput.setAttribute('data-exact-value', wingArea);
+            else wingAreaInput.removeAttribute('data-exact-value');
             if (!wingAreaInput.dataset.manual && height > 0 && quantity > 0) {
                 wingAreaInput.dataset.formula = (quantity > 1) ? `=${height}*${quantity}/1000` : `=${height}/1000`;
                 wingAreaInput.title = `Công thức: ${wingAreaInput.dataset.formula}`;
@@ -1421,6 +1423,7 @@ function calculateTotalPrice(row, sourceEvent) {
             if (!wingAreaInput.dataset.manual) {
                 if (!isNaN(width) && width > 0 && width <= 55) {
                     wingAreaInput.value = '';
+                    wingAreaInput.removeAttribute('data-exact-value');
                     delete wingAreaInput.dataset.formula;
                     wingAreaInput.removeAttribute('title');
                 } else {
@@ -1428,7 +1431,9 @@ function calculateTotalPrice(row, sourceEvent) {
                     if (height > 0 && width > 0 && quantity > 0) {
                         wingArea = (height * width * quantity) / 1000000;
                     }
-                    wingAreaInput.value = wingArea > 0 ? wingArea : '';
+                    wingAreaInput.value = wingArea > 0 ? (wingArea >= 1 ? wingArea.toFixed(3).replace(/\.?0+$/, '') : wingArea.toFixed(4).replace(/\.?0+$/, '')) : '';
+                    if (wingArea > 0) wingAreaInput.setAttribute('data-exact-value', wingArea);
+                    else wingAreaInput.removeAttribute('data-exact-value');
                     if (height > 0 && width > 0 && quantity > 0) {
                         wingAreaInput.dataset.formula = (quantity > 1) ? `=${height}*${width}*${quantity}/1000000` : `=${height}*${width}/1000000`;
                         wingAreaInput.title = `Công thức: ${wingAreaInput.dataset.formula}`;
@@ -1449,6 +1454,7 @@ function calculateTotalPrice(row, sourceEvent) {
     const totalPriceInput = row.querySelector('input[name*="[total_price]"]');
     if (totalPriceInput) {
         totalPriceInput.value = totalPrice > 0 ? totalPrice.toLocaleString('vi-VN') : 0;
+        totalPriceInput.setAttribute('data-exact-value', totalPrice > 0 ? totalPrice : 0);
     }
     updateOrderSummary();
 }
@@ -1490,6 +1496,8 @@ function applyNarrowWidthRule(row, triggerCalculation = true) {
         if (moldingLengthInput) {
             const phao = height > 0 ? ((height * quantity) / 1000) : 0;
             moldingLengthInput.value = phao > 0 ? phao : '';
+            if (phao > 0) moldingLengthInput.setAttribute('data-exact-value', phao);
+            else moldingLengthInput.removeAttribute('data-exact-value');
             if (height > 0 && !moldingLengthInput.dataset.manual) {
                 moldingLengthInput.dataset.formula = (quantity > 1) ? `=${height}*${quantity}/1000` : `=${height}/1000`;
                 moldingLengthInput.title = `Công thức: ${moldingLengthInput.dataset.formula}`;
@@ -1502,6 +1510,7 @@ function applyNarrowWidthRule(row, triggerCalculation = true) {
         // Cánh (m2) = 0
         if (wingAreaInput && !wingAreaInput.dataset.manual) {
             wingAreaInput.value = '';
+            wingAreaInput.removeAttribute('data-exact-value');
             delete wingAreaInput.dataset.formula;
             wingAreaInput.removeAttribute('title');
         }
@@ -1512,6 +1521,7 @@ function applyNarrowWidthRule(row, triggerCalculation = true) {
         // Phào (m) = 0 khi rộng > 55
         if (moldingLengthInput) {
             moldingLengthInput.value = '';
+            moldingLengthInput.removeAttribute('data-exact-value');
         }
 
         // If it transitioned from narrow to wide, restore the original price
@@ -2204,7 +2214,7 @@ function confirmExcelImport() {
                 const el = newRow.querySelector('input[name*="[total_price]"]');
                 if (el) {
                     el.value = formattedTotal;
-                    el.setAttribute('data-exact-value', formattedTotal);
+                    el.setAttribute('data-exact-value', item.total_price);
                 }
             }
 

@@ -503,9 +503,10 @@ function calculatePaymentDetailRowTotal(row) {
     const quantity = parseFn(qtyInput);
     const price = parseFn(priceInput);
     const priceOnly = priceOnlyInput ? parseFn(priceOnlyInput) : 0;
-    const total = quantity * (price + priceOnly);
+    const total = Math.round(quantity * (price + priceOnly));
     
-    totalInput.value = total > 0 ? Math.round(total).toLocaleString('vi-VN') : 0;
+    totalInput.value = total > 0 ? total.toLocaleString('vi-VN') : 0;
+    totalInput.setAttribute('data-exact-value', total > 0 ? total : 0);
     if (typeof updateOrderSummary === 'function') updateOrderSummary();
 }
 

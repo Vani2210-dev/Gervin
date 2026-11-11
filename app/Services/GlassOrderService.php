@@ -282,7 +282,9 @@ class GlassOrderService
             foreach ($supplies as $supply) {
                 if (!isset($supply['items']) || !is_array($supply['items'])) continue;
                 foreach ($supply['items'] as $item) {
-                    $itemTotal = isset($item['total_price']) ? floatval(str_replace('.', '', $item['total_price'])) : (($item['unit_price'] ?? 0) * ($item['area_m2'] ?: ($item['wing_quantity'] ?? 0)));
+                    $rawTotal = is_string($item['total_price'] ?? null) ? str_replace('.', '', $item['total_price']) : ($item['total_price'] ?? null);
+                    $rawUnitPrice = is_string($item['unit_price'] ?? null) ? str_replace('.', '', $item['unit_price']) : ($item['unit_price'] ?? 0);
+                    $itemTotal = ($rawTotal !== null && $rawTotal !== '') ? floatval($rawTotal) : (floatval($rawUnitPrice) * (floatval($item['area_m2'] ?: ($item['wing_quantity'] ?? 0))));
                     $total += $itemTotal;
                 }
             }
@@ -366,8 +368,10 @@ class GlassOrderService
                 $wingQuantity = $item['wing_quantity'] ?? 1;
                 $areaM2 = $item['area_m2'] ?? (($height * $width * $wingQuantity) / 1000000);
                 
-                $totalPrice = isset($item['total_price']) ? floatval(str_replace('.', '', $item['total_price'])) : ($areaM2 > 0 ? ($areaM2 * $item['unit_price']) : ($wingQuantity * $item['unit_price']));
-                $totalPrice = round($totalPrice);
+                $rawUnitPrice = is_string($item['unit_price'] ?? null) ? str_replace('.', '', $item['unit_price']) : ($item['unit_price'] ?? 0);
+                $unitPrice = round(floatval($rawUnitPrice));
+                $rawTotalPrice = is_string($item['total_price'] ?? null) ? str_replace('.', '', $item['total_price']) : ($item['total_price'] ?? null);
+                $totalPrice = ($rawTotalPrice !== null && $rawTotalPrice !== '') ? round(floatval($rawTotalPrice)) : round($areaM2 > 0 ? ($areaM2 * $unitPrice) : ($wingQuantity * $unitPrice));
 
                 $orderItem = GlassOrderItem::create([
                     'order_supply_id'        => $orderSupply->id,
@@ -381,7 +385,7 @@ class GlassOrderService
                     'unit'                   => $item['unit'] ?? 'Bộ',
                     'wing_quantity'          => $wingQuantity,
                     'area_m2'                => $areaM2,
-                    'unit_price'             => round($item['unit_price']),
+                    'unit_price'             => $unitPrice,
                     'total_price'            => $totalPrice,
                     'notes'                  => $item['notes'] ?? null,
                     'old_size'               => $item['old_size'] ?? null,
