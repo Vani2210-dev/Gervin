@@ -227,8 +227,10 @@
                             $item->beveled_handle = $iData['beveled_handle'] ?? 0;
                             $item->cnc = $iData['cnc'] ?? 0;
                             $item->direction = $iData['direction'] ?? '';
+                            $item->bevel = $iData['bevel'] ?? '';
                             $item->notes = $iData['notes'] ?? '';
                             $item->formula = $iData['formula'] ?? null;
+                            $item->old_size = $iData['old_size'] ?? '';
                             
                             $item->size = [
                                 'height' => $iData['height'] ?? '',
@@ -510,8 +512,8 @@
                                             <iconify-icon icon="lucide:trash-2" class="text-base"></iconify-icon>
                                         </button>
                                     </div>
-                                    <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][id]" value="{{ $item->id }}">
-                                    <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][old_size]" value="{{ $item->old_size }}">
+                                    <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][id]" value="{{ $item->id ?? '' }}">
+                                    <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][old_size]" value="{{ $item->old_size ?? '' }}">
                                 </td>
                             </tr>
                             @endforeach

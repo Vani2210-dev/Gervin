@@ -347,6 +347,7 @@
                             $item->total_price = $iData['total_price'] ?? 0;
                             $item->notes = $iData['notes'] ?? '';
                             $item->formula = $iData['formula'] ?? null;
+                            $item->old_size = $iData['old_size'] ?? '';
                             
                             $items->push($item);
                         }
@@ -489,8 +490,8 @@
                                         <span class="row-index font-semibold text-neutral-500">{{ $itemIndex + 1 }}</span>
                                     </td>
                                     <td style="width: 160px; min-width: 160px; " class="border border-neutral-200">
-                                        <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][id]" value="{{ $item->id }}">
-                                        <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][old_size]" value="{{ $item->old_size }}">
+                                        <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][id]" value="{{ $item->id ?? '' }}">
+                                        <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][old_size]" value="{{ $item->old_size ?? '' }}">
                                         @if($isAccessory)
                                             <select name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][product_code]" class="accessory-product-code-select tom-select-accessory-product w-full text-xs font-semibold">
                                                 <option value="">-- Mã SP --</option>
@@ -1362,24 +1363,30 @@ function calculateGlassTotalPrice(row, sourceEvent) {
     
     if (sourceEvent !== 'area') {
         const displayAreaInput = row.querySelector('.display-area-input');
-        if (!displayAreaInput || !displayAreaInput.dataset.manual) {
-            let area = 0;
+        let area = 0;
+        if (height > 0 && width > 0 && wingQty > 0) {
+            area = (height * width * wingQty) / 1000000;
+        }
+        areaInput.value = area > 0 ? (area >= 1 ? area.toFixed(3).replace(/\.?0+$/, '') : area.toFixed(4).replace(/\.?0+$/, '')) : '';
+        if (area > 0) areaInput.setAttribute('data-exact-value', area);
+        else areaInput.removeAttribute('data-exact-value');
+        if (displayAreaInput) {
+            delete displayAreaInput.dataset.manual;
             if (height > 0 && width > 0 && wingQty > 0) {
-                area = (height * width * wingQty) / 1000000;
+                displayAreaInput.dataset.formula = (wingQty > 1) ? `=${height}*${width}*${wingQty}/1000000` : `=${height}*${width}/1000000`;
+                displayAreaInput.title = `Công thức: ${displayAreaInput.dataset.formula}`;
+            } else {
+                delete displayAreaInput.dataset.formula;
+                displayAreaInput.removeAttribute('title');
             }
-            areaInput.value = area > 0 ? (area >= 1 ? area.toFixed(3).replace(/\.?0+$/, '') : area.toFixed(4).replace(/\.?0+$/, '')) : '';
-            if (area > 0) areaInput.setAttribute('data-exact-value', area);
-            else areaInput.removeAttribute('data-exact-value');
-            if (displayAreaInput) {
+            if (displayAreaInput.dataset.isEditing === '1') {
+                displayAreaInput.value = displayAreaInput.dataset.formula || '';
+            } else {
                 displayAreaInput.value = area > 0 ? area.toFixed(2) : '';
-                if (height > 0 && width > 0 && wingQty > 0) {
-                    displayAreaInput.dataset.formula = (wingQty > 1) ? `=${height}*${width}*${wingQty}/1000000` : `=${height}*${width}/1000000`;
-                    displayAreaInput.title = `Công thức: ${displayAreaInput.dataset.formula}`;
-                } else {
-                    delete displayAreaInput.dataset.formula;
-                    displayAreaInput.removeAttribute('title');
-                }
             }
+        }
+        if (typeof syncRowFormulasToHiddenInput === 'function') {
+            syncRowFormulasToHiddenInput(row);
         }
     }
     

@@ -5160,9 +5160,9 @@ function submitQuickCreateCustomer(e) {
         
         // 1. Cánh (m2) trong đơn Acrylic
         if (name.includes('[wing_area]')) {
-            const h = parseFloat(row.querySelector('input[name*="[height]"]')?.value) || 0;
-            const w = parseFloat(row.querySelector('input[name*="[width]"]')?.value) || 0;
-            const q = parseFloat(row.querySelector('input[name*="[quantity]"]')?.value) || 1;
+            const h = typeof window.parseInputValue === 'function' ? window.parseInputValue(row.querySelector('input[name*="[height]"]')) : (parseFloat(row.querySelector('input[name*="[height]"]')?.value) || 0);
+            const w = typeof window.parseInputValue === 'function' ? window.parseInputValue(row.querySelector('input[name*="[width]"]')) : (parseFloat(row.querySelector('input[name*="[width]"]')?.value) || 0);
+            const q = typeof window.parseInputValue === 'function' ? (window.parseInputValue(row.querySelector('input[name*="[quantity]"]')) || 1) : (parseFloat(row.querySelector('input[name*="[quantity]"]')?.value) || 1);
             const prodName = row.querySelector('input[name*="[product_name]"]')?.value?.trim();
             
             if (prodName === 'Công giả dày' && h > 0) {
@@ -5175,9 +5175,9 @@ function submitQuickCreateCustomer(e) {
 
         // 2. Phào (m) trong đơn Acrylic
         if (name.includes('[molding_length]')) {
-            const h = parseFloat(row.querySelector('input[name*="[height]"]')?.value) || 0;
-            const q = parseFloat(row.querySelector('input[name*="[quantity]"]')?.value) || 1;
-            const currentVal = parseFloat(input.value) || 0;
+            const h = typeof window.parseInputValue === 'function' ? window.parseInputValue(row.querySelector('input[name*="[height]"]')) : (parseFloat(row.querySelector('input[name*="[height]"]')?.value) || 0);
+            const q = typeof window.parseInputValue === 'function' ? (window.parseInputValue(row.querySelector('input[name*="[quantity]"]')) || 1) : (parseFloat(row.querySelector('input[name*="[quantity]"]')?.value) || 1);
+            const currentVal = typeof window.parseInputValue === 'function' ? window.parseInputValue(input) : (parseFloat(input.value) || 0);
             if (h > 0 && currentVal > 0) {
                 return (q > 1) ? `=${h}*${q}/1000` : `=${h}/1000`;
             }
@@ -5185,9 +5185,9 @@ function submitQuickCreateCustomer(e) {
 
         // 3. Khối lượng (m2) trong đơn Nhôm kính
         if (isDisplayArea || name.includes('[area_m2]')) {
-            const h = parseFloat(row.querySelector('input[name*="[height]"]')?.value) || 0;
-            const w = parseFloat(row.querySelector('input[name*="[width]"]')?.value) || 0;
-            const q = parseFloat(row.querySelector('input[name*="[wing_quantity]"]')?.value) || 1;
+            const h = typeof window.parseInputValue === 'function' ? window.parseInputValue(row.querySelector('input[name*="[height]"]')) : (parseFloat(row.querySelector('input[name*="[height]"]')?.value) || 0);
+            const w = typeof window.parseInputValue === 'function' ? window.parseInputValue(row.querySelector('input[name*="[width]"]')) : (parseFloat(row.querySelector('input[name*="[width]"]')?.value) || 0);
+            const q = typeof window.parseInputValue === 'function' ? (window.parseInputValue(row.querySelector('input[name*="[wing_quantity]"]')) || 1) : (parseFloat(row.querySelector('input[name*="[wing_quantity]"]')?.value) || 1);
             if (h > 0 && w > 0) {
                 return (q > 1) ? `=${h}*${w}*${q}/1000000` : `=${h}*${w}/1000000`;
             }
@@ -5276,8 +5276,13 @@ function submitQuickCreateCustomer(e) {
             input.title = `Công thức: ${rawVal.trim()} = ${evaluated}`;
             input.value = evaluated;
 
-            if (input.name && (input.name.includes('[wing_area]') || input.name.includes('[molding_length]') || input.name.includes('[area_m2]')) || input.classList.contains('display-area-input')) {
-                input.dataset.manual = '1';
+            const defF = getDefaultFormulaForInput(input);
+            if (defF && rawVal.trim() !== defF) {
+                if (input.name && (input.name.includes('[wing_area]') || input.name.includes('[molding_length]') || input.name.includes('[area_m2]')) || input.classList.contains('display-area-input')) {
+                    input.dataset.manual = '1';
+                }
+            } else {
+                delete input.dataset.manual;
             }
 
             if (input.classList.contains('display-area-input')) {
@@ -5297,6 +5302,7 @@ function submitQuickCreateCustomer(e) {
             // Chỉ xóa công thức nếu người dùng đang trực tiếp sửa ô này và cố tình xóa hoặc nhập đè số thông thường
             if (wasEditing && input.dataset.formula && !String(rawVal || '').trim().startsWith('=')) {
                 delete input.dataset.formula;
+                delete input.dataset.manual;
                 input.removeAttribute('title');
                 if (row) syncRowFormulasToHiddenInput(row);
             }
@@ -5321,10 +5327,11 @@ function submitQuickCreateCustomer(e) {
     function showFormulaInCell(input) {
         if (!input || !isFormulaEligibleInput(input)) return;
 
-        // Nếu ô chưa có công thức, kiểm tra xem có công thức tính sẵn (cánh m2, phào m, m2 kính...) không
-        if (!input.dataset.formula) {
-            const defFormula = getDefaultFormulaForInput(input);
-            if (defFormula) {
+        // Tự động đồng bộ công thức mặc định theo kích thước mới nhất của dòng nếu ô này là ô kích thước chuẩn
+        const defFormula = getDefaultFormulaForInput(input);
+        if (defFormula) {
+            const curFormula = (input.dataset.formula || '').trim();
+            if (!curFormula || /^\s*=\s*\d+(\.\d+)?\s*\*\s*\d+(\.\d+)?/i.test(curFormula)) {
                 input.dataset.formula = defFormula;
                 input.title = `Công thức: ${defFormula}`;
             }

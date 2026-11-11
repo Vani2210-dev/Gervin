@@ -326,6 +326,7 @@
                             $item->notes = $iData['notes'] ?? '';
                             $item->is_labor = $iData['is_labor'] ?? 0;
                             $item->formula = $iData['formula'] ?? null;
+                            $item->old_size = $iData['old_size'] ?? '';
                             $items->push($item);
                         }
                     }
@@ -566,8 +567,8 @@
                                             <iconify-icon icon="lucide:trash-2" class="text-base"></iconify-icon>
                                         </button>
                                     </div>
-                                    <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][id]" value="{{ $item->id }}">
-                                    <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][old_size]" value="{{ $item->old_size }}">
+                                    <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][id]" value="{{ $item->id ?? '' }}">
+                                    <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][old_size]" value="{{ $item->old_size ?? '' }}">
                                 </td>
                             </tr>
                             @endforeach
@@ -1138,17 +1139,15 @@ function bindAcrylicRowEvents(row) {
         });
     }
     if (wingAreaInput) {
-        ['input', 'change', 'blur'].forEach(evt => {
-            wingAreaInput.addEventListener(evt, () => {
-                if (wingAreaInput.value.trim() !== '') {
-                    wingAreaInput.dataset.manual = '1';
-                } else {
-                    delete wingAreaInput.dataset.manual;
-                    delete wingAreaInput.dataset.formula;
-                    wingAreaInput.removeAttribute('title');
-                }
-                calculateTotalPrice(row, 'wing_area');
-            });
+        wingAreaInput.addEventListener('input', () => {
+            if (wingAreaInput.value.trim() !== '') {
+                wingAreaInput.dataset.manual = '1';
+            } else {
+                delete wingAreaInput.dataset.manual;
+                delete wingAreaInput.dataset.formula;
+                wingAreaInput.removeAttribute('title');
+            }
+            calculateTotalPrice(row, 'wing_area');
         });
     }
     if (moldingLengthInput) {
@@ -1412,37 +1411,52 @@ function calculateTotalPrice(row, sourceEvent) {
             if (height > 0 && quantity > 0) {
                 wingArea = (height * quantity) / 1000;
             }
-            wingAreaInput.value = wingArea > 0 ? (wingArea >= 1 ? wingArea.toFixed(3).replace(/\.?0+$/, '') : wingArea.toFixed(4).replace(/\.?0+$/, '')) : '';
-            if (wingArea > 0) wingAreaInput.setAttribute('data-exact-value', wingArea);
-            else wingAreaInput.removeAttribute('data-exact-value');
-            if (!wingAreaInput.dataset.manual && height > 0 && quantity > 0) {
+            delete wingAreaInput.dataset.manual;
+            if (height > 0 && quantity > 0) {
                 wingAreaInput.dataset.formula = (quantity > 1) ? `=${height}*${quantity}/1000` : `=${height}/1000`;
                 wingAreaInput.title = `Công thức: ${wingAreaInput.dataset.formula}`;
+            } else {
+                delete wingAreaInput.dataset.formula;
+                wingAreaInput.removeAttribute('title');
             }
+            if (wingAreaInput.dataset.isEditing === '1') {
+                wingAreaInput.value = wingAreaInput.dataset.formula || '';
+            } else {
+                wingAreaInput.value = wingArea > 0 ? (wingArea >= 1 ? wingArea.toFixed(3).replace(/\.?0+$/, '') : wingArea.toFixed(4).replace(/\.?0+$/, '')) : '';
+            }
+            if (wingArea > 0) wingAreaInput.setAttribute('data-exact-value', wingArea);
+            else wingAreaInput.removeAttribute('data-exact-value');
         } else {
-            if (!wingAreaInput.dataset.manual) {
-                if (!isNaN(width) && width > 0 && width <= 55) {
-                    wingAreaInput.value = '';
-                    wingAreaInput.removeAttribute('data-exact-value');
+            if (!isNaN(width) && width > 0 && width <= 55) {
+                wingAreaInput.value = '';
+                wingAreaInput.removeAttribute('data-exact-value');
+                delete wingAreaInput.dataset.formula;
+                delete wingAreaInput.dataset.manual;
+                wingAreaInput.removeAttribute('title');
+            } else {
+                let wingArea = 0;
+                if (height > 0 && width > 0 && quantity > 0) {
+                    wingArea = (height * width * quantity) / 1000000;
+                }
+                delete wingAreaInput.dataset.manual;
+                if (height > 0 && width > 0 && quantity > 0) {
+                    wingAreaInput.dataset.formula = (quantity > 1) ? `=${height}*${width}*${quantity}/1000000` : `=${height}*${width}/1000000`;
+                    wingAreaInput.title = `Công thức: ${wingAreaInput.dataset.formula}`;
+                } else {
                     delete wingAreaInput.dataset.formula;
                     wingAreaInput.removeAttribute('title');
-                } else {
-                    let wingArea = 0;
-                    if (height > 0 && width > 0 && quantity > 0) {
-                        wingArea = (height * width * quantity) / 1000000;
-                    }
-                    wingAreaInput.value = wingArea > 0 ? (wingArea >= 1 ? wingArea.toFixed(3).replace(/\.?0+$/, '') : wingArea.toFixed(4).replace(/\.?0+$/, '')) : '';
-                    if (wingArea > 0) wingAreaInput.setAttribute('data-exact-value', wingArea);
-                    else wingAreaInput.removeAttribute('data-exact-value');
-                    if (height > 0 && width > 0 && quantity > 0) {
-                        wingAreaInput.dataset.formula = (quantity > 1) ? `=${height}*${width}*${quantity}/1000000` : `=${height}*${width}/1000000`;
-                        wingAreaInput.title = `Công thức: ${wingAreaInput.dataset.formula}`;
-                    } else {
-                        delete wingAreaInput.dataset.formula;
-                        wingAreaInput.removeAttribute('title');
-                    }
                 }
+                if (wingAreaInput.dataset.isEditing === '1') {
+                    wingAreaInput.value = wingAreaInput.dataset.formula || '';
+                } else {
+                    wingAreaInput.value = wingArea > 0 ? (wingArea >= 1 ? wingArea.toFixed(3).replace(/\.?0+$/, '') : wingArea.toFixed(4).replace(/\.?0+$/, '')) : '';
+                }
+                if (wingArea > 0) wingAreaInput.setAttribute('data-exact-value', wingArea);
+                else wingAreaInput.removeAttribute('data-exact-value');
             }
+        }
+        if (typeof syncRowFormulasToHiddenInput === 'function') {
+            syncRowFormulasToHiddenInput(row);
         }
     }
     
@@ -1498,7 +1512,7 @@ function applyNarrowWidthRule(row, triggerCalculation = true) {
             moldingLengthInput.value = phao > 0 ? phao : '';
             if (phao > 0) moldingLengthInput.setAttribute('data-exact-value', phao);
             else moldingLengthInput.removeAttribute('data-exact-value');
-            if (height > 0 && !moldingLengthInput.dataset.manual) {
+            if (height > 0) {
                 moldingLengthInput.dataset.formula = (quantity > 1) ? `=${height}*${quantity}/1000` : `=${height}/1000`;
                 moldingLengthInput.title = `Công thức: ${moldingLengthInput.dataset.formula}`;
             }
@@ -1508,10 +1522,11 @@ function applyNarrowWidthRule(row, triggerCalculation = true) {
             unitPriceInput.value = 100000;
         }
         // Cánh (m2) = 0
-        if (wingAreaInput && !wingAreaInput.dataset.manual) {
+        if (wingAreaInput) {
             wingAreaInput.value = '';
             wingAreaInput.removeAttribute('data-exact-value');
             delete wingAreaInput.dataset.formula;
+            delete wingAreaInput.dataset.manual;
             wingAreaInput.removeAttribute('title');
         }
     } else {
