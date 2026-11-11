@@ -74,96 +74,109 @@
     {{-- Main Table Card --}}
     <div class="card bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-sm overflow-hidden">
         {{-- Card Header --}}
-        <div class="card-header border-b border-neutral-200 dark:border-neutral-800 py-4 px-6 flex items-center flex-wrap gap-3 justify-between bg-white dark:bg-neutral-900/50">
-            <h5 class="text-lg font-bold text-neutral-800 dark:text-neutral-100 mb-0 flex items-center gap-2">
-                <iconify-icon icon="lucide:layers" class="text-orange-500 text-xl"></iconify-icon>
-                Tấm ván dư — Kho DC
-            </h5>
+        <div class="card-header border-b border-neutral-200 dark:border-neutral-800 py-3.5 px-6 flex flex-col gap-3 bg-white dark:bg-neutral-900/50">
+            {{-- Tầng 1: Tiêu đề, Tìm kiếm, Phân loại & Các nút thao tác --}}
+            <div class="flex items-center justify-between flex-wrap gap-3">
+                <div class="flex items-center flex-wrap gap-2.5">
+                    <h5 class="text-base font-bold text-neutral-800 dark:text-neutral-100 mb-0 flex items-center gap-2 mr-2">
+                        <iconify-icon icon="lucide:layers" class="text-orange-500 text-lg"></iconify-icon>
+                        Tấm ván dư — Kho DC
+                    </h5>
 
-            <div class="flex items-center flex-wrap gap-2">
-                {{-- Search & Filters --}}
-                <form method="GET" action="{{ route('dc-stocks.index') }}" class="flex items-center flex-wrap gap-2">
-                    <input type="hidden" name="per_page" value="{{ $perPage }}">
-                    <div class="relative w-44">
-                        <span class="absolute top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none" style="left: 10px;">
-                            <iconify-icon icon="solar:magnifer-linear" class="text-base"></iconify-icon>
-                        </span>
-                        <input type="text" name="search"
-                            class="w-full pr-3 py-1.5 border border-neutral-300 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 text-xs focus:outline-none focus:ring-2 focus:ring-orange-500"
-                            style="padding-left: 34px;"
-                            placeholder="Mã ván, màu, vị trí..." value="{{ $search }}">
-                    </div>
+                    {{-- Search & Filters --}}
+                    <form method="GET" action="{{ route('dc-stocks.index') }}" class="flex items-center flex-wrap gap-2">
+                        <input type="hidden" name="per_page" value="{{ $perPage }}">
+                        <div class="relative w-40 md:w-48">
+                            <span class="absolute top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none" style="left: 10px;">
+                                <iconify-icon icon="solar:magnifer-linear" class="text-base"></iconify-icon>
+                            </span>
+                            <input type="text" name="search"
+                                class="w-full pr-3 py-1.5 border border-neutral-300 dark:border-neutral-700 rounded-lg bg-neutral-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 text-xs focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                style="padding-left: 32px;"
+                                placeholder="Mã ván, màu, vị trí..." value="{{ $search }}">
+                        </div>
 
-                    {{-- Board Type filter --}}
-                    <select name="board_type" onchange="this.form.submit()"
-                            class="form-select form-select-sm w-auto border border-neutral-200 dark:border-neutral-700 rounded-lg py-1 px-2 text-xs bg-transparent dark:text-neutral-300">
-                        <option value="">-- Tất cả loại ván --</option>
-                        @foreach($boardTypes as $bt)
-                            <option value="{{ $bt->name }}" {{ ($boardType ?? '') === $bt->name ? 'selected' : '' }}>
-                                {{ $bt->name }}
-                            </option>
-                        @endforeach
-                    </select>
+                        {{-- Board Type filter --}}
+                        <select name="board_type" onchange="this.form.submit()"
+                                class="form-select form-select-sm w-auto border border-neutral-200 dark:border-neutral-700 rounded-lg py-1 px-2 text-xs bg-transparent dark:text-neutral-300">
+                            <option value="">-- Tất cả loại ván --</option>
+                            @foreach($boardTypes as $bt)
+                                <option value="{{ $bt->name }}" {{ ($boardType ?? '') === $bt->name ? 'selected' : '' }}>
+                                    {{ $bt->name }}
+                                </option>
+                            @endforeach
+                        </select>
 
-                    {{-- Status filter --}}
-                    <select name="status" onchange="this.form.submit()"
-                            class="form-select form-select-sm w-auto border border-neutral-200 dark:border-neutral-700 rounded-lg py-1 px-2 text-xs bg-transparent dark:text-neutral-300">
-                        <option value="">-- Tất cả trạng thái --</option>
-                        <option value="available" {{ $status === 'available' ? 'selected' : '' }}>Còn hàng</option>
-                        <option value="reserved"  {{ $status === 'reserved'  ? 'selected' : '' }}>Đã đặt</option>
-                        <option value="used"      {{ $status === 'used'      ? 'selected' : '' }}>Đã dùng</option>
-                    </select>
-                </form>
+                        {{-- Status filter --}}
+                        <select name="status" onchange="this.form.submit()"
+                                class="form-select form-select-sm w-auto border border-neutral-200 dark:border-neutral-700 rounded-lg py-1 px-2 text-xs bg-transparent dark:text-neutral-300">
+                            <option value="">-- Tất cả trạng thái --</option>
+                            <option value="available" {{ $status === 'available' ? 'selected' : '' }}>Còn hàng</option>
+                            <option value="reserved"  {{ $status === 'reserved'  ? 'selected' : '' }}>Đã đặt</option>
+                            <option value="used"      {{ $status === 'used'      ? 'selected' : '' }}>Đã dùng</option>
+                        </select>
+                    </form>
+                </div>
 
-                {{-- Bộ lọc ngày tháng chung --}}
-                <x-date-filter :action="route('dc-stocks.index')" />
+                <div class="flex items-center gap-2 flex-wrap">
+                    {{-- Export Button --}}
+                    <a href="{{ route('dc-stocks.export', request()->query()) }}"
+                        class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs" title="Tải file Excel danh sách tấm dư">
+                        <iconify-icon icon="solar:document-medicine-bold" class="text-base"></iconify-icon>
+                        Xuất Excel
+                    </a>
+
+                    @can('add dc stock')
+                    {{-- Import Button --}}
+                    <button type="button" onclick="openModal('importDcModal')"
+                        class="px-3 py-1.5 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs" title="Nhập danh sách từ file Excel">
+                        <iconify-icon icon="solar:upload-track-2-bold" class="text-base"></iconify-icon>
+                        Nhập Excel
+                    </button>
+
+                    {{-- Nút chuyển đổi chuẩn hóa đúng form theo ghi chú --}}
+                    <button type="button" onclick="confirmNormalizeTypes()"
+                        id="btnNormalizeTypes"
+                        class="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs cursor-pointer"
+                        title="Tự động chuẩn hóa Loại ván và Mã SKU theo Ghi chú">
+                        <iconify-icon icon="solar:magic-stick-3-bold" class="text-base"></iconify-icon>
+                        <span>Chuyển đổi đúng form</span>
+                    </button>
+                    @endcan
+
+                    {{-- Add Button with shortcut tooltip --}}
+                    <button type="button" onclick="openAddModal()"
+                        class="px-3.5 py-1.5 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm active:scale-95"
+                        title="Phím tắt: Alt + N">
+                        <iconify-icon icon="lucide:plus" class="text-base"></iconify-icon>
+                        <span>Thêm tấm dư</span>
+                        <kbd class="hidden sm:inline-block px-1 py-0.2 bg-orange-700/60 text-white/90 rounded text-[9px] font-mono font-normal">Alt+N</kbd>
+                    </button>
+                </div>
+            </div>
+
+            {{-- Tầng 2: Bộ lọc thời gian & Hiển thị --}}
+            <div class="flex items-center justify-between flex-wrap gap-2.5">
+                <div class="flex items-center flex-wrap gap-2">
+                    {{-- Bộ lọc ngày tháng chung --}}
+                    <x-date-filter :action="route('dc-stocks.index')" />
+                </div>
 
                 {{-- Per page --}}
-                <form method="GET" action="{{ route('dc-stocks.index') }}" id="perPageForm">
-                    <input type="hidden" name="search" value="{{ $search }}">
-                    <input type="hidden" name="status" value="{{ $status }}">
-                    <input type="hidden" name="board_type" value="{{ $boardType ?? '' }}">
-                    <select name="per_page" class="form-select form-select-sm w-auto border border-neutral-200 dark:border-neutral-700 rounded-lg py-1 px-2 text-xs bg-transparent dark:text-neutral-300"
-                        onchange="document.getElementById('perPageForm').submit()">
-                        @foreach([15, 25, 50, 100] as $option)
-                        <option value="{{ $option }}" {{ $perPage == $option ? 'selected' : '' }}>{{ $option }}</option>
-                        @endforeach
-                    </select>
-                </form>
-
-                {{-- Export Button --}}
-                <a href="{{ route('dc-stocks.export', request()->query()) }}"
-                    class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors shadow-sm" title="Tải file Excel danh sách tấm dư">
-                    <iconify-icon icon="solar:document-medicine-bold" class="text-base"></iconify-icon>
-                    Xuất Excel
-                </a>
-
-                @can('add dc stock')
-                {{-- Import Button --}}
-                <button type="button" onclick="openModal('importDcModal')"
-                    class="px-3.5 py-1.5 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors shadow-sm" title="Nhập danh sách từ file Excel">
-                    <iconify-icon icon="solar:upload-track-2-bold" class="text-base"></iconify-icon>
-                    Nhập Excel
-                </button>
-
-                {{-- Nút chuyển đổi chuẩn hóa đúng form theo ghi chú --}}
-                <button type="button" onclick="confirmNormalizeTypes()"
-                    id="btnNormalizeTypes"
-                    class="px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors shadow-sm cursor-pointer"
-                    title="Tự động chuẩn hóa Loại ván và Mã SKU theo Ghi chú (VD: PVC 1 mặt ➔ Cốt nhựa 1 mặt, MDF 2 mặt ➔ MDF 2 mặt)">
-                    <iconify-icon icon="solar:magic-stick-3-bold" class="text-base"></iconify-icon>
-                    <span>Chuyển đổi đúng form</span>
-                </button>
-                @endcan
-
-                {{-- Add Button with shortcut tooltip --}}
-                <button type="button" onclick="openAddModal()"
-                    class="px-4 py-1.5 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-sm font-bold flex items-center gap-2 transition-all shadow-sm active:scale-95"
-                    title="Phím tắt: Alt + N">
-                    <iconify-icon icon="lucide:plus" class="text-base"></iconify-icon>
-                    <span>Thêm tấm dư</span>
-                    <kbd class="hidden sm:inline-block px-1 py-0.2 bg-orange-700/60 text-white/90 rounded text-[10px] font-mono font-normal">Alt+N</kbd>
-                </button>
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-0">Hiển thị</span>
+                    <form method="GET" action="{{ route('dc-stocks.index') }}" id="perPageForm">
+                        <input type="hidden" name="search" value="{{ $search }}">
+                        <input type="hidden" name="status" value="{{ $status }}">
+                        <input type="hidden" name="board_type" value="{{ $boardType ?? '' }}">
+                        <select name="per_page" class="form-select form-select-sm w-auto border border-neutral-200 dark:border-neutral-700 rounded-lg py-1 px-2 text-xs bg-transparent dark:text-neutral-300"
+                            onchange="document.getElementById('perPageForm').submit()">
+                            @foreach([15, 25, 50, 100] as $option)
+                            <option value="{{ $option }}" {{ $perPage == $option ? 'selected' : '' }}>{{ $option }}</option>
+                            @endforeach
+                        </select>
+                    </form>
+                </div>
             </div>
         </div>
 

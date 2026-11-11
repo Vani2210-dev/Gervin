@@ -80,23 +80,24 @@
 </div>
 
 {{-- Thanh tác vụ: Tìm kiếm, lọc & nút Thêm xe --}}
-<div class="bg-white border border-neutral-200 rounded-2xl p-4 shadow-2xs mb-6">
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <form method="GET" action="{{ route('vehicles.index') }}" class="flex flex-wrap items-center gap-3 flex-1">
-            <div class="relative min-w-[240px] flex-1 max-w-md">
-                <iconify-icon icon="lucide:search" class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-base"></iconify-icon>
+<div class="bg-white border border-neutral-200 rounded-2xl p-4 shadow-2xs mb-6 flex flex-col gap-3">
+    {{-- Tầng 1: Tìm kiếm, Trạng thái & Thao tác --}}
+    <div class="flex items-center justify-between flex-wrap gap-3">
+        <form method="GET" action="{{ route('vehicles.index') }}" class="flex flex-wrap items-center gap-2.5">
+            <div class="relative w-56 md:w-64">
+                <iconify-icon icon="lucide:search" class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm"></iconify-icon>
                 <input type="text" name="keyword" value="{{ request('keyword') }}" placeholder="Tìm biển số, tên xe, lái xe..."
-                       class="w-full pl-10 pr-3 py-2 text-sm border border-neutral-300 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-primary-500 bg-neutral-50/50">
+                       class="w-full pl-9 pr-3 py-1.5 text-xs border border-neutral-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-primary-500 bg-neutral-50/50">
             </div>
 
-            <select name="status" class="py-2 px-3 text-sm border border-neutral-300 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-primary-500 bg-white">
+            <select name="status" class="py-1.5 px-2.5 text-xs border border-neutral-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-primary-500 bg-white">
                 <option value="">-- Tất cả trạng thái --</option>
                 <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Đang hoạt động</option>
                 <option value="maintenance" {{ request('status') == 'maintenance' ? 'selected' : '' }}>Đang bảo dưỡng</option>
                 <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Tạm ngưng</option>
             </select>
 
-            <select name="fuel_type" class="py-2 px-3 text-sm border border-neutral-300 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-primary-500 bg-white">
+            <select name="fuel_type" class="py-1.5 px-2.5 text-xs border border-neutral-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-primary-500 bg-white">
                 <option value="">-- Loại nhiên liệu --</option>
                 <option value="diesel" {{ request('fuel_type') == 'diesel' ? 'selected' : '' }}>Dầu Diesel</option>
                 <option value="ron95" {{ request('fuel_type') == 'ron95' ? 'selected' : '' }}>Xăng RON 95</option>
@@ -104,16 +105,13 @@
                 <option value="e5" {{ request('fuel_type') == 'e5' ? 'selected' : '' }}>Xăng E5</option>
             </select>
 
-            <button type="submit" class="px-4 py-2 bg-neutral-800 hover:bg-neutral-900 text-white rounded-xl text-sm font-medium transition-colors inline-flex items-center gap-2 shadow-2xs">
-                <iconify-icon icon="lucide:filter" class="text-base"></iconify-icon>
+            <button type="submit" class="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-900 text-white rounded-lg text-xs font-semibold transition-colors inline-flex items-center gap-1.5 shadow-2xs">
+                <iconify-icon icon="lucide:filter" class="text-sm"></iconify-icon>
                 Lọc
             </button>
 
-            {{-- Bộ lọc ngày tháng chung --}}
-            <x-date-filter :action="route('vehicles.index')" />
-
             @if(request()->anyFilled(['keyword', 'status', 'fuel_type', 'date_preset', 'start_date', 'end_date']))
-            <a href="{{ route('vehicles.index') }}" class="px-3 py-2 text-neutral-500 hover:text-neutral-700 text-sm font-medium inline-flex items-center gap-1">
+            <a href="{{ route('vehicles.index') }}" class="px-2.5 py-1.5 text-neutral-500 hover:text-neutral-700 text-xs font-medium inline-flex items-center gap-1">
                 <iconify-icon icon="lucide:rotate-ccw"></iconify-icon>
                 Đặt lại
             </a>
@@ -121,11 +119,17 @@
         </form>
 
         <div>
-            <button type="button" onclick="openAddVehicleModal()" class="w-full sm:w-auto px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-xl text-sm transition-all shadow-sm hover:shadow flex items-center justify-center gap-2">
-                <iconify-icon icon="lucide:plus" class="text-lg"></iconify-icon>
+            <button type="button" onclick="openAddVehicleModal()" class="w-full sm:w-auto px-3.5 py-1.5 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg text-xs transition-all shadow-sm flex items-center justify-center gap-1.5">
+                <iconify-icon icon="lucide:plus" class="text-base"></iconify-icon>
                 <span>Thêm phương tiện mới</span>
             </button>
         </div>
+    </div>
+
+    {{-- Tầng 2: Bộ lọc thời gian --}}
+    <div class="flex items-center justify-between flex-wrap gap-2.5">
+        {{-- Bộ lọc ngày tháng chung --}}
+        <x-date-filter :action="route('vehicles.index')" />
     </div>
 </div>
 

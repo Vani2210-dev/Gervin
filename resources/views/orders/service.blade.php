@@ -35,7 +35,10 @@
         setTimeout(() => {
             const container = document.getElementById('payment-details-container');
             if (container && container.querySelectorAll('tr.payment-detail-row').length === 0) {
-                if (typeof addPaymentDetail === 'function') {
+                const defaultCombo = (window.orderServiceCombosData || []).find(c => c.order_type === 'service' && c.is_default);
+                if (defaultCombo && typeof applyServiceCombo === 'function') {
+                    applyServiceCombo(defaultCombo.id, false);
+                } else if (typeof addPaymentDetail === 'function') {
                     addPaymentDetail();
                 }
             }

@@ -4,7 +4,7 @@
     $orderTypeLabels = [
         'acrylic' => 'Acrylic',
         'glass' => 'Glass',
-        'min_late' => 'Min Late',
+        'min_late' => 'Lệnh sản xuất',
         'Flywood' => 'Flywood',
         'service' => 'Dịch vụ & Vật tư',
     ];
@@ -576,6 +576,7 @@ window.ensureOrderCodeHasNK = function(isNK) {
     if (!val) return;
 
     if (isNK) {
+        val = val.replace(/[._-]D$/i, '');
         if (!/[._-]?NK$/i.test(val)) {
             codeInput.value = val + (val.endsWith('.') ? 'NK' : '.NK');
             if (typeof window.checkOrderCode === 'function') {
@@ -584,7 +585,12 @@ window.ensureOrderCodeHasNK = function(isNK) {
         }
     } else {
         if (/[._-]NK$/i.test(val)) {
-            codeInput.value = val.replace(/[._-]NK$/i, '');
+            val = val.replace(/[._-]NK$/i, '');
+            const isDraft = @json((isset($acrylicOrder) && $acrylicOrder->status === 'draft') || ($isDraftCreate ?? false));
+            if (isDraft && !/[._-]?D$/i.test(val)) {
+                val = val + (val.endsWith('.') ? 'D' : '.D');
+            }
+            codeInput.value = val;
             if (typeof window.checkOrderCode === 'function') {
                 window.checkOrderCode(codeInput.value);
             }
@@ -948,7 +954,56 @@ async function previewOrder() {
     }
 }
 
+// ========================================================
+// HỆ THỐNG ĐỌC VÀ TÍNH TOÁN GIÁ TRỊ INPUT / CÔNG THỨC EXCEL
+// ========================================================
+window.parseInputValue = function(input) {
+    if (!input) return 0;
+    let val = input.value;
+    if (typeof val === 'string') {
+        val = val.trim();
+        if (val.startsWith('=')) {
+            const evalFn = typeof window.evaluateExcelFormula === 'function' ? window.evaluateExcelFormula : (typeof evaluateExcelFormula === 'function' ? evaluateExcelFormula : null);
+            if (evalFn) {
+                const evalVal = evalFn(val);
+                if (evalVal !== null && !isNaN(evalVal)) return evalVal;
+            }
+        }
+        val = val.replace(/\./g, '').replace(/,/g, '.');
+    }
+    const num = parseFloat(input.getAttribute('data-exact-value') || val);
+    return isNaN(num) ? 0 : num;
+};
+
+window.getOrderColumnTotals = function() {
+    const totals = {};
+    document.querySelectorAll('.table-summary-row td[data-summary-col]').forEach(td => {
+        const col = (td.getAttribute('data-summary-col') || '').toUpperCase();
+        if (col) {
+            let val = td.hasAttribute('data-summary-raw') ? parseFloat(td.getAttribute('data-summary-raw')) : NaN;
+            if (isNaN(val)) {
+                let text = (td.textContent || '').replace(/[^\d.,]/g, '').replace(/\./g, '').replace(/,/g, '.');
+                val = parseFloat(text) || 0;
+            }
+            totals[col] = (totals[col] || 0) + (isNaN(val) ? 0 : val);
+        }
+    });
+    return totals;
+};
+
+let isUpdatingOrderSummary = false;
+
 function updateOrderSummary() {
+    if (isUpdatingOrderSummary) return;
+    isUpdatingOrderSummary = true;
+    try {
+        _doUpdateOrderSummary();
+    } finally {
+        isUpdatingOrderSummary = false;
+    }
+}
+
+function _doUpdateOrderSummary() {
     // Auto-calculate total quantity for each supply block
     document.querySelectorAll('.order-supply-row').forEach(supplyRow => {
         const supplyQtyInput = supplyRow.querySelector('input[name^="supplies["][name$="][quantity]"]:not([name*="][items]["])');
@@ -971,7 +1026,7 @@ function updateOrderSummary() {
                         );
                         if (isLabor) return; // BỎ RA: Không cộng số lượng công giả dày vào tổng số tấm của vật tư!
 
-                        const val = parseFloat(input.value);
+                        const val = typeof window.parseInputValue === 'function' ? window.parseInputValue(input) : (parseFloat(input.value) || 0);
                         if (!isNaN(val)) {
                             total += val;
                         }
@@ -1013,17 +1068,16 @@ function updateOrderSummary() {
 
                         const input = row.querySelector(`input[name*="[${field}]"]`);
                         if (input && !input.disabled && input.type !== 'hidden') {
-                            let valStr = input.hasAttribute('data-exact-value') ? input.getAttribute('data-exact-value') : input.value;
-                            if (typeof valStr === 'string' && !isFloat) {
-                                valStr = valStr.replace(/\./g, '');
-                            }
-                            const val = parseFloat(valStr);
+                            const val = typeof window.parseInputValue === 'function' ? window.parseInputValue(input) : (parseFloat(input.getAttribute('data-exact-value') || input.value) || 0);
                             if (!isNaN(val)) {
                                 sum += val;
                             }
                         }
                     });
                     
+                    // Store raw numeric sum on summary td
+                    td.setAttribute('data-summary-raw', sum);
+
                     // Format sum
                     if (field === 'total_price') {
                         const roundedSum = Math.round(sum / 1000) * 1000;
@@ -1037,6 +1091,26 @@ function updateOrderSummary() {
             }
         }
     });
+
+    // Tự động tính lại các ô có công thức tham chiếu biến cột (A, B, C...) khi tổng cột thay đổi
+    const formulaEvalFn = typeof window.evaluateExcelFormula === 'function' ? window.evaluateExcelFormula : (typeof evaluateExcelFormula === 'function' ? evaluateExcelFormula : null);
+    if (formulaEvalFn) {
+        document.querySelectorAll('tr.payment-detail-row input[data-formula], tr.order-item-row input[data-formula]').forEach(inp => {
+            const f = inp.dataset.formula || '';
+            if (/[a-zA-Z]/.test(f) && inp.dataset.isEditing !== '1') {
+                const evaluated = formulaEvalFn(f);
+                const currentVal = typeof window.parseInputValue === 'function' ? window.parseInputValue(inp) : (parseFloat(inp.value) || 0);
+                if (evaluated !== null && Math.abs(currentVal - evaluated) > 0.0001) {
+                    inp.value = evaluated;
+                    inp.title = `Công thức: ${f} = ${evaluated}`;
+                    const row = inp.closest('tr.payment-detail-row');
+                    if (row && typeof calculatePaymentDetailRowTotal === 'function') {
+                        calculatePaymentDetailRowTotal(row);
+                    }
+                }
+            }
+        });
+    }
 
     window.isReworkOrder = @json(isset($acrylicOrder) && $acrylicOrder->relation_type === 'rework');
     window.isWarrantyOrder = @json(isset($acrylicOrder) && $acrylicOrder->relation_type === 'warranty');
@@ -4853,9 +4927,25 @@ function submitQuickCreateCustomer(e) {
     window.addEventListener('resize', updateFillHandlePosition);
 
     // ========================================================
-    // HỆ THỐNG TÍNH TOÁN CÔNG THỨC DẠNG EXCEL TRONG BẢNG (VÍ DỤ: =720*1/1000)
+    // HỆ THỐNG TÍNH TOÁN CÔNG THỨC DẠNG EXCEL TRONG BẢNG (VÍ DỤ: =720*1/1000, =A*1000)
     // ========================================================
-    function evaluateExcelFormula(rawVal) {
+    window.getOrderColumnTotals = function() {
+        const totals = {};
+        document.querySelectorAll('.table-summary-row td[data-summary-col]').forEach(td => {
+            const col = (td.getAttribute('data-summary-col') || '').toUpperCase();
+            if (col) {
+                let val = td.hasAttribute('data-summary-raw') ? parseFloat(td.getAttribute('data-summary-raw')) : NaN;
+                if (isNaN(val)) {
+                    let text = (td.textContent || '').replace(/[^\d.,]/g, '').replace(/\./g, '').replace(/,/g, '.');
+                    val = parseFloat(text) || 0;
+                }
+                totals[col] = (totals[col] || 0) + (isNaN(val) ? 0 : val);
+            }
+        });
+        return totals;
+    };
+
+    window.evaluateExcelFormula = function evaluateExcelFormula(rawVal) {
         if (rawVal === null || rawVal === undefined) return null;
         let str = String(rawVal).trim();
         if (!str) return null;
@@ -4872,6 +4962,16 @@ function submitQuickCreateCustomer(e) {
 
         // Chuẩn hóa dấu phẩy thập phân kiểu Việt Nam (ví dụ: 1,5 -> 1.5, 0,72 -> 0.72)
         str = str.replace(/(\d+),(\d+)/g, '$1.$2');
+
+        // Thay thế biến ký tự cột (A, B, C...) bằng tổng thực tế của cột tương ứng
+        const colTotals = (typeof window.getOrderColumnTotals === 'function') ? window.getOrderColumnTotals() : {};
+        str = str.replace(/\b([A-Za-z])\b/g, function(match, p1) {
+            const letter = p1.toUpperCase();
+            if (colTotals.hasOwnProperty(letter)) {
+                return colTotals[letter];
+            }
+            return 0;
+        });
 
         // Chỉ cho phép các ký tự an toàn: số, +, -, *, /, (, ), ., khoảng trắng
         if (!/^[\d+\-*/().\s]+$/.test(str)) {
@@ -5563,9 +5663,25 @@ document.addEventListener('DOMContentLoaded', function() {
     if (form) {
         form.addEventListener('submit', function(e) {
             const isNK = typeof window.isNhapKhoSelected === 'function' && window.isNhapKhoSelected();
-            if (isNK && typeof window.ensureOrderCodeHasNK === 'function') {
-                window.ensureOrderCodeHasNK(true);
+            const actionEl = document.getElementById('order-form-action');
+            const isDraftAction = actionEl && actionEl.value === 'draft';
+
+            if (isNK) {
+                if (typeof window.ensureOrderCodeHasNK === 'function') {
+                    window.ensureOrderCodeHasNK(true);
+                }
+            } else if (isDraftAction) {
+                let val = codeInput.value.trim().replace(/[._-]NK$/i, '');
+                if (!/[._-]?D$/i.test(val)) {
+                    codeInput.value = val + (val.endsWith('.') ? 'D' : '.D');
+                }
+            } else {
+                let val = codeInput.value.trim();
+                if (/[._-]D$/i.test(val)) {
+                    codeInput.value = val.replace(/[._-]D$/i, '');
+                }
             }
+
             if (isCodeDuplicate) {
                 e.preventDefault();
                 alert('Mã đơn hàng "' + codeInput.value.trim() + '" đã tồn tại trong hệ thống. Vui lòng nhập mã khác!');

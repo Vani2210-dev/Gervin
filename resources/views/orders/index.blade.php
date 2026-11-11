@@ -92,27 +92,110 @@
     <div class="col-span-12">
         <div id="orders-list-card" class="card h-full p-0 rounded-xl border-0 overflow-hidden">
             {{-- Header --}}
-            <div class="card-header border-b border-neutral-200 bg-white py-4 px-6 flex items-center flex-wrap gap-3 justify-between">
-                <div class="flex items-center flex-wrap gap-3">
-                    {{-- Search --}}
-                    <form method="GET" action="{{ route('orders.index') }}" class="navbar-search">
-                        <input type="hidden" name="per_page" value="{{ $perPage }}">
+            <div class="card-header border-b border-neutral-200 bg-white py-3.5 px-6 flex flex-col gap-3">
+                {{-- Tầng 1: Tìm kiếm, Bộ lọc nhanh & Các nút hành động chính --}}
+                <div class="flex items-center justify-between flex-wrap gap-3">
+                    <div class="flex items-center flex-wrap gap-2">
+                        {{-- Search --}}
+                        <form method="GET" action="{{ route('orders.index') }}" class="navbar-search">
+                            <input type="hidden" name="per_page" value="{{ $perPage }}">
+                            @if(!empty($isViewingNhapKho))
+                                <input type="hidden" name="filter_nhap_kho" value="1">
+                            @endif
+                            @if($dateMode && $dateMode !== 'all')
+                                <input type="hidden" name="date_mode" value="{{ $dateMode }}">
+                                <input type="hidden" name="date_val" value="{{ $dateVal }}">
+                            @endif
+                            <div class="relative">
+                                <iconify-icon icon="solar:magnifer-linear" class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-base"></iconify-icon>
+                                <input type="text" name="search" class="form-control form-control-sm border-neutral-200 rounded-lg pl-9 pr-3 w-60 md:w-72" placeholder="Tìm kiếm đơn hàng..." value="{{ $search }}">
+                            </div>
+                        </form>
+
+                        @php
+                            $isViewingDrafts = request('filter_status') === 'draft';
+                        @endphp
+
+                        @if($isViewingDrafts)
+                        <a href="{{ route('orders.index') }}"
+                            class="btn bg-amber-500 hover:bg-amber-600 text-white text-xs btn-sm px-2.5 py-1.5 rounded-lg flex items-center gap-1 font-medium shadow-2xs transition-all" title="Quay lại danh sách đơn hàng chính thức">
+                            <iconify-icon icon="lucide:arrow-left" class="text-base"></iconify-icon>
+                            Đơn nháp (Quay lại)
+                        </a>
+                        @else
+                        <a href="{{ route('orders.index', ['filter_status' => 'draft']) }}"
+                            class="btn bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 text-xs btn-sm px-2.5 py-1.5 rounded-lg flex items-center gap-1 font-semibold transition-all shadow-2xs" title="Xem tất cả đơn nháp đang lưu tạm">
+                            <iconify-icon icon="lucide:file-text" class="text-base text-amber-600"></iconify-icon>
+                            Đơn nháp <span class="bg-amber-200/80 text-amber-900 text-[10px] px-1.5 py-0.2 rounded-full font-bold ml-0.5">{{ $draftOrdersCount ?? 0 }}</span>
+                        </a>
+                        @endif
+
                         @if(!empty($isViewingNhapKho))
-                            <input type="hidden" name="filter_nhap_kho" value="1">
+                        <a href="{{ route('orders.index') }}"
+                            class="btn bg-sky-600 hover:bg-sky-700 text-white text-xs btn-sm px-2.5 py-1.5 rounded-lg flex items-center gap-1 font-medium shadow-2xs transition-all" title="Quay lại danh sách đơn hàng thông thường">
+                            <iconify-icon icon="lucide:arrow-left" class="text-base"></iconify-icon>
+                            Phiếu nhập kho (Quay lại)
+                        </a>
+                        @else
+                        <a href="{{ route('orders.index', ['filter_nhap_kho' => '1']) }}"
+                            class="btn bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 text-xs btn-sm px-2.5 py-1.5 rounded-lg flex items-center gap-1 font-semibold transition-all shadow-2xs" title="Xem tất cả phiếu nhập kho">
+                            <iconify-icon icon="lucide:warehouse" class="text-base text-sky-600"></iconify-icon>
+                            Phiếu nhập kho <span class="bg-sky-200/80 text-sky-900 text-[10px] px-1.5 py-0.2 rounded-full font-bold ml-0.5">{{ $nhapKhoOrdersCount ?? 0 }}</span>
+                        </a>
                         @endif
-                        @if($dateMode && $dateMode !== 'all')
-                            <input type="hidden" name="date_mode" value="{{ $dateMode }}">
-                            <input type="hidden" name="date_val" value="{{ $dateVal }}">
+
+                        <button type="button" onclick="openModal('filter-modal')"
+                            class="btn bg-light-600 text-xs btn-sm px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 font-medium text-neutral-700 hover:bg-neutral-200 transition">
+                            <iconify-icon icon="solar:filter-outline" class="text-base"></iconify-icon>
+                            Lọc
+                        </button>
+                        @if(request()->filled('filter_customer_id') || request()->filled('filter_status') || request()->filled('filter_type') || request()->filled('filter_start_date') || request()->filled('filter_end_date') || ($dateMode !== 'all' && request()->filled('date_mode')))
+                        <a href="{{ route('orders.index', !empty($isViewingNhapKho) ? ['filter_nhap_kho' => '1'] : []) }}" class="btn text-xs btn-sm px-2.5 py-1.5 rounded-lg flex items-center gap-1 text-danger-600 bg-danger-50 hover:bg-danger-100 transition">
+                            <iconify-icon icon="solar:close-circle-outline" class="text-base"></iconify-icon>
+                            Xóa lọc
+                        </a>
                         @endif
-                        <div class="relative">
-                            <iconify-icon icon="solar:magnifer-linear" class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-base"></iconify-icon>
-                            <input type="text" name="search" class="form-control form-control-sm border-neutral-200 rounded-lg pl-9 pr-3 w-64 md:w-80" placeholder="Tìm kiếm đơn hàng..." value="{{ $search }}">
-                        </div>
-                    </form>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        {{-- Nút cài đặt cảnh báo deadline --}}
+                        <button type="button" onclick="openDeadlineSettings()" class="btn bg-light-600 text-xs btn-sm p-2 rounded-lg flex items-center gap-1 text-neutral-700 hover:bg-neutral-200 transition shadow-2xs" title="Cài đặt cảnh báo deadline">
+                            <iconify-icon icon="lucide:settings" class="text-base"></iconify-icon>
+                        </button>
+                        {{-- Nút Xuất Excel toàn bộ danh sách đơn theo bộ lọc --}}
+                        <a href="{{ route('orders.export', request()->query()) }}"
+                            class="btn bg-emerald-600 hover:bg-emerald-700 text-white text-xs btn-sm px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-2xs font-semibold transition"
+                            title="Xuất danh sách đơn hàng theo bộ lọc ra file Excel">
+                            <iconify-icon icon="solar:file-spreadsheet-bold" class="text-base"></iconify-icon>
+                            <span>Xuất Excel</span>
+                        </a>
+                        @can('add order')
+                        <a href="{{ route('orders.create') }}"
+                            class="btn btn-primary text-xs btn-sm px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-sm font-semibold transition">
+                            <iconify-icon icon="ic:baseline-plus" class="text-base"></iconify-icon>
+                            Tạo đơn hàng
+                        </a>
+                        @endcan
+                        @can('delete order')
+                        <button type="button" onclick="toggleBulkDeleteOrders()"
+                            class="js-toggle-bulk-delete btn bg-neutral-600 hover:bg-neutral-700 text-white text-xs btn-sm px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 shadow-2xs font-semibold">
+                            <iconify-icon icon="lucide:list-checks" class="text-base text-white"></iconify-icon>
+                            <span class="bulk-delete-toggle-label">Chọn nhiều</span>
+                        </button>
+                        @endcan
+                    </div>
+                </div>
+
+                {{-- Tầng 2: Bộ lọc thời gian & Hiển thị --}}
+                <div class="flex items-center justify-between flex-wrap gap-2.5">
+                    <div class="flex items-center flex-wrap gap-2">
+                        {{-- Bộ lọc ngày tháng chung --}}
+                        <x-date-filter :action="route('orders.index')" />
+                    </div>
 
                     {{-- Per page --}}
                     <div class="flex items-center gap-2">
-                        <span class="text-base font-medium text-secondary-light mb-0">Hiển thị</span>
+                        <span class="text-xs font-medium text-secondary-light mb-0">Hiển thị</span>
                         <form method="GET" action="{{ route('orders.index') }}" id="perPageForm">
                             <input type="hidden" name="search" value="{{ $search }}">
                             @if(!empty($isViewingNhapKho))
@@ -122,7 +205,7 @@
                                 <input type="hidden" name="date_mode" value="{{ $dateMode }}">
                                 <input type="hidden" name="date_val" value="{{ $dateVal }}">
                             @endif
-                            <select name="per_page" class="form-select form-select-sm w-auto border-neutral-200 rounded-lg"
+                            <select name="per_page" class="form-select form-select-sm w-auto border-neutral-200 rounded-lg py-1 px-2 text-xs"
                                 onchange="document.getElementById('perPageForm').submit()">
                                 @foreach([10, 25, 50, 100] as $option)
                                 <option value="{{ $option }}" {{ $perPage == $option ? 'selected' : '' }}>{{ $option }}</option>
@@ -130,80 +213,6 @@
                             </select>
                         </form>
                     </div>
-
-                    {{-- Bộ lọc ngày tháng chung --}}
-                    <x-date-filter :action="route('orders.index')" />
-                </div>
-
-                <div class="flex items-center gap-2 flex-wrap">
-                    @php
-                        $isViewingDrafts = request('filter_status') === 'draft';
-                    @endphp
-
-                    @if($isViewingDrafts)
-                    <a href="{{ route('orders.index') }}"
-                        class="btn bg-amber-500 hover:bg-amber-600 text-white text-sm btn-sm px-3 py-2 rounded-lg flex items-center gap-1.5 font-medium shadow-sm transition-all" title="Quay lại danh sách đơn hàng chính thức">
-                        <iconify-icon icon="lucide:arrow-left" class="icon text-base"></iconify-icon>
-                        Đang xem Đơn nháp (Quay lại)
-                    </a>
-                    @else
-                    <a href="{{ route('orders.index', ['filter_status' => 'draft']) }}"
-                        class="btn bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 text-sm btn-sm px-3 py-2 rounded-lg flex items-center gap-1.5 font-semibold transition-all" title="Xem tất cả đơn nháp đang lưu tạm">
-                        <iconify-icon icon="lucide:file-text" class="icon text-base text-amber-600"></iconify-icon>
-                        Xem đơn nháp <span class="bg-amber-200/80 text-amber-900 text-xs px-1.5 py-0.5 rounded-full font-bold ml-0.5">{{ $draftOrdersCount ?? 0 }}</span>
-                    </a>
-                    @endif
-
-                    @if(!empty($isViewingNhapKho))
-                    <a href="{{ route('orders.index') }}"
-                        class="btn bg-sky-600 hover:bg-sky-700 text-white text-sm btn-sm px-3 py-2 rounded-lg flex items-center gap-1.5 font-medium shadow-sm transition-all" title="Quay lại danh sách đơn hàng thông thường">
-                        <iconify-icon icon="lucide:arrow-left" class="icon text-base"></iconify-icon>
-                        Đang xem Đơn nhập kho (Quay lại)
-                    </a>
-                    @else
-                    <a href="{{ route('orders.index', ['filter_nhap_kho' => '1']) }}"
-                        class="btn bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 text-sm btn-sm px-3 py-2 rounded-lg flex items-center gap-1.5 font-semibold transition-all" title="Xem tất cả đơn hàng nhập kho">
-                        <iconify-icon icon="lucide:warehouse" class="icon text-base text-sky-600"></iconify-icon>
-                        Xem đơn nhập kho <span class="bg-sky-200/80 text-sky-900 text-xs px-1.5 py-0.5 rounded-full font-bold ml-0.5">{{ $nhapKhoOrdersCount ?? 0 }}</span>
-                    </a>
-                    @endif
-
-                    <button type="button" onclick="openModal('filter-modal')"
-                        class="btn bg-light-600 text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2">
-                        <iconify-icon icon="solar:filter-outline" class="icon text-xl line-height-1"></iconify-icon>
-                        Lọc
-                    </button>
-                    @if(request()->filled('filter_customer_id') || request()->filled('filter_status') || request()->filled('filter_type') || request()->filled('filter_start_date') || request()->filled('filter_end_date') || ($dateMode !== 'all' && request()->filled('date_mode')))
-                    <a href="{{ route('orders.index', !empty($isViewingNhapKho) ? ['filter_nhap_kho' => '1'] : []) }}" class="btn text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2">
-                        <iconify-icon icon="solar:close-circle-outline" class="icon text-xl line-height-1"></iconify-icon>
-                        Xóa lọc
-                    </a>
-                    @endif
-                    {{-- Nút cài đặt cảnh báo deadline --}}
-                    <button type="button" onclick="openDeadlineSettings()" class="btn bg-light-600 text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2" title="Cài đặt cảnh báo deadline">
-                        <iconify-icon icon="lucide:settings" class="icon text-xl line-height-1"></iconify-icon>
-                    </button>
-                    {{-- Nút Xuất Excel toàn bộ danh sách đơn theo bộ lọc --}}
-                    <a href="{{ route('orders.export', request()->query()) }}"
-                        class="btn bg-emerald-600 hover:bg-emerald-700 text-white text-sm btn-sm px-3 py-2 rounded-lg flex items-center gap-1.5 shadow-sm transition"
-                        title="Xuất danh sách đơn hàng theo bộ lọc ra file Excel">
-                        <iconify-icon icon="solar:file-spreadsheet-bold" class="text-lg"></iconify-icon>
-                        <span>Xuất Excel</span>
-                    </a>
-                    @can('add order')
-                    <a href="{{ route('orders.create') }}"
-                        class="btn btn-primary text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2">
-                        <iconify-icon icon="ic:baseline-plus" class="icon text-xl line-height-1"></iconify-icon>
-                        Tạo đơn hàng
-                    </a>
-                    @endcan
-                    @can('delete order')
-                    <button type="button" onclick="toggleBulkDeleteOrders()"
-                        class="js-toggle-bulk-delete btn bg-neutral-600 hover:bg-neutral-700 text-white text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2 shadow-sm">
-                        <iconify-icon icon="lucide:list-checks" class="icon text-xl line-height-1 text-white"></iconify-icon>
-                        <span class="bulk-delete-toggle-label">Chọn nhiều</span>
-                    </button>
-                    @endcan
                 </div>
             </div>
 
@@ -379,7 +388,7 @@
                                             ];
                                             $typeLabels = [
                                                 'acrylic' => 'Acrylic',
-                                                'min_late' => 'Min Late',
+                                                'min_late' => 'Lệnh sản xuất',
                                                 'glass' => 'Glass',
                                                 'Flywood' => 'Flywood',
                                                 'service' => 'Dịch vụ & Vật tư',
@@ -603,7 +612,7 @@
                     <option value="">Tất cả</option>
                     <option value="acrylic" {{ request('filter_type') === 'acrylic' ? 'selected' : '' }}>Acrylic</option>
                     <option value="glass" {{ request('filter_type') === 'glass' ? 'selected' : '' }}>Kính</option>
-                    <option value="min_late" {{ request('filter_type') === 'min_late' ? 'selected' : '' }}>Min Late</option>
+                    <option value="min_late" {{ request('filter_type') === 'min_late' ? 'selected' : '' }}>Lệnh sản xuất (Min-late)</option>
                     <option value="Flywood" {{ request('filter_type') === 'Flywood' ? 'selected' : '' }}>Flywood</option>
                     <option value="service" {{ request('filter_type') === 'service' ? 'selected' : '' }}>Dịch vụ & Vật tư</option>
                 </select>

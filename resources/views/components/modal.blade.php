@@ -1,12 +1,28 @@
 @props([
-    'name',
+    'name' => null,
+    'id' => null,
+    'title' => null,
+    'size' => null,
     'show' => false,
-    'maxWidth' => '2xl',
+    'maxWidth' => null,
     'hasBackdrop' => true,
     'transparent' => false
 ])
 
 @php
+$modalId = $name ?? $id ?? $attributes->get('id') ?? 'modal_' . substr(md5(uniqid(rand(), true)), 0, 8);
+
+if (!$maxWidth && $size) {
+    $maxWidth = match($size) {
+        'modal-sm' => 'sm',
+        'modal-md' => '2xl',
+        'modal-lg' => '4xl',
+        'modal-xl' => '6xl',
+        default    => '2xl',
+    };
+}
+$maxWidth = $maxWidth ?? '2xl';
+
 $maxWidthPx = [
     'sm'  => '384px',
     'md'  => '448px',
@@ -28,7 +44,7 @@ $contentStyle = $transparent
 @endphp
 
 <div
-    id="{{ $name }}"
+    id="{{ $modalId }}"
     data-modal
     data-has-backdrop="{{ $hasBackdrop ? 'true' : 'false' }}"
     style="display:{{ $show ? 'block' : 'none' }}; position:fixed; inset:0; z-index:9999999 !important;{{ !$hasBackdrop ? ' pointer-events:none;' : '' }}"
@@ -36,7 +52,7 @@ $contentStyle = $transparent
     {{-- Backdrop --}}
     @if($hasBackdrop)
     <div
-        onclick="closeModal('{{ $name }}')"
+        onclick="closeModal('{{ $modalId }}')"
         style="position:absolute; inset:0; background:rgba(0,0,0,0.55);">
     </div>
     @endif
@@ -44,6 +60,12 @@ $contentStyle = $transparent
     {{-- Content wrapper --}}
     <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; padding:1rem; pointer-events:none;">
         <div data-modal-content style="{{ $contentStyle }}">
+            @if($title)
+            <div class="px-6 py-4 border-b border-neutral-200 flex items-center justify-between bg-neutral-50 rounded-t-xl">
+                <h5 class="font-bold text-base text-neutral-800 mb-0">{{ $title }}</h5>
+                <button type="button" onclick="closeModal('{{ $modalId }}')" class="text-neutral-400 hover:text-neutral-700 text-xl leading-none transition-colors">&times;</button>
+            </div>
+            @endif
             {{ $slot }}
         </div>
     </div>

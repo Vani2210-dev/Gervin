@@ -542,7 +542,7 @@
 </div>
 
 {{-- MODAL THÊM PHIẾU CHI --}}
-<x-modal id="add-payment-modal" title="Lập phiếu chi thanh toán cho {{ $supplier->name }}" size="modal-md">
+<x-modal name="add-payment-modal" id="add-payment-modal" title="Lập phiếu chi thanh toán cho {{ $supplier->name }}" size="modal-md">
     <form method="POST" action="{{ route('suppliers.payments.store', $supplier) }}">
         @csrf
         <div class="p-6 space-y-4">
@@ -596,7 +596,7 @@
 </x-modal>
 
 {{-- MODAL SỬA PHIẾU CHI --}}
-<x-modal id="edit-payment-modal" title="Chỉnh sửa phiếu chi" size="modal-md">
+<x-modal name="edit-payment-modal" id="edit-payment-modal" title="Chỉnh sửa phiếu chi" size="modal-md">
     <form method="POST" action="" id="editPaymentForm">
         @csrf
         @method('PUT')
@@ -643,7 +643,7 @@
 </x-modal>
 
 {{-- MODAL SỬA THÔNG TIN NHÀ CUNG CẤP --}}
-<x-modal id="edit-supplier-modal" title="Chỉnh sửa thông tin nhà cung cấp" size="modal-lg">
+<x-modal name="edit-supplier-modal" id="edit-supplier-modal" title="Chỉnh sửa thông tin nhà cung cấp" size="modal-lg">
     <form method="POST" action="{{ route('suppliers.update', $supplier) }}" id="editSupplierForm">
         @csrf
         @method('PUT')

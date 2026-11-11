@@ -428,39 +428,37 @@
     {{-- ======================================================== --}}
     <div id="tab-pane-logs" class="{{ $currTab === 'logs' ? '' : 'hidden' }} space-y-6">
         <div class="card bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-2xl shadow-sm overflow-hidden">
-            <div class="card-header border-b border-neutral-200 dark:border-neutral-800 py-4 px-6 flex flex-wrap gap-3 items-center justify-between bg-white dark:bg-neutral-900/50">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-2xl shrink-0">
-                        <iconify-icon icon="solar:history-bold-duotone"></iconify-icon>
+            <div class="card-header border-b border-neutral-200 dark:border-neutral-800 py-3.5 px-6 flex flex-col gap-3 bg-white dark:bg-neutral-900/50">
+                {{-- Tầng 1: Tiêu đề & Bộ lọc nội dung --}}
+                <div class="flex items-center justify-between flex-wrap gap-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-xl shrink-0">
+                            <iconify-icon icon="solar:history-bold-duotone"></iconify-icon>
+                        </div>
+                        <div>
+                            <h5 class="text-sm font-bold text-neutral-800 dark:text-neutral-100 m-0">Nhật ký Quét QR Thời gian thực</h5>
+                            <span class="text-[11px] text-neutral-400">Theo dõi toàn bộ lịch sử quét mã của các thiết bị tại xưởng</span>
+                        </div>
                     </div>
-                    <div>
-                        <h5 class="text-base font-bold text-neutral-800 dark:text-neutral-100 m-0">Nhật ký Quét QR Thời gian thực</h5>
-                        <span class="text-xs text-neutral-400">Theo dõi toàn bộ lịch sử quét mã của các thiết bị tại xưởng</span>
-                    </div>
-                </div>
-                
-                {{-- Filter Forms --}}
-                <div class="flex items-center flex-wrap gap-2">
-                    <x-date-filter :action="route('processes.qr-scans', ['tab' => 'logs'])" />
-
+                    
                     <form method="GET" action="{{ route('processes.qr-scans') }}" class="flex items-center flex-wrap gap-2">
                         <input type="hidden" name="tab" value="logs">
                         <input type="hidden" name="per_page" value="{{ $perPage }}">
 
                         {{-- Search --}}
-                        <div class="relative w-44 sm:w-56">
+                        <div class="relative w-40 sm:w-48">
                             <span class="absolute top-1/2 -translate-y-1/2 text-neutral-400 flex items-center justify-center pointer-events-none" style="left: 10px;">
-                                <iconify-icon icon="lucide:search" class="text-base"></iconify-icon>
+                                <iconify-icon icon="lucide:search" class="text-xs"></iconify-icon>
                             </span>
                             <input type="text" name="search"
-                                class="w-full pr-3 py-1.5 border border-neutral-300 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 text-xs focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                style="padding-left: 34px;"
-                                placeholder="Tìm mã sản phẩm..." value="{{ $search }}">
+                                class="w-full pr-3 py-1.5 border border-neutral-300 dark:border-neutral-700 rounded-lg bg-neutral-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 text-xs focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                style="padding-left: 30px;"
+                                placeholder="Tìm mã SP..." value="{{ $search }}">
                         </div>
 
                         {{-- Status Filter --}}
                         <select name="status" onchange="this.form.submit()"
-                                class="form-select form-select-sm w-auto border border-neutral-200 dark:border-neutral-700 rounded-lg py-1 px-2.5 text-xs bg-transparent dark:text-neutral-300">
+                                class="form-select form-select-sm w-auto border border-neutral-200 dark:border-neutral-700 rounded-lg py-1 px-2 text-xs bg-transparent dark:text-neutral-300">
                             <option value="">-- Tất cả trạng thái --</option>
                             <option value="success" {{ $statusFilter === 'success' ? 'selected' : '' }}>Thành công</option>
                             <option value="failed" {{ $statusFilter === 'failed' ? 'selected' : '' }}>Thất bại</option>
@@ -470,7 +468,7 @@
 
                         {{-- Device Filter --}}
                         <select name="device_id" onchange="this.form.submit()"
-                                class="form-select form-select-sm w-auto border border-neutral-200 dark:border-neutral-700 rounded-lg py-1 px-2.5 text-xs bg-transparent dark:text-neutral-300">
+                                class="form-select form-select-sm w-auto border border-neutral-200 dark:border-neutral-700 rounded-lg py-1 px-2 text-xs bg-transparent dark:text-neutral-300">
                             <option value="">-- Tất cả máy quét --</option>
                             @foreach($devices as $dev)
                                 <option value="{{ $dev->id }}" {{ $deviceFilter == $dev->id ? 'selected' : '' }}>{{ $dev->name }}</option>
@@ -478,11 +476,16 @@
                         </select>
 
                         @if($search || $statusFilter || $deviceFilter || request()->filled('start_date') || request()->filled('date_preset'))
-                            <a href="{{ route('processes.qr-scans', ['tab' => 'logs']) }}" class="text-xs text-neutral-500 hover:text-red-600 px-2 py-1 rounded">
+                            <a href="{{ route('processes.qr-scans', ['tab' => 'logs']) }}" class="text-xs text-danger-600 bg-danger-50 hover:bg-danger-100 px-2.5 py-1 rounded-lg font-medium transition">
                                 Xóa lọc
                             </a>
                         @endif
                     </form>
+                </div>
+
+                {{-- Tầng 2: Bộ lọc thời gian --}}
+                <div class="flex items-center justify-between flex-wrap gap-2.5">
+                    <x-date-filter :action="route('processes.qr-scans', ['tab' => 'logs'])" />
                 </div>
             </div>
             

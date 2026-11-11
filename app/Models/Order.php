@@ -12,8 +12,22 @@ class Order extends Model
     {
         static::saving(function ($order) {
             if ($order->isNhapKho() && !empty($order->order_code)) {
-                if (!preg_match('/[._-]?NK$/i', trim($order->order_code))) {
-                    $order->order_code = static::formatNhapKhoOrderCode($order->order_code);
+                // Đơn nhập kho: loại bỏ hậu tố .D nếu có và đảm bảo có hậu tố .NK
+                $cleaned = static::stripDraftOrderCode($order->order_code);
+                if (!preg_match('/[._-]?NK$/i', trim($cleaned))) {
+                    $order->order_code = static::formatNhapKhoOrderCode($cleaned);
+                } else {
+                    $order->order_code = $cleaned;
+                }
+            } elseif ($order->status === 'draft' && !empty($order->order_code)) {
+                // Đơn nháp: tự động thêm hậu tố .D phía sau
+                if (!preg_match('/[._-]?D$/i', trim($order->order_code))) {
+                    $order->order_code = static::formatDraftOrderCode($order->order_code);
+                }
+            } elseif ($order->status !== 'draft' && !empty($order->order_code)) {
+                // Khi đơn không còn ở trạng thái nháp: tự động gỡ bỏ hậu tố .D
+                if (preg_match('/[._-]?D$/i', trim($order->order_code))) {
+                    $order->order_code = static::stripDraftOrderCode($order->order_code);
                 }
             }
         });
@@ -412,6 +426,33 @@ class Order extends Model
             return $code;
         }
         return $code . (str_ends_with($code, '.') ? 'NK' : '.NK');
+    }
+
+    /**
+     * Tự động thêm hậu tố .D vào mã đơn nháp nếu chưa có.
+     */
+    public static function formatDraftOrderCode(?string $code): string
+    {
+        $code = trim((string)$code);
+        if ($code === '') {
+            return '';
+        }
+        if (preg_match('/[._-]?D$/i', $code)) {
+            return $code;
+        }
+        return $code . (str_ends_with($code, '.') ? 'D' : '.D');
+    }
+
+    /**
+     * Tự động gỡ bỏ hậu tố .D khỏi mã đơn khi thoát trạng thái nháp.
+     */
+    public static function stripDraftOrderCode(?string $code): string
+    {
+        $code = trim((string)$code);
+        if ($code === '') {
+            return '';
+        }
+        return preg_replace('/[._-]?D$/i', '', $code);
     }
 
     /**

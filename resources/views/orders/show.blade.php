@@ -192,7 +192,7 @@
                             ];
                             $typeLabels = [
                                 'acrylic' => 'Acrylic',
-                                'min_late' => 'Min Late',
+                                'min_late' => 'Lệnh sản xuất',
                                 'glass' => 'Glass',
                             ];
                             $statusColors = [
@@ -219,7 +219,7 @@
                         @if($acrylicOrder->isNhapKho())
                             <span class="px-3 py-1 rounded-full text-xs font-semibold bg-sky-100 text-sky-800 border border-sky-300 flex items-center gap-1.5 shadow-2xs">
                                 <iconify-icon icon="solar:box-minimalistic-bold-duotone" class="text-sm text-sky-600"></iconify-icon>
-                                <span>Đơn Nhập Kho</span>
+                                <span>Phiếu Nhập Kho</span>
                             </span>
                         @endif
                         <span
@@ -482,23 +482,23 @@
                         </span>
                     </div>
                     <div class="p-6">
-                        <div class="overflow-x-auto">
-                            <table class="table bordered-table sm-table mb-0 w-full">
+                        <div class="overflow-x-auto rounded-lg border border-neutral-200">
+                            <table class="table bordered-table sm-table mb-0 w-full" style="table-layout: fixed; width: 100%;">
                                 <thead>
                                     <tr class="bg-neutral-50 text-center text-xs font-bold text-neutral-600 uppercase">
-                                        <th class="w-12 text-center">STT</th>
+                                        <th class="w-12 text-center" style="width: 45px;">STT</th>
                                         <th class="text-left">Tên nội dung / Dịch vụ / Vật tư</th>
-                                        <th class="w-24 text-center">Đơn vị</th>
-                                        <th class="w-24 text-center">Số lượng</th>
-                                        <th class="w-32 text-right">Đơn giá</th>
-                                        <th class="w-36 text-right">Thành tiền</th>
+                                        <th class="w-24 text-center" style="width: 70px;">Đơn vị</th>
+                                        <th class="w-24 text-center" style="width: 75px;">Số lượng</th>
+                                        <th class="w-32 text-right" style="width: 110px;">Đơn giá</th>
+                                        <th class="w-36 text-right" style="width: 125px;">Thành tiền</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @foreach($acrylicOrder->paymentDetails as $pIndex => $pDetail)
                                         <tr class="hover:bg-neutral-50/50">
                                             <td class="text-center font-semibold text-neutral-500">{{ $pIndex + 1 }}</td>
-                                            <td class="font-semibold text-neutral-800">{{ $pDetail->name }}</td>
+                                            <td class="font-semibold text-neutral-800" style="line-height: 1.45; word-break: break-word; overflow-wrap: anywhere; white-space: normal;">{{ $pDetail->name }}</td>
                                             <td class="text-center text-neutral-600">{{ $pDetail->unit ?: '—' }}</td>
                                             <td class="text-center font-bold text-neutral-700">{{ floatval($pDetail->quantity) == intval($pDetail->quantity) ? number_format($pDetail->quantity, 0, ',', '.') : number_format($pDetail->quantity, 2, ',', '.') }}</td>
                                             <td class="text-right text-neutral-700 font-medium">{{ number_format($pDetail->price, 0, ',', '.') }} đ</td>

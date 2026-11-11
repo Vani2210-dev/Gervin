@@ -82,26 +82,29 @@
     {{-- Main Table Card --}}
     <div class="col-span-12">
         <div class="bg-white border border-neutral-200 rounded-2xl shadow-sm overflow-hidden">
-            <div class="p-5 border-b border-neutral-200 bg-neutral-50/60 flex flex-wrap items-center justify-between gap-4">
-                <div>
-                    <h5 class="font-bold text-lg text-neutral-800 m-0">Danh sách Nhóm thị trường</h5>
-                    <p class="text-xs text-neutral-500 mt-1">Phân quyền chăm sóc khách hàng, theo dõi công nợ và doanh số theo kỳ lọc</p>
+            <div class="p-4 border-b border-neutral-200 bg-neutral-50/60 flex flex-col gap-3">
+                <div class="flex items-center justify-between flex-wrap gap-3">
+                    <div>
+                        <h5 class="font-bold text-base text-neutral-800 m-0">Danh sách Nhóm thị trường</h5>
+                        <p class="text-xs text-neutral-500 mt-0.5">Phân quyền chăm sóc khách hàng, theo dõi công nợ và doanh số theo kỳ lọc</p>
+                    </div>
+                    <div class="flex items-center gap-2.5">
+                        <form method="GET" action="{{ route('market-groups.index') }}" class="flex items-center">
+                            <input type="hidden" name="date_mode" value="{{ $dateMode }}">
+                            <input type="hidden" name="date_val" value="{{ $dateVal }}">
+                            <div class="relative">
+                                <input type="text" name="search" value="{{ $search }}" placeholder="Tìm kiếm nhóm..." class="form-control rounded-lg pl-9 pr-3 py-1.5 text-xs w-48 border-neutral-300">
+                                <iconify-icon icon="lucide:search" class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm"></iconify-icon>
+                            </div>
+                        </form>
+                        <button type="button" onclick="openCreateGroupModal()" class="btn btn-sm btn-primary rounded-lg flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold shadow-sm">
+                            <iconify-icon icon="lucide:plus" class="text-base"></iconify-icon> Thêm nhóm mới
+                        </button>
+                    </div>
                 </div>
-                <div class="flex items-center gap-3 flex-wrap">
+                <div class="flex items-center justify-between flex-wrap gap-2.5">
                     {{-- Bộ lọc ngày tháng chung --}}
                     <x-date-filter :action="route('market-groups.index')" />
-
-                    <form method="GET" action="{{ route('market-groups.index') }}" class="flex items-center">
-                        <input type="hidden" name="date_mode" value="{{ $dateMode }}">
-                        <input type="hidden" name="date_val" value="{{ $dateVal }}">
-                        <div class="relative">
-                            <input type="text" name="search" value="{{ $search }}" placeholder="Tìm kiếm nhóm..." class="form-control rounded-lg pl-9 pr-3 py-2 text-xs w-48 border-neutral-300">
-                            <iconify-icon icon="lucide:search" class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm"></iconify-icon>
-                        </div>
-                    </form>
-                    <button type="button" onclick="openCreateGroupModal()" class="btn btn-sm btn-primary rounded-lg flex items-center gap-2 px-3 py-2 text-xs font-semibold shadow-sm">
-                        <iconify-icon icon="lucide:plus" class="text-base"></iconify-icon> Thêm nhóm mới
-                    </button>
                 </div>
             </div>
 

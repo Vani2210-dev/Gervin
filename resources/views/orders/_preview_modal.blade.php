@@ -1,12 +1,12 @@
 @php
     $typeLabels = [
         'acrylic' => 'Acrylic',
-        'min_late' => 'Min Late',
+        'min_late' => 'Lệnh sản xuất',
         'glass' => 'Glass',
         'service' => 'Dịch vụ & Vật tư',
         'Flywood' => 'Flywood',
     ];
-    $typeLabel = $typeLabels[$acrylicOrder->type] ?? ucfirst($acrylicOrder->type);
+    $typeLabel = $acrylicOrder->isNhapKho() ? 'Phiếu Nhập Kho' : ($typeLabels[$acrylicOrder->type] ?? ucfirst($acrylicOrder->type));
 
     $statusLabels = [
         'draft' => 'Nháp',
@@ -91,7 +91,7 @@
                     <iconify-icon icon="lucide:eye" class="text-xl text-emerald-500"></iconify-icon>
                 </div>
                 <div>
-                    <h5 class="font-bold text-base text-neutral-800 m-0">Xem trước đơn hàng</h5>
+                    <h5 class="font-bold text-base text-neutral-800 m-0">{{ $acrylicOrder->isNhapKho() ? 'Xem trước Phiếu Nhập Kho' : (($acrylicOrder->type === 'min_late' || $acrylicOrder->type === 'Flywood') ? 'Xem trước Lệnh sản xuất' : 'Xem trước đơn hàng') }}</h5>
                     <p class="text-xs text-neutral-400 m-0 mt-1">{{ $acrylicOrder->order_code }} • {{ $typeLabel }}</p>
                 </div>
             </div>
@@ -132,7 +132,11 @@
                     <div class="text-right flex-shrink-0">
                         @if($acrylicOrder->isNhapKho())
                             <div class="inline-block px-2 py-1 bg-sky-100 text-sky-800 border border-sky-300 rounded font-bold text-[11px] uppercase tracking-wider mb-1">
-                                ĐƠN SẢN XUẤT NHẬP KHO
+                                PHIẾU NHẬP KHO
+                            </div>
+                        @elseif($acrylicOrder->type === 'min_late' || $acrylicOrder->type === 'Flywood')
+                            <div class="inline-block px-2 py-1 bg-primary-50 text-primary-700 border border-primary-200 rounded font-bold text-[11px] uppercase tracking-wider mb-1">
+                                LỆNH SẢN XUẤT
                             </div>
                         @else
                             <div class="inline-block px-2 py-1 bg-primary-50 text-primary-700 border border-primary-200 rounded font-bold text-[11px] uppercase tracking-wider mb-1">
@@ -515,16 +519,16 @@
                             <iconify-icon icon="lucide:receipt" class="text-lg text-primary-500"></iconify-icon>
                             <h6 class="font-bold text-sm text-neutral-800 m-0">Chi tiết hóa đơn dịch vụ & Vật tư bổ sung</h6>
                         </div>
-                        <div class="overflow-x-auto rounded-lg border border-neutral-200">
-                            <table class="w-full" style="border-collapse: collapse; min-width: 100%;">
+                        <div class="w-full rounded-lg border border-neutral-200 overflow-hidden">
+                            <table class="w-full" style="border-collapse: collapse; width: 100%; table-layout: fixed;">
                                 <thead>
                                     <tr style="background-color: #f1f5f9;">
-                                        <th style="border: 1.5px solid #cbd5e1; padding: 9px 8px; text-align: center; color: #0f172a; font-weight: 700; font-size: 12.5px; text-transform: uppercase; white-space: nowrap;">STT</th>
-                                        <th style="border: 1.5px solid #cbd5e1; padding: 9px 8px; text-align: left; color: #0f172a; font-weight: 700; font-size: 12.5px; text-transform: uppercase; white-space: nowrap;">Tên nội dung / Dịch vụ / Vật tư</th>
-                                        <th style="border: 1.5px solid #cbd5e1; padding: 9px 8px; text-align: center; color: #0f172a; font-weight: 700; font-size: 12.5px; text-transform: uppercase; white-space: nowrap;">Đơn vị</th>
-                                        <th style="border: 1.5px solid #cbd5e1; padding: 9px 8px; text-align: center; color: #0f172a; font-weight: 700; font-size: 12.5px; text-transform: uppercase; white-space: nowrap;">Số lượng</th>
-                                        <th style="border: 1.5px solid #cbd5e1; padding: 9px 8px; text-align: right; color: #0f172a; font-weight: 700; font-size: 12.5px; text-transform: uppercase; white-space: nowrap;">Đơn giá</th>
-                                        <th style="border: 1.5px solid #cbd5e1; padding: 9px 8px; text-align: right; color: #0f172a; font-weight: 700; font-size: 12.5px; text-transform: uppercase; white-space: nowrap;">Thành tiền</th>
+                                        <th style="border: 1.5px solid #cbd5e1; padding: 9px 4px; text-align: center; color: #0f172a; font-weight: 700; font-size: 12px; text-transform: uppercase; width: 42px; white-space: nowrap;">STT</th>
+                                        <th style="border: 1.5px solid #cbd5e1; padding: 9px 10px; text-align: left; color: #0f172a; font-weight: 700; font-size: 12px; text-transform: uppercase;">Tên nội dung / Dịch vụ / Vật tư</th>
+                                        <th style="border: 1.5px solid #cbd5e1; padding: 9px 4px; text-align: center; color: #0f172a; font-weight: 700; font-size: 12px; text-transform: uppercase; width: 60px; white-space: nowrap;">Đơn vị</th>
+                                        <th style="border: 1.5px solid #cbd5e1; padding: 9px 4px; text-align: center; color: #0f172a; font-weight: 700; font-size: 12px; text-transform: uppercase; width: 70px; white-space: nowrap;">Số lượng</th>
+                                        <th style="border: 1.5px solid #cbd5e1; padding: 9px 6px; text-align: right; color: #0f172a; font-weight: 700; font-size: 12px; text-transform: uppercase; width: 105px; white-space: nowrap;">Đơn giá</th>
+                                        <th style="border: 1.5px solid #cbd5e1; padding: 9px 6px; text-align: right; color: #0f172a; font-weight: 700; font-size: 12px; text-transform: uppercase; width: 120px; white-space: nowrap;">Thành tiền</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -539,20 +543,20 @@
                                             $sumPayTotal += $pTotal;
                                         @endphp
                                         <tr style="border-bottom: 1px solid #cbd5e1;">
-                                            <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: center; color: #64748b; font-size: 13px; white-space: nowrap;">{{ $pIdx + 1 }}</td>
-                                            <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: left; color: #0f172a; font-size: 13px; font-weight: 600; white-space: nowrap;">{{ $pName }}</td>
-                                            <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: center; color: #0f172a; font-size: 13px; white-space: nowrap;">{{ $pUnit ?: '—' }}</td>
-                                            <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: center; color: #0f172a; font-size: 13px; font-weight: 700; white-space: nowrap;">{{ floatval($pQty) == intval($pQty) ? number_format($pQty, 0, ',', '.') : number_format($pQty, 2, ',', '.') }}</td>
-                                            <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: right; color: #0f172a; font-size: 13px; font-weight: 600; white-space: nowrap;">{{ number_format($pPrice, 0, ',', '.') }} đ</td>
-                                            <td style="border: 1px solid #cbd5e1; padding: 7px 8px; text-align: right; color: #059669; font-size: 13px; font-weight: 700; white-space: nowrap;">{{ number_format($pTotal, 0, ',', '.') }} đ</td>
+                                            <td style="border: 1px solid #cbd5e1; padding: 7px 4px; text-align: center; color: #64748b; font-size: 13px; white-space: nowrap;">{{ $pIdx + 1 }}</td>
+                                            <td style="border: 1px solid #cbd5e1; padding: 7px 10px; text-align: left; color: #0f172a; font-size: 13px; font-weight: 600; line-height: 1.45; word-break: break-word; overflow-wrap: anywhere; white-space: normal;">{{ $pName }}</td>
+                                            <td style="border: 1px solid #cbd5e1; padding: 7px 4px; text-align: center; color: #0f172a; font-size: 13px; white-space: nowrap;">{{ $pUnit ?: '—' }}</td>
+                                            <td style="border: 1px solid #cbd5e1; padding: 7px 4px; text-align: center; color: #0f172a; font-size: 13px; font-weight: 700; white-space: nowrap;">{{ floatval($pQty) == intval($pQty) ? number_format($pQty, 0, ',', '.') : number_format($pQty, 2, ',', '.') }}</td>
+                                            <td style="border: 1px solid #cbd5e1; padding: 7px 6px; text-align: right; color: #0f172a; font-size: 13px; font-weight: 600; white-space: nowrap;">{{ number_format($pPrice, 0, ',', '.') }} đ</td>
+                                            <td style="border: 1px solid #cbd5e1; padding: 7px 6px; text-align: right; color: #059669; font-size: 13px; font-weight: 700; white-space: nowrap;">{{ number_format($pTotal, 0, ',', '.') }} đ</td>
                                         </tr>
                                     @endforeach
                                 </tbody>
                                 <tfoot>
                                     <tr style="background-color: #f8fafc; font-weight: 700; border-top: 2px solid #94a3b8;">
-                                        <td style="border: 1px solid #cbd5e1; padding: 8px 8px; text-align: center; color: #0f172a; font-size: 13px; font-weight: 700; white-space: nowrap;">TỔNG</td>
+                                        <td style="border: 1px solid #cbd5e1; padding: 8px 4px; text-align: center; color: #0f172a; font-size: 13px; font-weight: 700; white-space: nowrap;">TỔNG</td>
                                         <td colspan="4" style="border: 1px solid #cbd5e1;"></td>
-                                        <td style="border: 1px solid #cbd5e1; padding: 8px 8px; text-align: right; color: #059669; font-size: 13px; font-weight: 700; white-space: nowrap;">{{ number_format(round($sumPayTotal), 0, ',', '.') }} đ</td>
+                                        <td style="border: 1px solid #cbd5e1; padding: 8px 6px; text-align: right; color: #059669; font-size: 13px; font-weight: 700; white-space: nowrap;">{{ number_format(round($sumPayTotal), 0, ',', '.') }} đ</td>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -569,7 +573,7 @@
                         </div>
                         @if($acrylicOrder->isNhapKho())
                             <span class="text-xs font-bold text-sky-700 bg-sky-100 px-2 py-1 rounded border border-sky-200">
-                                Sản xuất nhập kho lưu trữ (Không tính tiền)
+                                Phiếu nhập kho lưu trữ (Không tính tiền)
                             </span>
                         @endif
                     </div>

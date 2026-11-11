@@ -234,9 +234,13 @@ Route::middleware(['auth'])->group(function () {
     Route::post('glass-prices/import', [GlassPriceController::class, 'import'])->name('glass_prices.import');
     Route::resource('glass-prices', GlassPriceController::class)->names('glass_prices');
 
-    // Min-late Prices
+    // Min-late Prices & Service Combos
     Route::get('minlate-prices/export', [MinLatePriceController::class, 'export'])->name('minlate_prices.export');
     Route::post('minlate-prices/import', [MinLatePriceController::class, 'import'])->name('minlate_prices.import');
+    Route::post('minlate-prices/combos', [MinLatePriceController::class, 'storeCombo'])->name('minlate_prices.combos.store');
+    Route::put('minlate-prices/combos/{combo}', [MinLatePriceController::class, 'updateCombo'])->name('minlate_prices.combos.update');
+    Route::delete('minlate-prices/combos/{combo}', [MinLatePriceController::class, 'destroyCombo'])->name('minlate_prices.combos.destroy');
+    Route::get('api/order-service-combos', [MinLatePriceController::class, 'getCombosApi'])->name('minlate_prices.combos.api');
     Route::resource('minlate-prices', MinLatePriceController::class)->names('minlate_prices');
 });
 

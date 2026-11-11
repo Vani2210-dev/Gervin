@@ -16,29 +16,58 @@
     <div class="grid grid-cols-12">
         <div class="col-span-12">
             <div class="card h-full p-0 rounded-xl border-0 overflow-hidden">
-                <div class="card-header border-b border-neutral-200 bg-white py-4 px-6 flex items-center flex-wrap gap-3 justify-between">
-                    <div class="flex items-center flex-wrap gap-3">
-                        {{-- Tìm kiếm (Bên trái ngoài cùng) --}}
-                        <form method="GET" action="{{ route('users.index') }}" class="navbar-search">
-                            <input type="hidden" name="per_page" value="{{ $perPage }}">
-                            <input type="hidden" name="role_id" value="{{ request('role_id') }}">
-                            <div class="relative">
-                                <iconify-icon icon="solar:magnifer-linear" class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-base"></iconify-icon>
-                                <input type="text" class="form-control form-control-sm border-neutral-200 rounded-lg pl-9 pr-3 w-64 md:w-80" name="search"
-                                    value="{{ request('search') }}" placeholder="Tìm kiếm người dùng...">
-                            </div>
-                        </form>
+                <div class="card-header border-b border-neutral-200 bg-white py-3.5 px-6 flex flex-col gap-3">
+                    {{-- Tầng 1: Tìm kiếm & Thao tác chính --}}
+                    <div class="flex items-center justify-between flex-wrap gap-3">
+                        <div class="flex items-center flex-wrap gap-2.5">
+                            {{-- Tìm kiếm (Bên trái ngoài cùng) --}}
+                            <form method="GET" action="{{ route('users.index') }}" class="navbar-search">
+                                <input type="hidden" name="per_page" value="{{ $perPage }}">
+                                <input type="hidden" name="role_id" value="{{ request('role_id') }}">
+                                <div class="relative">
+                                    <iconify-icon icon="solar:magnifer-linear" class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-base"></iconify-icon>
+                                    <input type="text" class="form-control form-control-sm border-neutral-200 rounded-lg pl-9 pr-3 w-60 md:w-72" name="search"
+                                        value="{{ request('search') }}" placeholder="Tìm kiếm người dùng...">
+                                </div>
+                            </form>
 
-                        {{-- Bộ lọc ngày tháng chung --}}
-                        <x-date-filter :action="route('users.index')" />
+                            <button type="button" onclick="openModal('filter-modal')"
+                                class="btn bg-light-600 text-xs btn-sm px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 font-medium text-neutral-700 hover:bg-neutral-200 transition">
+                                <iconify-icon icon="solar:filter-outline" class="text-base"></iconify-icon>
+                                Lọc
+                            </button>
+                            @if(request()->filled('filter_name') || request()->filled('filter_email') || request()->filled('filter_phone') || request()->filled('filter_role_id'))
+                            <a href="{{ route('users.index') }}" class="btn text-xs btn-sm px-2.5 py-1.5 rounded-lg flex items-center gap-1 text-danger-600 bg-danger-50 hover:bg-danger-100 transition">
+                                <iconify-icon icon="solar:close-circle-outline" class="text-base"></iconify-icon>
+                                Xóa lọc
+                            </a>
+                            @endif
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            @can('add user')
+                            <a href="{{ route('users.create') }}" class="btn btn-primary text-xs btn-sm px-3 py-1.5 rounded-lg flex items-center gap-1.5 font-semibold shadow-sm transition">
+                                <iconify-icon icon="ic:baseline-plus" class="text-base"></iconify-icon>
+                                Thêm người dùng mới
+                            </a>
+                            @endcan
+                        </div>
+                    </div>
+
+                    {{-- Tầng 2: Bộ lọc thời gian & Hiển thị --}}
+                    <div class="flex items-center justify-between flex-wrap gap-2.5">
+                        <div class="flex items-center flex-wrap gap-2">
+                            {{-- Bộ lọc ngày tháng chung --}}
+                            <x-date-filter :action="route('users.index')" />
+                        </div>
 
                         {{-- Per page --}}
                         <div class="flex items-center gap-2">
-                            <span class="text-base font-medium text-secondary-light mb-0">Hiển thị</span>
+                            <span class="text-xs font-medium text-secondary-light mb-0">Hiển thị</span>
                             <form method="GET" action="{{ route('users.index') }}" id="perPageForm">
                                 <input type="hidden" name="search" value="{{ request('search') }}">
                                 <input type="hidden" name="role_id" value="{{ request('role_id') }}">
-                                <select name="per_page" class="form-select form-select-sm w-auto border-neutral-200 rounded-lg"
+                                <select name="per_page" class="form-select form-select-sm w-auto border-neutral-200 rounded-lg py-1 px-2 text-xs"
                                     onchange="document.getElementById('perPageForm').submit()">
                                     @foreach([10, 25, 50, 100] as $n)
                                     <option value="{{ $n }}" {{ $perPage == $n ? 'selected' : '' }}>{{ $n }}</option>
@@ -46,25 +75,6 @@
                                 </select>
                             </form>
                         </div>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <button type="button" onclick="openModal('filter-modal')"
-                            class="btn bg-light-600 text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2">
-                            <iconify-icon icon="solar:filter-outline" class="icon text-xl line-height-1"></iconify-icon>
-                            Lọc
-                        </button>
-                        @if(request()->filled('filter_name') || request()->filled('filter_email') || request()->filled('filter_phone') || request()->filled('filter_role_id'))
-                        <a href="{{ route('users.index') }}" class="btn text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2">
-                            <iconify-icon icon="solar:close-circle-outline" class="icon text-xl line-height-1"></iconify-icon>
-                            Xóa lọc
-                        </a>
-                        @endif
-                        @can('add user')
-                        <a href="{{ route('users.create') }}" class="btn btn-primary text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2">
-                            <iconify-icon icon="ic:baseline-plus" class="icon text-xl line-height-1"></iconify-icon>
-                            Thêm người dùng mới
-                        </a>
-                        @endcan
                     </div>
                 </div>
                 <div class="card-body">

@@ -3,14 +3,14 @@
     $typeLabels = [
         'acrylic' => 'Đơn hàng Acrylic',
         'glass' => 'Đơn hàng gia công cánh kính',
-        'min_late' => 'Đơn hàng gia công Min-late',
+        'min_late' => 'Lệnh sản xuất (Ép tấm / Min-late)',
         'Flywood' => 'Đơn hàng gia công Flywood',
     ];
 
     $typeDescriptions = [
         'acrylic' => 'Quy trình xử lý cho đơn hàng acrylic.',
         'glass' => 'Quy trình xử lý cho đơn hàng gia công cánh kính.',
-        'min_late' => 'Quy trình xử lý cho đơn hàng gia công min-late.',
+        'min_late' => 'Quy trình xử lý cho lệnh sản xuất ép tấm (Min-late).',
         'Flywood' => 'Quy trình xử lý cho đơn hàng gia công Flywood.',
     ];
 @endphp

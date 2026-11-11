@@ -9,29 +9,75 @@
     <div class="col-span-12">
         <div class="card h-full p-0 rounded-xl border-0 overflow-hidden shadow-sm bg-white">
             {{-- Header --}}
-            <div class="card-header border-b border-neutral-200 bg-white py-4 px-6 flex items-center flex-wrap gap-3 justify-between">
-                <div class="flex items-center flex-wrap gap-3">
-                    {{-- Per page --}}
-                    {{-- Search (Bên trái ngoài cùng) --}}
-                    <form method="GET" action="{{ route('glass_prices.index') }}" class="navbar-search">
-                        <input type="hidden" name="per_page" value="{{ $perPage }}">
-                        <input type="hidden" name="filter_category" value="{{ $filterCategory }}">
-                        <div class="relative">
-                            <iconify-icon icon="solar:magnifer-linear" class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-base"></iconify-icon>
-                            <input type="text" name="search" class="form-control form-control-sm border-neutral-200 rounded-lg pl-9 pr-3 w-64 md:w-80" placeholder="Tìm tên, màu nhôm, màu kính, mã..." value="{{ $search }}">
-                        </div>
-                    </form>
+            <div class="card-header border-b border-neutral-200 bg-white py-3.5 px-6 flex flex-col gap-3">
+                {{-- Tầng 1: Tìm kiếm, Bộ lọc nhóm & Nút hành động chính --}}
+                <div class="flex items-center justify-between flex-wrap gap-3">
+                    <div class="flex items-center flex-wrap gap-2.5">
+                        {{-- Search (Bên trái ngoài cùng) --}}
+                        <form method="GET" action="{{ route('glass_prices.index') }}" class="navbar-search">
+                            <input type="hidden" name="per_page" value="{{ $perPage }}">
+                            <input type="hidden" name="filter_category" value="{{ $filterCategory }}">
+                            <div class="relative">
+                                <iconify-icon icon="solar:magnifer-linear" class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-base"></iconify-icon>
+                                <input type="text" name="search" class="form-control form-control-sm border-neutral-200 rounded-lg pl-9 pr-3 w-60 md:w-72" placeholder="Tìm tên, màu nhôm, màu kính, mã..." value="{{ $search }}">
+                            </div>
+                        </form>
 
-                    {{-- Bộ lọc ngày tháng chung --}}
-                    <x-date-filter :action="route('glass_prices.index')" />
+                        {{-- Category Filter --}}
+                        <form method="GET" action="{{ route('glass_prices.index') }}" id="categoryFilterForm">
+                            <input type="hidden" name="per_page" value="{{ $perPage }}">
+                            <input type="hidden" name="search" value="{{ $search }}">
+                            <select name="filter_category" class="form-select form-select-sm border-neutral-200 rounded-lg max-w-xs"
+                                onchange="document.getElementById('categoryFilterForm').submit()">
+                                <option value="">-- Lọc theo nhóm sản phẩm --</option>
+                                @foreach($categories as $cat)
+                                    <option value="{{ $cat }}" {{ $filterCategory == $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                                @endforeach
+                            </select>
+                        </form>
+                        
+                        @if($search || $filterCategory)
+                        <a href="{{ route('glass_prices.index') }}" class="btn bg-light-100 hover:bg-neutral-200 text-xs btn-sm px-2.5 py-1.5 rounded-lg flex items-center gap-1 text-neutral-600 transition">
+                            <iconify-icon icon="solar:close-circle-outline" class="text-base"></iconify-icon>
+                            Xóa lọc
+                        </a>
+                        @endif
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        @can('add supply')
+                        <button type="button" onclick="triggerImportExcel()"
+                            class="btn bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200 text-xs btn-sm px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all shadow-2xs font-semibold">
+                            <iconify-icon icon="lucide:file-spreadsheet" class="text-base"></iconify-icon>
+                            Nhập Excel
+                        </button>
+                        <form id="importExcelForm" action="{{ route('glass_prices.import') }}" method="POST" enctype="multipart/form-data" style="display: none;">
+                            @csrf
+                            <input type="file" id="excelImportFileInput" name="file" accept=".xlsx,.xls" onchange="submitImportForm()">
+                        </form>
+                        <button type="button" onclick="openModal('create-price-modal')"
+                            class="btn btn-primary text-xs btn-sm px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all shadow-sm font-semibold">
+                            <iconify-icon icon="ic:baseline-plus" class="text-base"></iconify-icon>
+                            Thêm dòng bảng giá
+                        </button>
+                        @endcan
+                    </div>
+                </div>
+
+                {{-- Tầng 2: Bộ lọc thời gian & Hiển thị --}}
+                <div class="flex items-center justify-between flex-wrap gap-2.5">
+                    <div class="flex items-center flex-wrap gap-2">
+                        {{-- Bộ lọc ngày tháng chung --}}
+                        <x-date-filter :action="route('glass_prices.index')" />
+                    </div>
 
                     {{-- Per page --}}
                     <div class="flex items-center gap-2">
-                        <span class="text-base font-medium text-secondary-light mb-0">Hiển thị</span>
+                        <span class="text-xs font-medium text-secondary-light mb-0">Hiển thị</span>
                         <form method="GET" action="{{ route('glass_prices.index') }}" id="perPageForm">
                             <input type="hidden" name="search" value="{{ $search }}">
                             <input type="hidden" name="filter_category" value="{{ $filterCategory }}">
-                            <select name="per_page" class="form-select form-select-sm w-auto border-neutral-200 rounded-lg"
+                            <select name="per_page" class="form-select form-select-sm w-auto border-neutral-200 rounded-lg py-1 px-2 text-xs"
                                 onchange="document.getElementById('perPageForm').submit()">
                                 @foreach([15, 25, 50, 100] as $option)
                                 <option value="{{ $option }}" {{ $perPage == $option ? 'selected' : '' }}>{{ $option }}</option>
@@ -39,45 +85,6 @@
                             </select>
                         </form>
                     </div>
-
-                    {{-- Category Filter --}}
-                    <form method="GET" action="{{ route('glass_prices.index') }}" id="categoryFilterForm">
-                        <input type="hidden" name="per_page" value="{{ $perPage }}">
-                        <input type="hidden" name="search" value="{{ $search }}">
-                        <select name="filter_category" class="form-select form-select-sm border-neutral-200 rounded-lg max-w-xs"
-                            onchange="document.getElementById('categoryFilterForm').submit()">
-                            <option value="">-- Lọc theo nhóm sản phẩm --</option>
-                            @foreach($categories as $cat)
-                                <option value="{{ $cat }}" {{ $filterCategory == $cat ? 'selected' : '' }}>{{ $cat }}</option>
-                            @endforeach
-                        </select>
-                    </form>
-                    
-                    @if($search || $filterCategory)
-                    <a href="{{ route('glass_prices.index') }}" class="btn bg-light-100 hover:bg-neutral-200 text-sm btn-sm px-3 py-2 rounded-lg flex items-center gap-1">
-                        <iconify-icon icon="solar:close-circle-outline" class="text-lg"></iconify-icon>
-                        Xóa bộ lọc
-                    </a>
-                    @endif
-                </div>
-
-                <div class="flex items-center gap-2">
-                    @can('add supply')
-                    <button type="button" onclick="triggerImportExcel()"
-                        class="btn bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200 text-sm btn-sm px-3 py-2 rounded-lg flex items-center gap-1.5 transition-all">
-                        <iconify-icon icon="lucide:file-spreadsheet" class="text-lg"></iconify-icon>
-                        Nhập Excel
-                    </button>
-                    <form id="importExcelForm" action="{{ route('glass_prices.import') }}" method="POST" enctype="multipart/form-data" style="display: none;">
-                        @csrf
-                        <input type="file" id="excelImportFileInput" name="file" accept=".xlsx,.xls" onchange="submitImportForm()">
-                    </form>
-                    <button type="button" onclick="openModal('create-price-modal')"
-                        class="btn btn-primary text-sm btn-sm px-3 py-2 rounded-lg flex items-center gap-1.5 transition-all">
-                        <iconify-icon icon="ic:baseline-plus" class="text-lg"></iconify-icon>
-                        Thêm dòng bảng giá
-                    </button>
-                    @endcan
                 </div>
             </div>
 

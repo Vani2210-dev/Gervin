@@ -207,6 +207,7 @@
                     $supply->order_supply_code = $sData['order_supply_code'] ?? null;
                     $supply->supply_name = $sData['supply_name'] ?? '';
                     $supply->quantity = $sData['quantity'] ?? 0;
+                    $supply->formula = $sData['formula'] ?? null;
                     
                     $items = collect();
                     if (isset($sData['items']) && is_array($sData['items'])) {
@@ -227,6 +228,7 @@
                             $item->cnc = $iData['cnc'] ?? 0;
                             $item->direction = $iData['direction'] ?? '';
                             $item->notes = $iData['notes'] ?? '';
+                            $item->formula = $iData['formula'] ?? null;
                             
                             $item->size = [
                                 'height' => $iData['height'] ?? '',
@@ -263,7 +265,8 @@
                         <input type="text" name="supplies[{{ $supplyIndex }}][order_supply_code]" class="order-supply-code-input form-control form-control-sm rounded-lg w-40 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Mã vật tư" value="{{ $supply->order_supply_code ?? '' }}">
                         <input type="text" name="supplies[{{ $supplyIndex }}][supply_name]" class="form-control form-control-sm rounded-lg w-64 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Tên vật tư (ví dụ: Acrylic, Melamine...)" value="{{ $supply->supply_name }}">
                         @php
-                            $supplyFormulas = is_array($supply->formula) ? $supply->formula : (json_decode($supply->formula ?? '[]', true) ?: []);
+                            $rawSupplyF = $supply->formula ?? null;
+                            $supplyFormulas = is_array($rawSupplyF) ? $rawSupplyF : (is_string($rawSupplyF) ? (json_decode($rawSupplyF, true) ?: []) : []);
                         @endphp
                         <input type="text" name="supplies[{{ $supplyIndex }}][quantity]" class="form-control form-control-sm rounded-lg w-24 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="SL" value="{{ $supply->quantity ?? 0 }}" autocomplete="off" @if(!empty($supplyFormulas['quantity'])) data-formula="{{ $supplyFormulas['quantity'] }}" title="Công thức: {{ $supplyFormulas['quantity'] }}" @endif>
                         <input type="hidden" name="supplies[{{ $supplyIndex }}][formula]" class="supply-formula-input" value="{{ !empty($supplyFormulas) ? json_encode($supplyFormulas) : '' }}">
@@ -296,27 +299,27 @@
                                 <th scope="col" style="width: 45px; min-width: 45px; white-space: nowrap;" class="sticky-stt-th align-middle text-center border border-neutral-200 font-bold text-xs text-neutral-600 uppercase"><span class="order-stt-header-label">STT</span></th>
                                 <th scope="col" style="width: 160px; min-width: 160px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Mã hàng</th>
                                 <th scope="col" style="min-width: 180px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên hàng hóa, dịch vụ</th>
-                                <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Độ dày</th>
+                                <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Độ dày <span class="text-primary-600 font-extrabold">(A)</span></th>
                                 @if($isRework)
                                     <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase text-center bg-yellow-50/50">Cao (cũ)</th>
                                     <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase text-center bg-yellow-50/50">Rộng (cũ)</th>
                                 @endif
-                                <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="align-middle border border-neutral-200 bg-yellow-100/70 font-bold text-xs text-neutral-600 uppercase text-center">Cao (vân)</th>
-                                <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase text-center">Rộng</th>
-                                <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số lượng</th>
+                                <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="align-middle border border-neutral-200 bg-yellow-100/70 font-bold text-xs text-neutral-600 uppercase text-center">Cao (vân) <span class="text-primary-600 font-extrabold">(B)</span></th>
+                                <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase text-center">Rộng <span class="text-primary-600 font-extrabold">(C)</span></th>
+                                <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số lượng <span class="text-primary-600 font-extrabold">(D)</span></th>
                                 <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Vát</th>
                                 <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Nẹp Cao 1</th>
                                 <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Nẹp Cao 2</th>
                                 <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Nẹp Rộng 1</th>
                                 <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Nẹp Rộng 2</th>
-                                <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán thẳng</th>
-                                <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán vát</th>
-                                <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán vát mòi</th>
-                                <th scope="col" style="width: 105px; min-width: 105px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán bản rộng 40-59mm</th>
-                                <th scope="col" style="width: 105px; min-width: 105px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán bản rộng 17-39mm</th>
-                                <th scope="col" style="width: 105px; min-width: 105px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán bản rộng 25-35mm</th>
-                                <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số vát tay nắm âm</th>
-                                <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số tấm CNC</th>
+                                <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán thẳng <span class="text-primary-600 font-extrabold">(E)</span></th>
+                                <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán vát <span class="text-primary-600 font-extrabold">(F)</span></th>
+                                <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán vát mòi <span class="text-primary-600 font-extrabold">(G)</span></th>
+                                <th scope="col" style="width: 105px; min-width: 105px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán bản rộng 40-59mm <span class="text-primary-600 font-extrabold">(H)</span></th>
+                                <th scope="col" style="width: 105px; min-width: 105px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán bản rộng 17-39mm <span class="text-primary-600 font-extrabold">(I)</span></th>
+                                <th scope="col" style="width: 105px; min-width: 105px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán bản rộng 25-35mm <span class="text-primary-600 font-extrabold">(J)</span></th>
+                                <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số vát tay nắm âm <span class="text-primary-600 font-extrabold">(K)</span></th>
+                                <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số tấm CNC <span class="text-primary-600 font-extrabold">(L)</span></th>
                                 <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Chiều vân</th>
                                 <th scope="col" style="min-width: 140px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Ghi chú</th>
                                 <th scope="col" style="width: 140px; min-width: 140px; white-space: nowrap; position: sticky; right: 0; z-index: 3; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="order-action-col align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Hành động</th>
@@ -325,29 +328,27 @@
                                 <td class="border border-neutral-200 text-center sticky-stt-td" style="font-size: 80% !important; background-color: #f1f5f9;">TỔNG</td>
                                 <td class="border border-neutral-200"></td>
                                 <td class="border border-neutral-200"></td>
-                                <td class="border border-neutral-200"></td>
+                                <td class="border border-neutral-200 text-center" data-summary-field="thickness" data-summary-col="A" style="font-size: 80% !important;"></td>
                                 @if($isRework)
                                     <td class="border border-neutral-200"></td>
                                     <td class="border border-neutral-200"></td>
                                 @endif
-                                <td class="border border-neutral-200"></td>
-                                <td class="border border-neutral-200"></td>
-                                <td class="border border-neutral-200 text-center" data-summary-field="quantity" style="font-size: 80% !important;">0</td>
-                                <td class="border border-neutral-200"></td>
-                                <td class="border border-neutral-200"></td>
-                                <td class="border border-neutral-200"></td>
+                                <td class="border border-neutral-200 text-center" data-summary-field="height" data-summary-col="B" style="font-size: 80% !important;"></td>
+                                <td class="border border-neutral-200 text-center" data-summary-field="width" data-summary-col="C" style="font-size: 80% !important;"></td>
+                                <td class="border border-neutral-200 text-center" data-summary-field="quantity" data-summary-col="D" style="font-size: 80% !important;">0</td>
                                 <td class="border border-neutral-200"></td>
                                 <td class="border border-neutral-200"></td>
                                 <td class="border border-neutral-200"></td>
-                                <td class="border border-neutral-200 text-center" data-summary-field="straight_paste_length" style="font-size: 80% !important;">0</td>
-                                <td class="border border-neutral-200 text-center" data-summary-field="beveled_length" style="font-size: 80% !important;">0</td>
-                                <td class="border border-neutral-200 text-center" data-summary-field="vat_moi_length" style="font-size: 80% !important;">0</td>
-                                <td class="border border-neutral-200 text-center" data-summary-field="ban_rong_40_59" style="font-size: 80% !important;">0</td>
-                                <td class="border border-neutral-200 text-center" data-summary-field="ban_rong_17_39" style="font-size: 80% !important;">0</td>
-                                <td class="border border-neutral-200 text-center" data-summary-field="ban_rong_25_35" style="font-size: 80% !important;">0</td>
-                                <td class="border border-neutral-200 text-center" data-summary-field="beveled_handle" style="font-size: 80% !important;">0</td>
-                                <td class="border border-neutral-200 text-center" data-summary-field="cnc" style="font-size: 80% !important;">0</td>
                                 <td class="border border-neutral-200"></td>
+                                <td class="border border-neutral-200"></td>
+                                <td class="border border-neutral-200 text-center" data-summary-field="straight_paste_length" data-summary-col="E" style="font-size: 80% !important;">0</td>
+                                <td class="border border-neutral-200 text-center" data-summary-field="beveled_length" data-summary-col="F" style="font-size: 80% !important;">0</td>
+                                <td class="border border-neutral-200 text-center" data-summary-field="vat_moi_length" data-summary-col="G" style="font-size: 80% !important;">0</td>
+                                <td class="border border-neutral-200 text-center" data-summary-field="ban_rong_40_59" data-summary-col="H" style="font-size: 80% !important;">0</td>
+                                <td class="border border-neutral-200 text-center" data-summary-field="ban_rong_17_39" data-summary-col="I" style="font-size: 80% !important;">0</td>
+                                <td class="border border-neutral-200 text-center" data-summary-field="ban_rong_25_35" data-summary-col="J" style="font-size: 80% !important;">0</td>
+                                <td class="border border-neutral-200 text-center" data-summary-field="beveled_handle" data-summary-col="K" style="font-size: 80% !important;">0</td>
+                                <td class="border border-neutral-200 text-center" data-summary-field="cnc" data-summary-col="L" style="font-size: 80% !important;">0</td>
                                 <td class="border border-neutral-200"></td>
                                 <td class="border border-neutral-200"></td>
                                 <td class="order-action-col border border-neutral-200" style="width: 140px; min-width: 140px; position: sticky; right: 0; z-index: 3; background-color: #f1f5f9;"></td>
@@ -368,7 +369,8 @@
                                 $oldWidth = isset($oldSizeParts[1]) ? trim($oldSizeParts[1]) : '';
                             @endphp
                             @php
-                                $itemFormulas = is_array($item->formula) ? $item->formula : (json_decode($item->formula ?? '[]', true) ?: []);
+                                $rawItemF = $item->formula ?? null;
+                                $itemFormulas = is_array($rawItemF) ? $rawItemF : (is_string($rawItemF) ? (json_decode($rawItemF, true) ?: []) : []);
                             @endphp
                             <tr class="order-item-row" data-item-id="{{ $item->id }}">
                                 <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][formula]" class="row-formula-input" value="{{ !empty($itemFormulas) ? json_encode($itemFormulas) : '' }}">
@@ -605,27 +607,27 @@ function addMinLateOrderSupply() {
                         <th scope="col" style="width: 45px; min-width: 45px; white-space: nowrap;" class="sticky-stt-th align-middle text-center border border-neutral-200 font-bold text-xs text-neutral-600 uppercase"><span class="order-stt-header-label">STT</span></th>
                         <th scope="col" style="width: 160px; min-width: 160px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Mã hàng</th>
                         <th scope="col" style="min-width: 180px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên hàng hóa, dịch vụ</th>
-                        <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Độ dày</th>
+                        <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Độ dày <span class="text-primary-600 font-extrabold">(A)</span></th>
                         ${window.isReworkOrder ? `
                             <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase text-center bg-yellow-50/50">Cao (cũ)</th>
                             <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase text-center bg-yellow-50/50">Rộng (cũ)</th>
                         ` : ''}
-                        <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="align-middle border border-neutral-200 bg-yellow-100/70 font-bold text-xs text-neutral-600 uppercase text-center">Cao (vân)</th>
-                        <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase text-center">Rộng</th>
-                        <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số lượng</th>
+                        <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="align-middle border border-neutral-200 bg-yellow-100/70 font-bold text-xs text-neutral-600 uppercase text-center">Cao (vân) <span class="text-primary-600 font-extrabold">(B)</span></th>
+                        <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase text-center">Rộng <span class="text-primary-600 font-extrabold">(C)</span></th>
+                        <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số lượng <span class="text-primary-600 font-extrabold">(D)</span></th>
                         <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Vát</th>
                         <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Nẹp Cao 1</th>
                         <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Nẹp Cao 2</th>
                         <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Nẹp Rộng 1</th>
                         <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Nẹp Rộng 2</th>
-                        <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán thẳng</th>
-                        <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán vát</th>
-                        <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán vát mòi</th>
-                        <th scope="col" style="width: 105px; min-width: 105px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán bản rộng 40-59mm</th>
-                        <th scope="col" style="width: 105px; min-width: 105px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán bản rộng 17-39mm</th>
-                        <th scope="col" style="width: 105px; min-width: 105px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán bản rộng 25-35mm</th>
-                        <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số vát tay nắm âm</th>
-                        <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số tấm CNC</th>
+                        <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán thẳng <span class="text-primary-600 font-extrabold">(E)</span></th>
+                        <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán vát <span class="text-primary-600 font-extrabold">(F)</span></th>
+                        <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán vát mòi <span class="text-primary-600 font-extrabold">(G)</span></th>
+                        <th scope="col" style="width: 105px; min-width: 105px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán bản rộng 40-59mm <span class="text-primary-600 font-extrabold">(H)</span></th>
+                        <th scope="col" style="width: 105px; min-width: 105px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán bản rộng 17-39mm <span class="text-primary-600 font-extrabold">(I)</span></th>
+                        <th scope="col" style="width: 105px; min-width: 105px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán bản rộng 25-35mm <span class="text-primary-600 font-extrabold">(J)</span></th>
+                        <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số vát tay nắm âm <span class="text-primary-600 font-extrabold">(K)</span></th>
+                        <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số tấm CNC <span class="text-primary-600 font-extrabold">(L)</span></th>
                         <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Chiều vân</th>
                         <th scope="col" style="min-width: 140px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Ghi chú</th>
                         <th scope="col" style="width: 140px; min-width: 140px; white-space: nowrap; position: sticky; right: 0; z-index: 3; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="order-action-col align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Hành động</th>
@@ -634,27 +636,27 @@ function addMinLateOrderSupply() {
                         <td class="border border-neutral-200 text-center sticky-stt-td" style="font-size: 80% !important; background-color: #f1f5f9;">TỔNG</td>
                         <td class="border border-neutral-200"></td>
                         <td class="border border-neutral-200"></td>
-                        <td class="border border-neutral-200"></td>
+                        <td class="border border-neutral-200 text-center" data-summary-field="thickness" data-summary-col="A" style="font-size: 80% !important;"></td>
                         ${window.isReworkOrder ? `
                             <td class="border border-neutral-200"></td>
                             <td class="border border-neutral-200"></td>
                         ` : ''}
+                        <td class="border border-neutral-200 text-center" data-summary-field="height" data-summary-col="B" style="font-size: 80% !important;"></td>
+                        <td class="border border-neutral-200 text-center" data-summary-field="width" data-summary-col="C" style="font-size: 80% !important;"></td>
+                        <td class="border border-neutral-200 text-center" data-summary-field="quantity" data-summary-col="D" style="font-size: 80% !important;">0</td>
                         <td class="border border-neutral-200"></td>
                         <td class="border border-neutral-200"></td>
-                        <td class="border border-neutral-200 text-center" data-summary-field="quantity" style="font-size: 80% !important;">0</td>
                         <td class="border border-neutral-200"></td>
                         <td class="border border-neutral-200"></td>
                         <td class="border border-neutral-200"></td>
-                        <td class="border border-neutral-200"></td>
-                        <td class="border border-neutral-200"></td>
-                        <td class="border border-neutral-200 text-center" data-summary-field="straight_paste_length" style="font-size: 80% !important;">0</td>
-                        <td class="border border-neutral-200 text-center" data-summary-field="beveled_length" style="font-size: 80% !important;">0</td>
-                        <td class="border border-neutral-200 text-center" data-summary-field="vat_moi_length" style="font-size: 80% !important;">0</td>
-                        <td class="border border-neutral-200 text-center" data-summary-field="ban_rong_40_59" style="font-size: 80% !important;">0</td>
-                        <td class="border border-neutral-200 text-center" data-summary-field="ban_rong_17_39" style="font-size: 80% !important;">0</td>
-                        <td class="border border-neutral-200 text-center" data-summary-field="ban_rong_25_35" style="font-size: 80% !important;">0</td>
-                        <td class="border border-neutral-200 text-center" data-summary-field="beveled_handle" style="font-size: 80% !important;">0</td>
-                        <td class="border border-neutral-200 text-center" data-summary-field="cnc" style="font-size: 80% !important;">0</td>
+                        <td class="border border-neutral-200 text-center" data-summary-field="straight_paste_length" data-summary-col="E" style="font-size: 80% !important;">0</td>
+                        <td class="border border-neutral-200 text-center" data-summary-field="beveled_length" data-summary-col="F" style="font-size: 80% !important;">0</td>
+                        <td class="border border-neutral-200 text-center" data-summary-field="vat_moi_length" data-summary-col="G" style="font-size: 80% !important;">0</td>
+                        <td class="border border-neutral-200 text-center" data-summary-field="ban_rong_40_59" data-summary-col="H" style="font-size: 80% !important;">0</td>
+                        <td class="border border-neutral-200 text-center" data-summary-field="ban_rong_17_39" data-summary-col="I" style="font-size: 80% !important;">0</td>
+                        <td class="border border-neutral-200 text-center" data-summary-field="ban_rong_25_35" data-summary-col="J" style="font-size: 80% !important;">0</td>
+                        <td class="border border-neutral-200 text-center" data-summary-field="beveled_handle" data-summary-col="K" style="font-size: 80% !important;">0</td>
+                        <td class="border border-neutral-200 text-center" data-summary-field="cnc" data-summary-col="L" style="font-size: 80% !important;">0</td>
                         <td class="border border-neutral-200"></td>
                         <td class="border border-neutral-200"></td>
                         <td class="order-action-col border border-neutral-200" style="width: 140px; min-width: 140px; position: sticky; right: 0; z-index: 3; background-color: #f1f5f9;"></td>
@@ -1018,9 +1020,10 @@ function calculateMinLateRowStats(row) {
     
     if (!heightInput || !widthInput || !quantityInput) return;
     
-    const height = parseFloat(heightInput.value) || 0;
-    const width = parseFloat(widthInput.value) || 0;
-    const quantity = parseFloat(quantityInput.value) || 0;
+    const parseFn = typeof window.parseInputValue === 'function' ? window.parseInputValue : (el => parseFloat(el?.value) || 0);
+    const height = parseFn(heightInput);
+    const width = parseFn(widthInput);
+    const quantity = parseFn(quantityInput);
     
     const height1Select = row.querySelector('select[name*="[edge_gluing][height_1]"]');
     const height2Select = row.querySelector('select[name*="[edge_gluing][height_2]"]');
@@ -1144,15 +1147,17 @@ function calculateMinLateRowStats(row) {
 function bindMinLateRowEvents(row) {
     if (!row) return;
     
-    const inputs = row.querySelectorAll('input[name*="[height]"], input[name*="[width]"], input[name*="[quantity]"]');
+    const inputs = row.querySelectorAll('input[name*="[height]"], input[name*="[width]"], input[name*="[quantity]"], input[name*="[unit_price]"]');
     inputs.forEach(input => {
-        input.addEventListener('input', () => {
-            calculateMinLateRowStats(row);
-            if (typeof calculateMinLateTotalPrice === 'function') calculateMinLateTotalPrice(row);
-            if (input.name.indexOf('[quantity]') !== -1) {
-                updateMinLateRowIndexes();
-            }
-            updateOrderSummary();
+        ['input', 'change', 'blur'].forEach(evtName => {
+            input.addEventListener(evtName, () => {
+                calculateMinLateRowStats(row);
+                if (typeof calculateMinLateTotalPrice === 'function') calculateMinLateTotalPrice(row);
+                if (input.name.indexOf('[quantity]') !== -1) {
+                    updateMinLateRowIndexes();
+                }
+                updateOrderSummary();
+            });
         });
     });
     
@@ -1171,8 +1176,9 @@ function calculateMinLateTotalPrice(row) {
     const unitPriceEl = row.querySelector('input[name*="[unit_price]"]');
     const totalPriceEl = row.querySelector('input[name*="[total_price]"]');
     if (!unitPriceEl || !totalPriceEl) return;
-    const unitPrice = parseFloat(unitPriceEl.value) || 0;
-    const quantity = parseFloat(row.querySelector('input[name*="[quantity]"]').value) || 0;
+    const parseFn = typeof window.parseInputValue === 'function' ? window.parseInputValue : (el => parseFloat(el?.value) || 0);
+    const unitPrice = parseFn(unitPriceEl);
+    const quantity = parseFn(row.querySelector('input[name*="[quantity]"]'));
     const totalPrice = unitPrice * quantity;
     totalPriceEl.value = Math.round(totalPrice);
     updateOrderSummary();

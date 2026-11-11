@@ -24,16 +24,24 @@ function estimateRowHeight(text, mergedWidth) {
     return Math.max(18, totalLines * 16);
 }
 
-/**
- * Lấy tên vật liệu cho Nesting: lấy trực tiếp tên vật tư (supply_name), không ghép thêm mã màu phía trước.
- */
 function getMaterialName(supply) {
     if (!supply) return '';
+    const rawCode = (supply.order_supply_code || '').trim();
     const name = (supply.supply_name || '').trim();
-    if (name) {
-        return name;
+
+    let colorCode = '';
+    if (rawCode) {
+        colorCode = rawCode.split('.')[0].split('_')[0].trim();
     }
-    return (supply.order_supply_code || '').trim();
+
+    if (colorCode && name) {
+        if (name.toLowerCase().startsWith(colorCode.toLowerCase())) {
+            return name;
+        }
+        return `${colorCode} ${name}`;
+    }
+
+    return colorCode || name || '';
 }
 
 function isLaborItem(item) {
@@ -238,7 +246,10 @@ async function exportToExcel(customData = null, returnBlob = false) {
             // Metadata rows (using C:K merge)
             worksheet.getRow(5).height = 25;
             worksheet.mergeCells('C5:K5');
-            setCell(5, 3, 'BÁO GIÁ KIÊM ĐƠN ĐẶT HÀNG', true, 'center', 16);
+            const acrylicTitle = (orderData.is_nhap_kho || (orderData.order_code && /[._-]?NK$/i.test(orderData.order_code)))
+                ? 'PHIẾU NHẬP KHO'
+                : 'BÁO GIÁ KIÊM ĐƠN ĐẶT HÀNG';
+            setCell(5, 3, acrylicTitle, true, 'center', 16);
 
             worksheet.getRow(6).height = 18;
             worksheet.mergeCells('C6:K6');
@@ -1560,7 +1571,10 @@ async function exportToExcel(customData = null, returnBlob = false) {
             // Metadata rows
             worksheet.getRow(5).height = 25;
             worksheet.mergeCells('C5:O5');
-            setCell(5, 3, 'BÁO GIÁ KIÊM ĐƠN ĐẶT HÀNG', true, 'center', 16);
+            const minLateTitle = (orderData.is_nhap_kho || (orderData.order_code && /[._-]?NK$/i.test(orderData.order_code)))
+                ? 'PHIẾU NHẬP KHO'
+                : 'LỆNH SẢN XUẤT';
+            setCell(5, 3, minLateTitle, true, 'center', 16);
 
             worksheet.getRow(6).height = 18;
             worksheet.mergeCells('C6:O6');
@@ -2199,7 +2213,9 @@ async function exportToExcel(customData = null, returnBlob = false) {
             return blob;
         }
         
-        saveAs(blob, `Bao_Gia_${orderData.order_code}.xlsx`);
+        const isNK = orderData.is_nhap_kho || (orderData.order_code && /[._-]?NK$/i.test(orderData.order_code));
+        const filePrefix = isNK ? 'Phieu_Nhap_Kho' : ((orderData.type === 'min_late' || orderData.type === 'Flywood') ? 'Lenh_San_Xuat' : 'Bao_Gia');
+        saveAs(blob, `${filePrefix}_${orderData.order_code}.xlsx`);
     } catch (error) {
         console.error("Export error", error);
         if (!returnBlob) {

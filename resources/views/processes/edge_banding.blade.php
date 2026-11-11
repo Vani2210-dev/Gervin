@@ -160,17 +160,32 @@
 
     <!-- History list section -->
     <div class="mt-8 card bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-sm overflow-hidden">
-        <div class="card-header border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/50 py-4 px-6 flex items-center flex-wrap gap-3 justify-between">
-            <h5 class="text-lg font-bold text-neutral-800 dark:text-neutral-100 mb-0 flex items-center gap-2">
-                Lịch sử dán cạnh
-            </h5>
-            <div class="flex items-center flex-wrap gap-3">
-                {{-- Bộ lọc ngày tháng chung --}}
+        <div class="card-header border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/50 py-3.5 px-6 flex flex-col gap-2.5">
+            {{-- Tầng 1: Tiêu đề & Tìm kiếm --}}
+            <div class="flex items-center justify-between flex-wrap gap-3">
+                <h5 class="text-base font-bold text-neutral-800 dark:text-neutral-100 mb-0 flex items-center gap-2">
+                    Lịch sử dán cạnh
+                </h5>
+                {{-- Search bar --}}
+                <form method="GET" action="{{ route('processes.edge-banding') }}" class="relative w-48 sm:w-60">
+                    <input type="hidden" name="per_page" value="{{ $perPage }}">
+                    <span class="absolute top-1/2 -translate-y-1/2 text-neutral-400 flex items-center justify-center pointer-events-none" style="left: 10px;">
+                        <iconify-icon icon="lucide:search" class="text-base"></iconify-icon>
+                    </span>
+                    <input type="text" name="search"
+                        class="w-full pr-3 py-1.5 border border-neutral-300 dark:border-neutral-700 rounded-lg bg-neutral-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        style="padding-left: 32px;"
+                        placeholder="Tìm kiếm lịch sử..." value="{{ $search }}">
+                </form>
+            </div>
+
+            {{-- Tầng 2: Bộ lọc thời gian & Hiển thị --}}
+            <div class="flex items-center justify-between flex-wrap gap-2.5">
                 <x-date-filter :action="route('processes.edge-banding')" />
 
                 {{-- Per page --}}
                 <div class="flex items-center gap-1.5">
-                    <span class="text-sm font-medium text-secondary-light mb-0">Hiển thị</span>
+                    <span class="text-xs font-medium text-secondary-light mb-0">Hiển thị</span>
                     <form method="GET" action="{{ route('processes.edge-banding') }}" id="perPageForm">
                         <input type="hidden" name="search" value="{{ $search }}">
                         <select name="per_page" class="form-select form-select-sm w-auto border border-neutral-200 dark:border-neutral-700 rounded-lg py-1 px-2 text-xs bg-transparent dark:text-neutral-300"
@@ -181,18 +196,6 @@
                         </select>
                     </form>
                 </div>
-
-                {{-- Search bar --}}
-                <form method="GET" action="{{ route('processes.edge-banding') }}" class="relative w-48 sm:w-56">
-                    <input type="hidden" name="per_page" value="{{ $perPage }}">
-                    <span class="absolute top-1/2 -translate-y-1/2 text-neutral-400 flex items-center justify-center pointer-events-none" style="left: 10px;">
-                        <iconify-icon icon="lucide:search" class="text-base"></iconify-icon>
-                    </span>
-                    <input type="text" name="search"
-                        class="w-full pr-3 py-1.5 border border-neutral-300 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                        style="padding-left: 34px;"
-                        placeholder="Tìm kiếm lịch sử..." value="{{ $search }}">
-                </form>
             </div>
         </div>
 

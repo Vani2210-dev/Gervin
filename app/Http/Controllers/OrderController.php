@@ -337,8 +337,12 @@ class OrderController extends Controller
         $code = trim((string)$request->query('code', ''));
         $orderId = $request->query('order_id');
         $isNhapKho = filter_var($request->query('is_nhap_kho'), FILTER_VALIDATE_BOOLEAN);
+        $isDraft = filter_var($request->query('is_draft'), FILTER_VALIDATE_BOOLEAN);
+
         if ($isNhapKho && $code !== '') {
             $code = Order::formatNhapKhoOrderCode($code);
+        } elseif ($isDraft && $code !== '') {
+            $code = Order::formatDraftOrderCode($code);
         }
 
         if ($code === '') {
@@ -576,6 +580,7 @@ class OrderController extends Controller
             'order_code' => $acrylicOrder->order_code,
             'created_at' => $acrylicOrder->created_at->format('d/m/Y H:i'),
             'type' => $acrylicOrder->type,
+            'is_nhap_kho' => $acrylicOrder->isNhapKho(),
             'customer_name' => $fullCustomerDisplay,
             'full_customer_display' => $fullCustomerDisplay,
             'customer_short_name' => $customerShortName,
@@ -839,6 +844,7 @@ class OrderController extends Controller
         }
 
         $isNhapKho = $this->isRequestNhapKho($request, $order);
+        $isDraftAction = $request->input('action') === 'draft';
         if ($isNhapKho && !empty($order->order_code) && !preg_match('/[._-]?NK$/i', $order->order_code)) {
             $order->order_code = Order::formatNhapKhoOrderCode($order->order_code);
             $order->saveQuietly();
@@ -848,8 +854,12 @@ class OrderController extends Controller
             $customCode = trim((string)$request->order_code);
             if ($isNhapKho) {
                 $customCode = Order::formatNhapKhoOrderCode($customCode);
-                $request->merge(['order_code' => $customCode]);
+            } elseif ($isDraftAction || $order->status === 'draft') {
+                $customCode = Order::formatDraftOrderCode($customCode);
+            } else {
+                $customCode = Order::stripDraftOrderCode($customCode);
             }
+            $request->merge(['order_code' => $customCode]);
             $exists = Order::where('order_code', $customCode)
                 ->where('id', '!=', $order->id)
                 ->exists();
@@ -863,6 +873,9 @@ class OrderController extends Controller
             $order->save();
         } elseif ($isNhapKho && !preg_match('/[._-]?NK$/i', $order->order_code)) {
             $order->order_code = Order::formatNhapKhoOrderCode($order->order_code);
+            $order->save();
+        } elseif (($isDraftAction || $order->status === 'draft') && !preg_match('/[._-]?D$/i', $order->order_code)) {
+            $order->order_code = Order::formatDraftOrderCode($order->order_code);
             $order->save();
         }
         $order->load(['supplies.items', 'supplies.minLateItems', 'supplies.glassItems', 'paymentDetails']);
@@ -900,13 +913,19 @@ class OrderController extends Controller
 
         $draftOrder = Order::where('status', 'draft')->findOrFail($request->draft_order_id);
         $isNhapKho = $this->isRequestNhapKho($request, $draftOrder);
+        $isDraftSave = $request->input('action') === 'draft';
 
         if ($request->filled('order_code')) {
             $customCode = trim((string)$request->order_code);
             if ($isNhapKho) {
                 $customCode = Order::formatNhapKhoOrderCode($customCode);
-                $request->merge(['order_code' => $customCode]);
+            } elseif ($isDraftSave) {
+                $customCode = Order::formatDraftOrderCode($customCode);
+            } else {
+                $customCode = Order::stripDraftOrderCode($customCode);
             }
+            $request->merge(['order_code' => $customCode]);
+
             $exists = Order::where('order_code', $customCode)
                 ->where('id', '!=', $draftOrder->id)
                 ->exists();
@@ -920,6 +939,9 @@ class OrderController extends Controller
             $draftOrder->save();
         } elseif ($isNhapKho && !preg_match('/[._-]?NK$/i', $draftOrder->order_code)) {
             $draftOrder->order_code = Order::formatNhapKhoOrderCode($draftOrder->order_code);
+            $draftOrder->save();
+        } elseif ($isDraftSave && !preg_match('/[._-]?D$/i', $draftOrder->order_code)) {
+            $draftOrder->order_code = Order::formatDraftOrderCode($draftOrder->order_code);
             $draftOrder->save();
         }
 
@@ -937,11 +959,18 @@ class OrderController extends Controller
 
         $service = $this->serviceFor($request->type);
 
-        $isDraftSave = $request->input('action') === 'draft';
         if ($isDraftSave) {
             $request->merge(['status' => 'draft']);
         } else {
-            // Xác nhận đơn từ đơn nháp sang đơn thường: Cập nhật lại ngày giờ tạo đơn theo đúng thời điểm gửi đơn
+            // Xác nhận đơn từ đơn nháp sang đơn thường: gỡ bỏ hậu tố .D nếu có
+            $cleanCode = Order::stripDraftOrderCode($draftOrder->order_code);
+            if ($isNhapKho) {
+                $cleanCode = Order::formatNhapKhoOrderCode($cleanCode);
+            }
+            $draftOrder->order_code = $cleanCode;
+            $request->merge(['order_code' => $cleanCode]);
+
+            // Cập nhật lại ngày giờ tạo đơn theo đúng thời điểm gửi đơn
             $now = \Carbon\Carbon::now('Asia/Ho_Chi_Minh');
             $request->merge(['order_date' => $now->format('Y-m-d H:i:s')]);
             $draftOrder->order_date = $now;
@@ -1023,6 +1052,7 @@ class OrderController extends Controller
         }
 
         $isNhapKho = $this->isRequestNhapKho($request, $order);
+        $isDraftAction = $request->input('action') === 'draft';
         if ($isNhapKho && !empty($order->order_code) && !preg_match('/[._-]?NK$/i', $order->order_code)) {
             $order->order_code = Order::formatNhapKhoOrderCode($order->order_code);
             $order->saveQuietly();
@@ -1032,8 +1062,12 @@ class OrderController extends Controller
             $customCode = trim((string)$request->order_code);
             if ($isNhapKho) {
                 $customCode = Order::formatNhapKhoOrderCode($customCode);
-                $request->merge(['order_code' => $customCode]);
+            } elseif ($isDraftAction || $order->status === 'draft') {
+                $customCode = Order::formatDraftOrderCode($customCode);
+            } else {
+                $customCode = Order::stripDraftOrderCode($customCode);
             }
+            $request->merge(['order_code' => $customCode]);
             $exists = Order::where('order_code', $customCode)
                 ->where('id', '!=', $order->id)
                 ->exists();
@@ -1047,6 +1081,9 @@ class OrderController extends Controller
             $order->save();
         } elseif ($isNhapKho && !preg_match('/[._-]?NK$/i', $order->order_code)) {
             $order->order_code = Order::formatNhapKhoOrderCode($order->order_code);
+            $order->save();
+        } elseif (($isDraftAction || $order->status === 'draft') && !preg_match('/[._-]?D$/i', $order->order_code)) {
+            $order->order_code = Order::formatDraftOrderCode($order->order_code);
             $order->save();
         }
 
@@ -1575,22 +1612,25 @@ class OrderController extends Controller
             if (preg_match('/[._-]?NK$/i', $code)) {
                 continue;
             }
+            // Gỡ bỏ hậu tố D của đơn nháp nếu có để tính đúng số thứ tự
+            $baseCode = preg_replace('/[._-]?D$/i', '', $code);
+
             // 1. Dạng 26.5178 hoặc 26.1 hoặc 26_5178
-            if (preg_match('/^' . preg_quote($yearPrefix, '/') . '[._](\d+)$/', $code, $matches)) {
+            if (preg_match('/^' . preg_quote($yearPrefix, '/') . '[._](\d+)$/', $baseCode, $matches)) {
                 $num = intval($matches[1]);
                 if ($num > $maxNumber) {
                     $maxNumber = $num;
                 }
             }
             // 2. Dạng số nguyên thuần túy (VD: người dùng nhập trực tiếp 5178)
-            elseif (preg_match('/^\d+$/', $code)) {
-                $num = intval($code);
+            elseif (preg_match('/^\d+$/', $baseCode)) {
+                $num = intval($baseCode);
                 if ($num > $maxNumber) {
                     $maxNumber = $num;
                 }
             }
             // 3. Dạng đơn con của năm hiện tại (VD: 26.5178.1 -> lấy 5178)
-            elseif (preg_match('/^' . preg_quote($yearPrefix, '/') . '[._](\d+)\./', $code, $matches)) {
+            elseif (preg_match('/^' . preg_quote($yearPrefix, '/') . '[._](\d+)\./', $baseCode, $matches)) {
                 $num = intval($matches[1]);
                 if ($num > $maxNumber) {
                     $maxNumber = $num;
@@ -1603,7 +1643,7 @@ class OrderController extends Controller
 
     private function generateChildOrderCode(Order $parentOrder): string
     {
-        $parentCode = trim((string)$parentOrder->order_code);
+        $parentCode = Order::stripDraftOrderCode(trim((string)$parentOrder->order_code));
         if ($parentCode === '') {
             return $this->generateOrderCode();
         }
@@ -1618,7 +1658,8 @@ class OrderController extends Controller
 
         $maxSuffix = 0;
         foreach ($existingCodes as $code) {
-            if (preg_match('/^' . preg_quote($parentCode, '/') . '\.(\d+)$/', $code, $matches)) {
+            $cleanChild = Order::stripDraftOrderCode(trim((string)$code));
+            if (preg_match('/^' . preg_quote($parentCode, '/') . '\.(\d+)$/', $cleanChild, $matches)) {
                 $num = intval($matches[1]);
                 if ($num > $maxSuffix) {
                     $maxSuffix = $num;
@@ -1633,6 +1674,7 @@ class OrderController extends Controller
     {
         return DB::transaction(function () use ($type, $relationType, $parentOrder) {
             $orderCode = $parentOrder ? $this->generateChildOrderCode($parentOrder) : $this->generateOrderCode();
+            $orderCode = Order::formatDraftOrderCode($orderCode);
 
             return Order::create([
                 'order_code' => $orderCode,
@@ -1663,7 +1705,7 @@ class OrderController extends Controller
     /**
      * Recursively convert empty string elements to null in request arrays.
      */
-    protected function evaluateFormulaString($expr)
+    protected function evaluateFormulaString($expr, array $columnTotals = [])
     {
         if (!is_string($expr)) return $expr;
         $expr = trim($expr);
@@ -1671,6 +1713,12 @@ class OrderController extends Controller
             $expr = trim(substr($expr, 1));
         }
         $expr = preg_replace('/(\d+),(\d+)/', '$1.$2', $expr);
+        if (!empty($columnTotals)) {
+            $expr = preg_replace_callback('/\b([A-Za-z])\b/', function ($matches) use ($columnTotals) {
+                $letter = strtoupper($matches[1]);
+                return isset($columnTotals[$letter]) ? $columnTotals[$letter] : 0;
+            }, $expr);
+        }
         if (!preg_match('/^[\d+\-*\/().\s]+$/', $expr)) {
             return null;
         }
@@ -1682,12 +1730,67 @@ class OrderController extends Controller
         }
     }
 
+    protected function computeOrderColumnTotalsFromRequest(Request $request): array
+    {
+        $totals = [];
+        $supplies = $request->input('supplies', []);
+        if (!is_array($supplies)) return $totals;
+
+        foreach ($supplies as $supply) {
+            $items = $supply['items'] ?? [];
+            if (!is_array($items)) continue;
+
+            foreach ($items as $item) {
+                // A: thickness, B: height, C: width, D: quantity
+                $thk = (float)($item['thickness'] ?? 0);
+                $h = (float)($item['height'] ?? ($item['size']['height'] ?? 0));
+                $w = (float)($item['width'] ?? ($item['size']['width'] ?? 0));
+                $qty = (float)($item['quantity'] ?? $item['wing_quantity'] ?? 0);
+
+                $totals['A'] = ($totals['A'] ?? 0) + $thk;
+                $totals['B'] = ($totals['B'] ?? 0) + $h;
+                $totals['C'] = ($totals['C'] ?? 0) + $w;
+                $totals['D'] = ($totals['D'] ?? 0) + $qty;
+
+                if (isset($item['straight_paste_length'])) {
+                    // Min Late: E to N
+                    $totals['E'] = ($totals['E'] ?? 0) + (float)$item['straight_paste_length'];
+                    $totals['F'] = ($totals['F'] ?? 0) + (float)($item['beveled_length'] ?? 0);
+                    $totals['G'] = ($totals['G'] ?? 0) + (float)($item['vat_moi_length'] ?? 0);
+                    $totals['H'] = ($totals['H'] ?? 0) + (float)($item['ban_rong_40_59'] ?? 0);
+                    $totals['I'] = ($totals['I'] ?? 0) + (float)($item['ban_rong_17_39'] ?? 0);
+                    $totals['J'] = ($totals['J'] ?? 0) + (float)($item['ban_rong_25_35'] ?? 0);
+                    $totals['K'] = ($totals['K'] ?? 0) + (float)($item['beveled_handle'] ?? 0);
+                    $totals['L'] = ($totals['L'] ?? 0) + (float)($item['cnc'] ?? 0);
+                    $totals['M'] = ($totals['M'] ?? 0) + (float)($item['unit_price'] ?? 0);
+                    $totals['N'] = ($totals['N'] ?? 0) + (float)($item['total_price'] ?? 0);
+                } elseif (isset($item['wing_area'])) {
+                    // Acrylic: E to H
+                    $totals['E'] = ($totals['E'] ?? 0) + (float)($item['wing_area'] ?? 0);
+                    $totals['F'] = ($totals['F'] ?? 0) + (float)($item['molding_length'] ?? 0);
+                    $totals['G'] = ($totals['G'] ?? 0) + (float)($item['unit_price'] ?? $item['price'] ?? 0);
+                    $totals['H'] = ($totals['H'] ?? 0) + (float)($item['total_price'] ?? 0);
+                } elseif (isset($item['area_m2']) || isset($item['weight'])) {
+                    // Glass: E to G
+                    $totals['E'] = ($totals['E'] ?? 0) + (float)($item['area_m2'] ?? $item['weight'] ?? 0);
+                    $totals['F'] = ($totals['F'] ?? 0) + (float)($item['unit_price'] ?? $item['price'] ?? 0);
+                    $totals['G'] = ($totals['G'] ?? 0) + (float)($item['total_price'] ?? 0);
+                }
+            }
+        }
+        return $totals;
+    }
+
     protected function sanitizeSuppliesFormulas(array $supplies): array
     {
         foreach ($supplies as &$supply) {
             if (isset($supply['quantity']) && is_string($supply['quantity']) && str_starts_with(trim($supply['quantity']), '=')) {
                 $rawQ = trim($supply['quantity']);
-                $supply['formula'] = is_array($supply['formula'] ?? null) ? $supply['formula'] : [];
+                $sFormula = $supply['formula'] ?? [];
+                if (is_string($sFormula)) {
+                    $sFormula = json_decode($sFormula, true) ?: [];
+                }
+                $supply['formula'] = is_array($sFormula) ? $sFormula : [];
                 $supply['formula']['quantity'] = $rawQ;
                 $calc = $this->evaluateFormulaString($rawQ);
                 $supply['quantity'] = ($calc !== null) ? $calc : 0;
@@ -1699,7 +1802,11 @@ class OrderController extends Controller
                 foreach ($numericFields as $field) {
                     if (isset($item[$field]) && is_string($item[$field]) && str_starts_with(trim($item[$field]), '=')) {
                         $rawF = trim($item[$field]);
-                        $item['formula'] = is_array($item['formula'] ?? null) ? $item['formula'] : [];
+                        $iFormula = $item['formula'] ?? [];
+                        if (is_string($iFormula)) {
+                            $iFormula = json_decode($iFormula, true) ?: [];
+                        }
+                        $item['formula'] = is_array($iFormula) ? $iFormula : [];
                         $item['formula'][$field] = $rawF;
                         $calc = $this->evaluateFormulaString($rawF);
                         $item[$field] = ($calc !== null) ? $calc : null;
@@ -1713,14 +1820,19 @@ class OrderController extends Controller
     protected function sanitizePaymentDetailsFormulas(Request $request): void
     {
         if ($request->has('payment_details') && is_array($request->payment_details)) {
+            $columnTotals = $this->computeOrderColumnTotalsFromRequest($request);
             $details = $request->payment_details;
             foreach ($details as &$detail) {
                 foreach (['quantity', 'price', 'price_only'] as $field) {
                     if (isset($detail[$field]) && is_string($detail[$field]) && str_starts_with(trim($detail[$field]), '=')) {
                         $rawF = trim($detail[$field]);
-                        $detail['formula'] = is_array($detail['formula'] ?? null) ? $detail['formula'] : [];
+                        $dFormula = $detail['formula'] ?? [];
+                        if (is_string($dFormula)) {
+                            $dFormula = json_decode($dFormula, true) ?: [];
+                        }
+                        $detail['formula'] = is_array($dFormula) ? $dFormula : [];
                         $detail['formula'][$field] = $rawF;
-                        $calc = $this->evaluateFormulaString($rawF);
+                        $calc = $this->evaluateFormulaString($rawF, $columnTotals);
                         $detail[$field] = ($calc !== null) ? $calc : 0;
                     }
                 }

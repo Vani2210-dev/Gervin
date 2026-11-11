@@ -64,38 +64,38 @@
     @endforeach
 @endif
 
-    <div class="inline-flex flex-wrap items-center gap-2 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl p-1.5 shadow-xs text-xs">
+    <div class="inline-flex flex-wrap items-center gap-2 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl p-1 shadow-2xs text-xs">
         <input type="hidden" name="date_preset" id="{{ $uid }}_preset" value="{{ $currentPreset }}">
 
         {{-- Preset Buttons --}}
         <div class="inline-flex items-center bg-neutral-100 dark:bg-neutral-900 rounded-lg p-0.5 font-medium">
             <button type="button" onclick="{{ $uid }}_setPreset('today')" id="{{ $uid }}_btn_today"
-                class="px-2.5 py-1 rounded-md transition-all {{ $currentPreset === 'today' ? 'bg-white dark:bg-neutral-800 text-primary-600 shadow-2xs font-semibold' : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200' }}"
+                class="px-2 py-0.5 rounded-md transition-all text-xs {{ $currentPreset === 'today' ? 'bg-white dark:bg-neutral-800 text-primary-600 shadow-2xs font-semibold' : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200' }}"
                 title="Hôm nay">
                 Hôm nay
             </button>
             <button type="button" onclick="{{ $uid }}_setPreset('yesterday')" id="{{ $uid }}_btn_yesterday"
-                class="px-2.5 py-1 rounded-md transition-all {{ $currentPreset === 'yesterday' ? 'bg-white dark:bg-neutral-800 text-primary-600 shadow-2xs font-semibold' : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200' }}"
+                class="px-2 py-0.5 rounded-md transition-all text-xs {{ $currentPreset === 'yesterday' ? 'bg-white dark:bg-neutral-800 text-primary-600 shadow-2xs font-semibold' : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200' }}"
                 title="Hôm qua">
                 Hôm qua
             </button>
             <button type="button" onclick="{{ $uid }}_setPreset('7_days')" id="{{ $uid }}_btn_7_days"
-                class="px-2.5 py-1 rounded-md transition-all {{ $currentPreset === '7_days' ? 'bg-white dark:bg-neutral-800 text-primary-600 shadow-2xs font-semibold' : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200' }}"
+                class="px-2 py-0.5 rounded-md transition-all text-xs {{ $currentPreset === '7_days' ? 'bg-white dark:bg-neutral-800 text-primary-600 shadow-2xs font-semibold' : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200' }}"
                 title="7 ngày gần nhất">
                 7 ngày
             </button>
             <button type="button" onclick="{{ $uid }}_setPreset('this_month')" id="{{ $uid }}_btn_this_month"
-                class="px-2.5 py-1 rounded-md transition-all {{ $currentPreset === 'this_month' ? 'bg-white dark:bg-neutral-800 text-primary-600 shadow-2xs font-semibold' : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200' }}"
+                class="px-2 py-0.5 rounded-md transition-all text-xs {{ $currentPreset === 'this_month' ? 'bg-white dark:bg-neutral-800 text-primary-600 shadow-2xs font-semibold' : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200' }}"
                 title="Tháng này">
                 Tháng này
             </button>
             <button type="button" onclick="{{ $uid }}_setPreset('this_year')" id="{{ $uid }}_btn_this_year"
-                class="px-2.5 py-1 rounded-md transition-all {{ $currentPreset === 'this_year' ? 'bg-white dark:bg-neutral-800 text-primary-600 shadow-2xs font-semibold' : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200' }}"
+                class="px-2 py-0.5 rounded-md transition-all text-xs {{ $currentPreset === 'this_year' ? 'bg-white dark:bg-neutral-800 text-primary-600 shadow-2xs font-semibold' : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200' }}"
                 title="Năm nay">
                 Năm nay
             </button>
             <button type="button" onclick="{{ $uid }}_setPreset('all')" id="{{ $uid }}_btn_all"
-                class="px-2.5 py-1 rounded-md transition-all {{ $currentPreset === 'all' ? 'bg-white dark:bg-neutral-800 text-primary-600 shadow-2xs font-semibold' : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200' }}"
+                class="px-2 py-0.5 rounded-md transition-all text-xs {{ $currentPreset === 'all' ? 'bg-white dark:bg-neutral-800 text-primary-600 shadow-2xs font-semibold' : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200' }}"
                 title="Tất cả thời gian">
                 Tất cả
             </button>
@@ -109,14 +109,14 @@
             <div class="relative flex items-center">
                 <input type="date" name="start_date" id="{{ $uid }}_start" value="{{ $currentStart }}"
                     onchange="{{ $uid }}_onCustomDateChange()"
-                    class="form-control form-control-xs py-1 px-2 text-xs border border-neutral-200 dark:border-neutral-700 rounded-lg bg-neutral-50 dark:bg-neutral-900 text-neutral-800 dark:text-neutral-200 focus:bg-white cursor-pointer w-32"
+                    class="form-control form-control-xs py-1 px-2 text-xs border border-neutral-200 dark:border-neutral-700 rounded-lg bg-neutral-50 dark:bg-neutral-900 text-neutral-800 dark:text-neutral-200 focus:bg-white cursor-pointer w-28 sm:w-30"
                     title="Từ ngày">
             </div>
             <span class="text-neutral-400 font-semibold text-xs">→</span>
             <div class="relative flex items-center">
                 <input type="date" name="end_date" id="{{ $uid }}_end" value="{{ $currentEnd }}"
                     onchange="{{ $uid }}_onCustomDateChange()"
-                    class="form-control form-control-xs py-1 px-2 text-xs border border-neutral-200 dark:border-neutral-700 rounded-lg bg-neutral-50 dark:bg-neutral-900 text-neutral-800 dark:text-neutral-200 focus:bg-white cursor-pointer w-32"
+                    class="form-control form-control-xs py-1 px-2 text-xs border border-neutral-200 dark:border-neutral-700 rounded-lg bg-neutral-50 dark:bg-neutral-900 text-neutral-800 dark:text-neutral-200 focus:bg-white cursor-pointer w-28 sm:w-30"
                     title="Đến ngày">
             </div>
 

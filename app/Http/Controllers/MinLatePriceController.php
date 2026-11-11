@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\MinLatePrice;
+use App\Models\OrderServiceCombo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -16,17 +17,19 @@ class MinLatePriceController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:view supply',   ['only' => ['index', 'export']]);
-        $this->middleware('permission:add supply',    ['only' => ['store', 'import']]);
-        $this->middleware('permission:edit supply',   ['only' => ['update']]);
-        $this->middleware('permission:delete supply', ['only' => ['destroy']]);
+        $this->middleware('permission:view supply',   ['only' => ['index', 'export', 'getCombosApi']]);
+        $this->middleware('permission:add supply',    ['only' => ['store', 'import', 'storeCombo']]);
+        $this->middleware('permission:edit supply',   ['only' => ['update', 'updateCombo']]);
+        $this->middleware('permission:delete supply', ['only' => ['destroy', 'destroyCombo']]);
     }
 
     public function index(Request $request)
     {
+        $activeTab = $request->input('tab', 'prices');
         $perPage = $request->input('per_page', 15);
         $search  = $request->input('search', '');
         $filterCategory = $request->input('filter_category', '');
+        $comboOrderType = $request->input('combo_type', '');
 
         // Fetch categories for filtering dropdown
         $categories = MinLatePrice::select('category_name')
@@ -52,7 +55,18 @@ class MinLatePriceController extends Controller
             ->paginate($perPage)
             ->withQueryString();
 
-        return view('minlate_prices.index', compact('minlatePrices', 'categories', 'perPage', 'search', 'filterCategory'));
+        // Load combos for Tab 2
+        $combosQuery = OrderServiceCombo::query()
+            ->when($comboOrderType, function ($q) use ($comboOrderType) {
+                $q->where('order_type', $comboOrderType);
+            })
+            ->orderBy('sort_order', 'asc')
+            ->orderBy('id', 'asc');
+        $combos = $combosQuery->get();
+
+        $allMinLatePrices = MinLatePrice::orderBy('product_name', 'asc')->get(['id', 'code', 'product_name', 'unit', 'price', 'default_formula']);
+
+        return view('minlate_prices.index', compact('minlatePrices', 'categories', 'perPage', 'search', 'filterCategory', 'activeTab', 'combos', 'comboOrderType', 'allMinLatePrices'));
     }
 
     public function store(Request $request)
@@ -65,6 +79,7 @@ class MinLatePriceController extends Controller
             'price'         => 'required|numeric|min:0',
             'code'          => 'nullable|string|max:100',
             'notes'         => 'nullable|string',
+            'default_formula' => 'nullable|string|max:255',
         ]);
 
         MinLatePrice::create([
@@ -75,6 +90,7 @@ class MinLatePriceController extends Controller
             'price'         => floatval($request->price),
             'code'          => $request->code ?: null,
             'notes'         => $request->notes,
+            'default_formula' => $request->default_formula ?: null,
         ]);
 
         return redirect()->route('minlate_prices.index')->with('success', 'Thêm dòng bảng giá dịch vụ Min-late thành công.');
@@ -90,6 +106,7 @@ class MinLatePriceController extends Controller
             'price'         => 'required|numeric|min:0',
             'code'          => 'nullable|string|max:100',
             'notes'         => 'nullable|string',
+            'default_formula' => 'nullable|string|max:255',
         ]);
 
         $minlatePrice->update([
@@ -100,6 +117,7 @@ class MinLatePriceController extends Controller
             'price'         => floatval($request->price),
             'code'          => $request->code ?: null,
             'notes'          => $request->notes,
+            'default_formula' => $request->default_formula ?: null,
         ]);
 
         return redirect()->route('minlate_prices.index')->with('success', 'Cập nhật dòng bảng giá dịch vụ Min-late thành công.');
@@ -121,14 +139,14 @@ class MinLatePriceController extends Controller
 
         // Title row 1
         $sheet->setCellValue('A1', 'BẢNG GIÁ DỊCH VỤ GIA CÔNG MIN-LATE GERVIN');
-        $sheet->mergeCells('A1:F1');
+        $sheet->mergeCells('A1:G1');
         $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF166534'));
         $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
         $sheet->getRowDimension(1)->setRowHeight(32);
 
         // Subtitle row 2
         $sheet->setCellValue('A2', 'Ngày xuất dữ liệu: ' . date('d/m/Y H:i') . ' | Tổng số dòng: ' . $items->count());
-        $sheet->mergeCells('A2:F2');
+        $sheet->mergeCells('A2:G2');
         $sheet->getStyle('A2')->getFont()->setItalic(true)->setSize(10)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF64748B'));
         $sheet->getStyle('A2')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
         $sheet->getRowDimension(2)->setRowHeight(20);
@@ -141,6 +159,7 @@ class MinLatePriceController extends Controller
             'D3' => 'ĐƠN VỊ TÍNH',
             'E3' => 'ĐƠN GIÁ (VNĐ)',
             'F3' => 'GHI CHÚ',
+            'G3' => 'CÔNG THỨC MẪU',
         ];
 
         foreach ($headers as $cell => $text) {
@@ -169,7 +188,7 @@ class MinLatePriceController extends Controller
                 ],
             ],
         ];
-        $sheet->getStyle('A3:F3')->applyFromArray($headerStyle);
+        $sheet->getStyle('A3:G3')->applyFromArray($headerStyle);
         $sheet->getRowDimension(3)->setRowHeight(28);
 
         $currentRow = 4;
@@ -185,7 +204,7 @@ class MinLatePriceController extends Controller
 
                 $sheet->setCellValue('A' . $currentRow, $roman);
                 $sheet->setCellValue('B' . $currentRow, mb_strtoupper($currentCategory ?: 'CHƯA PHÂN NHÓM', 'UTF-8'));
-                $sheet->mergeCells('B' . $currentRow . ':F' . $currentRow);
+                $sheet->mergeCells('B' . $currentRow . ':G' . $currentRow);
 
                 $catStyle = [
                     'font' => [
@@ -207,7 +226,7 @@ class MinLatePriceController extends Controller
                         ],
                     ],
                 ];
-                $sheet->getStyle('A' . $currentRow . ':F' . $currentRow)->applyFromArray($catStyle);
+                $sheet->getStyle('A' . $currentRow . ':G' . $currentRow)->applyFromArray($catStyle);
                 $sheet->getStyle('A' . $currentRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
                 $sheet->getRowDimension($currentRow)->setRowHeight(24);
                 $currentRow++;
@@ -220,6 +239,7 @@ class MinLatePriceController extends Controller
             $sheet->setCellValue('D' . $currentRow, $item->unit ?: '');
             $sheet->setCellValue('E' . $currentRow, $item->price);
             $sheet->setCellValue('F' . $currentRow, $item->notes ?: '');
+            $sheet->setCellValue('G' . $currentRow, $item->default_formula ?: '');
 
             // Formatting
             $sheet->getStyle('A' . $currentRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
@@ -230,9 +250,10 @@ class MinLatePriceController extends Controller
             $sheet->getStyle('E' . $currentRow)->getNumberFormat()->setFormatCode('#,##0');
             $sheet->getStyle('E' . $currentRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
             $sheet->getStyle('F' . $currentRow)->getAlignment()->setWrapText(true);
+            $sheet->getStyle('G' . $currentRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
-            $sheet->getStyle('A' . $currentRow . ':F' . $currentRow)->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
-            $sheet->getStyle('A' . $currentRow . ':F' . $currentRow)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FFE2E8F0'));
+            $sheet->getStyle('A' . $currentRow . ':G' . $currentRow)->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
+            $sheet->getStyle('A' . $currentRow . ':G' . $currentRow)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FFE2E8F0'));
 
             $currentRow++;
         }
@@ -244,6 +265,7 @@ class MinLatePriceController extends Controller
         $sheet->getColumnDimension('D')->setWidth(14);
         $sheet->getColumnDimension('E')->setWidth(18);
         $sheet->getColumnDimension('F')->setWidth(30);
+        $sheet->getColumnDimension('G')->setWidth(20);
 
         $filename = 'Bang_gia_dich_vu_Min_late_Gervin_' . date('Ymd_His') . '.xlsx';
         $writer = new Xlsx($spreadsheet);
@@ -306,6 +328,7 @@ class MinLatePriceController extends Controller
                     $detectedUnit = -1;
                     $detectedPrice = -1;
                     $detectedNotes = -1;
+                    $detectedFormula = -1;
 
                     foreach ($row as $idx => $cell) {
                         $val = mb_strtolower(trim((string)$cell), 'UTF-8');
@@ -321,6 +344,8 @@ class MinLatePriceController extends Controller
                             $detectedUnit = $idx;
                         } elseif (preg_match('/(đơn giá|giá)/u', $val) && !str_contains($val, 'bảng giá')) {
                             $detectedPrice = $idx;
+                        } elseif (preg_match('/(công thức|formula)/u', $val)) {
+                            $detectedFormula = $idx;
                         } elseif (preg_match('/(ghi chú|note)/u', $val)) {
                             $detectedNotes = $idx;
                         }
@@ -334,6 +359,7 @@ class MinLatePriceController extends Controller
                         $colUnit  = $detectedUnit >= 0 ? $detectedUnit : ($detectedName + 1);
                         $colPrice = $detectedPrice;
                         $colNotes = $detectedNotes >= 0 ? $detectedNotes : ($detectedPrice + 1);
+                        $colFormula = $detectedFormula;
                         break;
                     }
                 }
@@ -362,6 +388,7 @@ class MinLatePriceController extends Controller
                     $unit        = isset($row[$colUnit]) ? trim((string)$row[$colUnit]) : '';
                     $priceVal    = isset($row[$colPrice]) ? $row[$colPrice] : null;
                     $notes       = isset($row[$colNotes]) ? trim((string)$row[$colNotes]) : '';
+                    $formula     = ($colFormula >= 0 && isset($row[$colFormula])) ? trim((string)$row[$colFormula]) : '';
 
                     // Check if Category Header Row (e.g. STT is Roman Numeral like I, II, III and Price is empty)
                     $priceStr = trim((string)$priceVal);
@@ -405,6 +432,7 @@ class MinLatePriceController extends Controller
                         'price'         => $price,
                         'code'          => !empty($code) ? mb_substr($code, 0, 100, 'UTF-8') : null,
                         'notes'         => !empty($cleanNotes) ? $cleanNotes : null,
+                        'default_formula' => !empty($formula) ? mb_substr($formula, 0, 255, 'UTF-8') : null,
                     ]);
                 }
             });
@@ -511,5 +539,136 @@ class MinLatePriceController extends Controller
             $notes = $valStr;
         }
         return 0.0;
+    }
+
+    /**
+     * Store a new service combo
+     */
+    public function storeCombo(Request $request)
+    {
+        $request->validate([
+            'order_type'  => 'required|string|max:50',
+            'name'        => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'is_default'  => 'nullable|boolean',
+            'sort_order'  => 'nullable|integer',
+            'items'       => 'nullable|array',
+        ]);
+
+        $items = $this->cleanComboItems($request->input('items', []));
+
+        // If setting this as default, unset others of same order_type
+        if ($request->boolean('is_default')) {
+            OrderServiceCombo::where('order_type', $request->order_type)->update(['is_default' => false]);
+        }
+
+        OrderServiceCombo::create([
+            'order_type'  => $request->order_type,
+            'name'        => $request->name,
+            'description' => $request->description,
+            'is_default'  => $request->boolean('is_default'),
+            'sort_order'  => intval($request->sort_order ?? 0),
+            'items'       => $items,
+        ]);
+
+        return redirect()->route('minlate_prices.index', ['tab' => 'combos', 'combo_type' => $request->order_type])
+            ->with('success', "Thêm tổ hợp dịch vụ \"{$request->name}\" thành công.");
+    }
+
+    /**
+     * Update an existing service combo
+     */
+    public function updateCombo(Request $request, OrderServiceCombo $combo)
+    {
+        $request->validate([
+            'order_type'  => 'required|string|max:50',
+            'name'        => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'is_default'  => 'nullable|boolean',
+            'sort_order'  => 'nullable|integer',
+            'items'       => 'nullable|array',
+        ]);
+
+        $items = $this->cleanComboItems($request->input('items', []));
+
+        if ($request->boolean('is_default')) {
+            OrderServiceCombo::where('order_type', $request->order_type)
+                ->where('id', '!=', $combo->id)
+                ->update(['is_default' => false]);
+        }
+
+        $combo->update([
+            'order_type'  => $request->order_type,
+            'name'        => $request->name,
+            'description' => $request->description,
+            'is_default'  => $request->boolean('is_default'),
+            'sort_order'  => intval($request->sort_order ?? 0),
+            'items'       => $items,
+        ]);
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Cập nhật tổ hợp dịch vụ thành công.",
+                'combo'   => $combo
+            ]);
+        }
+
+        return redirect()->route('minlate_prices.index', ['tab' => 'combos', 'combo_type' => $request->order_type])
+            ->with('success', "Cập nhật tổ hợp \"{$combo->name}\" thành công.");
+    }
+
+    /**
+     * Delete a service combo
+     */
+    public function destroyCombo(OrderServiceCombo $combo)
+    {
+        $name = $combo->name;
+        $type = $combo->order_type;
+        $combo->delete();
+
+        return redirect()->route('minlate_prices.index', ['tab' => 'combos', 'combo_type' => $type])
+            ->with('success', "Đã xóa tổ hợp \"{$name}\".");
+    }
+
+    /**
+     * API to fetch combos for order creation
+     */
+    public function getCombosApi(Request $request)
+    {
+        $type = $request->input('order_type');
+        $combos = OrderServiceCombo::query()
+            ->when($type, function ($q) use ($type) {
+                $q->where('order_type', $type);
+            })
+            ->orderBy('sort_order', 'asc')
+            ->orderBy('id', 'asc')
+            ->get();
+
+        return response()->json($combos);
+    }
+
+    /**
+     * Clean and format combo items array
+     */
+    protected function cleanComboItems(array $rawItems): array
+    {
+        $cleaned = [];
+        foreach ($rawItems as $item) {
+            if (!is_array($item)) continue;
+            $name = trim($item['name'] ?? '');
+            if ($name === '') continue;
+
+            $cleaned[] = [
+                'code'       => trim($item['code'] ?? ''),
+                'name'       => $name,
+                'unit'       => trim($item['unit'] ?? ''),
+                'price'      => floatval($item['price'] ?? 0),
+                'price_only' => floatval($item['price_only'] ?? 0),
+                'formula'    => trim($item['formula'] ?? ($item['quantity'] ?? '')),
+                'notes'      => trim($item['notes'] ?? ''),
+            ];
+        }
+        return array_values($cleaned);
     }
 }

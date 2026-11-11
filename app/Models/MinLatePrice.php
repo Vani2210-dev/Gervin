@@ -16,6 +16,7 @@ class MinLatePrice extends Model
         'price',
         'code',
         'notes',
+        'default_formula',
     ];
 
     protected $casts = [

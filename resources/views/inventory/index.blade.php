@@ -79,137 +79,145 @@
         {{-- Filter & Action Bar --}}
         {{-- Filter & Action Bar --}}
         <div class="card p-0 rounded-xl border-0 bg-white shadow-sm mb-6">
-            <div class="p-4 border-b border-neutral-200 flex flex-wrap items-center justify-between gap-3">
-                {{-- Left: Search & Smart Date Filter --}}
-                <div class="flex items-center gap-3 flex-wrap">
-                    {{-- Quick Search --}}
-                    <form action="{{ route('inventory.index') }}" method="GET" class="relative">
-                        @if(request('warehouse_id')) <input type="hidden" name="warehouse_id" value="{{ request('warehouse_id') }}"> @endif
-                        @if(request('category')) <input type="hidden" name="category" value="{{ request('category') }}"> @endif
-                        @if(request('stock_filter')) <input type="hidden" name="stock_filter" value="{{ request('stock_filter') }}"> @endif
-                        @if(request('date_mode')) <input type="hidden" name="date_mode" value="{{ request('date_mode') }}"> @endif
-                        @if(request('date_val')) <input type="hidden" name="date_val" value="{{ request('date_val') }}"> @endif
+            <div class="p-3.5 border-b border-neutral-200 flex flex-col gap-3">
+                {{-- Tầng 1: Tìm kiếm, Kho, Trạng thái & Thao tác chính --}}
+                <div class="flex items-center justify-between flex-wrap gap-3">
+                    <div class="flex items-center gap-2.5 flex-wrap">
+                        {{-- Quick Search --}}
+                        <form action="{{ route('inventory.index') }}" method="GET" class="relative">
+                            @if(request('warehouse_id')) <input type="hidden" name="warehouse_id" value="{{ request('warehouse_id') }}"> @endif
+                            @if(request('category')) <input type="hidden" name="category" value="{{ request('category') }}"> @endif
+                            @if(request('stock_filter')) <input type="hidden" name="stock_filter" value="{{ request('stock_filter') }}"> @endif
+                            @if(request('date_mode')) <input type="hidden" name="date_mode" value="{{ request('date_mode') }}"> @endif
+                            @if(request('date_val')) <input type="hidden" name="date_val" value="{{ request('date_val') }}"> @endif
 
-                        <iconify-icon icon="ion:search-outline" class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400"></iconify-icon>
-                        <input type="text" name="search" value="{{ $search }}" class="form-control rounded-xl pl-9 pr-3 py-2 border-neutral-300 text-xs w-60 focus:border-primary-500 shadow-2xs" 
-                            placeholder="Tìm mã SKU, tên, xuất xứ...">
-                    </form>
+                            <iconify-icon icon="ion:search-outline" class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400"></iconify-icon>
+                            <input type="text" name="search" value="{{ $search }}" class="form-control rounded-lg pl-9 pr-3 py-1.5 border-neutral-300 text-xs w-52 md:w-60 focus:border-primary-500 shadow-2xs" 
+                                placeholder="Tìm mã SKU, tên, xuất xứ...">
+                        </form>
 
-                    {{-- Bộ lọc ngày tháng chung --}}
-                    <x-date-filter :action="route('inventory.index')" />
+                        {{-- Warehouse Pills (Tối đa 3 kho trực tiếp + Dropdown các kho còn lại) --}}
+                        @php
+                            $selectedWhModel = $selectedWarehouseId ? $warehouses->firstWhere('id', $selectedWarehouseId) : null;
+                            $maxDirectWh = 3;
+                            if ($warehouses->count() <= $maxDirectWh) {
+                                $visibleWarehouses = $warehouses;
+                                $otherWarehouses = collect();
+                            } else {
+                                $top3 = $warehouses->take($maxDirectWh);
+                                $isInTop3 = $selectedWhModel && $top3->contains('id', $selectedWhModel->id);
+                                if ($isInTop3 || !$selectedWhModel) {
+                                    $visibleWarehouses = $top3;
+                                    $otherWarehouses = $warehouses->slice($maxDirectWh);
+                                } else {
+                                    $visibleWarehouses = $warehouses->take(2)->push($selectedWhModel);
+                                    $otherWarehouses = $warehouses->reject(fn($w) => $visibleWarehouses->contains('id', $w->id));
+                                }
+                            }
+                        @endphp
+                        <div class="bg-neutral-100 p-0.5 rounded-lg flex items-center gap-0.5 text-xs font-semibold">
+                            <a href="{{ route('inventory.index', array_merge(request()->query(), ['warehouse_id' => ''])) }}"
+                               class="px-2.5 py-1 rounded-md transition-all {{ empty($selectedWarehouseId) ? 'bg-white text-neutral-900 shadow-2xs font-bold' : 'text-neutral-500 hover:text-neutral-900' }}">
+                                Tất cả kho
+                            </a>
+                            @foreach($visibleWarehouses as $wh)
+                                <a href="{{ route('inventory.index', array_merge(request()->query(), ['warehouse_id' => $wh->id])) }}"
+                                   class="px-2.5 py-1 rounded-md transition-all {{ (string)$selectedWarehouseId === (string)$wh->id ? ($wh->code === 'KHO-CHI' ? 'bg-amber-600 text-white shadow-2xs font-bold' : 'bg-primary-600 text-white shadow-2xs font-bold') : 'text-neutral-600 hover:text-neutral-900' }}">
+                                    {{ $wh->name }}
+                                </a>
+                            @endforeach
 
-                    @if($dateMode !== 'all')
-                        <span class="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-1 rounded-md bg-primary-50 text-primary-700 border border-primary-200">
-                            <iconify-icon icon="solar:calendar-date-bold" class="text-xs"></iconify-icon>
-                            {{ $dateLabel }}
-                        </span>
-                    @endif
+                            @if($otherWarehouses->count() > 0)
+                                <div class="relative inline-block" id="other_warehouses_dropdown_wrapper">
+                                    <button type="button" 
+                                            onclick="toggleOtherWhDropdown(event)" 
+                                            class="px-2 py-1 rounded-md transition-all flex items-center gap-1 text-neutral-600 hover:text-neutral-900 hover:bg-neutral-200">
+                                        <span>Khác ({{ $otherWarehouses->count() }})</span>
+                                        <iconify-icon icon="solar:alt-arrow-down-linear" class="text-xs"></iconify-icon>
+                                    </button>
+                                    <div id="other_warehouses_dropdown_menu" 
+                                         class="hidden absolute left-0 mt-2 w-56 bg-white border border-neutral-200 rounded-xl shadow-lg z-50 py-2 max-h-72 overflow-y-auto">
+                                        @foreach($otherWarehouses as $wh)
+                                            <a href="{{ route('inventory.index', array_merge(request()->query(), ['warehouse_id' => $wh->id])) }}"
+                                               class="px-4 py-2 block text-xs hover:bg-primary-50 hover:text-primary-700 transition-colors {{ (string)$selectedWarehouseId === (string)$wh->id ? 'font-bold text-primary-700 bg-primary-50' : 'text-neutral-700' }}">
+                                                <div class="font-semibold">{{ $wh->name }}</div>
+                                                <div class="text-[10px] text-neutral-400">{{ $wh->code }}</div>
+                                            </a>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+
+                        {{-- Status Pills (All / Low stock / Out of stock) --}}
+                        <div class="bg-neutral-100 p-0.5 rounded-lg flex items-center gap-0.5 text-xs font-semibold">
+                            <a href="{{ route('inventory.index', array_merge(request()->query(), ['stock_filter' => 'all'])) }}"
+                               class="px-2.5 py-1 rounded-md transition-all {{ $stockFilter === 'all' ? 'bg-white text-neutral-900 shadow-2xs font-bold' : 'text-neutral-500 hover:text-neutral-900' }}">
+                                Tất cả ({{ $totalItems }})
+                            </a>
+                            <a href="{{ route('inventory.index', array_merge(request()->query(), ['stock_filter' => 'low_stock'])) }}"
+                               class="px-2.5 py-1 rounded-md transition-all {{ $stockFilter === 'low_stock' ? 'bg-warning-500 text-white shadow-2xs font-bold' : 'text-warning-700 hover:text-warning-800' }}">
+                                Tồn thấp
+                            </a>
+                            <a href="{{ route('inventory.index', array_merge(request()->query(), ['stock_filter' => 'out_of_stock'])) }}"
+                               class="px-2.5 py-1 rounded-md transition-all {{ $stockFilter === 'out_of_stock' ? 'bg-rose-600 text-white shadow-2xs font-bold' : 'text-rose-600 hover:text-rose-800' }}">
+                                Hết hàng
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2 flex-wrap">
+                        {{-- Import Excel --}}
+                        <button type="button" onclick="openImportStockModal('{{ $selectedWarehouseId }}')" class="btn bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-2xs">
+                            <iconify-icon icon="solar:file-excel-bold" class="text-base"></iconify-icon> Nhập Excel tồn kho
+                        </button>
+
+                        {{-- Export Excel --}}
+                        <a href="{{ route('inventory.export-stock', request()->query()) }}" class="btn bg-white border border-neutral-300 text-neutral-700 hover:bg-neutral-50 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-2xs">
+                            <iconify-icon icon="solar:file-excel-outline" class="text-base text-emerald-600"></iconify-icon> Xuất Excel
+                        </a>
+
+                        {{-- Add Material --}}
+                        <button type="button" onclick="openModal('createMaterialModal')" class="btn btn-primary px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm">
+                            <iconify-icon icon="ic:baseline-plus" class="text-base"></iconify-icon> Thêm vật tư
+                        </button>
+                    </div>
                 </div>
 
-                {{-- Right: Filter Button (modal), Reset filter, Status Pills, Export, Add --}}
-                <div class="flex items-center gap-2 flex-wrap">
-                    {{-- Nút Bộ lọc Modal --}}
-                    <button type="button" onclick="openModal('inventoryFilterModal')" 
-                        class="btn bg-white border border-neutral-300 hover:bg-neutral-50 text-neutral-700 text-xs px-3 py-2 rounded-xl flex items-center gap-2 shadow-2xs font-semibold">
-                        <iconify-icon icon="solar:filter-outline" class="text-base text-neutral-500"></iconify-icon>
-                        <span>Bộ lọc</span>
-                        @if($activeFilterCount > 0)
-                            <span class="w-5 h-5 rounded-full bg-primary-600 text-white text-[10px] font-bold flex items-center justify-center">
-                                {{ $activeFilterCount }}
+                {{-- Tầng 2: Bộ lọc thời gian & Bộ lọc nâng cao --}}
+                <div class="flex items-center justify-between flex-wrap gap-2.5">
+                    <div class="flex items-center gap-2 flex-wrap">
+                        {{-- Bộ lọc ngày tháng chung --}}
+                        <x-date-filter :action="route('inventory.index')" />
+
+                        @if($dateMode !== 'all')
+                            <span class="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-1 rounded-md bg-primary-50 text-primary-700 border border-primary-200">
+                                <iconify-icon icon="solar:calendar-date-bold" class="text-xs"></iconify-icon>
+                                {{ $dateLabel }}
                             </span>
                         @endif
-                    </button>
+                    </div>
 
-                    @if($isFiltered)
-                        <a href="{{ route('inventory.index') }}" class="btn text-xs px-2 py-2 rounded-xl flex items-center gap-1 text-rose-600 hover:bg-rose-50 font-semibold" title="Xóa tất cả bộ lọc">
-                            <iconify-icon icon="solar:close-circle-outline" class="text-base"></iconify-icon>
-                            Xóa lọc
-                        </a>
-                    @endif
+                    <div class="flex items-center gap-2">
+                        {{-- Nút Bộ lọc Modal --}}
+                        <button type="button" onclick="openModal('inventoryFilterModal')" 
+                            class="btn bg-white border border-neutral-300 hover:bg-neutral-50 text-neutral-700 text-xs px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 shadow-2xs font-semibold">
+                            <iconify-icon icon="solar:filter-outline" class="text-base text-neutral-500"></iconify-icon>
+                            <span>Bộ lọc nâng cao</span>
+                            @if($activeFilterCount > 0)
+                                <span class="w-4 h-4 rounded-full bg-primary-600 text-white text-[9px] font-bold flex items-center justify-center">
+                                    {{ $activeFilterCount }}
+                                </span>
+                            @endif
+                        </button>
 
-                    {{-- Warehouse Pills (Tối đa 3 kho trực tiếp + Dropdown các kho còn lại) --}}
-                    @php
-                        $selectedWhModel = $selectedWarehouseId ? $warehouses->firstWhere('id', $selectedWarehouseId) : null;
-                        $maxDirectWh = 3;
-                        if ($warehouses->count() <= $maxDirectWh) {
-                            $visibleWarehouses = $warehouses;
-                            $otherWarehouses = collect();
-                        } else {
-                            $top3 = $warehouses->take($maxDirectWh);
-                            $isInTop3 = $selectedWhModel && $top3->contains('id', $selectedWhModel->id);
-                            if ($isInTop3 || !$selectedWhModel) {
-                                $visibleWarehouses = $top3;
-                                $otherWarehouses = $warehouses->slice($maxDirectWh);
-                            } else {
-                                $visibleWarehouses = $warehouses->take(2)->push($selectedWhModel);
-                                $otherWarehouses = $warehouses->reject(fn($w) => $visibleWarehouses->contains('id', $w->id));
-                            }
-                        }
-                    @endphp
-                    <div class="bg-neutral-100 p-1 rounded-xl flex items-center gap-1 text-xs font-semibold">
-                        <a href="{{ route('inventory.index', array_merge(request()->query(), ['warehouse_id' => ''])) }}"
-                           class="px-3 py-1 rounded-lg transition-all {{ empty($selectedWarehouseId) ? 'bg-white text-neutral-900 shadow-2xs font-bold' : 'text-neutral-500 hover:text-neutral-900' }}">
-                            Tất cả kho
-                        </a>
-                        @foreach($visibleWarehouses as $wh)
-                            <a href="{{ route('inventory.index', array_merge(request()->query(), ['warehouse_id' => $wh->id])) }}"
-                               class="px-3 py-1 rounded-lg transition-all {{ (string)$selectedWarehouseId === (string)$wh->id ? ($wh->code === 'KHO-CHI' ? 'bg-amber-600 text-white shadow-2xs font-bold' : 'bg-primary-600 text-white shadow-2xs font-bold') : 'text-neutral-600 hover:text-neutral-900' }}">
-                                {{ $wh->name }}
+                        @if($isFiltered)
+                            <a href="{{ route('inventory.index') }}" class="btn text-xs px-2 py-1.5 rounded-lg flex items-center gap-1 text-rose-600 hover:bg-rose-50 font-semibold" title="Xóa tất cả bộ lọc">
+                                <iconify-icon icon="solar:close-circle-outline" class="text-base"></iconify-icon>
+                                Xóa lọc
                             </a>
-                        @endforeach
-
-                        @if($otherWarehouses->count() > 0)
-                            <div class="relative inline-block" id="other_warehouses_dropdown_wrapper">
-                                <button type="button" 
-                                        onclick="toggleOtherWhDropdown(event)" 
-                                        class="px-3 py-1 rounded-lg transition-all flex items-center gap-1 text-neutral-600 hover:text-neutral-900 hover:bg-neutral-200">
-                                    <span>Kho khác ({{ $otherWarehouses->count() }})</span>
-                                    <iconify-icon icon="solar:alt-arrow-down-linear" class="text-xs"></iconify-icon>
-                                </button>
-                                <div id="other_warehouses_dropdown_menu" 
-                                     class="hidden absolute left-0 mt-2 w-56 bg-white border border-neutral-200 rounded-xl shadow-lg z-50 py-2 max-h-72 overflow-y-auto">
-                                    @foreach($otherWarehouses as $wh)
-                                        <a href="{{ route('inventory.index', array_merge(request()->query(), ['warehouse_id' => $wh->id])) }}"
-                                           class="px-4 py-2 block text-xs hover:bg-primary-50 hover:text-primary-700 transition-colors {{ (string)$selectedWarehouseId === (string)$wh->id ? 'font-bold text-primary-700 bg-primary-50' : 'text-neutral-700' }}">
-                                            <div class="font-semibold">{{ $wh->name }}</div>
-                                            <div class="text-[10px] text-neutral-400">{{ $wh->code }}</div>
-                                        </a>
-                                    @endforeach
-                                </div>
-                            </div>
                         @endif
                     </div>
-
-                    {{-- Status Pills (All / Low stock / Out of stock) --}}
-                    <div class="bg-neutral-100 p-1 rounded-xl flex items-center gap-1 text-xs font-semibold">
-                        <a href="{{ route('inventory.index', array_merge(request()->query(), ['stock_filter' => 'all'])) }}"
-                           class="px-3 py-1 rounded-lg transition-all {{ $stockFilter === 'all' ? 'bg-white text-neutral-900 shadow-2xs font-bold' : 'text-neutral-500 hover:text-neutral-900' }}">
-                            Tất cả ({{ $totalItems }})
-                        </a>
-                        <a href="{{ route('inventory.index', array_merge(request()->query(), ['stock_filter' => 'low_stock'])) }}"
-                           class="px-3 py-1 rounded-lg transition-all {{ $stockFilter === 'low_stock' ? 'bg-warning-500 text-white shadow-2xs font-bold' : 'text-warning-700 hover:text-warning-800' }}">
-                            Tồn thấp
-                        </a>
-                        <a href="{{ route('inventory.index', array_merge(request()->query(), ['stock_filter' => 'out_of_stock'])) }}"
-                           class="px-3 py-1 rounded-lg transition-all {{ $stockFilter === 'out_of_stock' ? 'bg-rose-600 text-white shadow-2xs font-bold' : 'text-rose-600 hover:text-rose-800' }}">
-                            Hết hàng
-                        </a>
-                    </div>
-
-                    {{-- Export Excel --}}
-                                        {{-- Import Excel --}}
-                    <button type="button" onclick="openImportStockModal('{{ $selectedWarehouseId }}')" class="btn bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm">
-                        <iconify-icon icon="solar:file-excel-bold" class="text-base"></iconify-icon> Nhập Excel tồn kho
-                    </button>
-
-                    <a href="{{ route('inventory.export-stock', request()->query()) }}" class="btn bg-white border border-neutral-300 text-neutral-700 hover:bg-neutral-50 px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shadow-2xs">
-                        <iconify-icon icon="solar:file-excel-outline" class="text-base text-emerald-600"></iconify-icon> Xuất Excel
-                    </a>
-
-                    {{-- Add Material --}}
-                    <button type="button" onclick="openModal('createMaterialModal')" class="btn btn-primary px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm">
-                        <iconify-icon icon="ic:baseline-plus" class="text-base"></iconify-icon> Thêm vật tư mới
-                    </button>
                 </div>
             </div>
 

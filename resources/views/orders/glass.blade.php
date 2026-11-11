@@ -325,6 +325,7 @@
                     $supply->order_supply_code = $sData['order_supply_code'] ?? null;
                     $supply->supply_name = $sData['supply_name'] ?? '';
                     $supply->quantity = $sData['quantity'] ?? 0;
+                    $supply->formula = $sData['formula'] ?? null;
                     
                     $items = collect();
                     if (isset($sData['items']) && is_array($sData['items'])) {
@@ -345,6 +346,7 @@
                             $item->unit_price = $iData['unit_price'] ?? 0;
                             $item->total_price = $iData['total_price'] ?? 0;
                             $item->notes = $iData['notes'] ?? '';
+                            $item->formula = $iData['formula'] ?? null;
                             
                             $items->push($item);
                         }
@@ -391,7 +393,8 @@
                             <input type="text" name="supplies[{{ $supplyIndex }}][supply_name]" class="form-control form-control-sm rounded-lg w-64 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Tên vật tư (ví dụ: Acrylic, Melamine...)" value="{{ $supply->supply_name }}">
                         @endif
                         @php
-                            $supplyFormulas = is_array($supply->formula) ? $supply->formula : (json_decode($supply->formula ?? '[]', true) ?: []);
+                            $rawSupplyF = $supply->formula ?? null;
+                            $supplyFormulas = is_array($rawSupplyF) ? $rawSupplyF : (is_string($rawSupplyF) ? (json_decode($rawSupplyF, true) ?: []) : []);
                         @endphp
                         <input type="text" name="supplies[{{ $supplyIndex }}][quantity]" class="form-control form-control-sm rounded-lg w-24 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="SL" value="{{ $supply->quantity ?? 0 }}" autocomplete="off" @if(!empty($supplyFormulas['quantity'])) data-formula="{{ $supplyFormulas['quantity'] }}" title="Công thức: {{ $supplyFormulas['quantity'] }}" @endif>
                         <input type="hidden" name="supplies[{{ $supplyIndex }}][formula]" class="supply-formula-input" value="{{ !empty($supplyFormulas) ? json_encode($supplyFormulas) : '' }}">
@@ -424,7 +427,7 @@
                                 <th scope="col" style="width: 30px; min-width: 30px; white-space: nowrap;" class="sticky-stt-th align-middle text-center border border-neutral-200 font-bold text-xs text-neutral-600 uppercase"><span class="order-stt-header-label">STT</span></th>
                                 <th scope="col" style="width: 110px; min-width: 110px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Mã SP</th>
                                 <th scope="col" style="width: 150px; min-width: 150px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên sản phẩm <span class="text-danger-500">*</span></th>
-                                <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase {{ $isAccessory ? 'hidden' : '' }}">Độ dày</th>
+                                <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase {{ $isAccessory ? 'hidden' : '' }}">Độ dày <span class="text-primary-600 font-extrabold">(A)</span></th>
                                 <th scope="col" style="width: 150px; min-width: 150px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase {{ $isAccessory ? 'hidden' : '' }}">Chiều mở cánh</th>
                                 <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase {{ $isAccessory ? 'hidden' : '' }}">Màu nhôm</th>
                                 <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase {{ $isAccessory ? 'hidden' : '' }}">Màu kính</th>
@@ -432,15 +435,15 @@
                                     <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase text-center bg-yellow-50/50 {{ $isAccessory ? 'hidden' : '' }}">Dài (cũ)</th>
                                     <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase text-center bg-yellow-50/50 {{ $isAccessory ? 'hidden' : '' }}">Rộng (cũ)</th>
                                 @endif
-                                <th scope="col" style="width: 130px; min-width: 130px; white-space: nowrap;" class="align-middle border border-neutral-200 bg-yellow-100/70 font-bold text-xs text-neutral-600 uppercase text-center {{ $isAccessory ? 'hidden' : '' }}">Dài cánh (mm)</th>
-                                <th scope="col" style="width: 130px; min-width: 130px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase text-center {{ $isAccessory ? 'hidden' : '' }}">Rộng cánh (mm)</th>
+                                <th scope="col" style="width: 130px; min-width: 130px; white-space: nowrap;" class="align-middle border border-neutral-200 bg-yellow-100/70 font-bold text-xs text-neutral-600 uppercase text-center {{ $isAccessory ? 'hidden' : '' }}">Dài cánh (mm) <span class="text-primary-600 font-extrabold">(B)</span></th>
+                                <th scope="col" style="width: 130px; min-width: 130px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase text-center {{ $isAccessory ? 'hidden' : '' }}">Rộng cánh (mm) <span class="text-primary-600 font-extrabold">(C)</span></th>
                                 <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase {{ $isAccessory ? 'hidden' : '' }}">Đơn vị</th>
                                 <th scope="col" style="width: 50px; min-width: 50px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">
-                                    {{ $isAccessory ? 'Số lượng' : 'Số lượng cánh' }} <span class="text-danger-500">*</span>
+                                    {{ $isAccessory ? 'Số lượng' : 'Số lượng cánh' }} <span class="text-danger-500">*</span> <span class="text-primary-600 font-extrabold">(D)</span>
                                 </th>
-                                <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase {{ $isAccessory ? 'hidden' : '' }}">Khối lượng (m2)</th>
-                                <th scope="col" style="width: 80px; min-width: 80px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá <span class="text-danger-500">*</span></th>
-                                <th scope="col" style="width: 90px; min-width: 90px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Thành tiền</th>
+                                <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase {{ $isAccessory ? 'hidden' : '' }}">Khối lượng (m2) <span class="text-primary-600 font-extrabold">(E)</span></th>
+                                <th scope="col" style="width: 80px; min-width: 80px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá <span class="text-danger-500">*</span> <span class="text-primary-600 font-extrabold">(F)</span></th>
+                                <th scope="col" style="width: 90px; min-width: 90px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Thành tiền <span class="text-primary-600 font-extrabold">(G)</span></th>
                                 <th scope="col" style="min-width: 120px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Ghi chú</th>
                                 <th scope="col" style="width: 140px; min-width: 140px; white-space: nowrap; position: sticky; right: 0; z-index: 3; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="order-action-col align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Hành động</th>
                             </tr>
@@ -448,7 +451,7 @@
                                 <td class="border border-neutral-200 text-center sticky-stt-td" style="font-size: 80% !important; background-color: #f1f5f9;">TỔNG</td>
                                 <td class="border border-neutral-200"></td>
                                 <td class="border border-neutral-200"></td>
-                                <td class="border border-neutral-200 {{ $isAccessory ? 'hidden' : '' }}"></td>
+                                <td class="border border-neutral-200 text-center {{ $isAccessory ? 'hidden' : '' }}" data-summary-field="thickness" data-summary-col="A" style="font-size: 80% !important;"></td>
                                 <td class="border border-neutral-200 {{ $isAccessory ? 'hidden' : '' }}"></td>
                                 <td class="border border-neutral-200 {{ $isAccessory ? 'hidden' : '' }}"></td>
                                 <td class="border border-neutral-200 {{ $isAccessory ? 'hidden' : '' }}"></td>
@@ -456,13 +459,13 @@
                                     <td class="border border-neutral-200 {{ $isAccessory ? 'hidden' : '' }}"></td>
                                     <td class="border border-neutral-200 {{ $isAccessory ? 'hidden' : '' }}"></td>
                                 @endif
+                                <td class="border border-neutral-200 text-center {{ $isAccessory ? 'hidden' : '' }}" data-summary-field="height" data-summary-col="B" style="font-size: 80% !important;"></td>
+                                <td class="border border-neutral-200 text-center {{ $isAccessory ? 'hidden' : '' }}" data-summary-field="width" data-summary-col="C" style="font-size: 80% !important;"></td>
                                 <td class="border border-neutral-200 {{ $isAccessory ? 'hidden' : '' }}"></td>
-                                <td class="border border-neutral-200 {{ $isAccessory ? 'hidden' : '' }}"></td>
-                                <td class="border border-neutral-200 {{ $isAccessory ? 'hidden' : '' }}"></td>
-                                <td class="border border-neutral-200 text-center" data-summary-field="quantity" style="font-size: 80% !important;">0</td>
-                                <td class="border border-neutral-200 text-center {{ $isAccessory ? 'hidden' : '' }}" data-summary-field="weight" style="font-size: 80% !important;">0</td>
-                                <td class="border border-neutral-200"></td>
-                                <td class="border border-neutral-200 text-center" data-summary-field="total_price" style="font-size: 80% !important;">0</td>
+                                <td class="border border-neutral-200 text-center" data-summary-field="quantity" data-summary-col="D" style="font-size: 80% !important;">0</td>
+                                <td class="border border-neutral-200 text-center {{ $isAccessory ? 'hidden' : '' }}" data-summary-field="weight" data-summary-col="E" style="font-size: 80% !important;">0</td>
+                                <td class="border border-neutral-200 text-center" data-summary-field="unit_price" data-summary-col="F" style="font-size: 80% !important;"></td>
+                                <td class="border border-neutral-200 text-center" data-summary-field="total_price" data-summary-col="G" style="font-size: 80% !important;">0</td>
                                 <td class="border border-neutral-200"></td>
                                 <td class="order-action-col border border-neutral-200" style="width: 140px; min-width: 140px; position: sticky; right: 0; z-index: 3; background-color: #f1f5f9;"></td>
                             </tr>
@@ -477,7 +480,8 @@
                                     $oldWidth = isset($oldSizeParts[1]) ? trim($oldSizeParts[1]) : '';
                                 @endphp
                                 @php
-                                    $itemFormulas = is_array($item->formula) ? $item->formula : (json_decode($item->formula ?? '[]', true) ?: []);
+                                    $rawItemF = $item->formula ?? null;
+                                    $itemFormulas = is_array($rawItemF) ? $rawItemF : (is_string($rawItemF) ? (json_decode($rawItemF, true) ?: []) : []);
                                 @endphp
                                 <tr class="order-item-row" data-item-id="{{ $item->id }}">
                                     <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][formula]" class="row-formula-input" value="{{ !empty($itemFormulas) ? json_encode($itemFormulas) : '' }}">
@@ -692,7 +696,7 @@ function addGlassOrderSupply(isAccessory = false) {
                         <th scope="col" style="width: 45px; min-width: 45px; white-space: nowrap;" class="sticky-stt-th align-middle text-center border border-neutral-200 font-bold text-xs text-neutral-600 uppercase"><span class="order-stt-header-label">STT</span></th>
                         <th scope="col" style="width: 160px; min-width: 160px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Mã SP</th>
                         <th scope="col" style="min-width: 220px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên sản phẩm <span class="text-danger-500">*</span></th>
-                        <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase ${isAccessory ? 'hidden' : ''}">Độ dày</th>
+                        <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase ${isAccessory ? 'hidden' : ''}">Độ dày <span class="text-primary-600 font-extrabold">(A)</span></th>
                         <th scope="col" style="width: 110px; min-width: 110px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase ${isAccessory ? 'hidden' : ''}">Chiều mở cánh</th>
                         <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase ${isAccessory ? 'hidden' : ''}">Màu nhôm</th>
                         <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase ${isAccessory ? 'hidden' : ''}">Màu kính</th>
@@ -700,13 +704,13 @@ function addGlassOrderSupply(isAccessory = false) {
                             <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase text-center bg-yellow-50/50 ${isAccessory ? 'hidden' : ''}">Dài (cũ)</th>
                             <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase text-center bg-yellow-50/50 ${isAccessory ? 'hidden' : ''}">Rộng (cũ)</th>
                         ` : ''}
-                        <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="align-middle border border-neutral-200 bg-yellow-100/70 font-bold text-xs text-neutral-600 uppercase text-center ${isAccessory ? 'hidden' : ''}">Dài cánh (mm)</th>
-                        <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase text-center ${isAccessory ? 'hidden' : ''}">Rộng cánh (mm)</th>
+                        <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="align-middle border border-neutral-200 bg-yellow-100/70 font-bold text-xs text-neutral-600 uppercase text-center ${isAccessory ? 'hidden' : ''}">Dài cánh (mm) <span class="text-primary-600 font-extrabold">(B)</span></th>
+                        <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase text-center ${isAccessory ? 'hidden' : ''}">Rộng cánh (mm) <span class="text-primary-600 font-extrabold">(C)</span></th>
                         <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase ${isAccessory ? 'hidden' : ''}">Đơn vị</th>
-                        <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">${isAccessory ? 'Số lượng' : 'Số lượng cánh'} <span class="text-danger-500">*</span></th>
-                        <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase ${isAccessory ? 'hidden' : ''}">Khối lượng (m2)</th>
-                        <th scope="col" style="width: 110px; min-width: 110px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá <span class="text-danger-500">*</span></th>
-                        <th scope="col" style="width: 120px; min-width: 120px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Thành tiền</th>
+                        <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">${isAccessory ? 'Số lượng' : 'Số lượng cánh'} <span class="text-danger-500">*</span> <span class="text-primary-600 font-extrabold">(D)</span></th>
+                        <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase ${isAccessory ? 'hidden' : ''}">Khối lượng (m2) <span class="text-primary-600 font-extrabold">(E)</span></th>
+                        <th scope="col" style="width: 110px; min-width: 110px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá <span class="text-danger-500">*</span> <span class="text-primary-600 font-extrabold">(F)</span></th>
+                        <th scope="col" style="width: 120px; min-width: 120px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Thành tiền <span class="text-primary-600 font-extrabold">(G)</span></th>
                         <th scope="col" style="min-width: 160px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Ghi chú</th>
                         <th scope="col" style="width: 140px; min-width: 140px; white-space: nowrap; position: sticky; right: 0; z-index: 3; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="order-action-col align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Hành động</th>
                     </tr>
@@ -714,7 +718,7 @@ function addGlassOrderSupply(isAccessory = false) {
                         <td class="border border-neutral-200 text-center sticky-stt-td" style="font-size: 80% !important; background-color: #f1f5f9;">TỔNG</td>
                         <td class="border border-neutral-200"></td>
                         <td class="border border-neutral-200"></td>
-                        <td class="border border-neutral-200 ${isAccessory ? 'hidden' : ''}"></td>
+                        <td class="border border-neutral-200 text-center ${isAccessory ? 'hidden' : ''}" data-summary-field="thickness" data-summary-col="A" style="font-size: 80% !important;"></td>
                         <td class="border border-neutral-200 ${isAccessory ? 'hidden' : ''}"></td>
                         <td class="border border-neutral-200 ${isAccessory ? 'hidden' : ''}"></td>
                         <td class="border border-neutral-200 ${isAccessory ? 'hidden' : ''}"></td>
@@ -722,13 +726,13 @@ function addGlassOrderSupply(isAccessory = false) {
                             <td class="border border-neutral-200 ${isAccessory ? 'hidden' : ''}"></td>
                             <td class="border border-neutral-200 ${isAccessory ? 'hidden' : ''}"></td>
                         ` : ''}
+                        <td class="border border-neutral-200 text-center ${isAccessory ? 'hidden' : ''}" data-summary-field="height" data-summary-col="B" style="font-size: 80% !important;"></td>
+                        <td class="border border-neutral-200 text-center ${isAccessory ? 'hidden' : ''}" data-summary-field="width" data-summary-col="C" style="font-size: 80% !important;"></td>
                         <td class="border border-neutral-200 ${isAccessory ? 'hidden' : ''}"></td>
-                        <td class="border border-neutral-200 ${isAccessory ? 'hidden' : ''}"></td>
-                        <td class="border border-neutral-200 ${isAccessory ? 'hidden' : ''}"></td>
-                        <td class="border border-neutral-200 text-center" data-summary-field="quantity" style="font-size: 80% !important;">0</td>
-                        <td class="border border-neutral-200 text-center ${isAccessory ? 'hidden' : ''}" data-summary-field="weight" style="font-size: 80% !important;">0</td>
-                        <td class="border border-neutral-200"></td>
-                        <td class="border border-neutral-200 text-center" data-summary-field="total_price" style="font-size: 80% !important;">0</td>
+                        <td class="border border-neutral-200 text-center" data-summary-field="quantity" data-summary-col="D" style="font-size: 80% !important;">0</td>
+                        <td class="border border-neutral-200 text-center ${isAccessory ? 'hidden' : ''}" data-summary-field="weight" data-summary-col="E" style="font-size: 80% !important;">0</td>
+                        <td class="border border-neutral-200 text-center" data-summary-field="unit_price" data-summary-col="F" style="font-size: 80% !important;"></td>
+                        <td class="border border-neutral-200 text-center" data-summary-field="total_price" data-summary-col="G" style="font-size: 80% !important;">0</td>
                         <td class="border border-neutral-200"></td>
                         <td class="order-action-col border border-neutral-200" style="width: 140px; min-width: 140px; position: sticky; right: 0; z-index: 3; background-color: #f1f5f9;"></td>
                     </tr>
@@ -1086,16 +1090,19 @@ function bindGlassRowEvents(row) {
     const areaInput = row.querySelector('input[name*="[area_m2]"]');
     const unitPriceInput = row.querySelector('input[name*="[unit_price]"]');
     
-    if (heightInput) heightInput.addEventListener('input', () => calculateGlassTotalPrice(row, 'height'));
-    if (widthInput) widthInput.addEventListener('input', () => calculateGlassTotalPrice(row, 'width'));
-    if (wingQtyInput) {
-        wingQtyInput.addEventListener('input', () => {
-            calculateGlassTotalPrice(row, 'wing_quantity');
-            updateGlassRowIndexes();
-        });
-    }
-    if (areaInput) areaInput.addEventListener('input', () => calculateGlassTotalPrice(row, 'area'));
-    if (unitPriceInput) unitPriceInput.addEventListener('input', () => calculateGlassTotalPrice(row, 'unit_price'));
+    const bindEvts = (el, fn) => {
+        if (!el) return;
+        ['input', 'change', 'blur'].forEach(evt => el.addEventListener(evt, fn));
+    };
+
+    bindEvts(heightInput, () => calculateGlassTotalPrice(row, 'height'));
+    bindEvts(widthInput, () => calculateGlassTotalPrice(row, 'width'));
+    bindEvts(wingQtyInput, () => {
+        calculateGlassTotalPrice(row, 'wing_quantity');
+        updateGlassRowIndexes();
+    });
+    bindEvts(areaInput, () => calculateGlassTotalPrice(row, 'area'));
+    bindEvts(unitPriceInput, () => calculateGlassTotalPrice(row, 'unit_price'));
 }
 
 function handleGlassSupplyCodeChange(selectEl, value) {
@@ -1329,8 +1336,9 @@ function calculateGlassTotalPrice(row, sourceEvent) {
     
     if (!wingQtyInput || !unitPriceInput) return;
 
-    const wingQty = parseFloat(wingQtyInput.value) || 0;
-    const unitPrice = parseFloat(unitPriceInput.value) || 0;
+    const parseFn = typeof window.parseInputValue === 'function' ? window.parseInputValue : (el => parseFloat(el?.value) || 0);
+    const wingQty = parseFn(wingQtyInput);
+    const unitPrice = parseFn(unitPriceInput);
     
     if (isAccessory) {
         if (areaInput) {
@@ -1349,8 +1357,8 @@ function calculateGlassTotalPrice(row, sourceEvent) {
 
     if (!heightInput || !widthInput || !areaInput) return;
 
-    const height = parseFloat(heightInput.value) || 0;
-    const width = parseFloat(widthInput.value) || 0;
+    const height = parseFn(heightInput);
+    const width = parseFn(widthInput);
     
     if (sourceEvent !== 'area') {
         const displayAreaInput = row.querySelector('.display-area-input');
@@ -1373,7 +1381,7 @@ function calculateGlassTotalPrice(row, sourceEvent) {
         }
     }
     
-    const currentArea = parseFloat(areaInput.value) || 0;
+    const currentArea = parseFn(areaInput);
     const totalPrice = currentArea * unitPrice;
     
     const totalPriceInput = row.querySelector('input[name*="[total_price]"]');

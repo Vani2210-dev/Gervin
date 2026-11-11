@@ -1,10 +1,27 @@
 @php
     $isWarranty = $isWarranty ?? (isset($acrylicOrder) && ($acrylicOrder->relation_type ?? null) === 'warranty');
-    $hasPaymentDetails = !$isWarranty && isset($acrylicOrder) && isset($acrylicOrder->paymentDetails) && $acrylicOrder->paymentDetails->count() > 0;
+    $paymentDetailsList = collect();
+    if (old('payment_details') && is_array(old('payment_details'))) {
+        foreach (old('payment_details') as $dIndex => $dData) {
+            $d = new \stdClass();
+            $d->name = $dData['name'] ?? '';
+            $d->unit = $dData['unit'] ?? '';
+            $d->quantity = $dData['quantity'] ?? 1;
+            $d->price = $dData['price'] ?? 0;
+            $d->price_only = $dData['price_only'] ?? 0;
+            $d->total = $dData['total'] ?? 0;
+            $d->formula = $dData['formula'] ?? null;
+            $paymentDetailsList->push($d);
+        }
+    } elseif (isset($acrylicOrder) && isset($acrylicOrder->paymentDetails) && $acrylicOrder->paymentDetails->count() > 0) {
+        $paymentDetailsList = $acrylicOrder->paymentDetails;
+    }
+    $hasPaymentDetails = !$isWarranty && $paymentDetailsList->count() > 0;
     $isMinLateOrder = in_array($currentOrderType ?? '', ['min_late', 'Flywood', 'plywood']);
     $woodBoardPrices = $woodBoardPrices ?? \App\Models\WoodBoardPrice::orderBy('code', 'asc')->get();
     $glassPrices = $glassPrices ?? \App\Models\GlassPrice::orderBy('code', 'asc')->get();
     $minLatePrices = $minLatePrices ?? \App\Models\MinLatePrice::orderBy('category_name', 'asc')->orderBy('stt', 'asc')->get();
+    $serviceCombos = \App\Models\OrderServiceCombo::orderBy('sort_order', 'asc')->orderBy('id', 'asc')->get();
 @endphp
 
 <style>
@@ -114,6 +131,74 @@
                 <iconify-icon icon="lucide:maximize-2" class="text-lg" data-order-supplies-popup-icon></iconify-icon>
                 <span data-order-supplies-popup-label>Phóng to</span>
             </button>
+            @if(isset($serviceCombos) && $serviceCombos->count() > 0)
+            <div class="relative inline-block text-left" id="service-combo-dropdown-wrapper">
+                <button type="button" onclick="toggleServiceComboMenu(event)" class="btn btn-sm bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-lg flex items-center gap-1.5 font-semibold transition-all shadow-2xs" title="Nạp nhanh tổ hợp chi tiết dịch vụ & vật tư mẫu">
+                    <iconify-icon icon="lucide:layers" class="text-base text-purple-600"></iconify-icon>
+                    <span class="mobile-hide-text">Nạp tổ hợp mẫu</span>
+                    <iconify-icon icon="lucide:chevron-down" class="text-xs text-purple-500"></iconify-icon>
+                </button>
+                <div id="service-combo-dropdown-menu" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-neutral-200 py-2 z-50 divide-y divide-neutral-100 text-left">
+                    @php
+                        $curType = $currentOrderType ?? 'min_late';
+                        $curTypeCombos = $serviceCombos->filter(fn($c) => $c->order_type === $curType);
+                        $otherCombos = $serviceCombos->filter(fn($c) => $c->order_type !== $curType);
+                    @endphp
+                    @if($curTypeCombos->count() > 0)
+                        <div class="px-3 py-1 text-[11px] font-bold text-neutral-400 uppercase tracking-wider">
+                            Dành cho {{ $curType }}
+                        </div>
+                        <div class="py-1">
+                            @foreach($curTypeCombos as $combo)
+                                <button type="button" onclick="applyServiceCombo({{ $combo->id }})" class="w-full text-left px-3 py-2 hover:bg-purple-50 flex items-start gap-2.5 transition-colors group">
+                                    <iconify-icon icon="lucide:sparkles" class="text-base text-purple-500 mt-0.5 shrink-0"></iconify-icon>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="text-xs font-bold text-neutral-800 group-hover:text-purple-700 flex items-center gap-1.5">
+                                            <span class="truncate">{{ $combo->name }}</span>
+                                            @if($combo->is_default)
+                                                <span class="text-[10px] bg-emerald-100 text-emerald-700 font-semibold px-1.5 py-0.2 rounded shrink-0">Mặc định</span>
+                                            @endif
+                                        </div>
+                                        @if($combo->description)
+                                            <div class="text-[11px] text-neutral-500 truncate">{{ $combo->description }}</div>
+                                        @endif
+                                        <div class="text-[10px] text-neutral-400 mt-0.5">{{ count($combo->items ?? []) }} hạng mục</div>
+                                    </div>
+                                </button>
+                            @endforeach
+                        </div>
+                    @endif
+
+                    @if($otherCombos->count() > 0)
+                        <div class="px-3 py-1 text-[11px] font-bold text-neutral-400 uppercase tracking-wider mt-1">
+                            Các tổ hợp khác
+                        </div>
+                        <div class="py-1 max-h-48 overflow-y-auto">
+                            @foreach($otherCombos as $combo)
+                                <button type="button" onclick="applyServiceCombo({{ $combo->id }})" class="w-full text-left px-3 py-2 hover:bg-neutral-50 flex items-start gap-2.5 transition-colors group">
+                                    <iconify-icon icon="lucide:box" class="text-base text-neutral-400 mt-0.5 shrink-0"></iconify-icon>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="text-xs font-semibold text-neutral-700 group-hover:text-primary-700 flex items-center gap-1.5">
+                                            <span class="truncate">{{ $combo->name }}</span>
+                                            <span class="text-[10px] text-neutral-400">({{ $combo->order_type }})</span>
+                                        </div>
+                                        <div class="text-[10px] text-neutral-400 mt-0.5">{{ count($combo->items ?? []) }} hạng mục</div>
+                                    </div>
+                                </button>
+                            @endforeach
+                        </div>
+                    @endif
+
+                    <div class="pt-1.5 px-3">
+                        <a href="{{ route('minlate_prices.index', ['tab' => 'combos']) }}" target="_blank" class="text-xs text-primary-600 hover:text-primary-800 font-semibold flex items-center gap-1 py-1">
+                            <iconify-icon icon="lucide:settings" class="text-sm"></iconify-icon>
+                            <span>Quản lý & Cài đặt tổ hợp</span>
+                            <iconify-icon icon="lucide:external-link" class="text-xs ml-auto text-neutral-400"></iconify-icon>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            @endif
             <button type="button" onclick="addPaymentDetail()" class="btn btn-sm btn-primary rounded-lg flex items-center gap-1">
                 <iconify-icon icon="lucide:plus" class="text-lg"></iconify-icon> <span class="mobile-hide-text">Thêm nội dung</span>
             </button>
@@ -139,10 +224,11 @@
                         </tr>
                     </thead>
                     <tbody id="payment-details-container">
-                        @if(isset($acrylicOrder) && isset($acrylicOrder->paymentDetails) && $acrylicOrder->paymentDetails->count() > 0)
-                            @foreach($acrylicOrder->paymentDetails as $detailIndex => $detail)
+                        @if(isset($paymentDetailsList) && $paymentDetailsList->count() > 0)
+                            @foreach($paymentDetailsList as $detailIndex => $detail)
                             @php
-                                $detailFormulas = is_array($detail->formula) ? $detail->formula : (json_decode($detail->formula ?? '[]', true) ?: []);
+                                $rawDetailF = $detail->formula ?? null;
+                                $detailFormulas = is_array($rawDetailF) ? $rawDetailF : (is_string($rawDetailF) ? (json_decode($rawDetailF, true) ?: []) : []);
                             @endphp
                             <tr class="payment-detail-row">
                                 <input type="hidden" name="payment_details[{{ $detailIndex }}][formula]" class="row-formula-input" value="{{ !empty($detailFormulas) ? json_encode($detailFormulas) : '' }}">
@@ -281,6 +367,7 @@ var applyFlashEffect = window.applyFlashEffect;
 window.woodBoardPricesData = @json($woodBoardPrices ?? []);
 window.glassPricesData = @json($glassPrices ?? []);
 window.minLatePricesData = @json($minLatePrices ?? []);
+window.orderServiceCombosData = @json($serviceCombos ?? []);
 var paymentDetailIndex = typeof window.paymentDetailIndex !== 'undefined' ? window.paymentDetailIndex : {{ isset($acrylicOrder) && isset($acrylicOrder->paymentDetails) ? $acrylicOrder->paymentDetails->count() : 0 }};
 window.paymentDetailIndex = paymentDetailIndex;
 var isMinLateOrderType = {{ $isMinLateOrder ? 'true' : 'false' }};
@@ -412,9 +499,10 @@ function calculatePaymentDetailRowTotal(row) {
     
     if (!qtyInput || !priceInput || !totalInput) return;
     
-    const quantity = parseFloat(qtyInput.value) || 0;
-    const price = parseFloat(priceInput.value) || 0;
-    const priceOnly = priceOnlyInput ? (parseFloat(priceOnlyInput.value) || 0) : 0;
+    const parseFn = typeof window.parseInputValue === 'function' ? window.parseInputValue : (el => parseFloat(el?.value) || 0);
+    const quantity = parseFn(qtyInput);
+    const price = parseFn(priceInput);
+    const priceOnly = priceOnlyInput ? parseFn(priceOnlyInput) : 0;
     const total = quantity * (price + priceOnly);
     
     totalInput.value = total > 0 ? Math.round(total).toLocaleString('vi-VN') : 0;
@@ -443,8 +531,10 @@ function updatePaymentDetailIndexes() {
 function bindPaymentDetailEvents(row) {
     const inputs = row.querySelectorAll('input[name*="[quantity]"], input[name*="[price]"], input[name*="[price_only]"]');
     inputs.forEach(input => {
-        input.addEventListener('input', () => {
-            calculatePaymentDetailRowTotal(row);
+        ['input', 'change', 'blur'].forEach(evtName => {
+            input.addEventListener(evtName, () => {
+                calculatePaymentDetailRowTotal(row);
+            });
         });
     });
 }
@@ -550,6 +640,19 @@ function handlePaymentDetailCodeSelected(row, rawCode) {
             applyFlashEffect(priceOnlyInput);
             priceOnlyInput.dispatchEvent(new Event('input', { bubbles: true }));
         }
+        if (minLatePrice.default_formula) {
+            const qtyInput = row.querySelector('input[name*="[quantity]"]');
+            if (qtyInput) {
+                const defF = String(minLatePrice.default_formula).trim();
+                const formulaVal = defF.startsWith('=') ? defF : ('=' + defF);
+                qtyInput.value = formulaVal;
+                qtyInput.dataset.formula = formulaVal;
+                if (typeof processFormulaForInput === 'function') {
+                    processFormulaForInput(qtyInput, true);
+                }
+                applyFlashEffect(qtyInput);
+            }
+        }
     }
 
     calculatePaymentDetailRowTotal(row);
@@ -635,6 +738,115 @@ function initPaymentCodeTomSelect(selectEl) {
     });
 }
 
+function toggleServiceComboMenu(e) {
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    const menu = document.getElementById('service-combo-dropdown-menu');
+    if (menu) menu.classList.toggle('hidden');
+}
+
+document.addEventListener('click', function(e) {
+    const wrapper = document.getElementById('service-combo-dropdown-wrapper');
+    const menu = document.getElementById('service-combo-dropdown-menu');
+    if (menu && !menu.classList.contains('hidden')) {
+        if (!wrapper || !wrapper.contains(e.target)) {
+            menu.classList.add('hidden');
+        }
+    }
+});
+
+window.applyServiceCombo = function(comboId, replace = true) {
+    const menu = document.getElementById('service-combo-dropdown-menu');
+    if (menu) menu.classList.add('hidden');
+
+    const combos = window.orderServiceCombosData || [];
+    const combo = combos.find(c => c.id == comboId);
+    if (!combo) return;
+
+    const container = document.getElementById('payment-details-container');
+    if (!container) return;
+
+    if (replace) {
+        const existingRows = container.querySelectorAll('tr.payment-detail-row');
+        let hasData = false;
+        existingRows.forEach(r => {
+            const name = r.querySelector('textarea[name*="[name]"]')?.value?.trim();
+            if (name) hasData = true;
+        });
+
+        if (hasData) {
+            if (!confirm(`Nạp tổ hợp "${combo.name}" sẽ thay thế các chi tiết hóa đơn hiện có. Bạn có muốn tiếp tục?`)) {
+                return;
+            }
+        }
+        container.innerHTML = '';
+        window.paymentDetailIndex = 0;
+    }
+
+    if (!combo.items || !Array.isArray(combo.items) || combo.items.length === 0) {
+        alert('Tổ hợp mẫu này chưa có hạng mục nào!');
+        return;
+    }
+
+    combo.items.forEach(item => {
+        addPaymentDetail();
+        const rows = container.querySelectorAll('tr.payment-detail-row');
+        const newRow = rows[rows.length - 1];
+        if (!newRow) return;
+
+        const nameInput = newRow.querySelector('textarea[name*="[name]"]');
+        const unitInput = newRow.querySelector('input[name*="[unit]"]');
+        const qtyInput = newRow.querySelector('input[name*="[quantity]"]');
+        const priceInput = newRow.querySelector('input[name*="[price]"]');
+        const priceOnlyInput = newRow.querySelector('input[name*="[price_only]"]');
+
+        if (nameInput) nameInput.value = item.name || '';
+        if (unitInput) unitInput.value = item.unit || '';
+        if (priceInput) priceInput.value = item.price || 0;
+        if (priceOnlyInput) priceOnlyInput.value = item.price_only || 0;
+
+        // Xử lý công thức nếu có
+        const formula = item.formula ? String(item.formula).trim() : '';
+        if (formula) {
+            const formulaVal = formula.startsWith('=') ? formula : ('=' + formula);
+            if (qtyInput) {
+                qtyInput.value = formulaVal;
+                qtyInput.dataset.formula = formulaVal;
+                if (typeof processFormulaForInput === 'function') {
+                    processFormulaForInput(qtyInput, false);
+                }
+            }
+        } else {
+            if (qtyInput) {
+                qtyInput.value = (item.quantity !== undefined && item.quantity !== null && item.quantity !== '') ? item.quantity : 1;
+            }
+        }
+
+        // Chọn mã nếu có
+        const select = newRow.querySelector('select.order-payment-code-select');
+        if (select && item.code) {
+            select.value = item.code;
+            if (select.tomselect) {
+                select.tomselect.setValue(item.code, true);
+            }
+        }
+
+        if (typeof syncRowFormulasToHiddenInput === 'function') {
+            syncRowFormulasToHiddenInput(newRow);
+        }
+        calculatePaymentDetailRowTotal(newRow);
+    });
+
+    if (typeof updateOrderSummary === 'function') {
+        updateOrderSummary();
+    }
+    if (typeof refreshPaymentDetailsTableLayout === 'function') {
+        refreshPaymentDetailsTableLayout();
+    }
+};
+
 function togglePaymentDetailsSection() {
     const section = document.getElementById('payment-details-section');
     const btn = document.getElementById('toggle-payment-details-btn');
@@ -649,7 +861,13 @@ function togglePaymentDetailsSection() {
             btn.innerHTML = '<iconify-icon icon="lucide:eye-off" class="text-lg"></iconify-icon> <span class="mobile-hide-text">Ẩn chi tiết hóa đơn</span>';
         }
         if (container && container.querySelectorAll('tr.payment-detail-row').length === 0) {
-            addPaymentDetail();
+            const curType = @json($currentOrderType ?? 'min_late');
+            const defaultCombo = (window.orderServiceCombosData || []).find(c => c.order_type === curType && c.is_default);
+            if (defaultCombo && typeof applyServiceCombo === 'function') {
+                applyServiceCombo(defaultCombo.id, false);
+            } else {
+                addPaymentDetail();
+            }
         }
     } else {
         section.style.display = 'none';

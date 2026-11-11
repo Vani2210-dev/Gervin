@@ -90,31 +90,72 @@
     <div class="col-span-12">
         <div class="card h-full p-0 rounded-xl border-0 overflow-hidden shadow-xs">
             {{-- Header --}}
-            <div class="card-header border-b border-neutral-200 bg-white py-4 px-6 flex items-center flex-wrap gap-3 justify-between">
-                <div class="flex items-center flex-wrap gap-3">
-                    {{-- Search --}}
-                    <form method="GET" action="{{ route('suppliers.index') }}" class="navbar-search">
-                        <input type="hidden" name="per_page" value="{{ $perPage }}">
-                        @if($dateMode && $dateMode !== 'all')
-                            <input type="hidden" name="date_mode" value="{{ $dateMode }}">
-                            <input type="hidden" name="date_val" value="{{ $dateVal }}">
+            <div class="card-header border-b border-neutral-200 bg-white py-3.5 px-6 flex flex-col gap-3">
+                {{-- Tầng 1: Tìm kiếm & Nút hành động chính --}}
+                <div class="flex items-center justify-between flex-wrap gap-3">
+                    <div class="flex items-center flex-wrap gap-2.5">
+                        {{-- Search --}}
+                        <form method="GET" action="{{ route('suppliers.index') }}" class="navbar-search">
+                            <input type="hidden" name="per_page" value="{{ $perPage }}">
+                            @if($dateMode && $dateMode !== 'all')
+                                <input type="hidden" name="date_mode" value="{{ $dateMode }}">
+                                <input type="hidden" name="date_val" value="{{ $dateVal }}">
+                            @endif
+                            <div class="relative">
+                                <iconify-icon icon="solar:magnifer-linear" class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-base"></iconify-icon>
+                                <input type="text" name="search" class="form-control form-control-sm border-neutral-200 rounded-lg pl-9 pr-3 w-60 md:w-72" placeholder="Tìm kiếm mã, tên, SĐT, MST, liên hệ..." value="{{ $search }}">
+                            </div>
+                        </form>
+
+                        <button type="button" onclick="openModal('filter-modal')"
+                            class="btn bg-light-600 text-xs btn-sm px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 font-medium text-neutral-700 hover:bg-neutral-200 transition">
+                            <iconify-icon icon="solar:filter-outline" class="text-base"></iconify-icon>
+                            Lọc nâng cao
+                        </button>
+
+                        @if(request()->filled('filter_supplier_code') || request()->filled('filter_name') || request()->filled('filter_phone') || request()->filled('filter_status') || request()->filled('filter_debt_level') || ($dateMode !== 'all' && request()->filled('date_mode')))
+                        <a href="{{ route('suppliers.index') }}" class="btn text-xs btn-sm px-2.5 py-1.5 rounded-lg flex items-center gap-1 text-danger-600 bg-danger-50 hover:bg-danger-100 transition">
+                            <iconify-icon icon="solar:close-circle-outline" class="text-base"></iconify-icon>
+                            Xóa lọc
+                        </a>
                         @endif
-                        <div class="relative">
-                            <iconify-icon icon="solar:magnifer-linear" class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-base"></iconify-icon>
-                            <input type="text" name="search" class="form-control form-control-sm border-neutral-200 rounded-lg pl-9 pr-3 w-64 md:w-80" placeholder="Tìm kiếm mã, tên, SĐT, MST, liên hệ..." value="{{ $search }}">
-                        </div>
-                    </form>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        {{-- Export Excel --}}
+                        <a href="{{ route('suppliers.export', request()->query()) }}"
+                            class="btn bg-emerald-600 hover:bg-emerald-700 text-white text-xs btn-sm px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-2xs font-semibold transition"
+                            title="Xuất danh sách nhà cung cấp & công nợ ra file Excel">
+                            <iconify-icon icon="solar:file-spreadsheet-bold" class="text-base"></iconify-icon>
+                            <span>Xuất Excel</span>
+                        </a>
+
+                        {{-- Thêm nhà cung cấp --}}
+                        <button type="button" onclick="openCreateSupplierModal()"
+                            class="btn btn-primary text-xs btn-sm px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-sm font-semibold transition">
+                            <iconify-icon icon="ic:baseline-plus" class="text-base"></iconify-icon>
+                            <span>Thêm NCC</span>
+                        </button>
+                    </div>
+                </div>
+
+                {{-- Tầng 2: Bộ lọc thời gian & Hiển thị --}}
+                <div class="flex items-center justify-between flex-wrap gap-2.5">
+                    <div class="flex items-center flex-wrap gap-2">
+                        {{-- Bộ lọc ngày tháng chung --}}
+                        <x-date-filter :action="route('suppliers.index')" />
+                    </div>
 
                     {{-- Per page --}}
                     <div class="flex items-center gap-2">
-                        <span class="text-base font-medium text-secondary-light mb-0">Hiển thị</span>
+                        <span class="text-xs font-medium text-secondary-light mb-0">Hiển thị</span>
                         <form method="GET" action="{{ route('suppliers.index') }}" id="perPageForm">
                             <input type="hidden" name="search" value="{{ $search }}">
                             @if($dateMode && $dateMode !== 'all')
                                 <input type="hidden" name="date_mode" value="{{ $dateMode }}">
                                 <input type="hidden" name="date_val" value="{{ $dateVal }}">
                             @endif
-                            <select name="per_page" class="form-select form-select-sm w-auto border-neutral-200 rounded-lg"
+                            <select name="per_page" class="form-select form-select-sm w-auto border-neutral-200 rounded-lg py-1 px-2 text-xs"
                                 onchange="document.getElementById('perPageForm').submit()">
                                 @foreach([10, 25, 50, 100] as $option)
                                 <option value="{{ $option }}" {{ $perPage == $option ? 'selected' : '' }}>{{ $option }}</option>
@@ -122,40 +163,6 @@
                             </select>
                         </form>
                     </div>
-
-                    {{-- Bộ lọc ngày tháng chung --}}
-                    <x-date-filter :action="route('suppliers.index')" />
-                </div>
-
-                <div class="flex items-center gap-2 flex-wrap">
-                    {{-- Filter Modal Button --}}
-                    <button type="button" onclick="openModal('filter-modal')"
-                        class="btn bg-light-600 text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2">
-                        <iconify-icon icon="solar:filter-outline" class="icon text-xl line-height-1"></iconify-icon>
-                        Lọc
-                    </button>
-
-                    @if(request()->filled('filter_supplier_code') || request()->filled('filter_name') || request()->filled('filter_phone') || request()->filled('filter_status') || request()->filled('filter_debt_level') || ($dateMode !== 'all' && request()->filled('date_mode')))
-                    <a href="{{ route('suppliers.index') }}" class="btn text-sm btn-sm px-2 py-2 rounded-lg flex items-center gap-2 text-danger-600 bg-danger-50">
-                        <iconify-icon icon="solar:close-circle-outline" class="icon text-xl line-height-1"></iconify-icon>
-                        Xóa lọc
-                    </a>
-                    @endif
-
-                    {{-- Export Excel --}}
-                    <a href="{{ route('suppliers.export', request()->query()) }}"
-                        class="btn bg-emerald-600 hover:bg-emerald-700 text-white text-sm btn-sm px-3 py-2 rounded-lg flex items-center gap-1.5 shadow-sm transition"
-                        title="Xuất danh sách nhà cung cấp & công nợ ra file Excel">
-                        <iconify-icon icon="solar:file-spreadsheet-bold" class="text-lg"></iconify-icon>
-                        <span>Xuất Excel</span>
-                    </a>
-
-                    {{-- Thêm nhà cung cấp --}}
-                    <button type="button" onclick="openCreateSupplierModal()"
-                        class="btn btn-primary text-sm btn-sm px-3 py-2 rounded-lg flex items-center gap-2 shadow-sm">
-                        <iconify-icon icon="ic:baseline-plus" class="icon text-xl line-height-1"></iconify-icon>
-                        <span>Thêm NCC</span>
-                    </button>
                 </div>
             </div>
 
@@ -331,7 +338,7 @@
 </div>
 
 {{-- MODAL THÊM MỚI NHÀ CUNG CẤP --}}
-<x-modal id="create-supplier-modal" title="Thêm mới nhà cung cấp" size="modal-lg">
+<x-modal name="create-supplier-modal" id="create-supplier-modal" title="Thêm mới nhà cung cấp" size="modal-lg">
     <form method="POST" action="{{ route('suppliers.store') }}" id="createSupplierForm">
         @csrf
         <div class="p-6 space-y-4">
@@ -421,7 +428,7 @@
 </x-modal>
 
 {{-- MODAL SỬA NHÀ CUNG CẤP --}}
-<x-modal id="edit-supplier-modal" title="Chỉnh sửa thông tin nhà cung cấp" size="modal-lg">
+<x-modal name="edit-supplier-modal" id="edit-supplier-modal" title="Chỉnh sửa thông tin nhà cung cấp" size="modal-lg">
     <form method="POST" action="" id="editSupplierForm">
         @csrf
         @method('PUT')
@@ -508,7 +515,7 @@
 </x-modal>
 
 {{-- MODAL LẬP PHIẾU CHI NHANH (THANH TOÁN NCC) --}}
-<x-modal id="quick-payment-modal" title="Lập phiếu chi thanh toán nhà cung cấp" size="modal-md">
+<x-modal name="quick-payment-modal" id="quick-payment-modal" title="Lập phiếu chi thanh toán nhà cung cấp" size="modal-md">
     <form method="POST" action="" id="quickPaymentForm">
         @csrf
         <div class="p-6 space-y-4">
@@ -568,7 +575,7 @@
 </x-modal>
 
 {{-- MODAL BỘ LỌC NÂNG CAO --}}
-<x-modal id="filter-modal" title="Bộ lọc nâng cao" size="modal-md">
+<x-modal name="filter-modal" id="filter-modal" title="Bộ lọc nâng cao" size="modal-md">
     <form method="GET" action="{{ route('suppliers.index') }}">
         <input type="hidden" name="per_page" value="{{ $perPage }}">
         @if($dateMode && $dateMode !== 'all')

@@ -286,6 +286,7 @@
                     $supply->order_supply_code = $sData['order_supply_code'] ?? null;
                     $supply->supply_name = $sData['supply_name'] ?? '';
                     $supply->quantity = $sData['quantity'] ?? 0;
+                    $supply->formula = $sData['formula'] ?? null;
                     
                     $items = collect();
                     if (isset($sData['items']) && is_array($sData['items'])) {
@@ -324,6 +325,7 @@
                             $item->total_price = $iData['total_price'] ?? 0;
                             $item->notes = $iData['notes'] ?? '';
                             $item->is_labor = $iData['is_labor'] ?? 0;
+                            $item->formula = $iData['formula'] ?? null;
                             $items->push($item);
                         }
                     }
@@ -355,7 +357,8 @@
                         </select>
                         <input type="text" name="supplies[{{ $supplyIndex }}][supply_name]" class="form-control form-control-sm rounded-lg w-64 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="Tên vật tư (ví dụ: Acrylic, Melamine...)" value="{{ $supply->supply_name }}">
                         @php
-                            $supplyFormulas = is_array($supply->formula) ? $supply->formula : (json_decode($supply->formula ?? '[]', true) ?: []);
+                            $rawSupplyF = $supply->formula ?? null;
+                            $supplyFormulas = is_array($rawSupplyF) ? $rawSupplyF : (is_string($rawSupplyF) ? (json_decode($rawSupplyF, true) ?: []) : []);
                         @endphp
                         <input type="text" name="supplies[{{ $supplyIndex }}][quantity]" class="form-control form-control-sm rounded-lg w-24 border-neutral-300 focus:border-primary-500 focus:ring-primary-500" placeholder="SL" value="{{ $supply->quantity ?? 0 }}" autocomplete="off" @if(!empty($supplyFormulas['quantity'])) data-formula="{{ $supplyFormulas['quantity'] }}" title="Công thức: {{ $supplyFormulas['quantity'] }}" @endif>
                         <input type="hidden" name="supplies[{{ $supplyIndex }}][formula]" class="supply-formula-input" value="{{ !empty($supplyFormulas) ? json_encode($supplyFormulas) : '' }}">
@@ -390,21 +393,21 @@
                                 <th scope="col" style="width: 30px; min-width: 30px; white-space: nowrap;" class="sticky-stt-th align-middle text-center border border-neutral-200 font-bold text-xs text-neutral-600 uppercase"><span class="order-stt-header-label">STT</span></th>
                                 <th scope="col" style="width: 110px; min-width: 110px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Mã SP</th>
                                 <th scope="col" style="width: 150px; min-width: 150px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên sản phẩm <span class="text-danger-500">*</span></th>
-                                <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Độ dày</th>
+                                <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Độ dày <span class="text-primary-600 font-extrabold">(A)</span></th>
                                 @if($isRework)
                                     <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase text-center bg-yellow-50/50">Cao (cũ)</th>
                                     <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase text-center bg-yellow-50/50">Rộng (cũ)</th>
                                 @endif
-                                <th scope="col" style="width: 130px; min-width: 130px; white-space: nowrap;" class="align-middle border border-neutral-200 bg-yellow-100/70 font-bold text-xs text-neutral-600 uppercase text-center">Cao (vân)</th>
-                                <th scope="col" style="width: 130px; min-width: 130px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase text-center">Rộng</th>
-                                <th scope="col" style="width: 50px; min-width: 50px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số lượng <span class="text-danger-500">*</span></th>
+                                <th scope="col" style="width: 130px; min-width: 130px; white-space: nowrap;" class="align-middle border border-neutral-200 bg-yellow-100/70 font-bold text-xs text-neutral-600 uppercase text-center">Cao (vân) <span class="text-primary-600 font-extrabold">(B)</span></th>
+                                <th scope="col" style="width: 130px; min-width: 130px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase text-center">Rộng <span class="text-primary-600 font-extrabold">(C)</span></th>
+                                <th scope="col" style="width: 50px; min-width: 50px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số lượng <span class="text-danger-500">*</span> <span class="text-primary-600 font-extrabold">(D)</span></th>
                                 <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Vát</th>
                                 <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Chiều vân</th>
-                                <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Cánh (m2)</th>
-                                <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Phào (m)</th>
+                                <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Cánh (m2) <span class="text-primary-600 font-extrabold">(E)</span></th>
+                                <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Phào (m) <span class="text-primary-600 font-extrabold">(F)</span></th>
                                 <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Khoét kính</th>
-                                <th scope="col" style="width: 80px; min-width: 80px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá <span class="text-danger-500">*</span></th>
-                                <th scope="col" style="width: 90px; min-width: 90px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Thành tiền</th>
+                                <th scope="col" style="width: 80px; min-width: 80px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá <span class="text-danger-500">*</span> <span class="text-primary-600 font-extrabold">(G)</span></th>
+                                <th scope="col" style="width: 90px; min-width: 90px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Thành tiền <span class="text-primary-600 font-extrabold">(H)</span></th>
                                 <th scope="col" style="min-width: 120px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Ghi chú</th>
                                 <th scope="col" style="width: 168px; min-width: 168px; white-space: nowrap; position: sticky; right: 0; z-index: 3; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="order-action-col align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Hành động</th>
                             </tr>
@@ -412,21 +415,21 @@
                                 <td class="border border-neutral-200 text-center sticky-stt-td" style="font-size: 80% !important; background-color: #f1f5f9;">TỔNG</td>
                                 <td class="border border-neutral-200"></td>
                                 <td class="border border-neutral-200"></td>
-                                <td class="border border-neutral-200"></td>
+                                <td class="border border-neutral-200 text-center" data-summary-field="thickness" data-summary-col="A" style="font-size: 80% !important;"></td>
                                 @if($isRework)
                                     <td class="border border-neutral-200"></td>
                                     <td class="border border-neutral-200"></td>
                                 @endif
+                                <td class="border border-neutral-200 text-center" data-summary-field="height" data-summary-col="B" style="font-size: 80% !important;"></td>
+                                <td class="border border-neutral-200 text-center" data-summary-field="width" data-summary-col="C" style="font-size: 80% !important;"></td>
+                                <td class="border border-neutral-200 text-center" data-summary-field="quantity" data-summary-col="D" style="font-size: 80% !important;">0</td>
                                 <td class="border border-neutral-200"></td>
                                 <td class="border border-neutral-200"></td>
-                                <td class="border border-neutral-200 text-center" data-summary-field="quantity" style="font-size: 80% !important;">0</td>
+                                <td class="border border-neutral-200 text-center" data-summary-field="wing_area" data-summary-col="E" style="font-size: 80% !important;">0</td>
+                                <td class="border border-neutral-200 text-center" data-summary-field="molding_length" data-summary-col="F" style="font-size: 80% !important;">0</td>
                                 <td class="border border-neutral-200"></td>
-                                <td class="border border-neutral-200"></td>
-                                <td class="border border-neutral-200 text-center" data-summary-field="wing_area" style="font-size: 80% !important;">0</td>
-                                <td class="border border-neutral-200 text-center" data-summary-field="molding_length" style="font-size: 80% !important;">0</td>
-                                <td class="border border-neutral-200"></td>
-                                <td class="border border-neutral-200"></td>
-                                <td class="border border-neutral-200 text-center" data-summary-field="total_price" style="font-size: 80% !important;">0</td>
+                                <td class="border border-neutral-200 text-center" data-summary-field="unit_price" data-summary-col="G" style="font-size: 80% !important;"></td>
+                                <td class="border border-neutral-200 text-center" data-summary-field="total_price" data-summary-col="H" style="font-size: 80% !important;">0</td>
                                 <td class="border border-neutral-200"></td>
                                 <td class="order-action-col border border-neutral-200" style="width: 168px; min-width: 168px; position: sticky; right: 0; z-index: 3; background-color: #f1f5f9;"></td>
                         </thead>
@@ -437,7 +440,8 @@
                                 $oldSizeParts = explode(' x ', $item->old_size ?? '');
                                 $oldHeight = isset($oldSizeParts[0]) ? trim($oldSizeParts[0]) : '';
                                 $oldWidth = isset($oldSizeParts[1]) ? trim($oldSizeParts[1]) : '';
-                                $itemFormulas = is_array($item->formula) ? $item->formula : (json_decode($item->formula ?? '[]', true) ?: []);
+                                $rawItemF = $item->formula ?? null;
+                                $itemFormulas = is_array($rawItemF) ? $rawItemF : (is_string($rawItemF) ? (json_decode($rawItemF, true) ?: []) : []);
                             @endphp
                             <tr class="order-item-row {{ $isLaborRow ? 'bg-amber-50/60' : '' }}" data-item-id="{{ $item->id }}" {{ $isLaborRow ? 'data-is-labor=1' : '' }}>
                                 <input type="hidden" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][formula]" class="row-formula-input" value="{{ !empty($itemFormulas) ? json_encode($itemFormulas) : '' }}">
@@ -708,21 +712,21 @@ function addOrderSupply() {
                         <th scope="col" style="width: 30px; min-width: 30px; white-space: nowrap;" class="sticky-stt-th align-middle text-center border border-neutral-200 font-bold text-xs text-neutral-600 uppercase"><span class="order-stt-header-label">STT</span></th>
                         <th scope="col" style="width: 110px; min-width: 110px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Mã SP</th>
                         <th scope="col" style="width: 150px; min-width: 150px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên sản phẩm <span class="text-danger-500">*</span></th>
-                        <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Độ dày</th>
+                        <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Độ dày <span class="text-primary-600 font-extrabold">(A)</span></th>
                         ${window.isReworkOrder ? `
                             <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase text-center bg-yellow-50/50">Cao (cũ)</th>
                             <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase text-center bg-yellow-50/50">Rộng (cũ)</th>
                         ` : ''}
-                        <th scope="col" style="width: 130px; min-width: 130px; white-space: nowrap;" class="align-middle border border-neutral-200 bg-yellow-100/70 font-bold text-xs text-neutral-600 uppercase text-center">Cao (vân)</th>
-                        <th scope="col" style="width: 130px; min-width: 130px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase text-center">Rộng</th>
-                        <th scope="col" style="width: 50px; min-width: 50px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số lượng <span class="text-danger-500">*</span></th>
+                        <th scope="col" style="width: 130px; min-width: 130px; white-space: nowrap;" class="align-middle border border-neutral-200 bg-yellow-100/70 font-bold text-xs text-neutral-600 uppercase text-center">Cao (vân) <span class="text-primary-600 font-extrabold">(B)</span></th>
+                        <th scope="col" style="width: 130px; min-width: 130px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase text-center">Rộng <span class="text-primary-600 font-extrabold">(C)</span></th>
+                        <th scope="col" style="width: 50px; min-width: 50px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số lượng <span class="text-danger-500">*</span> <span class="text-primary-600 font-extrabold">(D)</span></th>
                         <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Vát</th>
                         <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Chiều vân</th>
-                        <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Cánh (m2)</th>
-                        <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Phào (m)</th>
+                        <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Cánh (m2) <span class="text-primary-600 font-extrabold">(E)</span></th>
+                        <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Phào (m) <span class="text-primary-600 font-extrabold">(F)</span></th>
                         <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Khoét kính</th>
-                        <th scope="col" style="width: 80px; min-width: 80px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá <span class="text-danger-500">*</span></th>
-                        <th scope="col" style="width: 90px; min-width: 90px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Thành tiền</th>
+                        <th scope="col" style="width: 80px; min-width: 80px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá <span class="text-danger-500">*</span> <span class="text-primary-600 font-extrabold">(G)</span></th>
+                        <th scope="col" style="width: 90px; min-width: 90px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Thành tiền <span class="text-primary-600 font-extrabold">(H)</span></th>
                         <th scope="col" style="min-width: 120px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Ghi chú</th>
                         <th scope="col" style="width: 168px; min-width: 168px; white-space: nowrap; position: sticky; right: 0; z-index: 3; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="order-action-col align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Hành động</th>
                     </tr>
@@ -730,21 +734,21 @@ function addOrderSupply() {
                         <td class="border border-neutral-200 text-center sticky-stt-td" style="font-size: 80% !important; background-color: #f1f5f9;">TỔNG</td>
                         <td class="border border-neutral-200"></td>
                         <td class="border border-neutral-200"></td>
-                        <td class="border border-neutral-200"></td>
+                        <td class="border border-neutral-200 text-center" data-summary-field="thickness" data-summary-col="A" style="font-size: 80% !important;"></td>
                         ${window.isReworkOrder ? `
                             <td class="border border-neutral-200"></td>
                             <td class="border border-neutral-200"></td>
                         ` : ''}
+                        <td class="border border-neutral-200 text-center" data-summary-field="height" data-summary-col="B" style="font-size: 80% !important;"></td>
+                        <td class="border border-neutral-200 text-center" data-summary-field="width" data-summary-col="C" style="font-size: 80% !important;"></td>
+                        <td class="border border-neutral-200 text-center" data-summary-field="quantity" data-summary-col="D" style="font-size: 80% !important;">0</td>
                         <td class="border border-neutral-200"></td>
                         <td class="border border-neutral-200"></td>
-                        <td class="border border-neutral-200 text-center" data-summary-field="quantity" style="font-size: 80% !important;">0</td>
+                        <td class="border border-neutral-200 text-center" data-summary-field="wing_area" data-summary-col="E" style="font-size: 80% !important;">0</td>
+                        <td class="border border-neutral-200 text-center" data-summary-field="molding_length" data-summary-col="F" style="font-size: 80% !important;">0</td>
                         <td class="border border-neutral-200"></td>
-                        <td class="border border-neutral-200"></td>
-                        <td class="border border-neutral-200 text-center" data-summary-field="wing_area" style="font-size: 80% !important;">0</td>
-                        <td class="border border-neutral-200 text-center" data-summary-field="molding_length" style="font-size: 80% !important;">0</td>
-                        <td class="border border-neutral-200"></td>
-                        <td class="border border-neutral-200"></td>
-                        <td class="border border-neutral-200 text-center" data-summary-field="total_price" style="font-size: 80% !important;">0</td>
+                        <td class="border border-neutral-200 text-center" data-summary-field="unit_price" data-summary-col="G" style="font-size: 80% !important;"></td>
+                        <td class="border border-neutral-200 text-center" data-summary-field="total_price" data-summary-col="H" style="font-size: 80% !important;">0</td>
                         <td class="border border-neutral-200"></td>
                         <td class="order-action-col border border-neutral-200" style="width: 130px; min-width: 130px; position: sticky; right: 0; z-index: 3; background-color: #f1f5f9;"></td>
                 </thead>
@@ -1089,10 +1093,12 @@ function bindAcrylicRowEvents(row) {
     }
     
     if (heightInput) {
-        heightInput.addEventListener('input', () => {
-            applyNarrowWidthRule(row, false);
-            calculateTotalPrice(row, 'height');
-            syncBevelOnSizeChange(row);
+        ['input', 'change', 'blur'].forEach(evt => {
+            heightInput.addEventListener(evt, () => {
+                applyNarrowWidthRule(row, false);
+                calculateTotalPrice(row, 'height');
+                syncBevelOnSizeChange(row);
+            });
         });
     }
     if (widthInput) {
@@ -1116,30 +1122,45 @@ function bindAcrylicRowEvents(row) {
             }, 300);
         });
 
-        widthInput.addEventListener('change', triggerNarrowCheck);
+        widthInput.addEventListener('change', () => {
+            triggerNarrowCheck();
+            calculateTotalPrice(row, 'width');
+        });
         widthInput.addEventListener('blur', triggerNarrowCheck);
     }
     if (quantityInput) {
-        quantityInput.addEventListener('input', () => {
-            applyNarrowWidthRule(row, false);
-            calculateTotalPrice(row, 'quantity');
-            updateAcrylicRowIndexes();
+        ['input', 'change', 'blur'].forEach(evt => {
+            quantityInput.addEventListener(evt, () => {
+                applyNarrowWidthRule(row, false);
+                calculateTotalPrice(row, 'quantity');
+                updateAcrylicRowIndexes();
+            });
         });
     }
     if (wingAreaInput) {
-        wingAreaInput.addEventListener('input', () => {
-            if (wingAreaInput.value.trim() !== '') {
-                wingAreaInput.dataset.manual = '1';
-            } else {
-                delete wingAreaInput.dataset.manual;
-                delete wingAreaInput.dataset.formula;
-                wingAreaInput.removeAttribute('title');
-            }
-            calculateTotalPrice(row, 'wing_area');
+        ['input', 'change', 'blur'].forEach(evt => {
+            wingAreaInput.addEventListener(evt, () => {
+                if (wingAreaInput.value.trim() !== '') {
+                    wingAreaInput.dataset.manual = '1';
+                } else {
+                    delete wingAreaInput.dataset.manual;
+                    delete wingAreaInput.dataset.formula;
+                    wingAreaInput.removeAttribute('title');
+                }
+                calculateTotalPrice(row, 'wing_area');
+            });
         });
     }
-    if (moldingLengthInput) moldingLengthInput.addEventListener('input', () => calculateTotalPrice(row, 'molding_length'));
-    if (unitPriceInput) unitPriceInput.addEventListener('input', () => calculateTotalPrice(row, 'unit_price'));
+    if (moldingLengthInput) {
+        ['input', 'change', 'blur'].forEach(evt => {
+            moldingLengthInput.addEventListener(evt, () => calculateTotalPrice(row, 'molding_length'));
+        });
+    }
+    if (unitPriceInput) {
+        ['input', 'change', 'blur'].forEach(evt => {
+            unitPriceInput.addEventListener(evt, () => calculateTotalPrice(row, 'unit_price'));
+        });
+    }
     if (bevelInput) {
         bevelInput.addEventListener('input', () => {
             bevelInput.setAttribute('data-auto-sync', 'none');
@@ -1377,9 +1398,10 @@ function calculateTotalPrice(row, sourceEvent) {
     
     if (!heightInput || !widthInput || !quantityInput || !wingAreaInput || !moldingLengthInput) return;
 
-    const height = parseFloat(heightInput.value) || 0;
-    const width = parseFloat(widthInput.value) || 0;
-    const quantity = parseFloat(quantityInput.value) || 0;
+    const parseFn = typeof window.parseInputValue === 'function' ? window.parseInputValue : (el => parseFloat(el?.value) || 0);
+    const height = parseFn(heightInput);
+    const width = parseFn(widthInput);
+    const quantity = parseFn(quantityInput);
     
     if (sourceEvent !== 'wing_area') {
         const productNameInput = row.querySelector('input[name*="[product_name]"]');
@@ -1419,9 +1441,9 @@ function calculateTotalPrice(row, sourceEvent) {
         }
     }
     
-    const unitPrice = parseFloat(unitPriceInput ? unitPriceInput.value : 0) || 0;
-    const currentWingArea = parseFloat(wingAreaInput.value) || 0;
-    const moldingLength = parseFloat(moldingLengthInput.value) || 0;
+    const unitPrice = parseFn(unitPriceInput);
+    const currentWingArea = parseFn(wingAreaInput);
+    const moldingLength = parseFn(moldingLengthInput);
     
     const totalPrice = Math.round((currentWingArea + moldingLength) * unitPrice);
     const totalPriceInput = row.querySelector('input[name*="[total_price]"]');
@@ -1451,9 +1473,10 @@ function applyNarrowWidthRule(row, triggerCalculation = true) {
         return;
     }
 
-    const width    = parseFloat(widthInput.value);
-    const height   = parseFloat(heightInput ? heightInput.value : 0) || 0;
-    const quantity = parseFloat(quantityInput ? quantityInput.value : 1) || 1;
+    const parseFn = typeof window.parseInputValue === 'function' ? window.parseInputValue : (el => parseFloat(el?.value) || 0);
+    const width    = parseFn(widthInput);
+    const height   = parseFn(heightInput);
+    const quantity = quantityInput ? (parseFn(quantityInput) || 1) : 1;
 
     const lastWidth = parseFloat(widthInput.dataset.lastWidth);
     const isPreviousNarrow = !isNaN(lastWidth) && lastWidth > 0 && lastWidth <= 55;
