@@ -16,8 +16,8 @@ class PackingPackageController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:view packing')->only(['index', 'show', 'print', 'printZebra', 'getPrinterSettings', 'checkPrinterConnection']);
-        $this->middleware('permission:add packing')->only(['store', 'storeItem', 'update', 'reopen', 'savePrinterSettings']);
+        $this->middleware('permission:view packing')->only(['index', 'show', 'print', 'printZebra', 'getPrinterSettings', 'checkPrinterConnection', 'getPrinterHistory', 'getPackagePrintDataJson']);
+        $this->middleware('permission:add packing')->only(['store', 'storeItem', 'update', 'reopen', 'savePrinterSettings', 'printSimpleTest', 'exitDiagnostics', 'recoverZpl']);
         $this->middleware('permission:delete packing')->only(['destroyItem', 'destroy']);
         $this->middleware('permission:complete packing')->only(['complete']);
     }
@@ -885,10 +885,81 @@ class PackingPackageController extends Controller
             \Illuminate\Support\Facades\Log::warning('Zebra connection check: ' . $e->getMessage());
             return response()->json([
                 'connected' => false,
+                'ready'     => false,
                 'host'      => $request->input('host') ?? '192.168.1.67',
                 'port'      => (int) ($request->input('port') ?? 9100),
                 'message'   => $e->getMessage(),
             ], 200);
         }
+    }
+
+    /**
+     * Lấy dữ liệu in của một kiện dưới dạng JSON
+     */
+    public function getPackagePrintDataJson(PackingPackage $package)
+    {
+        return response()->json([
+            'success'   => true,
+            'printData' => $this->getPackagePrintData($package),
+        ]);
+    }
+
+    /**
+     * In thử 1 tem chữ ZPL (không gửi ảnh raster)
+     */
+    public function printSimpleTest(Request $request, ZebraPrinterService $zebraService)
+    {
+        try {
+            $result = $zebraService->printSimpleTest($request->all());
+            return response()->json($result);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi in thử: ' . $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    /**
+     * Thoát Diagnostic Mode (~JE)
+     */
+    public function exitDiagnostics(Request $request, ZebraPrinterService $zebraService)
+    {
+        try {
+            $result = $zebraService->exitDiagnostics($request->all());
+            return response()->json($result);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi: ' . $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    /**
+     * Khôi phục ZPL (Virtual Device = NONE, Diagnostic = OFF, Language = ZPL)
+     */
+    public function recoverZpl(Request $request, ZebraPrinterService $zebraService)
+    {
+        try {
+            $result = $zebraService->recoverZpl($request->all());
+            return response()->json($result);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi khôi phục: ' . $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    /**
+     * Lịch sử 50 lượt in gần nhất
+     */
+    public function getPrinterHistory(ZebraPrinterService $zebraService)
+    {
+        return response()->json([
+            'success' => true,
+            'history' => $zebraService->getHistory(),
+        ]);
     }
 }

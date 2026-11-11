@@ -81,6 +81,13 @@
                 @endcan
 
                 <button type="button"
+                    onclick="ZebraPacking.openSettingsModal()"
+                    class="btn bg-white hover:bg-neutral-50 text-neutral-700 border border-neutral-200 px-3.5 py-2.5 rounded-lg font-semibold inline-flex items-center gap-1.5 shadow-sm transition-colors"
+                    title="Cài đặt & kiểm tra máy in Zebra">
+                    <iconify-icon icon="lucide:settings" class="text-base text-neutral-500"></iconify-icon>
+                    Máy in
+                </button>
+                <button type="button"
                     onclick="ZebraPacking.openModal()"
                     class="packing-package-page__zebra-print-button btn bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-lg font-semibold inline-flex items-center gap-2 shadow-sm transition-colors">
                     <iconify-icon icon="lucide:printer" class="text-lg"></iconify-icon>
@@ -102,6 +109,13 @@
                     @endif
                 @endcan
 
+                <button type="button"
+                    onclick="ZebraPacking.openSettingsModal()"
+                    class="btn bg-white hover:bg-neutral-50 text-neutral-700 border border-neutral-200 px-3.5 py-2.5 rounded-lg font-semibold inline-flex items-center gap-1.5 shadow-sm transition-colors"
+                    title="Cài đặt & kiểm tra máy in Zebra">
+                    <iconify-icon icon="lucide:settings" class="text-base text-neutral-500"></iconify-icon>
+                    Máy in
+                </button>
                 <button type="button"
                     onclick="ZebraPacking.openModal()"
                     class="btn bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white border border-emerald-200 px-4 py-2.5 rounded-lg font-semibold inline-flex items-center gap-2 transition-colors shadow-sm">

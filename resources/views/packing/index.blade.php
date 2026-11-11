@@ -31,6 +31,14 @@
         </div>
 
         <div class="packing-page__toolbar-actions flex w-auto flex-wrap items-center justify-end gap-3">
+            <button type="button"
+                onclick="ZebraPacking.openSettingsModal()"
+                class="btn bg-white hover:bg-neutral-50 text-neutral-700 border border-neutral-200 px-4 py-2.5 rounded-lg flex items-center justify-center gap-2 font-semibold shadow-sm transition-colors"
+                title="Cài đặt & kiểm tra máy in Zebra ZT411">
+                <iconify-icon icon="lucide:printer" class="text-lg text-emerald-600"></iconify-icon>
+                <span class="text-sm font-semibold">Máy in Zebra</span>
+                <span id="packingPrinterStatusDot" class="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block shadow-sm"></span>
+            </button>
             <div class="packing-page__current-user bg-white border border-neutral-200 rounded-lg shadow-sm px-5 py-2.5 flex items-center gap-3">
                 <iconify-icon icon="lucide:user" class="packing-page__current-user-icon text-lg text-secondary-light"></iconify-icon>
                 <span class="packing-page__current-user-name font-semibold text-neutral-900">{{ $currentUser?->name ?? 'Người đóng gói' }}</span>
@@ -130,6 +138,14 @@
                                                 title="Đóng gói tiếp / Quét linh kiện">
                                                 <iconify-icon icon="lucide:package-open" class="text-base"></iconify-icon>
                                             </a>
+
+                                            <!-- Nút In tem kiện Zebra -->
+                                            <button type="button"
+                                                onclick="ZebraPacking.openModalForPackage({{ $package->id }})"
+                                                class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 transition-colors inline-flex items-center justify-center shadow-sm"
+                                                title="In tem kiện Zebra (60x60)">
+                                                <iconify-icon icon="lucide:printer" class="text-base"></iconify-icon>
+                                            </button>
 
                                             <!-- Nút Sửa tên kiện -->
                                             @can('add packing')
@@ -244,12 +260,13 @@
                                                 <iconify-icon icon="lucide:eye" class="packing-page__completed-view-icon text-base"></iconify-icon>
                                             </a>
 
-                                            <!-- Nút Xem chi tiết kiện / In tem -->
-                                            <a href="{{ route('processes.packing.show', $package) }}"
+                                            <!-- Nút In tem kiện Zebra -->
+                                            <button type="button"
+                                                onclick="ZebraPacking.openModalForPackage({{ $package->id }})"
                                                 class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 transition-colors inline-flex items-center justify-center shadow-sm"
-                                                title="In tem kiện">
+                                                title="In tem kiện Zebra (60x60)">
                                                 <iconify-icon icon="lucide:printer" class="text-base"></iconify-icon>
-                                            </a>
+                                            </button>
 
                                             @if(!$package->dispatched_at)
                                                 <!-- Nút Sửa tên kiện -->
@@ -360,5 +377,11 @@
         
     @endcan
 
+@php
+    $script = '
+    <script src="' . asset('assets/js/qrcode.js') . '"></script>
+    <script src="' . asset('assets/js/zebra-packing-label.js') . '?v=' . filemtime(public_path('assets/js/zebra-packing-label.js')) . '"></script>
+    ';
+@endphp
 
 @endsection

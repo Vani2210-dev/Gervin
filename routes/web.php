@@ -428,6 +428,11 @@ Route::middleware(['auth'])->prefix('processes')->name('processes.')->group(func
     Route::get('/packing/printer/settings', [PackingPackageController::class, 'getPrinterSettings'])->name('packing.printer.settings');
     Route::post('/packing/printer/settings', [PackingPackageController::class, 'savePrinterSettings'])->name('packing.printer.save-settings');
     Route::post('/packing/printer/check', [PackingPackageController::class, 'checkPrinterConnection'])->name('packing.printer.check');
+    Route::post('/packing/printer/simple-test', [PackingPackageController::class, 'printSimpleTest'])->name('packing.printer.simple-test');
+    Route::post('/packing/printer/exit-diagnostics', [PackingPackageController::class, 'exitDiagnostics'])->name('packing.printer.exit-diagnostics');
+    Route::post('/packing/printer/recover-zpl', [PackingPackageController::class, 'recoverZpl'])->name('packing.printer.recover-zpl');
+    Route::get('/packing/printer/history', [PackingPackageController::class, 'getPrinterHistory'])->name('packing.printer.history');
+    Route::get('/packing/{package}/print-data', [PackingPackageController::class, 'getPackagePrintDataJson'])->name('packing.print-data');
     Route::post('/packing/{package}/print-zebra', [PackingPackageController::class, 'printZebra'])->name('packing.print-zebra');
     Route::get('/packing/{package}', [PackingPackageController::class, 'show'])->name('packing.show');
     Route::get('/packing/{package}/print', [PackingPackageController::class, 'print'])->name('packing.print');
