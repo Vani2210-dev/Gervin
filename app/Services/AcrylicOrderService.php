@@ -40,7 +40,7 @@ class AcrylicOrderService
             'supplies.*.items.*.id'                   => 'nullable|integer',
             'supplies.*.items.*.product_code'        => 'nullable|string|max:50',
             'supplies.*.items.*.product_name'        => 'nullable|string|max:255',
-            'supplies.*.items.*.thickness'           => 'nullable|string|max:100',
+            'supplies.*.items.*.thickness'           => 'nullable|max:100',
             'supplies.*.items.*.height'              => 'nullable|numeric|min:0',
             'supplies.*.items.*.width'               => 'nullable|numeric|min:0',
             'supplies.*.items.*.grain_direction'     => 'nullable|string|max:100',

@@ -281,6 +281,9 @@ class OrderController extends Controller
                 $supplies = $this->sanitizeSuppliesFormulas($supplies);
                 $request->merge(['supplies' => $supplies]);
             }
+        } elseif ($request->has('supplies') && is_array($request->supplies)) {
+            $supplies = $this->cleanEmptyStrings($request->supplies);
+            $request->merge(['supplies' => $supplies]);
         }
         $this->sanitizePaymentDetailsFormulas($request);
         if ($request->has('payment_details') && is_array($request->payment_details)) {
@@ -897,6 +900,9 @@ class OrderController extends Controller
                 $supplies = $this->sanitizeSuppliesFormulas($supplies);
                 $request->merge(['supplies' => $supplies]);
             }
+        } elseif ($request->has('supplies') && is_array($request->supplies)) {
+            $supplies = $this->cleanEmptyStrings($request->supplies);
+            $request->merge(['supplies' => $supplies]);
         }
         $this->sanitizePaymentDetailsFormulas($request);
         if ($request->has('payment_details') && is_array($request->payment_details)) {
@@ -1094,6 +1100,9 @@ class OrderController extends Controller
                 $supplies = $this->sanitizeSuppliesFormulas($supplies);
                 $request->merge(['supplies' => $supplies]);
             }
+        } elseif ($request->has('supplies') && is_array($request->supplies)) {
+            $supplies = $this->cleanEmptyStrings($request->supplies);
+            $request->merge(['supplies' => $supplies]);
         }
         $this->sanitizePaymentDetailsFormulas($request);
         if ($request->has('payment_details') && is_array($request->payment_details)) {
@@ -1866,6 +1875,8 @@ class OrderController extends Controller
                 $array[$key] = $this->cleanEmptyStrings($value);
             } elseif ($value === '') {
                 $array[$key] = null;
+            } elseif ($key === 'thickness' && $value !== null) {
+                $array[$key] = (string) $value;
             }
         }
         return $array;

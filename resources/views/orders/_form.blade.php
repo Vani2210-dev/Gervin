@@ -3457,7 +3457,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
 
                         // Parse values based on input type
-                        const numericKeys = ['quantity', 'wing_quantity', 'height', 'width', 'thickness', 'unit_price', 'total_price', 'price', 'total', 'wing_area', 'molding_length', 'area_m2', 'weight', 'straight_paste_length', 'beveled_length', 'vat_moi_length', 'ban_rong_40_59', 'ban_rong_17_39', 'ban_rong_25_35', 'beveled_handle', 'cnc'];
+                        const numericKeys = ['quantity', 'wing_quantity', 'height', 'width', 'unit_price', 'total_price', 'price', 'total', 'wing_area', 'molding_length', 'area_m2', 'weight', 'straight_paste_length', 'beveled_length', 'vat_moi_length', 'ban_rong_40_59', 'ban_rong_17_39', 'ban_rong_25_35', 'beveled_handle', 'cnc'];
                         if (numericKeys.includes(key)) {
                             val = (val === '' || val === null || val === undefined) ? '' : (typeof window.parseInputValue === 'function' ? window.parseInputValue(input) : (parseFloat(val) || 0));
                         } else if (input.type === 'number') {

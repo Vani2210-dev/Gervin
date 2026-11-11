@@ -39,7 +39,7 @@ class GlassOrderService
             'supplies.*.items'               => 'nullable|array',
             'supplies.*.items.*.id'                   => 'nullable|integer',
             'supplies.*.items.*.product_name'        => 'nullable|string|max:255',
-            'supplies.*.items.*.thickness'           => 'nullable|string|max:100',
+            'supplies.*.items.*.thickness'           => 'nullable|max:100',
             'supplies.*.items.*.product_code'        => 'nullable|string|max:50',
             'supplies.*.items.*.wing_opening_direction' => 'nullable|string|max:100',
             'supplies.*.items.*.aluminum_color'      => 'nullable|string|max:100',
