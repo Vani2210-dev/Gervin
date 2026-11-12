@@ -219,7 +219,7 @@
                         @if($acrylicOrder->isNhapKho())
                             <span class="px-3 py-1 rounded-full text-xs font-semibold bg-sky-100 text-sky-800 border border-sky-300 flex items-center gap-1.5 shadow-2xs">
                                 <iconify-icon icon="solar:box-minimalistic-bold-duotone" class="text-sm text-sky-600"></iconify-icon>
-                                <span>Phiếu Nhập Kho</span>
+                                <span>Lệnh sản xuất</span>
                             </span>
                         @endif
                         <span
@@ -389,8 +389,8 @@
                             <span class="font-bold text-neutral-800">
                                 @if($acrylicOrder->isNhapKho())
                                     <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-sky-100 text-sky-800 border border-sky-300">
-                                        <iconify-icon icon="lucide:warehouse" class="text-sm"></iconify-icon>
-                                        Nhập kho nội bộ Gervin (Không tính tiền)
+                                        <iconify-icon icon="lucide:wrench" class="text-sm"></iconify-icon>
+                                        Sản xuất nội bộ Gervin (Không tính tiền)
                                     </span>
                                 @elseif($acrylicOrder->customer)
                                     <a href="{{ route('customers.index', ['overview_id' => $acrylicOrder->customer->id]) }}" class="text-primary-600 hover:underline">
@@ -721,9 +721,9 @@
                         <div class="p-3.5 bg-sky-50 border border-sky-200 rounded-xl text-xs text-sky-900 leading-relaxed space-y-1">
                             <div class="font-bold flex items-center gap-1.5 text-sky-800">
                                 <iconify-icon icon="solar:box-minimalistic-bold-duotone" class="text-base text-sky-600"></iconify-icon>
-                                <span>Đơn nhập kho lưu trữ</span>
+                                <span>Lệnh sản xuất nội bộ</span>
                             </div>
-                            <div class="text-sky-700">Đơn hàng sản xuất lưu kho nội bộ xưởng. Không tính tiền và không tính vào công nợ khách hàng.</div>
+                            <div class="text-sky-700">Đơn hàng sản xuất nội bộ xưởng. Không tính tiền và không tính vào công nợ khách hàng.</div>
                         </div>
 
                         <div class="border-t border-neutral-100 pt-3 flex justify-between items-center">

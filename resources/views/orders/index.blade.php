@@ -30,7 +30,7 @@
                 </div>
                 <div class="min-w-0 flex-1">
                     <div class="text-xs text-neutral-500 font-medium mb-1 flex items-center gap-1.5 flex-wrap">
-                        <span>{{ !empty($isViewingNhapKho) ? 'Đơn hàng nhập kho' : 'Tổng đơn hàng' }}</span>
+                        <span>{{ !empty($isViewingNhapKho) ? 'Lệnh sản xuất nội bộ' : 'Tổng đơn hàng' }}</span>
                         <span class="text-[10px] font-normal text-neutral-400 capitalize whitespace-nowrap">({{ $dateLabel }})</span>
                     </div>
                     <div class="text-xl font-bold text-neutral-800">{{ number_format($totalOrdersCount, 0, ',', '.') }} <span class="text-sm font-medium text-neutral-500">đơn</span></div>
@@ -134,13 +134,13 @@
                         <a href="{{ route('orders.index') }}"
                             class="btn bg-sky-600 hover:bg-sky-700 text-white text-xs btn-sm px-2.5 py-1.5 rounded-lg flex items-center gap-1 font-medium shadow-2xs transition-all" title="Quay lại danh sách đơn hàng thông thường">
                             <iconify-icon icon="lucide:arrow-left" class="text-base"></iconify-icon>
-                            Phiếu nhập kho (Quay lại)
+                            Lệnh sản xuất (Quay lại)
                         </a>
                         @else
                         <a href="{{ route('orders.index', ['filter_nhap_kho' => '1']) }}"
-                            class="btn bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 text-xs btn-sm px-2.5 py-1.5 rounded-lg flex items-center gap-1 font-semibold transition-all shadow-2xs" title="Xem tất cả phiếu nhập kho">
-                            <iconify-icon icon="lucide:warehouse" class="text-base text-sky-600"></iconify-icon>
-                            Phiếu nhập kho <span class="bg-sky-200/80 text-sky-900 text-[10px] px-1.5 py-0.2 rounded-full font-bold ml-0.5">{{ $nhapKhoOrdersCount ?? 0 }}</span>
+                            class="btn bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 text-xs btn-sm px-2.5 py-1.5 rounded-lg flex items-center gap-1 font-semibold transition-all shadow-2xs" title="Xem tất cả lệnh sản xuất nội bộ">
+                            <iconify-icon icon="lucide:wrench" class="text-base text-sky-600"></iconify-icon>
+                            Lệnh sản xuất <span class="bg-sky-200/80 text-sky-900 text-[10px] px-1.5 py-0.2 rounded-full font-bold ml-0.5">{{ $nhapKhoOrdersCount ?? 0 }}</span>
                         </a>
                         @endif
 
@@ -352,7 +352,7 @@
                                     <div class="inline-flex items-center gap-1.5 whitespace-nowrap">
                                         <span class="text-sm font-semibold {{ $showWarning ? 'text-danger-600' : 'text-neutral-900' }}">{{ $order->order_code }}</span>
                                         @if($order->isNhapKho())
-                                            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-100 text-sky-800 border border-sky-200">Nhập kho</span>
+                                            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-100 text-sky-800 border border-sky-200">Lệnh SX</span>
                                         @endif
                                         @if($order->relation_type === 'rework')
                                             <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">Sửa tấm</span>
@@ -437,8 +437,8 @@
                                 <td class="px-3 align-middle whitespace-nowrap">
                                     @if($order->isNhapKho())
                                         <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-sky-100 text-sky-800 border border-sky-200">
-                                            <iconify-icon icon="lucide:warehouse" class="text-xs"></iconify-icon>
-                                            Nhập kho Gervin
+                                            <iconify-icon icon="lucide:wrench" class="text-xs"></iconify-icon>
+                                            Sản xuất nội bộ Gervin
                                         </span>
                                     @elseif($order->customer)
                                         <a href="{{ route('customers.index', ['overview_id' => $order->customer->id]) }}" class="text-sm font-semibold text-neutral-900 hover:text-primary-600 inline-flex items-center gap-1.5" title="{{ $order->customer->name }} ({{ $order->customer->customer_code }})">

@@ -6,7 +6,7 @@
         'service' => 'Dịch vụ & Vật tư',
         'Flywood' => 'Flywood',
     ];
-    $typeLabel = $acrylicOrder->isNhapKho() ? 'Phiếu Nhập Kho' : ($typeLabels[$acrylicOrder->type] ?? ucfirst($acrylicOrder->type));
+    $typeLabel = $acrylicOrder->isNhapKho() ? 'Lệnh sản xuất' : ($typeLabels[$acrylicOrder->type] ?? ucfirst($acrylicOrder->type));
 
     $statusLabels = [
         'draft' => 'Nháp',
@@ -22,7 +22,7 @@
     $deadlineFormatted = $acrylicOrder->deadline ? \Carbon\Carbon::parse($acrylicOrder->deadline)->format('d/m/Y') : '—';
     $customerName = $acrylicOrder->customer ? ($acrylicOrder->customer->name . ' (' . $acrylicOrder->customer->customer_code . ')') : '';
     if ($acrylicOrder->isNhapKho()) {
-        $customerName = 'Nhập kho nội bộ Gervin';
+        $customerName = 'Sản xuất nội bộ Gervin';
     }
 
     $previewPaymentDetails = collect();
@@ -99,7 +99,7 @@
                     <iconify-icon icon="lucide:eye" class="text-xl text-emerald-500"></iconify-icon>
                 </div>
                 <div>
-                    <h5 class="font-bold text-base text-neutral-800 m-0">{{ $acrylicOrder->isNhapKho() ? 'Xem trước Phiếu Nhập Kho' : (($acrylicOrder->type === 'min_late' || $acrylicOrder->type === 'Flywood') ? 'Xem trước Lệnh sản xuất' : 'Xem trước đơn hàng') }}</h5>
+                    <h5 class="font-bold text-base text-neutral-800 m-0">{{ ($acrylicOrder->isNhapKho() || $acrylicOrder->type === 'min_late' || $acrylicOrder->type === 'Flywood') ? 'Xem trước Lệnh sản xuất' : 'Xem trước đơn hàng' }}</h5>
                     <p class="text-xs text-neutral-400 m-0 mt-1">{{ $acrylicOrder->order_code }} • {{ $typeLabel }}</p>
                 </div>
             </div>
@@ -142,11 +142,7 @@
                         </div>
                     </div>
                     <div class="text-right flex-shrink-0">
-                        @if($acrylicOrder->isNhapKho())
-                            <div class="inline-block px-2 py-1 bg-sky-100 text-sky-800 border border-sky-300 rounded font-bold text-[11px] uppercase tracking-wider mb-1">
-                                PHIẾU NHẬP KHO
-                            </div>
-                        @elseif($acrylicOrder->type === 'min_late' || $acrylicOrder->type === 'Flywood')
+                        @if($acrylicOrder->isNhapKho() || $acrylicOrder->type === 'min_late' || $acrylicOrder->type === 'Flywood')
                             <div class="inline-block px-2 py-1 bg-primary-50 text-primary-700 border border-primary-200 rounded font-bold text-[11px] uppercase tracking-wider mb-1">
                                 LỆNH SẢN XUẤT
                             </div>
@@ -584,8 +580,8 @@
                             <span class="font-bold text-xs text-neutral-800 uppercase tracking-wide">Tóm tắt đơn hàng</span>
                         </div>
                         @if($acrylicOrder->isNhapKho())
-                            <span class="text-xs font-bold text-sky-700 bg-sky-100 px-2 py-1 rounded border border-sky-200">
-                                Phiếu nhập kho lưu trữ (Không tính tiền)
+                            <span class="text-xs font-bold text-primary-700 bg-primary-100 px-2 py-1 rounded border border-primary-200">
+                                Lệnh sản xuất nội bộ (Không tính tiền)
                             </span>
                         @endif
                     </div>

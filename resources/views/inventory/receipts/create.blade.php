@@ -540,7 +540,7 @@
         const btn = document.getElementById('btnLoadOrderItems');
         if (btn) btn.innerHTML = 'Đang tải...';
 
-        fetch(`/warehouses/orders/${orderId}/supplies`)
+        fetch(`/warehouses/orders/${orderId}/supplies?type=receipt`)
             .then(res => res.json())
             .then(data => {
                 if (btn) btn.innerHTML = '<iconify-icon icon="solar:download-square-bold"></iconify-icon> Nạp vật tư đơn';
@@ -561,7 +561,7 @@
                         addItemRow(it.material_id, it.quantity, it.unit_price, it.notes || '');
                     });
                 } else {
-                    alert('Đơn hàng ' + (data.order_code || '') + ' không có vật tư phù hợp để nạp.');
+                    alert('Đơn hàng ' + (data.order_code || '') + ' không có vật tư nào được đánh dấu [Thêm kho] để nhập kho.');
                 }
             })
             .catch(err => {

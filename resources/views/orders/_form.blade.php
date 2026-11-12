@@ -124,9 +124,9 @@
                                 <div class="flex items-center justify-between mb-2">
                                     <label class="form-label font-semibold text-xs text-neutral-500 uppercase tracking-wider block m-0">Khách hàng <span class="text-danger-500">*</span></label>
                                     <div class="flex items-center gap-2">
-                                        <button type="button" onclick="selectNhapKhoCustomer()" class="text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-300 px-2.5 py-1 rounded-lg text-xs font-semibold inline-flex items-center gap-1 transition shadow-sm" title="Chọn khách hàng là Nhập kho">
-                                            <iconify-icon icon="lucide:warehouse" class="text-sm text-amber-600"></iconify-icon>
-                                            Nhập kho
+                                        <button type="button" onclick="selectNhapKhoCustomer()" class="text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-300 px-2.5 py-1 rounded-lg text-xs font-semibold inline-flex items-center gap-1 transition shadow-sm" title="Tạo lệnh sản xuất nội bộ">
+                                            <iconify-icon icon="lucide:wrench" class="text-sm text-amber-600"></iconify-icon>
+                                            Lệnh sản xuất
                                         </button>
                                         <button type="button" onclick="openModal('quickCreateCustomerModal')" class="text-primary-600 hover:text-primary-700 text-xs font-semibold inline-flex items-center gap-1 transition">
                                             <iconify-icon icon="lucide:user-plus" class="text-sm"></iconify-icon>

@@ -886,7 +886,7 @@ class InventoryController extends Controller
 
         $selectedOrderId = $request->input('order_id');
         $selectedOrder = $selectedOrderId ? Order::with(['customer', 'supplies'])->find($selectedOrderId) : null;
-        $orderItems = $selectedOrder ? $this->inventoryService->getOrderMaterialItems($selectedOrder) : [];
+        $orderItems = $selectedOrder ? $this->inventoryService->getOrderMaterialItems($selectedOrder, 'receipt') : [];
 
         $orders = Order::select('id', 'order_code', 'customer_name', 'order_date')
             ->whereNotIn('status', ['cancelled'])
@@ -1008,7 +1008,7 @@ class InventoryController extends Controller
 
         $selectedOrderId = $request->input('order_id');
         $selectedOrder = $selectedOrderId ? Order::with(['customer', 'supplies'])->find($selectedOrderId) : null;
-        $orderItems = $selectedOrder ? $this->inventoryService->getOrderMaterialItems($selectedOrder) : [];
+        $orderItems = $selectedOrder ? $this->inventoryService->getOrderMaterialItems($selectedOrder, 'issue') : [];
 
         $orders = Order::select('id', 'order_code', 'customer_name', 'order_date')
             ->whereNotIn('status', ['cancelled'])
@@ -1084,9 +1084,10 @@ class InventoryController extends Controller
         return redirect()->route('inventory.issues.show', $issue)->with('success', 'Cập nhật phiếu xuất kho ' . $issue->code . ' thành công!');
     }
 
-    public function orderSupplies(Order $order)
+    public function orderSupplies(Request $request, Order $order)
     {
-        $items = $this->inventoryService->getOrderMaterialItems($order);
+        $type = $request->query('type');
+        $items = $this->inventoryService->getOrderMaterialItems($order, $type);
         return response()->json([
             'success'       => true,
             'order_id'      => $order->id,

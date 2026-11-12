@@ -1219,16 +1219,50 @@ class InventoryService
 
     /**
      * Lấy danh sách vật tư từ đơn hàng để nạp vào form tạo Phiếu Nhập / Xuất kho
+     * 
+     * @param Order $order
+     * @param string|null $type 'receipt' (PNK - Nhập kho) hoặc 'issue' (PXK - Xuất kho)
+     * @return array
      */
-    public function getOrderMaterialItems(Order $order): array
+    public function getOrderMaterialItems(Order $order, ?string $type = null): array
     {
         $order->loadMissing(['supplies.items', 'supplies.glassItems', 'supplies.minLateItems']);
         $items = [];
+
+        // Kiểm tra xem đơn hàng có phân định Thêm kho / Trừ kho không
+        // Phân định khi:
+        // 1. Đơn là Lệnh sản xuất / nhập kho nội bộ ($order->isNhapKho())
+        // 2. HOẶC trong đơn có ít nhất 1 vật tư có inventory_action === 'subtract'
+        $hasActionDistinction = $order->isNhapKho()
+            || $order->supplies->contains(fn($s) => ($s->inventory_action ?? '') === 'subtract');
 
         foreach ($order->supplies as $supply) {
             $code = trim($supply->order_supply_code ?: '');
             $name = trim($supply->supply_name ?: '');
             if (!$code && !$name) continue;
+
+            $action = $supply->inventory_action ?? 'add';
+
+            // Lọc theo loại phiếu kho:
+            if ($type === 'issue' || $type === 'pxk') {
+                // Phiếu Xuất Kho (PXK):
+                // Nếu đơn hàng có phân định Thêm/Trừ kho:
+                // CHỈ lấy các vật tư 'subtract' (Trừ kho) để xuất khỏi kho xưởng đi làm.
+                // Tuyệt đối bỏ qua các vật tư 'add' (Thêm kho - là thành phẩm ép xong mới nhập kho).
+                if ($hasActionDistinction && $action !== 'subtract') {
+                    continue;
+                }
+            } elseif ($type === 'receipt' || $type === 'pnk') {
+                // Phiếu Nhập Kho (PNK):
+                // Tuyệt đối không lấy các vật tư 'subtract' (Trừ kho).
+                if ($action === 'subtract') {
+                    continue;
+                }
+                // Nếu đơn hàng có phân định, chỉ lấy các vật tư 'add' (Thêm kho - thành phẩm nhập kho).
+                if ($hasActionDistinction && $action !== 'add') {
+                    continue;
+                }
+            }
 
             $qty = (float)($supply->quantity ?? 0);
             if ($qty <= 0) {
@@ -1270,14 +1304,17 @@ class InventoryService
                 }
             }
 
+            $actionLabel = ($action === 'subtract') ? ' (Trừ kho)' : (($action === 'add' && $hasActionDistinction) ? ' (Thêm kho)' : '');
+
             $items[] = [
-                'material_id' => $materialId,
-                'code'        => $code,
-                'name'        => $name ?: ($boardPrice?->name ?? ($woodBoard ? 'Tấm ' . $woodBoard->color_code : $code)),
-                'quantity'    => $qty,
-                'unit_price'  => $price,
-                'unit'        => $unit,
-                'notes'       => "Từ đơn #{$order->order_code}",
+                'material_id'      => $materialId,
+                'code'             => $code,
+                'name'             => $name ?: ($boardPrice?->name ?? ($woodBoard ? 'Tấm ' . $woodBoard->color_code : $code)),
+                'quantity'         => $qty,
+                'unit_price'       => $price,
+                'unit'             => $unit,
+                'inventory_action' => $action,
+                'notes'            => "Từ đơn #{$order->order_code}{$actionLabel}",
             ];
         }
 
