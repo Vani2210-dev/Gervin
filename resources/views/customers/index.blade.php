@@ -1548,6 +1548,12 @@ function previewCustomerPhotos(photos, custName) {
                             </select>
                         </div>
                         <div>
+                            <label style="font-size:11px; font-weight:600; color:#4b5563; display:block; margin-bottom:3px;">Liên kết đơn hàng (Tùy chọn)</label>
+                            <select name="order_id" id="ov-add-payment-order" style="width:100%; padding:6px 10px; border:1px solid #cbd5e0; border-radius:6px; font-size:12px; background:white;">
+                                <option value="">-- Không liên kết đơn cụ thể (Cấn trừ chung) --</option>
+                            </select>
+                        </div>
+                        <div>
                             <label style="font-size:11px; font-weight:600; color:#4b5563; display:block; margin-bottom:3px;">Ghi chú</label>
                             <input type="text" name="note" placeholder="Ghi chú (nếu có)"
                                 style="width:100%; padding:6px 10px; border:1px solid #cbd5e0; border-radius:6px; font-size:12px; box-sizing:border-box;">
@@ -1879,6 +1885,13 @@ function renderCustomerOverview(data) {
 
     // Store customer orders in window scope for edit payment modal
     window.lastCustomerOrders = data.customer_orders || [];
+    const ovAddOrderSelect = document.getElementById('ov-add-payment-order');
+    if (ovAddOrderSelect) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const targetOrderId = urlParams.get('order_id');
+        ovAddOrderSelect.innerHTML = '<option value="">-- Không liên kết đơn cụ thể (Cấn trừ chung) --</option>' + 
+            window.lastCustomerOrders.map(o => `<option value="${o.id}" ${targetOrderId == o.id ? 'selected' : ''}>${o.order_code} (${ovFmt(o.total_amount)}₫)</option>`).join('');
+    }
 
     // Stat cards
     const cards = [

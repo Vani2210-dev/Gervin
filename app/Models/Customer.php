@@ -253,7 +253,8 @@ class Customer extends Model
 
         // A. Nếu đơn hiện tại $order đang ở trạng thái đã được cộng vào $this->debt (transferred, in_production, completed):
         // Ta phải TRỪ tiền đơn này ra khỏi $oldDebt (vì $oldDebt là nợ TRƯỚC đơn này)
-        if ($order && !in_array($order->status, ['draft', 'pending', 'cancelled']) && $order->board_return_status !== 'returned') {
+        $isOrderInDebt = $order && !in_array($order->status, ['draft', 'pending', 'cancelled']) && $order->board_return_status !== 'returned';
+        if ($isOrderInDebt) {
             $oldDebt -= round($order->total_amount ?? 0, -3);
         }
 
@@ -277,49 +278,65 @@ class Customer extends Model
         // D. Xử lý các khoản thanh toán (payments)
         $payments = $this->customerPayments()->get();
 
-        // Khoản thanh toán cho riêng đơn hiện tại này
-        $thisOrderPaid = 0;
-        if ($orderId) {
-            $thisOrderPaid = $payments->where('order_id', $orderId)->sum('amount');
+        $todayStr = now()->format('Y-m-d');
+        $orderDateStr = $orderDate->format('Y-m-d');
+
+        // 1. Khoản thanh toán gắn đích danh với đơn hàng này
+        $specificPaid = $orderId ? $payments->where('order_id', $orderId)->sum('amount') : 0;
+
+        // 2. Khoản thanh toán chung trong ngày (không gắn mã đơn cụ thể)
+        $generalPaymentsToday = $payments->filter(function($p) use ($orderDateStr, $todayStr) {
+            if (!empty($p->order_id) || !$p->payment_date) return false;
+            $pDate = \Carbon\Carbon::parse($p->payment_date)->format('Y-m-d');
+            return $pDate === $orderDateStr || $pDate === $todayStr;
+        })->sum('amount');
+
+        // Phân bổ phần thanh toán chung còn lại sau các đơn trước đó trong ngày
+        $usedByPreviousOrders = 0;
+        if ($generalPaymentsToday > 0) {
+            $sameDayOrdersBefore = $ordersBefore->filter(function($o) use ($orderDateStr, $todayStr) {
+                $d = $o->order_date ? \Carbon\Carbon::parse($o->order_date)->format('Y-m-d') : null;
+                return $d === $orderDateStr || $d === $todayStr;
+            });
+
+            foreach ($sameDayOrdersBefore as $prevOrder) {
+                $prevSpecific = $payments->where('order_id', $prevOrder->id)->sum('amount');
+                if ($prevSpecific == 0) {
+                    $prevAmount = round($prevOrder->total_amount ?? 0, -3);
+                    $usedByPreviousOrders += $prevAmount;
+                }
+            }
         }
 
-        // Các khoản thanh toán diễn ra SAU đơn này: cộng lại vào $oldDebt
+        $remainingGeneralPayment = max(0, $generalPaymentsToday - $usedByPreviousOrders);
+
+        // Đã thanh toán: Hiện đầy đủ số tiền đã thanh toán trong ngày/cho đơn này, không bị khống chế theo tiền đơn
+        $thisOrderPaid = $specificPaid + $remainingGeneralPayment;
+
+        // Bất kể là thanh toán riêng hay thanh toán chung được phân bổ:
+        // Khoản $thisOrderPaid này đã được hệ thống trừ vào $this->debt của khách hàng khi tạo phiếu thu.
+        // Để $oldDebt thể hiện đúng số nợ TRƯỚC đơn này và TRƯỚC khoản thanh toán này,
+        // ta cần cộng lại $thisOrderPaid vào $oldDebt.
+        if ($thisOrderPaid > 0) {
+            $oldDebt += $thisOrderPaid;
+        }
+
+        // Các khoản thanh toán diễn ra SAU đơn này: cộng lại vào $oldDebt (loại trừ phần đã tính vào thisOrderPaid)
+        $allocatedRemaining = $thisOrderPaid;
         foreach ($payments as $pmt) {
             if ($pmt->order_id && $ordersAfter->contains('id', $pmt->order_id)) {
                 $oldDebt += floatval($pmt->amount);
             } elseif (!$pmt->order_id && $pmt->payment_date) {
                 $pDate = \Carbon\Carbon::parse($pmt->payment_date)->startOfDay();
                 if ($pDate->gt($orderDate->copy()->startOfDay())) {
-                    $oldDebt += floatval($pmt->amount);
-                }
-            }
-        }
-
-        // Nếu đơn hiện tại chưa có phiếu thanh toán riêng gắn với order_id:
-        // Phân bổ khoản thanh toán chung trong ngày cho các đơn theo thứ tự
-        if ($thisOrderPaid == 0) {
-            $orderDateStr = $orderDate->format('Y-m-d');
-            $generalPaymentsToday = $payments->filter(function($p) use ($orderDateStr) {
-                return empty($p->order_id) && $p->payment_date && \Carbon\Carbon::parse($p->payment_date)->format('Y-m-d') === $orderDateStr;
-            })->sum('amount');
-
-            if ($generalPaymentsToday > 0) {
-                $sameDayOrdersBefore = $ordersBefore->filter(function($o) use ($orderDateStr) {
-                    $d = $o->order_date ? \Carbon\Carbon::parse($o->order_date)->format('Y-m-d') : null;
-                    return $d === $orderDateStr;
-                });
-
-                $usedByPreviousOrders = 0;
-                foreach ($sameDayOrdersBefore as $prevOrder) {
-                    $prevSpecific = $payments->where('order_id', $prevOrder->id)->sum('amount');
-                    if ($prevSpecific == 0) {
-                        $prevAmount = round($prevOrder->total_amount ?? 0, -3);
-                        $usedByPreviousOrders += $prevAmount;
+                    $pmtAmt = floatval($pmt->amount);
+                    if ($allocatedRemaining > 0) {
+                        $deduct = min($allocatedRemaining, $pmtAmt);
+                        $allocatedRemaining -= $deduct;
+                        $pmtAmt -= $deduct;
                     }
+                    $oldDebt += $pmtAmt;
                 }
-
-                $remainingGeneralPayment = max(0, $generalPaymentsToday - $usedByPreviousOrders);
-                $thisOrderPaid = min($orderTotal, $remainingGeneralPayment);
             }
         }
 

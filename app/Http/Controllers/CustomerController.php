@@ -278,7 +278,7 @@ class CustomerController extends Controller
 
         // Customer orders eligible for payment linking
         $customerOrders = $customer->orders()
-            ->whereNotIn('status', ['draft', 'cancelled'])
+            ->whereNotIn('status', ['cancelled'])
             ->orderBy('order_date', 'desc')
             ->get(['id', 'order_code', 'total_amount']);
 
@@ -1345,7 +1345,7 @@ class CustomerController extends Controller
         });
 
         // Get customer's orders for the select dropdown in the add payment form
-        $customerOrders = $customer->orders()->whereNotIn('status', ['draft', 'cancelled'])->orderBy('order_date', 'desc')->get()->map(function($o) {
+        $customerOrders = $customer->orders()->whereNotIn('status', ['cancelled'])->orderBy('order_date', 'desc')->get()->map(function($o) {
             return [
                 'id' => $o->id,
                 'order_code' => $o->order_code,

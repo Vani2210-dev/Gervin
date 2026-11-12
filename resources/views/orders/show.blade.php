@@ -826,7 +826,7 @@
                     </div>
 
                     <div class="pt-2 border-t border-neutral-100 text-center">
-                        <a href="{{ route('customers.index', ['overview_id' => $customer->id]) }}" 
+                        <a href="{{ route('customers.index', ['overview_id' => $customer->id, 'order_id' => $acrylicOrder->id]) }}" 
                            class="inline-flex items-center justify-center gap-2 py-2 px-4 w-full rounded-lg bg-violet-50 hover:bg-violet-100 text-violet-700 text-sm font-semibold transition-colors">
                             <iconify-icon icon="lucide:external-link" style="font-size:14px;"></iconify-icon>
                             Quản lý thanh toán khách hàng

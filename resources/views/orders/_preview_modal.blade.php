@@ -69,12 +69,15 @@
     $additionalDiscountAmt = $acrylicOrder->additional_discount_amount ?? 0;
     $subTotal = $acrylicOrder->total_amount + $discountAmt - $vatAmt + $additionalDiscountAmt;
 
-    // Order specific payment
-    $orderPaidAmt = $acrylicOrder->orderPayments ? $acrylicOrder->orderPayments->sum('amount') : 0;
-    $orderRemainingAmt = max(0, $acrylicOrder->total_amount - $orderPaidAmt);
-
     // Customer debt calculation matching OrderController::getExportData exactly (Phương án 2)
     $debtInfo = $exportData['customer_debt_info'] ?? ($acrylicOrder->customer ? $acrylicOrder->customer->getDebtInfoForOrder($acrylicOrder) : null);
+
+    // Order specific payment
+    $orderPaidAmt = $acrylicOrder->orderPayments ? $acrylicOrder->orderPayments->sum('amount') : 0;
+    if ($orderPaidAmt == 0 && !empty($debtInfo['this_order_paid'])) {
+        $orderPaidAmt = floatval($debtInfo['this_order_paid']);
+    }
+    $orderRemainingAmt = max(0, $acrylicOrder->total_amount - $orderPaidAmt);
 
     // Tra cứu thông tin đóng gói từ mục processes/packing
     $packingInfo = $acrylicOrder->getPackingInfo();
@@ -653,7 +656,7 @@
                                         </span>
                                     </div>
                                     <div class="bg-white py-1 px-2 rounded border border-emerald-200 bg-emerald-50/40 flex items-center justify-between text-xs">
-                                        <span class="text-emerald-700 text-[11px]">Đã TT:</span>
+                                        <span class="text-emerald-700 text-[11px]">Đã thanh toán:</span>
                                         <span class="font-bold text-emerald-600 font-mono">
                                             {{ number_format(round($debtInfo['this_order_paid'], -3), 0, ',', '.') }} đ
                                         </span>
