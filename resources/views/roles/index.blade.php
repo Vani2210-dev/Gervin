@@ -8,11 +8,11 @@
 
     <div class="grid grid-cols-12">
         <div class="col-span-12">
-            <div class="card h-full p-0 rounded-xl border-0 overflow-hidden">
-                <div class="card-header border-b border-neutral-200 bg-white py-3.5 px-6 flex flex-col gap-3">
+            <div class="card h-full rounded-xl border-0 overflow-hidden">
+                <div class="card-header border-b border-neutral-200 bg-white py-4 px-6 flex flex-col gap-3">
                     {{-- Tầng 1: Tìm kiếm & Thao tác chính --}}
                     <div class="flex items-center justify-between flex-wrap gap-3">
-                        <div class="flex items-center flex-wrap gap-2.5">
+                        <div class="flex items-center flex-wrap gap-2">
                             {{-- Search (Bên trái ngoài cùng) --}}
                             <form method="GET" action="{{ route('roles.index') }}" class="navbar-search">
                                 <input type="hidden" name="per_page" value="{{ $perPage }}">
@@ -37,6 +37,7 @@
                         </div>
 
                         <div class="flex items-center gap-2">
+                            <x-table-column-toggle table-id="rolesTable" />
                             @can('add role')
                             <a href="{{ route('roles.create') }}" class="btn btn-primary text-xs btn-sm px-3 py-1.5 rounded-lg flex items-center gap-1.5 font-semibold shadow-sm transition">
                                 <iconify-icon icon="ic:baseline-plus" class="text-base"></iconify-icon>
@@ -68,9 +69,9 @@
                         </div>
                     </div>
                 </div>
-                <div class="card-body">
+                <div class="p-1">
                     <div class="table-responsive scroll-sm">
-                        <table class="table bordered-table sm-table mb-0">
+                        <table class="table bordered-table sm-table mb-0" id="rolesTable">
                             <thead>
                                 <tr>
                                     <th scope="col">STT</th>

@@ -547,6 +547,7 @@
                             <a href="{{ route('customers.show', ['customer' => $customer, 'tab' => 'orders']) }}" class="btn bg-neutral-100 hover:bg-neutral-200 text-neutral-700 rounded-xl text-xs font-semibold px-3 py-2">
                                 Xóa lọc
                             </a>
+                            <x-table-column-toggle table-id="customerOrdersTable" />
                         </div>
                     </div>
                 </form>
@@ -555,7 +556,7 @@
             {{-- Orders Table --}}
             <div class="p-1">
                 <div class="overflow-x-auto">
-                    <table class="table bordered-table sm-table mb-0 w-full text-xs">
+                    <table class="table bordered-table sm-table mb-0 w-full text-xs" id="customerOrdersTable">
                     <thead>
                         <tr class="bg-neutral-50 text-neutral-700 border-b border-neutral-200">
                             <th class="text-center w-12 py-3">STT</th>
@@ -730,13 +731,14 @@
                             Xóa lọc
                         </a>
                     @endif
+                    <x-table-column-toggle table-id="customerPaymentsTable" />
                 </form>
             </div>
 
             {{-- Payments Full-width Table --}}
             <div class="p-1">
                 <div class="overflow-x-auto">
-                    <table class="table bordered-table sm-table mb-0 w-full text-xs">
+                    <table class="table bordered-table sm-table mb-0 w-full text-xs" id="customerPaymentsTable">
                     <thead>
                         <tr class="bg-neutral-50 text-neutral-700 border-b border-neutral-200">
                             <th class="text-center w-12 py-3">STT</th>
@@ -1310,6 +1312,7 @@
                             <span>Đồng bộ lại sổ công nợ</span>
                         </button>
                     </form>
+                    <x-table-column-toggle table-id="customerLedgerTable" />
                 </div>
             </div>
 
@@ -1341,7 +1344,7 @@
             {{-- Table --}}
             <div class="p-1">
                 <div class="overflow-x-auto">
-                    <table class="table bordered-table sm-table mb-0 w-full text-xs">
+                    <table class="table bordered-table sm-table mb-0 w-full text-xs" id="customerLedgerTable">
                     <thead>
                         <tr class="bg-neutral-50 text-neutral-600 font-bold border-b border-neutral-200">
                             <th class="w-12 text-center py-3">STT</th>

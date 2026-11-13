@@ -129,6 +129,7 @@
                             <iconify-icon icon="solar:file-spreadsheet-bold" class="text-base"></iconify-icon>
                             <span>Xuất Excel</span>
                         </a>
+                        <x-table-column-toggle table-id="suppliersTable" />
 
                         {{-- Thêm nhà cung cấp --}}
                         <button type="button" onclick="openCreateSupplierModal()"
@@ -169,7 +170,7 @@
             {{-- Table --}}
             <div class="p-1">
                 <div class="overflow-x-auto">
-                    <table class="table bordered-table sm-table mb-0 w-full text-xs">
+                    <table class="table bordered-table sm-table mb-0 w-full text-xs" id="suppliersTable">
                         <thead>
                             <tr class="bg-neutral-50 text-neutral-700">
                                 <th scope="col" class="w-12 text-center">STT</th>

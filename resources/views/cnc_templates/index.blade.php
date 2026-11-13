@@ -19,13 +19,16 @@
                         <p class="text-xs text-neutral-500 mb-0">Cấu hình bao trong, xoi 1 và xoi 2 cho từng mẫu</p>
                     </div>
                 </div>
-                @can('add supply')
-                <button type="button" onclick="openModal('create-cnc-modal')"
-                    class="btn btn-primary text-sm btn-sm px-3 py-2 rounded-lg flex items-center gap-2">
-                    <iconify-icon icon="ic:baseline-plus" class="icon text-xl line-height-1"></iconify-icon>
-                    Thêm mẫu CNC mới
-                </button>
-                @endcan
+                <div class="flex items-center gap-2">
+                    <x-table-column-toggle table-id="cncTemplatesTable" />
+                    @can('add supply')
+                    <button type="button" onclick="openModal('create-cnc-modal')"
+                        class="btn btn-primary text-sm btn-sm px-3 py-2 rounded-lg flex items-center gap-2">
+                        <iconify-icon icon="ic:baseline-plus" class="icon text-xl line-height-1"></iconify-icon>
+                        Thêm mẫu CNC mới
+                    </button>
+                    @endcan
+                </div>
             </div>
 
             {{-- Flash messages --}}
@@ -43,7 +46,7 @@
             {{-- Table --}}
             <div class="p-1">
                 <div class="overflow-x-auto">
-                    <table class="table bordered-table sm-table mb-0 border-collapse border border-neutral-200 text-xs w-full" style="min-width: 1100px;">
+                    <table class="table bordered-table sm-table mb-0 border-collapse border border-neutral-200 text-xs w-full" style="min-width: 1100px;" id="cncTemplatesTable">
                         <thead class="bg-neutral-50 font-semibold text-neutral-700 text-center text-xs uppercase tracking-wider">
                             <tr>
                                 <th rowspan="2" class="text-center align-middle border border-neutral-200 w-10 px-3 py-3">STT</th>

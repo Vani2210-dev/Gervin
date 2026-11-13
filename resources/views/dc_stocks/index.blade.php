@@ -126,6 +126,8 @@
                         Xuất Excel
                     </a>
 
+                    <x-table-column-toggle table-id="stockTable" />
+
                     @can('add dc stock')
                     {{-- Import Button --}}
                     <button type="button" onclick="openModal('importDcModal')"
@@ -239,7 +241,7 @@
         </div>
 
         {{-- Table --}}
-        <div class="card-body p-6">
+        <div class="p-1">
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse text-sm" id="stockTable">
                     <thead>

@@ -29,12 +29,12 @@
 
 <div class="grid grid-cols-12">
     <div class="col-span-12">
-        <div class="card h-full p-0 rounded-xl border-0 overflow-hidden shadow-sm bg-white">
+        <div class="card h-full rounded-xl border-0 overflow-hidden shadow-sm bg-white">
             {{-- Header --}}
-            <div class="card-header border-b border-neutral-200 bg-white py-3.5 px-6 flex flex-col gap-3">
+            <div class="card-header border-b border-neutral-200 bg-white py-4 px-6 flex flex-col gap-3">
                 {{-- Tầng 1: Tìm kiếm & Hành động chính --}}
                 <div class="flex items-center justify-between flex-wrap gap-3">
-                    <div class="flex items-center flex-wrap gap-2.5">
+                    <div class="flex items-center flex-wrap gap-2">
                         {{-- Search (Bên trái ngoài cùng) --}}
                         <form method="GET" action="{{ route('wood_boards.index') }}" class="navbar-search">
                             <input type="hidden" name="per_page" value="{{ $perPage }}">
@@ -45,7 +45,7 @@
                         </form>
 
                         <button type="button" onclick="openModal('filter-modal')"
-                            class="btn bg-light-600 text-xs btn-sm px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 font-medium text-neutral-700 hover:bg-neutral-200 transition">
+                            class="btn bg-light-600 text-xs btn-sm px-3 py-2 rounded-lg flex items-center gap-2 font-medium text-neutral-700 hover:bg-neutral-200 transition">
                             <iconify-icon icon="solar:filter-outline" class="text-base"></iconify-icon>
                             Lọc nâng cao
                         </button>
@@ -58,6 +58,7 @@
                     </div>
 
                     <div class="flex items-center gap-2 flex-wrap">
+                        <x-table-column-toggle table-id="woodBoardsTable" />
                         @can('add supply')
                         <button type="button" onclick="openModal('manage-types-modal')"
                             class="btn btn-outline-primary text-xs btn-sm px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 font-medium transition shadow-2xs">
@@ -123,13 +124,13 @@
             @endif
 
             {{-- Table --}}
-            <div class="card-body">
+            <div class="p-1">
                 <div class="table-responsive scroll-sm overflow-x-auto">
                     @php
                         // Estimate table width based on number of columns (5 sub-columns per type)
                         $minWidth = 350 + (count($boardTypes) * 480);
                     @endphp
-                    <table class="table bordered-table sm-table mb-0 border-collapse border border-neutral-200 text-xs" style="min-width: {{ $minWidth }}px;">
+                    <table class="table bordered-table sm-table mb-0 border-collapse border border-neutral-200 text-xs" style="min-width: {{ $minWidth }}px;" id="woodBoardsTable">
                         <thead class="bg-neutral-50 font-semibold text-neutral-700 text-center uppercase tracking-wider">
                             <tr>
                                 <th rowspan="2" class="text-center align-middle border border-neutral-200 w-10">STT</th>

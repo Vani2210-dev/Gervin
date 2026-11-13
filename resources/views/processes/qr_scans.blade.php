@@ -248,12 +248,12 @@
                 </span>
             </div>
 
-            <div class="p-4 bg-sky-50/60 dark:bg-sky-950/20 border-b border-sky-100 dark:border-sky-900/30 flex items-center gap-2.5 text-xs text-sky-800 dark:text-sky-300">
+            <div class="p-4 bg-sky-50/60 dark:bg-sky-950/20 border-b border-sky-100 dark:border-sky-900/30 flex items-center gap-2 text-xs text-sky-800 dark:text-sky-300">
                 <iconify-icon icon="solar:info-circle-bold" class="text-sky-600 text-lg shrink-0"></iconify-icon>
                 <span>Hệ thống tự động đăng ký máy quét mới vào danh sách khi thiết bị gửi dữ liệu quét lần đầu tiên.</span>
             </div>
 
-            <div class="card-body p-0">
+            <div class="p-1">
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse text-sm">
                         <thead>
@@ -484,12 +484,13 @@
                 </div>
 
                 {{-- Tầng 2: Bộ lọc thời gian --}}
-                <div class="flex items-center justify-between flex-wrap gap-2.5">
+                <div class="flex items-center justify-between flex-wrap gap-2">
                     <x-date-filter :action="route('processes.qr-scans', ['tab' => 'logs'])" />
+                    <x-table-column-toggle table-id="logsTable" />
                 </div>
             </div>
             
-            <div class="card-body p-0">
+            <div class="p-1">
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse text-sm" id="logsTable">
                         <thead>

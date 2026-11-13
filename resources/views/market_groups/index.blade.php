@@ -97,6 +97,7 @@
                                 <iconify-icon icon="lucide:search" class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm"></iconify-icon>
                             </div>
                         </form>
+                        <x-table-column-toggle table-id="marketGroupsTable" />
                         <button type="button" onclick="openCreateGroupModal()" class="btn btn-sm btn-primary rounded-lg flex items-center gap-2 px-3 py-2 text-xs font-semibold shadow-sm">
                             <iconify-icon icon="lucide:plus" class="text-base"></iconify-icon> Thêm nhóm mới
                         </button>
@@ -110,7 +111,7 @@
 
             <div class="p-1">
                 <div class="overflow-x-auto">
-                    <table class="table bordered-table mb-0 w-full text-left">
+                    <table class="table bordered-table mb-0 w-full text-left" id="marketGroupsTable">
                     <thead>
                         <tr class="bg-neutral-50 text-neutral-600 font-semibold text-xs uppercase border-b border-neutral-200">
                             <th style="width: 60px;" class="text-center py-3">STT</th>

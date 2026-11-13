@@ -30,6 +30,7 @@
                         <iconify-icon icon="ion:search-outline" class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400"></iconify-icon>
                         <input type="text" name="search" value="{{ request('search') }}" class="form-control rounded-lg pl-9 pr-4 py-2 border-neutral-200 text-xs w-64 focus:border-primary-500" placeholder="Tìm số phiếu, NCC...">
                     </form>
+                    <x-table-column-toggle table-id="receiptsTable" />
                     <a href="{{ route('inventory.receipts.create') }}" class="btn btn-primary px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 shadow-sm">
                         <iconify-icon icon="ic:baseline-plus" class="text-base"></iconify-icon> Tạo phiếu nhập mới
                     </a>
@@ -38,7 +39,7 @@
 
             <div class="p-1">
                 <div class="overflow-x-auto w-full">
-                    <table class="w-full border-collapse text-xs text-left">
+                    <table class="w-full border-collapse text-xs text-left" id="receiptsTable">
                         <thead>
                             <tr class="bg-neutral-50 text-neutral-700 uppercase font-bold border-b border-neutral-200">
                                 <th class="py-3 px-4 w-12 text-center">STT</th>

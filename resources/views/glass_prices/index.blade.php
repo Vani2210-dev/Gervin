@@ -7,12 +7,12 @@
 @section('content')
 <div class="grid grid-cols-12">
     <div class="col-span-12">
-        <div class="card h-full p-0 rounded-xl border-0 overflow-hidden shadow-sm bg-white">
+        <div class="card h-full rounded-xl border-0 overflow-hidden shadow-sm bg-white">
             {{-- Header --}}
-            <div class="card-header border-b border-neutral-200 bg-white py-3.5 px-6 flex flex-col gap-3">
+            <div class="card-header border-b border-neutral-200 bg-white py-4 px-6 flex flex-col gap-3">
                 {{-- Tầng 1: Tìm kiếm, Bộ lọc nhóm & Nút hành động chính --}}
                 <div class="flex items-center justify-between flex-wrap gap-3">
-                    <div class="flex items-center flex-wrap gap-2.5">
+                    <div class="flex items-center flex-wrap gap-2">
                         {{-- Search (Bên trái ngoài cùng) --}}
                         <form method="GET" action="{{ route('glass_prices.index') }}" class="navbar-search">
                             <input type="hidden" name="per_page" value="{{ $perPage }}">
@@ -45,6 +45,7 @@
                     </div>
 
                     <div class="flex items-center gap-2">
+                        <x-table-column-toggle table-id="glassPricesTable" />
                         @can('add supply')
                         <button type="button" onclick="triggerImportExcel()"
                             class="btn bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200 text-xs btn-sm px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all shadow-2xs font-semibold">
@@ -101,9 +102,9 @@
             @endif
 
             {{-- Table --}}
-            <div class="card-body">
+            <div class="p-1">
                 <div class="table-responsive scroll-sm overflow-x-auto">
-                    <table class="table bordered-table sm-table mb-0 border-collapse border border-neutral-200 text-xs min-w-[1000px]">
+                    <table class="table bordered-table sm-table mb-0 border-collapse border border-neutral-200 text-xs min-w-[1000px]" id="glassPricesTable">
                         <thead class="bg-neutral-50 font-semibold text-neutral-700 text-center uppercase tracking-wider">
                             <tr>
                                 <th class="border border-neutral-200 w-12 text-center">STT</th>

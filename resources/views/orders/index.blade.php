@@ -172,6 +172,7 @@
                             <iconify-icon icon="solar:file-spreadsheet-bold" class="text-base"></iconify-icon>
                             <span>Xuất Excel</span>
                         </a>
+                        <x-table-column-toggle table-id="ordersTable" />
                         @can('add order')
                         <a href="{{ route('orders.create') }}"
                             class="btn btn-primary text-xs btn-sm px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-sm font-semibold transition">
@@ -335,7 +336,7 @@
                 @endif
 
                 <div class="table-responsive scroll-sm">
-                    <table class="table bordered-table sm-table mb-0 min-w-[1380px]">
+                    <table class="table bordered-table sm-table mb-0 min-w-[1380px]" id="ordersTable">
                         <thead>
                             <tr>
                                 @if($canBulkDeleteOrders)

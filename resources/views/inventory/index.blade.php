@@ -177,6 +177,8 @@
                             <iconify-icon icon="solar:file-excel-outline" class="text-base text-emerald-600"></iconify-icon> Xuất Excel
                         </a>
 
+                        <x-table-column-toggle table-id="inventoryTable" />
+
                         {{-- Add Material --}}
                         <button type="button" onclick="openModal('createMaterialModal')" class="btn btn-primary px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm">
                             <iconify-icon icon="ic:baseline-plus" class="text-base"></iconify-icon> Thêm vật tư
@@ -224,7 +226,7 @@
             {{-- Table Area --}}
             <div class="p-1">
                 <div class="overflow-x-auto w-full">
-                    <table class="w-full border-collapse text-xs text-left">
+                    <table class="w-full border-collapse text-xs text-left" id="inventoryTable">
                         <thead>
                             <tr class="bg-neutral-50 text-neutral-700 uppercase font-bold border-b border-neutral-200">
                                 <th class="py-3 px-4 w-12 text-center">STT</th>

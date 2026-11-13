@@ -27,5 +27,7 @@
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
     <!-- main js -->
     <script src="{{ asset('assets/js/app.js') }}"></script>
+    <!-- Table Column Visibility Toggle -->
+    <script src="{{ asset('assets/js/table-column-toggle.js') }}"></script>
 
     <?php echo (isset($script) ? $script   : '')?>

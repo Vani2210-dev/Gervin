@@ -125,6 +125,7 @@
                             <iconify-icon icon="solar:file-spreadsheet-bold" class="text-base"></iconify-icon>
                             <span>Xuất Excel</span>
                         </a>
+                        <x-table-column-toggle table-id="customersTable" />
                         @can('add customer')
                         <button type="button" onclick="openCreateCustomerModal()"
                             class="btn btn-primary text-xs btn-sm px-3 py-2 rounded-lg flex items-center gap-2 transition shadow-sm font-semibold">
@@ -177,7 +178,7 @@
             {{-- Table --}}
             <div class="p-1">
                 <div class="table-responsive scroll-sm">
-                    <table class="table bordered-table sm-table mb-0">
+                    <table class="table bordered-table sm-table mb-0" id="customersTable">
                         <thead>
                             <tr>
                                 <th scope="col">STT</th>

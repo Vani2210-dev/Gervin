@@ -342,9 +342,9 @@
 
 
     <!-- History list section -->
-    <div class="mt-8 card bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-sm">
-        <div class="card-body p-6">
-            <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-6">
+    <div class="mt-8 card bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-sm overflow-hidden">
+        <div class="p-4 border-b border-neutral-200 dark:border-neutral-700">
+            <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
                 <h5 class="text-lg font-bold text-neutral-800 dark:text-neutral-100 flex items-center gap-2 mb-0">
                     Lịch sử kiểm soát chất lượng
                 </h5>
@@ -353,19 +353,23 @@
                     {{-- Bộ lọc ngày tháng chung --}}
                     <x-date-filter :action="route('processes.qc')" />
 
+                    <x-table-column-toggle table-id="historyTable" />
+
                     <!-- Search bar -->
                     <div class="relative w-48 sm:w-56">
                         <span class="absolute top-1/2 -translate-y-1/2 text-neutral-400 flex items-center justify-center pointer-events-none" style="left: 10px;">
                             <iconify-icon icon="lucide:search" class="text-base"></iconify-icon>
                         </span>
                         <input type="text" id="historySearch" oninput="filterHistoryTable()"
-                            class="w-full pr-3 py-1.5 border border-neutral-300 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 text-xs focus:outline-none focus:ring-2 focus:ring-sky-500"
+                            class="w-full pr-3 py-2 border border-neutral-300 dark:border-neutral-700 rounded-xl bg-neutral-50 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 text-xs focus:outline-none focus:ring-2 focus:ring-sky-500"
                             style="padding-left: 34px;"
                             placeholder="Tìm kiếm lịch sử...">
                     </div>
                 </div>
             </div>
+        </div>
 
+        <div class="p-1">
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse text-sm" id="historyTable">
                     <thead>

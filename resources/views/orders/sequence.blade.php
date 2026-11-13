@@ -108,7 +108,7 @@
 </div>
 
 {{-- KHỐI BẢNG TIẾN ĐỘ CHÍNH --}}
-<div class="card p-0 rounded-2xl border border-neutral-200 overflow-hidden bg-white shadow-none mb-6">
+<div class="card rounded-2xl border border-neutral-200 overflow-hidden bg-white shadow-none mb-6">
     
     {{-- Thanh công cụ & Bộ lọc --}}
     <div class="card-header border-b border-neutral-200 bg-white p-4 flex items-center flex-wrap gap-4 justify-between">
@@ -164,6 +164,8 @@
                 <iconify-icon icon="solar:file-download-bold-duotone" class="text-base"></iconify-icon>
                 Xuất Excel
             </a>
+
+            <x-table-column-toggle table-id="sequenceTable" />
         </div>
     </div>
 
@@ -182,9 +184,9 @@
     @endif
 
     {{-- Table Dữ Liệu --}}
-    <div class="card-body p-0">
+    <div class="p-1">
         <div class="overflow-x-auto scroll-sm">
-            <table class="table bordered-table sm-table mb-0 w-full min-w-full">
+            <table class="table bordered-table sm-table mb-0 w-full min-w-full" id="sequenceTable">
                 <thead>
                     <tr class="bg-neutral-50/90 text-neutral-700 border-b border-neutral-200 whitespace-nowrap">
                         <th class="w-12 text-center py-2 px-2 text-xs font-bold uppercase tracking-wider text-neutral-600 whitespace-nowrap">STT</th>
