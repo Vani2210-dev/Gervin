@@ -537,6 +537,7 @@
                                         <th style="border: 1.5px solid #cbd5e1; padding: 9px 4px; text-align: center; color: #0f172a; font-weight: 700; font-size: 12px; text-transform: uppercase; width: 42px; white-space: nowrap;">STT</th>
                                         <th style="border: 1.5px solid #cbd5e1; padding: 9px 10px; text-align: left; color: #0f172a; font-weight: 700; font-size: 12px; text-transform: uppercase;">Tên nội dung / Dịch vụ / Vật tư</th>
                                         <th style="border: 1.5px solid #cbd5e1; padding: 9px 4px; text-align: center; color: #0f172a; font-weight: 700; font-size: 12px; text-transform: uppercase; width: 60px; white-space: nowrap;">Đơn vị</th>
+                                        <th style="border: 1.5px solid #cbd5e1; padding: 9px 4px; text-align: center; color: #0f172a; font-weight: 700; font-size: 12px; text-transform: uppercase; width: 90px; white-space: nowrap;">Quy cách</th>
                                         <th style="border: 1.5px solid #cbd5e1; padding: 9px 4px; text-align: center; color: #0f172a; font-weight: 700; font-size: 12px; text-transform: uppercase; width: 70px; white-space: nowrap;">Số lượng</th>
                                         <th style="border: 1.5px solid #cbd5e1; padding: 9px 6px; text-align: right; color: #0f172a; font-weight: 700; font-size: 12px; text-transform: uppercase; width: 105px; white-space: nowrap;">Đơn giá</th>
                                         <th style="border: 1.5px solid #cbd5e1; padding: 9px 6px; text-align: right; color: #0f172a; font-weight: 700; font-size: 12px; text-transform: uppercase; width: 120px; white-space: nowrap;">Thành tiền</th>
@@ -548,6 +549,9 @@
                                         @php
                                             $pName = is_object($pDetail) ? ($pDetail->name ?? '') : ($pDetail['name'] ?? '');
                                             $pUnit = is_object($pDetail) ? ($pDetail->unit ?? '') : ($pDetail['unit'] ?? '');
+                                            $pLen = is_object($pDetail) ? ($pDetail->length ?? null) : ($pDetail['length'] ?? null);
+                                            $pWid = is_object($pDetail) ? ($pDetail->width ?? null) : ($pDetail['width'] ?? null);
+                                            $dimStr = ($pLen || $pWid) ? (($pLen ? number_format(floatval($pLen), 0, ',', '.') : '—') . ' x ' . ($pWid ? number_format(floatval($pWid), 0, ',', '.') : '—')) : '—';
                                             $pQty = floatval(is_object($pDetail) ? ($pDetail->quantity ?? 0) : ($pDetail['quantity'] ?? 0));
                                             $pPrice = floatval(is_object($pDetail) ? ($pDetail->price ?? 0) : ($pDetail['price'] ?? 0));
                                             $pTotal = floatval(is_object($pDetail) ? ($pDetail->total ?? 0) : ($pDetail['total'] ?? 0));
@@ -557,6 +561,7 @@
                                             <td style="border: 1px solid #cbd5e1; padding: 7px 4px; text-align: center; color: #64748b; font-size: 13px; white-space: nowrap;">{{ $pIdx + 1 }}</td>
                                             <td style="border: 1px solid #cbd5e1; padding: 7px 10px; text-align: left; color: #0f172a; font-size: 13px; font-weight: 600; line-height: 1.45; word-break: break-word; overflow-wrap: anywhere; white-space: normal;">{{ $pName }}</td>
                                             <td style="border: 1px solid #cbd5e1; padding: 7px 4px; text-align: center; color: #0f172a; font-size: 13px; white-space: nowrap;">{{ $pUnit ?: '—' }}</td>
+                                            <td style="border: 1px solid #cbd5e1; padding: 7px 4px; text-align: center; color: #0f172a; font-size: 13px; white-space: nowrap;">{{ $dimStr }}</td>
                                             <td style="border: 1px solid #cbd5e1; padding: 7px 4px; text-align: center; color: #0f172a; font-size: 13px; font-weight: 700; white-space: nowrap;">{{ floatval($pQty) == intval($pQty) ? number_format($pQty, 0, ',', '.') : number_format($pQty, 2, ',', '.') }}</td>
                                             <td style="border: 1px solid #cbd5e1; padding: 7px 6px; text-align: right; color: #0f172a; font-size: 13px; font-weight: 600; white-space: nowrap;">{{ number_format($pPrice, 0, ',', '.') }} đ</td>
                                             <td style="border: 1px solid #cbd5e1; padding: 7px 6px; text-align: right; color: #059669; font-size: 13px; font-weight: 700; white-space: nowrap;">{{ number_format($pTotal, 0, ',', '.') }} đ</td>
@@ -566,7 +571,7 @@
                                 <tfoot>
                                     <tr style="background-color: #f8fafc; font-weight: 700; border-top: 2px solid #94a3b8;">
                                         <td style="border: 1px solid #cbd5e1; padding: 8px 4px; text-align: center; color: #0f172a; font-size: 13px; font-weight: 700; white-space: nowrap;">TỔNG</td>
-                                        <td colspan="4" style="border: 1px solid #cbd5e1;"></td>
+                                        <td colspan="5" style="border: 1px solid #cbd5e1;"></td>
                                         <td style="border: 1px solid #cbd5e1; padding: 8px 6px; text-align: right; color: #059669; font-size: 13px; font-weight: 700; white-space: nowrap;">{{ number_format(round($sumPayTotal), 0, ',', '.') }} đ</td>
                                     </tr>
                                 </tfoot>

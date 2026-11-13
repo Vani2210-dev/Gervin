@@ -61,6 +61,8 @@ class MinLateOrderService
             'payment_details'                          => 'nullable|array',
             'payment_details.*.name'                   => 'required|string|max:255',
             'payment_details.*.unit'                   => 'nullable|string|max:255',
+            'payment_details.*.length'                 => 'nullable',
+            'payment_details.*.width'                  => 'nullable',
             'payment_details.*.quantity'               => 'nullable|numeric|min:0',
             'payment_details.*.price'                  => 'required|numeric|min:0',
             'payment_details.*.price_only'             => 'nullable|numeric|min:0',
@@ -298,10 +300,19 @@ class MinLateOrderService
             $rawPriceOnly = is_string($detail['price_only'] ?? 0) ? str_replace('.', '', $detail['price_only']) : ($detail['price_only'] ?? 0);
             $rawTotal = is_string($detail['total'] ?? 0) ? str_replace('.', '', $detail['total']) : ($detail['total'] ?? 0);
             
+            $parseDim = function($val) {
+                if ($val === null || $val === '') return null;
+                if (is_numeric($val)) return (float)$val;
+                $clean = str_replace([' ', ','], ['', '.'], (string)$val);
+                return is_numeric($clean) ? (float)$clean : null;
+            };
+
             PaymentDetail::create([
                 'order_id'   => $order->id,
                 'name'       => $detail['name'],
                 'unit'       => $detail['unit'] ?? null,
+                'length'     => $parseDim($detail['length'] ?? null),
+                'width'      => $parseDim($detail['width'] ?? null),
                 'quantity'   => $detail['quantity'] ?? 0,
                 'price'      => round(floatval($rawPrice)),
                 'price_only' => round(floatval($rawPriceOnly)),

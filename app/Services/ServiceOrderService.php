@@ -33,6 +33,8 @@ class ServiceOrderService
             'payment_details'   => 'nullable|array',
             'payment_details.*.name'     => 'required|string|max:255',
             'payment_details.*.unit'     => 'nullable|string|max:255',
+            'payment_details.*.length'   => 'nullable',
+            'payment_details.*.width'    => 'nullable',
             'payment_details.*.quantity' => 'nullable|numeric|min:0',
             'payment_details.*.price'    => 'nullable|numeric|min:0',
             'payment_details.*.price_only'=> 'nullable|numeric|min:0',
@@ -224,10 +226,19 @@ class ServiceOrderService
             $rawPriceOnly = str_replace('.', '', $detail['price_only'] ?? 0);
             $rawTotal = str_replace('.', '', $detail['total'] ?? 0);
 
+            $parseDim = function($val) {
+                if ($val === null || $val === '') return null;
+                if (is_numeric($val)) return (float)$val;
+                $clean = str_replace([' ', ','], ['', '.'], (string)$val);
+                return is_numeric($clean) ? (float)$clean : null;
+            };
+
             PaymentDetail::create([
                 'order_id'   => $order->id,
                 'name'       => $detail['name'] ?? '',
                 'unit'       => $detail['unit'] ?? '',
+                'length'     => $parseDim($detail['length'] ?? null),
+                'width'      => $parseDim($detail['width'] ?? null),
                 'quantity'   => floatval($detail['quantity'] ?? 1),
                 'price'      => floatval($rawPrice),
                 'formula'    => $detail['formula'] ?? null,

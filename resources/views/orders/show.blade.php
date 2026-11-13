@@ -489,6 +489,7 @@
                                         <th class="w-12 text-center" style="width: 45px;">STT</th>
                                         <th class="text-left">Tên nội dung / Dịch vụ / Vật tư</th>
                                         <th class="w-24 text-center" style="width: 70px;">Đơn vị</th>
+                                        <th class="w-28 text-center" style="width: 95px;">Quy cách</th>
                                         <th class="w-24 text-center" style="width: 75px;">Số lượng</th>
                                         <th class="w-32 text-right" style="width: 110px;">Đơn giá</th>
                                         <th class="w-36 text-right" style="width: 125px;">Thành tiền</th>
@@ -500,6 +501,7 @@
                                             <td class="text-center font-semibold text-neutral-500">{{ $pIndex + 1 }}</td>
                                             <td class="font-semibold text-neutral-800" style="line-height: 1.45; word-break: break-word; overflow-wrap: anywhere; white-space: normal;">{{ $pDetail->name }}</td>
                                             <td class="text-center text-neutral-600">{{ $pDetail->unit ?: '—' }}</td>
+                                            <td class="text-center text-neutral-600 font-medium">{{ ($pDetail->length || $pDetail->width) ? (($pDetail->length ? number_format($pDetail->length, 0, ',', '.') : '—') . ' x ' . ($pDetail->width ? number_format($pDetail->width, 0, ',', '.') : '—')) : '—' }}</td>
                                             <td class="text-center font-bold text-neutral-700">{{ floatval($pDetail->quantity) == intval($pDetail->quantity) ? number_format($pDetail->quantity, 0, ',', '.') : number_format($pDetail->quantity, 2, ',', '.') }}</td>
                                             <td class="text-right text-neutral-700 font-medium">{{ number_format($pDetail->price, 0, ',', '.') }} đ</td>
                                             <td class="text-right font-bold text-primary-600">{{ number_format($pDetail->total, 0, ',', '.') }} đ</td>
@@ -630,7 +632,8 @@
                                     <tr class="bg-neutral-50 text-center">
                                         <th scope="col" class="w-10 text-center">STT</th>
                                         <th scope="col">Tên nội dung</th>
-                                        <th scope="col" class="w-28 text-center">Đơn vị</th>
+                                        <th scope="col" class="w-24 text-center">Đơn vị</th>
+                                        <th scope="col" class="w-28 text-center">Quy cách</th>
                                         <th scope="col" class="w-24 text-center">Số lượng</th>
                                         <th scope="col" class="w-32 text-end">Đơn giá</th>
                                         @if($hasPriceOnly)
@@ -645,6 +648,7 @@
                                             <td class="text-center font-semibold text-neutral-500">{{ $detailIndex + 1 }}</td>
                                             <td><span class="font-semibold text-neutral-800">{{ $detail->name }}</span></td>
                                             <td class="text-center">{{ $detail->unit ?? '—' }}</td>
+                                            <td class="text-center text-neutral-600 font-medium">{{ ($detail->length || $detail->width) ? (($detail->length ? number_format($detail->length, 0, ',', '.') : '—') . ' x ' . ($detail->width ? number_format($detail->width, 0, ',', '.') : '—')) : '—' }}</td>
                                             <td class="text-center font-medium">{{ floatval($detail->quantity) == intval($detail->quantity) ? number_format($detail->quantity, 0, ',', '.') : number_format($detail->quantity, 2, ',', '.') }}</td>
                                             <td class="text-end font-medium text-neutral-600">
                                                 {{ number_format($detail->price, 0, ',', '.') }}</td>

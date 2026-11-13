@@ -7,6 +7,8 @@
             $d->id = $dData['id'] ?? null;
             $d->name = $dData['name'] ?? '';
             $d->unit = $dData['unit'] ?? '';
+            $d->length = $dData['length'] ?? null;
+            $d->width = $dData['width'] ?? null;
             $d->quantity = $dData['quantity'] ?? 1;
             $d->price = $dData['price'] ?? 0;
             $d->price_only = $dData['price_only'] ?? 0;
@@ -212,20 +214,22 @@
     <div class="order-supplies-body">
         <div class="overflow-x-auto pb-3" data-order-supplies-table-scroll>
             <div class="order-supplies-table-zoom-wrap" data-order-supplies-table-zoom-wrap>
-                <table class="table bordered-table sm-table mb-0 min-w-[950px] border border-neutral-200" data-order-resize-group="min_late_payment">
+                <table class="table bordered-table sm-table mb-0 min-w-[1100px] border border-neutral-200" data-order-resize-group="min_late_payment">
                     <thead>
                         <tr class="bg-neutral-50 text-center">
                             <th scope="col" style="width: 50px; min-width: 50px; white-space: nowrap;" class="sticky-stt-th text-center border border-neutral-200 font-bold text-xs text-neutral-600 uppercase"><span class="order-stt-header-label">STT</span></th>
                             <th scope="col" style="width: 140px; min-width: 120px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Mã</th>
                             <th scope="col" style="white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Tên nội dung <span class="text-danger-500">*</span></th>
-                            <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn vị</th>
-                            <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số lượng</th>
-                            <th scope="col" style="width: 140px; min-width: 140px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá <span class="text-danger-500">*</span></th>
+                            <th scope="col" style="width: 90px; min-width: 80px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn vị</th>
+                            <th scope="col" style="width: 90px; min-width: 80px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Dài (mm)</th>
+                            <th scope="col" style="width: 90px; min-width: 80px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Rộng (mm)</th>
+                            <th scope="col" style="width: 90px; min-width: 80px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số lượng</th>
+                            <th scope="col" style="width: 130px; min-width: 120px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá <span class="text-danger-500">*</span></th>
                             @if($isMinLateOrder)
-                            <th scope="col" style="width: 120px; min-width: 120px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá chỉ</th>
+                            <th scope="col" style="width: 120px; min-width: 110px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Đơn giá chỉ</th>
                             @endif
-                            <th scope="col" style="width: 150px; min-width: 150px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Thành tiền</th>
-                            <th scope="col" style="width: 80px; min-width: 80px; white-space: nowrap; position: sticky; right: 0; z-index: 2; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Hành động</th>
+                            <th scope="col" style="width: 140px; min-width: 130px; white-space: nowrap;" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Thành tiền</th>
+                            <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap; position: sticky; right: 0; z-index: 2; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Hành động</th>
                         </tr>
                     </thead>
                     <tbody id="payment-details-container">
@@ -300,13 +304,19 @@
                                 <td class="border border-neutral-200" style="padding: 0 !important; position: relative;">
                                     <textarea name="payment_details[{{ $detailIndex }}][name]" class="form-control form-control-sm rounded-lg w-full border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-xs font-semibold resize-none" rows="2" style="resize: none; padding: 4px 8px;" placeholder="Tên nội dung..." required>{{ $detail->name }}</textarea>
                                 </td>
-                                <td style="width: 100px; min-width: 100px; padding: 0 !important;" class="border border-neutral-200">
+                                <td style="width: 90px; min-width: 80px; padding: 0 !important;" class="border border-neutral-200">
                                     <input type="text" name="payment_details[{{ $detailIndex }}][unit]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs w-full" placeholder="tấm, m², bộ..." value="{{ $detail->unit }}">
                                 </td>
-                                <td style="width: 100px; min-width: 100px; padding: 0 !important;" class="border border-neutral-200">
+                                <td style="width: 90px; min-width: 80px; padding: 0 !important;" class="border border-neutral-200">
+                                    <input type="text" name="payment_details[{{ $detailIndex }}][length]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs w-full" placeholder="Dài" value="{{ $detail->length ?? '' }}" autocomplete="off" @if(!empty($detailFormulas['length'])) data-formula="{{ $detailFormulas['length'] }}" title="Công thức: {{ $detailFormulas['length'] }}" @endif>
+                                </td>
+                                <td style="width: 90px; min-width: 80px; padding: 0 !important;" class="border border-neutral-200">
+                                    <input type="text" name="payment_details[{{ $detailIndex }}][width]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs w-full" placeholder="Rộng" value="{{ $detail->width ?? '' }}" autocomplete="off" @if(!empty($detailFormulas['width'])) data-formula="{{ $detailFormulas['width'] }}" title="Công thức: {{ $detailFormulas['width'] }}" @endif>
+                                </td>
+                                <td style="width: 90px; min-width: 80px; padding: 0 !important;" class="border border-neutral-200">
                                     <input type="text" name="payment_details[{{ $detailIndex }}][quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs payment-quantity-input w-full" placeholder="1" value="{{ $detail->quantity }}" autocomplete="off" @if(!empty($detailFormulas['quantity'])) data-formula="{{ $detailFormulas['quantity'] }}" title="Công thức: {{ $detailFormulas['quantity'] }}" @endif>
                                 </td>
-                                <td style="width: 140px; min-width: 140px; padding: 0 !important;" class="border border-neutral-200">
+                                <td style="width: 130px; min-width: 120px; padding: 0 !important;" class="border border-neutral-200">
                                     <input type="text" name="payment_details[{{ $detailIndex }}][price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs w-full" placeholder="0" required value="{{ $detail->price }}" autocomplete="off" @if(!empty($detailFormulas['price'])) data-formula="{{ $detailFormulas['price'] }}" title="Công thức: {{ $detailFormulas['price'] }}" @endif>
                                 </td>
                                 @if($isMinLateOrder)
@@ -446,25 +456,31 @@ function addPaymentDetail() {
         <td class="border border-neutral-200" style="padding: 0 !important; position: relative;">
             <textarea name="payment_details[${paymentDetailIndex}][name]" class="form-control form-control-sm rounded-lg w-full border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-xs font-semibold resize-none" rows="2" style="resize: none; padding: 4px 8px;" placeholder="Tên nội dung..." required></textarea>
         </td>
-        <td style="width: 100px; min-width: 100px; padding: 0 !important;" class="border border-neutral-200">
+        <td style="width: 90px; min-width: 80px; padding: 0 !important;" class="border border-neutral-200">
             <input type="text" name="payment_details[${paymentDetailIndex}][unit]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs w-full" placeholder="tấm, m², bộ...">
         </td>
-        <td style="width: 100px; min-width: 100px; padding: 0 !important;" class="border border-neutral-200">
+        <td style="width: 90px; min-width: 80px; padding: 0 !important;" class="border border-neutral-200">
+            <input type="text" name="payment_details[${paymentDetailIndex}][length]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs w-full" placeholder="Dài" autocomplete="off">
+        </td>
+        <td style="width: 90px; min-width: 80px; padding: 0 !important;" class="border border-neutral-200">
+            <input type="text" name="payment_details[${paymentDetailIndex}][width]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs w-full" placeholder="Rộng" autocomplete="off">
+        </td>
+        <td style="width: 90px; min-width: 80px; padding: 0 !important;" class="border border-neutral-200">
             <input type="text" name="payment_details[${paymentDetailIndex}][quantity]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs payment-quantity-input w-full" placeholder="1" value="1" autocomplete="off">
         </td>
-        <td style="width: 140px; min-width: 140px; padding: 0 !important;" class="border border-neutral-200">
+        <td style="width: 130px; min-width: 120px; padding: 0 !important;" class="border border-neutral-200">
             <input type="text" name="payment_details[${paymentDetailIndex}][price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs w-full" placeholder="0" required value="0" autocomplete="off">
         </td>
         ${isMinLateOrderType ? `
-        <td style="width: 120px; min-width: 120px; padding: 0 !important;" class="border border-neutral-200">
+        <td style="width: 120px; min-width: 110px; padding: 0 !important;" class="border border-neutral-200">
             <input type="text" name="payment_details[${paymentDetailIndex}][price_only]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center h-8 text-xs w-full" placeholder="0" value="0" autocomplete="off">
         </td>` : `
         <input type="hidden" name="payment_details[${paymentDetailIndex}][price_only]" value="0">
         `}
-        <td style="width: 150px; min-width: 150px; padding: 0 !important;" class="border border-neutral-200">
+        <td style="width: 140px; min-width: 130px; padding: 0 !important;" class="border border-neutral-200">
             <input type="text" name="payment_details[${paymentDetailIndex}][total]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center h-8 text-xs w-full" placeholder="0" readonly value="0">
         </td>
-        <td style="width: 80px; min-width: 80px; padding: 0 !important; position: sticky; right: 0; z-index: 1; background-color: #fff; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="text-center align-middle border border-neutral-200">
+        <td style="width: 70px; min-width: 70px; padding: 0 !important; position: sticky; right: 0; z-index: 1; background-color: #fff; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="text-center align-middle border border-neutral-200">
             <button type="button" onclick="removePaymentDetail(this)" class="text-neutral-400 hover:text-danger-500 transition-colors p-1" title="Xóa nội dung này">
                 <iconify-icon icon="lucide:trash-2" class="text-base"></iconify-icon>
             </button>
@@ -599,6 +615,18 @@ function handlePaymentDetailCodeSelected(row, rawCode) {
             unitInput.value = woodPrice.unit || 'tấm';
             applyFlashEffect(unitInput);
             unitInput.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        const lengthInput = row.querySelector('[name*="[length]"]');
+        const widthInput = row.querySelector('[name*="[width]"]');
+        if (lengthInput && !lengthInput.value) {
+            lengthInput.value = 2440;
+            applyFlashEffect(lengthInput);
+            lengthInput.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        if (widthInput && !widthInput.value) {
+            widthInput.value = 1220;
+            applyFlashEffect(widthInput);
+            widthInput.dispatchEvent(new Event('input', { bubbles: true }));
         }
         if (priceInput) {
             const rawPr = woodPrice.price_board !== undefined ? woodPrice.price_board : (woodPrice.price !== undefined ? woodPrice.price : 0);
@@ -811,12 +839,16 @@ window.applyServiceCombo = function(comboId, replace = true) {
 
         const nameInput = newRow.querySelector('textarea[name*="[name]"]');
         const unitInput = newRow.querySelector('input[name*="[unit]"]');
+        const lengthInput = newRow.querySelector('input[name*="[length]"]');
+        const widthInput = newRow.querySelector('input[name*="[width]"]');
         const qtyInput = newRow.querySelector('input[name*="[quantity]"]');
         const priceInput = newRow.querySelector('input[name*="[price]"]');
         const priceOnlyInput = newRow.querySelector('input[name*="[price_only]"]');
 
         if (nameInput) nameInput.value = item.name || '';
         if (unitInput) unitInput.value = item.unit || '';
+        if (lengthInput && item.length) lengthInput.value = item.length;
+        if (widthInput && item.width) widthInput.value = item.width;
         if (priceInput) priceInput.value = item.price || 0;
         if (priceOnlyInput) priceOnlyInput.value = item.price_only || 0;
 

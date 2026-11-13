@@ -12,6 +12,8 @@ class PaymentDetail extends Model
         'order_id',
         'name',
         'unit',
+        'length',
+        'width',
         'quantity',
         'price',
         'price_only',
@@ -20,6 +22,8 @@ class PaymentDetail extends Model
     ];
 
     protected $casts = [
+        'length' => 'float',
+        'width' => 'float',
         'quantity' => 'float',
         'price' => 'float',
         'price_only' => 'float',
@@ -41,6 +45,11 @@ class PaymentDetail extends Model
     public function getFormulasAttribute()
     {
         return is_array($this->formula) ? $this->formula : (json_decode($this->formula ?? '[]', true) ?: []);
+    }
+
+    public function getDimensionsAttribute(): string
+    {
+        return ($this->length && $this->width) ? "{$this->length} x {$this->width}" : '—';
     }
 
     public function order()
