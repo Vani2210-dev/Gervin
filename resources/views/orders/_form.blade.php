@@ -4352,11 +4352,75 @@ function submitQuickCreateCustomer(e) {
     let isHandleDragging = false;
     let fillHandleEl = null;
     let fillSourceCell = null;
+    let fillSourceCells = [];
     let fillTargetCells = [];
     let mouseStartPos = { x: 0, y: 0 };
     let isPossibleDrag = false;
     let currentCellTbody = null;
     let internalCopiedText = null;
+
+    const TABLE_CELL_SELECTOR = 'table.bordered-table tbody tr.order-item-row td input:not([type="hidden"]), ' +
+                                'table.bordered-table tbody tr.order-item-row td select, ' +
+                                'table.bordered-table tbody tr.order-item-row td textarea, ' +
+                                'table.bordered-table tbody tr.payment-detail-row td input:not([type="hidden"]), ' +
+                                'table.bordered-table tbody tr.payment-detail-row td select, ' +
+                                'table.bordered-table tbody tr.payment-detail-row td textarea';
+
+    // Hàm gán giá trị thông minh cho ô (hỗ trợ cả INPUT và SELECT như nẹp dán cạnh Nẹp Cao 1, 2, Rộng 1, 2)
+    function setCellVal(cell, val) {
+        if (!cell) return;
+        const cleanVal = (val !== null && val !== undefined) ? String(val).trim() : '';
+        if (cell.tagName === 'SELECT') {
+            if (!cleanVal || cleanVal === '-' || cleanVal === '0') {
+                cell.value = '';
+                return;
+            }
+            // 1. Thử gán trực tiếp
+            cell.value = cleanVal;
+            if (cell.value === cleanVal && cell.selectedIndex >= 0 && cell.options[cell.selectedIndex]?.value === cleanVal) {
+                return;
+            }
+
+            // 2. Thử match không phân biệt hoa thường với value hoặc text của option
+            const lower = cleanVal.toLowerCase();
+            for (let i = 0; i < cell.options.length; i++) {
+                const opt = cell.options[i];
+                if (opt.value.toLowerCase() === lower || opt.text.trim().toLowerCase() === lower) {
+                    cell.selectedIndex = i;
+                    return;
+                }
+            }
+
+            // 3. Match từ thông dụng tiếng Việt cho nẹp dán cạnh
+            if (lower === 'thẳng' || lower === 'thang' || lower === 't') {
+                for (let i = 0; i < cell.options.length; i++) {
+                    if (cell.options[i].value === 'T') { cell.selectedIndex = i; return; }
+                }
+            } else if (lower === 'vát' || lower === 'vat' || lower === 'v') {
+                for (let i = 0; i < cell.options.length; i++) {
+                    if (cell.options[i].value === 'V') { cell.selectedIndex = i; return; }
+                }
+            } else if (lower === 'vát mòi' || lower === 'vat moi' || lower === 'vat_moi' || lower === 'vatmoi') {
+                for (let i = 0; i < cell.options.length; i++) {
+                    if (cell.options[i].value === 'VAT MOI') { cell.selectedIndex = i; return; }
+                }
+            } else if (lower === 'ds' || lower === 'dán sọc' || lower === 'dan soc') {
+                for (let i = 0; i < cell.options.length; i++) {
+                    if (cell.options[i].value === 'DS') { cell.selectedIndex = i; return; }
+                }
+            } else if (lower === 'vat tna' || lower === 'tna' || lower === 'vát tay nắm âm' || lower === 'tay nắm âm') {
+                for (let i = 0; i < cell.options.length; i++) {
+                    if (cell.options[i].value === 'VAT TNA') { cell.selectedIndex = i; return; }
+                }
+            } else if (lower === 'xem ban ve ct' || lower === 'bản vẽ' || lower === 'ct') {
+                for (let i = 0; i < cell.options.length; i++) {
+                    if (cell.options[i].value === 'XEM BAN VE CT') { cell.selectedIndex = i; return; }
+                }
+            }
+        } else {
+            cell.value = cleanVal;
+        }
+    }
 
     // === HỆ THỐNG HOÀN TÁC UNDO / REDO ===
     const undoStack = [];
@@ -4382,7 +4446,7 @@ function submitQuickCreateCustomer(e) {
 
         action.changes.forEach(ch => {
             if (ch.input && document.body.contains(ch.input)) {
-                ch.input.value = ch.oldValue;
+                setCellVal(ch.input, ch.oldValue);
                 ch.input.dispatchEvent(new Event('input', { bubbles: true }));
                 ch.input.dispatchEvent(new Event('change', { bubbles: true }));
                 affected.push(ch.input);
@@ -4414,7 +4478,7 @@ function submitQuickCreateCustomer(e) {
 
         action.changes.forEach(ch => {
             if (ch.input && document.body.contains(ch.input)) {
-                ch.input.value = ch.newValue;
+                setCellVal(ch.input, ch.newValue);
                 ch.input.dispatchEvent(new Event('input', { bubbles: true }));
                 ch.input.dispatchEvent(new Event('change', { bubbles: true }));
                 affected.push(ch.input);
@@ -4489,7 +4553,7 @@ function submitQuickCreateCustomer(e) {
 
         // 3. Xóa giá trị các ô
         targetCells.forEach(c => {
-            c.value = '';
+            setCellVal(c, '');
             c.dispatchEvent(new Event('input', { bubbles: true }));
             c.dispatchEvent(new Event('change', { bubbles: true }));
         });
@@ -4526,7 +4590,9 @@ function submitQuickCreateCustomer(e) {
                 e.stopPropagation();
                 if (!cellActive && selectedCells.length === 0) return;
                 isHandleDragging = true;
-                fillSourceCell = cellActive || selectedCells[0];
+                const sourceCellsList = selectedCells.length > 0 ? [...selectedCells] : (cellActive ? [cellActive] : []);
+                fillSourceCells = sourceCellsList;
+                fillSourceCell = sourceCellsList[0] || cellActive;
                 fillTargetCells = [];
                 currentCellTbody = fillSourceCell.closest('tbody');
             };
@@ -4619,12 +4685,13 @@ function submitQuickCreateCustomer(e) {
         updateFillHandlePosition();
     }
 
-    // 1. Khi nhấn chuột xuống một ô input (mousedown)
+    // 1. Khi nhấn chuột xuống một ô input hoặc select (mousedown)
     document.addEventListener('mousedown', function(e) {
+        if (e.target.tagName === 'OPTION') return;
         // Bỏ qua nếu bấm vào fill handle
         if (e.target.closest('#excel-fill-handle')) return;
 
-        const input = e.target.closest('table.bordered-table tbody tr.order-item-row td input:not([type="hidden"]), table.bordered-table tbody tr.payment-detail-row td input:not([type="hidden"])');
+        const input = e.target.closest(TABLE_CELL_SELECTOR);
         if (!input || input.readOnly || input.disabled) {
             if (!e.target.closest('.excel-cell-selected')) {
                 clearCellSelection();
@@ -4669,18 +4736,24 @@ function submitQuickCreateCustomer(e) {
             fillTargetCells = [];
 
             if (sourcePos && targetPos && sourcePos.tbody === targetPos.tbody) {
-                // Điền dọc theo cột của ô nguồn
-                const col = sourcePos.colIndex;
+                // Điền dọc/ngang theo vùng bao của ô nguồn và ô đích
                 const minR = Math.min(sourcePos.rowIndex, targetPos.rowIndex);
                 const maxR = Math.max(sourcePos.rowIndex, targetPos.rowIndex);
+                const minC = Math.min(sourcePos.colIndex, targetPos.colIndex);
+                const maxC = Math.max(sourcePos.colIndex, targetPos.colIndex);
 
                 for (let r = minR; r <= maxR; r++) {
                     const row = sourcePos.rows[r];
                     if (!row) continue;
-                    const inp = row.querySelectorAll('td')[col]?.querySelector('input:not([type="hidden"]), select, textarea');
-                    if (inp && inp !== fillSourceCell && !inp.readOnly && !inp.disabled) {
-                        inp.classList.add('excel-fill-preview');
-                        fillTargetCells.push(inp);
+                    const rowTds = Array.from(row.querySelectorAll('td'));
+                    for (let c = minC; c <= maxC; c++) {
+                        const cellTd = rowTds[c];
+                        if (!cellTd) continue;
+                        const inp = cellTd.querySelector('input:not([type="hidden"]), select, textarea');
+                        if (inp && !fillSourceCells.includes(inp) && !inp.readOnly && !inp.disabled) {
+                            inp.classList.add('excel-fill-preview');
+                            fillTargetCells.push(inp);
+                        }
                     }
                 }
             }
@@ -4714,14 +4787,23 @@ function submitQuickCreateCustomer(e) {
             document.querySelectorAll('.excel-fill-preview').forEach(el => el.classList.remove('excel-fill-preview'));
 
             if (fillSourceCell && fillTargetCells.length > 0) {
-                const fillVal = fillSourceCell.value;
+                // Map giá trị nguồn theo cột:
+                const sourceColMap = new Map();
+                fillSourceCells.forEach(sc => {
+                    const p = getCellPos(sc);
+                    if (p) sourceColMap.set(p.colIndex, sc.value);
+                });
 
                 // Ghi vào Undo Stack
-                const changes = fillTargetCells.map(inp => ({
-                    input: inp,
-                    oldValue: inp.value,
-                    newValue: fillVal
-                }));
+                const changes = fillTargetCells.map(inp => {
+                    const p = getCellPos(inp);
+                    const fillVal = (p && sourceColMap.has(p.colIndex)) ? sourceColMap.get(p.colIndex) : fillSourceCell.value;
+                    return {
+                        input: inp,
+                        oldValue: inp.value,
+                        newValue: fillVal
+                    };
+                });
                 pushUndoAction({
                     type: 'fill',
                     description: `Điền tự động ${fillTargetCells.length} ô`,
@@ -4729,24 +4811,28 @@ function submitQuickCreateCustomer(e) {
                 });
 
                 fillTargetCells.forEach(inp => {
-                    inp.value = fillVal;
-                    if (fillSourceCell.dataset.formula) {
+                    const p = getCellPos(inp);
+                    const fillVal = (p && sourceColMap.has(p.colIndex)) ? sourceColMap.get(p.colIndex) : fillSourceCell.value;
+                    setCellVal(inp, fillVal);
+                    if (fillSourceCell.dataset && fillSourceCell.dataset.formula) {
                         inp.dataset.formula = fillSourceCell.dataset.formula;
                         inp.title = fillSourceCell.title || `Công thức: ${inp.dataset.formula}`;
-                    } else if (inp.dataset.formula) {
+                    } else if (inp.dataset && inp.dataset.formula) {
                         delete inp.dataset.formula;
                         inp.removeAttribute('title');
                     }
                     inp.dispatchEvent(new Event('input', { bubbles: true }));
                     inp.dispatchEvent(new Event('change', { bubbles: true }));
-                    syncRowFormulasToHiddenInput(inp.closest('tr'));
+                    if (typeof syncRowFormulasToHiddenInput === 'function') {
+                        syncRowFormulasToHiddenInput(inp.closest('tr'));
+                    }
                 });
 
                 if (typeof updateOrderSummary === 'function') updateOrderSummary();
 
                 // Chọn lại vùng vừa điền
                 clearCellSelection();
-                selectedCells = [fillSourceCell, ...fillTargetCells];
+                selectedCells = [...fillSourceCells, ...fillTargetCells];
                 selectedCells.forEach(c => c.classList.add('excel-cell-selected'));
                 cellActive = fillTargetCells[fillTargetCells.length - 1];
                 updateFillHandlePosition();
@@ -4756,13 +4842,14 @@ function submitQuickCreateCustomer(e) {
                         toast: true,
                         position: 'top-end',
                         icon: 'success',
-                        title: `Đã tự động điền "${fillVal}" vào ${fillTargetCells.length} ô!`,
+                        title: `Đã tự động điền vào ${fillTargetCells.length} ô!`,
                         showConfirmButton: false,
-                        timer: 1800
+                        timer: 1500
                     });
                 }
             }
             fillSourceCell = null;
+            fillSourceCells = [];
             fillTargetCells = [];
             return;
         }
@@ -4795,6 +4882,9 @@ function submitQuickCreateCustomer(e) {
             if (e.clipboardData) {
                 e.clipboardData.setData('text/plain', tsv);
             }
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(tsv).catch(() => {});
+            }
 
             // Hiệu ứng viền marching ants giống Excel
             selectedCells.forEach(c => c.classList.add('excel-copied-marching'));
@@ -4812,8 +4902,34 @@ function submitQuickCreateCustomer(e) {
                     timer: 1500
                 });
             }
-        } else if (cellActive) {
-            internalCopiedText = cellActive.value;
+        } else {
+            const activeCell = (selectedCells.length === 1 ? selectedCells[0] : cellActive) || (document.activeElement?.closest('table.bordered-table tbody tr.order-item-row, table.bordered-table tbody tr.payment-detail-row') ? document.activeElement : null);
+            if (activeCell) {
+                const val = activeCell.value || '';
+                internalCopiedText = val;
+                if (activeCell.tagName === 'SELECT') {
+                    e.preventDefault();
+                    if (e.clipboardData) {
+                        e.clipboardData.setData('text/plain', val);
+                    }
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(val).catch(() => {});
+                    }
+                    activeCell.classList.add('excel-copied-marching');
+                    setTimeout(() => activeCell.classList.remove('excel-copied-marching'), 1500);
+
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            toast: true,
+                            position: 'top-end',
+                            icon: 'success',
+                            title: `Đã copy "${val || '(trống)'}"!`,
+                            showConfirmButton: false,
+                            timer: 1200
+                        });
+                    }
+                }
+            }
         }
     });
 
@@ -4842,43 +4958,48 @@ function submitQuickCreateCustomer(e) {
         const rawLines = clipboardText.replace(/\r\n/g, '\n').replace(/\r/g, '\n').replace(/\n$/, '').split('\n').map(l => l.split('\t'));
         const isSingleValue = rawLines.length === 1 && rawLines[0].length === 1;
 
-        // TRƯỜNG HỢP 1: Copy 1 giá trị (ví dụ: 1200) và dán vào nhiều ô đang chọn
-        if (isSingleValue && selectedCells.length > 1) {
-            e.preventDefault();
-            const singleVal = rawLines[0][0].trim();
+        // TRƯỜNG HỢP 1: Copy 1 giá trị và dán vào 1 hoặc nhiều ô đang chọn / đang focus SELECT
+        if (isSingleValue) {
+            const targetCells = selectedCells.length > 0 ? selectedCells : (activeEl ? [activeEl] : []);
+            if (targetCells.length > 1 || (targetCells.length === 1 && targetCells[0].tagName === 'SELECT')) {
+                e.preventDefault();
+                const singleVal = rawLines[0][0].trim();
 
-            const changes = selectedCells.map(cell => ({
-                input: cell,
-                oldValue: cell.value,
-                newValue: singleVal
-            }));
-            pushUndoAction({
-                type: 'paste',
-                description: `Dán ${selectedCells.length} ô`,
-                changes: changes
-            });
-
-            selectedCells.forEach(cell => {
-                cell.value = singleVal;
-                processFormulaForInput(cell, false);
-                cell.dispatchEvent(new Event('input', { bubbles: true }));
-                cell.dispatchEvent(new Event('change', { bubbles: true }));
-            });
-
-            if (typeof updateOrderSummary === 'function') updateOrderSummary();
-            updateFillHandlePosition();
-
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    toast: true,
-                    position: 'top-end',
-                    icon: 'success',
-                    title: `Đã dán "${singleVal}" vào ${selectedCells.length} ô!`,
-                    showConfirmButton: false,
-                    timer: 1800
+                const changes = targetCells.map(cell => ({
+                    input: cell,
+                    oldValue: cell.value,
+                    newValue: singleVal
+                }));
+                pushUndoAction({
+                    type: 'paste',
+                    description: `Dán ${targetCells.length} ô`,
+                    changes: changes
                 });
+
+                targetCells.forEach(cell => {
+                    setCellVal(cell, singleVal);
+                    if (typeof processFormulaForInput === 'function') {
+                        processFormulaForInput(cell, false);
+                    }
+                    cell.dispatchEvent(new Event('input', { bubbles: true }));
+                    cell.dispatchEvent(new Event('change', { bubbles: true }));
+                });
+
+                if (typeof updateOrderSummary === 'function') updateOrderSummary();
+                updateFillHandlePosition();
+
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: `Đã dán "${singleVal}" vào ${targetCells.length} ô!`,
+                        showConfirmButton: false,
+                        timer: 1500
+                    });
+                }
+                return;
             }
-            return;
         }
 
         // TRƯỜNG HỢP 2: Dán bảng dữ liệu nhiều dòng/nhiều cột từ Excel hoặc sao chép nhiều ô
@@ -4909,8 +5030,10 @@ function submitQuickCreateCustomer(e) {
                             oldValue: inp.value,
                             newValue: val.trim()
                         });
-                        inp.value = val.trim();
-                        processFormulaForInput(inp, false);
+                        setCellVal(inp, val.trim());
+                        if (typeof processFormulaForInput === 'function') {
+                            processFormulaForInput(inp, false);
+                        }
                         inp.dispatchEvent(new Event('input', { bubbles: true }));
                         inp.dispatchEvent(new Event('change', { bubbles: true }));
                         pastedCells.push(inp);
@@ -4942,7 +5065,7 @@ function submitQuickCreateCustomer(e) {
                         icon: 'success',
                         title: `Đã dán ${pastedCells.length} ô dữ liệu!`,
                         showConfirmButton: false,
-                        timer: 1800
+                        timer: 1500
                     });
                 }
             }
@@ -4952,14 +5075,14 @@ function submitQuickCreateCustomer(e) {
 
     // Theo dõi giá trị ban đầu khi focus ô để hỗ trợ Undo chỉnh sửa đơn lẻ
     document.addEventListener('focusin', function(e) {
-        const inp = e.target.closest('table.bordered-table tbody tr.order-item-row td input:not([type="hidden"]), table.bordered-table tbody tr.payment-detail-row td input:not([type="hidden"])');
+        const inp = e.target.closest(TABLE_CELL_SELECTOR);
         if (inp) {
             inp.dataset.undoVal = inp.value;
         }
     });
 
     document.addEventListener('change', function(e) {
-        const inp = e.target.closest('table.bordered-table tbody tr.order-item-row td input:not([type="hidden"]), table.bordered-table tbody tr.payment-detail-row td input:not([type="hidden"])');
+        const inp = e.target.closest(TABLE_CELL_SELECTOR);
         if (inp && inp.dataset.undoVal !== undefined && inp.value !== inp.dataset.undoVal) {
             pushUndoAction({
                 type: 'edit',
@@ -5022,29 +5145,47 @@ function submitQuickCreateCustomer(e) {
             }
         }
 
-        // Phím Delete hoặc Backspace khi có nhiều ô được chọn
-        if ((e.key === 'Delete' || e.key === 'Backspace') && selectedCells.length > 1) {
-            const isTyping = ['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName) && selectedCells.length <= 1;
-            if (!isTyping) {
-                e.preventDefault();
-                const changes = selectedCells.map(cell => ({
-                    input: cell,
-                    oldValue: cell.value,
-                    newValue: ''
-                }));
-                pushUndoAction({
-                    type: 'delete',
-                    description: `Xóa ${selectedCells.length} ô`,
-                    changes: changes
-                });
+        // Phím Delete hoặc Backspace khi có ô được chọn
+        if (e.key === 'Delete' || e.key === 'Backspace') {
+            if (selectedCells.length > 1) {
+                const isTyping = ['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName) && selectedCells.length <= 1;
+                if (!isTyping) {
+                    e.preventDefault();
+                    const changes = selectedCells.map(cell => ({
+                        input: cell,
+                        oldValue: cell.value,
+                        newValue: ''
+                    }));
+                    pushUndoAction({
+                        type: 'delete',
+                        description: `Xóa ${selectedCells.length} ô`,
+                        changes: changes
+                    });
 
-                selectedCells.forEach(cell => {
-                    cell.value = '';
-                    cell.dispatchEvent(new Event('input', { bubbles: true }));
-                    cell.dispatchEvent(new Event('change', { bubbles: true }));
-                });
-                if (typeof updateOrderSummary === 'function') updateOrderSummary();
-                return;
+                    selectedCells.forEach(cell => {
+                        setCellVal(cell, '');
+                        cell.dispatchEvent(new Event('input', { bubbles: true }));
+                        cell.dispatchEvent(new Event('change', { bubbles: true }));
+                    });
+                    if (typeof updateOrderSummary === 'function') updateOrderSummary();
+                    return;
+                }
+            } else {
+                const target = selectedCells.length === 1 ? selectedCells[0] : (document.activeElement?.closest('table.bordered-table tbody tr.order-item-row, table.bordered-table tbody tr.payment-detail-row') ? document.activeElement : null);
+                if (target && target.tagName === 'SELECT') {
+                    e.preventDefault();
+                    if (target.value !== '') {
+                        pushUndoAction({
+                            type: 'delete',
+                            description: 'Xóa ô',
+                            changes: [{ input: target, oldValue: target.value, newValue: '' }]
+                        });
+                        setCellVal(target, '');
+                        target.dispatchEvent(new Event('input', { bubbles: true }));
+                        target.dispatchEvent(new Event('change', { bubbles: true }));
+                        if (typeof updateOrderSummary === 'function') updateOrderSummary();
+                    }
+                }
             }
         }
 
@@ -5542,7 +5683,9 @@ function submitQuickCreateCustomer(e) {
     /* === EXCEL-LIKE CELL SELECTION & AUTO-FILL STYLES === */
     .excel-cell-selected,
     table.bordered-table tbody tr.order-item-row td input.excel-cell-selected,
-    table.bordered-table tbody tr.payment-detail-row td input.excel-cell-selected {
+    table.bordered-table tbody tr.order-item-row td select.excel-cell-selected,
+    table.bordered-table tbody tr.payment-detail-row td input.excel-cell-selected,
+    table.bordered-table tbody tr.payment-detail-row td select.excel-cell-selected {
         background-color: #dbeafe !important; /* Tailwind blue-100 */
         color: #1e3a8a !important;
         outline: 2px solid #2563eb !important;
@@ -5553,14 +5696,17 @@ function submitQuickCreateCustomer(e) {
 
     .excel-fill-preview,
     table.bordered-table tbody tr.order-item-row td input.excel-fill-preview,
-    table.bordered-table tbody tr.payment-detail-row td input.excel-fill-preview {
+    table.bordered-table tbody tr.order-item-row td select.excel-fill-preview,
+    table.bordered-table tbody tr.payment-detail-row td input.excel-fill-preview,
+    table.bordered-table tbody tr.payment-detail-row td select.excel-fill-preview {
         background-color: rgba(59, 130, 246, 0.18) !important;
         outline: 2px dashed #2563eb !important;
         outline-offset: -2px !important;
     }
 
     .excel-copied-marching,
-    table.bordered-table tbody tr.order-item-row td input.excel-copied-marching {
+    table.bordered-table tbody tr.order-item-row td input.excel-copied-marching,
+    table.bordered-table tbody tr.order-item-row td select.excel-copied-marching {
         outline: 2px dashed #16a34a !important;
         outline-offset: -2px !important;
         animation: excelMarchingAnts 0.8s linear infinite;

@@ -53,7 +53,7 @@ class OrderController extends Controller
         $isViewingDrafts = $request->input('filter_status') === 'draft';
         $isViewingNhapKho = $request->input('filter_nhap_kho') == '1';
 
-        $query = Order::with([
+        $relations = [
             'customer',
             'supplies.items',
             'supplies.minLateItems',
@@ -61,9 +61,13 @@ class OrderController extends Controller
             'accountantApprover',
             'technicalApprover',
             'rejecter',
-            'receipts',
-            'issues',
-        ])
+        ];
+        if ($isViewingNhapKho) {
+            $relations[] = 'receipts';
+            $relations[] = 'issues';
+        }
+
+        $query = Order::with($relations)
             ->when($user && !$user->canViewAllMarketGroups(), function ($q) use ($user) {
                 $userMarketGroupIds = $user->marketGroups()->pluck('market_groups.id');
                 $q->whereHas('customer', function ($cq) use ($userMarketGroupIds) {
@@ -103,7 +107,7 @@ class OrderController extends Controller
             ->when($request->filled('filter_type'), function ($q) use ($request) {
                 $q->where('type', $request->filter_type);
             })
-            ->when($request->filled('filter_warehouse_status'), function ($q) use ($request) {
+            ->when($isViewingNhapKho && $request->filled('filter_warehouse_status'), function ($q) use ($request) {
                 $whStatus = $request->filter_warehouse_status;
                 if ($whStatus === 'missing_issue') {
                     $q->whereDoesntHave('issues');
@@ -437,7 +441,7 @@ class OrderController extends Controller
             ->when($request->filled('filter_type'), function ($q) use ($request) {
                 $q->where('type', $request->filter_type);
             })
-            ->when($request->filled('filter_warehouse_status'), function ($q) use ($request) {
+            ->when($isViewingNhapKho && $request->filled('filter_warehouse_status'), function ($q) use ($request) {
                 $whStatus = $request->filter_warehouse_status;
                 if ($whStatus === 'missing_issue') {
                     $q->whereDoesntHave('issues');

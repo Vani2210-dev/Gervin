@@ -347,7 +347,9 @@
                                 <th scope="col" class="px-3 whitespace-nowrap" style="min-width: 120px;">Mã đơn</th>
                                 <th scope="col" class="px-3 whitespace-nowrap" style="min-width: 90px;">Loại đơn</th>
                                 <th scope="col" class="px-3 whitespace-nowrap" style="min-width: 110px;">Trạng thái</th>
+                                @if(!empty($isViewingNhapKho))
                                 <th scope="col" class="text-center whitespace-nowrap px-3" style="min-width: 155px;">Phiếu kho (PXK / PNK)</th>
+                                @endif
                                 <th scope="col" class="px-3 whitespace-nowrap" style="min-width: 130px;">Tên công trình</th>
                                 <th scope="col" class="px-3 whitespace-nowrap" style="min-width: 140px;">Tên khách hàng</th>
                                 <th scope="col" class="text-center whitespace-nowrap px-3" style="min-width: 85px;">Số tấm</th>
@@ -476,6 +478,7 @@
                                         </span>
                                     @endif
                                 </td>
+                                @if(!empty($isViewingNhapKho))
                                 {{-- Phiếu kho (PXK / PNK) --}}
                                 <td class="px-3 align-middle whitespace-nowrap text-center">
                                     <div class="inline-flex flex-col gap-1 items-stretch justify-center min-w-[135px]">
@@ -530,6 +533,7 @@
                                         @endif
                                     </div>
                                 </td>
+                                @endif
                                 <td class="px-3 align-middle whitespace-nowrap">
                                     <span class="text-sm font-semibold text-neutral-900 truncate max-w-[200px] inline-block" title="{{ $order->customer_name }}">{{ $order->customer_name ?: '—' }}</span>
                                 </td>
@@ -645,7 +649,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="{{ $canBulkDeleteOrders ? 16 : 15 }}" class="text-center py-8">
+                                <td colspan="{{ ($canBulkDeleteOrders ? 1 : 0) + (!empty($isViewingNhapKho) ? 15 : 14) }}" class="text-center py-8">
                                     <p class="text-neutral-500">Chưa có đơn hàng nào</p>
                                 </td>
                             </tr>
@@ -716,6 +720,7 @@
                     <option value="service" {{ request('filter_type') === 'service' ? 'selected' : '' }}>Dịch vụ & Vật tư</option>
                 </select>
             </div>
+            @if(!empty($isViewingNhapKho))
             <div class="form-group md:col-span-2">
                 <label class="form-label font-semibold text-sm text-neutral-600">Trạng thái phiếu kho (PXK / PNK)</label>
                 <select name="filter_warehouse_status" class="form-select rounded-lg">
@@ -728,6 +733,7 @@
                     <option value="completed_both" {{ request('filter_warehouse_status') === 'completed_both' ? 'selected' : '' }}>Đã hoàn tất kho (Đủ cả PXK & PNK)</option>
                 </select>
             </div>
+            @endif
             <div class="form-group md:col-span-2">
                 <label class="form-label font-semibold text-sm text-neutral-600 mb-1.5 block">Thời gian đặt đơn</label>
                 <x-flexible-date-filter :dateMode="$dateMode" :dateVal="$dateVal" :standalone="false" formId="orderFilterModalForm" prefix="modal_order_fdf" />
