@@ -61,6 +61,8 @@ class OrderController extends Controller
             'accountantApprover',
             'technicalApprover',
             'rejecter',
+            'receipts',
+            'issues',
         ])
             ->when($user && !$user->canViewAllMarketGroups(), function ($q) use ($user) {
                 $userMarketGroupIds = $user->marketGroups()->pluck('market_groups.id');
@@ -100,6 +102,24 @@ class OrderController extends Controller
             })
             ->when($request->filled('filter_type'), function ($q) use ($request) {
                 $q->where('type', $request->filter_type);
+            })
+            ->when($request->filled('filter_warehouse_status'), function ($q) use ($request) {
+                $whStatus = $request->filter_warehouse_status;
+                if ($whStatus === 'missing_issue') {
+                    $q->whereDoesntHave('issues');
+                } elseif ($whStatus === 'has_issue') {
+                    $q->whereHas('issues');
+                } elseif ($whStatus === 'missing_receipt') {
+                    $q->whereDoesntHave('receipts');
+                } elseif ($whStatus === 'has_receipt') {
+                    $q->whereHas('receipts');
+                } elseif ($whStatus === 'missing_any') {
+                    $q->where(function($sub) {
+                        $sub->whereDoesntHave('issues')->orWhereDoesntHave('receipts');
+                    });
+                } elseif ($whStatus === 'completed_both') {
+                    $q->whereHas('issues')->whereHas('receipts');
+                }
             });
 
         $dateFilterData = [];
@@ -188,6 +208,8 @@ class OrderController extends Controller
             })
             ->count();
 
+        $filterWarehouseStatus = $request->input('filter_warehouse_status', 'all');
+
         return view('orders.index', compact(
             'orders', 
             'perPage', 
@@ -206,7 +228,8 @@ class OrderController extends Controller
             'dateVal',
             'dateLabel',
             'startDate',
-            'endDate'
+            'endDate',
+            'filterWarehouseStatus'
         ));
     }
 
@@ -413,6 +436,24 @@ class OrderController extends Controller
             })
             ->when($request->filled('filter_type'), function ($q) use ($request) {
                 $q->where('type', $request->filter_type);
+            })
+            ->when($request->filled('filter_warehouse_status'), function ($q) use ($request) {
+                $whStatus = $request->filter_warehouse_status;
+                if ($whStatus === 'missing_issue') {
+                    $q->whereDoesntHave('issues');
+                } elseif ($whStatus === 'has_issue') {
+                    $q->whereHas('issues');
+                } elseif ($whStatus === 'missing_receipt') {
+                    $q->whereDoesntHave('receipts');
+                } elseif ($whStatus === 'has_receipt') {
+                    $q->whereHas('receipts');
+                } elseif ($whStatus === 'missing_any') {
+                    $q->where(function($sub) {
+                        $sub->whereDoesntHave('issues')->orWhereDoesntHave('receipts');
+                    });
+                } elseif ($whStatus === 'completed_both') {
+                    $q->whereHas('issues')->whereHas('receipts');
+                }
             });
 
         // Date Filter Mode: day | month | year | all | custom

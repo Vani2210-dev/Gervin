@@ -550,20 +550,25 @@ window.isNhapKhoSelected = function() {
     if (nhapKhoId && String(val) === nhapKhoId) {
         return true;
     }
+    const checkText = function(str) {
+        if (!str) return false;
+        const s = str.toLowerCase();
+        return s.includes('nhập kho') || s.includes('nhap kho') || s.includes('lệnh sản xuất') || s.includes('lenh san xuat') || s.includes('lsx');
+    };
     if (custSelect.tomselect) {
         const item = custSelect.tomselect.getItem(val);
         const text = item ? (item.textContent || '') : '';
-        if (text.toLowerCase().includes('nhập kho') || text.toLowerCase().includes('nhap kho')) {
+        if (checkText(text)) {
             return true;
         }
     } else if (custSelect.selectedIndex >= 0) {
         const text = custSelect.options[custSelect.selectedIndex]?.text || '';
-        if (text.toLowerCase().includes('nhập kho') || text.toLowerCase().includes('nhap kho')) {
+        if (checkText(text)) {
             return true;
         }
     }
     const cName = document.querySelector('input[name="customer_name"]')?.value || '';
-    if (cName.trim().toLowerCase() === 'nhập kho' || cName.trim().toLowerCase() === 'nhap kho') {
+    if (checkText(cName)) {
         return true;
     }
     return false;

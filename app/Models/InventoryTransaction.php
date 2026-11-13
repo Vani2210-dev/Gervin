@@ -61,7 +61,16 @@ class InventoryTransaction extends Model
         if ($this->item_type === 'edge_band') {
             return $this->woodBoard?->edge_band_code ?? ('CHI-' . ($this->woodBoard?->color_code ?? ''));
         }
-        return $this->boardPrice?->code ?? $this->woodBoard?->code ?? '-';
+        if ($this->boardPrice) {
+            return $this->boardPrice->code;
+        }
+        if ($this->wood_board_id) {
+            $maybePrice = WoodBoardPrice::find($this->wood_board_id);
+            if ($maybePrice) {
+                return $maybePrice->code;
+            }
+        }
+        return $this->woodBoard?->code ?? '-';
     }
 
     public function getItemNameAttribute(): string
@@ -69,7 +78,16 @@ class InventoryTransaction extends Model
         if ($this->item_type === 'edge_band') {
             return $this->woodBoard?->edge_band_name ?? ('Chỉ dán viền ' . ($this->woodBoard?->color_code ?? ''));
         }
-        return $this->boardPrice?->name ?? $this->woodBoard?->name ?? '-';
+        if ($this->boardPrice) {
+            return $this->boardPrice->name;
+        }
+        if ($this->wood_board_id) {
+            $maybePrice = WoodBoardPrice::find($this->wood_board_id);
+            if ($maybePrice) {
+                return $maybePrice->name;
+            }
+        }
+        return $this->woodBoard?->name ?? '-';
     }
 
     public function getItemUnitAttribute(): string
@@ -86,6 +104,11 @@ class InventoryTransaction extends Model
             return 'Chỉ dán viền (' . ($this->woodBoard?->price_group ?? 'Tiêu chuẩn') . ')';
         }
         return $this->woodBoard?->category ?? 'Tấm ván';
+    }
+
+    public function getItemOriginCodeAttribute(): string
+    {
+        return $this->woodBoard?->origin_code ?? '';
     }
 
     public function getEditUrlAttribute(): ?string

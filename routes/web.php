@@ -339,6 +339,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('customers/{customer}/default-discount', [CustomerController::class, 'saveDefaultDiscount'])->name('customers.default-discount.save');
     Route::post('customers/{customer}/apply-monthly-discount', [CustomerController::class, 'applyMonthlyDiscount'])->name('customers.apply-monthly-discount');
     Route::post('customers/{customer}/cancel-monthly-discount', [CustomerController::class, 'cancelMonthlyDiscount'])->name('customers.cancel-monthly-discount');
+    Route::post('customers/{customer}/rebuild-debts', [CustomerController::class, 'rebuildDebts'])->name('customers.rebuild-debts');
 
     // Market Groups (Nhóm thị trường)
     Route::resource('market-groups', MarketGroupController::class)->parameters(['market-groups' => 'marketGroup'])->names('market-groups');

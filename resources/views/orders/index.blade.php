@@ -102,6 +102,9 @@
                             @if(!empty($isViewingNhapKho))
                                 <input type="hidden" name="filter_nhap_kho" value="1">
                             @endif
+                            @if(request()->filled('filter_warehouse_status'))
+                                <input type="hidden" name="filter_warehouse_status" value="{{ request('filter_warehouse_status') }}">
+                            @endif
                             @if($dateMode && $dateMode !== 'all')
                                 <input type="hidden" name="date_mode" value="{{ $dateMode }}">
                                 <input type="hidden" name="date_val" value="{{ $dateVal }}">
@@ -201,6 +204,9 @@
                             @if(!empty($isViewingNhapKho))
                                 <input type="hidden" name="filter_nhap_kho" value="1">
                             @endif
+                            @if(request()->filled('filter_warehouse_status'))
+                                <input type="hidden" name="filter_warehouse_status" value="{{ request('filter_warehouse_status') }}">
+                            @endif
                             @if($dateMode && $dateMode !== 'all')
                                 <input type="hidden" name="date_mode" value="{{ $dateMode }}">
                                 <input type="hidden" name="date_val" value="{{ $dateVal }}">
@@ -290,6 +296,44 @@
                 </div>
                 @endif
 
+                @if(!empty($isViewingNhapKho))
+                {{-- Thanh lọc nhanh phiếu kho cho Lệnh sản xuất --}}
+                <div class="flex items-center gap-2 mb-3 px-1 overflow-x-auto flex-wrap">
+                    <span class="text-xs font-semibold text-neutral-500 mr-1 flex items-center gap-1">
+                        <iconify-icon icon="solar:box-minimalistic-bold-duotone" class="text-base text-sky-600"></iconify-icon>
+                        Lọc phiếu kho:
+                    </span>
+                    <a href="{{ request()->fullUrlWithQuery(['filter_warehouse_status' => 'all', 'page' => null]) }}"
+                       class="px-3 py-1 rounded-full text-xs font-semibold transition-all {{ ($filterWarehouseStatus ?? 'all') === 'all' ? 'bg-sky-600 text-white shadow-2xs' : 'bg-neutral-100 hover:bg-neutral-200 text-neutral-700' }}">
+                        Tất cả
+                    </a>
+                    <a href="{{ request()->fullUrlWithQuery(['filter_warehouse_status' => 'missing_issue', 'page' => null]) }}"
+                       class="px-3 py-1 rounded-full text-xs font-semibold transition-all {{ ($filterWarehouseStatus ?? '') === 'missing_issue' ? 'bg-rose-600 text-white shadow-2xs' : 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200' }}">
+                        Chưa xuất kho
+                    </a>
+                    <a href="{{ request()->fullUrlWithQuery(['filter_warehouse_status' => 'has_issue', 'page' => null]) }}"
+                       class="px-3 py-1 rounded-full text-xs font-semibold transition-all {{ ($filterWarehouseStatus ?? '') === 'has_issue' ? 'bg-rose-700 text-white shadow-2xs' : 'bg-rose-50/60 hover:bg-rose-100 text-rose-700 border border-rose-200' }}">
+                        Đã có PXK
+                    </a>
+                    <a href="{{ request()->fullUrlWithQuery(['filter_warehouse_status' => 'missing_receipt', 'page' => null]) }}"
+                       class="px-3 py-1 rounded-full text-xs font-semibold transition-all {{ ($filterWarehouseStatus ?? '') === 'missing_receipt' ? 'bg-primary-600 text-white shadow-2xs' : 'bg-primary-50 hover:bg-primary-100 text-primary-700 border border-primary-200' }}">
+                        Chưa nhập kho
+                    </a>
+                    <a href="{{ request()->fullUrlWithQuery(['filter_warehouse_status' => 'has_receipt', 'page' => null]) }}"
+                       class="px-3 py-1 rounded-full text-xs font-semibold transition-all {{ ($filterWarehouseStatus ?? '') === 'has_receipt' ? 'bg-primary-700 text-white shadow-2xs' : 'bg-primary-50/60 hover:bg-primary-100 text-primary-700 border border-primary-200' }}">
+                        Đã có PNK
+                    </a>
+                    <a href="{{ request()->fullUrlWithQuery(['filter_warehouse_status' => 'missing_any', 'page' => null]) }}"
+                       class="px-3 py-1 rounded-full text-xs font-semibold transition-all {{ ($filterWarehouseStatus ?? '') === 'missing_any' ? 'bg-amber-600 text-white shadow-2xs' : 'bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200' }}">
+                        Thiếu PXK hoặc PNK
+                    </a>
+                    <a href="{{ request()->fullUrlWithQuery(['filter_warehouse_status' => 'completed_both', 'page' => null]) }}"
+                       class="px-3 py-1 rounded-full text-xs font-semibold transition-all {{ ($filterWarehouseStatus ?? '') === 'completed_both' ? 'bg-emerald-600 text-white shadow-2xs' : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200' }}">
+                        Đã đủ PXK & PNK
+                    </a>
+                </div>
+                @endif
+
                 <div class="table-responsive scroll-sm">
                     <table class="table bordered-table sm-table mb-0 min-w-[1380px]">
                         <thead>
@@ -303,6 +347,7 @@
                                 <th scope="col" class="px-3 whitespace-nowrap" style="min-width: 120px;">Mã đơn</th>
                                 <th scope="col" class="px-3 whitespace-nowrap" style="min-width: 90px;">Loại đơn</th>
                                 <th scope="col" class="px-3 whitespace-nowrap" style="min-width: 110px;">Trạng thái</th>
+                                <th scope="col" class="text-center whitespace-nowrap px-3" style="min-width: 155px;">Phiếu kho (PXK / PNK)</th>
                                 <th scope="col" class="px-3 whitespace-nowrap" style="min-width: 130px;">Tên công trình</th>
                                 <th scope="col" class="px-3 whitespace-nowrap" style="min-width: 140px;">Tên khách hàng</th>
                                 <th scope="col" class="text-center whitespace-nowrap px-3" style="min-width: 85px;">Số tấm</th>
@@ -431,6 +476,60 @@
                                         </span>
                                     @endif
                                 </td>
+                                {{-- Phiếu kho (PXK / PNK) --}}
+                                <td class="px-3 align-middle whitespace-nowrap text-center">
+                                    <div class="inline-flex flex-col gap-1 items-stretch justify-center min-w-[135px]">
+                                        {{-- 1. Phiếu Xuất Kho (PXK) --}}
+                                        @if($order->issues->isNotEmpty())
+                                            @foreach($order->issues as $issue)
+                                                <a href="{{ route('inventory.issues.show', $issue) }}" target="_blank"
+                                                   class="inline-flex items-center justify-between gap-1.5 px-2 py-0.5 rounded text-[11px] font-bold bg-rose-50 text-rose-700 hover:bg-rose-100 hover:text-rose-900 border border-rose-200 transition-colors shadow-2xs"
+                                                   title="Xem chi tiết Phiếu Xuất Kho {{ $issue->code }} ({{ floatval($issue->total_quantity) }} tấm) - Bấm mở tab mới">
+                                                    <span class="inline-flex items-center gap-1">
+                                                        <iconify-icon icon="solar:export-bold" class="text-xs text-rose-600 shrink-0"></iconify-icon>
+                                                        <span>{{ $issue->code }}</span>
+                                                    </span>
+                                                    <span class="text-[10px] text-rose-600 font-bold bg-white/80 px-1 py-0.2 rounded border border-rose-200/60">{{ floatval($issue->total_quantity) == intval($issue->total_quantity) ? number_format($issue->total_quantity, 0, ',', '.') : number_format($issue->total_quantity, 1, ',', '.') }}t</span>
+                                                </a>
+                                            @endforeach
+                                        @else
+                                            @if(!empty($isViewingNhapKho) || $order->isNhapKho())
+                                                <a href="{{ route('inventory.issues.create', ['order_id' => $order->id]) }}" target="_blank"
+                                                   class="inline-flex items-center justify-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold text-rose-600 bg-rose-50/50 hover:bg-rose-100 border border-dashed border-rose-300 transition-colors"
+                                                   title="Đơn chưa có Phiếu Xuất Kho - Bấm để tạo PXK">
+                                                    <iconify-icon icon="lucide:plus" class="text-xs shrink-0"></iconify-icon>
+                                                    <span>Chưa tạo PXK</span>
+                                                </a>
+                                            @else
+                                                <span class="text-neutral-300 text-xs">—</span>
+                                            @endif
+                                        @endif
+
+                                        {{-- 2. Phiếu Nhập Kho (PNK) --}}
+                                        @if($order->receipts->isNotEmpty())
+                                            @foreach($order->receipts as $receipt)
+                                                <a href="{{ route('inventory.receipts.show', $receipt) }}" target="_blank"
+                                                   class="inline-flex items-center justify-between gap-1.5 px-2 py-0.5 rounded text-[11px] font-bold bg-primary-50 text-primary-700 hover:bg-primary-100 hover:text-primary-900 border border-primary-200 transition-colors shadow-2xs"
+                                                   title="Xem chi tiết Phiếu Nhập Kho {{ $receipt->code }} ({{ floatval($receipt->total_quantity) }} tấm) - Bấm mở tab mới">
+                                                    <span class="inline-flex items-center gap-1">
+                                                        <iconify-icon icon="solar:import-bold" class="text-xs text-primary-600 shrink-0"></iconify-icon>
+                                                        <span>{{ $receipt->code }}</span>
+                                                    </span>
+                                                    <span class="text-[10px] text-primary-600 font-bold bg-white/80 px-1 py-0.2 rounded border border-primary-200/60">{{ floatval($receipt->total_quantity) == intval($receipt->total_quantity) ? number_format($receipt->total_quantity, 0, ',', '.') : number_format($receipt->total_quantity, 1, ',', '.') }}t</span>
+                                                </a>
+                                            @endforeach
+                                        @else
+                                            @if(!empty($isViewingNhapKho) || $order->isNhapKho())
+                                                <a href="{{ route('inventory.receipts.create', ['order_id' => $order->id]) }}" target="_blank"
+                                                   class="inline-flex items-center justify-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold text-primary-600 bg-primary-50/50 hover:bg-primary-100 border border-dashed border-primary-300 transition-colors"
+                                                   title="Đơn chưa có Phiếu Nhập Kho - Bấm để tạo PNK">
+                                                    <iconify-icon icon="lucide:plus" class="text-xs shrink-0"></iconify-icon>
+                                                    <span>Chưa tạo PNK</span>
+                                                </a>
+                                            @endif
+                                        @endif
+                                    </div>
+                                </td>
                                 <td class="px-3 align-middle whitespace-nowrap">
                                     <span class="text-sm font-semibold text-neutral-900 truncate max-w-[200px] inline-block" title="{{ $order->customer_name }}">{{ $order->customer_name ?: '—' }}</span>
                                 </td>
@@ -546,7 +645,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="{{ $canBulkDeleteOrders ? 15 : 14 }}" class="text-center py-8">
+                                <td colspan="{{ $canBulkDeleteOrders ? 16 : 15 }}" class="text-center py-8">
                                     <p class="text-neutral-500">Chưa có đơn hàng nào</p>
                                 </td>
                             </tr>
@@ -615,6 +714,18 @@
                     <option value="min_late" {{ request('filter_type') === 'min_late' ? 'selected' : '' }}>Lệnh sản xuất (Min-late)</option>
                     <option value="Flywood" {{ request('filter_type') === 'Flywood' ? 'selected' : '' }}>Flywood</option>
                     <option value="service" {{ request('filter_type') === 'service' ? 'selected' : '' }}>Dịch vụ & Vật tư</option>
+                </select>
+            </div>
+            <div class="form-group md:col-span-2">
+                <label class="form-label font-semibold text-sm text-neutral-600">Trạng thái phiếu kho (PXK / PNK)</label>
+                <select name="filter_warehouse_status" class="form-select rounded-lg">
+                    <option value="all" {{ request('filter_warehouse_status') === 'all' || !request('filter_warehouse_status') ? 'selected' : '' }}>Tất cả</option>
+                    <option value="missing_issue" {{ request('filter_warehouse_status') === 'missing_issue' ? 'selected' : '' }}>Chưa xuất kho (Chưa có PXK)</option>
+                    <option value="has_issue" {{ request('filter_warehouse_status') === 'has_issue' ? 'selected' : '' }}>Đã xuất kho (Đã có PXK)</option>
+                    <option value="missing_receipt" {{ request('filter_warehouse_status') === 'missing_receipt' ? 'selected' : '' }}>Chưa nhập kho (Chưa có PNK)</option>
+                    <option value="has_receipt" {{ request('filter_warehouse_status') === 'has_receipt' ? 'selected' : '' }}>Đã nhập kho (Đã có PNK)</option>
+                    <option value="missing_any" {{ request('filter_warehouse_status') === 'missing_any' ? 'selected' : '' }}>Thiếu PXK hoặc PNK</option>
+                    <option value="completed_both" {{ request('filter_warehouse_status') === 'completed_both' ? 'selected' : '' }}>Đã hoàn tất kho (Đủ cả PXK & PNK)</option>
                 </select>
             </div>
             <div class="form-group md:col-span-2">
@@ -1231,6 +1342,20 @@
                 <a href="{{ route('orders.show', $order) }}?open_additional=1" class="flex items-center gap-2 px-4 py-2 hover:bg-neutral-50 text-neutral-700 transition-colors">
                     <iconify-icon icon="lucide:plus-circle" class="text-success-500 text-lg"></iconify-icon>
                     <span>Tạo đơn bổ sung</span>
+                </a>
+            </li>
+
+            {{-- Phiếu kho (PXK / PNK) --}}
+            <li class="border-t border-neutral-100 my-1 pt-1">
+                <a href="{{ route('inventory.issues.create') }}?order_id={{ $order->id }}" class="flex items-center gap-2 px-4 py-2 hover:bg-rose-50 text-rose-700 transition-colors font-medium">
+                    <iconify-icon icon="solar:export-bold" class="text-rose-600 text-lg"></iconify-icon>
+                    <span>Tạo phiếu xuất kho (PXK)</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('inventory.receipts.create') }}?order_id={{ $order->id }}" class="flex items-center gap-2 px-4 py-2 hover:bg-primary-50 text-primary-700 transition-colors font-medium">
+                    <iconify-icon icon="solar:import-bold" class="text-primary-600 text-lg"></iconify-icon>
+                    <span>Tạo phiếu nhập kho (PNK)</span>
                 </a>
             </li>
             @endcan

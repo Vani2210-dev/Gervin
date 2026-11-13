@@ -1232,34 +1232,41 @@ class InventoryService
         // Kiểm tra xem đơn hàng có phân định Thêm kho / Trừ kho không
         // Phân định khi:
         // 1. Đơn là Lệnh sản xuất / nhập kho nội bộ ($order->isNhapKho())
-        // 2. HOẶC trong đơn có ít nhất 1 vật tư có inventory_action === 'subtract'
-        $hasActionDistinction = $order->isNhapKho()
-            || $order->supplies->contains(fn($s) => ($s->inventory_action ?? '') === 'subtract');
+        // 2. HOẶC trong đơn có chứa vật tư có inventory_action === 'subtract'
+        // 3. HOẶC trong đơn có chứa vật tư có inventory_action === 'add' trong khi là đơn sản xuất
+        $isNK = $order->isNhapKho();
+        $hasSubtract = $order->supplies->contains(fn($s) => ($s->inventory_action ?? '') === 'subtract');
+        $hasAdd = $order->supplies->contains(fn($s) => ($s->inventory_action ?? '') === 'add');
+        $hasActionDistinction = $isNK || ($hasSubtract && $hasAdd);
 
         foreach ($order->supplies as $supply) {
             $code = trim($supply->order_supply_code ?: '');
             $name = trim($supply->supply_name ?: '');
             if (!$code && !$name) continue;
 
-            $action = $supply->inventory_action ?? 'add';
+            $action = $supply->inventory_action ?? ($isNK ? 'add' : 'subtract');
 
             // Lọc theo loại phiếu kho:
             if ($type === 'issue' || $type === 'pxk') {
                 // Phiếu Xuất Kho (PXK):
-                // Nếu đơn hàng có phân định Thêm/Trừ kho:
-                // CHỈ lấy các vật tư 'subtract' (Trừ kho) để xuất khỏi kho xưởng đi làm.
-                // Tuyệt đối bỏ qua các vật tư 'add' (Thêm kho - là thành phẩm ép xong mới nhập kho).
-                if ($hasActionDistinction && $action !== 'subtract') {
+                // 1. Tuyệt đối không lấy các vật tư 'add' (Thêm kho) nếu đơn là Lệnh sản xuất / Nhập kho,
+                //    hoặc đơn có phân định Thêm/Trừ kho.
+                if (($isNK || $hasActionDistinction) && $action !== 'subtract') {
                     continue;
                 }
             } elseif ($type === 'receipt' || $type === 'pnk') {
                 // Phiếu Nhập Kho (PNK):
-                // Tuyệt đối không lấy các vật tư 'subtract' (Trừ kho).
+                // 1. Tuyệt đối không lấy các vật tư 'subtract' (Trừ kho).
                 if ($action === 'subtract') {
                     continue;
                 }
-                // Nếu đơn hàng có phân định, chỉ lấy các vật tư 'add' (Thêm kho - thành phẩm nhập kho).
-                if ($hasActionDistinction && $action !== 'add') {
+                // 2. Nếu là đơn bán hàng thường (không phải Lệnh SX / Nhập kho) và không có phân định:
+                //    Đơn bán hàng thường không xuất hiện trong PNK (tránh nạp nhầm nguyên liệu thành nhập kho).
+                if (!$isNK && !$hasActionDistinction) {
+                    continue;
+                }
+                // 3. Nếu đơn là Lệnh sản xuất / Nhập kho hoặc có phân định, chỉ lấy các vật tư 'add' (Thêm kho - thành phẩm).
+                if (($isNK || $hasActionDistinction) && $action !== 'add') {
                     continue;
                 }
             }

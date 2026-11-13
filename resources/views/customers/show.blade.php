@@ -250,6 +250,15 @@
                     </span>
                 @endif
             </button>
+
+            <button type="button" onclick="switchCustomerTab('daily_debts')" id="tab-btn-daily_debts"
+                class="flex items-center gap-2.5 px-5 py-3 rounded-xl font-bold text-xs sm:text-sm transition-all {{ $currTab === 'daily_debts' ? 'bg-primary-600 text-white shadow-sm shadow-primary-200' : 'bg-neutral-50 hover:bg-neutral-100 text-neutral-600' }}">
+                <iconify-icon icon="solar:calendar-date-bold-duotone" class="text-lg"></iconify-icon>
+                <span>Sổ công nợ theo ngày</span>
+                <span id="tab-badge-daily_debts" class="px-2 py-0.5 rounded-full text-xs font-extrabold {{ $currTab === 'daily_debts' ? 'bg-white/20 text-white' : 'bg-neutral-200 text-neutral-700' }}">
+                    {{ $dailyDebts->total() }}
+                </span>
+            </button>
         </div>
     </div>
 
@@ -1269,6 +1278,167 @@
         </div>
 
     </div>
+
+    {{-- ======================================================== --}}
+    {{-- TAB 5: SỔ CÔNG NỢ THEO NGÀY                             --}}
+    {{-- ======================================================== --}}
+    <div id="tab-pane-daily_debts" class="space-y-6 {{ $currTab === 'daily_debts' ? '' : 'hidden' }}">
+        <div class="bg-white rounded-2xl border border-neutral-200/80 shadow-xs overflow-hidden">
+            {{-- Header --}}
+            <div class="p-5 border-b border-neutral-200 flex flex-wrap items-center justify-between gap-3 bg-neutral-50/50">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center text-xl shrink-0">
+                        <iconify-icon icon="solar:calendar-date-bold-duotone"></iconify-icon>
+                    </div>
+                    <div>
+                        <h6 class="font-bold text-base text-neutral-800 m-0">Sổ cái công nợ theo ngày</h6>
+                        <span class="text-xs text-neutral-400">
+                            Nhật ký chốt công nợ tự động theo từng ngày (Nợ đầu ngày + Phát sinh đơn - Đã thanh toán = Nợ cuối ngày). Nợ đầu ngày hôm sau bằng nợ cuối ngày hôm trước.
+                        </span>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <form method="POST" action="{{ route('customers.rebuild-debts', $customer) }}" onsubmit="return confirm('Đồng bộ và tính toán lại toàn bộ số dư công nợ theo ngày từ đầu cho khách hàng này?')" class="m-0">
+                        @csrf
+                        <button type="submit" class="btn bg-white hover:bg-neutral-50 text-neutral-700 border border-neutral-200 px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 shadow-xs transition" title="Tính toán đối soát lại toàn bộ từ đầu">
+                            <iconify-icon icon="lucide:refresh-cw" class="text-sm text-primary-600"></iconify-icon>
+                            <span>Đồng bộ lại sổ công nợ</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            {{-- Summary cards --}}
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 p-5 bg-neutral-50/30 border-b border-neutral-100">
+                <div class="bg-white p-4 rounded-xl border border-neutral-200/70 shadow-xs">
+                    <div class="text-xs text-neutral-500 font-medium">Tổng tiền đơn hàng</div>
+                    <div class="text-lg font-bold text-neutral-800 mt-1">
+                        {{ number_format($totalOrdersAmount, 0, ',', '.') }}₫
+                    </div>
+                    <div class="text-[11px] text-neutral-400 mt-0.5">{{ $totalOrdersCount }} đơn hàng hợp lệ</div>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-neutral-200/70 shadow-xs">
+                    <div class="text-xs text-neutral-500 font-medium">Tổng đã thanh toán</div>
+                    <div class="text-lg font-bold text-emerald-600 mt-1">
+                        {{ number_format($totalPaid, 0, ',', '.') }}₫
+                    </div>
+                    <div class="text-[11px] text-neutral-400 mt-0.5">Toàn bộ phiếu thu đã ghi nhận</div>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-neutral-200/70 shadow-xs">
+                    <div class="text-xs text-neutral-500 font-medium">Tổng dư nợ hiện tại</div>
+                    <div class="text-lg font-bold {{ $customer->debt > 0 ? 'text-rose-600' : 'text-emerald-600' }} mt-1">
+                        {{ number_format($customer->debt, 0, ',', '.') }}₫
+                    </div>
+                    <div class="text-[11px] text-neutral-400 mt-0.5">Khớp tuyệt đối với số dư cuối cùng</div>
+                </div>
+            </div>
+
+            {{-- Table --}}
+            <div class="overflow-x-auto">
+                <table class="table bordered-table sm-table mb-0 w-full text-xs">
+                    <thead>
+                        <tr class="bg-neutral-50 text-neutral-600 font-bold border-b border-neutral-200">
+                            <th class="w-12 text-center py-3">STT</th>
+                            <th class="w-32 text-center py-3">Ngày</th>
+                            <th class="w-40 text-right py-3">Nợ đầu ngày (₫)</th>
+                            <th class="w-44 text-right py-3">Phát sinh đơn (₫)</th>
+                            <th class="w-44 text-right py-3">Đã thanh toán (₫)</th>
+                            <th class="w-44 text-right py-3">Nợ cuối ngày (₫)</th>
+                            <th class="text-center py-3">Chi tiết trong ngày</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-neutral-100">
+                        @php $stt = ($dailyDebts->currentPage() - 1) * $dailyDebts->perPage(); @endphp
+                        @forelse($dailyDebts as $record)
+                        @php $stt++; @endphp
+                        <tr class="hover:bg-neutral-50/70 transition-colors">
+                            <td class="text-center font-medium text-neutral-400 py-3">{{ $stt }}</td>
+                            <td class="text-center py-3">
+                                <span class="font-bold text-neutral-800 block text-xs">
+                                    {{ \Carbon\Carbon::parse($record->date)->format('d/m/Y') }}
+                                </span>
+                                <span class="text-[10px] text-neutral-400">
+                                    {{ \Carbon\Carbon::parse($record->date)->locale('vi')->isoFormat('dddd') }}
+                                </span>
+                            </td>
+                            <td class="text-right font-medium text-neutral-600 py-3">
+                                {{ number_format($record->opening_debt, 0, ',', '.') }}₫
+                            </td>
+                            <td class="text-right py-3">
+                                @if($record->order_amount > 0)
+                                    <span class="font-bold text-neutral-800">
+                                        +{{ number_format($record->order_amount, 0, ',', '.') }}₫
+                                    </span>
+                                    <span class="block text-[11px] text-neutral-400">
+                                        ({{ $record->orders_count }} đơn)
+                                    </span>
+                                @else
+                                    <span class="text-neutral-300">—</span>
+                                @endif
+                            </td>
+                            <td class="text-right py-3">
+                                @if($record->paid_amount > 0)
+                                    <span class="font-bold text-emerald-600">
+                                        -{{ number_format($record->paid_amount, 0, ',', '.') }}₫
+                                    </span>
+                                    <span class="block text-[11px] text-emerald-500">
+                                        ({{ $record->payments_count }} phiếu thu)
+                                    </span>
+                                @else
+                                    <span class="text-neutral-300">—</span>
+                                @endif
+                            </td>
+                            <td class="text-right font-bold py-3">
+                                <span class="{{ $record->closing_debt > 0 ? 'text-rose-600' : 'text-neutral-700' }} font-bold text-sm">
+                                    {{ number_format($record->closing_debt, 0, ',', '.') }}₫
+                                </span>
+                            </td>
+                            <td class="text-center py-3">
+                                <div class="inline-flex items-center gap-1.5">
+                                    @if($record->orders_count > 0)
+                                        <a href="{{ route('customers.show', ['customer' => $customer->id, 'tab' => 'orders', 'date_mode' => 'day', 'date_val' => $record->date]) }}"
+                                           class="px-2 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-[11px] font-semibold border border-blue-200 transition"
+                                           title="Xem danh sách đơn hàng ngày {{ \Carbon\Carbon::parse($record->date)->format('d/m/Y') }}">
+                                            Xem {{ $record->orders_count }} đơn
+                                        </a>
+                                    @endif
+                                    @if($record->payments_count > 0)
+                                        <a href="{{ route('customers.show', ['customer' => $customer->id, 'tab' => 'payments', 'payment_date' => $record->date]) }}"
+                                           class="px-2 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-[11px] font-semibold border border-emerald-200 transition"
+                                           title="Xem phiếu thu ngày {{ \Carbon\Carbon::parse($record->date)->format('d/m/Y') }}">
+                                            Xem {{ $record->payments_count }} phiếu thu
+                                        </a>
+                                    @endif
+                                    @if($record->orders_count == 0 && $record->payments_count == 0)
+                                        <span class="text-neutral-400 text-xs">Không có giao dịch</span>
+                                    @endif
+                                </div>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="7" class="text-center py-12 text-neutral-400">
+                                <iconify-icon icon="solar:calendar-date-bold-duotone" class="text-3xl mb-2 text-neutral-300 block mx-auto"></iconify-icon>
+                                Chưa có nhật ký chốt công nợ ngày nào cho khách hàng này.
+                            </td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            {{-- Pagination --}}
+            @if($dailyDebts->hasPages())
+                <div class="p-4 border-t border-neutral-200 bg-white flex justify-between items-center">
+                    <span class="text-xs text-neutral-500">
+                        Hiển thị {{ $dailyDebts->firstItem() }} - {{ $dailyDebts->lastItem() }} trên tổng số {{ $dailyDebts->total() }} ngày chốt
+                    </span>
+                    {{ $dailyDebts->links() }}
+                </div>
+            @endif
+        </div>
+    </div>
 </div>
 
 {{-- ===== MODAL: THÊM THANH TOÁN ===== --}}
@@ -1700,7 +1870,7 @@
 @push('scripts')
 <script>
 function switchCustomerTab(tabName) {
-    const tabs = ['info', 'orders', 'payments', 'discount'];
+    const tabs = ['info', 'orders', 'payments', 'discount', 'daily_debts'];
     tabs.forEach(t => {
         const pane = document.getElementById('tab-pane-' + t);
         const btn = document.getElementById('tab-btn-' + t);

@@ -77,9 +77,9 @@
             @foreach($receipt->items as $idx => $it)
                 <tr>
                     <td class="text-center">{{ $idx + 1 }}</td>
-                    <td class="font-bold">{{ $it->material->code ?? '-' }}</td>
-                    <td>{{ $it->material->name ?? '-' }} ({{ $it->material->origin_code ?: 'QC' }})</td>
-                    <td class="text-center">{{ $it->material->unit ?? 'Tấm' }}</td>
+                    <td class="font-bold">{{ $it->item_sku }}</td>
+                    <td>{{ $it->item_name }} {{ ($it->item_origin_code ?: ($it->material->origin_code ?? '')) ? '(' . ($it->item_origin_code ?: $it->material->origin_code) . ')' : '' }}</td>
+                    <td class="text-center">{{ $it->item_unit }}</td>
                     <td class="text-right font-bold">{{ fmod($it->quantity, 1) == 0 ? number_format($it->quantity, 0, ',', '.') : number_format($it->quantity, 2, ',', '.') }}</td>
                     <td class="text-right">{{ $it->unit_price > 0 ? number_format($it->unit_price, 0, ',', '.') : '-' }}</td>
                     <td class="text-right font-bold">{{ $it->total_price > 0 ? number_format($it->total_price, 0, ',', '.') : '-' }}</td>

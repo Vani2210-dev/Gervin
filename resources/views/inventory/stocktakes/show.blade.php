@@ -182,19 +182,19 @@
                                         {{ $idx + 1 }}
                                     </td>
                                     <td class="py-3 px-3 font-bold text-neutral-900">
-                                        {{ $item->material->code ?? '-' }}
+                                        {{ $item->item_sku }}
                                     </td>
                                     <td class="py-3 px-3 font-medium text-neutral-600">
-                                        {{ $item->material->origin_code ?? '-' }}
+                                        {{ $item->item_origin_code ?: ($item->material->origin_code ?? '-') }}
                                     </td>
                                     <td class="py-3 px-4 text-neutral-800 font-semibold">
-                                        {{ $item->material->name ?? '-' }}
-                                        @if($item->material && $item->material->category)
-                                            <span class="block text-[10px] text-neutral-400 font-normal">{{ $item->material->category }}</span>
+                                        {{ $item->item_name }}
+                                        @if($item->item_category)
+                                            <span class="block text-[10px] text-neutral-400 font-normal">{{ $item->item_category }}</span>
                                         @endif
                                     </td>
                                     <td class="py-3 px-3 text-center text-neutral-600 font-medium">
-                                        {{ $item->material->unit ?? 'Tấm' }}
+                                        {{ $item->item_unit }}
                                     </td>
                                     <td class="py-3 px-3 text-right font-medium text-neutral-700">
                                         {{ fmod($item->book_quantity, 1) == 0 ? number_format($item->book_quantity, 0, ',', '.') : number_format($item->book_quantity, 2, ',', '.') }}

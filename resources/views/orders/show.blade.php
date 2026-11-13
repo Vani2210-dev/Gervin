@@ -530,7 +530,7 @@
                             </h6>
                             @if(($supply->inventory_action ?? '') === 'subtract')
                                 <span class="text-xs font-bold text-rose-700 bg-rose-50 px-2 py-1 rounded-lg border border-rose-200">Trừ kho</span>
-                            @elseif(($supply->inventory_action ?? '') === 'add' && (str_contains(mb_strtolower($acrylicOrder->customer_name ?? ''), 'nhập kho') || str_contains(mb_strtolower($acrylicOrder->customer_name ?? ''), 'nhap kho')))
+                            @elseif(($supply->inventory_action ?? '') === 'add' && ($acrylicOrder->isNhapKho() || str_contains(mb_strtolower($acrylicOrder->customer_name ?? ''), 'nhập kho') || str_contains(mb_strtolower($acrylicOrder->customer_name ?? ''), 'lệnh sản xuất') || str_contains(mb_strtolower($acrylicOrder->customer_name ?? ''), 'nhap kho')))
                                 <span class="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-200">Thêm kho</span>
                             @endif
                         </div>

@@ -97,11 +97,11 @@
                             @foreach($issue->items as $idx => $it)
                                 <tr class="hover:bg-neutral-50 transition-colors">
                                     <td class="py-3 px-4 text-center text-neutral-500 font-medium">{{ $idx + 1 }}</td>
-                                    <td class="py-3 px-4 font-bold text-neutral-900">{{ $it->material->code ?? '-' }}</td>
-                                    <td class="py-3 px-4 font-semibold text-neutral-800">{{ $it->material->name ?? '-' }}</td>
-                                    <td class="py-3 px-4 text-center text-neutral-600">{{ $it->material->origin_code ?? '-' }}</td>
-                                    <td class="py-3 px-4 text-neutral-600">{{ $it->material->category ?? '-' }}</td>
-                                    <td class="py-3 px-4 text-center text-neutral-600">{{ $it->material->unit ?? 'Tấm' }}</td>
+                                    <td class="py-3 px-4 font-bold text-neutral-900">{{ $it->item_sku }}</td>
+                                    <td class="py-3 px-4 font-semibold text-neutral-800">{{ $it->item_name }}</td>
+                                    <td class="py-3 px-4 text-center text-neutral-600">{{ $it->item_origin_code ?: ($it->material->origin_code ?? '-') }}</td>
+                                    <td class="py-3 px-4 text-neutral-600">{{ $it->item_category }}</td>
+                                    <td class="py-3 px-4 text-center text-neutral-600">{{ $it->item_unit }}</td>
                                     <td class="py-3 px-4 text-right font-black text-rose-700 text-sm">
                                         {{ fmod($it->quantity, 1) == 0 ? number_format($it->quantity, 0, ',', '.') : number_format($it->quantity, 2, ',', '.') }}
                                     </td>

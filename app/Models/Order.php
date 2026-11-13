@@ -55,6 +55,10 @@ class Order extends Model
             $amount = round($this->total_amount, -3);
             $this->customer->increment('debt', $amount);
         }
+
+        if ($this->customer) {
+            \App\Services\CustomerDebtService::syncCustomerDailyDebts($this->customer);
+        }
     }
 
     public function adjustCustomerDebtOnUpdate()
@@ -87,7 +91,11 @@ class Order extends Model
                 $newCustomer = Customer::find($newCustomerId);
                 if ($newCustomer) {
                     $newCustomer->increment('debt', $newAmount);
+                    \App\Services\CustomerDebtService::syncCustomerDailyDebts($newCustomer);
                 }
+            }
+            if ($wasValid && $oldCustomerId && isset($oldCustomer)) {
+                \App\Services\CustomerDebtService::syncCustomerDailyDebts($oldCustomer);
             }
             return;
         }
@@ -107,6 +115,8 @@ class Order extends Model
                 // Đơn hàng chuyển sang trạng thái tính nợ, cộng thêm nợ mới
                 $this->customer->increment('debt', $newAmount);
             }
+
+            \App\Services\CustomerDebtService::syncCustomerDailyDebts($this->customer);
         }
     }
 
@@ -119,6 +129,10 @@ class Order extends Model
         if ($this->customer && !in_array($this->status, ['draft', 'pending', 'cancelled']) && $this->board_return_status !== 'returned') {
             $amount = round($this->total_amount, -3);
             $this->customer->decrement('debt', $amount);
+        }
+
+        if ($this->customer) {
+            \App\Services\CustomerDebtService::syncCustomerDailyDebts($this->customer);
         }
     }
 
@@ -397,19 +411,33 @@ class Order extends Model
 
     public function isNhapKho(): bool
     {
-        if ($this->customer && (
-            in_array(strtoupper($this->customer->customer_code ?? ''), ['NK', 'NHAPKHO'], true) ||
-            in_array(mb_strtolower(trim($this->customer->name ?? '')), ['nhập kho', 'nhap kho'], true)
+        $code = strtoupper(trim($this->customer?->customer_code ?? ''));
+        if (in_array($code, ['NK', 'NHAPKHO', 'LSX', 'SX'], true)) {
+            return true;
+        }
+
+        $cName = mb_strtolower(trim($this->customer?->name ?? ''));
+        if ($cName !== '' && (
+            str_contains($cName, 'nhập kho') || str_contains($cName, 'lệnh sản xuất') || 
+            str_contains($cName, 'nhap kho') || str_contains($cName, 'lenh san xuat') ||
+            str_contains($cName, 'sản xuất nội bộ')
         )) {
             return true;
         }
-        $cName = mb_strtolower(trim($this->customer_name ?? ''));
-        if (in_array($cName, ['nhập kho', 'nhap kho'], true)) {
+
+        $orderCustomerName = mb_strtolower(trim($this->customer_name ?? ''));
+        if ($orderCustomerName !== '' && (
+            str_contains($orderCustomerName, 'nhập kho') || str_contains($orderCustomerName, 'lệnh sản xuất') || 
+            str_contains($orderCustomerName, 'nhap kho') || str_contains($orderCustomerName, 'lenh san xuat') ||
+            str_contains($orderCustomerName, 'sản xuất nội bộ')
+        )) {
             return true;
         }
-        if (!empty($this->order_code) && preg_match('/[._-]?NK$/i', trim($this->order_code))) {
+
+        if (!empty($this->order_code) && preg_match('/[._-]?(NK|LSX)$/i', trim($this->order_code))) {
             return true;
         }
+
         return false;
     }
 
@@ -570,11 +598,17 @@ class Order extends Model
     {
         return $query->where(function ($q) {
             $q->whereHas('customer', function ($cq) {
-                $cq->whereIn('customer_code', ['NK', 'NHAPKHO'])
-                   ->orWhereRaw('LOWER(TRIM(name)) IN (?, ?)', ['nhập kho', 'nhap kho']);
-            })->orWhereRaw('LOWER(TRIM(customer_name)) IN (?, ?)', ['nhập kho', 'nhap kho'])
+                $cq->whereIn('customer_code', ['NK', 'NHAPKHO', 'LSX', 'SX'])
+                   ->orWhereRaw('LOWER(TRIM(name)) IN (?, ?, ?, ?)', ['nhập kho', 'nhap kho', 'lệnh sản xuất', 'lenh san xuat'])
+                   ->orWhere('name', 'like', '%lệnh sản xuất%')
+                   ->orWhere('name', 'like', '%nhập kho%');
+            })->orWhereRaw('LOWER(TRIM(customer_name)) IN (?, ?, ?, ?)', ['nhập kho', 'nhap kho', 'lệnh sản xuất', 'lenh san xuat'])
+              ->orWhere('customer_name', 'like', '%lệnh sản xuất%')
+              ->orWhere('customer_name', 'like', '%nhập kho%')
               ->orWhere('order_code', 'like', '%.NK')
-              ->orWhere('order_code', 'like', '%NK');
+              ->orWhere('order_code', 'like', '%NK')
+              ->orWhere('order_code', 'like', '%.LSX')
+              ->orWhere('order_code', 'like', '%LSX');
         });
     }
 
@@ -582,16 +616,24 @@ class Order extends Model
     {
         return $query->where(function ($q) {
             $q->whereDoesntHave('customer', function ($cq) {
-                $cq->whereIn('customer_code', ['NK', 'NHAPKHO'])
-                   ->orWhereRaw('LOWER(TRIM(name)) IN (?, ?)', ['nhập kho', 'nhap kho']);
+                $cq->whereIn('customer_code', ['NK', 'NHAPKHO', 'LSX', 'SX'])
+                   ->orWhereRaw('LOWER(TRIM(name)) IN (?, ?, ?, ?)', ['nhập kho', 'nhap kho', 'lệnh sản xuất', 'lenh san xuat'])
+                   ->orWhere('name', 'like', '%lệnh sản xuất%')
+                   ->orWhere('name', 'like', '%nhập kho%');
             })->where(function ($sub) {
                 $sub->whereNull('customer_name')
-                    ->orWhereRaw('LOWER(TRIM(customer_name)) NOT IN (?, ?)', ['nhập kho', 'nhap kho']);
+                    ->orWhere(function ($s) {
+                        $s->whereRaw('LOWER(TRIM(customer_name)) NOT IN (?, ?, ?, ?)', ['nhập kho', 'nhap kho', 'lệnh sản xuất', 'lenh san xuat'])
+                          ->where('customer_name', 'not like', '%lệnh sản xuất%')
+                          ->where('customer_name', 'not like', '%nhập kho%');
+                    });
             })->where(function ($subCode) {
                 $subCode->whereNull('order_code')
                     ->orWhere(function ($cQ) {
                         $cQ->where('order_code', 'not like', '%.NK')
-                           ->where('order_code', 'not like', '%NK');
+                           ->where('order_code', 'not like', '%NK')
+                           ->where('order_code', 'not like', '%.LSX')
+                           ->where('order_code', 'not like', '%LSX');
                     });
             });
         });

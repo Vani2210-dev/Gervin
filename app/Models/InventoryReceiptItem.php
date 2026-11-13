@@ -52,7 +52,16 @@ class InventoryReceiptItem extends Model
         if ($this->item_type === 'edge_band') {
             return $this->woodBoard?->edge_band_code ?? ('CHI-' . ($this->woodBoard?->color_code ?? ''));
         }
-        return $this->boardPrice?->code ?? $this->woodBoard?->code ?? '-';
+        if ($this->boardPrice) {
+            return $this->boardPrice->code;
+        }
+        if ($this->wood_board_id) {
+            $maybePrice = WoodBoardPrice::find($this->wood_board_id);
+            if ($maybePrice) {
+                return $maybePrice->code;
+            }
+        }
+        return $this->woodBoard?->code ?? '-';
     }
 
     public function getItemNameAttribute(): string
@@ -60,7 +69,16 @@ class InventoryReceiptItem extends Model
         if ($this->item_type === 'edge_band') {
             return $this->woodBoard?->edge_band_name ?? ('Chỉ dán viền ' . ($this->woodBoard?->color_code ?? ''));
         }
-        return $this->boardPrice?->name ?? $this->woodBoard?->name ?? '-';
+        if ($this->boardPrice) {
+            return $this->boardPrice->name;
+        }
+        if ($this->wood_board_id) {
+            $maybePrice = WoodBoardPrice::find($this->wood_board_id);
+            if ($maybePrice) {
+                return $maybePrice->name;
+            }
+        }
+        return $this->woodBoard?->name ?? '-';
     }
 
     public function getItemUnitAttribute(): string
@@ -77,5 +95,57 @@ class InventoryReceiptItem extends Model
             return 'Chỉ dán viền (' . ($this->woodBoard?->price_group ?? 'Tiêu chuẩn') . ')';
         }
         return $this->woodBoard?->category ?? 'Tấm ván';
+    }
+
+    public function getItemOriginCodeAttribute(): string
+    {
+        return $this->woodBoard?->origin_code ?? '';
+    }
+
+    /**
+     * Accessor for $item->material
+     * Ưu tiên WoodBoardPrice (mã SKU đầy đủ như GV125.TP.PVC.1M) thay vì rơi về mã foil của WoodBoard (GV125)
+     */
+    public function getMaterialAttribute()
+    {
+        if ($this->item_type === 'edge_band' && $this->woodBoard) {
+            return (object) [
+                'id'          => $this->woodBoard->id,
+                'code'        => $this->woodBoard->edge_band_code ?? ('CHI-' . ($this->woodBoard->color_code ?? '')),
+                'name'        => $this->woodBoard->edge_band_name ?? ('Chỉ dán viền ' . ($this->woodBoard->color_code ?? '')),
+                'origin_code' => $this->woodBoard->origin_code ?? '',
+                'category'    => 'Chỉ dán viền (' . ($this->woodBoard->price_group ?? 'Tiêu chuẩn') . ')',
+                'unit'        => $this->woodBoard->edge_band_unit ?? 'm',
+            ];
+        }
+
+        if ($this->boardPrice) {
+            return (object) [
+                'id'          => $this->boardPrice->id,
+                'code'        => $this->boardPrice->code,
+                'name'        => $this->boardPrice->name,
+                'origin_code' => $this->woodBoard?->origin_code ?? '',
+                'category'    => $this->woodBoard?->category ?? 'Tấm ván',
+                'unit'        => $this->woodBoard?->unit ?? 'Tấm',
+                'thickness'   => $this->boardPrice->thickness,
+            ];
+        }
+
+        if (!$this->boardPrice && $this->wood_board_id && $this->item_type !== 'edge_band') {
+            $maybePrice = WoodBoardPrice::find($this->wood_board_id);
+            if ($maybePrice) {
+                return (object) [
+                    'id'          => $maybePrice->id,
+                    'code'        => $maybePrice->code,
+                    'name'        => $maybePrice->name,
+                    'origin_code' => $maybePrice->board?->origin_code ?? '',
+                    'category'    => $maybePrice->board?->category ?? 'Tấm ván',
+                    'unit'        => $maybePrice->board?->unit ?? 'Tấm',
+                    'thickness'   => $maybePrice->thickness,
+                ];
+            }
+        }
+
+        return $this->woodBoard;
     }
 }

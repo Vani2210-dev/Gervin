@@ -369,6 +369,9 @@
                                 ($nhapKhoCust && $acrylicOrder->customer_id == $nhapKhoCust->id) || 
                                 str_contains(mb_strtolower($acrylicOrder->customer_name ?? ''), 'nhập kho') ||
                                 str_contains(mb_strtolower($acrylicOrder->customer_name ?? ''), 'nhap kho') ||
+                                str_contains(mb_strtolower($acrylicOrder->customer_name ?? ''), 'lệnh sản xuất') ||
+                                str_contains(mb_strtolower($acrylicOrder->customer_name ?? ''), 'lenh san xuat') ||
+                                $acrylicOrder->isNhapKho() ||
                                 ($supply->inventory_action ?? 'add') === 'subtract'
                             );
                             $currentAction = $supply->inventory_action ?? 'add';

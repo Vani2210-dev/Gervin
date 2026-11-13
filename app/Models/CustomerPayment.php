@@ -48,6 +48,13 @@ class CustomerPayment extends Model
         static::deleted(function ($payment) {
             if ($payment->customer) {
                 $payment->customer->increment('debt', $payment->amount);
+                \App\Services\CustomerDebtService::syncCustomerDailyDebts($payment->customer);
+            }
+        });
+
+        static::saved(function ($payment) {
+            if ($payment->customer) {
+                \App\Services\CustomerDebtService::syncCustomerDailyDebts($payment->customer);
             }
         });
     }

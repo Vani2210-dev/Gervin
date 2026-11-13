@@ -287,6 +287,11 @@ class CustomerController extends Controller
         $selectedDiscountMonth = $request->input('discount_month', now()->format('Y-m'));
         $monthlyDiscountCalc = $customer->calculateMonthlyDiscount($selectedDiscountMonth);
 
+        $dailyDebts = $customer->dailyDebts()
+            ->orderBy('date', 'desc')
+            ->paginate(20, ['*'], 'daily_debt_page')
+            ->withQueryString();
+
         $activeTab = $request->input('tab', 'info');
         if (!$request->has('tab')) {
             if ($request->hasAny(['page', 'search', 'status', 'date_mode', 'date_val', 'start_date', 'end_date', 'per_page'])) {
@@ -295,6 +300,8 @@ class CustomerController extends Controller
                 $activeTab = 'payments';
             } elseif ($request->has('discount_month')) {
                 $activeTab = 'discount';
+            } elseif ($request->has('daily_debt_page')) {
+                $activeTab = 'daily_debts';
             }
         }
 
@@ -320,7 +327,8 @@ class CustomerController extends Controller
             'marketGroups',
             'activeTab',
             'selectedDiscountMonth',
-            'monthlyDiscountCalc'
+            'monthlyDiscountCalc',
+            'dailyDebts'
         ));
     }
 
@@ -424,6 +432,14 @@ class CustomerController extends Controller
         } catch (\Throwable $e) {
             return redirect()->back()->with('error', $e->getMessage());
         }
+    }
+
+    public function rebuildDebts(Customer $customer)
+    {
+        abort_unless($customer->isAccessibleBy(auth()->user()), 403, 'Bạn không có quyền thao tác với khách hàng này.');
+        \App\Services\CustomerDebtService::syncCustomerDailyDebts($customer);
+        return redirect()->route('customers.show', ['customer' => $customer->id, 'tab' => 'daily_debts'])
+            ->with('success', 'Đã đồng bộ lại sổ cái công nợ theo ngày thành công!');
     }
 
     public function exportExcel(Request $request)
@@ -1353,6 +1369,23 @@ class CustomerController extends Controller
             ];
         });
 
+        // Get recent daily debts for quick ledger view
+        $recentDailyDebts = $customer->dailyDebts()
+            ->orderBy('date', 'desc')
+            ->take(5)
+            ->get()
+            ->map(function($d) {
+                return [
+                    'date' => $d->date ? $d->date->format('d/m/Y') : '—',
+                    'opening_debt' => (float) $d->opening_debt,
+                    'order_amount' => (float) $d->order_amount,
+                    'paid_amount' => (float) $d->paid_amount,
+                    'closing_debt' => (float) $d->closing_debt,
+                    'orders_count' => (int) $d->orders_count,
+                    'payments_count' => (int) $d->payments_count,
+                ];
+            });
+
         return response()->json([
             'customer'      => $customer,
             'total_orders'  => $totalOrders,
@@ -1371,6 +1404,7 @@ class CustomerController extends Controller
                 'per_page' => $paymentsPaginator->perPage(),
             ],
             'customer_orders' => $customerOrders,
+            'recent_daily_debts' => $recentDailyDebts,
         ]);
     }
 
