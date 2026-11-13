@@ -348,9 +348,7 @@
                                 <th scope="col" class="px-3 whitespace-nowrap" style="min-width: 120px;">Mã đơn</th>
                                 <th scope="col" class="px-3 whitespace-nowrap" style="min-width: 90px;">Loại đơn</th>
                                 <th scope="col" class="px-3 whitespace-nowrap" style="min-width: 110px;">Trạng thái</th>
-                                @if(!empty($isViewingNhapKho))
                                 <th scope="col" class="text-center whitespace-nowrap px-3" style="min-width: 155px;">Phiếu kho (PXK / PNK)</th>
-                                @endif
                                 <th scope="col" class="px-3 whitespace-nowrap" style="min-width: 130px;">Tên công trình</th>
                                 <th scope="col" class="px-3 whitespace-nowrap" style="min-width: 140px;">Tên khách hàng</th>
                                 <th scope="col" class="text-center whitespace-nowrap px-3" style="min-width: 85px;">Số tấm</th>
@@ -479,7 +477,6 @@
                                         </span>
                                     @endif
                                 </td>
-                                @if(!empty($isViewingNhapKho))
                                 {{-- Phiếu kho (PXK / PNK) --}}
                                 <td class="px-3 align-middle whitespace-nowrap text-center">
                                     <div class="inline-flex flex-col gap-1 items-stretch justify-center min-w-[135px]">
@@ -497,16 +494,12 @@
                                                 </a>
                                             @endforeach
                                         @else
-                                            @if(!empty($isViewingNhapKho) || $order->isNhapKho())
-                                                <a href="{{ route('inventory.issues.create', ['order_id' => $order->id]) }}" target="_blank"
-                                                   class="inline-flex items-center justify-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold text-rose-600 bg-rose-50/50 hover:bg-rose-100 border border-dashed border-rose-300 transition-colors"
-                                                   title="Đơn chưa có Phiếu Xuất Kho - Bấm để tạo PXK">
-                                                    <iconify-icon icon="lucide:plus" class="text-xs shrink-0"></iconify-icon>
-                                                    <span>Chưa tạo PXK</span>
-                                                </a>
-                                            @else
-                                                <span class="text-neutral-300 text-xs">—</span>
-                                            @endif
+                                            <a href="{{ route('inventory.issues.create', ['order_id' => $order->id]) }}" target="_blank"
+                                               class="inline-flex items-center justify-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold text-rose-600 bg-rose-50/50 hover:bg-rose-100 border border-dashed border-rose-300 transition-colors"
+                                               title="Đơn chưa có Phiếu Xuất Kho - Bấm để tạo PXK">
+                                                <iconify-icon icon="lucide:plus" class="text-xs shrink-0"></iconify-icon>
+                                                <span>Chưa tạo PXK</span>
+                                            </a>
                                         @endif
 
                                         {{-- 2. Phiếu Nhập Kho (PNK) --}}
@@ -523,18 +516,15 @@
                                                 </a>
                                             @endforeach
                                         @else
-                                            @if(!empty($isViewingNhapKho) || $order->isNhapKho())
-                                                <a href="{{ route('inventory.receipts.create', ['order_id' => $order->id]) }}" target="_blank"
-                                                   class="inline-flex items-center justify-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold text-primary-600 bg-primary-50/50 hover:bg-primary-100 border border-dashed border-primary-300 transition-colors"
-                                                   title="Đơn chưa có Phiếu Nhập Kho - Bấm để tạo PNK">
-                                                    <iconify-icon icon="lucide:plus" class="text-xs shrink-0"></iconify-icon>
-                                                    <span>Chưa tạo PNK</span>
-                                                </a>
-                                            @endif
+                                            <a href="{{ route('inventory.receipts.create', ['order_id' => $order->id]) }}" target="_blank"
+                                               class="inline-flex items-center justify-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold text-primary-600 bg-primary-50/50 hover:bg-primary-100 border border-dashed border-primary-300 transition-colors"
+                                               title="Đơn chưa có Phiếu Nhập Kho - Bấm để tạo PNK">
+                                                <iconify-icon icon="lucide:plus" class="text-xs shrink-0"></iconify-icon>
+                                                <span>Chưa tạo PNK</span>
+                                            </a>
                                         @endif
                                     </div>
                                 </td>
-                                @endif
                                 <td class="px-3 align-middle whitespace-nowrap">
                                     <span class="text-sm font-semibold text-neutral-900 truncate max-w-[200px] inline-block" title="{{ $order->customer_name }}">{{ $order->customer_name ?: '—' }}</span>
                                 </td>
@@ -650,7 +640,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="{{ ($canBulkDeleteOrders ? 1 : 0) + (!empty($isViewingNhapKho) ? 15 : 14) }}" class="text-center py-8">
+                                <td colspan="{{ ($canBulkDeleteOrders ? 1 : 0) + 15 }}" class="text-center py-8">
                                     <p class="text-neutral-500">Chưa có đơn hàng nào</p>
                                 </td>
                             </tr>

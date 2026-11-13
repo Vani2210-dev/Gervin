@@ -61,11 +61,9 @@ class OrderController extends Controller
             'accountantApprover',
             'technicalApprover',
             'rejecter',
+            'receipts',
+            'issues',
         ];
-        if ($isViewingNhapKho) {
-            $relations[] = 'receipts';
-            $relations[] = 'issues';
-        }
 
         $query = Order::with($relations)
             ->when($user && !$user->canViewAllMarketGroups(), function ($q) use ($user) {
