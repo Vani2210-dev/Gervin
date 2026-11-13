@@ -553,8 +553,9 @@
             </div>
 
             {{-- Orders Table --}}
-            <div class="overflow-x-auto">
-                <table class="table bordered-table sm-table mb-0 w-full text-xs">
+            <div class="p-1">
+                <div class="overflow-x-auto">
+                    <table class="table bordered-table sm-table mb-0 w-full text-xs">
                     <thead>
                         <tr class="bg-neutral-50 text-neutral-700 border-b border-neutral-200">
                             <th class="text-center w-12 py-3">STT</th>
@@ -653,6 +654,7 @@
                     </tbody>
                 </table>
             </div>
+            </div>
 
             {{-- Pagination summary & links --}}
             @if($orders->hasPages() || $orders->total() > 0)
@@ -732,8 +734,9 @@
             </div>
 
             {{-- Payments Full-width Table --}}
-            <div class="overflow-x-auto">
-                <table class="table bordered-table sm-table mb-0 w-full text-xs">
+            <div class="p-1">
+                <div class="overflow-x-auto">
+                    <table class="table bordered-table sm-table mb-0 w-full text-xs">
                     <thead>
                         <tr class="bg-neutral-50 text-neutral-700 border-b border-neutral-200">
                             <th class="text-center w-12 py-3">STT</th>
@@ -828,6 +831,7 @@
                         @endforelse
                     </tbody>
                 </table>
+            </div>
             </div>
 
             {{-- Payments Pagination --}}
@@ -1335,8 +1339,9 @@
             </div>
 
             {{-- Table --}}
-            <div class="overflow-x-auto">
-                <table class="table bordered-table sm-table mb-0 w-full text-xs">
+            <div class="p-1">
+                <div class="overflow-x-auto">
+                    <table class="table bordered-table sm-table mb-0 w-full text-xs">
                     <thead>
                         <tr class="bg-neutral-50 text-neutral-600 font-bold border-b border-neutral-200">
                             <th class="w-12 text-center py-3">STT</th>
@@ -1426,6 +1431,7 @@
                         @endforelse
                     </tbody>
                 </table>
+            </div>
             </div>
 
             {{-- Pagination --}}

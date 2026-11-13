@@ -167,7 +167,7 @@
             </div>
 
             {{-- Table --}}
-            <div class="card-body p-0">
+            <div class="p-1">
                 <div class="overflow-x-auto">
                     <table class="table bordered-table sm-table mb-0 w-full text-xs">
                         <thead>

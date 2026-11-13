@@ -41,7 +41,7 @@
             @endif
 
             {{-- Table --}}
-            <div class="card-body p-0">
+            <div class="p-1">
                 <div class="overflow-x-auto">
                     <table class="table bordered-table sm-table mb-0 border-collapse border border-neutral-200 text-xs w-full" style="min-width: 1100px;">
                         <thead class="bg-neutral-50 font-semibold text-neutral-700 text-center text-xs uppercase tracking-wider">

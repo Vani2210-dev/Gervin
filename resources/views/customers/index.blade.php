@@ -86,12 +86,12 @@
     </div>
 
     <div class="col-span-12">
-        <div class="card h-full p-0 rounded-xl border-0 overflow-hidden">
+        <div class="card h-full rounded-xl border-0 overflow-hidden">
             {{-- Header --}}
-            <div class="card-header border-b border-neutral-200 bg-white py-3.5 px-6 flex flex-col gap-3">
+            <div class="card-header border-b border-neutral-200 bg-white py-4 px-6 flex flex-col gap-3">
                 {{-- Tầng 1: Tìm kiếm & Nút hành động chính --}}
                 <div class="flex items-center justify-between flex-wrap gap-3">
-                    <div class="flex items-center flex-wrap gap-2.5">
+                    <div class="flex items-center flex-wrap gap-2">
                         {{-- Search (Bên trái ngoài cùng) --}}
                         <form method="GET" action="{{ route('customers.index') }}" class="navbar-search">
                             <input type="hidden" name="per_page" value="{{ $perPage }}">
@@ -106,12 +106,12 @@
                         </form>
 
                         <button type="button" onclick="openModal('filter-modal')"
-                            class="btn bg-light-600 text-xs btn-sm px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 font-medium text-neutral-700 hover:bg-neutral-200 transition">
+                            class="btn bg-light-600 text-xs btn-sm px-3 py-2 rounded-lg flex items-center gap-2 font-medium text-neutral-700 hover:bg-neutral-200 transition">
                             <iconify-icon icon="solar:filter-outline" class="text-base"></iconify-icon>
                             Lọc nâng cao
                         </button>
                         @if(request()->filled('filter_customer_code') || request()->filled('filter_name') || request()->filled('filter_phone') || request()->filled('filter_start_date') || request()->filled('filter_end_date') || request()->filled('filter_customer_id') || request()->filled('filter_debt_level') || request()->filled('filter_market_group_id') || ($dateMode !== 'all' && request()->filled('date_mode')))
-                        <a href="{{ route('customers.index') }}" class="btn text-xs btn-sm px-2.5 py-1.5 rounded-lg flex items-center gap-1 text-danger-600 bg-danger-50 hover:bg-danger-100 transition">
+                        <a href="{{ route('customers.index') }}" class="btn text-xs btn-sm px-3 py-2 rounded-lg flex items-center gap-1 text-danger-600 bg-danger-50 hover:bg-danger-100 transition">
                             <iconify-icon icon="solar:close-circle-outline" class="text-base"></iconify-icon>
                             Xóa lọc
                         </a>
@@ -120,14 +120,14 @@
 
                     <div class="flex items-center gap-2">
                         <a href="{{ route('customers.export', request()->query()) }}"
-                            class="btn bg-emerald-600 hover:bg-emerald-700 text-white text-xs btn-sm px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-2xs font-semibold transition"
+                            class="btn bg-emerald-600 hover:bg-emerald-700 text-white text-xs btn-sm px-3 py-2 rounded-lg flex items-center gap-2 shadow-2xs font-semibold transition"
                             title="Xuất danh sách khách hàng & công nợ ra file Excel">
                             <iconify-icon icon="solar:file-spreadsheet-bold" class="text-base"></iconify-icon>
                             <span>Xuất Excel</span>
                         </a>
                         @can('add customer')
                         <button type="button" onclick="openCreateCustomerModal()"
-                            class="btn btn-primary text-xs btn-sm px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition shadow-sm font-semibold">
+                            class="btn btn-primary text-xs btn-sm px-3 py-2 rounded-lg flex items-center gap-2 transition shadow-sm font-semibold">
                             <iconify-icon icon="ic:baseline-plus" class="text-base"></iconify-icon>
                             Thêm khách hàng
                         </button>
@@ -136,7 +136,7 @@
                 </div>
 
                 {{-- Tầng 2: Bộ lọc thời gian & Hiển thị --}}
-                <div class="flex items-center justify-between flex-wrap gap-2.5">
+                <div class="flex items-center justify-between flex-wrap gap-2">
                     <div class="flex items-center flex-wrap gap-2">
                         {{-- Bộ lọc ngày tháng chung --}}
                         <x-date-filter :action="route('customers.index')" />
@@ -175,7 +175,7 @@
             @endif
 
             {{-- Table --}}
-            <div class="card-body">
+            <div class="p-1">
                 <div class="table-responsive scroll-sm">
                     <table class="table bordered-table sm-table mb-0">
                         <thead>

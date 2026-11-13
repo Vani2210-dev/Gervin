@@ -222,7 +222,7 @@
             </div>
 
             {{-- Table Area --}}
-            <div class="card-body p-0">
+            <div class="p-1">
                 <div class="overflow-x-auto w-full">
                     <table class="w-full border-collapse text-xs text-left">
                         <thead>

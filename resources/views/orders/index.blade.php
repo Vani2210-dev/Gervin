@@ -90,9 +90,9 @@
     </div>
 
     <div class="col-span-12">
-        <div id="orders-list-card" class="card h-full p-0 rounded-xl border-0 overflow-hidden">
+        <div id="orders-list-card" class="card h-full rounded-xl border-0 overflow-hidden">
             {{-- Header --}}
-            <div class="card-header border-b border-neutral-200 bg-white py-3.5 px-6 flex flex-col gap-3">
+            <div class="card-header border-b border-neutral-200 bg-white py-4 px-6 flex flex-col gap-3">
                 {{-- Tầng 1: Tìm kiếm, Bộ lọc nhanh & Các nút hành động chính --}}
                 <div class="flex items-center justify-between flex-wrap gap-3">
                     <div class="flex items-center flex-wrap gap-2">
@@ -121,13 +121,13 @@
 
                         @if($isViewingDrafts)
                         <a href="{{ route('orders.index') }}"
-                            class="btn bg-amber-500 hover:bg-amber-600 text-white text-xs btn-sm px-2.5 py-1.5 rounded-lg flex items-center gap-1 font-medium shadow-2xs transition-all" title="Quay lại danh sách đơn hàng chính thức">
+                            class="btn bg-amber-500 hover:bg-amber-600 text-white text-xs btn-sm px-3 py-2 rounded-lg flex items-center gap-1 font-medium shadow-2xs transition-all" title="Quay lại danh sách đơn hàng chính thức">
                             <iconify-icon icon="lucide:arrow-left" class="text-base"></iconify-icon>
                             Đơn nháp (Quay lại)
                         </a>
                         @else
                         <a href="{{ route('orders.index', ['filter_status' => 'draft']) }}"
-                            class="btn bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 text-xs btn-sm px-2.5 py-1.5 rounded-lg flex items-center gap-1 font-semibold transition-all shadow-2xs" title="Xem tất cả đơn nháp đang lưu tạm">
+                            class="btn bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 text-xs btn-sm px-3 py-2 rounded-lg flex items-center gap-1 font-semibold transition-all shadow-2xs" title="Xem tất cả đơn nháp đang lưu tạm">
                             <iconify-icon icon="lucide:file-text" class="text-base text-amber-600"></iconify-icon>
                             Đơn nháp <span class="bg-amber-200/80 text-amber-900 text-[10px] px-1.5 py-0.2 rounded-full font-bold ml-0.5">{{ $draftOrdersCount ?? 0 }}</span>
                         </a>
@@ -135,25 +135,25 @@
 
                         @if(!empty($isViewingNhapKho))
                         <a href="{{ route('orders.index') }}"
-                            class="btn bg-sky-600 hover:bg-sky-700 text-white text-xs btn-sm px-2.5 py-1.5 rounded-lg flex items-center gap-1 font-medium shadow-2xs transition-all" title="Quay lại danh sách đơn hàng thông thường">
+                            class="btn bg-sky-600 hover:bg-sky-700 text-white text-xs btn-sm px-3 py-2 rounded-lg flex items-center gap-1 font-medium shadow-2xs transition-all" title="Quay lại danh sách đơn hàng thông thường">
                             <iconify-icon icon="lucide:arrow-left" class="text-base"></iconify-icon>
                             Lệnh sản xuất (Quay lại)
                         </a>
                         @else
                         <a href="{{ route('orders.index', ['filter_nhap_kho' => '1']) }}"
-                            class="btn bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 text-xs btn-sm px-2.5 py-1.5 rounded-lg flex items-center gap-1 font-semibold transition-all shadow-2xs" title="Xem tất cả lệnh sản xuất nội bộ">
+                            class="btn bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 text-xs btn-sm px-3 py-2 rounded-lg flex items-center gap-1 font-semibold transition-all shadow-2xs" title="Xem tất cả lệnh sản xuất nội bộ">
                             <iconify-icon icon="lucide:wrench" class="text-base text-sky-600"></iconify-icon>
                             Lệnh sản xuất <span class="bg-sky-200/80 text-sky-900 text-[10px] px-1.5 py-0.2 rounded-full font-bold ml-0.5">{{ $nhapKhoOrdersCount ?? 0 }}</span>
                         </a>
                         @endif
 
                         <button type="button" onclick="openModal('filter-modal')"
-                            class="btn bg-light-600 text-xs btn-sm px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 font-medium text-neutral-700 hover:bg-neutral-200 transition">
+                            class="btn bg-light-600 text-xs btn-sm px-3 py-2 rounded-lg flex items-center gap-2 font-medium text-neutral-700 hover:bg-neutral-200 transition">
                             <iconify-icon icon="solar:filter-outline" class="text-base"></iconify-icon>
                             Lọc
                         </button>
                         @if(request()->filled('filter_customer_id') || request()->filled('filter_status') || request()->filled('filter_type') || request()->filled('filter_start_date') || request()->filled('filter_end_date') || ($dateMode !== 'all' && request()->filled('date_mode')))
-                        <a href="{{ route('orders.index', !empty($isViewingNhapKho) ? ['filter_nhap_kho' => '1'] : []) }}" class="btn text-xs btn-sm px-2.5 py-1.5 rounded-lg flex items-center gap-1 text-danger-600 bg-danger-50 hover:bg-danger-100 transition">
+                        <a href="{{ route('orders.index', !empty($isViewingNhapKho) ? ['filter_nhap_kho' => '1'] : []) }}" class="btn text-xs btn-sm px-3 py-2 rounded-lg flex items-center gap-1 text-danger-600 bg-danger-50 hover:bg-danger-100 transition">
                             <iconify-icon icon="solar:close-circle-outline" class="text-base"></iconify-icon>
                             Xóa lọc
                         </a>
@@ -283,7 +283,7 @@
             @endif
 
             {{-- Table --}}
-            <div class="card-body">
+            <div class="p-1">
                 {{-- Flash messages --}}
                 @if(session('success'))
                 <div class="alert alert-success bg-success-50 text-success-600 border border-success-200 rounded-lg p-4 mb-4">
