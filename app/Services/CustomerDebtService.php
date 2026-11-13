@@ -19,84 +19,104 @@ class CustomerDebtService
     {
         try {
             DB::transaction(function () use ($customer) {
-            // 1. Lấy tất cả đơn hàng hợp lệ của khách (loại trừ đơn hủy, đơn nhập kho nội bộ)
-            $orders = $customer->orders()
-                ->whereNotNhapKho()
-                ->where('status', '!=', 'cancelled')
-                ->get(['id', 'order_code', 'total_amount', 'order_date', 'created_at', 'status']);
+                // 1. Chỉ lấy các đơn hàng ĐÃ ĐƯỢC XÁC NHẬN cộng vào công nợ (loại trừ đơn nháp, chờ duyệt, đơn hủy, trả ván, nhập kho)
+                $orders = $customer->orders()
+                    ->whereNotNhapKho()
+                    ->whereNotIn('status', ['draft', 'pending', 'cancelled'])
+                    ->where(function ($q) {
+                        $q->whereNull('board_return_status')->orWhere('board_return_status', '!=', 'returned');
+                    })
+                    ->get(['id', 'order_code', 'total_amount', 'order_date', 'created_at', 'status', 'board_return_status']);
 
-            // 2. Lấy tất cả các khoản thanh toán của khách
-            $payments = $customer->customerPayments()
-                ->get(['id', 'order_id', 'amount', 'payment_date', 'payment_method']);
+                // 2. Lấy tất cả các khoản thanh toán của khách
+                $payments = $customer->customerPayments()
+                    ->get(['id', 'order_id', 'amount', 'payment_date', 'payment_method']);
 
-            // 3. Gom danh sách các ngày phát sinh giao dịch
-            $dates = collect();
+                // 3. Gom danh sách các ngày phát sinh giao dịch
+                $dates = collect();
 
-            foreach ($orders as $o) {
-                $d = $o->order_date ? Carbon::parse($o->order_date)->format('Y-m-d') : Carbon::parse($o->created_at)->format('Y-m-d');
-                $dates->push($d);
-            }
-
-            foreach ($payments as $p) {
-                if ($p->payment_date) {
-                    $dates->push(Carbon::parse($p->payment_date)->format('Y-m-d'));
-                }
-            }
-
-            $uniqueDates = $dates->unique()->sort()->values();
-
-            // Nếu khách hàng chưa có giao dịch nào
-            if ($uniqueDates->isEmpty()) {
-                CustomerDailyDebt::where('customer_id', $customer->id)->delete();
-                $customer->updateQuietly(['debt' => 0]);
-                return;
-            }
-
-            // Xóa các ngày thừa không còn giao dịch
-            CustomerDailyDebt::where('customer_id', $customer->id)
-                ->whereNotIn('date', $uniqueDates)
-                ->delete();
-
-            $runningDebt = 0;
-
-            foreach ($uniqueDates as $dateStr) {
-                // Đơn hàng trong ngày này
-                $dayOrders = $orders->filter(function ($o) use ($dateStr) {
+                foreach ($orders as $o) {
                     $d = $o->order_date ? Carbon::parse($o->order_date)->format('Y-m-d') : Carbon::parse($o->created_at)->format('Y-m-d');
-                    return $d === $dateStr;
-                });
+                    $dates->push($d);
+                }
 
-                // Thanh toán trong ngày này
-                $dayPayments = $payments->filter(function ($p) use ($dateStr) {
-                    return $p->payment_date && Carbon::parse($p->payment_date)->format('Y-m-d') === $dateStr;
-                });
+                foreach ($payments as $p) {
+                    if ($p->payment_date) {
+                        $dates->push(Carbon::parse($p->payment_date)->format('Y-m-d'));
+                    }
+                }
 
-                $openingDebt = round($runningDebt, -3);
-                $orderAmount = round($dayOrders->sum('total_amount'), -3);
-                $paidAmount = round($dayPayments->sum('amount'), -3);
-                $closingDebt = round($openingDebt + $orderAmount - $paidAmount, -3);
+                $uniqueDates = $dates->unique()->sort()->values();
 
-                CustomerDailyDebt::updateOrCreate(
-                    [
-                        'customer_id' => $customer->id,
-                        'date'        => $dateStr,
-                    ],
-                    [
-                        'opening_debt'   => $openingDebt,
-                        'order_amount'   => $orderAmount,
-                        'paid_amount'    => $paidAmount,
-                        'closing_debt'   => $closingDebt,
-                        'orders_count'   => $dayOrders->count(),
-                        'payments_count' => $dayPayments->count(),
-                    ]
-                );
+                // Nếu khách hàng chưa có giao dịch nào
+                if ($uniqueDates->isEmpty()) {
+                    CustomerDailyDebt::where('customer_id', $customer->id)->delete();
+                    return;
+                }
 
-                $runningDebt = $closingDebt;
-            }
+                // Xóa các ngày thừa không còn giao dịch
+                CustomerDailyDebt::where('customer_id', $customer->id)
+                    ->whereNotIn('date', $uniqueDates)
+                    ->delete();
 
-            // Ghi chú: KHÔNG ghi đè $customer->debt ở đây để đảm bảo Còn nợ hiện tại (customers.debt)
-            // là nguồn dữ liệu chuẩn mực nhất theo số dư ban đầu và các giao dịch thực tế.
-        });
+                // 4. Còn nợ hiện tại của khách hàng (Chuẩn mực trong hệ thống)
+                $currentDebt = floatval($customer->debt ?? 0);
+
+                // Tổng tiền các đơn hàng hợp lệ đã cộng nợ và tổng tiền đã thanh toán
+                $totalOrderAmount = round($orders->sum('total_amount'), -3);
+                $totalPaidAmount = round($payments->sum('amount'), -3);
+
+                // Nợ ban đầu (số dư trước tất cả các đơn hàng / thanh toán ghi nhận trong hệ thống)
+                // Công thức: Nợ cuối = Nợ ban đầu + Tổng đơn - Tổng trả => Nợ ban đầu = Nợ cuối - Tổng đơn + Tổng trả
+                $initialDebt = round($currentDebt - $totalOrderAmount + $totalPaidAmount, -3);
+
+                $runningDebt = $initialDebt;
+                $lastIndex = $uniqueDates->count() - 1;
+
+                foreach ($uniqueDates as $index => $dateStr) {
+                    // Đơn hàng trong ngày này
+                    $dayOrders = $orders->filter(function ($o) use ($dateStr) {
+                        $d = $o->order_date ? Carbon::parse($o->order_date)->format('Y-m-d') : Carbon::parse($o->created_at)->format('Y-m-d');
+                        return $d === $dateStr;
+                    });
+
+                    // Thanh toán trong ngày này
+                    $dayPayments = $payments->filter(function ($p) use ($dateStr) {
+                        return $p->payment_date && Carbon::parse($p->payment_date)->format('Y-m-d') === $dateStr;
+                    });
+
+                    $openingDebt = round($runningDebt, -3);
+                    $orderAmount = round($dayOrders->sum('total_amount'), -3);
+                    $paidAmount = round($dayPayments->sum('amount'), -3);
+
+                    // Tại ngày cuối cùng, chốt số dư cuối ngày khớp tuyệt đối 100% với Còn nợ hiện tại ($currentDebt)
+                    if ($index === $lastIndex) {
+                        $closingDebt = $currentDebt;
+                    } else {
+                        $closingDebt = round($openingDebt + $orderAmount - $paidAmount, -3);
+                    }
+
+                    CustomerDailyDebt::updateOrCreate(
+                        [
+                            'customer_id' => $customer->id,
+                            'date'        => $dateStr,
+                        ],
+                        [
+                            'opening_debt'   => $openingDebt,
+                            'order_amount'   => $orderAmount,
+                            'paid_amount'    => $paidAmount,
+                            'closing_debt'   => $closingDebt,
+                            'orders_count'   => $dayOrders->count(),
+                            'payments_count' => $dayPayments->count(),
+                        ]
+                    );
+
+                    $runningDebt = $closingDebt;
+                }
+
+                // Ghi chú: KHÔNG ghi đè $customer->debt ở đây để đảm bảo Còn nợ hiện tại (customers.debt)
+                // là nguồn dữ liệu chuẩn mực nhất theo số dư ban đầu và các giao dịch thực tế.
+            });
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::warning('syncCustomerDailyDebts error: ' . $e->getMessage());
         }
