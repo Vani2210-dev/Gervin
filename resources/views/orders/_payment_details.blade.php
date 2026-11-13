@@ -4,12 +4,17 @@
     if (old('payment_details') && is_array(old('payment_details'))) {
         foreach (old('payment_details') as $dIndex => $dData) {
             $d = new \stdClass();
+            $d->id = $dData['id'] ?? null;
             $d->name = $dData['name'] ?? '';
             $d->unit = $dData['unit'] ?? '';
             $d->quantity = $dData['quantity'] ?? 1;
             $d->price = $dData['price'] ?? 0;
             $d->price_only = $dData['price_only'] ?? 0;
-            $d->total = $dData['total'] ?? 0;
+            $rawTotal = $dData['total'] ?? 0;
+            if (is_string($rawTotal)) {
+                $rawTotal = str_replace(['.', ',', ' ', 'đ', '₫'], '', $rawTotal);
+            }
+            $d->total = is_numeric($rawTotal) ? (float)$rawTotal : 0;
             $d->formula = $dData['formula'] ?? null;
             $paymentDetailsList->push($d);
         }
@@ -312,13 +317,20 @@
                                 <input type="hidden" name="payment_details[{{ $detailIndex }}][price_only]" value="{{ $detail->price_only ?? 0 }}">
                                 @endif
                                 <td style="width: 150px; min-width: 150px; padding: 0 !important;" class="border border-neutral-200">
-                                    <input type="text" name="payment_details[{{ $detailIndex }}][total]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center h-8 text-xs w-full" placeholder="0" readonly value="{{ number_format($detail->total, 0, ',', '.') }}">
+                                    @php
+                                        $dtTotal = $detail->total ?? 0;
+                                        if (is_string($dtTotal)) {
+                                            $dtTotal = str_replace(['.', ',', ' ', 'đ', '₫'], '', $dtTotal);
+                                        }
+                                        $dtTotal = is_numeric($dtTotal) ? (float)$dtTotal : 0;
+                                    @endphp
+                                    <input type="text" name="payment_details[{{ $detailIndex }}][total]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center h-8 text-xs w-full" placeholder="0" readonly value="{{ number_format($dtTotal, 0, ',', '.') }}">
                                 </td>
                                 <td style="width: 80px; min-width: 80px; padding: 0 !important; position: sticky; right: 0; z-index: 1; background-color: #fff; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="text-center align-middle border border-neutral-200">
                                     <button type="button" onclick="removePaymentDetail(this)" class="text-neutral-400 hover:text-danger-500 transition-colors p-1" title="Xóa nội dung này">
                                         <iconify-icon icon="lucide:trash-2" class="text-base"></iconify-icon>
                                     </button>
-                                    <input type="hidden" name="payment_details[{{ $detailIndex }}][id]" value="{{ $detail->id }}">
+                                    <input type="hidden" name="payment_details[{{ $detailIndex }}][id]" value="{{ $detail->id ?? '' }}">
                                 </td>
                             </tr>
                             @endforeach

@@ -344,7 +344,11 @@
                             $item->wing_quantity = $iData['wing_quantity'] ?? 1;
                             $item->area_m2 = $iData['area_m2'] ?? '';
                             $item->unit_price = $iData['unit_price'] ?? 0;
-                            $item->total_price = $iData['total_price'] ?? 0;
+                            $rawTotalPrice = $iData['total_price'] ?? 0;
+                            if (is_string($rawTotalPrice)) {
+                                $rawTotalPrice = str_replace(['.', ',', ' ', 'đ', '₫'], '', $rawTotalPrice);
+                            }
+                            $item->total_price = is_numeric($rawTotalPrice) ? (float)$rawTotalPrice : 0;
                             $item->notes = $iData['notes'] ?? '';
                             $item->formula = $iData['formula'] ?? null;
                             $item->old_size = $iData['old_size'] ?? '';
@@ -573,7 +577,14 @@
                                         <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][unit_price]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Đơn giá" required value="{{ $item->unit_price }}" autocomplete="off" @if(!empty($itemFormulas['unit_price'])) data-formula="{{ $itemFormulas['unit_price'] }}" title="Công thức: {{ $itemFormulas['unit_price'] }}" @endif>
                                     </td>
                                     <td style="width: 120px; min-width: 120px; " class="border border-neutral-200">
-                                        <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][total_price]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center px-1 py-1 h-8 text-xs" placeholder="Thành tiền" readonly value="{{ number_format($item->total_price, 0, ',', '.') }}">
+                                        @php
+                                            $itTotal = $item->total_price ?? 0;
+                                            if (is_string($itTotal)) {
+                                                $itTotal = str_replace(['.', ',', ' ', 'đ', '₫'], '', $itTotal);
+                                            }
+                                            $itTotal = is_numeric($itTotal) ? (float)$itTotal : 0;
+                                        @endphp
+                                        <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][total_price]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed font-semibold text-neutral-700 text-center px-1 py-1 h-8 text-xs" placeholder="Thành tiền" readonly value="{{ number_format($itTotal, 0, ',', '.') }}">
                                     </td>
                                     <td style="min-width: 160px;" class="border border-neutral-200">
                                         <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 h-8 text-xs" placeholder="Ghi chú" value="{{ $item->notes }}">
