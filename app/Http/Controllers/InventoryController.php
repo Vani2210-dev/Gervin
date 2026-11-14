@@ -66,7 +66,7 @@ class InventoryController extends Controller
             }
         }
 
-        $warehouses = Warehouse::orderBy('name')->get();
+        $warehouses = $this->getOrderedWarehouses();
         $selectedWarehouseId = $request->input('warehouse_id');
         $selectedWarehouse = $selectedWarehouseId ? Warehouse::find($selectedWarehouseId) : null;
         $isEdgeBandWarehouse = $selectedWarehouse && ($selectedWarehouse->code === 'KHO-CHI' || str_contains(mb_strtolower($selectedWarehouse->name), 'chỉ'));
@@ -965,7 +965,7 @@ class InventoryController extends Controller
 
     public function createReceipt(Request $request)
     {
-        $warehouses = Warehouse::orderByRaw("CASE WHEN code = 'KHO-VAN' THEN 0 WHEN code = 'KHO-CHI' THEN 1 ELSE 2 END")->orderBy('name')->get();
+        $warehouses = $this->getOrderedWarehouses();
         $materials = $this->getSelectableMaterials();
         $suppliers = Supplier::where('status', 'active')->orderBy('name')->get();
         $nextCode = $this->inventoryService->generateCode('PNK', 'inventory_receipts');
@@ -1018,7 +1018,7 @@ class InventoryController extends Controller
     public function editReceipt(InventoryReceipt $receipt)
     {
         $receipt->load(['order', 'supplier', 'items.woodBoard', 'items.boardPrice.type']);
-        $warehouses = Warehouse::orderBy('name')->get();
+        $warehouses = $this->getOrderedWarehouses();
         $materials = $this->getSelectableMaterials();
         $suppliers = Supplier::orderBy('name')->get();
         $orders = Order::select('id', 'order_code', 'customer_name', 'order_date')
@@ -1093,7 +1093,7 @@ class InventoryController extends Controller
 
     public function createIssue(Request $request)
     {
-        $warehouses = Warehouse::orderByRaw("CASE WHEN code = 'KHO-VAN' THEN 0 WHEN code = 'KHO-CHI' THEN 1 ELSE 2 END")->orderBy('name')->get();
+        $warehouses = $this->getOrderedWarehouses();
         $materials = $this->getSelectableMaterials();
         $nextCode = $this->inventoryService->generateCode('PXK', 'inventory_issues');
 
@@ -1144,7 +1144,7 @@ class InventoryController extends Controller
     public function editIssue(InventoryIssue $issue)
     {
         $issue->load(['order', 'items.woodBoard', 'items.boardPrice.type']);
-        $warehouses = Warehouse::orderBy('name')->get();
+        $warehouses = $this->getOrderedWarehouses();
         $materials = $this->getSelectableMaterials();
         $orders = Order::select('id', 'order_code', 'customer_name', 'order_date')
             ->whereNotIn('status', ['cancelled'])
@@ -1236,7 +1236,7 @@ class InventoryController extends Controller
             $warehouse = Warehouse::create(['name' => 'Kho Tấm Ván', 'code' => 'KHO-VAN']);
         }
 
-        $warehouses = Warehouse::orderBy('name')->get();
+        $warehouses = $this->getOrderedWarehouses();
         $materials = $this->getSelectableMaterials($warehouse->id);
         $nextCode = $this->inventoryService->generateCode('PKK', 'inventory_stocktakes');
 
@@ -1287,6 +1287,20 @@ class InventoryController extends Controller
     {
         $stocktake->load(['warehouse', 'balancedByUser', 'items.woodBoard', 'items.boardPrice.type']);
         return view('inventory.stocktakes.show', compact('stocktake'));
+    }
+
+    /**
+     * Lấy danh sách kho hàng ưu tiên: Kho Tấm Ván lên đầu tiên, Kho Dán Chỉ xuống cuối
+     */
+    private function getOrderedWarehouses()
+    {
+        return Warehouse::orderByRaw("
+            CASE 
+                WHEN code = 'KHO-VAN' OR LOWER(name) LIKE '%ván%' OR LOWER(name) LIKE '%tấm%' OR LOWER(name) LIKE '%gỗ%' THEN 0 
+                WHEN code = 'KHO-CHI' OR LOWER(name) LIKE '%chỉ%' THEN 2 
+                ELSE 1 
+            END, name ASC
+        ")->get();
     }
 
     /**
@@ -1417,7 +1431,7 @@ class InventoryController extends Controller
         $year = (int)$request->input('year', date('Y'));
         $warehouseId = $request->input('warehouse_id');
 
-        $warehouses = Warehouse::orderBy('name')->get();
+        $warehouses = $this->getOrderedWarehouses();
         $selectedWarehouse = $warehouseId ? Warehouse::find($warehouseId) : null;
         $isEdgeBand = $selectedWarehouse && ($selectedWarehouse->code === 'KHO-CHI' || str_contains(mb_strtolower($selectedWarehouse->name), 'chỉ'));
 

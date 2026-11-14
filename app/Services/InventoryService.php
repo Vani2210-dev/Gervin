@@ -86,7 +86,11 @@ class InventoryService
                 $rawMatId = (string)($item['wood_board_id'] ?? $item['material_id'] ?? '');
                 $itemType = $item['item_type'] ?? null;
                 if (!$itemType) {
-                    if (str_starts_with($rawMatId, 'edge_') || str_starts_with($rawMatId, 'CHI-') || $isEdgeBandWarehouse) {
+                    if (str_starts_with($rawMatId, 'board_')) {
+                        $itemType = 'board';
+                    } elseif (str_starts_with($rawMatId, 'edge_') || str_starts_with($rawMatId, 'CHI-')) {
+                        $itemType = 'edge_band';
+                    } elseif ($isEdgeBandWarehouse) {
                         $itemType = 'edge_band';
                     } else {
                         $itemType = 'board';
@@ -108,13 +112,16 @@ class InventoryService
                     $price = (float)($item['unit_price'] ?? 0);
                     $lineTotal = $qty * $price;
 
+                    $itemHeight = isset($item['height']) && $item['height'] !== '' ? (float)$item['height'] : null;
+                    $itemWidth = isset($item['width']) && $item['width'] !== '' ? (float)$item['width'] : null;
+
                     InventoryReceiptItem::create($this->sanitizeItemData('inventory_receipt_items', [
                         'receipt_id'          => $receipt->id,
                         'item_type'           => 'edge_band',
                         'wood_board_id'       => $board->id,
                         'wood_board_price_id' => null,
-                        'height'              => null,
-                        'width'               => null,
+                        'height'              => $itemHeight,
+                        'width'               => $itemWidth,
                         'quantity'            => $qty,
                         'unit_price'          => $price,
                         'total_price'         => $lineTotal,
@@ -133,8 +140,8 @@ class InventoryService
                         'item_type'           => 'edge_band',
                         'wood_board_id'       => $board->id,
                         'wood_board_price_id' => null,
-                        'height'              => null,
-                        'width'               => null,
+                        'height'              => $itemHeight,
+                        'width'               => $itemWidth,
                         'date'                => $date,
                         'type'                => 'receipt',
                         'voucher_code'        => $code,
@@ -345,7 +352,11 @@ class InventoryService
                 $rawMatId = (string)($item['wood_board_id'] ?? $item['material_id'] ?? '');
                 $itemType = $item['item_type'] ?? null;
                 if (!$itemType) {
-                    if (str_starts_with($rawMatId, 'edge_') || str_starts_with($rawMatId, 'CHI-') || $isEdgeBandWarehouse) {
+                    if (str_starts_with($rawMatId, 'board_')) {
+                        $itemType = 'board';
+                    } elseif (str_starts_with($rawMatId, 'edge_') || str_starts_with($rawMatId, 'CHI-')) {
+                        $itemType = 'edge_band';
+                    } elseif ($isEdgeBandWarehouse) {
                         $itemType = 'edge_band';
                     } else {
                         $itemType = 'board';
@@ -367,13 +378,16 @@ class InventoryService
                     $price = (float)($item['unit_price'] ?? 0);
                     $lineTotal = $qty * $price;
 
+                    $itemHeight = isset($item['height']) && $item['height'] !== '' ? (float)$item['height'] : null;
+                    $itemWidth = isset($item['width']) && $item['width'] !== '' ? (float)$item['width'] : null;
+
                     InventoryReceiptItem::create($this->sanitizeItemData('inventory_receipt_items', [
                         'receipt_id'          => $receipt->id,
                         'item_type'           => 'edge_band',
                         'wood_board_id'       => $board->id,
                         'wood_board_price_id' => null,
-                        'height'              => null,
-                        'width'               => null,
+                        'height'              => $itemHeight,
+                        'width'               => $itemWidth,
                         'quantity'            => $qty,
                         'unit_price'          => $price,
                         'total_price'         => $lineTotal,
@@ -392,8 +406,8 @@ class InventoryService
                         'item_type'           => 'edge_band',
                         'wood_board_id'       => $board->id,
                         'wood_board_price_id' => null,
-                        'height'              => null,
-                        'width'               => null,
+                        'height'              => $itemHeight,
+                        'width'               => $itemWidth,
                         'date'                => $date,
                         'type'                => 'receipt',
                         'voucher_code'        => $code,
@@ -545,7 +559,11 @@ class InventoryService
                 $rawMatId = (string)($item['wood_board_id'] ?? $item['material_id'] ?? '');
                 $itemType = $item['item_type'] ?? null;
                 if (!$itemType) {
-                    if (str_starts_with($rawMatId, 'edge_') || str_starts_with($rawMatId, 'CHI-') || $isEdgeBandWarehouse) {
+                    if (str_starts_with($rawMatId, 'board_')) {
+                        $itemType = 'board';
+                    } elseif (str_starts_with($rawMatId, 'edge_') || str_starts_with($rawMatId, 'CHI-')) {
+                        $itemType = 'edge_band';
+                    } elseif ($isEdgeBandWarehouse) {
                         $itemType = 'edge_band';
                     } else {
                         $itemType = 'board';
@@ -567,13 +585,16 @@ class InventoryService
                     $price = (float)($item['unit_price'] ?? 0);
                     $lineTotal = $qty * $price;
 
+                    $itemHeight = isset($item['height']) && $item['height'] !== '' ? (float)$item['height'] : null;
+                    $itemWidth = isset($item['width']) && $item['width'] !== '' ? (float)$item['width'] : null;
+
                     InventoryIssueItem::create($this->sanitizeItemData('inventory_issue_items', [
                         'issue_id'            => $issue->id,
                         'item_type'           => 'edge_band',
                         'wood_board_id'       => $board->id,
                         'wood_board_price_id' => null,
-                        'height'              => null,
-                        'width'               => null,
+                        'height'              => $itemHeight,
+                        'width'               => $itemWidth,
                         'quantity'            => $qty,
                         'unit_price'          => $price,
                         'total_price'         => $lineTotal,
@@ -589,8 +610,8 @@ class InventoryService
                         'item_type'           => 'edge_band',
                         'wood_board_id'       => $board->id,
                         'wood_board_price_id' => null,
-                        'height'              => null,
-                        'width'               => null,
+                        'height'              => $itemHeight,
+                        'width'               => $itemWidth,
                         'date'                => $date,
                         'type'                => 'issue',
                         'voucher_code'        => $code,
@@ -777,7 +798,11 @@ class InventoryService
                 $rawMatId = (string)($item['wood_board_id'] ?? $item['material_id'] ?? '');
                 $itemType = $item['item_type'] ?? null;
                 if (!$itemType) {
-                    if (str_starts_with($rawMatId, 'edge_') || str_starts_with($rawMatId, 'CHI-') || $isEdgeBandWarehouse) {
+                    if (str_starts_with($rawMatId, 'board_')) {
+                        $itemType = 'board';
+                    } elseif (str_starts_with($rawMatId, 'edge_') || str_starts_with($rawMatId, 'CHI-')) {
+                        $itemType = 'edge_band';
+                    } elseif ($isEdgeBandWarehouse) {
                         $itemType = 'edge_band';
                     } else {
                         $itemType = 'board';
@@ -799,13 +824,16 @@ class InventoryService
                     $price = (float)($item['unit_price'] ?? 0);
                     $lineTotal = $qty * $price;
 
+                    $itemHeight = isset($item['height']) && $item['height'] !== '' ? (float)$item['height'] : null;
+                    $itemWidth = isset($item['width']) && $item['width'] !== '' ? (float)$item['width'] : null;
+
                     InventoryIssueItem::create($this->sanitizeItemData('inventory_issue_items', [
                         'issue_id'            => $issue->id,
                         'item_type'           => 'edge_band',
                         'wood_board_id'       => $board->id,
                         'wood_board_price_id' => null,
-                        'height'              => null,
-                        'width'               => null,
+                        'height'              => $itemHeight,
+                        'width'               => $itemWidth,
                         'quantity'            => $qty,
                         'unit_price'          => $price,
                         'total_price'         => $lineTotal,
@@ -821,8 +849,8 @@ class InventoryService
                         'item_type'           => 'edge_band',
                         'wood_board_id'       => $board->id,
                         'wood_board_price_id' => null,
-                        'height'              => null,
-                        'width'               => null,
+                        'height'              => $itemHeight,
+                        'width'               => $itemWidth,
                         'date'                => $date,
                         'type'                => 'issue',
                         'voucher_code'        => $code,
@@ -1292,10 +1320,6 @@ class InventoryService
         $hasAdd = $order->supplies->contains(fn($s) => ($s->inventory_action ?? '') === 'add');
         $isLsx = $isNK || ($hasSubtract && $hasAdd);
 
-        $targetWh = $warehouseId ? Warehouse::find($warehouseId) : null;
-        $isTargetEdgeWh = $targetWh && ($targetWh->code === 'KHO-CHI' || str_contains(mb_strtolower($targetWh->name), 'chỉ'));
-        $isTargetBoardWh = $targetWh && ($targetWh->code === 'KHO-VAN' || str_contains(mb_strtolower($targetWh->name), 'ván'));
-
         foreach ($order->supplies as $supply) {
             $code = trim($supply->order_supply_code ?: '');
             $name = trim($supply->supply_name ?: '');
@@ -1343,31 +1367,12 @@ class InventoryService
             $childItems = $supply->items?->isNotEmpty() ? $supply->items : ($supply->glassItems?->isNotEmpty() ? $supply->glassItems : ($supply->minLateItems?->isNotEmpty() ? $supply->minLateItems : collect()));
             $actionLabel = $isLsx ? (($action === 'subtract') ? ' (Trừ kho)' : ' (Thêm kho)') : '';
 
-            // TH 1: Khi kho đích là Kho Dán Chỉ (KHO-CHI)
-            if ($isTargetEdgeWh) {
-                $moldingMeters = 0;
-                if ($childItems->isNotEmpty()) {
-                    $moldingMeters = $childItems->sum(function($c) {
-                        $m = (float)($c->molding_length ?? 0);
-                        $q = max(1, (float)($c->quantity ?? 1));
-                        return $m * $q;
-                    });
-                    if ($moldingMeters <= 0) {
-                        $moldingMeters = $childItems->sum(function($c) {
-                            $h = (float)($c->height ?? 0);
-                            $w = (float)($c->width ?? 0);
-                            $q = max(1, (float)($c->quantity ?? 1));
-                            return (($h + $w) * 2 / 1000) * $q;
-                        });
-                    }
-                } else {
-                    $moldingMeters = (float)($supply->quantity ?? 1);
-                }
-
+            // Nếu dòng vật tư này bản thân là chỉ dán viền (Mã CHI-... hoặc tên Chỉ)
+            if ($isEdge) {
                 $edgeCode = $woodBoard?->edge_band_code ?: ('CHI-' . ($woodBoard?->color_code ?: $code));
-                $edgeName = $woodBoard?->edge_band_name ?: ('Chỉ dán viền ' . ($woodBoard?->color_code ?: $name));
+                $edgeName = $woodBoard?->edge_band_name ?: ($name ?: ('Chỉ dán viền ' . ($woodBoard?->color_code ?: $code)));
                 $matId = 'edge_' . ($woodBoard ? $woodBoard->id : ($supply->wood_board_id ?? 0));
-                $edgePrice = (float)($woodBoard->edge_band_cost_price ?? 0);
+                $qty = (float)($supply->quantity ?? 1);
 
                 $items[] = [
                     'material_id'      => $matId,
@@ -1375,18 +1380,17 @@ class InventoryService
                     'name'             => $edgeName,
                     'height'           => null,
                     'width'            => null,
-                    'quantity'         => round($moldingMeters, 2),
+                    'quantity'         => $qty,
                     'unit_price'       => 0,
                     'unit'             => 'm',
                     'inventory_action' => $action,
-                    'notes'            => "Từ đơn #{$order->order_code}{$actionLabel} (Chỉ dán viền cho {$code})",
+                    'notes'            => "Từ đơn #{$order->order_code}{$actionLabel}",
                 ];
                 continue;
             }
 
-            // TH 2: Khi kho đích là Kho Tấm Ván (hoặc không chỉ định riêng Kho Chỉ)
+            // Dòng vật tư là Tấm Ván
             $boardMatId = $boardPrice ? ('board_' . $boardPrice->id) : ($woodBoard ? ('board_' . $woodBoard->id) : ('board_' . ($supply->wood_board_id ?? 0)));
-            $boardPriceVal = (float)($boardPrice?->price_board ?? ($woodBoard?->cost_price ?? 0));
             $boardDisplayName = $name ?: ($boardPrice?->name ?? ($woodBoard ? 'Tấm ' . $woodBoard->color_code : $code));
 
             if ($childItems->isNotEmpty()) {
@@ -1447,23 +1451,36 @@ class InventoryService
                 ];
             }
 
-            // Nếu không chỉ định kho đích và có chỉ dán viền đi kèm, thêm dòng chỉ dán viền
-            if (!$isTargetBoardWh && !$isTargetEdgeWh && $childItems->isNotEmpty()) {
+            // Thêm chỉ dán viền đi kèm cho tấm ván này (nếu có chi tiết và có tính mét chỉ)
+            if ($childItems->isNotEmpty()) {
                 $moldingMeters = $childItems->sum(function($c) {
                     return ((float)($c->molding_length ?? 0)) * max(1, (float)($c->quantity ?? 1));
                 });
-                if ($moldingMeters > 0 && $woodBoard) {
+                if ($moldingMeters <= 0) {
+                    $moldingMeters = $childItems->sum(function($c) {
+                        $h = (float)($c->height ?? 0);
+                        $w = (float)($c->width ?? 0);
+                        $q = max(1, (float)($c->quantity ?? 1));
+                        return (($h + $w) * 2 / 1000) * $q;
+                    });
+                }
+
+                if ($moldingMeters > 0) {
+                    $edgeCode = $woodBoard?->edge_band_code ?: ('CHI-' . ($woodBoard?->color_code ?: $code));
+                    $edgeName = $woodBoard?->edge_band_name ?: ('Chỉ dán viền ' . ($woodBoard?->color_code ?: $name));
+                    $matId = 'edge_' . ($woodBoard ? $woodBoard->id : ($supply->wood_board_id ?? 0));
+
                     $items[] = [
-                        'material_id'      => 'edge_' . $woodBoard->id,
-                        'code'             => $woodBoard->edge_band_code ?: ('CHI-' . $woodBoard->color_code),
-                        'name'             => $woodBoard->edge_band_name ?: ('Chỉ dán viền ' . $woodBoard->color_code),
+                        'material_id'      => $matId,
+                        'code'             => $edgeCode,
+                        'name'             => $edgeName,
                         'height'           => null,
                         'width'            => null,
                         'quantity'         => round($moldingMeters, 2),
                         'unit_price'       => 0,
                         'unit'             => 'm',
                         'inventory_action' => $action,
-                        'notes'            => "Từ đơn #{$order->order_code}{$actionLabel} (Chỉ dán viền)",
+                        'notes'            => "Từ đơn #{$order->order_code}{$actionLabel} (Chỉ dán viền cho {$code})",
                     ];
                 }
             }

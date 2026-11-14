@@ -268,11 +268,7 @@
     }
 
     function getFilteredMaterialOptions() {
-        const isEdge = isEdgeBandWarehouse();
-        return MATERIALS.filter(m => {
-            if (isEdge) return m.item_type === 'edge_band';
-            return m.item_type !== 'edge_band';
-        }).map(m => ({
+        return MATERIALS.map(m => ({
             value: String(m.id),
             code: m.code || '',
             name: m.name || '',
@@ -291,7 +287,7 @@
         if (thCol) {
             thCol.innerHTML = isEdge 
                 ? 'Mặt hàng Chỉ Dán Viền (Mã CHI-...) <span class="text-danger-500">*</span>' 
-                : 'Mặt hàng Tấm Ván (Mã SKU) <span class="text-danger-500">*</span>';
+                : 'Mặt hàng vật tư (Mã ván / Chỉ dán) <span class="text-danger-500">*</span>';
         }
 
         const orderSelect = document.getElementById('select_order');
@@ -346,18 +342,34 @@
             </td>
             <td class="py-2 px-3 text-center text-neutral-600 unit-cell">${isEdge ? 'm' : 'Tấm'}</td>
             <td class="py-2 px-3 text-center">
-                <input type="number" name="items[${thisRowIdx}][height]" value="${height !== '' ? height : (isEdge ? '' : '2440')}" step="1" min="0" class="form-control rounded-lg w-full border-neutral-200 px-2 py-1 text-center text-xs focus:border-primary-500 height-input" placeholder="${isEdge ? '—' : '2440'}" ${isEdge ? 'disabled' : ''}>
+                <input type="number" name="items[${thisRowIdx}][height]" value="${height !== '' && height !== null ? height : (isEdge ? '' : '2440')}" step="1" min="0" class="form-control rounded-lg w-full border-neutral-200 px-2 py-1 text-center text-xs focus:border-primary-500 height-input" placeholder="${isEdge ? '—' : '2440'}">
             </td>
             <td class="py-2 px-3 text-center">
-                <input type="number" name="items[${thisRowIdx}][width]" value="${width !== '' ? width : (isEdge ? '' : '1220')}" step="1" min="0" class="form-control rounded-lg w-full border-neutral-200 px-2 py-1 text-center text-xs focus:border-primary-500 width-input" placeholder="${isEdge ? '—' : '1220'}" ${isEdge ? 'disabled' : ''}>
+                <input type="number" name="items[${thisRowIdx}][width]" value="${width !== '' && width !== null ? width : (isEdge ? '' : '1220')}" step="1" min="0" class="form-control rounded-lg w-full border-neutral-200 px-2 py-1 text-center text-xs focus:border-primary-500 width-input" placeholder="${isEdge ? '—' : '1220'}">
             </td>
             <td class="py-2 px-3 text-right text-neutral-500 stock-cell">-</td>
             <td class="py-2 px-3 text-right">
                 <input type="number" name="items[${thisRowIdx}][quantity]" value="${qty}" step="0.01" min="0.01" class="form-control rounded-lg w-full border-neutral-200 px-2 py-1 text-right text-xs font-bold text-emerald-700 focus:border-primary-500 qty-input" required oninput="calcTotals()">
             </td>
             <td class="py-2 px-3 text-right">
-                <input type="number" name="items[${thisRowIdx}][unit_price]" value="${price !== '' ? price : '0'}" step="1000" min="0" class="form-control rounded-lg w-full border-neutral-200 px-2 py-1 text-right text-xs focus:border-primary-500 price-input" placeholder="0" oninput="calcTotals()">
+                <input type="number" name="items[${thisRowIdx}][unit_price]" value="${price !== '' && price !== null ? price : '0'}" step="1000" min="0" class="form-control rounded-lg w-full border-neutral-200 px-2 py-1 text-right text-xs focus:border-primary-500 price-input" placeholder="0" oninput="calcTotals()">
             </td>
+            <td class="py-2 px-3 text-right font-bold text-neutral-800 line-total-cell">0đ</td>
+            <td class="py-2 px-3">
+                <input type="text" name="items[${thisRowIdx}][notes]" value="${notes}" class="form-control rounded-lg w-full border-neutral-200 px-2 py-1 text-xs" placeholder="Ghi chú...">
+            </td>
+            <td class="py-2 px-3 text-center">
+                <button type="button" onclick="removeRow(${thisRowIdx})" class="text-danger-500 hover:text-danger-700 p-1 text-base leading-none" title="Xóa dòng">&times;</button>
+            </td>
+        `;
+
+        tbody.appendChild(tr);
+        rowCount++;
+
+        initTomSelectForRow(thisRowIdx, selectedMaterialId);
+        updateStt();
+        calcTotals();
+    }
             <td class="py-2 px-3 text-right font-bold text-neutral-800 line-total-cell">0đ</td>
             <td class="py-2 px-3">
                 <input type="text" name="items[${thisRowIdx}][notes]" value="${notes}" class="form-control rounded-lg w-full border-neutral-200 px-2 py-1 text-xs" placeholder="Ghi chú...">
@@ -487,17 +499,20 @@
         const heightInput = tr.querySelector('.height-input');
         const widthInput = tr.querySelector('.width-input');
         const isMatEdge = mat.item_type === 'edge_band' || (mat.code && String(mat.code).startsWith('CHI-'));
-        if (isMatEdge) {
-            if (heightInput) { heightInput.value = ''; heightInput.disabled = true; heightInput.placeholder = '—'; }
-            if (widthInput) { widthInput.value = ''; widthInput.disabled = true; widthInput.placeholder = '—'; }
-        } else {
-            if (heightInput) {
-                heightInput.disabled = false;
+        if (heightInput) {
+            heightInput.disabled = false;
+            if (isMatEdge) {
+                heightInput.placeholder = '—';
+            } else {
                 heightInput.placeholder = '2440';
                 if (!heightInput.value) heightInput.value = '2440';
             }
-            if (widthInput) {
-                widthInput.disabled = false;
+        }
+        if (widthInput) {
+            widthInput.disabled = false;
+            if (isMatEdge) {
+                widthInput.placeholder = '—';
+            } else {
                 widthInput.placeholder = '1220';
                 if (!widthInput.value) widthInput.value = '1220';
             }
