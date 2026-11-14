@@ -105,7 +105,7 @@ class InventoryService
                     $qty = (float)($item['quantity'] ?? 0);
                     if ($qty <= 0) continue;
 
-                    $price = (float)($item['unit_price'] ?? ($board->edge_band_cost_price ?? 0));
+                    $price = (float)($item['unit_price'] ?? 0);
                     $lineTotal = $qty * $price;
 
                     InventoryReceiptItem::create($this->sanitizeItemData('inventory_receipt_items', [
@@ -113,6 +113,8 @@ class InventoryService
                         'item_type'           => 'edge_band',
                         'wood_board_id'       => $board->id,
                         'wood_board_price_id' => null,
+                        'height'              => null,
+                        'width'               => null,
                         'quantity'            => $qty,
                         'unit_price'          => $price,
                         'total_price'         => $lineTotal,
@@ -131,6 +133,8 @@ class InventoryService
                         'item_type'           => 'edge_band',
                         'wood_board_id'       => $board->id,
                         'wood_board_price_id' => null,
+                        'height'              => null,
+                        'width'               => null,
                         'date'                => $date,
                         'type'                => 'receipt',
                         'voucher_code'        => $code,
@@ -170,14 +174,19 @@ class InventoryService
                     $qty = (float)($item['quantity'] ?? 0);
                     if ($qty <= 0) continue;
 
-                    $price = (float)($item['unit_price'] ?? ($boardPrice?->price_board ?? 0));
+                    $price = (float)($item['unit_price'] ?? 0);
                     $lineTotal = $qty * $price;
+
+                    $itemHeight = isset($item['height']) && $item['height'] !== '' ? (float)$item['height'] : null;
+                    $itemWidth = isset($item['width']) && $item['width'] !== '' ? (float)$item['width'] : null;
 
                     InventoryReceiptItem::create($this->sanitizeItemData('inventory_receipt_items', [
                         'receipt_id'          => $receipt->id,
                         'item_type'           => 'board',
                         'wood_board_id'       => $boardId,
                         'wood_board_price_id' => $boardPrice?->id,
+                        'height'              => $itemHeight,
+                        'width'               => $itemWidth,
                         'quantity'            => $qty,
                         'unit_price'          => $price,
                         'total_price'         => $lineTotal,
@@ -214,6 +223,8 @@ class InventoryService
                         'item_type'           => 'board',
                         'wood_board_id'       => $boardId,
                         'wood_board_price_id' => $boardPrice?->id,
+                        'height'              => $itemHeight,
+                        'width'               => $itemWidth,
                         'date'                => $date,
                         'type'                => 'receipt',
                         'voucher_code'        => $code,
@@ -353,7 +364,7 @@ class InventoryService
                     $qty = (float)($item['quantity'] ?? 0);
                     if ($qty <= 0) continue;
 
-                    $price = (float)($item['unit_price'] ?? ($board->edge_band_cost_price ?? 0));
+                    $price = (float)($item['unit_price'] ?? 0);
                     $lineTotal = $qty * $price;
 
                     InventoryReceiptItem::create($this->sanitizeItemData('inventory_receipt_items', [
@@ -361,6 +372,8 @@ class InventoryService
                         'item_type'           => 'edge_band',
                         'wood_board_id'       => $board->id,
                         'wood_board_price_id' => null,
+                        'height'              => null,
+                        'width'               => null,
                         'quantity'            => $qty,
                         'unit_price'          => $price,
                         'total_price'         => $lineTotal,
@@ -379,6 +392,8 @@ class InventoryService
                         'item_type'           => 'edge_band',
                         'wood_board_id'       => $board->id,
                         'wood_board_price_id' => null,
+                        'height'              => null,
+                        'width'               => null,
                         'date'                => $date,
                         'type'                => 'receipt',
                         'voucher_code'        => $code,
@@ -418,14 +433,19 @@ class InventoryService
                     $qty = (float)($item['quantity'] ?? 0);
                     if ($qty <= 0) continue;
 
-                    $price = (float)($item['unit_price'] ?? ($boardPrice?->price_board ?? 0));
+                    $price = (float)($item['unit_price'] ?? 0);
                     $lineTotal = $qty * $price;
+
+                    $itemHeight = isset($item['height']) && $item['height'] !== '' ? (float)$item['height'] : null;
+                    $itemWidth = isset($item['width']) && $item['width'] !== '' ? (float)$item['width'] : null;
 
                     InventoryReceiptItem::create($this->sanitizeItemData('inventory_receipt_items', [
                         'receipt_id'          => $receipt->id,
                         'item_type'           => 'board',
                         'wood_board_id'       => $boardId,
                         'wood_board_price_id' => $boardPrice?->id,
+                        'height'              => $itemHeight,
+                        'width'               => $itemWidth,
                         'quantity'            => $qty,
                         'unit_price'          => $price,
                         'total_price'         => $lineTotal,
@@ -462,6 +482,8 @@ class InventoryService
                         'item_type'           => 'board',
                         'wood_board_id'       => $boardId,
                         'wood_board_price_id' => $boardPrice?->id,
+                        'height'              => $itemHeight,
+                        'width'               => $itemWidth,
                         'date'                => $date,
                         'type'                => 'receipt',
                         'voucher_code'        => $code,
@@ -542,7 +564,7 @@ class InventoryService
                     $qty = (float)($item['quantity'] ?? 0);
                     if ($qty <= 0) continue;
 
-                    $price = (float)($item['unit_price'] ?? ($board->edge_band_cost_price ?? 0));
+                    $price = (float)($item['unit_price'] ?? 0);
                     $lineTotal = $qty * $price;
 
                     InventoryIssueItem::create($this->sanitizeItemData('inventory_issue_items', [
@@ -550,6 +572,8 @@ class InventoryService
                         'item_type'           => 'edge_band',
                         'wood_board_id'       => $board->id,
                         'wood_board_price_id' => null,
+                        'height'              => null,
+                        'width'               => null,
                         'quantity'            => $qty,
                         'unit_price'          => $price,
                         'total_price'         => $lineTotal,
@@ -565,6 +589,8 @@ class InventoryService
                         'item_type'           => 'edge_band',
                         'wood_board_id'       => $board->id,
                         'wood_board_price_id' => null,
+                        'height'              => null,
+                        'width'               => null,
                         'date'                => $date,
                         'type'                => 'issue',
                         'voucher_code'        => $code,
@@ -605,14 +631,19 @@ class InventoryService
                     if ($qty <= 0) continue;
 
                     $board = WoodBoard::find($boardId);
-                    $price = (float)($item['unit_price'] ?? ($boardPrice?->price_board ?? $board?->cost_price ?? 0));
+                    $price = (float)($item['unit_price'] ?? 0);
                     $lineTotal = $qty * $price;
+
+                    $itemHeight = isset($item['height']) && $item['height'] !== '' ? (float)$item['height'] : null;
+                    $itemWidth = isset($item['width']) && $item['width'] !== '' ? (float)$item['width'] : null;
 
                     InventoryIssueItem::create($this->sanitizeItemData('inventory_issue_items', [
                         'issue_id'            => $issue->id,
                         'item_type'           => 'board',
                         'wood_board_id'       => $boardId,
                         'wood_board_price_id' => $boardPrice?->id,
+                        'height'              => $itemHeight,
+                        'width'               => $itemWidth,
                         'quantity'            => $qty,
                         'unit_price'          => $price,
                         'total_price'         => $lineTotal,
@@ -642,6 +673,8 @@ class InventoryService
                         'item_type'           => 'board',
                         'wood_board_id'       => $boardId,
                         'wood_board_price_id' => $boardPrice?->id,
+                        'height'              => $itemHeight,
+                        'width'               => $itemWidth,
                         'date'                => $date,
                         'type'                => 'issue',
                         'voucher_code'        => $code,
@@ -763,7 +796,7 @@ class InventoryService
                     $qty = (float)($item['quantity'] ?? 0);
                     if ($qty <= 0) continue;
 
-                    $price = (float)($item['unit_price'] ?? ($board->edge_band_cost_price ?? 0));
+                    $price = (float)($item['unit_price'] ?? 0);
                     $lineTotal = $qty * $price;
 
                     InventoryIssueItem::create($this->sanitizeItemData('inventory_issue_items', [
@@ -771,6 +804,8 @@ class InventoryService
                         'item_type'           => 'edge_band',
                         'wood_board_id'       => $board->id,
                         'wood_board_price_id' => null,
+                        'height'              => null,
+                        'width'               => null,
                         'quantity'            => $qty,
                         'unit_price'          => $price,
                         'total_price'         => $lineTotal,
@@ -786,6 +821,8 @@ class InventoryService
                         'item_type'           => 'edge_band',
                         'wood_board_id'       => $board->id,
                         'wood_board_price_id' => null,
+                        'height'              => null,
+                        'width'               => null,
                         'date'                => $date,
                         'type'                => 'issue',
                         'voucher_code'        => $code,
@@ -825,14 +862,19 @@ class InventoryService
                     if ($qty <= 0) continue;
 
                     $board = WoodBoard::find($boardId);
-                    $price = (float)($item['unit_price'] ?? ($boardPrice?->price_board ?? $board?->cost_price ?? 0));
+                    $price = (float)($item['unit_price'] ?? 0);
                     $lineTotal = $qty * $price;
+
+                    $itemHeight = isset($item['height']) && $item['height'] !== '' ? (float)$item['height'] : null;
+                    $itemWidth = isset($item['width']) && $item['width'] !== '' ? (float)$item['width'] : null;
 
                     InventoryIssueItem::create($this->sanitizeItemData('inventory_issue_items', [
                         'issue_id'            => $issue->id,
                         'item_type'           => 'board',
                         'wood_board_id'       => $boardId,
                         'wood_board_price_id' => $boardPrice?->id,
+                        'height'              => $itemHeight,
+                        'width'               => $itemWidth,
                         'quantity'            => $qty,
                         'unit_price'          => $price,
                         'total_price'         => $lineTotal,
@@ -862,6 +904,8 @@ class InventoryService
                         'item_type'           => 'board',
                         'wood_board_id'       => $boardId,
                         'wood_board_price_id' => $boardPrice?->id,
+                        'height'              => $itemHeight,
+                        'width'               => $itemWidth,
                         'date'                => $date,
                         'type'                => 'issue',
                         'voucher_code'        => $code,
@@ -950,6 +994,8 @@ class InventoryService
                         'item_type'           => 'edge_band',
                         'wood_board_id'       => $board->id,
                         'wood_board_price_id' => null,
+                        'height'              => null,
+                        'width'               => null,
                         'book_quantity'       => $bookQty,
                         'actual_quantity'     => $actualQty,
                         'difference'          => $diff,
@@ -988,11 +1034,16 @@ class InventoryService
                         : 0;
                     $diff = $actualQty - $bookQty;
 
+                    $itemHeight = isset($item['height']) && $item['height'] !== '' ? (float)$item['height'] : 2440;
+                    $itemWidth = isset($item['width']) && $item['width'] !== '' ? (float)$item['width'] : 1220;
+
                     InventoryStocktakeItem::create($this->sanitizeItemData('inventory_stocktake_items', [
                         'stocktake_id'        => $stocktake->id,
                         'item_type'           => 'board',
                         'wood_board_id'       => $boardId,
                         'wood_board_price_id' => $boardPrice?->id,
+                        'height'              => $itemHeight,
+                        'width'               => $itemWidth,
                         'book_quantity'       => $bookQty,
                         'actual_quantity'     => $actualQty,
                         'difference'          => $diff,
@@ -1040,6 +1091,8 @@ class InventoryService
                             'item_type'           => 'edge_band',
                             'wood_board_id'       => $board->id,
                             'wood_board_price_id' => null,
+                            'height'              => null,
+                            'width'               => null,
                             'date'                => $stocktake->date,
                             'type'                => 'stocktake',
                             'voucher_code'        => $stocktake->code,
@@ -1080,6 +1133,8 @@ class InventoryService
                             'item_type'           => 'board',
                             'wood_board_id'       => $board?->id ?? $boardPrice?->wood_board_id,
                             'wood_board_price_id' => $boardPrice?->id,
+                            'height'              => $item->height,
+                            'width'               => $item->width,
                             'date'                => $stocktake->date,
                             'type'                => 'stocktake',
                             'voucher_code'        => $stocktake->code,
@@ -1224,105 +1279,194 @@ class InventoryService
      * @param string|null $type 'receipt' (PNK - Nhập kho) hoặc 'issue' (PXK - Xuất kho)
      * @return array
      */
-    public function getOrderMaterialItems(Order $order, ?string $type = null): array
+    public function getOrderMaterialItems(Order $order, ?string $type = null, ?int $warehouseId = null): array
     {
         $order->loadMissing(['supplies.items', 'supplies.glassItems', 'supplies.minLateItems']);
         $items = [];
 
-        // Kiểm tra xem đơn hàng có phân định Thêm kho / Trừ kho không
-        // Phân định khi:
+        // Phân biệt Đơn hàng thường vs Lệnh sản xuất (LSX / Đơn nhập kho nội bộ):
         // 1. Đơn là Lệnh sản xuất / nhập kho nội bộ ($order->isNhapKho())
-        // 2. HOẶC trong đơn có chứa vật tư có inventory_action === 'subtract'
-        // 3. HOẶC trong đơn có chứa vật tư có inventory_action === 'add' trong khi là đơn sản xuất
+        // 2. HOẶC trong đơn có chứa cả vật tư 'subtract' (Trừ kho - nguyên liệu) và 'add' (Thêm kho - thành phẩm)
         $isNK = $order->isNhapKho();
         $hasSubtract = $order->supplies->contains(fn($s) => ($s->inventory_action ?? '') === 'subtract');
         $hasAdd = $order->supplies->contains(fn($s) => ($s->inventory_action ?? '') === 'add');
-        $hasActionDistinction = $isNK || ($hasSubtract && $hasAdd);
+        $isLsx = $isNK || ($hasSubtract && $hasAdd);
+
+        $targetWh = $warehouseId ? Warehouse::find($warehouseId) : null;
+        $isTargetEdgeWh = $targetWh && ($targetWh->code === 'KHO-CHI' || str_contains(mb_strtolower($targetWh->name), 'chỉ'));
+        $isTargetBoardWh = $targetWh && ($targetWh->code === 'KHO-VAN' || str_contains(mb_strtolower($targetWh->name), 'ván'));
 
         foreach ($order->supplies as $supply) {
             $code = trim($supply->order_supply_code ?: '');
             $name = trim($supply->supply_name ?: '');
             if (!$code && !$name) continue;
 
-            $action = $supply->inventory_action ?? ($isNK ? 'add' : 'subtract');
+            $action = $supply->inventory_action ?? ($isLsx ? 'add' : 'subtract');
 
             // Lọc theo loại phiếu kho:
-            if ($type === 'issue' || $type === 'pxk') {
-                // Phiếu Xuất Kho (PXK):
-                // 1. Tuyệt đối không lấy các vật tư 'add' (Thêm kho) nếu đơn là Lệnh sản xuất / Nhập kho,
-                //    hoặc đơn có phân định Thêm/Trừ kho.
-                if (($isNK || $hasActionDistinction) && $action !== 'subtract') {
-                    continue;
+            if ($isLsx) {
+                // Còn LSX thì nhập và xuất dựa theo lựa chọn trong đơn
+                if ($type === 'issue' || $type === 'pxk') {
+                    // Phiếu Xuất Kho (PXK): Chỉ lấy các dòng đánh dấu [Trừ kho] (nguyên vật liệu sản xuất)
+                    if ($action !== 'subtract') {
+                        continue;
+                    }
+                } elseif ($type === 'receipt' || $type === 'pnk') {
+                    // Phiếu Nhập Kho (PNK): Chỉ lấy các dòng đánh dấu [Thêm kho] (thành phẩm sản xuất)
+                    if ($action !== 'add') {
+                        continue;
+                    }
                 }
-            } elseif ($type === 'receipt' || $type === 'pnk') {
-                // Phiếu Nhập Kho (PNK):
-                // 1. Tuyệt đối không lấy các vật tư 'subtract' (Trừ kho).
-                if ($action === 'subtract') {
-                    continue;
-                }
-                // 2. Nếu là đơn bán hàng thường (không phải Lệnh SX / Nhập kho) và không có phân định:
-                //    Đơn bán hàng thường không xuất hiện trong PNK (tránh nạp nhầm nguyên liệu thành nhập kho).
-                if (!$isNK && !$hasActionDistinction) {
-                    continue;
-                }
-                // 3. Nếu đơn là Lệnh sản xuất / Nhập kho hoặc có phân định, chỉ lấy các vật tư 'add' (Thêm kho - thành phẩm).
-                if (($isNK || $hasActionDistinction) && $action !== 'add') {
-                    continue;
-                }
+            } else {
+                // Riêng đơn hàng thường thì nhập xuất giống nhau:
+                // Cả PNK và PXK đều nạp toàn bộ danh mục vật tư / tấm ván của đơn hàng!
             }
-
-            $qty = (float)($supply->quantity ?? 0);
-            if ($qty <= 0) {
-                $childCount = ($supply->items ? $supply->items->sum('quantity') : 0) 
-                    ?: (($supply->glassItems ? $supply->glassItems->sum('quantity') : 0) 
-                    ?: (($supply->minLateItems ? $supply->minLateItems->sum('quantity') : 0) ?: 0));
-                $qty = (float)$childCount;
-            }
-            if ($qty <= 0) $qty = 1;
 
             $isEdge = str_starts_with($code, 'CHI-') || str_contains(mb_strtolower($name), 'chỉ');
 
             // Tìm trong WoodBoardPrice hoặc WoodBoard
             $boardPrice = WoodBoardPrice::where('code', $code)->first();
             $woodBoard = null;
-            if (!$boardPrice && $code) {
-                $woodBoard = WoodBoard::where('color_code', $code)->first();
-            }
-            if (!$boardPrice && !$woodBoard && $supply->wood_board_id) {
-                $woodBoard = WoodBoard::find($supply->wood_board_id);
-            }
-
-            $materialId = '';
-            $unit = $isEdge ? 'm' : 'Tấm';
-            $price = 0;
-
-            if ($isEdge) {
-                $materialId = 'edge_' . ($woodBoard ? $woodBoard->id : ($supply->wood_board_id ?? 0));
-                $price = (float)($woodBoard->edge_band_cost_price ?? 0);
+            if ($boardPrice) {
+                $woodBoard = $boardPrice->board;
             } else {
-                if ($boardPrice) {
-                    $materialId = 'board_' . $boardPrice->id;
-                    $price = (float)($boardPrice->price_board ?? 0);
-                } elseif ($woodBoard) {
-                    $materialId = 'board_' . $woodBoard->id;
-                    $price = (float)($woodBoard->cost_price ?? 0);
-                } else {
-                    $materialId = 'board_' . ($supply->wood_board_id ?? 0);
+                $woodBoard = WoodBoard::where('color_code', $code)->first();
+                if (!$woodBoard) {
+                    $baseCode = preg_replace('/(\.TP|\.PVC|\.2M|\.1M).*$/i', '', $code);
+                    $woodBoard = WoodBoard::where('color_code', $baseCode)->first();
+                }
+                if (!$woodBoard && $supply->wood_board_id) {
+                    $woodBoard = WoodBoard::find($supply->wood_board_id);
                 }
             }
 
-            $actionLabel = ($action === 'subtract') ? ' (Trừ kho)' : (($action === 'add' && $hasActionDistinction) ? ' (Thêm kho)' : '');
+            $childItems = $supply->items?->isNotEmpty() ? $supply->items : ($supply->glassItems?->isNotEmpty() ? $supply->glassItems : ($supply->minLateItems?->isNotEmpty() ? $supply->minLateItems : collect()));
+            $actionLabel = $isLsx ? (($action === 'subtract') ? ' (Trừ kho)' : ' (Thêm kho)') : '';
 
-            $items[] = [
-                'material_id'      => $materialId,
-                'code'             => $code,
-                'name'             => $name ?: ($boardPrice?->name ?? ($woodBoard ? 'Tấm ' . $woodBoard->color_code : $code)),
-                'quantity'         => $qty,
-                'unit_price'       => $price,
-                'unit'             => $unit,
-                'inventory_action' => $action,
-                'notes'            => "Từ đơn #{$order->order_code}{$actionLabel}",
-            ];
+            // TH 1: Khi kho đích là Kho Dán Chỉ (KHO-CHI)
+            if ($isTargetEdgeWh) {
+                $moldingMeters = 0;
+                if ($childItems->isNotEmpty()) {
+                    $moldingMeters = $childItems->sum(function($c) {
+                        $m = (float)($c->molding_length ?? 0);
+                        $q = max(1, (float)($c->quantity ?? 1));
+                        return $m * $q;
+                    });
+                    if ($moldingMeters <= 0) {
+                        $moldingMeters = $childItems->sum(function($c) {
+                            $h = (float)($c->height ?? 0);
+                            $w = (float)($c->width ?? 0);
+                            $q = max(1, (float)($c->quantity ?? 1));
+                            return (($h + $w) * 2 / 1000) * $q;
+                        });
+                    }
+                } else {
+                    $moldingMeters = (float)($supply->quantity ?? 1);
+                }
+
+                $edgeCode = $woodBoard?->edge_band_code ?: ('CHI-' . ($woodBoard?->color_code ?: $code));
+                $edgeName = $woodBoard?->edge_band_name ?: ('Chỉ dán viền ' . ($woodBoard?->color_code ?: $name));
+                $matId = 'edge_' . ($woodBoard ? $woodBoard->id : ($supply->wood_board_id ?? 0));
+                $edgePrice = (float)($woodBoard->edge_band_cost_price ?? 0);
+
+                $items[] = [
+                    'material_id'      => $matId,
+                    'code'             => $edgeCode,
+                    'name'             => $edgeName,
+                    'height'           => null,
+                    'width'            => null,
+                    'quantity'         => round($moldingMeters, 2),
+                    'unit_price'       => 0,
+                    'unit'             => 'm',
+                    'inventory_action' => $action,
+                    'notes'            => "Từ đơn #{$order->order_code}{$actionLabel} (Chỉ dán viền cho {$code})",
+                ];
+                continue;
+            }
+
+            // TH 2: Khi kho đích là Kho Tấm Ván (hoặc không chỉ định riêng Kho Chỉ)
+            $boardMatId = $boardPrice ? ('board_' . $boardPrice->id) : ($woodBoard ? ('board_' . $woodBoard->id) : ('board_' . ($supply->wood_board_id ?? 0)));
+            $boardPriceVal = (float)($boardPrice?->price_board ?? ($woodBoard?->cost_price ?? 0));
+            $boardDisplayName = $name ?: ($boardPrice?->name ?? ($woodBoard ? 'Tấm ' . $woodBoard->color_code : $code));
+
+            if ($childItems->isNotEmpty()) {
+                $grouped = [];
+                foreach ($childItems as $child) {
+                    $h = !empty($child->height) ? (float)$child->height : 2440;
+                    $w = !empty($child->width) ? (float)$child->width : 1220;
+                    $q = max(1, (float)($child->quantity ?? 1));
+                    $pName = trim($child->product_name ?? '');
+                    $cNotes = trim($child->notes ?? '');
+
+                    // Gom nhóm theo kích thước và tên/ghi chú sản phẩm
+                    $key = "{$h}_{$w}_" . md5($pName . '_' . $cNotes);
+                    if (!isset($grouped[$key])) {
+                        $grouped[$key] = [
+                            'height'       => $h,
+                            'width'        => $w,
+                            'quantity'     => 0,
+                            'product_name' => $pName,
+                            'notes'        => $cNotes,
+                        ];
+                    }
+                    $grouped[$key]['quantity'] += $q;
+                }
+
+                foreach ($grouped as $g) {
+                    $noteParts = [];
+                    if (!empty($g['product_name'])) $noteParts[] = $g['product_name'];
+                    if (!empty($g['notes'])) $noteParts[] = $g['notes'];
+                    $extraNote = !empty($noteParts) ? ' - ' . implode(' | ', $noteParts) : '';
+
+                    $items[] = [
+                        'material_id'      => $boardMatId,
+                        'code'             => $code,
+                        'name'             => $boardDisplayName,
+                        'height'           => $g['height'],
+                        'width'            => $g['width'],
+                        'quantity'         => $g['quantity'],
+                        'unit_price'       => 0,
+                        'unit'             => 'Tấm',
+                        'inventory_action' => $action,
+                        'notes'            => "Từ đơn #{$order->order_code}{$actionLabel}{$extraNote}",
+                    ];
+                }
+            } else {
+                $qty = (float)($supply->quantity ?? 1);
+                $items[] = [
+                    'material_id'      => $boardMatId,
+                    'code'             => $code,
+                    'name'             => $boardDisplayName,
+                    'height'           => 2440,
+                    'width'            => 1220,
+                    'quantity'         => $qty,
+                    'unit_price'       => 0,
+                    'unit'             => 'Tấm',
+                    'inventory_action' => $action,
+                    'notes'            => "Từ đơn #{$order->order_code}{$actionLabel}",
+                ];
+            }
+
+            // Nếu không chỉ định kho đích và có chỉ dán viền đi kèm, thêm dòng chỉ dán viền
+            if (!$isTargetBoardWh && !$isTargetEdgeWh && $childItems->isNotEmpty()) {
+                $moldingMeters = $childItems->sum(function($c) {
+                    return ((float)($c->molding_length ?? 0)) * max(1, (float)($c->quantity ?? 1));
+                });
+                if ($moldingMeters > 0 && $woodBoard) {
+                    $items[] = [
+                        'material_id'      => 'edge_' . $woodBoard->id,
+                        'code'             => $woodBoard->edge_band_code ?: ('CHI-' . $woodBoard->color_code),
+                        'name'             => $woodBoard->edge_band_name ?: ('Chỉ dán viền ' . $woodBoard->color_code),
+                        'height'           => null,
+                        'width'            => null,
+                        'quantity'         => round($moldingMeters, 2),
+                        'unit_price'       => 0,
+                        'unit'             => 'm',
+                        'inventory_action' => $action,
+                        'notes'            => "Từ đơn #{$order->order_code}{$actionLabel} (Chỉ dán viền)",
+                    ];
+                }
+            }
         }
 
         return $items;

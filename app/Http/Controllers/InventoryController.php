@@ -333,6 +333,43 @@ class InventoryController extends Controller
             }
         }
 
+        // Tách tồn kho theo từng kích thước (Quy cách) phát sinh từ các giao dịch
+        $dimStocks = collect();
+        if (!$isEdgeBandWarehouse && $materials->isNotEmpty()) {
+            if ($hasPrices ?? false) {
+                $priceIds = $materials->getCollection()->pluck('id')->filter()->toArray();
+                if (!empty($priceIds)) {
+                    $dimStocks = \App\Models\InventoryTransaction::whereIn('wood_board_price_id', $priceIds)
+                        ->when($selectedWarehouseId, function ($q) use ($selectedWarehouseId) {
+                            $q->where('warehouse_id', $selectedWarehouseId);
+                        })
+                        ->where('item_type', 'board')
+                        ->groupBy('wood_board_price_id', 'height', 'width')
+                        ->selectRaw('wood_board_price_id, height, width, SUM(in_qty - out_qty) as dim_stock')
+                        ->havingRaw('dim_stock > 0')
+                        ->orderByDesc('dim_stock')
+                        ->get()
+                        ->groupBy('wood_board_price_id');
+                }
+            } else {
+                $boardIds = $materials->getCollection()->pluck('id')->filter()->toArray();
+                if (!empty($boardIds)) {
+                    $dimStocks = \App\Models\InventoryTransaction::whereIn('wood_board_id', $boardIds)
+                        ->whereNull('wood_board_price_id')
+                        ->when($selectedWarehouseId, function ($q) use ($selectedWarehouseId) {
+                            $q->where('warehouse_id', $selectedWarehouseId);
+                        })
+                        ->where('item_type', 'board')
+                        ->groupBy('wood_board_id', 'height', 'width')
+                        ->selectRaw('wood_board_id, height, width, SUM(in_qty - out_qty) as dim_stock')
+                        ->havingRaw('dim_stock > 0')
+                        ->orderByDesc('dim_stock')
+                        ->get()
+                        ->groupBy('wood_board_id');
+                }
+            }
+        }
+
         $categories = WoodBoard::select('price_group as category')->whereNotNull('price_group')->distinct()->pluck('category');
 
         $activeFilterCount = 0;
@@ -349,6 +386,7 @@ class InventoryController extends Controller
 
         return view('inventory.index', compact(
             'materials',
+            'dimStocks',
             'warehouses',
             'selectedWarehouseId',
             'selectedWarehouse',
@@ -776,8 +814,21 @@ class InventoryController extends Controller
                 }
             }
 
+            $dimStocks = \App\Models\InventoryTransaction::whereIn('wood_board_price_id', $prices->pluck('id'))
+                ->when($selectedWarehouseId, function ($q) use ($selectedWarehouseId) {
+                    $q->where('warehouse_id', $selectedWarehouseId);
+                })
+                ->where('item_type', 'board')
+                ->groupBy('wood_board_price_id', 'height', 'width')
+                ->selectRaw('wood_board_price_id, height, width, SUM(in_qty - out_qty) as dim_stock')
+                ->havingRaw('dim_stock > 0')
+                ->orderByDesc('dim_stock')
+                ->get()
+                ->groupBy('wood_board_price_id');
+
             $row = 4;
-            foreach ($prices as $i => $p) {
+            $counter = 1;
+            foreach ($prices as $p) {
                 $sku = $p->code ?: ($p->board?->color_code . ($p->type?->prefix ?? ''));
                 $color = $p->board?->color_code ?? '';
                 $rawName = trim($p->name ?: ($p->type?->name ?? 'Tấm Acrylic'));
@@ -804,16 +855,51 @@ class InventoryController extends Controller
                 }
                 $cost = (float)$p->price_board;
 
-                $sheet->setCellValue('A' . $row, $i + 1);
-                $sheet->setCellValue('B' . $row, $sku);
-                $sheet->setCellValue('C' . $row, $name);
-                $sheet->setCellValue('D' . $row, $origin);
-                $sheet->setCellValue('E' . $row, $category);
-                $sheet->setCellValue('F' . $row, $unit);
-                $sheet->setCellValue('G' . $row, $stock);
-                $sheet->setCellValue('H' . $row, $cost);
-                $sheet->setCellValue('I' . $row, "=G{$row}*H{$row}");
-                $row++;
+                $mDims = $dimStocks->get($p->id);
+                if ($mDims && $mDims->isNotEmpty()) {
+                    $sumDim = 0;
+                    foreach ($mDims as $subIdx => $d) {
+                        $h = $d->height ? (float)$d->height : 2440;
+                        $w = $d->width ? (float)$d->width : 1220;
+                        $dQty = (float)$d->dim_stock;
+                        $sumDim += $dQty;
+                        $sheet->setCellValue('A' . $row, $counter . '.' . ($subIdx + 1));
+                        $sheet->setCellValue('B' . $row, $sku);
+                        $sheet->setCellValue('C' . $row, $name);
+                        $sheet->setCellValue('D' . $row, $origin);
+                        $sheet->setCellValue('E' . $row, $category);
+                        $sheet->setCellValue('F' . $row, "{$unit} ({$h}x{$w})");
+                        $sheet->setCellValue('G' . $row, $dQty);
+                        $sheet->setCellValue('H' . $row, $cost);
+                        $sheet->setCellValue('I' . $row, "=G{$row}*H{$row}");
+                        $row++;
+                    }
+                    $remainStd = max(0, $stock - $sumDim);
+                    if ($remainStd > 0.001) {
+                        $sheet->setCellValue('A' . $row, $counter . '.' . ($mDims->count() + 1));
+                        $sheet->setCellValue('B' . $row, $sku);
+                        $sheet->setCellValue('C' . $row, $name);
+                        $sheet->setCellValue('D' . $row, $origin);
+                        $sheet->setCellValue('E' . $row, $category);
+                        $sheet->setCellValue('F' . $row, "{$unit} (2440x1220)");
+                        $sheet->setCellValue('G' . $row, $remainStd);
+                        $sheet->setCellValue('H' . $row, $cost);
+                        $sheet->setCellValue('I' . $row, "=G{$row}*H{$row}");
+                        $row++;
+                    }
+                } else {
+                    $sheet->setCellValue('A' . $row, $counter);
+                    $sheet->setCellValue('B' . $row, $sku);
+                    $sheet->setCellValue('C' . $row, $name);
+                    $sheet->setCellValue('D' . $row, $origin);
+                    $sheet->setCellValue('E' . $row, $category);
+                    $sheet->setCellValue('F' . $row, "{$unit} (2440x1220)");
+                    $sheet->setCellValue('G' . $row, $stock);
+                    $sheet->setCellValue('H' . $row, $cost);
+                    $sheet->setCellValue('I' . $row, "=G{$row}*H{$row}");
+                    $row++;
+                }
+                $counter++;
             }
         }
 
@@ -879,14 +965,15 @@ class InventoryController extends Controller
 
     public function createReceipt(Request $request)
     {
-        $warehouses = Warehouse::orderBy('name')->get();
+        $warehouses = Warehouse::orderByRaw("CASE WHEN code = 'KHO-VAN' THEN 0 WHEN code = 'KHO-CHI' THEN 1 ELSE 2 END")->orderBy('name')->get();
         $materials = $this->getSelectableMaterials();
-        $nextCode = $this->inventoryService->generateCode('PNK', 'inventory_receipts');
         $suppliers = Supplier::where('status', 'active')->orderBy('name')->get();
+        $nextCode = $this->inventoryService->generateCode('PNK', 'inventory_receipts');
 
         $selectedOrderId = $request->input('order_id');
-        $selectedOrder = $selectedOrderId ? Order::with(['customer', 'supplies'])->find($selectedOrderId) : null;
-        $orderItems = $selectedOrder ? $this->inventoryService->getOrderMaterialItems($selectedOrder, 'receipt') : [];
+        $selectedWarehouseId = $request->input('warehouse_id') ?: ($warehouses->first()?->id ?? null);
+        $selectedOrder = $selectedOrderId ? Order::with(['customer', 'supplies.items', 'supplies.glassItems', 'supplies.minLateItems'])->find($selectedOrderId) : null;
+        $orderItems = $selectedOrder ? $this->inventoryService->getOrderMaterialItems($selectedOrder, 'receipt', $selectedWarehouseId ? (int)$selectedWarehouseId : null) : [];
 
         $orders = Order::select('id', 'order_code', 'customer_name', 'order_date')
             ->whereNotIn('status', ['cancelled'])
@@ -904,6 +991,8 @@ class InventoryController extends Controller
             'date'                => 'required|date',
             'items'               => 'required|array|min:1',
             'items.*.material_id' => 'required',
+            'items.*.height'      => 'nullable|numeric|min:0',
+            'items.*.width'       => 'nullable|numeric|min:0',
             'items.*.quantity'    => 'required|numeric|min:0.01',
             'items.*.unit_price'  => 'nullable|numeric|min:0',
         ]);
@@ -948,6 +1037,8 @@ class InventoryController extends Controller
             'date'                => 'required|date',
             'items'               => 'required|array|min:1',
             'items.*.material_id' => 'required',
+            'items.*.height'      => 'nullable|numeric|min:0',
+            'items.*.width'       => 'nullable|numeric|min:0',
             'items.*.quantity'    => 'required|numeric|min:0.01',
             'items.*.unit_price'  => 'nullable|numeric|min:0',
         ]);
@@ -1002,13 +1093,14 @@ class InventoryController extends Controller
 
     public function createIssue(Request $request)
     {
-        $warehouses = Warehouse::orderBy('name')->get();
+        $warehouses = Warehouse::orderByRaw("CASE WHEN code = 'KHO-VAN' THEN 0 WHEN code = 'KHO-CHI' THEN 1 ELSE 2 END")->orderBy('name')->get();
         $materials = $this->getSelectableMaterials();
         $nextCode = $this->inventoryService->generateCode('PXK', 'inventory_issues');
 
         $selectedOrderId = $request->input('order_id');
-        $selectedOrder = $selectedOrderId ? Order::with(['customer', 'supplies'])->find($selectedOrderId) : null;
-        $orderItems = $selectedOrder ? $this->inventoryService->getOrderMaterialItems($selectedOrder, 'issue') : [];
+        $selectedWarehouseId = $request->input('warehouse_id') ?: ($warehouses->first()?->id ?? null);
+        $selectedOrder = $selectedOrderId ? Order::with(['customer', 'supplies.items', 'supplies.glassItems', 'supplies.minLateItems'])->find($selectedOrderId) : null;
+        $orderItems = $selectedOrder ? $this->inventoryService->getOrderMaterialItems($selectedOrder, 'issue', $selectedWarehouseId ? (int)$selectedWarehouseId : null) : [];
 
         $orders = Order::select('id', 'order_code', 'customer_name', 'order_date')
             ->whereNotIn('status', ['cancelled'])
@@ -1026,6 +1118,8 @@ class InventoryController extends Controller
             'date'                => 'required|date',
             'items'               => 'required|array|min:1',
             'items.*.material_id' => 'required',
+            'items.*.height'      => 'nullable|numeric|min:0',
+            'items.*.width'       => 'nullable|numeric|min:0',
             'items.*.quantity'    => 'required|numeric|min:0.01',
         ]);
 
@@ -1068,6 +1162,8 @@ class InventoryController extends Controller
             'date'                => 'required|date',
             'items'               => 'required|array|min:1',
             'items.*.material_id' => 'required',
+            'items.*.height'      => 'nullable|numeric|min:0',
+            'items.*.width'       => 'nullable|numeric|min:0',
             'items.*.quantity'    => 'required|numeric|min:0.01',
         ]);
 
@@ -1087,7 +1183,8 @@ class InventoryController extends Controller
     public function orderSupplies(Request $request, Order $order)
     {
         $type = $request->query('type');
-        $items = $this->inventoryService->getOrderMaterialItems($order, $type);
+        $warehouseId = $request->query('warehouse_id');
+        $items = $this->inventoryService->getOrderMaterialItems($order, $type, $warehouseId ? (int)$warehouseId : null);
         return response()->json([
             'success'       => true,
             'order_id'      => $order->id,

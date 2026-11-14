@@ -12,6 +12,8 @@ class InventoryIssueItem extends Model
         'item_type',
         'wood_board_id',
         'wood_board_price_id',
+        'height',
+        'width',
         'quantity',
         'unit_price',
         'total_price',
@@ -19,10 +21,17 @@ class InventoryIssueItem extends Model
     ];
 
     protected $casts = [
+        'height' => 'double',
+        'width' => 'double',
         'quantity' => 'double',
         'unit_price' => 'double',
         'total_price' => 'double',
     ];
+
+    public function getDimensionsAttribute(): string
+    {
+        return ($this->height && $this->width) ? ((int)$this->height . ' x ' . (int)$this->width) : '—';
+    }
 
     public function issue(): BelongsTo
     {

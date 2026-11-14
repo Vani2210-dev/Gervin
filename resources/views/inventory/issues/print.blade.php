@@ -65,11 +65,12 @@
         <thead>
             <tr>
                 <th style="width: 35px;">STT</th>
-                <th style="width: 120px;">Mã SKU</th>
+                <th style="width: 110px;">Mã SKU</th>
                 <th>Tên nhãn hiệu, quy cách vật tư</th>
-                <th style="width: 50px;">ĐVT</th>
-                <th style="width: 90px;">Số lượng xuất</th>
-                <th style="width: 140px;">Ghi chú</th>
+                <th style="width: 45px;">ĐVT</th>
+                <th style="width: 90px;">Quy cách (mm)</th>
+                <th style="width: 85px;">Số lượng xuất</th>
+                <th style="width: 130px;">Ghi chú</th>
             </tr>
         </thead>
         <tbody>
@@ -79,12 +80,13 @@
                     <td class="font-bold">{{ $it->item_sku }}</td>
                     <td>{{ $it->item_name }} {{ ($it->item_origin_code ?: ($it->material->origin_code ?? '')) ? '(' . ($it->item_origin_code ?: $it->material->origin_code) . ')' : '' }}</td>
                     <td class="text-center">{{ $it->item_unit }}</td>
+                    <td class="text-center">{{ $it->dimensions }}</td>
                     <td class="text-right font-bold">{{ fmod($it->quantity, 1) == 0 ? number_format($it->quantity, 0, ',', '.') : number_format($it->quantity, 2, ',', '.') }}</td>
                     <td>{{ $it->notes ?: '-' }}</td>
                 </tr>
             @endforeach
             <tr class="font-bold">
-                <td colspan="4" class="text-center">TỔNG CỘNG XUẤT</td>
+                <td colspan="5" class="text-center">TỔNG CỘNG XUẤT</td>
                 <td class="text-right">{{ fmod($issue->total_quantity, 1) == 0 ? number_format($issue->total_quantity, 0, ',', '.') : number_format($issue->total_quantity, 2, ',', '.') }}</td>
                 <td></td>
             </tr>

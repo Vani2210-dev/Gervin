@@ -37,7 +37,7 @@
                             <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Kho nhận <span class="text-danger-500">*</span></label>
                             <select name="warehouse_id" id="select_warehouse" class="form-select rounded-lg w-full border border-neutral-300 px-3 py-2 text-xs font-semibold text-neutral-800 bg-white focus:border-primary-500 focus:ring-primary-500" required>
                                 @foreach($warehouses as $wh)
-                                    <option value="{{ $wh->id }}">{{ $wh->name }}</option>
+                                    <option value="{{ $wh->id }}" {{ (string)old('warehouse_id', request('warehouse_id', $selectedWarehouseId ?? '')) === (string)$wh->id ? 'selected' : '' }}>{{ $wh->name }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -109,8 +109,10 @@
                                 <thead class="bg-neutral-50 text-neutral-700 font-bold border-b border-neutral-200">
                                     <tr>
                                         <th class="py-2 px-3 w-12 text-center">STT</th>
-                                        <th class="py-2 px-3 min-w-[340px]" id="thMaterialCol">Mặt hàng vật tư (Mã ván / Chỉ dán) <span class="text-danger-500">*</span></th>
-                                        <th class="py-2 px-3 w-20 text-center">ĐVT</th>
+                                        <th class="py-2 px-3 min-w-[280px]" id="thMaterialCol">Mặt hàng vật tư (Mã ván / Chỉ dán) <span class="text-danger-500">*</span></th>
+                                        <th class="py-2 px-3 w-16 text-center">ĐVT</th>
+                                        <th class="py-2 px-3 w-24 text-center">Cao (mm)</th>
+                                        <th class="py-2 px-3 w-24 text-center">Rộng (mm)</th>
                                         <th class="py-2 px-3 w-24 text-right">Tồn hiện tại</th>
                                         <th class="py-2 px-3 w-32 text-right">Số lượng nhập <span class="text-danger-500">*</span></th>
                                         <th class="py-2 px-3 w-36 text-right">Đơn giá nhập (đ)</th>
@@ -124,7 +126,7 @@
                                 </tbody>
                                 <tfoot class="bg-neutral-50 font-bold border-t-2 border-neutral-300 text-xs">
                                     <tr>
-                                        <td colspan="4" class="py-3 px-3 text-right text-neutral-700 uppercase">TỔNG CỘNG:</td>
+                                        <td colspan="6" class="py-3 px-3 text-right text-neutral-700 uppercase">TỔNG CỘNG:</td>
                                         <td class="py-3 px-3 text-right text-emerald-700 font-black text-sm" id="lblTotalQty">0</td>
                                         <td></td>
                                         <td class="py-3 px-3 text-right text-primary-700 font-black text-sm" id="lblTotalAmount">0đ</td>
@@ -292,6 +294,12 @@
                 : 'Mặt hàng Tấm Ván (Mã SKU) <span class="text-danger-500">*</span>';
         }
 
+        const orderSelect = document.getElementById('select_order');
+        if (orderSelect && orderSelect.value) {
+            loadSelectedOrderSupplies(true);
+            return;
+        }
+
         const filtered = getFilteredMaterialOptions();
         const rows = document.querySelectorAll('#itemsTableBody tr');
         rows.forEach(r => {
@@ -299,12 +307,17 @@
             if (selectEl && selectEl._tomSelect) {
                 const ts = selectEl._tomSelect;
                 const curVal = ts.getValue();
+                const curOpt = curVal && ts.options ? ts.options[curVal] : null;
                 ts.clear();
                 ts.clearOptions();
                 ts.addOptions(filtered);
+                if (curVal && curOpt && !filtered.some(opt => opt.value === curVal)) {
+                    ts.addOption(curOpt);
+                }
                 ts.refreshOptions(false);
-                if (filtered.some(opt => opt.value === curVal)) {
+                if (curVal) {
                     ts.setValue(curVal, true);
+                    onMaterialSelected(r.id.replace('row_', ''), curVal);
                 } else {
                     r.querySelector('.unit-cell').textContent = isEdge ? 'm' : 'Tấm';
                     r.querySelector('.stock-cell').textContent = '-';
@@ -316,7 +329,7 @@
 
     let rowCount = 0;
 
-    function addItemRow(selectedMaterialId = '', qty = '', price = '', notes = '') {
+    function addItemRow(selectedMaterialId = '', qty = '', price = '', notes = '', height = '', width = '') {
         const tbody = document.getElementById('itemsTableBody');
         const tr = document.createElement('tr');
         const thisRowIdx = rowCount;
@@ -332,12 +345,18 @@
                 </select>
             </td>
             <td class="py-2 px-3 text-center text-neutral-600 unit-cell">${isEdge ? 'm' : 'Tấm'}</td>
+            <td class="py-2 px-3 text-center">
+                <input type="number" name="items[${thisRowIdx}][height]" value="${height !== '' ? height : (isEdge ? '' : '2440')}" step="1" min="0" class="form-control rounded-lg w-full border-neutral-200 px-2 py-1 text-center text-xs focus:border-primary-500 height-input" placeholder="${isEdge ? '—' : '2440'}" ${isEdge ? 'disabled' : ''}>
+            </td>
+            <td class="py-2 px-3 text-center">
+                <input type="number" name="items[${thisRowIdx}][width]" value="${width !== '' ? width : (isEdge ? '' : '1220')}" step="1" min="0" class="form-control rounded-lg w-full border-neutral-200 px-2 py-1 text-center text-xs focus:border-primary-500 width-input" placeholder="${isEdge ? '—' : '1220'}" ${isEdge ? 'disabled' : ''}>
+            </td>
             <td class="py-2 px-3 text-right text-neutral-500 stock-cell">-</td>
             <td class="py-2 px-3 text-right">
                 <input type="number" name="items[${thisRowIdx}][quantity]" value="${qty}" step="0.01" min="0.01" class="form-control rounded-lg w-full border-neutral-200 px-2 py-1 text-right text-xs font-bold text-emerald-700 focus:border-primary-500 qty-input" required oninput="calcTotals()">
             </td>
             <td class="py-2 px-3 text-right">
-                <input type="number" name="items[${thisRowIdx}][unit_price]" value="${price}" step="1000" min="0" class="form-control rounded-lg w-full border-neutral-200 px-2 py-1 text-right text-xs focus:border-primary-500 price-input" placeholder="0" oninput="calcTotals()">
+                <input type="number" name="items[${thisRowIdx}][unit_price]" value="${price !== '' ? price : '0'}" step="1000" min="0" class="form-control rounded-lg w-full border-neutral-200 px-2 py-1 text-right text-xs focus:border-primary-500 price-input" placeholder="0" oninput="calcTotals()">
             </td>
             <td class="py-2 px-3 text-right font-bold text-neutral-800 line-total-cell">0đ</td>
             <td class="py-2 px-3">
@@ -419,8 +438,25 @@
             selectEl._tomSelect = ts;
 
             if (selectedMaterialId) {
-                ts.setValue(String(selectedMaterialId), true);
-                onMaterialSelected(rowIdx, selectedMaterialId);
+                const strId = String(selectedMaterialId);
+                if (!ts.options[strId]) {
+                    const foundMat = MATERIALS.find(m => String(m.id) === strId);
+                    if (foundMat) {
+                        ts.addOption({
+                            value: String(foundMat.id),
+                            code: foundMat.code || '',
+                            name: foundMat.name || '',
+                            origin_code: foundMat.origin_code || '',
+                            category: foundMat.category || '',
+                            unit: foundMat.unit || (foundMat.item_type === 'edge_band' ? 'm' : 'Tấm'),
+                            price: foundMat.cost_price || 0,
+                            stock: foundMat.current_stock || 0,
+                            item_type: foundMat.item_type
+                        });
+                    }
+                }
+                ts.setValue(strId, true);
+                onMaterialSelected(rowIdx, strId);
             }
         }
     }
@@ -444,9 +480,29 @@
         tr.querySelector('.stock-cell').textContent = Number(stock).toLocaleString('vi-VN');
 
         const priceInput = tr.querySelector('.price-input');
-        if (priceInput && (!priceInput.value || parseFloat(priceInput.value) === 0)) {
-            priceInput.value = price;
+        if (priceInput && (priceInput.value === '' || priceInput.value === null || priceInput.value === undefined)) {
+            priceInput.value = 0;
         }
+
+        const heightInput = tr.querySelector('.height-input');
+        const widthInput = tr.querySelector('.width-input');
+        const isMatEdge = mat.item_type === 'edge_band' || (mat.code && String(mat.code).startsWith('CHI-'));
+        if (isMatEdge) {
+            if (heightInput) { heightInput.value = ''; heightInput.disabled = true; heightInput.placeholder = '—'; }
+            if (widthInput) { widthInput.value = ''; widthInput.disabled = true; widthInput.placeholder = '—'; }
+        } else {
+            if (heightInput) {
+                heightInput.disabled = false;
+                heightInput.placeholder = '2440';
+                if (!heightInput.value) heightInput.value = '2440';
+            }
+            if (widthInput) {
+                widthInput.disabled = false;
+                widthInput.placeholder = '1220';
+                if (!widthInput.value) widthInput.value = '1220';
+            }
+        }
+
         calcTotals();
     }
 
@@ -504,7 +560,7 @@
 
         if (PREFILLED_ORDER_ITEMS && PREFILLED_ORDER_ITEMS.length > 0) {
             PREFILLED_ORDER_ITEMS.forEach(it => {
-                addItemRow(it.material_id, it.quantity, it.unit_price, it.notes || '');
+                addItemRow(it.material_id, it.quantity, it.unit_price, it.notes || '', it.height || '', it.width || '');
             });
         } else {
             addItemRow();
@@ -530,27 +586,28 @@
         }
     }
 
-    function loadSelectedOrderSupplies() {
+    function loadSelectedOrderSupplies(forceClean = false) {
         const orderId = document.getElementById('select_order')?.value;
         if (!orderId) {
-            alert('Vui lòng chọn đơn hàng trước.');
+            if (!forceClean) alert('Vui lòng chọn đơn hàng trước.');
             return;
         }
 
         const btn = document.getElementById('btnLoadOrderItems');
         if (btn) btn.innerHTML = 'Đang tải...';
 
-        fetch(`/warehouses/orders/${orderId}/supplies?type=receipt`)
+        const whId = document.getElementById('select_warehouse')?.value || '';
+        fetch(`/warehouses/orders/${orderId}/supplies?type=receipt&warehouse_id=${whId}`)
             .then(res => res.json())
             .then(data => {
                 if (btn) btn.innerHTML = '<iconify-icon icon="solar:download-square-bold"></iconify-icon> Nạp vật tư đơn';
                 if (data.success && data.items && data.items.length > 0) {
                     const tbody = document.getElementById('itemsTableBody');
-                    if (tbody && tbody.children.length > 0) {
+                    if (!forceClean && tbody && tbody.children.length > 0) {
                         const hasFilled = Array.from(tbody.querySelectorAll('.qty-input')).some(i => parseFloat(i.value) > 0);
                         if (hasFilled && !confirm('Bạn có muốn xóa các dòng hiện tại để nạp lại vật tư từ đơn hàng ' + data.order_code + '?')) {
                             data.items.forEach(it => {
-                                addItemRow(it.material_id, it.quantity, it.unit_price, it.notes || '');
+                                addItemRow(it.material_id, it.quantity, it.unit_price, it.notes || '', it.height || '', it.width || '');
                             });
                             return;
                         }
@@ -558,15 +615,15 @@
 
                     if (tbody) tbody.innerHTML = '';
                     data.items.forEach(it => {
-                        addItemRow(it.material_id, it.quantity, it.unit_price, it.notes || '');
+                        addItemRow(it.material_id, it.quantity, it.unit_price, it.notes || '', it.height || '', it.width || '');
                     });
                 } else {
-                    alert('Đơn hàng ' + (data.order_code || '') + ' không có vật tư nào được đánh dấu [Thêm kho] để nhập kho.');
+                    if (!forceClean) alert('Đơn hàng ' + (data.order_code || '') + ' không có vật tư phù hợp để nhập kho.');
                 }
             })
             .catch(err => {
                 if (btn) btn.innerHTML = '<iconify-icon icon="solar:download-square-bold"></iconify-icon> Nạp vật tư đơn';
-                alert('Không thể tải vật tư từ đơn hàng.');
+                if (!forceClean) alert('Không thể tải vật tư từ đơn hàng.');
             });
     }
 

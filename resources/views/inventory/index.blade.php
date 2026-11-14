@@ -235,7 +235,7 @@
                                 <th class="py-3 px-4 min-w-[240px]">Tên Foil thay thế</th>
                                 <th class="py-3 px-4 w-28 text-center">Mã xuất xứ</th>
                                 <th class="py-3 px-4 w-44">Nhóm hàng</th>
-                                <th class="py-3 px-4 w-20 text-center">ĐVT</th>
+                                <th class="py-3 px-4 w-28 text-center">ĐVT / Quy cách</th>
                                 <th class="py-3 px-4 w-32 text-right">Giá vốn</th>
                                 <th class="py-3 px-4 w-36 text-right">Tồn kho thực tế</th>
                                 <th class="py-3 px-4 w-36 text-right">Giá trị tồn</th>
@@ -332,100 +332,161 @@
                                             'is_price'     => $isPriceModel ? 1 : 0,
                                         ];
                                     }
+
+                                    // Lấy danh sách quy cách (kích thước) riêng biệt của mặt hàng này
+                                    $mDims = (!$isEdgeBandWarehouse && isset($dimStocks)) ? $dimStocks->get($m->id) : null;
+                                    $itemRows = [];
+                                    if ($mDims && $mDims->isNotEmpty()) {
+                                        $sumDimStock = 0;
+                                        foreach ($mDims as $subIdx => $d) {
+                                            $dH = $d->height ? (float)$d->height : 2440;
+                                            $dW = $d->width ? (float)$d->width : 1220;
+                                            $dQty = (float)$d->dim_stock;
+                                            $sumDimStock += $dQty;
+                                            $itemRows[] = [
+                                                'dim_height' => $dH,
+                                                'dim_width'  => $dW,
+                                                'stock'      => $dQty,
+                                                'sub_index'  => $subIdx + 1,
+                                                'total_dims' => $mDims->count(),
+                                            ];
+                                        }
+                                        $remainStandard = max(0, (float)$displayStock - $sumDimStock);
+                                        if ($remainStandard > 0.001) {
+                                            $itemRows[] = [
+                                                'dim_height' => 2440,
+                                                'dim_width'  => 1220,
+                                                'stock'      => $remainStandard,
+                                                'sub_index'  => count($itemRows) + 1,
+                                                'total_dims' => $mDims->count() + 1,
+                                            ];
+                                        }
+                                    } else {
+                                        $itemRows[] = [
+                                            'dim_height' => 2440,
+                                            'dim_width'  => 1220,
+                                            'stock'      => $displayStock,
+                                            'sub_index'  => null,
+                                            'total_dims' => 1,
+                                        ];
+                                    }
                                 @endphp
-                                <tr class="hover:bg-primary-50 hover:bg-opacity-40 transition-colors">
-                                    <td class="py-3 px-4 text-center text-neutral-500 font-medium">
-                                        {{ $materials->firstItem() + $index }}
-                                    </td>
-                                    <td class="py-3 px-4 font-bold text-neutral-900 whitespace-nowrap">
-                                        <a href="{{ route('inventory.materials.stock-card', [$m->id, 'type' => $stockCardType]) }}" 
-                                           onclick="event.preventDefault(); openStockCardModal({{ $m->id }}, '{{ $stockCardType }}')" 
-                                           class="hover:text-primary-600 hover:underline flex items-center gap-2" 
-                                           title="Xem thẻ kho cho {{ $displaySku }}">
-                                            <span>{{ $displaySku }}</span>
-                                        </a>
-                                    </td>
-                                    <td class="py-3 px-4">
-                                        <div class="font-bold text-neutral-900 text-xs">{{ $displayName }}</div>
-                                        @if(($m->notes ?? false) && !$isEdgeBandWarehouse)
-                                            <div class="text-[11px] text-neutral-400 truncate max-w-xs mt-1">{{ $m->notes }}</div>
-                                        @endif
-                                    </td>
-                                                                        <td class="py-3 px-4 min-w-[240px]">
-                                        @php
-                                            $foilNameDisplay = $isPriceModel 
-                                                ? ($m->foil_name ?: ($board?->foil_name ?: '')) 
-                                                : ($m->foil_name ?: '');
-                                        @endphp
-                                        @if($foilNameDisplay)
-                                            <span class="text-neutral-800 font-medium text-xs block leading-relaxed">{{ $foilNameDisplay }}</span>
-                                        @else
-                                            <span class="text-neutral-300">—</span>
-                                        @endif
-                                    </td>
-                                    <td class="py-3 px-4 text-center text-neutral-600">
-                                        {{ $originCode }}
-                                    </td>
-                                    <td class="py-3 px-4">
-                                        <span class="bg-neutral-100 text-neutral-700 px-2 py-1 rounded text-[11px] font-semibold inline-block">
-                                            {{ $categoryName }}
-                                        </span>
-                                    </td>
-                                    <td class="py-3 px-4 text-center font-medium text-neutral-600">
-                                        {{ $displayUnit }}
-                                    </td>
-                                    <td class="py-3 px-4 text-right font-medium text-neutral-700 whitespace-nowrap">
-                                        {{ $displayCostPrice > 0 ? number_format($displayCostPrice, 0, ',', '.') . 'đ' : '—' }}
-                                    </td>
-                                    <td class="py-3 px-4 text-right whitespace-nowrap">
-                                        <div class="font-black text-sm {{ $displayStock <= 0 ? 'text-rose-600' : ($displayStock <= $displayMinStock ? 'text-warning-600' : 'text-emerald-700') }}">
-                                            {{ fmod($displayStock, 1) == 0 ? number_format($displayStock, 0, ',', '.') : number_format($displayStock, 2, ',', '.') }}
-                                        </div>
-                                    </td>
-                                    <td class="py-3 px-4 text-right font-semibold text-neutral-800 whitespace-nowrap">
-                                        {{ $lineValue > 0 ? number_format($lineValue, 0, ',', '.') . 'đ' : '—' }}
-                                    </td>
-                                    <td class="py-3 px-4 text-center whitespace-nowrap">
-                                        @if($displayStock <= 0)
-                                            <span class="bg-rose-100 text-rose-700 text-[10px] px-2.5 py-1 rounded-full font-bold inline-block">Hết hàng</span>
-                                        @elseif($displayStock <= $displayMinStock)
-                                            <span class="bg-warning-100 text-warning-800 text-[10px] px-2.5 py-1 rounded-full font-bold inline-block">Tồn thấp</span>
-                                        @else
-                                            <span class="bg-success-100 text-success-700 text-[10px] px-2.5 py-1 rounded-full font-bold inline-block">Còn hàng</span>
-                                        @endif
-                                    </td>
-                                    <td class="py-3 px-4 text-center whitespace-nowrap">
-                                        <div class="flex items-center justify-center gap-2">
-                                            @if($colorLink)
-                                                <a href="{{ route('wood_boards.index', ['search' => $colorLink]) }}" 
-                                                   class="p-1 text-info-600 hover:text-info-800 text-base" 
-                                                   title="Xem trên Bảng giá tấm">
-                                                    <iconify-icon icon="solar:grid-bold"></iconify-icon>
-                                                </a>
-                                            @endif
+                                @foreach($itemRows as $itemRow)
+                                    @php
+                                        $rowStock = $itemRow['stock'];
+                                        $rowLineValue = $rowStock * $displayCostPrice;
+                                        $rowDimH = $itemRow['dim_height'];
+                                        $rowDimW = $itemRow['dim_width'];
+                                        $rowSubIdx = $itemRow['sub_index'];
+                                        $rowTotalDims = $itemRow['total_dims'] ?? 1;
+                                        $sttDisplay = ($rowSubIdx && $rowTotalDims > 1) 
+                                            ? ($materials->firstItem() + $index) . '.' . $rowSubIdx 
+                                            : ($materials->firstItem() + $index);
+                                    @endphp
+                                    <tr class="hover:bg-primary-50 hover:bg-opacity-40 transition-colors {{ ($rowTotalDims > 1 && $rowSubIdx > 1) ? 'bg-neutral-50/50' : '' }}">
+                                        <td class="py-3 px-4 text-center text-neutral-500 font-medium whitespace-nowrap">
+                                            {{ $sttDisplay }}
+                                        </td>
+                                        <td class="py-3 px-4 font-bold text-neutral-900 whitespace-nowrap">
                                             <a href="{{ route('inventory.materials.stock-card', [$m->id, 'type' => $stockCardType]) }}" 
                                                onclick="event.preventDefault(); openStockCardModal({{ $m->id }}, '{{ $stockCardType }}')" 
-                                               class="p-1 text-primary-600 hover:text-primary-800 text-base" 
-                                               title="Xem thẻ kho">
-                                                <iconify-icon icon="solar:history-bold"></iconify-icon>
+                                               class="hover:text-primary-600 hover:underline inline-flex items-center gap-1.5" 
+                                               title="Xem thẻ kho cho {{ $displaySku }}">
+                                                <span>{{ $displaySku }}</span>
+                                                @if($rowSubIdx === 1 && $rowTotalDims > 1)
+                                                    <span class="text-[10px] bg-primary-100 text-primary-700 font-bold px-1.5 py-0.2 rounded border border-primary-200">{{ $rowTotalDims }} quy cách</span>
+                                                @endif
                                             </a>
-                                            <button type="button" 
-                                                    data-material='@json($editPayload)'
-                                                    onclick="editMaterial(this)" 
-                                                    class="p-1 text-warning-600 hover:text-warning-800 text-base transition-colors cursor-pointer" 
-                                                    title="Chỉnh sửa hàng hóa">
-                                                <iconify-icon icon="lucide:edit"></iconify-icon>
-                                            </button>
-                                            <form action="{{ route('inventory.materials.destroy', $m->id) }}" method="POST" onsubmit="return confirm('Bạn có chắc muốn xóa mặt hàng {{ addslashes($displaySku) }}?')" class="inline-block m-0">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="p-1 text-danger-600 hover:text-danger-800 text-base" title="Xóa">
-                                                    <iconify-icon icon="fluent:delete-24-regular"></iconify-icon>
+                                        </td>
+                                        <td class="py-3 px-4">
+                                            <div class="font-bold text-neutral-900 text-xs">{{ $displayName }}</div>
+                                            @if(($m->notes ?? false) && !$isEdgeBandWarehouse)
+                                                <div class="text-[11px] text-neutral-400 truncate max-w-xs mt-1">{{ $m->notes }}</div>
+                                            @endif
+                                        </td>
+                                        <td class="py-3 px-4 min-w-[240px]">
+                                            @php
+                                                $foilNameDisplay = $isPriceModel 
+                                                    ? ($m->foil_name ?: ($board?->foil_name ?: '')) 
+                                                    : ($m->foil_name ?: '');
+                                            @endphp
+                                            @if($foilNameDisplay)
+                                                <span class="text-neutral-800 font-medium text-xs block leading-relaxed">{{ $foilNameDisplay }}</span>
+                                            @else
+                                                <span class="text-neutral-300">—</span>
+                                            @endif
+                                        </td>
+                                        <td class="py-3 px-4 text-center text-neutral-600">
+                                            {{ $originCode }}
+                                        </td>
+                                        <td class="py-3 px-4">
+                                            <span class="bg-neutral-100 text-neutral-700 px-2 py-1 rounded text-[11px] font-semibold inline-block">
+                                                {{ $categoryName }}
+                                            </span>
+                                        </td>
+                                        <td class="py-3 px-4 text-center font-medium text-neutral-600 whitespace-nowrap">
+                                            <span class="font-bold text-xs">{{ $displayUnit }}</span>
+                                            @if(!$isEdgeBandWarehouse)
+                                                @if($rowDimH && $rowDimW && ($rowDimH != 2440 || $rowDimW != 1220))
+                                                    <span class="block text-[11px] font-bold text-primary-700 bg-primary-50 border border-primary-200/80 rounded px-1.5 py-0.5 mt-0.5 whitespace-nowrap">{{ (int)$rowDimH }}x{{ (int)$rowDimW }}</span>
+                                                @else
+                                                    <span class="block text-[10px] text-neutral-400 font-normal mt-0.5">2440x1220</span>
+                                                @endif
+                                            @endif
+                                        </td>
+                                        <td class="py-3 px-4 text-right font-medium text-neutral-700 whitespace-nowrap">
+                                            {{ $displayCostPrice > 0 ? number_format($displayCostPrice, 0, ',', '.') . 'đ' : '—' }}
+                                        </td>
+                                        <td class="py-3 px-4 text-right whitespace-nowrap">
+                                            <div class="font-black text-sm {{ $rowStock <= 0 ? 'text-rose-600' : ($rowStock <= $displayMinStock ? 'text-warning-600' : 'text-emerald-700') }}">
+                                                {{ fmod($rowStock, 1) == 0 ? number_format($rowStock, 0, ',', '.') : number_format($rowStock, 2, ',', '.') }}
+                                            </div>
+                                        </td>
+                                        <td class="py-3 px-4 text-right font-semibold text-neutral-800 whitespace-nowrap">
+                                            {{ $rowLineValue > 0 ? number_format($rowLineValue, 0, ',', '.') . 'đ' : '—' }}
+                                        </td>
+                                        <td class="py-3 px-4 text-center whitespace-nowrap">
+                                            @if($rowStock <= 0)
+                                                <span class="bg-rose-100 text-rose-700 text-[10px] px-2.5 py-1 rounded-full font-bold inline-block">Hết hàng</span>
+                                            @elseif($rowStock <= $displayMinStock)
+                                                <span class="bg-warning-100 text-warning-800 text-[10px] px-2.5 py-1 rounded-full font-bold inline-block">Tồn thấp</span>
+                                            @else
+                                                <span class="bg-success-100 text-success-700 text-[10px] px-2.5 py-1 rounded-full font-bold inline-block">Còn hàng</span>
+                                            @endif
+                                        </td>
+                                        <td class="py-3 px-4 text-center whitespace-nowrap">
+                                            <div class="flex items-center justify-center gap-2">
+                                                @if($colorLink)
+                                                    <a href="{{ route('wood_boards.index', ['search' => $colorLink]) }}" 
+                                                       class="p-1 text-info-600 hover:text-info-800 text-base" 
+                                                       title="Xem trên Bảng giá tấm">
+                                                        <iconify-icon icon="solar:grid-bold"></iconify-icon>
+                                                    </a>
+                                                @endif
+                                                <a href="{{ route('inventory.materials.stock-card', [$m->id, 'type' => $stockCardType]) }}" 
+                                                   onclick="event.preventDefault(); openStockCardModal({{ $m->id }}, '{{ $stockCardType }}')" 
+                                                   class="p-1 text-primary-600 hover:text-primary-800 text-base" 
+                                                   title="Xem thẻ kho">
+                                                    <iconify-icon icon="solar:history-bold"></iconify-icon>
+                                                </a>
+                                                <button type="button" 
+                                                        data-material='@json($editPayload)'
+                                                        onclick="editMaterial(this)" 
+                                                        class="p-1 text-warning-600 hover:text-warning-800 text-base transition-colors cursor-pointer" 
+                                                        title="Chỉnh sửa hàng hóa">
+                                                    <iconify-icon icon="lucide:edit"></iconify-icon>
                                                 </button>
-                                            </form>
-                                        </div>
-                                    </td>
-                                </tr>
+                                                <form action="{{ route('inventory.materials.destroy', $m->id) }}" method="POST" onsubmit="return confirm('Bạn có chắc muốn xóa mặt hàng {{ addslashes($displaySku) }}?')" class="inline-block m-0">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="p-1 text-danger-600 hover:text-danger-800 text-base" title="Xóa">
+                                                        <iconify-icon icon="fluent:delete-24-regular"></iconify-icon>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforeach
                             @empty
                                 <tr>
                                     <td colspan="12" class="py-12 text-center text-neutral-500 font-medium bg-neutral-50">

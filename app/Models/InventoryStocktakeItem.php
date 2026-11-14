@@ -12,6 +12,8 @@ class InventoryStocktakeItem extends Model
         'item_type',
         'wood_board_id',
         'wood_board_price_id',
+        'height',
+        'width',
         'book_quantity',
         'actual_quantity',
         'difference',
@@ -19,10 +21,17 @@ class InventoryStocktakeItem extends Model
     ];
 
     protected $casts = [
+        'height' => 'double',
+        'width' => 'double',
         'book_quantity' => 'double',
         'actual_quantity' => 'double',
         'difference' => 'double',
     ];
+
+    public function getDimensionsAttribute(): string
+    {
+        return ($this->height && $this->width) ? ((int)$this->height . ' x ' . (int)$this->width) : '—';
+    }
 
     public function stocktake(): BelongsTo
     {

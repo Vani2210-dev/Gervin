@@ -118,6 +118,7 @@
                                 <th class="py-3 px-3 w-28">Mã gốc TQ</th>
                                 <th class="py-3 px-4 min-w-[200px]">Tên vật tư / Quy cách</th>
                                 <th class="py-3 px-3 w-20 text-center">ĐVT</th>
+                                <th class="py-3 px-3 w-28 text-center">Quy cách (mm)</th>
                                 <th class="py-3 px-3 w-32 text-right">Tồn sổ sách</th>
                                 <th class="py-3 px-3 w-40 text-center">Tồn thực tế đếm được</th>
                                 <th class="py-3 px-3 w-32 text-right">Chênh lệch</th>
@@ -145,6 +146,15 @@
                                     </td>
                                     <td class="py-3 px-3 text-center text-neutral-600 font-medium">
                                         {{ $m->unit }}
+                                    </td>
+                                    <td class="py-3 px-3 text-center text-neutral-600 font-medium">
+                                        @if($m->item_type !== 'edge_band' && !str_starts_with($m->code ?? '', 'CHI-'))
+                                            2440 x 1220
+                                            <input type="hidden" name="items[{{ $index }}][height]" value="2440">
+                                            <input type="hidden" name="items[{{ $index }}][width]" value="1220">
+                                        @else
+                                            —
+                                        @endif
                                     </td>
                                     <td class="py-3 px-3 text-right font-bold text-neutral-700 book-qty" data-book="{{ (float)$m->current_stock }}">
                                         {{ fmod($m->current_stock, 1) == 0 ? number_format($m->current_stock, 0, ',', '.') : number_format($m->current_stock, 2, ',', '.') }}

@@ -15,6 +15,8 @@ class InventoryTransaction extends Model
         'item_type',
         'wood_board_id',
         'wood_board_price_id',
+        'height',
+        'width',
         'date',
         'type', // 'receipt', 'issue', 'stocktake', 'initial'
         'voucher_code',
@@ -29,12 +31,19 @@ class InventoryTransaction extends Model
     ];
 
     protected $casts = [
+        'height' => 'double',
+        'width' => 'double',
         'date' => 'date',
         'in_qty' => 'double',
         'out_qty' => 'double',
         'stock_after' => 'double',
         'unit_price' => 'double',
     ];
+
+    public function getDimensionsAttribute(): string
+    {
+        return ($this->height && $this->width) ? ((int)$this->height . ' x ' . (int)$this->width) : '—';
+    }
 
     public function warehouse(): BelongsTo
     {

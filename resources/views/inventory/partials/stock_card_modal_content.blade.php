@@ -37,7 +37,8 @@
                         <th class="py-2 px-3 w-24">Ngày</th>
                         <th class="py-2 px-3 w-28">Số chứng từ</th>
                         <th class="py-2 px-3 w-28">Loại phát sinh</th>
-                        <th class="py-2 px-3 min-w-[180px]">Diễn giải</th>
+                        <th class="py-2 px-3 min-w-[160px]">Diễn giải</th>
+                        <th class="py-2 px-3 w-28 text-center">Quy cách (mm)</th>
                         <th class="py-2 px-3 w-24 text-right bg-emerald-50 text-emerald-800">Nhập</th>
                         <th class="py-2 px-3 w-24 text-right bg-rose-50 text-rose-800">Xuất</th>
                         <th class="py-2 px-3 w-28 text-right bg-primary-50 text-primary-900">Tồn sau GD</th>
@@ -69,6 +70,7 @@
                                 @endif
                             </td>
                             <td class="py-2 px-3 text-neutral-700">{{ $t->notes ?: '-' }}</td>
+                            <td class="py-2 px-3 text-center text-neutral-600 font-medium">{{ $t->dimensions }}</td>
                             <td class="py-2 px-3 text-right font-semibold text-emerald-700 bg-emerald-50 bg-opacity-20">
                                 {{ $t->in_qty > 0 ? (fmod($t->in_qty, 1) == 0 ? number_format($t->in_qty, 0, ',', '.') : number_format($t->in_qty, 2, ',', '.')) : '-' }}
                             </td>
@@ -81,7 +83,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="py-8 text-center text-neutral-400 font-medium">
+                            <td colspan="8" class="py-8 text-center text-neutral-400 font-medium">
                                 Chưa có phát sinh giao dịch nào cho mặt hàng này.
                             </td>
                         </tr>

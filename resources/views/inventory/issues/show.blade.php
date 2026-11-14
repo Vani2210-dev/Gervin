@@ -89,6 +89,7 @@
                                 <th class="py-3 px-4 w-28 text-center">Mã xuất xứ</th>
                                 <th class="py-3 px-4 w-36">Nhóm hàng</th>
                                 <th class="py-3 px-4 w-20 text-center">ĐVT</th>
+                                <th class="py-3 px-4 w-28 text-center">Quy cách (mm)</th>
                                 <th class="py-3 px-4 w-36 text-right">Số lượng xuất</th>
                                 <th class="py-3 px-4 min-w-[160px]">Ghi chú dòng</th>
                             </tr>
@@ -102,6 +103,7 @@
                                     <td class="py-3 px-4 text-center text-neutral-600">{{ $it->item_origin_code ?: ($it->material->origin_code ?? '-') }}</td>
                                     <td class="py-3 px-4 text-neutral-600">{{ $it->item_category }}</td>
                                     <td class="py-3 px-4 text-center text-neutral-600">{{ $it->item_unit }}</td>
+                                    <td class="py-3 px-4 text-center text-neutral-600 font-medium">{{ $it->dimensions }}</td>
                                     <td class="py-3 px-4 text-right font-black text-rose-700 text-sm">
                                         {{ fmod($it->quantity, 1) == 0 ? number_format($it->quantity, 0, ',', '.') : number_format($it->quantity, 2, ',', '.') }}
                                     </td>
@@ -113,7 +115,7 @@
                         </tbody>
                         <tfoot class="bg-neutral-50 font-bold border-t-2 border-neutral-300 text-xs">
                             <tr>
-                                <td colspan="6" class="py-3 px-4 text-right text-neutral-700 uppercase">TỔNG CỘNG XUẤT:</td>
+                                <td colspan="7" class="py-3 px-4 text-right text-neutral-700 uppercase">TỔNG CỘNG XUẤT:</td>
                                 <td class="py-3 px-4 text-right text-rose-700 font-black text-sm">
                                     {{ fmod($issue->total_quantity, 1) == 0 ? number_format($issue->total_quantity, 0, ',', '.') : number_format($issue->total_quantity, 2, ',', '.') }}
                                 </td>

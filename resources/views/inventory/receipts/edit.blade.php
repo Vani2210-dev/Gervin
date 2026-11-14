@@ -105,8 +105,10 @@
                                 <thead class="bg-neutral-50 text-neutral-700 font-bold border-b border-neutral-200">
                                     <tr>
                                         <th class="py-2 px-3 w-12 text-center">STT</th>
-                                        <th class="py-2 px-3 min-w-[340px]" id="thMaterialCol">Mặt hàng vật tư (Mã ván / Chỉ dán) <span class="text-danger-500">*</span></th>
-                                        <th class="py-2 px-3 w-20 text-center">ĐVT</th>
+                                        <th class="py-2 px-3 min-w-[280px]" id="thMaterialCol">Mặt hàng vật tư (Mã ván / Chỉ dán) <span class="text-danger-500">*</span></th>
+                                        <th class="py-2 px-3 w-16 text-center">ĐVT</th>
+                                        <th class="py-2 px-3 w-24 text-center">Cao (mm)</th>
+                                        <th class="py-2 px-3 w-24 text-center">Rộng (mm)</th>
                                         <th class="py-2 px-3 w-24 text-right">Tồn hiện tại</th>
                                         <th class="py-2 px-3 w-32 text-right">Số lượng nhập <span class="text-danger-500">*</span></th>
                                         <th class="py-2 px-3 w-36 text-right">Đơn giá nhập (đ)</th>
@@ -120,7 +122,7 @@
                                 </tbody>
                                 <tfoot class="bg-neutral-50 font-bold border-t-2 border-neutral-300 text-xs">
                                     <tr>
-                                        <td colspan="4" class="py-3 px-3 text-right text-neutral-700 uppercase">TỔNG CỘNG:</td>
+                                        <td colspan="6" class="py-3 px-3 text-right text-neutral-700 uppercase">TỔNG CỘNG:</td>
                                         <td class="py-3 px-3 text-right text-emerald-700 font-black text-sm" id="lblTotalQty">0</td>
                                         <td></td>
                                         <td class="py-3 px-3 text-right text-primary-700 font-black text-sm" id="lblTotalAmount">0đ</td>
@@ -295,12 +297,17 @@
             if (selectEl && selectEl._tomSelect) {
                 const ts = selectEl._tomSelect;
                 const curVal = ts.getValue();
+                const curOpt = curVal && ts.options ? ts.options[curVal] : null;
                 ts.clear();
                 ts.clearOptions();
                 ts.addOptions(filtered);
+                if (curVal && curOpt && !filtered.some(opt => opt.value === curVal)) {
+                    ts.addOption(curOpt);
+                }
                 ts.refreshOptions(false);
-                if (filtered.some(opt => opt.value === curVal)) {
+                if (curVal) {
                     ts.setValue(curVal, true);
+                    onMaterialSelected(r.id.replace('row_', ''), curVal);
                 } else {
                     r.querySelector('.unit-cell').textContent = isEdge ? 'm' : 'Tấm';
                     r.querySelector('.stock-cell').textContent = '-';
@@ -312,7 +319,7 @@
 
     let rowCount = 0;
 
-    function addItemRow(selectedMaterialId = '', qty = '', price = '', notes = '') {
+    function addItemRow(selectedMaterialId = '', qty = '', price = '', notes = '', height = '', width = '') {
         const tbody = document.getElementById('itemsTableBody');
         const tr = document.createElement('tr');
         const thisRowIdx = rowCount;
@@ -328,6 +335,12 @@
                 </select>
             </td>
             <td class="py-2 px-3 text-center text-neutral-600 unit-cell">${isEdge ? 'm' : 'Tấm'}</td>
+            <td class="py-2 px-3 text-center">
+                <input type="number" name="items[${thisRowIdx}][height]" value="${height !== '' ? height : (isEdge ? '' : '2440')}" step="1" min="0" class="form-control rounded-lg w-full border-neutral-200 px-2 py-1 text-center text-xs focus:border-primary-500 height-input" placeholder="${isEdge ? '—' : '2440'}" ${isEdge ? 'disabled' : ''}>
+            </td>
+            <td class="py-2 px-3 text-center">
+                <input type="number" name="items[${thisRowIdx}][width]" value="${width !== '' ? width : (isEdge ? '' : '1220')}" step="1" min="0" class="form-control rounded-lg w-full border-neutral-200 px-2 py-1 text-center text-xs focus:border-primary-500 width-input" placeholder="${isEdge ? '—' : '1220'}" ${isEdge ? 'disabled' : ''}>
+            </td>
             <td class="py-2 px-3 text-right text-neutral-500 stock-cell">-</td>
             <td class="py-2 px-3 text-right">
                 <input type="number" name="items[${thisRowIdx}][quantity]" value="${qty}" step="0.01" min="0.01" class="form-control rounded-lg w-full border-neutral-200 px-2 py-1 text-right text-xs font-bold text-emerald-700 focus:border-primary-500 qty-input" required oninput="calcTotals()">
@@ -457,9 +470,29 @@
         tr.querySelector('.stock-cell').textContent = Number(stock).toLocaleString('vi-VN');
 
         const priceInput = tr.querySelector('.price-input');
-        if (priceInput && (!priceInput.value || parseFloat(priceInput.value) === 0)) {
-            priceInput.value = price;
+        if (priceInput && (priceInput.value === '' || priceInput.value === null || priceInput.value === undefined)) {
+            priceInput.value = 0;
         }
+
+        const heightInput = tr.querySelector('.height-input');
+        const widthInput = tr.querySelector('.width-input');
+        const isMatEdge = mat.item_type === 'edge_band' || (mat.code && String(mat.code).startsWith('CHI-'));
+        if (isMatEdge) {
+            if (heightInput) { heightInput.value = ''; heightInput.disabled = true; heightInput.placeholder = '—'; }
+            if (widthInput) { widthInput.value = ''; widthInput.disabled = true; widthInput.placeholder = '—'; }
+        } else {
+            if (heightInput) {
+                heightInput.disabled = false;
+                heightInput.placeholder = '2440';
+                if (!heightInput.value) heightInput.value = '2440';
+            }
+            if (widthInput) {
+                widthInput.disabled = false;
+                widthInput.placeholder = '1220';
+                if (!widthInput.value) widthInput.value = '1220';
+            }
+        }
+
         calcTotals();
     }
 
@@ -548,7 +581,7 @@
         if (INITIAL_ITEMS && INITIAL_ITEMS.length > 0) {
             INITIAL_ITEMS.forEach(it => {
                 const matId = resolveMaterialId(it);
-                addItemRow(matId, it.quantity, it.unit_price, it.notes || '');
+                addItemRow(matId, it.quantity, it.unit_price, it.notes || '', it.height !== null && it.height !== undefined ? it.height : '', it.width !== null && it.width !== undefined ? it.width : '');
             });
         } else {
             addItemRow();

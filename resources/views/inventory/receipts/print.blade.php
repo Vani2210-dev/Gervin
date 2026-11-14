@@ -65,12 +65,13 @@
         <thead>
             <tr>
                 <th style="width: 35px;">STT</th>
-                <th style="width: 110px;">Mã SKU</th>
-                <th>Tên nhãn hiệu, quy cách vật tư</th>
-                <th style="width: 50px;">ĐVT</th>
-                <th style="width: 80px;">Số lượng</th>
-                <th style="width: 90px;">Đơn giá (đ)</th>
-                <th style="width: 100px;">Thành tiền (đ)</th>
+                <th style="width: 100px;">Mã SKU</th>
+                <th>Tên nhãn hiệu, mặt hàng</th>
+                <th style="width: 45px;">ĐVT</th>
+                <th style="width: 85px;">Quy cách (mm)</th>
+                <th style="width: 75px;">Số lượng</th>
+                <th style="width: 85px;">Đơn giá (đ)</th>
+                <th style="width: 95px;">Thành tiền (đ)</th>
             </tr>
         </thead>
         <tbody>
@@ -80,13 +81,14 @@
                     <td class="font-bold">{{ $it->item_sku }}</td>
                     <td>{{ $it->item_name }} {{ ($it->item_origin_code ?: ($it->material->origin_code ?? '')) ? '(' . ($it->item_origin_code ?: $it->material->origin_code) . ')' : '' }}</td>
                     <td class="text-center">{{ $it->item_unit }}</td>
+                    <td class="text-center">{{ $it->dimensions }}</td>
                     <td class="text-right font-bold">{{ fmod($it->quantity, 1) == 0 ? number_format($it->quantity, 0, ',', '.') : number_format($it->quantity, 2, ',', '.') }}</td>
                     <td class="text-right">{{ $it->unit_price > 0 ? number_format($it->unit_price, 0, ',', '.') : '-' }}</td>
                     <td class="text-right font-bold">{{ $it->total_price > 0 ? number_format($it->total_price, 0, ',', '.') : '-' }}</td>
                 </tr>
             @endforeach
             <tr class="font-bold">
-                <td colspan="4" class="text-center">TỔNG CỘNG</td>
+                <td colspan="5" class="text-center">TỔNG CỘNG</td>
                 <td class="text-right">{{ fmod($receipt->total_quantity, 1) == 0 ? number_format($receipt->total_quantity, 0, ',', '.') : number_format($receipt->total_quantity, 2, ',', '.') }}</td>
                 <td></td>
                 <td class="text-right">{{ $receipt->total_amount > 0 ? number_format($receipt->total_amount, 0, ',', '.') . 'đ' : '-' }}</td>

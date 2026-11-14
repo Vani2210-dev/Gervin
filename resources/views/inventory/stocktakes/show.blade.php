@@ -164,8 +164,9 @@
                                 <th class="py-3 px-3 w-12 text-center">STT</th>
                                 <th class="py-3 px-3 w-28">Mã SKU</th>
                                 <th class="py-3 px-3 w-28">Mã gốc TQ</th>
-                                <th class="py-3 px-4 min-w-[200px]">Tên vật tư / Quy cách</th>
+                                <th class="py-3 px-4 min-w-[200px]">Tên vật tư / Mặt hàng</th>
                                 <th class="py-3 px-3 w-20 text-center">ĐVT</th>
+                                <th class="py-3 px-3 w-28 text-center">Quy cách (mm)</th>
                                 <th class="py-3 px-3 w-32 text-right">Tồn sổ sách</th>
                                 <th class="py-3 px-3 w-32 text-right">Tồn thực tế</th>
                                 <th class="py-3 px-3 w-32 text-right">Chênh lệch</th>
@@ -195,6 +196,9 @@
                                     </td>
                                     <td class="py-3 px-3 text-center text-neutral-600 font-medium">
                                         {{ $item->item_unit }}
+                                    </td>
+                                    <td class="py-3 px-3 text-center text-neutral-600 font-medium">
+                                        {{ $item->dimensions }}
                                     </td>
                                     <td class="py-3 px-3 text-right font-medium text-neutral-700">
                                         {{ fmod($item->book_quantity, 1) == 0 ? number_format($item->book_quantity, 0, ',', '.') : number_format($item->book_quantity, 2, ',', '.') }}
