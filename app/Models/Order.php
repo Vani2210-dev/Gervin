@@ -442,6 +442,50 @@ class Order extends Model
     }
 
     /**
+     * Kiểm tra đơn hàng có phải là Lệnh sản xuất (LSX) hay không.
+     * Đơn hàng thông thường (bán cho khách) và đơn nhập kho (.NK) KHÔNG phải là LSX.
+     */
+    public function isLsx(): bool
+    {
+        // 1. Loại đơn min_late là lệnh sản xuất ép tấm
+        if ($this->type === 'min_late') {
+            return true;
+        }
+
+        // 2. Mã khách hàng là LSX hoặc SX
+        $code = strtoupper(trim($this->customer?->customer_code ?? ''));
+        if (in_array($code, ['LSX', 'SX'], true)) {
+            return true;
+        }
+
+        // 3. Tên khách hàng chứa cụm "lệnh sản xuất" hoặc "sản xuất nội bộ"
+        $cName = mb_strtolower(trim($this->customer?->name ?? ''));
+        if ($cName !== '' && (
+            str_contains($cName, 'lệnh sản xuất') || 
+            str_contains($cName, 'lenh san xuat') || 
+            str_contains($cName, 'sản xuất nội bộ')
+        )) {
+            return true;
+        }
+
+        $orderCustomerName = mb_strtolower(trim($this->customer_name ?? ''));
+        if ($orderCustomerName !== '' && (
+            str_contains($orderCustomerName, 'lệnh sản xuất') || 
+            str_contains($orderCustomerName, 'lenh san xuat') || 
+            str_contains($orderCustomerName, 'sản xuất nội bộ')
+        )) {
+            return true;
+        }
+
+        // 4. Mã đơn hàng có hậu tố .LSX hoặc LSX (không tính .NK)
+        if (!empty($this->order_code) && preg_match('/[._-]?LSX$/i', trim($this->order_code))) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * Tự động thêm hậu tố .NK vào mã đơn nhập kho nếu chưa có (tránh trùng với đơn thường).
      */
     public static function formatNhapKhoOrderCode(?string $code): string
