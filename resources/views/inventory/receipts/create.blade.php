@@ -290,12 +290,6 @@
                 : 'Mặt hàng vật tư (Mã ván / Chỉ dán) <span class="text-danger-500">*</span>';
         }
 
-        const orderSelect = document.getElementById('select_order');
-        if (orderSelect && orderSelect.value) {
-            loadSelectedOrderSupplies(true);
-            return;
-        }
-
         const filtered = getFilteredMaterialOptions();
         const rows = document.querySelectorAll('#itemsTableBody tr');
         rows.forEach(r => {
@@ -592,12 +586,22 @@
     // Order items loader
     function onOrderChanged(selectEl) {
         const btn = document.getElementById('btnLoadOrderItems');
-        if (btn) {
-            if (selectEl.value) {
-                btn.classList.remove('hidden');
-            } else {
-                btn.classList.add('hidden');
+        if (selectEl.value) {
+            if (btn) btn.classList.remove('hidden');
+            loadSelectedOrderSupplies(true);
+
+            // Gợi ý ghi chú phiếu nhập theo đơn hàng
+            const notesInput = document.querySelector('input[name="notes"]');
+            if (notesInput && (!notesInput.value || notesInput.value.startsWith('Nhập kho cho đơn hàng'))) {
+                const optText = selectEl.options[selectEl.selectedIndex]?.text || '';
+                const match = optText.match(/\[(.*?)\]/);
+                const orderCode = match ? match[1] : '';
+                if (orderCode) {
+                    notesInput.value = 'Nhập kho cho đơn hàng #' + orderCode;
+                }
             }
+        } else {
+            if (btn) btn.classList.add('hidden');
         }
     }
 
@@ -633,7 +637,7 @@
                         addItemRow(it.material_id, it.quantity, it.unit_price, it.notes || '', it.height || '', it.width || '');
                     });
                 } else {
-                    if (!forceClean) alert('Đơn hàng ' + (data.order_code || '') + ' không có vật tư phù hợp để nhập kho.');
+                    alert('Đơn hàng ' + (data.order_code || '') + ' không có vật tư phù hợp để nhập kho.');
                 }
             })
             .catch(err => {

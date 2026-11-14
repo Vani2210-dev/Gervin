@@ -1312,24 +1312,26 @@ class InventoryService
         $order->loadMissing(['supplies.items', 'supplies.glassItems', 'supplies.minLateItems']);
         $items = [];
 
-        // Phân biệt Đơn hàng thường vs Lệnh sản xuất (LSX / Đơn nhập kho nội bộ):
-        // 1. Đơn là Lệnh sản xuất / nhập kho nội bộ ($order->isNhapKho())
-        // 2. HOẶC trong đơn có chứa cả vật tư 'subtract' (Trừ kho - nguyên liệu) và 'add' (Thêm kho - thành phẩm)
-        $isNK = $order->isNhapKho();
+        // Phân biệt Đơn hàng thông thường vs Lệnh sản xuất 2 chiều (LSX):
+        // Theo yêu cầu:
+        // - "Riêng đơn hàng thì nhập xuất giống nhau": Cả PNK và PXK đều nạp toàn bộ danh mục vật tư/tấm ván của đơn hàng.
+        // - "Còn LSX thì nhập và xuất dựa theo lựa chọn trong đơn": Chỉ khi đơn hàng thực sự là LSX có đồng thời
+        //   cả vật tư 'subtract' (Trừ kho - nguyên liệu) VÀ 'add' (Thêm kho - thành phẩm) thì mới phân tách:
+        //   + PXK: chỉ lấy vật tư [Trừ kho]
+        //   + PNK: chỉ lấy vật tư [Thêm kho]
         $hasSubtract = $order->supplies->contains(fn($s) => ($s->inventory_action ?? '') === 'subtract');
         $hasAdd = $order->supplies->contains(fn($s) => ($s->inventory_action ?? '') === 'add');
-        $isLsx = $isNK || ($hasSubtract && $hasAdd);
+        $isTwoWayLsx = $hasSubtract && $hasAdd;
 
         foreach ($order->supplies as $supply) {
             $code = trim($supply->order_supply_code ?: '');
             $name = trim($supply->supply_name ?: '');
             if (!$code && !$name) continue;
 
-            $action = $supply->inventory_action ?? ($isLsx ? 'add' : 'subtract');
+            $action = $supply->inventory_action ?? ($isTwoWayLsx ? 'add' : 'subtract');
 
-            // Lọc theo loại phiếu kho:
-            if ($isLsx) {
-                // Còn LSX thì nhập và xuất dựa theo lựa chọn trong đơn
+            // Lọc theo loại phiếu kho khi là LSX 2 chiều:
+            if ($isTwoWayLsx) {
                 if ($type === 'issue' || $type === 'pxk') {
                     // Phiếu Xuất Kho (PXK): Chỉ lấy các dòng đánh dấu [Trừ kho] (nguyên vật liệu sản xuất)
                     if ($action !== 'subtract') {
@@ -1341,9 +1343,6 @@ class InventoryService
                         continue;
                     }
                 }
-            } else {
-                // Riêng đơn hàng thường thì nhập xuất giống nhau:
-                // Cả PNK và PXK đều nạp toàn bộ danh mục vật tư / tấm ván của đơn hàng!
             }
 
             $isEdge = str_starts_with($code, 'CHI-') || str_contains(mb_strtolower($name), 'chỉ');
@@ -1365,7 +1364,7 @@ class InventoryService
             }
 
             $childItems = $supply->items?->isNotEmpty() ? $supply->items : ($supply->glassItems?->isNotEmpty() ? $supply->glassItems : ($supply->minLateItems?->isNotEmpty() ? $supply->minLateItems : collect()));
-            $actionLabel = $isLsx ? (($action === 'subtract') ? ' (Trừ kho)' : ' (Thêm kho)') : '';
+            $actionLabel = $isTwoWayLsx ? (($action === 'subtract') ? ' (Trừ kho)' : ' (Thêm kho)') : '';
 
             // Nếu dòng vật tư này bản thân là chỉ dán viền (Mã CHI-... hoặc tên Chỉ)
             if ($isEdge) {
