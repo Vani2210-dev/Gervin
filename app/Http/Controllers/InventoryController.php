@@ -17,6 +17,7 @@ use App\Models\Supplier;
 use App\Models\Order;
 use App\Services\InventoryService;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -424,6 +425,7 @@ class InventoryController extends Controller
             'code' => 'nullable|string|max:100',
             'origin_code' => 'nullable|string|max:100',
             'foil_name' => 'nullable|string|max:255',
+            'nature' => 'nullable|string|max:100',
             'unit' => 'nullable|string|max:50',
             'cost_price' => 'nullable|numeric|min:0',
             'min_stock' => 'nullable|numeric|min:0',
@@ -438,10 +440,59 @@ class InventoryController extends Controller
         ]);
 
         if (!$code) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Vui lòng nhập mã màu ván / mã SKU!'], 422);
+            }
             return back()->withErrors(['code' => 'Vui lòng nhập mã màu ván!']);
         }
 
         if (WoodBoard::where('color_code', $code)->exists()) {
+            if ($request->ajax() || $request->wantsJson()) {
+                $existingBoard = WoodBoard::where('color_code', $code)->with(['prices.type'])->first();
+                $existingPrices = $existingBoard->prices->map(function ($p) use ($existingBoard) {
+                    return [
+                        'id'                  => 'board_' . $p->id,
+                        'raw_id'              => $p->id,
+                        'wood_board_id'       => $existingBoard->id,
+                        'wood_board_price_id' => $p->id,
+                        'item_type'           => 'board',
+                        'warehouse_code'      => 'KHO-VAN',
+                        'code'                => $p->code,
+                        'name'                => $p->name ?: ('Tấm ' . $p->code),
+                        'origin_code'         => $existingBoard->origin_code ?? '',
+                        'category'            => $existingBoard->price_group ?: ($p->type?->name ?? 'Tấm cốt gỗ'),
+                        'unit'                => 'Tấm',
+                        'cost_price'          => (float)$p->price_board,
+                        'current_stock'       => (float)$p->stock,
+                        'thickness'           => '17mm',
+                    ];
+                })->all();
+
+                $edgeItem = [
+                    'id'                  => 'edge_' . $existingBoard->id,
+                    'raw_id'              => $existingBoard->id,
+                    'wood_board_id'       => $existingBoard->id,
+                    'wood_board_price_id' => null,
+                    'item_type'           => 'edge_band',
+                    'warehouse_code'      => 'KHO-CHI',
+                    'code'                => $existingBoard->edge_band_code,
+                    'name'                => $existingBoard->edge_band_name,
+                    'origin_code'         => $existingBoard->origin_code ?? '',
+                    'category'            => 'Chỉ dán viền',
+                    'unit'                => $existingBoard->edge_band_unit ?: 'm',
+                    'cost_price'          => (float)$existingBoard->edge_band_cost_price,
+                    'current_stock'       => (float)$existingBoard->edge_band_current_stock,
+                    'thickness'           => null,
+                ];
+
+                return response()->json([
+                    'success'        => true,
+                    'message'        => 'Mã ' . $code . ' đã có sẵn trong hệ thống!',
+                    'already_exists' => true,
+                    'created_items'  => array_merge($existingPrices, [$edgeItem]),
+                    'primary_item'   => $existingPrices[0] ?? $edgeItem,
+                ]);
+            }
             return back()->withErrors(['code' => 'Mã màu ván này đã tồn tại trong hệ thống!']);
         }
 
@@ -452,6 +503,7 @@ class InventoryController extends Controller
             'color_code' => $code,
             'origin_code' => trim($request->origin_code),
             'foil_name' => trim($request->foil_name) ?: null,
+            'nature' => trim($request->nature) ?: 'Vật tư hàng hóa',
             'price_group' => $category ?: 'Tấm cốt gỗ / Acrylic',
             'unit' => trim($request->unit) ?: 'Tấm',
             'cost_price' => (float)($request->cost_price ?? 0),
@@ -467,6 +519,52 @@ class InventoryController extends Controller
             'edge_band_initial_stock' => $edgeInitStock,
             'edge_band_current_stock' => $edgeInitStock,
         ]);
+
+        // Tạo tự động các quy cách thành phẩm cho WoodBoard
+        $boardTypes = WoodBoardType::orderBy('id')->get();
+        $createdPriceItems = [];
+        $selectedTypeId = $request->input('selected_type_id');
+        $primaryItem = null;
+
+        foreach ($boardTypes as $type) {
+            $prefix = $type->prefix ?? '';
+            $subPrice = WoodBoardPrice::create([
+                'wood_board_id'      => $board->id,
+                'wood_board_type_id' => $type->id,
+                'code'               => $board->color_code . $prefix,
+                'name'               => $type->name ? ('Tấm ' . $board->color_code . ' - ' . $type->name) : ('Tấm ' . $board->color_code),
+                'foil_name'          => $board->foil_name,
+                'thickness'          => '17mm',
+                'price_board'        => $prefix === '' ? (float)$board->cost_price : 0,
+                'price_m2'           => 0,
+                'stock'              => $prefix === '' ? $initStock : 0,
+            ]);
+            $itemObj = [
+                'id'                  => 'board_' . $subPrice->id,
+                'raw_id'              => $subPrice->id,
+                'wood_board_id'       => $board->id,
+                'wood_board_price_id' => $subPrice->id,
+                'item_type'           => 'board',
+                'warehouse_code'      => 'KHO-VAN',
+                'code'                => $subPrice->code,
+                'name'                => $subPrice->name,
+                'origin_code'         => $board->origin_code ?? '',
+                'category'            => $board->price_group ?: $type->name,
+                'unit'                => 'Tấm',
+                'cost_price'          => (float)$subPrice->price_board,
+                'current_stock'       => (float)$subPrice->stock,
+                'thickness'           => '17mm',
+            ];
+            $createdPriceItems[] = $itemObj;
+
+            if ($selectedTypeId && (int)$selectedTypeId === (int)$type->id) {
+                $primaryItem = $itemObj;
+            }
+        }
+
+        if (!$primaryItem && !empty($createdPriceItems)) {
+            $primaryItem = $createdPriceItems[0];
+        }
 
         if ($initStock > 0) {
             $vanWarehouse = Warehouse::where('code', 'KHO-VAN')->first() ?? Warehouse::first();
@@ -499,6 +597,32 @@ class InventoryController extends Controller
                 'stock_after' => $edgeInitStock,
                 'notes' => 'Số dư tồn kho chỉ ban đầu',
                 'created_by' => Auth::id(),
+            ]);
+        }
+
+        if ($request->ajax() || $request->wantsJson()) {
+            $edgeItem = [
+                'id'                  => 'edge_' . $board->id,
+                'raw_id'              => $board->id,
+                'wood_board_id'       => $board->id,
+                'wood_board_price_id' => null,
+                'item_type'           => 'edge_band',
+                'warehouse_code'      => 'KHO-CHI',
+                'code'                => $board->edge_band_code,
+                'name'                => $board->edge_band_name,
+                'origin_code'         => $board->origin_code ?? '',
+                'category'            => 'Chỉ dán viền',
+                'unit'                => $board->edge_band_unit ?: 'm',
+                'cost_price'          => (float)$board->edge_band_cost_price,
+                'current_stock'       => (float)$board->edge_band_current_stock,
+                'thickness'           => null,
+            ];
+
+            return response()->json([
+                'success'       => true,
+                'message'       => 'Thêm mới mã ' . $board->color_code . ' và các loại thành phẩm thành công!',
+                'created_items' => array_merge($createdPriceItems, [$edgeItem]),
+                'primary_item'  => $primaryItem ?? $edgeItem,
             ]);
         }
 
@@ -565,6 +689,7 @@ class InventoryController extends Controller
                 $board->current_stock = $board->prices()->sum('stock');
                 if ($request->filled('origin_code')) $board->origin_code = trim($request->origin_code);
                 if ($request->has('foil_name')) $board->foil_name = trim($request->foil_name) ?: null;
+                if ($request->filled('nature')) $board->nature = trim($request->nature);
                 if ($request->filled('category')) $board->price_group = trim($request->category);
                 if ($request->filled('warehouse_id')) {
                     $whExists = \App\Models\Warehouse::where('id', $request->warehouse_id)->exists();
@@ -586,6 +711,7 @@ class InventoryController extends Controller
         $request->validate([
             'origin_code' => 'nullable|string|max:100',
             'foil_name' => 'nullable|string|max:255',
+            'nature' => 'nullable|string|max:100',
             'price_group' => 'nullable|string|max:255',
             'category' => 'nullable|string|max:255',
             'unit' => 'nullable|string|max:50',
@@ -610,6 +736,7 @@ class InventoryController extends Controller
         $updateData = [
             'origin_code' => trim($request->origin_code),
             'foil_name' => trim($request->foil_name) ?: null,
+            'nature' => trim($request->nature) ?: ($material->nature ?: 'Vật tư hàng hóa'),
             'price_group' => $group ?: $material->price_group,
             'unit' => trim($request->unit) ?: $material->unit,
             'cost_price' => (float)($request->cost_price ?? $material->cost_price),
@@ -937,30 +1064,215 @@ class InventoryController extends Controller
     }
 
     /**
-     * 2. Phiếu Nhập kho (Goods Receipts)
+     * 2. Sổ tổng hợp Phiếu Nhập / Xuất kho (Master-Detail theo phong cách MISA SME)
      */
     public function receipts(Request $request)
     {
-        $query = InventoryReceipt::with(['warehouse', 'creator', 'supplier', 'order'])->withCount('items');
-        $this->applyDateFilter($query, $request, 'date');
+        $type = $request->input('type', 'all'); // 'all', 'receipt', 'issue'
+        $warehouseId = $request->input('warehouse_id');
+        $search = $request->input('search');
+        $warehouses = $this->getOrderedWarehouses();
 
-        if ($search = $request->input('search')) {
-            $query->where(function ($q) use ($search) {
-                $q->where('code', 'like', "%{$search}%")
-                  ->orWhere('supplier_name', 'like', "%{$search}%")
-                  ->orWhereHas('supplier', function ($sq) use ($search) {
-                      $sq->where('name', 'like', "%{$search}%")
-                         ->orWhere('code', 'like', "%{$search}%");
-                  })
-                  ->orWhere('deliverer', 'like', "%{$search}%")
-                  ->orWhere('receiver', 'like', "%{$search}%")
-                  ->orWhere('notes', 'like', "%{$search}%");
+        // 1. Query Receipts (PNK)
+        $receipts = collect();
+        if ($type === 'all' || $type === 'receipt') {
+            $rQuery = InventoryReceipt::with([
+                'warehouse',
+                'creator',
+                'supplier',
+                'order',
+                'items.woodBoard',
+                'items.boardPrice'
+            ])->withCount('items');
+
+            $this->applyDateFilter($rQuery, $request, 'date');
+
+            if ($warehouseId) {
+                $rQuery->where('warehouse_id', $warehouseId);
+            }
+
+            if ($search) {
+                $rQuery->where(function ($q) use ($search) {
+                    $q->where('code', 'like', "%{$search}%")
+                      ->orWhere('supplier_name', 'like', "%{$search}%")
+                      ->orWhereHas('supplier', fn($sq) => $sq->where('name', 'like', "%{$search}%")->orWhere('code', 'like', "%{$search}%"))
+                      ->orWhere('deliverer', 'like', "%{$search}%")
+                      ->orWhere('receiver', 'like', "%{$search}%")
+                      ->orWhere('notes', 'like', "%{$search}%")
+                      ->orWhereHas('order', fn($oq) => $oq->where('order_code', 'like', "%{$search}%"));
+                });
+            }
+
+            $receipts = $rQuery->get()->map(function ($r) {
+                $partnerText = $r->supplier
+                    ? "[{$r->supplier->code}] {$r->supplier->name}"
+                    : ($r->supplier_name ?: 'NCC Nhà máy');
+
+                return (object)[
+                    'unique_id'      => 'receipt_' . $r->id,
+                    'id'             => $r->id,
+                    'voucher_type'   => 'receipt',
+                    'type_label'     => 'Nhập kho',
+                    'badge_class'    => 'bg-emerald-50 text-emerald-700 border border-emerald-300',
+                    'icon'           => 'solar:import-bold',
+                    'code'           => $r->code,
+                    'date'           => $r->date,
+                    'warehouse'      => $r->warehouse,
+                    'warehouse_name' => $r->warehouse->name ?? '—',
+                    'order'          => $r->order,
+                    'partner'        => $partnerText,
+                    'partner_title'  => 'Nhà cung cấp',
+                    'deliverer'      => $r->deliverer ?: '—',
+                    'receiver'       => $r->receiver ?: '—',
+                    'reason'         => $r->notes ?: 'Nhập kho vật tư',
+                    'notes'          => $r->notes ?: '',
+                    'items_count'    => $r->items_count ?? $r->items->count(),
+                    'total_quantity' => (float)$r->total_quantity,
+                    'total_amount'   => (float)$r->total_amount,
+                    'creator'        => $r->creator,
+                    'created_at'     => $r->created_at,
+                    'show_url'       => route('inventory.receipts.show', $r),
+                    'edit_url'       => route('inventory.receipts.edit', $r),
+                    'print_url'      => route('inventory.receipts.print', $r),
+                    'destroy_url'    => route('inventory.receipts.destroy', $r),
+                    'items'          => $r->items->map(function ($it, $idx) use ($r) {
+                        return [
+                            'stt'         => $idx + 1,
+                            'sku'         => $it->item_sku,
+                            'name'        => $it->item_name,
+                            'dimensions'  => $it->dimensions,
+                            'unit'        => $it->item_unit,
+                            'warehouse'   => $r->warehouse->name ?? '—',
+                            'quantity'    => (float)$it->quantity,
+                            'unit_price'  => (float)$it->unit_price,
+                            'total_price' => (float)$it->total_price,
+                            'notes'       => $it->notes ?: '',
+                        ];
+                    })->values()->all(),
+                ];
             });
         }
 
-        $receipts = $query->orderBy('date', 'desc')->orderBy('id', 'desc')->paginate(20)->withQueryString();
+        // 2. Query Issues (PXK)
+        $issues = collect();
+        if ($type === 'all' || $type === 'issue') {
+            $iQuery = InventoryIssue::with([
+                'warehouse',
+                'creator',
+                'order',
+                'items.woodBoard',
+                'items.boardPrice'
+            ])->withCount('items');
 
-        return view('inventory.receipts.index', compact('receipts'));
+            $this->applyDateFilter($iQuery, $request, 'date');
+
+            if ($warehouseId) {
+                $iQuery->where('warehouse_id', $warehouseId);
+            }
+
+            if ($search) {
+                $iQuery->where(function ($q) use ($search) {
+                    $q->where('code', 'like', "%{$search}%")
+                      ->orWhere('recipient', 'like', "%{$search}%")
+                      ->orWhere('deliverer', 'like', "%{$search}%")
+                      ->orWhere('reason', 'like', "%{$search}%")
+                      ->orWhere('notes', 'like', "%{$search}%")
+                      ->orWhereHas('order', fn($oq) => $oq->where('order_code', 'like', "%{$search}%"));
+                });
+            }
+
+            $issues = $iQuery->get()->map(function ($i) {
+                $partnerText = $i->recipient
+                    ?: ($i->order ? ($i->order->customer_name ?: 'Đơn ' . $i->order->code) : 'Xưởng sản xuất');
+
+                return (object)[
+                    'unique_id'      => 'issue_' . $i->id,
+                    'id'             => $i->id,
+                    'voucher_type'   => 'issue',
+                    'type_label'     => 'Xuất kho',
+                    'badge_class'    => 'bg-rose-50 text-rose-700 border border-rose-300',
+                    'icon'           => 'solar:export-bold',
+                    'code'           => $i->code,
+                    'date'           => $i->date,
+                    'warehouse'      => $i->warehouse,
+                    'warehouse_name' => $i->warehouse->name ?? '—',
+                    'order'          => $i->order,
+                    'partner'        => $partnerText,
+                    'partner_title'  => 'Người / Bộ phận nhận',
+                    'deliverer'      => $i->deliverer ?: '—',
+                    'receiver'       => $i->recipient ?: '—',
+                    'reason'         => $i->reason ?: ($i->notes ?: 'Xuất kho vật tư'),
+                    'notes'          => $i->notes ?: '',
+                    'items_count'    => $i->items_count ?? $i->items->count(),
+                    'total_quantity' => (float)$i->total_quantity,
+                    'total_amount'   => (float)$i->total_amount,
+                    'creator'        => $i->creator,
+                    'created_at'     => $i->created_at,
+                    'show_url'       => route('inventory.issues.show', $i),
+                    'edit_url'       => route('inventory.issues.edit', $i),
+                    'print_url'      => route('inventory.issues.print', $i),
+                    'destroy_url'    => route('inventory.issues.destroy', $i),
+                    'items'          => $i->items->map(function ($it, $idx) use ($i) {
+                        return [
+                            'stt'         => $idx + 1,
+                            'sku'         => $it->item_sku,
+                            'name'        => $it->item_name,
+                            'dimensions'  => $it->dimensions,
+                            'unit'        => $it->item_unit,
+                            'warehouse'   => $i->warehouse->name ?? '—',
+                            'quantity'    => (float)$it->quantity,
+                            'unit_price'  => (float)$it->unit_price,
+                            'total_price' => (float)$it->total_price,
+                            'notes'       => $it->notes ?: '',
+                        ];
+                    })->values()->all(),
+                ];
+            });
+        }
+
+        // 3. Merge & Sort by date desc, then created_at / id desc
+        $combined = $receipts->concat($issues)->sortByDesc(function ($item) {
+            $dateStr = $item->date ? $item->date->format('Y-m-d') : '1970-01-01';
+            $ts = $item->created_at ? $item->created_at->timestamp : 0;
+            return $dateStr . '_' . str_pad((string)$ts, 12, '0', STR_PAD_LEFT) . '_' . str_pad((string)$item->id, 8, '0', STR_PAD_LEFT);
+        })->values();
+
+        // 4. Calculate overall statistics
+        $stats = [
+            'total_vouchers' => $combined->count(),
+            'total_receipts' => $receipts->count(),
+            'total_issues'   => $issues->count(),
+            'total_quantity' => $combined->sum('total_quantity'),
+            'total_amount'   => $combined->sum('total_amount'),
+        ];
+
+        // 5. Paginate with LengthAwarePaginator
+        $perPage = 25;
+        $page = LengthAwarePaginator::resolveCurrentPage();
+        $total = $combined->count();
+        $pagedData = $combined->slice(($page - 1) * $perPage, $perPage)->values();
+
+        $vouchers = new LengthAwarePaginator($pagedData, $total, $perPage, $page, [
+            'path' => LengthAwarePaginator::resolveCurrentPath(),
+            'query' => $request->query(),
+        ]);
+
+        $voucherItemsMap = $pagedData->keyBy('unique_id')->map->items;
+        $voucherMetaMap = $pagedData->keyBy('unique_id')->map(function ($v) {
+            return [
+                'code'           => $v->code,
+                'type_label'     => $v->type_label,
+                'badge_class'    => $v->badge_class,
+                'date'           => $v->date ? $v->date->format('d/m/Y') : '—',
+                'partner'        => $v->partner,
+                'warehouse_name' => $v->warehouse_name,
+                'reason'         => $v->reason,
+                'total_quantity' => $v->total_quantity,
+                'total_amount'   => $v->total_amount,
+            ];
+        });
+
+        return view('inventory.receipts.index', compact('vouchers', 'warehouses', 'type', 'warehouseId', 'search', 'stats', 'voucherItemsMap', 'voucherMetaMap'));
     }
 
     public function createReceipt(Request $request)
@@ -981,7 +1293,11 @@ class InventoryController extends Controller
             ->take(100)
             ->get();
 
-        return view('inventory.receipts.create', compact('warehouses', 'materials', 'nextCode', 'suppliers', 'orders', 'selectedOrder', 'orderItems'));
+        $categories = WoodBoard::select('price_group')->whereNotNull('price_group')->distinct()->pluck('price_group')->filter()->values();
+        $colorCodes = WoodBoard::select('color_code')->whereNotNull('color_code')->distinct()->pluck('color_code')->filter()->values();
+        $boardTypes = WoodBoardType::orderBy('id')->get();
+
+        return view('inventory.receipts.create', compact('warehouses', 'materials', 'nextCode', 'suppliers', 'orders', 'selectedOrder', 'orderItems', 'categories', 'colorCodes', 'boardTypes', 'selectedWarehouseId'));
     }
 
     public function storeReceipt(Request $request)
@@ -1027,7 +1343,11 @@ class InventoryController extends Controller
             ->take(100)
             ->get();
 
-        return view('inventory.receipts.edit', compact('receipt', 'warehouses', 'materials', 'suppliers', 'orders'));
+        $categories = WoodBoard::select('price_group')->whereNotNull('price_group')->distinct()->pluck('price_group')->filter()->values();
+        $colorCodes = WoodBoard::select('color_code')->whereNotNull('color_code')->distinct()->pluck('color_code')->filter()->values();
+        $boardTypes = WoodBoardType::orderBy('id')->get();
+
+        return view('inventory.receipts.edit', compact('receipt', 'warehouses', 'materials', 'suppliers', 'orders', 'categories', 'colorCodes', 'boardTypes'));
     }
 
     public function updateReceipt(Request $request, InventoryReceipt $receipt)
@@ -1074,21 +1394,10 @@ class InventoryController extends Controller
      */
     public function issues(Request $request)
     {
-        $query = InventoryIssue::with(['warehouse', 'creator', 'order'])->withCount('items');
-        $this->applyDateFilter($query, $request, 'date');
-
-        if ($search = $request->input('search')) {
-            $query->where(function ($q) use ($search) {
-                $q->where('code', 'like', "%{$search}%")
-                  ->orWhere('recipient', 'like', "%{$search}%")
-                  ->orWhere('reason', 'like', "%{$search}%")
-                  ->orWhere('notes', 'like', "%{$search}%");
-            });
+        if (!$request->has('type')) {
+            $request->merge(['type' => 'issue']);
         }
-
-        $issues = $query->orderBy('date', 'desc')->orderBy('id', 'desc')->paginate(20)->withQueryString();
-
-        return view('inventory.issues.index', compact('issues'));
+        return $this->receipts($request);
     }
 
     public function createIssue(Request $request)
@@ -1108,7 +1417,11 @@ class InventoryController extends Controller
             ->take(100)
             ->get();
 
-        return view('inventory.issues.create', compact('warehouses', 'materials', 'nextCode', 'orders', 'selectedOrder', 'orderItems'));
+        $categories = WoodBoard::select('price_group')->whereNotNull('price_group')->distinct()->pluck('price_group')->filter()->values();
+        $colorCodes = WoodBoard::select('color_code')->whereNotNull('color_code')->distinct()->pluck('color_code')->filter()->values();
+        $boardTypes = WoodBoardType::orderBy('id')->get();
+
+        return view('inventory.issues.create', compact('warehouses', 'materials', 'nextCode', 'orders', 'selectedOrder', 'orderItems', 'categories', 'colorCodes', 'boardTypes', 'selectedWarehouseId'));
     }
 
     public function storeIssue(Request $request)

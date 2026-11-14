@@ -14,6 +14,7 @@ class WoodBoard extends Model
         'price_group',
         'color_code',
         'foil_name',
+        'nature',
         'origin_code',
         'unit',
         'cost_price',

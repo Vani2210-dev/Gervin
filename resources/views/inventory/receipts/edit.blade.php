@@ -96,16 +96,28 @@
                     <div class="border border-neutral-200 rounded-xl overflow-hidden mb-6">
                         <div class="p-3 bg-neutral-100 border-b border-neutral-200 flex items-center justify-between">
                             <h6 class="font-bold text-neutral-800 text-xs uppercase mb-0">Danh sách vật tư nhập kho</h6>
-                            <button type="button" onclick="addItemRow()" class="btn btn-sm btn-primary px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1 shadow-sm">
-                                <iconify-icon icon="ic:baseline-plus" class="text-sm"></iconify-icon> Thêm dòng
-                            </button>
+                            <div class="flex items-center gap-2">
+                                <button type="button" onclick="openQuickMaterialModal()" class="btn btn-sm bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1 shadow-sm transition-all" title="Thêm mới mã nguyên vật liệu hoặc thành phẩm">
+                                    <iconify-icon icon="solar:box-minimalistic-bold" class="text-sm"></iconify-icon> Thêm mới mã NVL, TP
+                                </button>
+                                <button type="button" onclick="addItemRow()" class="btn btn-sm btn-primary px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1 shadow-sm">
+                                    <iconify-icon icon="ic:baseline-plus" class="text-sm"></iconify-icon> Thêm dòng
+                                </button>
+                            </div>
                         </div>
                         <div class="overflow-x-auto">
                             <table class="w-full text-xs text-left border-collapse" id="itemsTable">
                                 <thead class="bg-neutral-50 text-neutral-700 font-bold border-b border-neutral-200">
                                     <tr>
                                         <th class="py-2 px-3 w-12 text-center">STT</th>
-                                        <th class="py-2 px-3 min-w-[280px]" id="thMaterialCol">Mặt hàng vật tư (Mã ván / Chỉ dán) <span class="text-danger-500">*</span></th>
+                                        <th class="py-2 px-3 min-w-[280px]" id="thMaterialCol">
+                                            <div class="flex items-center justify-between gap-2">
+                                                <span>Mặt hàng vật tư (Mã ván / Chỉ dán) <span class="text-danger-500">*</span></span>
+                                                <button type="button" onclick="openQuickMaterialModal()" class="text-[11px] text-emerald-700 hover:text-emerald-900 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded font-bold flex items-center gap-0.5 transition-all">
+                                                    <iconify-icon icon="ic:baseline-plus"></iconify-icon> Thêm mới NVL / TP
+                                                </button>
+                                            </div>
+                                        </th>
                                         <th class="py-2 px-3 w-16 text-center">ĐVT</th>
                                         <th class="py-2 px-3 w-24 text-center">Cao (mm)</th>
                                         <th class="py-2 px-3 w-24 text-center">Rộng (mm)</th>
@@ -192,6 +204,182 @@
                     </button>
                     <button type="submit" id="btnSubmitQuickSupplier" class="btn btn-primary px-4 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 shadow-sm">
                         <iconify-icon icon="solar:check-circle-bold" class="text-sm"></iconify-icon> Lưu NCC
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- MODAL THÊM NHANH MÃ VẬT TƯ / THÀNH PHẨM (NVL, TP) --}}
+<div id="quickMaterialModal" class="fixed inset-0 z-50 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-neutral-900 bg-opacity-50 transition-opacity" onclick="closeQuickMaterialModal()"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+        <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+            <div class="p-4 border-b border-neutral-200 flex items-center justify-between bg-neutral-50">
+                <div class="flex items-center gap-2">
+                    <iconify-icon icon="solar:box-minimalistic-bold" class="text-xl text-emerald-600"></iconify-icon>
+                    <div>
+                        <h5 class="font-bold text-neutral-800 text-sm mb-0">Thêm nhanh Hàng hóa / Vật tư (NVL, Thành phẩm)</h5>
+                        <p class="text-[11px] text-neutral-500 mb-0">Tạo mã mới và tự động nạp thẳng vào dòng phiếu nhập kho hiện tại</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeQuickMaterialModal()" class="text-neutral-400 hover:text-neutral-700 text-xl font-bold leading-none">&times;</button>
+            </div>
+
+            <form id="quickMaterialForm" onsubmit="handleQuickMaterialSubmit(event)" class="p-5 space-y-4 max-h-[78vh] overflow-y-auto">
+                <input type="hidden" id="quick_mat_target_row" value="">
+                <input type="hidden" id="quick_selected_type_id" value="">
+
+                {{-- CHỌN NHANH TỪ BẢNG GIÁ TẤM --}}
+                <div class="p-3 bg-orange-50/80 border border-orange-200 rounded-xl space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-orange-900 flex items-center gap-1.5">
+                            <iconify-icon icon="solar:magic-stick-3-bold" class="text-orange-600 text-sm"></iconify-icon>
+                            Lấy nhanh data từ Bảng giá tấm (Nhập mã màu & loại ván)
+                        </span>
+                        <span id="quickBoardMatchPrice" class="text-xs font-bold text-emerald-700"></span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="form-label text-[11px] font-bold text-neutral-600 mb-1 block">Mã màu ván</label>
+                            <input type="text" id="quick_lookup_color" list="quickColorList" oninput="onQuickBoardLookup()"
+                                   class="form-control rounded-lg w-full border-neutral-300 px-3 py-1.5 text-xs font-mono font-bold uppercase focus:border-orange-500"
+                                   placeholder="Vd: GV01, PARC 01, GV26**...">
+                            <datalist id="quickColorList">
+                                @foreach($colorCodes ?? [] as $code)
+                                    <option value="{{ $code }}"></option>
+                                @endforeach
+                            </datalist>
+                        </div>
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <label class="form-label text-[11px] font-bold text-neutral-600 block mb-0">Loại ván (Cốt ván)</label>
+                                <span class="text-[10px] text-neutral-400 font-semibold">Chọn nhanh:</span>
+                            </div>
+                            <div class="grid grid-cols-3 gap-1 mb-1.5">
+                                <button type="button" onclick="selectQuickTypeShortcut(2)" id="btnQuickType_2"
+                                        class="quick-type-btn px-1.5 py-1 rounded text-[11px] font-bold border transition-all bg-emerald-600 text-white border-emerald-600 shadow-xs">
+                                    MDF 1M
+                                </button>
+                                <button type="button" onclick="selectQuickTypeShortcut(3)" id="btnQuickType_3"
+                                        class="quick-type-btn px-1.5 py-1 rounded text-[11px] font-bold border transition-all bg-white text-neutral-700 border-neutral-300 hover:bg-neutral-50">
+                                    MDF 2M
+                                </button>
+                                <button type="button" onclick="selectQuickTypeShortcut(5)" id="btnQuickType_5"
+                                        class="quick-type-btn px-1.5 py-1 rounded text-[11px] font-bold border transition-all bg-white text-neutral-700 border-neutral-300 hover:bg-neutral-50">
+                                    Nhựa PVC
+                                </button>
+                            </div>
+                            <select id="quick_lookup_type" onchange="onQuickTypeSelectChange()"
+                                    class="form-select rounded-lg w-full border-neutral-300 px-3 py-1 text-xs focus:border-orange-500 font-semibold">
+                                <option value="">-- Chọn loại ván --</option>
+                                @foreach($boardTypes ?? [] as $bt)
+                                    <option value="{{ $bt->id }}" data-prefix="{{ $bt->prefix }}" data-name="{{ $bt->name }}" {{ $bt->id == 2 ? 'selected' : '' }}>
+                                        {{ $bt->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div id="quickBoardMatchNote" class="text-[11px] text-emerald-800 font-medium hidden"></div>
+                </div>
+
+                {{-- Thông tin chi tiết --}}
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Mã SKU / Mã vật tư <span class="text-danger-500">*</span></label>
+                        <input type="text" id="quick_mat_code" class="form-control rounded-lg w-full border-neutral-300 px-3 py-2 text-xs font-bold text-primary-700 focus:border-primary-500" placeholder="Vd: GV26** hoặc GV26**.TP" required>
+                    </div>
+                    <div>
+                        <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Mã xuất xứ (NCC)</label>
+                        <input type="text" id="quick_mat_origin_code" class="form-control rounded-lg w-full border-neutral-300 px-3 py-2 text-xs focus:border-primary-500" placeholder="Vd: 2201, Austria...">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Tên Foil thay thế</label>
+                    <input type="text" id="quick_mat_foil_name" class="form-control rounded-lg w-full border-neutral-300 px-3 py-2 text-xs focus:border-primary-500" placeholder="Tên hàng Foil thay thế tên cũ (nếu có)">
+                </div>
+
+                <div>
+                    <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Tên vật tư / Quy cách <span class="text-danger-500">*</span></label>
+                    <input type="text" id="quick_mat_name" class="form-control rounded-lg w-full border-neutral-300 px-3 py-2 text-xs focus:border-primary-500 font-medium" placeholder="Vd: Tấm MDF 1 mặt Acrylic GV26**" required>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Tính chất <span class="text-danger-500">*</span></label>
+                        <select id="quick_mat_nature" class="form-select rounded-lg w-full border-neutral-300 px-3 py-2 text-xs focus:border-primary-500 font-semibold text-neutral-800">
+                            <option value="Vật tư hàng hóa" selected>Vật tư hàng hóa</option>
+                            <option value="Thành phẩm">Thành phẩm</option>
+                            <option value="Bán thành phẩm">Bán thành phẩm</option>
+                            <option value="Dịch vụ">Dịch vụ</option>
+                            <option value="Công cụ dụng cụ">Công cụ dụng cụ</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Kho ngầm định <span class="text-danger-500">*</span></label>
+                        <select id="quick_mat_warehouse_id" class="form-select rounded-lg w-full border-neutral-300 px-3 py-2 text-xs focus:border-primary-500 font-semibold text-neutral-800">
+                            @foreach($warehouses as $wh)
+                                <option value="{{ $wh->id }}" {{ (string)$receipt->warehouse_id === (string)$wh->id ? 'selected' : '' }}>
+                                    {{ $wh->name }} ({{ $wh->code }})
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Nhóm hàng / Phân loại</label>
+                        <input type="text" id="quick_mat_category" list="quickCategoryOptions" class="form-control rounded-lg w-full border-neutral-300 px-3 py-2 text-xs focus:border-primary-500" placeholder="Vd: Acrylic TQ, MDF...">
+                        <datalist id="quickCategoryOptions">
+                            @foreach($categories ?? [] as $cat)
+                                <option value="{{ $cat }}"></option>
+                            @endforeach
+                        </datalist>
+                    </div>
+                    <div>
+                        <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Đơn vị tính <span class="text-danger-500">*</span></label>
+                        <input type="text" id="quick_mat_unit" value="Tấm" class="form-control rounded-lg w-full border-neutral-300 px-3 py-2 text-xs focus:border-primary-500 font-bold" required>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="form-label text-xs font-semibold text-neutral-700 mb-1 block">Giá mua gần nhất (đ)</label>
+                        <input type="number" id="quick_mat_cost_price" value="0" min="0" step="1000" class="form-control rounded-lg w-full border-neutral-300 px-3 py-2 text-xs focus:border-primary-500 font-semibold">
+                    </div>
+                    <div>
+                        <label class="form-label text-xs font-semibold text-neutral-700 mb-1 block">Định mức tồn min</label>
+                        <input type="number" id="quick_mat_min_stock" value="50" min="0" class="form-control rounded-lg w-full border-neutral-300 px-3 py-2 text-xs focus:border-primary-500">
+                    </div>
+                </div>
+
+                {{-- Thông số chỉ dán viền đi kèm --}}
+                <div class="p-3 bg-purple-50 border border-purple-200 rounded-xl space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-purple-900 flex items-center gap-1.5">
+                            <iconify-icon icon="solar:ruler-angular-bold" class="text-base text-purple-600"></iconify-icon>
+                            Chỉ dán viền tương ứng (Tự động tạo ở Kho Dán Chỉ)
+                        </span>
+                        <span class="text-[11px] text-purple-600 font-semibold">SKU: CHI-[Mã tấm]</span>
+                    </div>
+                    <div>
+                        <label class="form-label text-[11px] font-semibold text-neutral-700 mb-1 block">Giá mua gần nhất chỉ (đ/m)</label>
+                        <input type="number" id="quick_edge_band_cost_price" value="0" min="0" step="100" class="form-control rounded-lg w-full border-purple-200 px-3 py-1.5 text-xs focus:border-purple-500">
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-2 pt-3 border-t border-neutral-200">
+                    <button type="button" onclick="closeQuickMaterialModal()" class="btn border border-neutral-300 text-neutral-700 hover:bg-neutral-100 px-4 py-2 rounded-lg text-xs font-semibold">
+                        Hủy
+                    </button>
+                    <button type="submit" id="btnSubmitQuickMaterial" class="btn bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all">
+                        <iconify-icon icon="solar:check-circle-bold" class="text-base"></iconify-icon> Lưu & Chọn vào phiếu
                     </button>
                 </div>
             </form>

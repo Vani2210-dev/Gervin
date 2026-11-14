@@ -659,12 +659,22 @@ class MinLatePriceController extends Controller
             $name = trim($item['name'] ?? '');
             if ($name === '') continue;
 
+            $rawPrice = $item['price'] ?? 0;
+            $rawPriceOnly = $item['price_only'] ?? 0;
+
+            if (is_string($rawPrice)) {
+                $rawPrice = str_replace([',', '.', ' '], '', $rawPrice);
+            }
+            if (is_string($rawPriceOnly)) {
+                $rawPriceOnly = str_replace([',', '.', ' '], '', $rawPriceOnly);
+            }
+
             $cleaned[] = [
                 'code'       => trim($item['code'] ?? ''),
                 'name'       => $name,
                 'unit'       => trim($item['unit'] ?? ''),
-                'price'      => floatval($item['price'] ?? 0),
-                'price_only' => floatval($item['price_only'] ?? 0),
+                'price'      => floatval($rawPrice),
+                'price_only' => floatval($rawPriceOnly),
                 'formula'    => trim($item['formula'] ?? ($item['quantity'] ?? '')),
                 'notes'      => trim($item['notes'] ?? ''),
             ];

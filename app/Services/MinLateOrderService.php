@@ -63,10 +63,10 @@ class MinLateOrderService
             'payment_details.*.unit'                   => 'nullable|string|max:255',
             'payment_details.*.length'                 => 'nullable',
             'payment_details.*.width'                  => 'nullable',
-            'payment_details.*.quantity'               => 'nullable|numeric|min:0',
-            'payment_details.*.price'                  => 'required|numeric|min:0',
-            'payment_details.*.price_only'             => 'nullable|numeric|min:0',
-            'payment_details.*.total'                  => 'required|numeric|min:0',
+            'payment_details.*.quantity'               => 'nullable',
+            'payment_details.*.price'                  => 'nullable',
+            'payment_details.*.price_only'             => 'nullable',
+            'payment_details.*.total'                  => 'nullable',
             'payment_details.*.formula'                => 'nullable',
         ];
     }
@@ -296,9 +296,9 @@ class MinLateOrderService
         foreach ($paymentDetailsData as $detail) {
             if (empty($detail['name'])) continue;
 
-            $rawPrice = is_string($detail['price'] ?? 0) ? str_replace('.', '', $detail['price']) : ($detail['price'] ?? 0);
-            $rawPriceOnly = is_string($detail['price_only'] ?? 0) ? str_replace('.', '', $detail['price_only']) : ($detail['price_only'] ?? 0);
-            $rawTotal = is_string($detail['total'] ?? 0) ? str_replace('.', '', $detail['total']) : ($detail['total'] ?? 0);
+            $rawPrice = is_string($detail['price'] ?? 0) ? str_replace(['.', ',', ' '], '', $detail['price']) : ($detail['price'] ?? 0);
+            $rawPriceOnly = is_string($detail['price_only'] ?? 0) ? str_replace(['.', ',', ' '], '', $detail['price_only']) : ($detail['price_only'] ?? 0);
+            $rawTotal = is_string($detail['total'] ?? 0) ? str_replace(['.', ',', ' '], '', $detail['total']) : ($detail['total'] ?? 0);
             
             $parseDim = function($val) {
                 if ($val === null || $val === '') return null;

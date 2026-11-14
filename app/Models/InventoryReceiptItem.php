@@ -30,7 +30,12 @@ class InventoryReceiptItem extends Model
 
     public function getDimensionsAttribute(): string
     {
-        return ($this->height && $this->width) ? ((int)$this->height . ' x ' . (int)$this->width) : '—';
+        if ($this->height && $this->width) {
+            $h = (fmod($this->height, 1) == 0) ? number_format($this->height, 0, ',', '.') : rtrim(rtrim(number_format($this->height, 2, ',', '.'), '0'), ',');
+            $w = (fmod($this->width, 1) == 0) ? number_format($this->width, 0, ',', '.') : rtrim(rtrim(number_format($this->width, 2, ',', '.'), '0'), ',');
+            return "{$h} x {$w}";
+        }
+        return '—';
     }
 
     public function receipt(): BelongsTo

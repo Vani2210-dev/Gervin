@@ -39,15 +39,9 @@
         </a>
 
         <a href="{{ route('inventory.receipts.index') }}" 
-           class="flex items-center gap-2 px-4 py-3 border-b-2 transition-all {{ str_starts_with($currentRoute, 'inventory.receipts') ? 'border-primary-600 text-primary-600 bg-white rounded-t-lg shadow-sm' : 'border-transparent text-neutral-600 hover:text-neutral-900 hover:border-neutral-300' }}">
-            <iconify-icon icon="solar:import-outline" class="text-base"></iconify-icon>
-            Phiếu Nhập kho
-        </a>
-
-        <a href="{{ route('inventory.issues.index') }}" 
-           class="flex items-center gap-2 px-4 py-3 border-b-2 transition-all {{ str_starts_with($currentRoute, 'inventory.issues') ? 'border-primary-600 text-primary-600 bg-white rounded-t-lg shadow-sm' : 'border-transparent text-neutral-600 hover:text-neutral-900 hover:border-neutral-300' }}">
-            <iconify-icon icon="solar:export-outline" class="text-base"></iconify-icon>
-            Phiếu Xuất kho
+           class="flex items-center gap-2 px-4 py-3 border-b-2 transition-all {{ (str_starts_with($currentRoute, 'inventory.receipts') || str_starts_with($currentRoute, 'inventory.issues')) ? 'border-primary-600 text-primary-600 bg-white rounded-t-lg shadow-sm' : 'border-transparent text-neutral-600 hover:text-neutral-900 hover:border-neutral-300' }}">
+            <iconify-icon icon="solar:clipboard-list-bold" class="text-base"></iconify-icon>
+            Nhập, xuất kho
         </a>
 
         <a href="{{ route('inventory.stocktakes.index') }}" 

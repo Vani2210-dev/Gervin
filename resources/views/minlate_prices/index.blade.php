@@ -78,6 +78,26 @@
         background-color: #f5f3ff !important;
         color: #4f46e5 !important;
     }
+    /* Drag & Drop Reordering for Combo Items */
+    .combo-drag-handle {
+        cursor: grab;
+        touch-action: none;
+    }
+    .combo-drag-handle:active {
+        cursor: grabbing;
+    }
+    tr.combo-item-row.ui-sortable-helper {
+        display: table !important;
+        background-color: #ffffff !important;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+        border: 2px solid #6366f1 !important;
+        opacity: 0.96;
+        z-index: 99999;
+    }
+    tr.combo-sort-placeholder td {
+        background-color: #eff6ff !important;
+        border: 2px dashed #3b82f6 !important;
+    }
 </style>
 <div class="grid grid-cols-12 gap-4">
     <div class="col-span-12">
@@ -441,7 +461,7 @@
                             <table class="table bordered-table sm-table mb-0 w-full text-xs" id="combo-items-table-{{ $combo->id }}">
                                 <thead class="bg-neutral-50 text-neutral-700 uppercase font-bold text-center">
                                     <tr>
-                                        <th class="border border-neutral-200 w-10 text-center">STT</th>
+                                        <th class="border border-neutral-200 w-16 text-center" title="Kéo thả để sắp xếp thứ tự">STT</th>
                                         <th class="border border-neutral-200 text-left" style="width: 240px; min-width: 220px;">Chọn từ bảng giá DV (Smart Select)</th>
                                         <th class="border border-neutral-200 text-left min-w-[260px]">Tên nội dung / Dịch vụ gia công <span class="text-danger-500">*</span></th>
                                         <th class="border border-neutral-200 w-24 text-center">Đơn vị</th>
@@ -458,8 +478,13 @@
                                     @endphp
                                     @forelse($items as $iIndex => $item)
                                     <tr class="combo-item-row hover:bg-neutral-50/50">
-                                        <td class="text-center font-bold text-neutral-400 border border-neutral-200 combo-row-stt">
-                                            {{ $iIndex + 1 }}
+                                        <td class="text-center font-bold text-neutral-400 border border-neutral-200 p-1">
+                                            <div class="flex items-center justify-center gap-1">
+                                                <span class="combo-drag-handle cursor-grab active:cursor-grabbing text-neutral-400 hover:text-primary-600 p-1 rounded hover:bg-neutral-100 transition-colors select-none" title="Kéo thả để thay đổi vị trí dòng">
+                                                    <iconify-icon icon="lucide:grip-vertical" class="text-base pointer-events-none"></iconify-icon>
+                                                </span>
+                                                <span class="combo-row-stt">{{ $iIndex + 1 }}</span>
+                                            </div>
                                         </td>
                                         <td class="border border-neutral-200 p-1" style="width: 240px; min-width: 220px;">
                                             <select class="combo-quick-price-select w-full" style="display: none;">
@@ -894,8 +919,13 @@
         const tr = document.createElement('tr');
         tr.className = 'combo-item-row hover:bg-neutral-50/50';
         tr.innerHTML = `
-            <td class="text-center font-bold text-neutral-400 border border-neutral-200 combo-row-stt">
-                ${rowIndex + 1}
+            <td class="text-center font-bold text-neutral-400 border border-neutral-200 p-1">
+                <div class="flex items-center justify-center gap-1">
+                    <span class="combo-drag-handle cursor-grab active:cursor-grabbing text-neutral-400 hover:text-primary-600 p-1 rounded hover:bg-neutral-100 transition-colors select-none" title="Kéo thả để thay đổi vị trí dòng">
+                        <iconify-icon icon="lucide:grip-vertical" class="text-base pointer-events-none"></iconify-icon>
+                    </span>
+                    <span class="combo-row-stt">${rowIndex + 1}</span>
+                </div>
             </td>
             <td class="border border-neutral-200 p-1" style="width: 240px; min-width: 220px;">
                 <select class="combo-quick-price-select w-full" style="display: none;">
@@ -929,11 +959,104 @@
         `;
         tbody.appendChild(tr);
         updateComboRowIndexes(comboId);
+        initComboSortable(comboId);
 
         const newSel = tr.querySelector('.combo-quick-price-select');
         if (newSel && typeof TomSelect !== 'undefined') {
             initComboPriceTomSelect(newSel);
         }
+    }
+
+    function initComboSortable(comboId) {
+        const table = document.getElementById(`combo-items-table-${comboId}`);
+        if (!table) return;
+        const tbody = table.querySelector('.combo-items-body');
+        if (!tbody) return;
+
+        // Use jQuery UI sortable if available
+        if (window.jQuery && typeof jQuery.fn.sortable === 'function') {
+            const $tbody = $(tbody);
+            if ($tbody.data('ui-sortable') || $tbody.hasClass('ui-sortable')) {
+                $tbody.sortable('destroy');
+            }
+            $tbody.sortable({
+                handle: '.combo-drag-handle',
+                items: 'tr.combo-item-row',
+                axis: 'y',
+                cursor: 'grabbing',
+                placeholder: 'combo-sort-placeholder',
+                forcePlaceholderSize: true,
+                helper: function(e, tr) {
+                    const $originals = tr.children();
+                    const $helper = tr.clone();
+                    $helper.children().each(function(index) {
+                        $(this).width($originals.eq(index).outerWidth());
+                    });
+                    return $helper;
+                },
+                start: function(e, ui) {
+                    ui.placeholder.html('<td colspan="9" class="bg-primary-50/70 border-2 border-dashed border-primary-400 py-3 text-center text-primary-700 text-xs font-semibold select-none">Thả vào vị trí này</td>');
+                },
+                stop: function(e, ui) {
+                    updateComboRowIndexes(comboId);
+                }
+            });
+            return;
+        }
+
+        // Native HTML5 Drag & Drop Fallback
+        initNativeComboSortable(tbody, comboId);
+    }
+
+    function initNativeComboSortable(tbody, comboId) {
+        let draggedRow = null;
+
+        tbody.querySelectorAll('tr.combo-item-row').forEach(row => {
+            const handle = row.querySelector('.combo-drag-handle');
+            if (!handle) return;
+
+            handle.setAttribute('draggable', 'true');
+
+            handle.ondragstart = function(e) {
+                draggedRow = row;
+                row.classList.add('opacity-40', 'bg-primary-50');
+                if (e.dataTransfer) {
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', '');
+                }
+            };
+
+            handle.ondragend = function() {
+                if (draggedRow) {
+                    draggedRow.classList.remove('opacity-40', 'bg-primary-50');
+                    draggedRow = null;
+                }
+                updateComboRowIndexes(comboId);
+            };
+
+            row.ondragover = function(e) {
+                e.preventDefault();
+                if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+                if (!draggedRow || draggedRow === row) return;
+
+                const rect = row.getBoundingClientRect();
+                const relY = e.clientY - rect.top;
+                if (relY < rect.height / 2) {
+                    tbody.insertBefore(draggedRow, row);
+                } else {
+                    tbody.insertBefore(draggedRow, row.nextSibling);
+                }
+            };
+        });
+    }
+
+    function initAllComboSortables() {
+        document.querySelectorAll('[id^="combo-items-table-"]').forEach(table => {
+            const comboId = table.id.replace('combo-items-table-', '');
+            if (comboId) {
+                initComboSortable(comboId);
+            }
+        });
     }
 
     document.addEventListener('DOMContentLoaded', function() {
@@ -942,6 +1065,11 @@
                 initComboPriceTomSelect(el);
             });
         }
+        initAllComboSortables();
+    });
+
+    window.addEventListener('load', function() {
+        initAllComboSortables();
     });
 </script>
 @endsection

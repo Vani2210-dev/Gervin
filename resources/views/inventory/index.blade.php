@@ -236,7 +236,7 @@
                                 <th class="py-3 px-4 w-28 text-center">Mã xuất xứ</th>
                                 <th class="py-3 px-4 w-44">Nhóm hàng</th>
                                 <th class="py-3 px-4 w-28 text-center">ĐVT / Quy cách</th>
-                                <th class="py-3 px-4 w-32 text-right">Giá vốn</th>
+                                <th class="py-3 px-4 w-36 text-right">Giá mua gần nhất</th>
                                 <th class="py-3 px-4 w-36 text-right">Tồn kho thực tế</th>
                                 <th class="py-3 px-4 w-36 text-right">Giá trị tồn</th>
                                 <th class="py-3 px-4 w-28 text-center">Trạng thái</th>
@@ -267,6 +267,7 @@
                                             'code'                    => $m->edge_band_code,
                                             'name'                    => $m->edge_band_name,
                                             'origin_code'             => $m->origin_code,
+                                            'nature'                  => $m->nature ?? 'Vật tư hàng hóa',
                                             'category'                => 'Chỉ dán viền',
                                             'unit'                    => $m->edge_band_unit ?: 'm',
                                             'cost_price'              => (float)$m->edge_band_cost_price,
@@ -320,6 +321,7 @@
                                             'code'         => $displaySku,
                                             'name'         => $displayName,
                                             'origin_code'  => $board?->origin_code,
+                                            'nature'       => $board?->nature ?? 'Vật tư hàng hóa',
                                             'category'     => $categoryName,
                                             'unit'         => $displayUnit,
                                             'cost_price'   => $displayCostPrice,
@@ -596,6 +598,29 @@
 
             <div class="grid grid-cols-2 gap-4">
                 <div>
+                    <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Tính chất <span class="text-danger-500">*</span></label>
+                    <select name="nature" id="create_mat_nature" class="form-select rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500 font-semibold text-neutral-800">
+                        <option value="Vật tư hàng hóa" selected>Vật tư hàng hóa</option>
+                        <option value="Thành phẩm">Thành phẩm</option>
+                        <option value="Bán thành phẩm">Bán thành phẩm</option>
+                        <option value="Dịch vụ">Dịch vụ</option>
+                        <option value="Công cụ dụng cụ">Công cụ dụng cụ</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Kho ngầm định <span class="text-danger-500">*</span></label>
+                    <select name="warehouse_id" id="create_mat_warehouse_id" class="form-select rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500 font-semibold text-neutral-800">
+                        @foreach($warehouses as $wh)
+                            <option value="{{ $wh->id }}" {{ (string)($selectedWarehouseId ?? 1) === (string)$wh->id ? 'selected' : '' }}>
+                                {{ $wh->name }} ({{ $wh->code }})
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
                     <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Nhóm hàng / Phân loại</label>
                     <input type="text" name="category" id="create_mat_category" list="categoryOptions" class="form-control rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500" placeholder="Vd: Acrylic TQ">
                     <datalist id="categoryOptions">
@@ -612,7 +637,7 @@
 
             <div class="grid grid-cols-3 gap-4">
                 <div>
-                    <label class="form-label text-xs font-semibold text-neutral-700 mb-1 block">Giá vốn ván (đ)</label>
+                    <label class="form-label text-xs font-semibold text-neutral-700 mb-1 block">Giá mua gần nhất (đ)</label>
                     <input type="number" name="cost_price" id="create_mat_cost_price" value="0" min="0" step="1000" class="form-control rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500">
                 </div>
                 <div>
@@ -640,7 +665,7 @@
                         <input type="number" name="edge_band_initial_stock" value="0" min="0" step="0.1" class="form-control rounded-lg w-full border-purple-200 px-3 py-1.5 text-xs focus:border-purple-500">
                     </div>
                     <div>
-                        <label class="form-label text-[11px] font-semibold text-neutral-700 dark:text-neutral-300 mb-1 block">Giá vốn chỉ (đ/m)</label>
+                        <label class="form-label text-[11px] font-semibold text-neutral-700 dark:text-neutral-300 mb-1 block">Giá mua gần nhất chỉ (đ/m)</label>
                         <input type="number" name="edge_band_cost_price" value="0" min="0" step="100" class="form-control rounded-lg w-full border-purple-200 px-3 py-1.5 text-xs focus:border-purple-500">
                     </div>
                     <div>
@@ -648,15 +673,6 @@
                         <input type="number" name="edge_band_min_stock" value="100" min="0" class="form-control rounded-lg w-full border-purple-200 px-3 py-1.5 text-xs focus:border-purple-500">
                     </div>
                 </div>
-            </div>
-
-            <div>
-                <label class="form-label text-xs font-semibold text-neutral-700 mb-1 block">Kho tấm ván mặc định</label>
-                <select name="warehouse_id" class="form-select rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500">
-                    @foreach($warehouses as $wh)
-                        <option value="{{ $wh->id }}">{{ $wh->name }}</option>
-                    @endforeach
-                </select>
             </div>
 
             <div>
@@ -705,6 +721,27 @@
 
             <div class="grid grid-cols-2 gap-4">
                 <div>
+                    <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Tính chất <span class="text-danger-500">*</span></label>
+                    <select name="nature" id="edit_nature" class="form-select rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500 font-semibold text-neutral-800">
+                        <option value="Vật tư hàng hóa">Vật tư hàng hóa</option>
+                        <option value="Thành phẩm">Thành phẩm</option>
+                        <option value="Bán thành phẩm">Bán thành phẩm</option>
+                        <option value="Dịch vụ">Dịch vụ</option>
+                        <option value="Công cụ dụng cụ">Công cụ dụng cụ</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Kho ngầm định</label>
+                    <select name="warehouse_id" id="edit_warehouse_id" class="form-select rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500 font-semibold text-neutral-800">
+                        @foreach($warehouses as $wh)
+                            <option value="{{ $wh->id }}">{{ $wh->name }} ({{ $wh->code }})</option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
                     <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Nhóm hàng</label>
                     <input type="text" name="category" id="edit_category" class="form-control rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500">
                 </div>
@@ -720,7 +757,7 @@
                     <input type="number" name="stock" id="edit_stock" step="0.01" class="form-control rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500">
                 </div>
                 <div>
-                    <label class="form-label text-xs font-semibold text-neutral-700 mb-1 block">Giá vốn (đ)</label>
+                    <label class="form-label text-xs font-semibold text-neutral-700 mb-1 block">Giá mua gần nhất (đ)</label>
                     <input type="number" name="cost_price" id="edit_cost_price" min="0" step="1000" class="form-control rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500">
                 </div>
                 <div>
@@ -729,22 +766,12 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="form-label text-xs font-semibold text-neutral-700 mb-1 block">Kho hàng ván</label>
-                    <select name="warehouse_id" id="edit_warehouse_id" class="form-select rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500">
-                        @foreach($warehouses as $wh)
-                            <option value="{{ $wh->id }}">{{ $wh->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div>
-                    <label class="form-label text-xs font-semibold text-neutral-700 mb-1 block">Trạng thái</label>
-                    <select name="status" id="edit_status" class="form-select rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500">
-                        <option value="active">Đang kinh doanh</option>
-                        <option value="inactive">Ngừng kinh doanh</option>
-                    </select>
-                </div>
+            <div>
+                <label class="form-label text-xs font-semibold text-neutral-700 mb-1 block">Trạng thái kinh doanh</label>
+                <select name="status" id="edit_status" class="form-select rounded-lg w-full border-neutral-200 px-3 py-2 text-xs focus:border-primary-500">
+                    <option value="active">Đang kinh doanh</option>
+                    <option value="inactive">Ngừng kinh doanh</option>
+                </select>
             </div>
 
             {{-- Thông số chỉ dán viền đi kèm tại Kho Dán Chỉ --}}
@@ -762,7 +789,7 @@
                         <input type="number" name="edge_band_current_stock" id="edit_edge_band_current_stock" min="0" step="0.1" class="form-control rounded-lg w-full border-purple-200 px-3 py-1.5 text-xs focus:border-purple-500">
                     </div>
                     <div>
-                        <label class="form-label text-[11px] font-semibold text-neutral-700 dark:text-neutral-300 mb-1 block">Giá vốn chỉ (đ/m)</label>
+                        <label class="form-label text-[11px] font-semibold text-neutral-700 dark:text-neutral-300 mb-1 block">Giá mua gần nhất chỉ (đ/m)</label>
                         <input type="number" name="edge_band_cost_price" id="edit_edge_band_cost_price" min="0" step="100" class="form-control rounded-lg w-full border-purple-200 px-3 py-1.5 text-xs focus:border-purple-500">
                     </div>
                     <div>
@@ -955,6 +982,7 @@
         setVal('edit_name', item.name || ('Tấm ' + (item.code || item.color_code || '')));
         setVal('edit_foil_name', item.foil_name || '');
         setVal('edit_origin_code', item.origin_code || '');
+        setVal('edit_nature', item.nature || 'Vật tư hàng hóa');
         setVal('edit_category', item.category || item.price_group || '');
         setVal('edit_unit', item.unit || 'Tấm');
         setVal('edit_cost_price', item.cost_price || 0);

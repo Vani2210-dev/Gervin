@@ -634,7 +634,7 @@ function handlePaymentDetailCodeSelected(row, rawCode) {
             applyFlashEffect(priceInput);
             priceInput.dispatchEvent(new Event('input', { bubbles: true }));
         }
-        if (priceOnlyInput) {
+        if (priceOnlyInput && (priceOnlyInput.value === '' || priceOnlyInput.value === null || priceOnlyInput.value === undefined)) {
             priceOnlyInput.value = 0;
             priceOnlyInput.dispatchEvent(new Event('input', { bubbles: true }));
         }
@@ -655,7 +655,7 @@ function handlePaymentDetailCodeSelected(row, rawCode) {
             applyFlashEffect(priceInput);
             priceInput.dispatchEvent(new Event('input', { bubbles: true }));
         }
-        if (priceOnlyInput) {
+        if (priceOnlyInput && (priceOnlyInput.value === '' || priceOnlyInput.value === null || priceOnlyInput.value === undefined)) {
             priceOnlyInput.value = 0;
             priceOnlyInput.dispatchEvent(new Event('input', { bubbles: true }));
         }
@@ -676,9 +676,8 @@ function handlePaymentDetailCodeSelected(row, rawCode) {
             applyFlashEffect(priceInput);
             priceInput.dispatchEvent(new Event('input', { bubbles: true }));
         }
-        if (priceOnlyInput) {
+        if (priceOnlyInput && (priceOnlyInput.value === '' || priceOnlyInput.value === null || priceOnlyInput.value === undefined)) {
             priceOnlyInput.value = 0;
-            applyFlashEffect(priceOnlyInput);
             priceOnlyInput.dispatchEvent(new Event('input', { bubbles: true }));
         }
         if (minLatePrice.default_formula) {
@@ -707,28 +706,36 @@ window.addPaymentDetailWithData = function(code, name, unit, qty, price, priceOn
     const newRow = rows[rows.length - 1];
     if (!newRow) return;
 
+    newRow.dataset.skipAutoFill = 'true';
+
     const nameInput = newRow.querySelector('textarea[name*="[name]"]');
     const unitInput = newRow.querySelector('input[name*="[unit]"]');
     const qtyInput = newRow.querySelector('input[name*="[quantity]"]');
-    const priceInput = newRow.querySelector('input[name*="[price]"]');
+    const priceInput = newRow.querySelector('input[name*="[price]"]:not([name*="[price_only]"])');
     const priceOnlyInput = newRow.querySelector('input[name*="[price_only]"]');
-
-    if (nameInput) nameInput.value = name;
-    if (unitInput) unitInput.value = unit;
-    if (qtyInput) qtyInput.value = qty;
-    if (priceInput) priceInput.value = price;
-    if (priceOnlyInput) priceOnlyInput.value = priceOnly;
 
     const select = newRow.querySelector('select.order-payment-code-select');
     if (select) {
+        select._skipAutoFill = true;
         select.value = code;
         if (select.tomselect) {
             select.tomselect.setValue(code, true);
         }
     }
 
+    if (nameInput) nameInput.value = name;
+    if (unitInput) unitInput.value = unit;
+    if (qtyInput) qtyInput.value = qty;
+    if (priceInput) priceInput.value = price;
+    if (priceOnlyInput) priceOnlyInput.value = priceOnly || 0;
+
     calculatePaymentDetailRowTotal(newRow);
     if (typeof updateOrderSummary === 'function') updateOrderSummary();
+
+    setTimeout(() => {
+        delete newRow.dataset.skipAutoFill;
+        if (select) delete select._skipAutoFill;
+    }, 100);
 };
 
 function initPaymentCodeTomSelect(selectEl) {
@@ -760,6 +767,7 @@ function initPaymentCodeTomSelect(selectEl) {
     let lastFilledCode = null;
     const triggerFill = (val) => {
         const targetRow = row || selectEl.closest('.payment-detail-row');
+        if (!targetRow || targetRow.dataset.skipAutoFill === 'true' || selectEl._skipAutoFill) return;
         const code = (val !== undefined && val !== null && val !== '') ? val : (ts ? ts.getValue() : selectEl.value);
         if (!code || code === lastFilledCode) return;
         lastFilledCode = code;
@@ -837,20 +845,36 @@ window.applyServiceCombo = function(comboId, replace = true) {
         const newRow = rows[rows.length - 1];
         if (!newRow) return;
 
+        // Bật cờ ngăn TomSelect tự động ghi đè dữ liệu từ combo
+        newRow.dataset.skipAutoFill = 'true';
+
         const nameInput = newRow.querySelector('textarea[name*="[name]"]');
         const unitInput = newRow.querySelector('input[name*="[unit]"]');
         const lengthInput = newRow.querySelector('input[name*="[length]"]');
         const widthInput = newRow.querySelector('input[name*="[width]"]');
         const qtyInput = newRow.querySelector('input[name*="[quantity]"]');
-        const priceInput = newRow.querySelector('input[name*="[price]"]');
+        const priceInput = newRow.querySelector('input[name*="[price]"]:not([name*="[price_only]"])');
         const priceOnlyInput = newRow.querySelector('input[name*="[price_only]"]');
 
+        // 1. Gán mã cho TomSelect trước (nếu có)
+        const select = newRow.querySelector('select.order-payment-code-select');
+        if (select) {
+            select._skipAutoFill = true;
+            if (item.code) {
+                select.value = item.code;
+                if (select.tomselect) {
+                    select.tomselect.setValue(item.code, true);
+                }
+            }
+        }
+
+        // 2. Điền chính xác các giá trị từ tổ hợp (Combo là nguồn chân lý)
         if (nameInput) nameInput.value = item.name || '';
         if (unitInput) unitInput.value = item.unit || '';
         if (lengthInput && item.length) lengthInput.value = item.length;
         if (widthInput && item.width) widthInput.value = item.width;
-        if (priceInput) priceInput.value = item.price || 0;
-        if (priceOnlyInput) priceOnlyInput.value = item.price_only || 0;
+        if (priceInput) priceInput.value = (item.price !== undefined && item.price !== null && item.price !== '') ? item.price : 0;
+        if (priceOnlyInput) priceOnlyInput.value = (item.price_only !== undefined && item.price_only !== null && item.price_only !== '') ? item.price_only : 0;
 
         // Xử lý công thức nếu có
         const formula = item.formula ? String(item.formula).trim() : '';
@@ -869,19 +893,15 @@ window.applyServiceCombo = function(comboId, replace = true) {
             }
         }
 
-        // Chọn mã nếu có
-        const select = newRow.querySelector('select.order-payment-code-select');
-        if (select && item.code) {
-            select.value = item.code;
-            if (select.tomselect) {
-                select.tomselect.setValue(item.code, true);
-            }
-        }
-
         if (typeof syncRowFormulasToHiddenInput === 'function') {
             syncRowFormulasToHiddenInput(newRow);
         }
         calculatePaymentDetailRowTotal(newRow);
+
+        setTimeout(() => {
+            delete newRow.dataset.skipAutoFill;
+            if (select) delete select._skipAutoFill;
+        }, 100);
     });
 
     if (typeof updateOrderSummary === 'function') {

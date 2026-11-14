@@ -455,9 +455,9 @@ class AcrylicOrderService
         foreach ($paymentDetailsData as $detail) {
             if (empty($detail['name'])) continue;
 
-            $rawPrice = is_string($detail['price'] ?? 0) ? str_replace('.', '', $detail['price']) : ($detail['price'] ?? 0);
-            $rawPriceOnly = is_string($detail['price_only'] ?? 0) ? str_replace('.', '', $detail['price_only']) : ($detail['price_only'] ?? 0);
-            $rawTotal = is_string($detail['total'] ?? 0) ? str_replace('.', '', $detail['total']) : ($detail['total'] ?? 0);
+            $rawPrice = is_string($detail['price'] ?? 0) ? str_replace(['.', ',', ' '], '', $detail['price']) : ($detail['price'] ?? 0);
+            $rawPriceOnly = is_string($detail['price_only'] ?? 0) ? str_replace(['.', ',', ' '], '', $detail['price_only']) : ($detail['price_only'] ?? 0);
+            $rawTotal = is_string($detail['total'] ?? 0) ? str_replace(['.', ',', ' '], '', $detail['total']) : ($detail['total'] ?? 0);
             
             $parseDim = function($val) {
                 if ($val === null || $val === '') return null;
