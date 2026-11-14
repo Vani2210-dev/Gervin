@@ -364,22 +364,6 @@
         updateStt();
         calcTotals();
     }
-            <td class="py-2 px-3 text-right font-bold text-neutral-800 line-total-cell">0đ</td>
-            <td class="py-2 px-3">
-                <input type="text" name="items[${thisRowIdx}][notes]" value="${notes}" class="form-control rounded-lg w-full border-neutral-200 px-2 py-1 text-xs" placeholder="Ghi chú...">
-            </td>
-            <td class="py-2 px-3 text-center">
-                <button type="button" onclick="removeRow(${thisRowIdx})" class="text-danger-500 hover:text-danger-700 p-1 text-base leading-none" title="Xóa dòng">&times;</button>
-            </td>
-        `;
-
-        tbody.appendChild(tr);
-        rowCount++;
-
-        initTomSelectForRow(thisRowIdx, selectedMaterialId);
-        updateStt();
-        calcTotals();
-    }
 
     function initTomSelectForRow(rowIdx, selectedMaterialId) {
         const selectEl = document.getElementById(`select_mat_${rowIdx}`);
