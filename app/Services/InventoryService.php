@@ -1449,40 +1449,6 @@ class InventoryService
                     'notes'            => "Từ đơn #{$order->order_code}{$actionLabel}",
                 ];
             }
-
-            // Thêm chỉ dán viền đi kèm cho tấm ván này (nếu có chi tiết và có tính mét chỉ)
-            if ($childItems->isNotEmpty()) {
-                $moldingMeters = $childItems->sum(function($c) {
-                    return ((float)($c->molding_length ?? 0)) * max(1, (float)($c->quantity ?? 1));
-                });
-                if ($moldingMeters <= 0) {
-                    $moldingMeters = $childItems->sum(function($c) {
-                        $h = (float)($c->height ?? 0);
-                        $w = (float)($c->width ?? 0);
-                        $q = max(1, (float)($c->quantity ?? 1));
-                        return (($h + $w) * 2 / 1000) * $q;
-                    });
-                }
-
-                if ($moldingMeters > 0) {
-                    $edgeCode = $woodBoard?->edge_band_code ?: ('CHI-' . ($woodBoard?->color_code ?: $code));
-                    $edgeName = $woodBoard?->edge_band_name ?: ('Chỉ dán viền ' . ($woodBoard?->color_code ?: $name));
-                    $matId = 'edge_' . ($woodBoard ? $woodBoard->id : ($supply->wood_board_id ?? 0));
-
-                    $items[] = [
-                        'material_id'      => $matId,
-                        'code'             => $edgeCode,
-                        'name'             => $edgeName,
-                        'height'           => null,
-                        'width'            => null,
-                        'quantity'         => round($moldingMeters, 2),
-                        'unit_price'       => 0,
-                        'unit'             => 'm',
-                        'inventory_action' => $action,
-                        'notes'            => "Từ đơn #{$order->order_code}{$actionLabel} (Chỉ dán viền cho {$code})",
-                    ];
-                }
-            }
         }
 
         return $items;
