@@ -56,6 +56,19 @@
         $module  = $parts[1] ?? 'other';
         $grouped[$module][] = $permission;
     }
+
+    // Sắp xếp các nhóm module theo đúng thứ tự ưu tiên hiển thị (Đơn hàng luôn ở hàng đầu)
+    $sortedGrouped = [];
+    foreach (array_keys($moduleLabels) as $moduleKey) {
+        if (isset($grouped[$moduleKey])) {
+            $sortedGrouped[$moduleKey] = $grouped[$moduleKey];
+            unset($grouped[$moduleKey]);
+        }
+    }
+    foreach ($grouped as $k => $v) {
+        $sortedGrouped[$k] = $v;
+    }
+    $grouped = $sortedGrouped;
 @endphp
 
 <form action="{{ $action }}" method="POST">
