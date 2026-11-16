@@ -37,12 +37,18 @@
     ];
     $customPermissionLabels = [
         'view all market groups' => 'Xem tất cả (Không bị lọc theo nhóm thị trường)',
+        'approve accountant order' => 'Duyệt kế toán',
+        'approve technical order' => 'Duyệt kỹ thuật (Chuyển SX)',
     ];
 
     $grouped = [];
     foreach ($permissions as $permission) {
         if ($permission->name === 'view all market groups') {
             $grouped['market group'][] = $permission;
+            continue;
+        }
+        if (in_array($permission->name, ['approve accountant order', 'approve technical order'])) {
+            $grouped['order'][] = $permission;
             continue;
         }
         $parts = explode(' ', $permission->name, 2);

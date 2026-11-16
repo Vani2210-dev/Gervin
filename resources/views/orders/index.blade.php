@@ -1357,46 +1357,53 @@
             </li>
             @endcan
 
-            @if(auth()->user()->can('approve order') || auth()->user()->can('edit order'))
             {{-- Kế toán duyệt --}}
-            @if(!$order->accountant_approved_by && in_array($order->status, ['draft', 'pending']))
-            <li class="border-t border-neutral-100 my-1 pt-1">
-                <form method="POST" action="{{ route('orders.update-status', $order) }}" onsubmit="return confirm('Kế toán xác nhận duyệt đơn hàng {{ $order->order_code }}?')">
-                    @csrf
-                    <input type="hidden" name="status" value="accountant_approve">
-                    <button type="submit" class="w-full flex items-center gap-2 px-4 py-2 hover:bg-emerald-50 text-emerald-700 text-left transition-colors font-medium">
-                        <iconify-icon icon="lucide:check-circle" class="text-emerald-600 text-lg"></iconify-icon>
-                        <span>Kế toán duyệt</span>
-                    </button>
-                </form>
-            </li>
-            @endif
-
-            {{-- Chuyển sản xuất (Kỹ thuật duyệt) --}}
-            @if(!$order->technical_approved_by && in_array($order->status, ['draft', 'pending']))
-                @if($order->accountant_approved_by)
+            @if(auth()->user()?->canApproveAccountantOrder())
+                @if(!$order->accountant_approved_by && !in_array($order->status, ['in_production', 'completed', 'cancelled']))
                 <li class="border-t border-neutral-100 my-1 pt-1">
-                    <form method="POST" action="{{ route('orders.update-status', $order) }}" onsubmit="return confirm('Kỹ thuật xác nhận duyệt & Chuyển đơn hàng {{ $order->order_code }} sang sản xuất?')">
+                    <form method="POST" action="{{ route('orders.update-status', $order) }}" onsubmit="return confirm('Kế toán xác nhận duyệt đơn hàng {{ $order->order_code }}?')">
                         @csrf
-                        <input type="hidden" name="status" value="transferred">
-                        <button type="submit" class="w-full flex items-center gap-2 px-4 py-2 hover:bg-violet-50 text-violet-700 text-left transition-colors font-medium">
-                            <iconify-icon icon="lucide:factory" class="text-violet-600 text-lg"></iconify-icon>
-                            <span>{{ !empty($order->edit_reason) ? 'Chuyển SX lại' : 'Kỹ thuật duyệt (Chuyển SX)' }}</span>
+                        <input type="hidden" name="status" value="accountant_approve">
+                        <button type="submit" class="w-full flex items-center gap-2 px-4 py-2 hover:bg-emerald-50 text-emerald-700 text-left transition-colors font-medium">
+                            <iconify-icon icon="lucide:check-circle" class="text-emerald-600 text-lg"></iconify-icon>
+                            <span>Kế toán duyệt</span>
                         </button>
                     </form>
-                </li>
-                @else
-                <li class="border-t border-neutral-100 my-1 pt-1">
-                    <button type="button" onclick="alert('Đơn hàng cần được Kế toán duyệt trước khi Kỹ thuật duyệt chuyển sản xuất!')" class="w-full flex items-center gap-2 px-4 py-2 text-neutral-400 text-left cursor-not-allowed opacity-60 font-medium" title="Cần Kế toán duyệt trước khi Kỹ thuật duyệt">
-                        <iconify-icon icon="lucide:factory" class="text-neutral-400 text-lg"></iconify-icon>
-                        <span>Kỹ thuật duyệt (Chờ KT duyệt)</span>
-                    </button>
                 </li>
                 @endif
             @endif
 
+            {{-- Chuyển sản xuất (Kỹ thuật duyệt) --}}
+            @if(auth()->user()?->canApproveTechnicalOrder())
+                @if(!$order->technical_approved_by && !in_array($order->status, ['in_production', 'completed', 'cancelled']))
+                    @if($order->accountant_approved_by)
+                    <li class="border-t border-neutral-100 my-1 pt-1">
+                        <form method="POST" action="{{ route('orders.update-status', $order) }}" onsubmit="return confirm('Kỹ thuật xác nhận duyệt & Chuyển đơn hàng {{ $order->order_code }} sang sản xuất?')">
+                            @csrf
+                            <input type="hidden" name="status" value="transferred">
+                            <button type="submit" class="w-full flex items-center gap-2 px-4 py-2 hover:bg-violet-50 text-violet-700 text-left transition-colors font-medium">
+                                <iconify-icon icon="lucide:factory" class="text-violet-600 text-lg"></iconify-icon>
+                                <span>{{ !empty($order->edit_reason) ? 'Chuyển SX lại' : 'Kỹ thuật duyệt (Chuyển SX)' }}</span>
+                            </button>
+                        </form>
+                    </li>
+                    @else
+                    <li class="border-t border-neutral-100 my-1 pt-1">
+                        <button type="button" onclick="alert('Đơn hàng cần được Kế toán duyệt trước khi Kỹ thuật duyệt chuyển sản xuất!')" class="w-full flex items-center gap-2 px-4 py-2 text-neutral-400 text-left cursor-not-allowed opacity-60 font-medium" title="Cần Kế toán duyệt trước khi Kỹ thuật duyệt">
+                            <iconify-icon icon="lucide:factory" class="text-neutral-400 text-lg"></iconify-icon>
+                            <span>Kỹ thuật duyệt (Chờ KT duyệt)</span>
+                        </button>
+                    </li>
+                    @endif
+                @endif
+            @endif
+
             {{-- Yêu cầu sửa đơn --}}
-            @if(in_array($order->status, ['draft', 'pending', 'transferred']))
+            @php
+                $canRequestEditAccountant = auth()->user()?->canApproveAccountantOrder() && !$order->accountant_approved_by;
+                $canRequestEditTechnical = auth()->user()?->canApproveTechnicalOrder() && $order->accountant_approved_by;
+            @endphp
+            @if(($canRequestEditAccountant || $canRequestEditTechnical) && in_array($order->status, ['draft', 'pending', 'transferred']))
             <li class="{{ in_array($order->status, ['draft', 'pending']) ? '' : 'border-t border-neutral-100 my-1 pt-1' }}">
                 <button type="button" onclick="openRequestEditModal('{{ route('orders.update-status', $order) }}', '{{ $order->order_code }}', '{{ $order->accountant_approved_by ? 'technical' : 'accountant' }}')" class="w-full flex items-center gap-2 px-4 py-2 hover:bg-amber-50 text-amber-700 text-left transition-colors font-medium">
                     <iconify-icon icon="lucide:alert-circle" class="text-amber-600 text-lg"></iconify-icon>
@@ -1405,6 +1412,7 @@
             </li>
             @endif
 
+            @can('edit order')
             {{-- Chỉnh sửa đơn hàng --}}
             <li class="{{ in_array($order->status, ['draft', 'pending']) ? '' : 'border-t border-neutral-100 my-1 pt-1' }}">
                 @if($order->status === 'cancelled')
@@ -1549,8 +1557,8 @@
                     <span class="text-neutral-400 font-medium">{{ $order->accountant_approved_at?->format('H:i d/m/Y') }}</span>
                 </div>
             @else
-                @if(auth()->user()->can('approve order') || auth()->user()->can('edit order'))
-                    @if(in_array($order->status, ['draft', 'pending']))
+                @if(auth()->user()?->canApproveAccountantOrder())
+                    @if(!in_array($order->status, ['in_production', 'completed', 'cancelled']))
                         <div class="flex items-center gap-2 mt-2 pt-2 border-t border-neutral-200/60 justify-end">
                             <button type="button" onclick="openRequestEditModal('{{ route('orders.update-status', $order) }}', '{{ $order->order_code }}', 'accountant')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-300 transition-colors">
                                 Yêu cầu sửa
@@ -1564,7 +1572,7 @@
                             </form>
                         </div>
                     @endif
-                @endcan
+                @endif
             @endif
         </div>
 
@@ -1591,7 +1599,7 @@
                     <span class="text-neutral-400 font-medium">{{ $order->technical_approved_at?->format('H:i d/m/Y') }}</span>
                 </div>
             @else
-                @if(auth()->user()->can('approve order') || auth()->user()->can('edit order'))
+                @if(auth()->user()?->canApproveTechnicalOrder())
                     @if(!in_array($order->status, ['cancelled', 'completed']))
                         @if($order->accountant_approved_by)
                             <div class="flex items-center gap-2 mt-2 pt-2 border-t border-neutral-200/60 justify-end">
@@ -1612,7 +1620,7 @@
                             </div>
                         @endif
                     @endif
-                @endcan
+                @endif
             @endif
         </div>
     </div>

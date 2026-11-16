@@ -104,6 +104,8 @@ class PermissionSeeder extends Seeder
             'edit order',
             'delete order',
             'approve order',
+            'approve accountant order',
+            'approve technical order',
             
 
             // Warehouse permissions

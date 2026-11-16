@@ -401,7 +401,7 @@
                 @if($acrylicOrder->status !== 'cancelled')
                 <button type="submit" name="status" value="cancelled" class="btn bg-danger-50 text-danger-600 hover:bg-danger-100 border border-danger-200 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all" onclick="return confirm('Bạn có chắc chắn muốn hủy đơn hàng này?')">Hủy đơn</button>
                 @endif
-                @if($acrylicOrder->status === 'pending')
+                @if($acrylicOrder->status === 'pending' && auth()->user()?->canApproveTechnicalOrder())
                     @if($acrylicOrder->accountant_approved_by)
                     <button type="submit" name="status" value="transferred" class="btn bg-violet-50 text-violet-600 hover:bg-violet-100 border border-violet-200 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all" onclick="return confirm('Kỹ thuật xác nhận duyệt & chuyển đơn hàng sang sản xuất?')">{{ !empty($acrylicOrder->edit_reason) ? 'Chuyển SX lại' : 'Kỹ thuật duyệt & Chuyển SX' }}</button>
                     @else

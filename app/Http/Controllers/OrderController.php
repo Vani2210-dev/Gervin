@@ -40,7 +40,16 @@ class OrderController extends Controller
         $this->middleware('permission:add order',    ['only' => ['create', 'createByType', 'store']]);
         $this->middleware('permission:edit order',   ['only' => ['edit', 'update']]);
         $this->middleware('permission:delete order', ['only' => ['destroy', 'bulkDestroy']]);
-        $this->middleware('permission:approve order|edit order', ['only' => ['updateStatus']]);
+        $this->middleware(function ($request, $next) {
+            $user = auth()->user();
+            if (!$user) {
+                abort(401);
+            }
+            if ($user->canApproveAccountantOrder() || $user->canApproveTechnicalOrder() || $user->can('approve order') || $user->can('edit order')) {
+                return $next($request);
+            }
+            abort(403, 'Bạn không có quyền thực hiện thao tác duyệt này.');
+        }, ['only' => ['updateStatus']]);
         $this->middleware('permission:view order|add order|edit order', ['only' => ['preview', 'previewLive']]);
     }
 
@@ -1192,8 +1201,17 @@ class OrderController extends Controller
             }
         }
 
-        if ($request->status === 'transferred' && !$order->accountant_approved_by) {
-            return redirect()->back()->withInput()->with('error', 'Đơn hàng cần được Kế toán duyệt trước khi Kỹ thuật duyệt chuyển sản xuất.');
+        if ($request->status === 'transferred') {
+            if (!auth()->user()->canApproveTechnicalOrder()) {
+                return redirect()->back()->withInput()->with('error', 'Chỉ tài khoản có vai trò/quyền Kỹ thuật mới được duyệt chuyển sản xuất. Kế toán và các role khác không được duyệt.');
+            }
+            if (!$order->accountant_approved_by) {
+                return redirect()->back()->withInput()->with('error', 'Đơn hàng cần được Kế toán duyệt trước khi Kỹ thuật duyệt chuyển sản xuất.');
+            }
+        } elseif ($request->status === 'accountant_approve') {
+            if (!auth()->user()->canApproveAccountantOrder()) {
+                return redirect()->back()->withInput()->with('error', 'Chỉ tài khoản có vai trò/quyền Kế toán mới được duyệt đơn hàng.');
+            }
         }
 
         $request->validate($rules);
@@ -1206,6 +1224,9 @@ class OrderController extends Controller
         }
 
         if ($request->status === 'transferred') {
+            if (!auth()->user()->canApproveTechnicalOrder()) {
+                return redirect()->back()->with('error', 'Chỉ tài khoản có vai trò/quyền Kỹ thuật mới được duyệt chuyển sản xuất. Kế toán và các role khác không được duyệt.');
+            }
             if (!$order->accountant_approved_by) {
                 return redirect()->back()->with('error', 'Đơn hàng cần được Kế toán duyệt trước khi Kỹ thuật duyệt chuyển sản xuất.');
             }
@@ -1218,6 +1239,9 @@ class OrderController extends Controller
             $order->rejected_step = null;
             $order->save();
         } elseif ($request->status === 'accountant_approve') {
+            if (!auth()->user()->canApproveAccountantOrder()) {
+                return redirect()->back()->with('error', 'Chỉ tài khoản có vai trò/quyền Kế toán mới được duyệt đơn hàng.');
+            }
             $order->accountant_approved_by = auth()->id();
             $order->accountant_approved_at = now();
             if ($order->rejected_step === 'accountant') {
@@ -1293,8 +1317,12 @@ class OrderController extends Controller
         ]);
 
         $status = $request->status;
+        $currentUser = auth()->user();
 
         if ($status === 'accountant_approve') {
+            if (!$currentUser || !$currentUser->canApproveAccountantOrder()) {
+                return redirect()->back()->with('error', 'Chỉ người dùng có quyền/vai trò Kế toán mới được duyệt ở bước Kế toán. Kỹ thuật và các role khác không được phép duyệt.');
+            }
             if (in_array($order->status, ['in_production', 'completed', 'cancelled'])) {
                 return redirect()->back()->with('error', 'Trạng thái đơn hàng không hợp lệ để kế toán duyệt.');
             }
@@ -1319,6 +1347,9 @@ class OrderController extends Controller
         }
 
         if ($status === 'accountant_unapprove') {
+            if (!$currentUser || !$currentUser->canApproveAccountantOrder()) {
+                return redirect()->back()->with('error', 'Chỉ người dùng có quyền/vai trò Kế toán mới được hủy duyệt kế toán.');
+            }
             if ($order->status === 'transferred' || in_array($order->status, ['in_production', 'completed']) || $order->technical_approved_by) {
                 return redirect()->back()->with('error', 'Đơn hàng đã được duyệt chuyển sản xuất, không thể huỷ duyệt kế toán.');
             }
@@ -1332,6 +1363,21 @@ class OrderController extends Controller
         }
 
         if ($status === 'request_edit') {
+            $step = $request->input('step', 'accountant');
+            if ($step === 'accountant') {
+                if (!$currentUser || !$currentUser->canApproveAccountantOrder()) {
+                    return redirect()->back()->with('error', 'Chỉ người dùng có quyền/vai trò Kế toán mới được yêu cầu sửa ở bước Kế toán.');
+                }
+            } elseif ($step === 'technical') {
+                if (!$currentUser || !$currentUser->canApproveTechnicalOrder()) {
+                    return redirect()->back()->with('error', 'Chỉ người dùng có quyền/vai trò Kỹ thuật mới được yêu cầu sửa ở bước Kỹ thuật.');
+                }
+            } else {
+                if (!$currentUser || (!$currentUser->canApproveAccountantOrder() && !$currentUser->canApproveTechnicalOrder())) {
+                    return redirect()->back()->with('error', 'Bạn không có quyền yêu cầu sửa đơn hàng.');
+                }
+            }
+
             if (in_array($order->status, ['in_production', 'completed', 'cancelled'])) {
                 return redirect()->back()->with('error', 'Không thể yêu cầu sửa đơn hàng đang sản xuất, đã hoàn thành hoặc đã hủy.');
             }
@@ -1340,7 +1386,6 @@ class OrderController extends Controller
                 return redirect()->back()->with('error', 'Vui lòng nhập lý do yêu cầu sửa đơn hàng.');
             }
 
-            $step = $request->input('step', 'accountant');
             $order->status = 'pending';
             $order->edit_reason = $reason;
             $order->rejected_by = auth()->id();
@@ -1366,7 +1411,10 @@ class OrderController extends Controller
         }
 
         if ($status === 'transferred') {
-            if (!in_array($order->status, ['pending', 'draft'])) {
+            if (!$currentUser || !$currentUser->canApproveTechnicalOrder()) {
+                return redirect()->back()->with('error', 'Chỉ người dùng có quyền/vai trò Kỹ thuật mới được duyệt chuyển sản xuất. Kế toán và các role khác không được phép duyệt.');
+            }
+            if (in_array($order->status, ['in_production', 'completed', 'cancelled'])) {
                 return redirect()->back()->with('error', 'Trạng thái đơn hàng không hợp lệ để chuyển sản xuất.');
             }
             // Kỹ thuật duyệt & Chuyển sản xuất: Bắt buộc Kế toán phải duyệt trước
