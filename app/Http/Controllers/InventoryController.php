@@ -113,13 +113,15 @@ class InventoryController extends Controller
             });
         }
 
-        $materials = $query->orderBy('code')->paginate(50)->withQueryString();
-        $totalItems = (clone $query)->count();
-        $totalStockQty = (float)(clone $query)->sum('current_stock');
-        $totalStockValue = (float)((clone $query)->selectRaw('SUM(current_stock * cost_price) as val')->value('val') ?? 0);
-        $lowStockCount = (clone $query)->where(function ($q) {
+        $statsQuery = (clone $query)->reorder();
+        $totalItems = (clone $statsQuery)->count();
+        $totalStockQty = (float)(clone $statsQuery)->sum('current_stock');
+        $totalStockValue = (float)((clone $statsQuery)->selectRaw('SUM(current_stock * cost_price) as val')->value('val') ?? 0);
+        $lowStockCount = (clone $statsQuery)->where(function ($q) {
             $q->whereColumn('current_stock', '<=', 'min_stock')->orWhere('current_stock', '<=', 0);
         })->count();
+
+        $materials = $query->orderBy('code')->paginate(50)->withQueryString();
 
         $categories = Material::when($selectedWarehouseId, fn($q) => $q->where('warehouse_id', $selectedWarehouseId))
             ->whereNotNull('category')
