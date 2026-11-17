@@ -9,6 +9,7 @@ class InventoryReceiptItem extends Model
 {
     protected $fillable = [
         'receipt_id',
+        'material_id',
         'item_type',
         'wood_board_id',
         'wood_board_price_id',
@@ -53,16 +54,17 @@ class InventoryReceiptItem extends Model
         return $this->belongsTo(WoodBoardPrice::class, 'wood_board_price_id');
     }
 
-    /**
-     * Backward-compatible alias for existing views
-     */
     public function material(): BelongsTo
     {
-        return $this->woodBoard();
+        return $this->belongsTo(Material::class, 'material_id');
     }
 
     public function getItemSkuAttribute(): string
     {
+        if ($this->material_id) {
+            $mat = $this->relationLoaded('material') ? $this->material : Material::find($this->material_id);
+            if ($mat) return $mat->code;
+        }
         if ($this->item_type === 'edge_band') {
             return $this->woodBoard?->edge_band_code ?? ('CHI-' . ($this->woodBoard?->color_code ?? ''));
         }
@@ -80,6 +82,10 @@ class InventoryReceiptItem extends Model
 
     public function getItemNameAttribute(): string
     {
+        if ($this->material_id) {
+            $mat = $this->relationLoaded('material') ? $this->material : Material::find($this->material_id);
+            if ($mat) return $mat->name;
+        }
         if ($this->item_type === 'edge_band') {
             return $this->woodBoard?->edge_band_name ?? ('Chỉ dán viền ' . ($this->woodBoard?->color_code ?? ''));
         }
@@ -97,6 +103,10 @@ class InventoryReceiptItem extends Model
 
     public function getItemUnitAttribute(): string
     {
+        if ($this->material_id) {
+            $mat = $this->relationLoaded('material') ? $this->material : Material::find($this->material_id);
+            if ($mat && !empty($mat->unit)) return $mat->unit;
+        }
         if ($this->item_type === 'edge_band') {
             return $this->woodBoard?->edge_band_unit ?? 'm';
         }
@@ -105,6 +115,10 @@ class InventoryReceiptItem extends Model
 
     public function getItemCategoryAttribute(): string
     {
+        if ($this->material_id) {
+            $mat = $this->relationLoaded('material') ? $this->material : Material::find($this->material_id);
+            if ($mat && !empty($mat->category)) return $mat->category;
+        }
         if ($this->item_type === 'edge_band') {
             return 'Chỉ dán viền (' . ($this->woodBoard?->price_group ?? 'Tiêu chuẩn') . ')';
         }
@@ -113,6 +127,10 @@ class InventoryReceiptItem extends Model
 
     public function getItemOriginCodeAttribute(): string
     {
+        if ($this->material_id) {
+            $mat = $this->relationLoaded('material') ? $this->material : Material::find($this->material_id);
+            if ($mat && !empty($mat->origin)) return $mat->origin;
+        }
         return $this->woodBoard?->origin_code ?? '';
     }
 

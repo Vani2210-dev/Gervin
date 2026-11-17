@@ -8,7 +8,7 @@
                         <iconify-icon icon="lucide:alert-triangle" class="text-xl"></iconify-icon>
                     </div>
                     <div>
-                        <h5 class="text-base font-bold text-neutral-800 m-0">Yêu cầu sửa đơn hàng</h5>
+                        <h5 id="requestEditModalTitle" class="text-base font-bold text-neutral-800 m-0">Yêu cầu sửa đơn hàng</h5>
                         <div class="flex items-center gap-2 mt-0.5">
                             <p class="text-xs text-neutral-500 m-0">Đơn hàng: <span id="requestEditModalOrderCode" class="font-bold text-primary-600"></span></p>
                             <span id="requestEditModalStepBadge" class="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-200 text-amber-900">Kế toán yêu cầu</span>
@@ -59,6 +59,7 @@
         const reasonEl = document.getElementById('requestEditModalReason');
         const stepEl = document.getElementById('requestEditModalStep');
         const stepBadge = document.getElementById('requestEditModalStepBadge');
+        const titleEl = document.getElementById('requestEditModalTitle');
 
         if (modal && form) {
             form.action = actionUrl;
@@ -66,11 +67,20 @@
             if (stepEl) stepEl.value = step || 'accountant';
             if (stepBadge) {
                 if (step === 'technical') {
+                    if (titleEl) titleEl.textContent = 'Kỹ thuật yêu cầu sửa đơn';
                     stepBadge.textContent = 'Kỹ thuật yêu cầu';
                     stepBadge.className = 'px-2 py-0.5 rounded text-[11px] font-bold bg-blue-100 text-blue-800 border border-blue-200';
+                    if (reasonEl) reasonEl.placeholder = 'Nhập chi tiết yêu cầu sửa kỹ thuật (sai quy cách, kích thước, liên kết...)';
+                } else if (step === 'sale') {
+                    if (titleEl) titleEl.textContent = 'Xin mở khóa sửa lại đơn';
+                    stepBadge.textContent = 'Sale xin sửa lại';
+                    stepBadge.className = 'px-2 py-0.5 rounded text-[11px] font-bold bg-purple-100 text-purple-800 border border-purple-200';
+                    if (reasonEl) reasonEl.placeholder = 'Nhập chi tiết lý do cần sửa (khách đổi kích thước, mã màu, số lượng...)';
                 } else {
+                    if (titleEl) titleEl.textContent = 'Kế toán yêu cầu sửa đơn';
                     stepBadge.textContent = 'Kế toán yêu cầu';
                     stepBadge.className = 'px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300';
+                    if (reasonEl) reasonEl.placeholder = 'Nhập chi tiết yêu cầu sửa kế toán (sai đơn giá, công nợ, chiết khấu...)';
                 }
             }
             if (reasonEl) {

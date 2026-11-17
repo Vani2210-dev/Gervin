@@ -15,6 +15,7 @@ use App\Models\InventoryStocktakeItem;
 use App\Models\InventoryTransaction;
 use App\Models\Order;
 use App\Models\OrderSupply;
+use App\Models\Material;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -84,6 +85,96 @@ class InventoryService
 
             foreach ($items as $item) {
                 $rawMatId = (string)($item['wood_board_id'] ?? $item['material_id'] ?? '');
+                $qty = (float)($item['quantity'] ?? 0);
+                if ($qty <= 0) continue;
+
+                $price = (float)($item['unit_price'] ?? 0);
+                $lineTotal = $qty * $price;
+                $itemHeight = isset($item['height']) && $item['height'] !== '' ? (float)$item['height'] : null;
+                $itemWidth = isset($item['width']) && $item['width'] !== '' ? (float)$item['width'] : null;
+
+                // 1. Kiểm tra nếu là Material (mat_...) hoặc có material_id
+                $material = null;
+                if (str_starts_with($rawMatId, 'mat_')) {
+                    $matId = (int)str_replace('mat_', '', $rawMatId);
+                    $material = \App\Models\Material::find($matId);
+                } elseif (isset($item['material_id']) && is_numeric($item['material_id'])) {
+                    $material = \App\Models\Material::find($item['material_id']);
+                } elseif (str_starts_with($rawMatId, 'board_')) {
+                    $subId = (int)str_replace('board_', '', $rawMatId);
+                    $material = \App\Models\Material::where('wood_board_price_id', $subId)->first()
+                        ?? \App\Models\Material::where('wood_board_id', $subId)->where('item_type', 'board')->first();
+                } elseif (str_starts_with($rawMatId, 'edge_')) {
+                    $subId = (int)str_replace('edge_', '', $rawMatId);
+                    $material = \App\Models\Material::where('wood_board_id', $subId)->where('item_type', 'edge_band')->first();
+                }
+
+                if ($material) {
+                    $itemType = $material->item_type;
+                    $woodBoardId = $material->wood_board_id;
+                    $woodBoardPriceId = $material->wood_board_price_id;
+
+                    InventoryReceiptItem::create($this->sanitizeItemData('inventory_receipt_items', [
+                        'receipt_id'          => $receipt->id,
+                        'material_id'         => $material->id,
+                        'item_type'           => $itemType,
+                        'wood_board_id'       => $woodBoardId,
+                        'wood_board_price_id' => $woodBoardPriceId,
+                        'height'              => $itemHeight,
+                        'width'               => $itemWidth,
+                        'quantity'            => $qty,
+                        'unit_price'          => $price,
+                        'total_price'         => $lineTotal,
+                        'notes'               => $item['notes'] ?? null,
+                    ]));
+
+                    $material->current_stock = (float)$material->current_stock + $qty;
+                    if ($price > 0) $material->cost_price = $price;
+                    $material->save();
+                    $stockAfter = $material->current_stock;
+
+                    if ($woodBoardPriceId) {
+                        $p = \App\Models\WoodBoardPrice::find($woodBoardPriceId);
+                        if ($p) { $p->stock += $qty; $p->save(); }
+                    }
+                    if ($woodBoardId) {
+                        $b = \App\Models\WoodBoard::find($woodBoardId);
+                        if ($b) {
+                            if ($itemType === 'edge_band') {
+                                $b->edge_band_current_stock = (float)$b->edge_band_current_stock + $qty;
+                            } else {
+                                $b->current_stock = $b->prices()->sum('stock') ?: ($b->current_stock + $qty);
+                            }
+                            $b->save();
+                        }
+                    }
+
+                    InventoryTransaction::create($this->sanitizeItemData('inventory_transactions', [
+                        'warehouse_id'        => $warehouse->id,
+                        'material_id'         => $material->id,
+                        'item_type'           => $itemType,
+                        'wood_board_id'       => $woodBoardId,
+                        'wood_board_price_id' => $woodBoardPriceId,
+                        'height'              => $itemHeight,
+                        'width'               => $itemWidth,
+                        'date'                => $date,
+                        'type'                => 'receipt',
+                        'voucher_code'        => $code,
+                        'reference_id'        => $receipt->id,
+                        'reference_type'      => InventoryReceipt::class,
+                        'in_qty'              => $qty,
+                        'out_qty'             => 0,
+                        'stock_after'         => $stockAfter,
+                        'unit_price'          => $price,
+                        'notes'               => $data['notes'] ?? ('Nhập kho ' . $material->name . ' theo phiếu ' . $code),
+                        'created_by'          => $userId,
+                    ]));
+
+                    $totalQty += $qty;
+                    $totalAmount += $lineTotal;
+                    continue;
+                }
+
                 $itemType = $item['item_type'] ?? null;
                 if (!$itemType) {
                     if (str_starts_with($rawMatId, 'board_')) {
@@ -275,6 +366,14 @@ class InventoryService
                     $oldQty = (float)($oldItem->quantity ?? 0);
                     if ($oldQty <= 0) continue;
 
+                    if ($oldItem->material_id) {
+                        $oldMat = \App\Models\Material::find($oldItem->material_id);
+                        if ($oldMat) {
+                            $oldMat->current_stock = max(0, (float)$oldMat->current_stock - $oldQty);
+                            $oldMat->save();
+                        }
+                    }
+
                     if ($oldItem->item_type === 'edge_band') {
                         if ($oldItem->wood_board_id) {
                             $oldBoard = WoodBoard::find($oldItem->wood_board_id);
@@ -350,6 +449,96 @@ class InventoryService
 
             foreach ($items as $item) {
                 $rawMatId = (string)($item['wood_board_id'] ?? $item['material_id'] ?? '');
+                $qty = (float)($item['quantity'] ?? 0);
+                if ($qty <= 0) continue;
+
+                $price = (float)($item['unit_price'] ?? 0);
+                $lineTotal = $qty * $price;
+                $itemHeight = isset($item['height']) && $item['height'] !== '' ? (float)$item['height'] : null;
+                $itemWidth = isset($item['width']) && $item['width'] !== '' ? (float)$item['width'] : null;
+
+                // 1. Kiểm tra nếu là Material (mat_...) hoặc có material_id
+                $material = null;
+                if (str_starts_with($rawMatId, 'mat_')) {
+                    $matId = (int)str_replace('mat_', '', $rawMatId);
+                    $material = \App\Models\Material::find($matId);
+                } elseif (isset($item['material_id']) && is_numeric($item['material_id'])) {
+                    $material = \App\Models\Material::find($item['material_id']);
+                } elseif (str_starts_with($rawMatId, 'board_')) {
+                    $subId = (int)str_replace('board_', '', $rawMatId);
+                    $material = \App\Models\Material::where('wood_board_price_id', $subId)->first()
+                        ?? \App\Models\Material::where('wood_board_id', $subId)->where('item_type', 'board')->first();
+                } elseif (str_starts_with($rawMatId, 'edge_')) {
+                    $subId = (int)str_replace('edge_', '', $rawMatId);
+                    $material = \App\Models\Material::where('wood_board_id', $subId)->where('item_type', 'edge_band')->first();
+                }
+
+                if ($material) {
+                    $itemType = $material->item_type;
+                    $woodBoardId = $material->wood_board_id;
+                    $woodBoardPriceId = $material->wood_board_price_id;
+
+                    InventoryReceiptItem::create($this->sanitizeItemData('inventory_receipt_items', [
+                        'receipt_id'          => $receipt->id,
+                        'material_id'         => $material->id,
+                        'item_type'           => $itemType,
+                        'wood_board_id'       => $woodBoardId,
+                        'wood_board_price_id' => $woodBoardPriceId,
+                        'height'              => $itemHeight,
+                        'width'               => $itemWidth,
+                        'quantity'            => $qty,
+                        'unit_price'          => $price,
+                        'total_price'         => $lineTotal,
+                        'notes'               => $item['notes'] ?? null,
+                    ]));
+
+                    $material->current_stock = (float)$material->current_stock + $qty;
+                    if ($price > 0) $material->cost_price = $price;
+                    $material->save();
+                    $stockAfter = $material->current_stock;
+
+                    if ($woodBoardPriceId) {
+                        $p = \App\Models\WoodBoardPrice::find($woodBoardPriceId);
+                        if ($p) { $p->stock += $qty; $p->save(); }
+                    }
+                    if ($woodBoardId) {
+                        $b = \App\Models\WoodBoard::find($woodBoardId);
+                        if ($b) {
+                            if ($itemType === 'edge_band') {
+                                $b->edge_band_current_stock = (float)$b->edge_band_current_stock + $qty;
+                            } else {
+                                $b->current_stock = $b->prices()->sum('stock') ?: ($b->current_stock + $qty);
+                            }
+                            $b->save();
+                        }
+                    }
+
+                    InventoryTransaction::create($this->sanitizeItemData('inventory_transactions', [
+                        'warehouse_id'        => $warehouse->id,
+                        'material_id'         => $material->id,
+                        'item_type'           => $itemType,
+                        'wood_board_id'       => $woodBoardId,
+                        'wood_board_price_id' => $woodBoardPriceId,
+                        'height'              => $itemHeight,
+                        'width'               => $itemWidth,
+                        'date'                => $date,
+                        'type'                => 'receipt',
+                        'voucher_code'        => $code,
+                        'reference_id'        => $receipt->id,
+                        'reference_type'      => InventoryReceipt::class,
+                        'in_qty'              => $qty,
+                        'out_qty'             => 0,
+                        'stock_after'         => $stockAfter,
+                        'unit_price'          => $price,
+                        'notes'               => $data['notes'] ?? ('Nhập kho ' . $material->name . ' theo phiếu ' . $code),
+                        'created_by'          => $userId,
+                    ]));
+
+                    $totalQty += $qty;
+                    $totalAmount += $lineTotal;
+                    continue;
+                }
+
                 $itemType = $item['item_type'] ?? null;
                 if (!$itemType) {
                     if (str_starts_with($rawMatId, 'board_')) {
@@ -557,6 +746,98 @@ class InventoryService
 
             foreach ($items as $item) {
                 $rawMatId = (string)($item['wood_board_id'] ?? $item['material_id'] ?? '');
+                $qty = (float)($item['quantity'] ?? 0);
+                if ($qty <= 0) continue;
+
+                $price = (float)($item['unit_price'] ?? 0);
+                $lineTotal = $qty * $price;
+                $itemHeight = isset($item['height']) && $item['height'] !== '' ? (float)$item['height'] : null;
+                $itemWidth = isset($item['width']) && $item['width'] !== '' ? (float)$item['width'] : null;
+
+                // 1. Kiểm tra nếu là Material (mat_...) hoặc có material_id
+                $material = null;
+                if (str_starts_with($rawMatId, 'mat_')) {
+                    $matId = (int)str_replace('mat_', '', $rawMatId);
+                    $material = \App\Models\Material::find($matId);
+                } elseif (isset($item['material_id']) && is_numeric($item['material_id'])) {
+                    $material = \App\Models\Material::find($item['material_id']);
+                } elseif (str_starts_with($rawMatId, 'board_')) {
+                    $subId = (int)str_replace('board_', '', $rawMatId);
+                    $material = \App\Models\Material::where('wood_board_price_id', $subId)->first()
+                        ?? \App\Models\Material::where('wood_board_id', $subId)->where('item_type', 'board')->first();
+                } elseif (str_starts_with($rawMatId, 'edge_')) {
+                    $subId = (int)str_replace('edge_', '', $rawMatId);
+                    $material = \App\Models\Material::where('wood_board_id', $subId)->where('item_type', 'edge_band')->first();
+                }
+
+                if ($material) {
+                    $itemType = $material->item_type;
+                    $woodBoardId = $material->wood_board_id;
+                    $woodBoardPriceId = $material->wood_board_price_id;
+
+                    InventoryIssueItem::create($this->sanitizeItemData('inventory_issue_items', [
+                        'issue_id'            => $issue->id,
+                        'material_id'         => $material->id,
+                        'item_type'           => $itemType,
+                        'wood_board_id'       => $woodBoardId,
+                        'wood_board_price_id' => $woodBoardPriceId,
+                        'height'              => $itemHeight,
+                        'width'               => $itemWidth,
+                        'quantity'            => $qty,
+                        'unit_price'          => $price,
+                        'total_price'         => $lineTotal,
+                        'notes'               => $item['notes'] ?? null,
+                    ]));
+
+                    $material->current_stock = max(0, (float)$material->current_stock - $qty);
+                    $material->save();
+                    $stockAfter = $material->current_stock;
+
+                    if ($woodBoardPriceId) {
+                        $p = \App\Models\WoodBoardPrice::find($woodBoardPriceId);
+                        if ($p) {
+                            $p->stock = max(0, (float)$p->stock - $qty);
+                            $p->save();
+                        }
+                    }
+                    if ($woodBoardId) {
+                        $b = \App\Models\WoodBoard::find($woodBoardId);
+                        if ($b) {
+                            if ($itemType === 'edge_band') {
+                                $b->edge_band_current_stock = max(0, (float)$b->edge_band_current_stock - $qty);
+                            } else {
+                                $b->current_stock = $b->prices()->sum('stock') ?: max(0, (float)$b->current_stock - $qty);
+                            }
+                            $b->save();
+                        }
+                    }
+
+                    InventoryTransaction::create($this->sanitizeItemData('inventory_transactions', [
+                        'warehouse_id'        => $warehouse->id,
+                        'material_id'         => $material->id,
+                        'item_type'           => $itemType,
+                        'wood_board_id'       => $woodBoardId,
+                        'wood_board_price_id' => $woodBoardPriceId,
+                        'height'              => $itemHeight,
+                        'width'               => $itemWidth,
+                        'date'                => $date,
+                        'type'                => 'issue',
+                        'voucher_code'        => $code,
+                        'reference_id'        => $issue->id,
+                        'reference_type'      => InventoryIssue::class,
+                        'in_qty'              => 0,
+                        'out_qty'             => $qty,
+                        'stock_after'         => $stockAfter,
+                        'unit_price'          => $price,
+                        'notes'               => $data['notes'] ?? ('Xuất kho ' . $material->name . ' theo phiếu ' . $code),
+                        'created_by'          => $userId,
+                    ]));
+
+                    $totalQty += $qty;
+                    $totalAmount += $lineTotal;
+                    continue;
+                }
+
                 $itemType = $item['item_type'] ?? null;
                 if (!$itemType) {
                     if (str_starts_with($rawMatId, 'board_')) {
@@ -736,6 +1017,14 @@ class InventoryService
                     $oldQty = (float)($oldItem->quantity ?? 0);
                     if ($oldQty <= 0) continue;
 
+                    if ($oldItem->material_id) {
+                        $oldMat = \App\Models\Material::find($oldItem->material_id);
+                        if ($oldMat) {
+                            $oldMat->current_stock = (float)$oldMat->current_stock + $oldQty;
+                            $oldMat->save();
+                        }
+                    }
+
                     if ($oldItem->item_type === 'edge_band') {
                         if ($oldItem->wood_board_id) {
                             $oldBoard = WoodBoard::find($oldItem->wood_board_id);
@@ -796,6 +1085,98 @@ class InventoryService
 
             foreach ($items as $item) {
                 $rawMatId = (string)($item['wood_board_id'] ?? $item['material_id'] ?? '');
+                $qty = (float)($item['quantity'] ?? 0);
+                if ($qty <= 0) continue;
+
+                $price = (float)($item['unit_price'] ?? 0);
+                $lineTotal = $qty * $price;
+                $itemHeight = isset($item['height']) && $item['height'] !== '' ? (float)$item['height'] : null;
+                $itemWidth = isset($item['width']) && $item['width'] !== '' ? (float)$item['width'] : null;
+
+                // 1. Kiểm tra nếu là Material (mat_...) hoặc có material_id
+                $material = null;
+                if (str_starts_with($rawMatId, 'mat_')) {
+                    $matId = (int)str_replace('mat_', '', $rawMatId);
+                    $material = \App\Models\Material::find($matId);
+                } elseif (isset($item['material_id']) && is_numeric($item['material_id'])) {
+                    $material = \App\Models\Material::find($item['material_id']);
+                } elseif (str_starts_with($rawMatId, 'board_')) {
+                    $subId = (int)str_replace('board_', '', $rawMatId);
+                    $material = \App\Models\Material::where('wood_board_price_id', $subId)->first()
+                        ?? \App\Models\Material::where('wood_board_id', $subId)->where('item_type', 'board')->first();
+                } elseif (str_starts_with($rawMatId, 'edge_')) {
+                    $subId = (int)str_replace('edge_', '', $rawMatId);
+                    $material = \App\Models\Material::where('wood_board_id', $subId)->where('item_type', 'edge_band')->first();
+                }
+
+                if ($material) {
+                    $itemType = $material->item_type;
+                    $woodBoardId = $material->wood_board_id;
+                    $woodBoardPriceId = $material->wood_board_price_id;
+
+                    InventoryIssueItem::create($this->sanitizeItemData('inventory_issue_items', [
+                        'issue_id'            => $issue->id,
+                        'material_id'         => $material->id,
+                        'item_type'           => $itemType,
+                        'wood_board_id'       => $woodBoardId,
+                        'wood_board_price_id' => $woodBoardPriceId,
+                        'height'              => $itemHeight,
+                        'width'               => $itemWidth,
+                        'quantity'            => $qty,
+                        'unit_price'          => $price,
+                        'total_price'         => $lineTotal,
+                        'notes'               => $item['notes'] ?? null,
+                    ]));
+
+                    $material->current_stock = max(0, (float)$material->current_stock - $qty);
+                    $material->save();
+                    $stockAfter = $material->current_stock;
+
+                    if ($woodBoardPriceId) {
+                        $p = \App\Models\WoodBoardPrice::find($woodBoardPriceId);
+                        if ($p) {
+                            $p->stock = max(0, (float)$p->stock - $qty);
+                            $p->save();
+                        }
+                    }
+                    if ($woodBoardId) {
+                        $b = \App\Models\WoodBoard::find($woodBoardId);
+                        if ($b) {
+                            if ($itemType === 'edge_band') {
+                                $b->edge_band_current_stock = max(0, (float)$b->edge_band_current_stock - $qty);
+                            } else {
+                                $b->current_stock = $b->prices()->sum('stock') ?: max(0, (float)$b->current_stock - $qty);
+                            }
+                            $b->save();
+                        }
+                    }
+
+                    InventoryTransaction::create($this->sanitizeItemData('inventory_transactions', [
+                        'warehouse_id'        => $warehouse->id,
+                        'material_id'         => $material->id,
+                        'item_type'           => $itemType,
+                        'wood_board_id'       => $woodBoardId,
+                        'wood_board_price_id' => $woodBoardPriceId,
+                        'height'              => $itemHeight,
+                        'width'               => $itemWidth,
+                        'date'                => $date,
+                        'type'                => 'issue',
+                        'voucher_code'        => $code,
+                        'reference_id'        => $issue->id,
+                        'reference_type'      => InventoryIssue::class,
+                        'in_qty'              => 0,
+                        'out_qty'             => $qty,
+                        'stock_after'         => $stockAfter,
+                        'unit_price'          => $price,
+                        'notes'               => $data['notes'] ?? ('Xuất kho ' . $material->name . ' theo phiếu ' . $code),
+                        'created_by'          => $userId,
+                    ]));
+
+                    $totalQty += $qty;
+                    $totalAmount += $lineTotal;
+                    continue;
+                }
+
                 $itemType = $item['item_type'] ?? null;
                 if (!$itemType) {
                     if (str_starts_with($rawMatId, 'board_')) {
@@ -1200,6 +1581,14 @@ class InventoryService
                     $qty = (float)($item->quantity ?? 0);
                     if ($qty <= 0) continue;
 
+                    if ($item->material_id) {
+                        $mat = \App\Models\Material::find($item->material_id);
+                        if ($mat) {
+                            $mat->current_stock = max(0, (float)$mat->current_stock - $qty);
+                            $mat->save();
+                        }
+                    }
+
                     if ($item->item_type === 'edge_band') {
                         if ($item->wood_board_id) {
                             $board = WoodBoard::find($item->wood_board_id);
@@ -1251,6 +1640,14 @@ class InventoryService
                 foreach ($issue->items as $item) {
                     $qty = (float)($item->quantity ?? 0);
                     if ($qty <= 0) continue;
+
+                    if ($item->material_id) {
+                        $mat = \App\Models\Material::find($item->material_id);
+                        if ($mat) {
+                            $mat->current_stock = (float)$mat->current_stock + $qty;
+                            $mat->save();
+                        }
+                    }
 
                     if ($item->item_type === 'edge_band') {
                         if ($item->wood_board_id) {
@@ -1318,7 +1715,8 @@ class InventoryService
         // - "Chỉ có lệnh sx mới phân biệt thôi":
         //   + PXK (Xuất kho): Lấy các vật tư đánh dấu [Trừ kho] (inventory_action = subtract)
         //   + PNK (Nhập kho): Lấy các vật tư đánh dấu [Thêm kho] (inventory_action = add)
-        $isLsx = $order->isLsx();
+        $hasSubtract = $order->supplies->contains(fn($s) => ($s->inventory_action ?? '') === 'subtract');
+        $isLsx = $order->isLsx() || $order->isNhapKho() || $hasSubtract;
 
         foreach ($order->supplies as $supply) {
             $code = trim($supply->order_supply_code ?: '');
@@ -1345,6 +1743,26 @@ class InventoryService
                 // Nhập kho hay xuất kho đều lấy ĐỦ trong đơn hết, không lọc bỏ dòng nào!
             }
 
+            // 1. Kiểm tra trong danh mục Vật tư chung (Material - phụ kiện, kim khí, hóa chất, nẹp, vít, ốc...)
+            $generalMat = \App\Models\Material::where('code', $code)->first();
+            if ($generalMat && !in_array($generalMat->item_type, ['board', 'edge_band']) && $generalMat->unit !== 'Tấm') {
+                $qty = (float)($supply->quantity ?? 1);
+                $actionLabel = $isLsx ? (($action === 'subtract') ? ' (Trừ kho)' : ' (Thêm kho)') : '';
+                $items[] = [
+                    'material_id'      => 'mat_' . $generalMat->id,
+                    'code'             => $generalMat->code,
+                    'name'             => $generalMat->name,
+                    'height'           => null,
+                    'width'            => null,
+                    'quantity'         => $qty,
+                    'unit_price'       => (float)$generalMat->cost_price,
+                    'unit'             => $generalMat->unit ?: 'Cái',
+                    'inventory_action' => $action,
+                    'notes'            => "Từ đơn #{$order->order_code}{$actionLabel}",
+                ];
+                continue;
+            }
+
             $isEdge = str_starts_with($code, 'CHI-') || str_contains(mb_strtolower($name), 'chỉ');
 
             // Tìm trong WoodBoardPrice hoặc WoodBoard
@@ -1368,29 +1786,61 @@ class InventoryService
 
             // Nếu dòng vật tư này bản thân là chỉ dán viền (Mã CHI-... hoặc tên Chỉ)
             if ($isEdge) {
-                $edgeCode = $woodBoard?->edge_band_code ?: ('CHI-' . ($woodBoard?->color_code ?: $code));
-                $edgeName = $woodBoard?->edge_band_name ?: ($name ?: ('Chỉ dán viền ' . ($woodBoard?->color_code ?: $code)));
-                $matId = 'edge_' . ($woodBoard ? $woodBoard->id : ($supply->wood_board_id ?? 0));
+                $matEdge = \App\Models\Material::where('code', $code)->first();
+                if (!$matEdge && $woodBoard) {
+                    $matEdge = \App\Models\Material::where('wood_board_id', $woodBoard->id)->where('item_type', 'edge_band')->first();
+                }
+                if (!$matEdge && $woodBoard?->edge_band_code) {
+                    $matEdge = \App\Models\Material::where('code', $woodBoard->edge_band_code)->first();
+                }
+                if (!$matEdge) {
+                    $matEdge = \App\Models\Material::where('code', 'like', "%{$code}%")->where('item_type', 'edge_band')->first();
+                }
+
+                $edgeMatId = $matEdge ? ('mat_' . $matEdge->id) : ('edge_' . ($woodBoard ? $woodBoard->id : ($supply->wood_board_id ?? 0)));
+                $edgeCode = $matEdge?->code ?: ($woodBoard?->edge_band_code ?: ('CHI-' . ($woodBoard?->color_code ?: $code)));
+                $edgeName = $matEdge?->name ?: ($woodBoard?->edge_band_name ?: ($name ?: ('Chỉ dán viền ' . ($woodBoard?->color_code ?: $code))));
+                $edgePrice = (float)($matEdge?->cost_price ?: ($woodBoard?->edge_band_cost_price ?: 0));
+                $edgeUnit = $matEdge?->unit ?: 'm';
                 $qty = (float)($supply->quantity ?? 1);
 
                 $items[] = [
-                    'material_id'      => $matId,
+                    'material_id'      => $edgeMatId,
                     'code'             => $edgeCode,
                     'name'             => $edgeName,
                     'height'           => null,
                     'width'            => null,
                     'quantity'         => $qty,
-                    'unit_price'       => 0,
-                    'unit'             => 'm',
+                    'unit_price'       => $edgePrice,
+                    'unit'             => $edgeUnit,
                     'inventory_action' => $action,
                     'notes'            => "Từ đơn #{$order->order_code}{$actionLabel}",
                 ];
                 continue;
             }
 
-            // Dòng vật tư là Tấm Ván
-            $boardMatId = $boardPrice ? ('board_' . $boardPrice->id) : ($woodBoard ? ('board_' . $woodBoard->id) : ('board_' . ($supply->wood_board_id ?? 0)));
-            $boardDisplayName = $name ?: ($boardPrice?->name ?? ($woodBoard ? 'Tấm ' . $woodBoard->color_code : $code));
+            // Dòng vật tư là Tấm Ván: Tìm trong Material
+            $matBoard = null;
+            if ($boardPrice) {
+                $matBoard = \App\Models\Material::where('wood_board_price_id', $boardPrice->id)->first();
+            }
+            if (!$matBoard) {
+                $matBoard = \App\Models\Material::where('code', $code)->first();
+            }
+            if (!$matBoard && $woodBoard) {
+                $matBoard = \App\Models\Material::where('wood_board_id', $woodBoard->id)->where('item_type', 'board')->first();
+            }
+            if (!$matBoard) {
+                $baseCode = preg_replace('/(\.TP|\.PVC|\.2M|\.1M).*$/i', '', $code);
+                $matBoard = \App\Models\Material::where('code', $baseCode)->first()
+                    ?? \App\Models\Material::where('code', 'like', "%{$baseCode}%")->where('item_type', 'board')->first();
+            }
+
+            $boardMatId = $matBoard ? ('mat_' . $matBoard->id) : ($boardPrice ? ('board_' . $boardPrice->id) : ($woodBoard ? ('board_' . $woodBoard->id) : ('board_' . ($supply->wood_board_id ?? 0))));
+            $boardCode = $matBoard?->code ?: $code;
+            $boardDisplayName = $matBoard?->name ?: ($name ?: ($boardPrice?->name ?? ($woodBoard ? 'Tấm ' . $woodBoard->color_code : $code)));
+            $boardCostPrice = (float)($matBoard?->cost_price ?: ($boardPrice?->price_board ?: 0));
+            $boardUnit = $matBoard?->unit ?: 'Tấm';
 
             if ($childItems->isNotEmpty()) {
                 $grouped = [];
@@ -1423,13 +1873,13 @@ class InventoryService
 
                     $items[] = [
                         'material_id'      => $boardMatId,
-                        'code'             => $code,
+                        'code'             => $boardCode,
                         'name'             => $boardDisplayName,
                         'height'           => $g['height'],
                         'width'            => $g['width'],
                         'quantity'         => $g['quantity'],
-                        'unit_price'       => 0,
-                        'unit'             => 'Tấm',
+                        'unit_price'       => $boardCostPrice,
+                        'unit'             => $boardUnit,
                         'inventory_action' => $action,
                         'notes'            => "Từ đơn #{$order->order_code}{$actionLabel}{$extraNote}",
                     ];
@@ -1438,13 +1888,13 @@ class InventoryService
                 $qty = (float)($supply->quantity ?? 1);
                 $items[] = [
                     'material_id'      => $boardMatId,
-                    'code'             => $code,
+                    'code'             => $boardCode,
                     'name'             => $boardDisplayName,
                     'height'           => 2440,
                     'width'            => 1220,
                     'quantity'         => $qty,
-                    'unit_price'       => 0,
-                    'unit'             => 'Tấm',
+                    'unit_price'       => $boardCostPrice,
+                    'unit'             => $boardUnit,
                     'inventory_action' => $action,
                     'notes'            => "Từ đơn #{$order->order_code}{$actionLabel}",
                 ];
@@ -2068,6 +2518,161 @@ class InventoryService
             'updated_count' => $updatedCount,
             'created_count' => $createdCount,
             'total_stock'   => $totalStock,
+        ];
+    }
+
+    /**
+     * Nhập danh mục vật tư tổng quát từ file mã.xlsx (hoặc file xuất từ MISA)
+     */
+    public function importMaterialsFromExcel(string $filePath, ?int $targetWarehouseId = null): array
+    {
+        if (!file_exists($filePath)) {
+            throw new \Exception("Không tìm thấy file: {$filePath}");
+        }
+
+        $spreadsheet = IOFactory::load($filePath);
+        $sheet = $spreadsheet->getSheetByName('Báo cáo') ?: $spreadsheet->getActiveSheet();
+        $highestRow = $sheet->getHighestRow();
+
+        $warehouseNameMap = [
+            '152 - KÍNH'              => 'Kho Kính (152)',
+            '152 - NHÔM'              => 'Kho Nhôm (152)',
+            '152 Melamin Panex'       => 'Kho Melamin Panex (152)',
+            '152_ACRYLIC'             => 'Kho Tấm Acrylic (152)',
+            '152_ACRYLIC ĐÀ NẴNG'     => 'Kho Acrylic Đà Nẵng (152)',
+            '152_CHI'                 => 'Kho Chỉ Dán Viền (152)',
+            '152_COT'                 => 'Kho Cốt Ván (MDF, PVC, Plywood) (152)',
+            '152_HÓA CHẤT'            => 'Kho Hóa Chất - Keo Dán (152)',
+            '152_LAMINATE'            => 'Kho Laminate (152)',
+            '152_LAMINATE BMH'        => 'Kho Laminate BMH (152)',
+            '152_MELAMIN VƯƠNG THANH' => 'Kho Melamin Vương Thanh (152)',
+            '152_MELAMIN_ NHAVIET'    => 'Kho Melamin Nhà Việt (152)',
+            '152_MELAMIN_MP'          => 'Kho Melamin MP (152)',
+            '152_MELAMIN_TTĐ'         => 'Kho Melamin TTĐ (152)',
+            '152_MELAMIN_XN'          => 'Kho Melamin XN (152)',
+            '152_MIN An Cường'        => 'Kho Melamin An Cường (152)',
+            '152_MIN_ THUYTRINH'      => 'Kho Melamin Thùy Trinh (152)',
+            '152_PHU'                 => 'Kho Vật Tư Phụ (152)',
+            '153_PHU'                 => 'Kho Phụ Tùng - Vật Tư Phụ (153)',
+            '153_PK'                  => 'Kho Phụ Kiện - Kim Khí (153)',
+            '155_CÁNH KÍNH'           => 'Kho Cánh Kính Thành Phẩm (155)',
+            '155_EP_TAM'              => 'Kho Ép Tấm Thành Phẩm (155)',
+            '155_Thành Phẩm'          => 'Kho Thành Phẩm Gia Công (155)',
+            'Melamin Minh Long'       => 'Kho Melamin Minh Long',
+        ];
+
+        $currentWhRaw = '';
+        $whCache = [];
+        $forcedWh = $targetWarehouseId ? Warehouse::find($targetWarehouseId) : null;
+
+        $boards = WoodBoard::all()->keyBy(fn($b) => strtoupper(trim($b->color_code)));
+        $prices = WoodBoardPrice::all()->keyBy(fn($p) => strtoupper(trim($p->code)));
+
+        $importedCount = 0;
+        $updatedCount = 0;
+
+        for ($r = 4; $r <= $highestRow; $r++) {
+            $c1 = $sheet->getCell("A{$r}")->getValue();
+            $c2 = $sheet->getCell("B{$r}")->getValue();
+            $c3 = $sheet->getCell("C{$r}")->getValue();
+            $c4 = $sheet->getCell("D{$r}")->getValue();
+            $c5 = $sheet->getCell("E{$r}")->getValue();
+            $c6 = $sheet->getCell("F{$r}")->getValue();
+
+            if ($c1 && str_starts_with(trim((string)$c1), 'Tên kho :')) {
+                $currentWhRaw = trim(str_replace('Tên kho :', '', (string)$c1));
+                continue;
+            }
+
+            $code = trim((string)$c3);
+            if ($code === '' || $code === 'Mã hàng') {
+                continue;
+            }
+
+            $name = trim((string)$c4);
+            $unit = trim((string)$c5) ?: 'Cái';
+            $origin = trim((string)$c6);
+
+            if ($forcedWh) {
+                $warehouse = $forcedWh;
+                $whCode = $warehouse->code;
+            } else {
+                $whRaw = trim((string)$c2) ?: $currentWhRaw;
+                $whCode = preg_replace('/\s*\(\d+\s*\)$/u', '', $whRaw);
+                $whCode = trim($whCode);
+                if (!$whCode) {
+                    $whCode = '152_PHU';
+                }
+
+                if (!isset($whCache[$whCode])) {
+                    $whName = $warehouseNameMap[$whCode] ?? $whCode;
+                    $whCache[$whCode] = Warehouse::firstOrCreate(
+                        ['code' => $whCode],
+                        ['name' => $whName, 'status' => 'active']
+                    );
+                }
+                $warehouse = $whCache[$whCode];
+            }
+
+            $itemType = 'hardware';
+            $upperWh = strtoupper($whCode);
+            if ($upperWh === '152_CHI' || str_starts_with($code, 'CHI') || str_starts_with($code, 'CML.') || str_starts_with($code, 'ASA.CHI')) {
+                $itemType = 'edge_band';
+            } elseif ($upperWh === '153_PK') {
+                $itemType = 'hardware';
+            } elseif (in_array($upperWh, ['152_HÓA CHẤT', '152_PHU', '153_PHU'])) {
+                $itemType = 'chemical';
+            } elseif ($upperWh === '152 - NHÔM') {
+                $itemType = 'aluminum';
+            } elseif (in_array($upperWh, ['152 - KÍNH', '155_CÁNH KÍNH'])) {
+                $itemType = 'glass';
+            } elseif ($upperWh === '155_THÀNH PHẨM') {
+                $itemType = 'finished';
+            } elseif (
+                in_array($upperWh, ['152_ACRYLIC', '152_ACRYLIC ĐÀ NẴNG', '152_COT', '152_LAMINATE', '152_LAMINATE BMH', '155_EP_TAM']) ||
+                str_contains($upperWh, 'MELAMIN') || str_contains($upperWh, 'MIN') ||
+                mb_strtolower($unit) === 'tấm'
+            ) {
+                $itemType = 'board';
+            }
+
+            $upperCode = strtoupper($code);
+            $cleanCodeNoStars = rtrim($upperCode, '*');
+            $matchedBoard = $boards->get($upperCode) ?: $boards->get($cleanCodeNoStars) ?: $boards->get($cleanCodeNoStars . '**');
+            $matchedPrice = $prices->get($upperCode) ?: $prices->get($cleanCodeNoStars) ?: $prices->get($cleanCodeNoStars . '**');
+
+            $mat = Material::where('warehouse_id', $warehouse->id)->where('code', $code)->first();
+            if (!$mat) {
+                $mat = Material::where('code', $code)->first();
+            }
+
+            $data = [
+                'code'                => $code,
+                'name'                => $name ?: $code,
+                'warehouse_code'      => $whCode,
+                'warehouse_id'        => $warehouse->id,
+                'category'            => $whCode,
+                'unit'                => $unit,
+                'item_type'           => $itemType,
+                'origin'              => $origin ?: null,
+                'wood_board_id'       => $matchedBoard?->id ?: ($matchedPrice?->wood_board_id ?? null),
+                'wood_board_price_id' => $matchedPrice?->id ?? null,
+                'status'              => 'active',
+            ];
+
+            if ($mat) {
+                $mat->update($data);
+                $updatedCount++;
+            } else {
+                Material::create($data);
+                $importedCount++;
+            }
+        }
+
+        return [
+            'created_count' => $importedCount,
+            'updated_count' => $updatedCount,
+            'total_items'   => $importedCount + $updatedCount,
         ];
     }
 }

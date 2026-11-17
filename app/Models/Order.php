@@ -442,8 +442,14 @@ class Order extends Model
     }
 
     /**
-     * Kiểm tra đơn hàng có phải là Lệnh sản xuất (LSX) hay không.
-     * Đơn hàng thông thường (bán cho khách) và đơn nhập kho (.NK) KHÔNG phải là LSX.
+     * Kiểm tra đơn hàng có phải là Lệnh sản xuất (LSX / Đơn nhập kho nội bộ) hay không.
+     * Đơn hàng thông thường (bán cho khách): không phải là LSX.
+     * Lệnh sản xuất (LSX) bao gồm:
+     * - Các đơn thuộc diện Nhập kho / LSX ($this->isNhapKho())
+     * - Đơn loại min_late (lệnh ép tấm)
+     * - Khách hàng có mã hoặc tên là LSX, SX, NK, NHAPKHO, Lệnh sản xuất, Nhập kho, Sản xuất nội bộ...
+     * - Mã đơn có hậu tố .LSX hoặc .NK
+     * - Hoặc đơn có chứa vật tư đánh dấu 'subtract' (Trừ kho)
      */
     public function isLsx(): bool
     {
@@ -452,17 +458,24 @@ class Order extends Model
             return true;
         }
 
-        // 2. Mã khách hàng là LSX hoặc SX
-        $code = strtoupper(trim($this->customer?->customer_code ?? ''));
-        if (in_array($code, ['LSX', 'SX'], true)) {
+        // 2. Đơn thuộc diện nhập kho / LSX
+        if ($this->isNhapKho()) {
             return true;
         }
 
-        // 3. Tên khách hàng chứa cụm "lệnh sản xuất" hoặc "sản xuất nội bộ"
+        // 3. Mã khách hàng là LSX, SX, NK, NHAPKHO
+        $code = strtoupper(trim($this->customer?->customer_code ?? ''));
+        if (in_array($code, ['LSX', 'SX', 'NK', 'NHAPKHO'], true)) {
+            return true;
+        }
+
+        // 4. Tên khách hàng chứa cụm "lệnh sản xuất", "nhập kho", "sản xuất nội bộ"
         $cName = mb_strtolower(trim($this->customer?->name ?? ''));
         if ($cName !== '' && (
             str_contains($cName, 'lệnh sản xuất') || 
             str_contains($cName, 'lenh san xuat') || 
+            str_contains($cName, 'nhập kho') || 
+            str_contains($cName, 'nhap kho') || 
             str_contains($cName, 'sản xuất nội bộ')
         )) {
             return true;
@@ -472,14 +485,23 @@ class Order extends Model
         if ($orderCustomerName !== '' && (
             str_contains($orderCustomerName, 'lệnh sản xuất') || 
             str_contains($orderCustomerName, 'lenh san xuat') || 
+            str_contains($orderCustomerName, 'nhập kho') || 
+            str_contains($orderCustomerName, 'nhap kho') || 
             str_contains($orderCustomerName, 'sản xuất nội bộ')
         )) {
             return true;
         }
 
-        // 4. Mã đơn hàng có hậu tố .LSX hoặc LSX (không tính .NK)
-        if (!empty($this->order_code) && preg_match('/[._-]?LSX$/i', trim($this->order_code))) {
+        // 5. Mã đơn hàng có hậu tố .LSX hoặc .NK
+        if (!empty($this->order_code) && preg_match('/[._-]?(LSX|NK)$/i', trim($this->order_code))) {
             return true;
+        }
+
+        // 6. Có vật tư mang hành động Trừ kho
+        if ($this->relationLoaded('supplies')) {
+            if ($this->supplies->contains(fn($s) => ($s->inventory_action ?? '') === 'subtract')) {
+                return true;
+            }
         }
 
         return false;

@@ -34,7 +34,7 @@ class Warehouse extends Model
 
     public function materials(): HasMany
     {
-        return $this->woodBoards();
+        return $this->hasMany(Material::class);
     }
 
     public function receipts(): HasMany

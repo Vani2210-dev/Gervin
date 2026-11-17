@@ -156,13 +156,13 @@
         <div class="fixed inset-0 bg-neutral-900 bg-opacity-50 transition-opacity" onclick="closeQuickMaterialModal()"></div>
         <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
-        <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+        <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-xl sm:w-full">
             <div class="p-4 border-b border-neutral-200 flex items-center justify-between bg-neutral-50">
                 <div class="flex items-center gap-2">
                     <iconify-icon icon="solar:box-minimalistic-bold" class="text-xl text-emerald-600"></iconify-icon>
                     <div>
-                        <h5 class="font-bold text-neutral-800 text-sm mb-0">Thêm nhanh Hàng hóa / Vật tư (NVL, Thành phẩm)</h5>
-                        <p class="text-[11px] text-neutral-500 mb-0">Tạo mã mới và tự động nạp thẳng vào dòng phiếu xuất kho hiện tại</p>
+                        <h5 class="font-bold text-neutral-800 text-sm mb-0">Thêm nhanh Hàng hóa / Vật tư vào kho</h5>
+                        <p class="text-[11px] text-neutral-500 mb-0">Tạo mã vật tư mới vào danh mục và tự động nạp vào dòng phiếu hiện tại</p>
                     </div>
                 </div>
                 <button type="button" onclick="closeQuickMaterialModal()" class="text-neutral-400 hover:text-neutral-700 text-xl font-bold leading-none">&times;</button>
@@ -170,97 +170,26 @@
 
             <form id="quickMaterialForm" onsubmit="handleQuickMaterialSubmit(event)" class="p-5 space-y-4 max-h-[78vh] overflow-y-auto">
                 <input type="hidden" id="quick_mat_target_row" value="">
-                <input type="hidden" id="quick_selected_type_id" value="">
 
-                {{-- CHỌN NHANH TỪ BẢNG GIÁ TẤM --}}
-                <div class="p-3 bg-orange-50/80 border border-orange-200 rounded-xl space-y-2">
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-bold text-orange-900 flex items-center gap-1.5">
-                            <iconify-icon icon="solar:magic-stick-3-bold" class="text-orange-600 text-sm"></iconify-icon>
-                            Lấy nhanh data từ Bảng giá tấm (Nhập mã màu & loại ván)
-                        </span>
-                        <span id="quickBoardMatchPrice" class="text-xs font-bold text-emerald-700"></span>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="form-label text-[11px] font-bold text-neutral-600 mb-1 block">Mã màu ván</label>
-                            <input type="text" id="quick_lookup_color" list="quickColorList" oninput="onQuickBoardLookup()"
-                                   class="form-control rounded-lg w-full border-neutral-300 px-3 py-1.5 text-xs font-mono font-bold uppercase focus:border-orange-500"
-                                   placeholder="Vd: GV01, PARC 01, GV26**...">
-                            <datalist id="quickColorList">
-                                @foreach($colorCodes ?? [] as $code)
-                                    <option value="{{ $code }}"></option>
-                                @endforeach
-                            </datalist>
-                        </div>
-                        <div>
-                            <div class="flex items-center justify-between mb-1">
-                                <label class="form-label text-[11px] font-bold text-neutral-600 block mb-0">Loại ván (Cốt ván)</label>
-                                <span class="text-[10px] text-neutral-400 font-semibold">Chọn nhanh:</span>
-                            </div>
-                            <div class="grid grid-cols-3 gap-1 mb-1.5">
-                                <button type="button" onclick="selectQuickTypeShortcut(2)" id="btnQuickType_2"
-                                        class="quick-type-btn px-1.5 py-1 rounded text-[11px] font-bold border transition-all bg-emerald-600 text-white border-emerald-600 shadow-xs">
-                                    MDF 1M
-                                </button>
-                                <button type="button" onclick="selectQuickTypeShortcut(3)" id="btnQuickType_3"
-                                        class="quick-type-btn px-1.5 py-1 rounded text-[11px] font-bold border transition-all bg-white text-neutral-700 border-neutral-300 hover:bg-neutral-50">
-                                    MDF 2M
-                                </button>
-                                <button type="button" onclick="selectQuickTypeShortcut(5)" id="btnQuickType_5"
-                                        class="quick-type-btn px-1.5 py-1 rounded text-[11px] font-bold border transition-all bg-white text-neutral-700 border-neutral-300 hover:bg-neutral-50">
-                                    Nhựa PVC
-                                </button>
-                            </div>
-                            <select id="quick_lookup_type" onchange="onQuickTypeSelectChange()"
-                                    class="form-select rounded-lg w-full border-neutral-300 px-3 py-1 text-xs focus:border-orange-500 font-semibold">
-                                <option value="">-- Chọn loại ván --</option>
-                                @foreach($boardTypes ?? [] as $bt)
-                                    <option value="{{ $bt->id }}" data-prefix="{{ $bt->prefix }}" data-name="{{ $bt->name }}" {{ $bt->id == 2 ? 'selected' : '' }}>
-                                        {{ $bt->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-                    <div id="quickBoardMatchNote" class="text-[11px] text-emerald-800 font-medium hidden"></div>
-                </div>
-
-                {{-- Thông tin chi tiết --}}
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Mã SKU / Mã vật tư <span class="text-danger-500">*</span></label>
-                        <input type="text" id="quick_mat_code" class="form-control rounded-lg w-full border-neutral-300 px-3 py-2 text-xs font-mono font-bold uppercase focus:border-primary-500" placeholder="Vd: GV120.TP" required>
+                        <input type="text" id="quick_mat_code" class="form-control rounded-lg w-full border-neutral-300 px-3 py-2 text-xs font-bold text-primary-700 focus:border-primary-500" placeholder="Vd: KINH-CL-5LY, 153-PK-01..." required>
                     </div>
                     <div>
-                        <label class="form-label text-xs font-semibold text-neutral-700 mb-1 block">Mã xuất xứ (NCC)</label>
-                        <input type="text" id="quick_mat_origin_code" class="form-control rounded-lg w-full border-neutral-300 px-3 py-2 text-xs focus:border-primary-500" placeholder="Vd: 2201">
+                        <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Mã xuất xứ (NCC)</label>
+                        <input type="text" id="quick_mat_origin_code" class="form-control rounded-lg w-full border-neutral-300 px-3 py-2 text-xs focus:border-primary-500" placeholder="Vd: Austria, Malaysia, TQ...">
                     </div>
                 </div>
 
                 <div>
-                    <label class="form-label text-xs font-semibold text-neutral-700 mb-1 block">Tên Foil thay thế</label>
-                    <input type="text" id="quick_mat_foil_name" class="form-control rounded-lg w-full border-neutral-300 px-3 py-2 text-xs focus:border-primary-500" placeholder="Tên hàng Foil thay thế tên cũ (nếu có)">
-                </div>
-
-                <div>
-                    <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Tên vật tư / Quy cách <span class="text-danger-500">*</span></label>
-                    <input type="text" id="quick_mat_name" class="form-control rounded-lg w-full border-neutral-300 px-3 py-2 text-xs focus:border-primary-500 font-medium" placeholder="Vd: Tấm GV120 - MDF 1 mặt Acrylic 1 mặt Bakerlic" required>
+                    <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Tên hàng hóa / vật tư <span class="text-danger-500">*</span></label>
+                    <input type="text" id="quick_mat_name" class="form-control rounded-lg w-full border-neutral-300 px-3 py-2 text-xs focus:border-primary-500 font-medium" placeholder="Vd: Kính cường lực 5ly, Bản lề..." required>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Tính chất <span class="text-danger-500">*</span></label>
-                        <select id="quick_mat_nature" class="form-select rounded-lg w-full border-neutral-300 px-3 py-2 text-xs focus:border-primary-500 font-semibold text-neutral-800">
-                            <option value="Vật tư hàng hóa" selected>Vật tư hàng hóa</option>
-                            <option value="Thành phẩm">Thành phẩm</option>
-                            <option value="Bán thành phẩm">Bán thành phẩm</option>
-                            <option value="Dịch vụ">Dịch vụ</option>
-                            <option value="Công cụ dụng cụ">Công cụ dụng cụ</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Kho ngầm định <span class="text-danger-500">*</span></label>
+                        <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Kho lưu trữ <span class="text-danger-500">*</span></label>
                         <select id="quick_mat_warehouse_id" class="form-select rounded-lg w-full border-neutral-300 px-3 py-2 text-xs focus:border-primary-500 font-semibold text-neutral-800">
                             @foreach($warehouses as $wh)
                                 <option value="{{ $wh->id }}" {{ (string)old('warehouse_id', request('warehouse_id', $selectedWarehouseId ?? '')) === (string)$wh->id ? 'selected' : '' }}>
@@ -269,47 +198,35 @@
                             @endforeach
                         </select>
                     </div>
+                    <div>
+                        <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Đơn vị tính <span class="text-danger-500">*</span></label>
+                        <input type="text" id="quick_mat_unit" value="Cái" list="quickCommonUnitsIss" class="form-control rounded-lg w-full border-neutral-300 px-3 py-2 text-xs focus:border-primary-500 font-bold" required>
+                        <datalist id="quickCommonUnitsIss">
+                            <option value="Cái"></option>
+                            <option value="Tấm"></option>
+                            <option value="Mét"></option>
+                            <option value="Kg"></option>
+                            <option value="Hộp"></option>
+                            <option value="Cây"></option>
+                            <option value="Cuộn"></option>
+                            <option value="Bộ"></option>
+                        </datalist>
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Nhóm hàng / Phân loại</label>
-                        <input type="text" id="quick_mat_category" list="quickCategoryOptions" class="form-control rounded-lg w-full border-neutral-300 px-3 py-2 text-xs focus:border-primary-500" placeholder="Vd: Acrylic TQ, MDF...">
-                        <datalist id="quickCategoryOptions">
+                        <input type="text" id="quick_mat_category" list="quickCategoryOptionsIss" class="form-control rounded-lg w-full border-neutral-300 px-3 py-2 text-xs focus:border-primary-500" placeholder="Vd: 153_PK, Phụ kiện...">
+                        <datalist id="quickCategoryOptionsIss">
                             @foreach($categories ?? [] as $cat)
                                 <option value="{{ $cat }}"></option>
                             @endforeach
                         </datalist>
                     </div>
                     <div>
-                        <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Đơn vị tính <span class="text-danger-500">*</span></label>
-                        <input type="text" id="quick_mat_unit" value="Tấm" class="form-control rounded-lg w-full border-neutral-300 px-3 py-2 text-xs focus:border-primary-500 font-bold" required>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
                         <label class="form-label text-xs font-semibold text-neutral-700 mb-1 block">Giá mua gần nhất (đ)</label>
-                        <input type="number" id="quick_mat_cost_price" value="0" min="0" step="1000" class="form-control rounded-lg w-full border-neutral-300 px-3 py-2 text-xs focus:border-primary-500 font-semibold">
-                    </div>
-                    <div>
-                        <label class="form-label text-xs font-semibold text-neutral-700 mb-1 block">Định mức tồn min</label>
-                        <input type="number" id="quick_mat_min_stock" value="50" min="0" class="form-control rounded-lg w-full border-neutral-300 px-3 py-2 text-xs focus:border-primary-500">
-                    </div>
-                </div>
-
-                {{-- Thông số chỉ dán viền đi kèm --}}
-                <div class="p-3 bg-purple-50 border border-purple-200 rounded-xl space-y-2">
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-bold text-purple-900 flex items-center gap-1.5">
-                            <iconify-icon icon="solar:ruler-angular-bold" class="text-base text-purple-600"></iconify-icon>
-                            Chỉ dán viền tương ứng (Tự động tạo ở Kho Dán Chỉ)
-                        </span>
-                        <span class="text-[11px] text-purple-600 font-semibold">SKU: CHI-[Mã tấm]</span>
-                    </div>
-                    <div>
-                        <label class="form-label text-[11px] font-semibold text-neutral-700 mb-1 block">Giá mua gần nhất chỉ (đ/m)</label>
-                        <input type="number" id="quick_edge_band_cost_price" value="0" min="0" step="100" class="form-control rounded-lg w-full border-purple-200 px-3 py-1.5 text-xs focus:border-purple-500">
+                        <input type="number" id="quick_mat_cost_price" value="0" min="0" step="100" class="form-control rounded-lg w-full border-neutral-300 px-3 py-2 text-xs focus:border-primary-500 font-semibold">
                     </div>
                 </div>
 
@@ -318,12 +235,14 @@
                         Hủy
                     </button>
                     <button type="submit" id="btnSubmitQuickMaterial" class="btn bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all">
-                        <iconify-icon icon="solar:check-circle-bold" class="text-sm"></iconify-icon> Lưu & Chọn vật tư
+                        <iconify-icon icon="solar:check-circle-bold" class="text-base"></iconify-icon>
+                        Lưu & Nạp vào phiếu
                     </button>
                 </div>
             </form>
         </div>
     </div>
+</div>
 </div>
 
 <style>
@@ -397,6 +316,7 @@
             name: m.name || '',
             origin_code: m.origin_code || '',
             category: m.category || '',
+            warehouse_name: m.warehouse_name || '',
             unit: m.unit || (m.item_type === 'edge_band' ? 'm' : 'Tấm'),
             stock: m.current_stock || 0,
             item_type: m.item_type
@@ -497,10 +417,11 @@
                 options: options,
                 valueField: 'value',
                 labelField: 'code',
-                searchField: ['code', 'origin_code', 'name', 'category'],
+                searchField: ['code', 'origin_code', 'name', 'category', 'warehouse_name'],
                 create: false,
                 maxItems: 1,
-                placeholder: isEdge ? '-- Tìm kiếm mã chỉ dán CHI-... --' : '-- Tìm kiếm mã ván, tên màu... --',
+                maxOptions: 5000,
+                placeholder: isEdge ? '-- Tìm kiếm mã chỉ dán CHI-... --' : '-- Tìm kiếm mã ván, tên màu, vật tư... --',
                 allowEmptyOption: true,
                 dropdownParent: 'body',
                 wrapperClass: 'ts-wrapper issue-ts-wrapper',
@@ -509,6 +430,9 @@
                     option: function(data, escape) {
                         const originHtml = data.origin_code 
                             ? `<span class="inline-block bg-amber-50 text-amber-700 border border-amber-200 rounded px-1 text-[10px] font-bold ml-1">${escape(data.origin_code)}</span>`
+                            : '';
+                        const whHtml = data.warehouse_name 
+                            ? `<span class="inline-block bg-neutral-100 text-neutral-600 rounded px-1.5 py-0.5 text-[10px] font-medium ml-1.5">${escape(data.warehouse_name)}</span>`
                             : '';
                         const catHtml = data.category
                             ? `<span class="text-neutral-400 text-[11px]">&bull; ${escape(data.category)}</span>`
@@ -522,9 +446,10 @@
                         return `
                             <div class="py-2 px-3 flex items-center justify-between border-b border-neutral-100 hover:bg-rose-50 transition-colors">
                                 <div class="flex-1 min-w-0 pr-2">
-                                    <div class="flex items-center">
+                                    <div class="flex items-center flex-wrap gap-1">
                                         <span class="font-bold text-neutral-800 text-xs">${escape(data.code)}</span>
                                         ${originHtml}
+                                        ${whHtml}
                                     </div>
                                     <div class="text-[11px] text-neutral-600 truncate mt-1">
                                         ${escape(data.name)} ${catHtml}
@@ -538,8 +463,9 @@
                     },
                     item: function(data, escape) {
                         const originText = data.origin_code ? ` [${escape(data.origin_code)}]` : '';
+                        const whText = data.warehouse_name ? ` (${escape(data.warehouse_name)})` : '';
                         return `<div class="truncate text-xs font-semibold text-neutral-800">
-                            <span class="font-bold text-rose-700">${escape(data.code)}</span>${originText} - ${escape(data.name)}
+                            <span class="font-bold text-rose-700">${escape(data.code)}</span>${originText}${whText} - ${escape(data.name)}
                         </div>`;
                     },
                     no_results: function(data, escape) {
@@ -580,7 +506,8 @@
             selectEl._tomSelect = ts;
 
             if (selectedMaterialId) {
-                const strId = String(selectedMaterialId);
+                const resolvedId = resolveMaterialId(selectedMaterialId);
+                const strId = String(resolvedId);
                 if (!ts.options[strId]) {
                     const foundMat = MATERIALS.find(m => String(m.id) === strId);
                     if (foundMat) {
@@ -623,23 +550,27 @@
 
         const heightInput = tr.querySelector('.height-input');
         const widthInput = tr.querySelector('.width-input');
-        const isMatEdge = mat.item_type === 'edge_band' || (mat.code && String(mat.code).startsWith('CHI-'));
+        const isMatBoard = (mat.item_type === 'board' || mat.unit === 'Tấm') && !String(mat.code || '').startsWith('CHI-');
         if (heightInput) {
-            heightInput.disabled = false;
-            if (isMatEdge) {
-                heightInput.placeholder = '—';
-            } else {
+            if (isMatBoard) {
+                heightInput.disabled = false;
                 heightInput.placeholder = '2440';
                 if (!heightInput.value) heightInput.value = '2440';
+            } else {
+                heightInput.disabled = true;
+                heightInput.value = '';
+                heightInput.placeholder = '—';
             }
         }
         if (widthInput) {
-            widthInput.disabled = false;
-            if (isMatEdge) {
-                widthInput.placeholder = '—';
-            } else {
+            if (isMatBoard) {
+                widthInput.disabled = false;
                 widthInput.placeholder = '1220';
                 if (!widthInput.value) widthInput.value = '1220';
+            } else {
+                widthInput.disabled = true;
+                widthInput.value = '';
+                widthInput.placeholder = '—';
             }
         }
 
@@ -691,6 +622,69 @@
         document.getElementById('lblTotalQty').textContent = totalQty.toLocaleString('vi-VN');
     }
 
+    function resolveMaterialId(it) {
+        if (!it) return '';
+        let targetCode = '';
+        let targetId = '';
+        let boardPriceId = null;
+        let woodBoardId = null;
+        let isEdge = false;
+
+        if (typeof it === 'object') {
+            targetId = String(it.material_id || it.id || '');
+            targetCode = String(it.code || '').trim().toUpperCase();
+            boardPriceId = it.wood_board_price_id || null;
+            woodBoardId = it.wood_board_id || null;
+            isEdge = it.item_type === 'edge_band' || targetCode.startsWith('CHI-') || targetCode.includes('CHỈ');
+        } else {
+            targetId = String(it);
+        }
+
+        // 1. Nếu đã khớp chính xác id trong MATERIALS
+        const exactMatch = MATERIALS.find(m => String(m.id) === targetId || String(m.raw_id) === targetId || String(m.material_id) === targetId);
+        if (exactMatch) return String(exactMatch.id);
+
+        // 2. Nếu targetId có dạng board_X hoặc edge_X
+        if (targetId.startsWith('board_')) {
+            const subId = targetId.replace('board_', '');
+            const match = MATERIALS.find(m => String(m.wood_board_price_id) === subId || String(m.wood_board_id) === subId || String(m.raw_id) === subId);
+            if (match) return String(match.id);
+        }
+        if (targetId.startsWith('edge_')) {
+            const subId = targetId.replace('edge_', '');
+            const match = MATERIALS.find(m => (m.item_type === 'edge_band' || String(m.warehouse_code) === '152_CHI') && (String(m.wood_board_id) === subId || String(m.raw_id) === subId));
+            if (match) return String(match.id);
+        }
+
+        // 3. Khớp theo wood_board_price_id / wood_board_id
+        if (boardPriceId) {
+            const match = MATERIALS.find(m => String(m.wood_board_price_id) === String(boardPriceId));
+            if (match) return String(match.id);
+        }
+        if (woodBoardId) {
+            const match = MATERIALS.find(m => String(m.wood_board_id) === String(woodBoardId) && (isEdge ? m.item_type === 'edge_band' : m.item_type === 'board'));
+            if (match) return String(match.id);
+        }
+
+        // 4. Khớp theo mã code
+        if (targetCode) {
+            const matchCode = MATERIALS.find(m => String(m.code || '').trim().toUpperCase() === targetCode);
+            if (matchCode) return String(matchCode.id);
+
+            const base = targetCode.replace(/(\.TP|\.PVC|\.2M|\.1M).*$/i, '');
+            if (base && base !== targetCode) {
+                const matchBase = MATERIALS.find(m => String(m.code || '').trim().toUpperCase() === base);
+                if (matchBase) return String(matchBase.id);
+            }
+        }
+
+        // 5. Nếu targetId có thể là code
+        const matchByStrCode = MATERIALS.find(m => String(m.code || '').trim().toUpperCase() === targetId.trim().toUpperCase());
+        if (matchByStrCode) return String(matchByStrCode.id);
+
+        return targetId;
+    }
+
     // Initialize rows
     function initDefaultRows() {
         const whEl = document.getElementById("select_warehouse");
@@ -701,7 +695,8 @@
 
         if (PREFILLED_ORDER_ITEMS && PREFILLED_ORDER_ITEMS.length > 0) {
             PREFILLED_ORDER_ITEMS.forEach(it => {
-                addItemRow(it.material_id, it.quantity, it.notes || '', it.height || '', it.width || '');
+                const matId = resolveMaterialId(it);
+                addItemRow(matId, it.quantity, it.notes || '', it.height || '', it.width || '');
             });
         } else {
             addItemRow();
@@ -753,7 +748,8 @@
                         const hasFilled = Array.from(tbody.querySelectorAll('.qty-input')).some(i => parseFloat(i.value) > 0);
                         if (hasFilled && !confirm('Bạn có muốn xóa các dòng hiện tại để nạp lại vật tư từ đơn hàng ' + data.order_code + '?')) {
                             data.items.forEach(it => {
-                                addItemRow(it.material_id, it.quantity, it.notes || '', it.height || '', it.width || '');
+                                const matId = resolveMaterialId(it);
+                                addItemRow(matId, it.quantity, it.notes || '', it.height || '', it.width || '');
                             });
                             return;
                         }
@@ -761,7 +757,8 @@
 
                     if (tbody) tbody.innerHTML = '';
                     data.items.forEach(it => {
-                        addItemRow(it.material_id, it.quantity, it.notes || '', it.height || '', it.width || '');
+                        const matId = resolveMaterialId(it);
+                        addItemRow(matId, it.quantity, it.notes || '', it.height || '', it.width || '');
                     });
                 } else {
                     alert('Đơn hàng ' + (data.order_code || '') + ' không có vật tư phù hợp để xuất kho.');
@@ -837,15 +834,12 @@
             color_code: code,
             name: document.getElementById('quick_mat_name')?.value.trim() || '',
             origin_code: document.getElementById('quick_mat_origin_code')?.value.trim() || '',
-            foil_name: document.getElementById('quick_mat_foil_name')?.value.trim() || '',
-            nature: document.getElementById('quick_mat_nature')?.value || 'Vật tư hàng hóa',
+            nature: 'Vật tư hàng hóa',
             warehouse_id: document.getElementById('quick_mat_warehouse_id')?.value || '',
             category: document.getElementById('quick_mat_category')?.value.trim() || '',
-            unit: document.getElementById('quick_mat_unit')?.value.trim() || 'Tấm',
+            unit: document.getElementById('quick_mat_unit')?.value.trim() || 'Cái',
             cost_price: document.getElementById('quick_mat_cost_price')?.value || 0,
-            min_stock: document.getElementById('quick_mat_min_stock')?.value || 50,
-            edge_band_cost_price: document.getElementById('quick_edge_band_cost_price')?.value || 0,
-            selected_type_id: document.getElementById('quick_selected_type_id')?.value || '',
+            min_stock: 50,
         };
 
         try {

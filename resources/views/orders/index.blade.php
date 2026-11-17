@@ -1398,16 +1398,22 @@
                 @endif
             @endif
 
-            {{-- Yêu cầu sửa đơn --}}
+            {{-- Yêu cầu sửa đơn / Xin sửa lại đơn --}}
             @php
-                $canRequestEditAccountant = auth()->user()?->canApproveAccountantOrder() && !$order->accountant_approved_by;
-                $canRequestEditTechnical = auth()->user()?->canApproveTechnicalOrder() && $order->accountant_approved_by;
+                $notInProd = !in_array($order->status, ['in_production', 'completed', 'cancelled']);
+                $canRequestEditAccountant = auth()->user()?->canApproveAccountantOrder() && $notInProd;
+                $canRequestEditTechnical = auth()->user()?->canApproveTechnicalOrder() && $notInProd;
+                $canRequestEditSale = auth()->user()?->can('edit order') && $order->isLockedForEdit() && $notInProd && empty($order->edit_reason);
             @endphp
-            @if(($canRequestEditAccountant || $canRequestEditTechnical) && in_array($order->status, ['draft', 'pending', 'transferred']))
+            @if(($canRequestEditAccountant || $canRequestEditTechnical || $canRequestEditSale) && in_array($order->status, ['draft', 'pending', 'transferred']))
             <li class="{{ in_array($order->status, ['draft', 'pending']) ? '' : 'border-t border-neutral-100 my-1 pt-1' }}">
-                <button type="button" onclick="openRequestEditModal('{{ route('orders.update-status', $order) }}', '{{ $order->order_code }}', '{{ $order->accountant_approved_by ? 'technical' : 'accountant' }}')" class="w-full flex items-center gap-2 px-4 py-2 hover:bg-amber-50 text-amber-700 text-left transition-colors font-medium">
+                @php
+                    $reqStep = $canRequestEditAccountant ? 'accountant' : ($canRequestEditTechnical ? 'technical' : 'sale');
+                    $btnLabel = ($canRequestEditSale && !$canRequestEditAccountant && !$canRequestEditTechnical) ? 'Xin sửa lại đơn' : 'Yêu cầu sửa đơn';
+                @endphp
+                <button type="button" onclick="openRequestEditModal('{{ route('orders.update-status', $order) }}', '{{ $order->order_code }}', '{{ $reqStep }}')" class="w-full flex items-center gap-2 px-4 py-2 hover:bg-amber-50 text-amber-700 text-left transition-colors font-medium">
                     <iconify-icon icon="lucide:alert-circle" class="text-amber-600 text-lg"></iconify-icon>
-                    <span>Yêu cầu sửa đơn</span>
+                    <span>{{ $btnLabel }}</span>
                 </button>
             </li>
             @endif
@@ -1421,18 +1427,18 @@
                         <span>Chỉnh sửa đơn</span>
                     </button>
                 @elseif($order->isLockedForEdit())
-                    <button type="button" onclick="alert('Đơn hàng đã được Kế toán duyệt (hoặc đã chuyển sản xuất). Cần Kế toán bấm \'Yêu cầu sửa đơn\' để mở khóa cho phép Sale sửa.')" class="w-full flex items-center justify-between px-4 py-2 text-neutral-400 hover:bg-neutral-50 text-left transition-colors" title="Đã được Kế toán duyệt - Cần Kế toán yêu cầu sửa để mở khóa">
+                    <button type="button" onclick="if(confirm('Đơn hàng {{ $order->order_code }} đã được duyệt chuyển sản xuất.\nBạn có muốn gửi Yêu cầu xin mở khóa sửa lại đơn không?')) { openRequestEditModal('{{ route('orders.update-status', $order) }}', '{{ $order->order_code }}', 'sale'); }" class="w-full flex items-center justify-between px-4 py-2 hover:bg-amber-50 text-neutral-700 text-left transition-colors cursor-pointer" title="Đã duyệt chuyển sản xuất - Bấm để xin mở khóa sửa đơn">
                         <div class="flex items-center gap-2">
-                            <iconify-icon icon="lucide:lock" class="text-neutral-400 text-lg"></iconify-icon>
+                            <iconify-icon icon="lucide:lock" class="text-amber-500 text-lg"></iconify-icon>
                             <span>Chỉnh sửa đơn</span>
                         </div>
-                        <span class="text-[10px] bg-neutral-100 text-neutral-500 font-bold px-1.5 py-0.5 rounded">Khóa</span>
+                        <span class="text-[10px] bg-amber-100 text-amber-800 font-bold px-1.5 py-0.5 rounded border border-amber-200">Xin mở khóa</span>
                     </button>
                 @elseif($order->isRequestedEdit())
-                    <a href="{{ route('orders.edit', $order) }}" class="flex items-center justify-between px-4 py-2 bg-amber-50 hover:bg-amber-100 text-amber-900 transition-colors font-bold" title="Kế toán đã yêu cầu sửa: {{ $order->edit_reason }}">
+                    <a href="{{ route('orders.edit', $order) }}" class="flex items-center justify-between px-4 py-2 bg-amber-50 hover:bg-amber-100 text-amber-900 transition-colors font-bold" title="Yêu cầu sửa: {{ $order->edit_reason }}">
                         <div class="flex items-center gap-2">
                             <iconify-icon icon="lucide:edit-3" class="text-amber-600 text-lg"></iconify-icon>
-                            <span>Sửa theo yêu cầu KT</span>
+                            <span>Sửa theo yêu cầu</span>
                         </div>
                         <span class="text-[10px] bg-amber-200 text-amber-800 font-bold px-1.5 py-0.5 rounded animate-pulse">Cần sửa</span>
                     </a>
@@ -1519,7 +1525,7 @@
                 <div class="flex items-center justify-between gap-1 font-bold text-amber-900 mb-1.5">
                     <span class="flex items-center gap-1.5">
                         <iconify-icon icon="lucide:alert-triangle" class="text-amber-600 text-base shrink-0"></iconify-icon>
-                        <span>Yêu cầu sửa ({{ $order->rejected_step === 'technical' ? 'Kỹ thuật' : 'Kế toán' }})</span>
+                        <span>{{ $order->rejected_step === 'technical' ? 'Kỹ thuật yêu cầu sửa' : ($order->rejected_step === 'sale' ? 'Sale xin sửa lại' : 'Kế toán yêu cầu sửa') }}</span>
                     </span>
                     @if($order->rejected_at)
                         <span class="text-[11px] font-medium text-amber-700">{{ $order->rejected_at->format('H:i d/m') }}</span>
@@ -1556,6 +1562,13 @@
                     <span>Người duyệt: <strong class="text-neutral-800">{{ $order->accountantApprover?->name }}</strong></span>
                     <span class="text-neutral-400 font-medium">{{ $order->accountant_approved_at?->format('H:i d/m/Y') }}</span>
                 </div>
+                @if(auth()->user()?->canApproveAccountantOrder() && !in_array($order->status, ['in_production', 'completed', 'cancelled']))
+                    <div class="flex items-center gap-2 mt-2 pt-2 border-t border-emerald-200/60 justify-end">
+                        <button type="button" onclick="openRequestEditModal('{{ route('orders.update-status', $order) }}', '{{ $order->order_code }}', 'accountant')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-white hover:bg-amber-50 text-amber-700 border border-amber-300 transition-colors shadow-2xs">
+                            Thu hồi duyệt / Yêu cầu sửa
+                        </button>
+                    </div>
+                @endif
             @else
                 @if(auth()->user()?->canApproveAccountantOrder())
                     @if(!in_array($order->status, ['in_production', 'completed', 'cancelled']))
@@ -1598,6 +1611,13 @@
                     <span>Người duyệt: <strong class="text-neutral-800">{{ $order->technicalApprover?->name ?? 'Kỹ thuật' }}</strong></span>
                     <span class="text-neutral-400 font-medium">{{ $order->technical_approved_at?->format('H:i d/m/Y') }}</span>
                 </div>
+                @if(auth()->user()?->canApproveTechnicalOrder() && !in_array($order->status, ['in_production', 'completed', 'cancelled']))
+                    <div class="flex items-center gap-2 mt-2 pt-2 border-t border-blue-200/60 justify-end">
+                        <button type="button" onclick="openRequestEditModal('{{ route('orders.update-status', $order) }}', '{{ $order->order_code }}', 'technical')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-white hover:bg-amber-50 text-amber-700 border border-amber-300 transition-colors shadow-2xs">
+                            Thu hồi duyệt / Yêu cầu sửa
+                        </button>
+                    </div>
+                @endif
             @else
                 @if(auth()->user()?->canApproveTechnicalOrder())
                     @if(!in_array($order->status, ['cancelled', 'completed']))
@@ -1623,6 +1643,18 @@
                 @endif
             @endif
         </div>
+
+        {{-- Nút xin mở khóa sửa dành cho Sale / Người lên đơn khi đơn đã duyệt mà xưởng chưa làm --}}
+        @if(!in_array($order->status, ['draft', 'in_production', 'completed', 'cancelled']) && empty($order->edit_reason))
+            @can('edit order')
+                <div class="mt-2.5 pt-2 border-t border-neutral-200">
+                    <button type="button" onclick="openRequestEditModal('{{ route('orders.update-status', $order) }}', '{{ $order->order_code }}', 'sale')" class="w-full py-1.5 px-3 rounded-lg text-xs font-bold bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 transition-colors flex items-center justify-center gap-1.5 cursor-pointer">
+                        <iconify-icon icon="lucide:undo-2" class="text-sm text-amber-600"></iconify-icon>
+                        <span>Phát hiện sai sót? Bấm xin sửa lại đơn</span>
+                    </button>
+                </div>
+            @endcan
+        @endif
     </div>
 @endforeach
 @include('orders._request_edit_modal')

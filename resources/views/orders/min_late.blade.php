@@ -1036,10 +1036,10 @@ function calculateMinLateRowStats(row) {
     const width1Select = row.querySelector('select[name*="[edge_gluing][width_1]"]');
     const width2Select = row.querySelector('select[name*="[edge_gluing][width_2]"]');
     
-    const h1 = height1Select ? height1Select.value : '';
-    const h2 = height2Select ? height2Select.value : '';
-    const w1 = width1Select ? width1Select.value : '';
-    const w2 = width2Select ? width2Select.value : '';
+    const h1 = height1Select ? (height1Select.value || '').trim().toUpperCase() : '';
+    const h2 = height2Select ? (height2Select.value || '').trim().toUpperCase() : '';
+    const w1 = width1Select ? (width1Select.value || '').trim().toUpperCase() : '';
+    const w2 = width2Select ? (width2Select.value || '').trim().toUpperCase() : '';
     
     // 1. Straight paste length ("T")
     let sumT = 0;
@@ -1171,9 +1171,11 @@ function bindMinLateRowEvents(row) {
     
     const selects = row.querySelectorAll('select[name*="[edge_gluing]"]');
     selects.forEach(select => {
-        select.addEventListener('change', () => {
-            calculateMinLateRowStats(row);
-            updateOrderSummary();
+        ['change', 'input'].forEach(evtName => {
+            select.addEventListener(evtName, () => {
+                calculateMinLateRowStats(row);
+                updateOrderSummary();
+            });
         });
     });
 }

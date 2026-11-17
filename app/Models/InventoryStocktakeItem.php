@@ -9,6 +9,7 @@ class InventoryStocktakeItem extends Model
 {
     protected $fillable = [
         'stocktake_id',
+        'material_id',
         'item_type',
         'wood_board_id',
         'wood_board_price_id',
@@ -48,16 +49,17 @@ class InventoryStocktakeItem extends Model
         return $this->belongsTo(WoodBoardPrice::class, 'wood_board_price_id');
     }
 
-    /**
-     * Backward-compatible alias for existing views
-     */
-     public function material(): BelongsTo
-     {
-         return $this->woodBoard();
-     }
+    public function material(): BelongsTo
+    {
+        return $this->belongsTo(Material::class, 'material_id');
+    }
 
     public function getItemSkuAttribute(): string
     {
+        if ($this->material_id) {
+            $mat = $this->relationLoaded('material') ? $this->material : Material::find($this->material_id);
+            if ($mat) return $mat->code;
+        }
         if ($this->item_type === 'edge_band') {
             return $this->woodBoard?->edge_band_code ?? ('CHI-' . ($this->woodBoard?->color_code ?? ''));
         }
@@ -75,6 +77,10 @@ class InventoryStocktakeItem extends Model
 
     public function getItemNameAttribute(): string
     {
+        if ($this->material_id) {
+            $mat = $this->relationLoaded('material') ? $this->material : Material::find($this->material_id);
+            if ($mat) return $mat->name;
+        }
         if ($this->item_type === 'edge_band') {
             return $this->woodBoard?->edge_band_name ?? ('Chỉ dán viền ' . ($this->woodBoard?->color_code ?? ''));
         }
@@ -92,6 +98,10 @@ class InventoryStocktakeItem extends Model
 
     public function getItemUnitAttribute(): string
     {
+        if ($this->material_id) {
+            $mat = $this->relationLoaded('material') ? $this->material : Material::find($this->material_id);
+            if ($mat && !empty($mat->unit)) return $mat->unit;
+        }
         if ($this->item_type === 'edge_band') {
             return $this->woodBoard?->edge_band_unit ?? 'm';
         }
