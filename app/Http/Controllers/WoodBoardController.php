@@ -7,6 +7,9 @@ use App\Models\WoodBoardType;
 use App\Models\WoodBoardPrice;
 use App\Models\WoodBoardPriceGroup;
 use App\Models\WoodBoardPriceGroupPrice;
+use App\Models\Material;
+use App\Models\Warehouse;
+use App\Services\InventoryService;
 use Illuminate\Http\Request;
 
 class WoodBoardController extends Controller
@@ -15,7 +18,7 @@ class WoodBoardController extends Controller
     {
         $this->middleware('permission:view supply',   ['only' => ['index']]);
         $this->middleware('permission:add supply',    ['only' => ['store', 'storeType', 'batchUpdate', 'batchUpdatePriceGroups', 'import']]);
-        $this->middleware('permission:edit supply',   ['only' => ['update', 'updateType', 'quickUpdateStock']]);
+        $this->middleware('permission:edit supply',   ['only' => ['update', 'updateType', 'quickUpdateStock', 'syncFromInventory']]);
         $this->middleware('permission:delete supply', ['only' => ['destroy', 'destroyType']]);
     }
 
@@ -70,8 +73,12 @@ class WoodBoardController extends Controller
         // Fetch all wood board price groups with their default prices
         $priceGroups = WoodBoardPriceGroup::with('prices')->get();
 
-        $woodBoards = WoodBoard::with(['prices'])
-            ->when($search, function ($q) use ($search) {
+        $stockFilter = $request->input('stock_filter', 'all');
+
+        $query = WoodBoard::query();
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('color_code', 'like', "%$search%")
                   ->orWhere('price_group', 'like', "%$search%")
                   ->orWhereHas('prices', function ($subQ) use ($search) {
@@ -79,21 +86,66 @@ class WoodBoardController extends Controller
                            ->orWhere('name', 'like', "%$search%")
                            ->orWhere('thickness', 'like', "%$search%");
                   });
-            })
-            ->when($request->filled('filter_color_code'), function ($q) use ($request) {
-                $q->where('color_code', 'like', "%{$request->filter_color_code}%");
-            })
-            ->when($request->filled('filter_price_group'), function ($q) use ($request) {
-                $q->where('price_group', 'like', "%{$request->filter_price_group}%");
             });
+        }
 
-        $this->applyDateFilter($woodBoards, $request, 'created_at');
+        if ($request->filled('filter_color_code')) {
+            $query->where('color_code', 'like', "%{$request->filter_color_code}%");
+        }
 
-        $woodBoards = $woodBoards->orderBy('id', 'desc')
+        if ($request->filled('filter_price_group')) {
+            $query->where('price_group', 'like', "%{$request->filter_price_group}%");
+        }
+
+        $this->applyDateFilter($query, $request, 'created_at');
+
+        // Thống kê tồn kho tổng hợp từ Kho vật tư cho Bảng giá tấm
+        $allBoardIds = (clone $query)->pluck('id');
+        $totalBoardColors = $allBoardIds->count();
+        $totalBoardVariants = WoodBoardPrice::whereIn('wood_board_id', $allBoardIds)->count();
+        $totalBoardStock = (float)WoodBoardPrice::whereIn('wood_board_id', $allBoardIds)->sum('stock');
+        $totalEdgeStock = (float)WoodBoard::whereIn('id', $allBoardIds)->sum('edge_band_current_stock');
+
+        $totalStockValue = (float)Material::whereIn('wood_board_id', $allBoardIds)
+            ->selectRaw('SUM(current_stock * cost_price) as val')
+            ->value('val') ?? 0;
+
+        $inStockVariants = WoodBoardPrice::whereIn('wood_board_id', $allBoardIds)->where('stock', '>', 0)->count();
+        $outOfStockVariants = $totalBoardVariants - $inStockVariants;
+
+        if ($stockFilter === 'in_stock') {
+            $query->where(function($q) {
+                $q->where('current_stock', '>', 0)
+                  ->orWhereHas('prices', fn($p) => $p->where('stock', '>', 0));
+            });
+        } elseif ($stockFilter === 'out_of_stock') {
+            $query->where(function($q) {
+                $q->where(function($sub) {
+                    $sub->whereNull('current_stock')->orWhere('current_stock', '<=', 0);
+                })->whereDoesntHave('prices', fn($p) => $p->where('stock', '>', 0));
+            });
+        }
+
+        $woodBoards = $query->with(['prices.material'])
+            ->orderBy('id', 'desc')
             ->paginate($perPage)
             ->withQueryString();
 
-        return view('wood_boards.index', compact('woodBoards', 'boardTypes', 'perPage', 'search', 'priceGroups'));
+        return view('wood_boards.index', compact(
+            'woodBoards', 
+            'boardTypes', 
+            'perPage', 
+            'search', 
+            'priceGroups',
+            'totalBoardColors',
+            'totalBoardVariants',
+            'totalBoardStock',
+            'totalEdgeStock',
+            'totalStockValue',
+            'inStockVariants',
+            'outOfStockVariants',
+            'stockFilter'
+        ));
     }
 
     public function store(Request $request)
@@ -113,13 +165,14 @@ class WoodBoardController extends Controller
 
         $pricesData = $request->input('prices', []);
         $boardTypes = WoodBoardType::all();
+        $targetWarehouse = Warehouse::where('code', '155_EP_TAM')->orWhere('code', 'KHO-VAN')->first() ?? Warehouse::first();
 
         foreach ($boardTypes as $type) {
             $typeData = $pricesData[$type->id] ?? [];
             // Compute code = color_code . prefix
             $computedCode = $board->color_code . ($type->prefix ?? '');
 
-            $board->prices()->create([
+            $price = $board->prices()->create([
                 'wood_board_type_id' => $type->id,
                 'code'               => $computedCode,
                 'name'               => !empty($typeData['name']) ? $typeData['name'] : $type->name,
@@ -128,6 +181,26 @@ class WoodBoardController extends Controller
                 'price_m2'           => floatval($typeData['price_m2'] ?? 0),
                 'stock'              => floatval($typeData['stock'] ?? 0),
             ]);
+
+            // Tự động tạo bản ghi Material trong kho tương ứng để đồng bộ 1-1
+            if ($targetWarehouse) {
+                Material::firstOrCreate(
+                    ['wood_board_price_id' => $price->id],
+                    [
+                        'code'           => $price->code,
+                        'name'           => $price->name,
+                        'warehouse_id'   => $targetWarehouse->id,
+                        'warehouse_code' => $targetWarehouse->code,
+                        'category'       => $board->price_group ?: 'Tấm ván',
+                        'unit'           => 'Tấm',
+                        'item_type'      => 'board',
+                        'cost_price'     => 0,
+                        'current_stock'  => (float)$price->stock,
+                        'wood_board_id'  => $board->id,
+                        'status'         => 'active',
+                    ]
+                );
+            }
         }
 
         // Sync total stock to board
@@ -171,10 +244,25 @@ class WoodBoardController extends Controller
                 $updateData['stock'] = floatval($typeData['stock']);
             }
 
-            $woodBoard->prices()->updateOrCreate(
+            $price = $woodBoard->prices()->updateOrCreate(
                 ['wood_board_type_id' => $type->id],
                 $updateData
             );
+
+            // Đồng bộ sang Material nếu có
+            $mat = Material::where('wood_board_price_id', $price->id)->first();
+            if ($mat) {
+                $matUpdates = [];
+                if (!empty($updateData['code']) && $mat->code !== $updateData['code']) {
+                    $matUpdates['code'] = $updateData['code'];
+                }
+                if (!empty($updateData['name']) && $mat->name !== $updateData['name']) {
+                    $matUpdates['name'] = $updateData['name'];
+                }
+                if (!empty($matUpdates)) {
+                    $mat->update($matUpdates);
+                }
+            }
         }
 
         // Sync total stock to board if prices have stock
@@ -188,8 +276,32 @@ class WoodBoardController extends Controller
 
     public function destroy(WoodBoard $woodBoard)
     {
+        // Gỡ liên kết trong kho để bảo toàn lịch sử phiếu kho
+        Material::where('wood_board_id', $woodBoard->id)->update([
+            'wood_board_id' => null,
+            'wood_board_price_id' => null,
+        ]);
+
         $woodBoard->delete();
         return redirect()->route('wood_boards.index')->with('success', 'Xóa dòng bảng giá thành công.');
+    }
+
+    /**
+     * Đồng bộ số liệu tồn kho từ Kho vật tư sang Bảng giá tấm
+     */
+    public function syncFromInventory(Request $request, InventoryService $inventoryService)
+    {
+        $res = $inventoryService->syncWoodBoardsWithInventory();
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Đồng bộ thành công! Đã kiểm tra {$res['boards_synced']} mã màu và khớp tồn kho {$res['prices_synced']} biến thể từ kho.",
+                'data'    => $res,
+            ]);
+        }
+
+        return redirect()->route('wood_boards.index')->with('success', "Đồng bộ từ kho thành công! Đã kiểm tra {$res['boards_synced']} mã màu và khớp tồn kho {$res['prices_synced']} biến thể.");
     }
 
     // Dynamic Board Type Management

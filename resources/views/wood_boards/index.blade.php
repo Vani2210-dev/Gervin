@@ -27,7 +27,56 @@
     }
 </style>
 
-<div class="grid grid-cols-12">
+<div class="grid grid-cols-12 gap-y-4">
+    <div class="col-span-12">
+        {{-- 4 Summary KPI Cards from Inventory (Customers style) --}}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- Card 1: Tổng mặt hàng ván -->
+            <div class="bg-white border border-neutral-200 rounded-2xl p-4 shadow-sm flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-primary-50 flex items-center justify-center text-primary-600 text-xl flex-shrink-0">
+                    <iconify-icon icon="solar:box-bold"></iconify-icon>
+                </div>
+                <div class="min-w-0">
+                    <div class="text-xs text-neutral-500 font-medium mb-0.5">Tổng mặt hàng ván</div>
+                    <div class="text-lg font-bold text-neutral-800 truncate">{{ number_format($totalBoardColors) }} <span class="text-xs font-normal text-neutral-500">mã màu ({{ number_format($totalBoardVariants) }} SKU)</span></div>
+                </div>
+            </div>
+
+            <!-- Card 2: Tổng số lượng tồn -->
+            <div class="bg-white border border-neutral-200 rounded-2xl p-4 shadow-sm flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 text-xl flex-shrink-0">
+                    <iconify-icon icon="solar:warehouse-bold"></iconify-icon>
+                </div>
+                <div class="min-w-0">
+                    <div class="text-xs text-neutral-500 font-medium mb-0.5">Tổng số lượng tồn</div>
+                    <div class="text-lg font-bold text-neutral-800 truncate">{{ number_format($totalBoardStock, 0, ',', '.') }} <span class="text-xs font-normal text-neutral-500">tấm</span> <span class="text-xs font-normal text-neutral-400">({{ number_format($totalEdgeStock, 0, ',', '.') }}m chỉ)</span></div>
+                </div>
+            </div>
+
+            <!-- Card 3: Tổng giá trị tồn kho -->
+            <div class="bg-white border border-neutral-200 rounded-2xl p-4 shadow-sm flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 text-xl flex-shrink-0">
+                    <iconify-icon icon="solar:wallet-money-bold"></iconify-icon>
+                </div>
+                <div class="min-w-0">
+                    <div class="text-xs text-neutral-500 font-medium mb-0.5">Tổng giá trị tồn kho</div>
+                    <div class="text-lg font-bold text-neutral-800 truncate">{{ number_format($totalStockValue, 0, ',', '.') }}₫</div>
+                </div>
+            </div>
+
+            <!-- Card 4: Cần nhập thêm -->
+            <div class="bg-white border border-neutral-200 rounded-2xl p-4 shadow-sm flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center text-rose-600 text-xl flex-shrink-0">
+                    <iconify-icon icon="solar:danger-triangle-bold"></iconify-icon>
+                </div>
+                <div class="min-w-0">
+                    <div class="text-xs text-neutral-500 font-medium mb-0.5">Hết hàng / Cần nhập</div>
+                    <div class="text-lg font-bold text-rose-600 truncate">{{ number_format($outOfStockVariants) }} <span class="text-xs font-normal text-neutral-500">mã hết</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="col-span-12">
         <div class="card h-full rounded-xl border-0 overflow-hidden shadow-sm bg-white">
             {{-- Header --}}
@@ -38,18 +87,35 @@
                         {{-- Search (Bên trái ngoài cùng) --}}
                         <form method="GET" action="{{ route('wood_boards.index') }}" class="navbar-search">
                             <input type="hidden" name="per_page" value="{{ $perPage }}">
+                            @if(request('stock_filter')) <input type="hidden" name="stock_filter" value="{{ request('stock_filter') }}"> @endif
                             <div class="relative">
                                 <iconify-icon icon="solar:magnifer-linear" class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-base"></iconify-icon>
                                 <input type="text" name="search" class="form-control form-control-sm border-neutral-200 rounded-lg pl-9 pr-3 w-60 md:w-72" placeholder="Tìm kiếm mã màu, nhóm..." value="{{ $search }}">
                             </div>
                         </form>
 
+                        {{-- Stock Status Pills --}}
+                        <div class="bg-neutral-100 p-0.5 rounded-lg flex items-center gap-0.5 text-xs font-semibold">
+                            <a href="{{ route('wood_boards.index', array_merge(request()->except('page'), ['stock_filter' => 'all'])) }}"
+                               class="px-2.5 py-1 rounded-md transition-all {{ ($stockFilter ?? 'all') === 'all' ? 'bg-white text-neutral-900 shadow-2xs font-bold' : 'text-neutral-500 hover:text-neutral-900' }}">
+                                Tất cả ({{ $totalBoardColors }})
+                            </a>
+                            <a href="{{ route('wood_boards.index', array_merge(request()->except('page'), ['stock_filter' => 'in_stock'])) }}"
+                               class="px-2.5 py-1 rounded-md transition-all {{ ($stockFilter ?? '') === 'in_stock' ? 'bg-emerald-600 text-white shadow-2xs font-bold' : 'text-emerald-700 hover:text-emerald-800' }}">
+                                Còn hàng
+                            </a>
+                            <a href="{{ route('wood_boards.index', array_merge(request()->except('page'), ['stock_filter' => 'out_of_stock'])) }}"
+                               class="px-2.5 py-1 rounded-md transition-all {{ ($stockFilter ?? '') === 'out_of_stock' ? 'bg-rose-600 text-white shadow-2xs font-bold' : 'text-rose-600 hover:text-rose-800' }}">
+                                Hết hàng
+                            </a>
+                        </div>
+
                         <button type="button" onclick="openModal('filter-modal')"
                             class="btn bg-light-600 text-xs btn-sm px-3 py-2 rounded-lg flex items-center gap-2 font-medium text-neutral-700 hover:bg-neutral-200 transition">
                             <iconify-icon icon="solar:filter-outline" class="text-base"></iconify-icon>
                             Lọc nâng cao
                         </button>
-                        @if(request()->filled('filter_color_code') || request()->filled('filter_price_group'))
+                        @if(request()->filled('filter_color_code') || request()->filled('filter_price_group') || request('stock_filter', 'all') !== 'all')
                         <a href="{{ route('wood_boards.index') }}" class="btn text-xs btn-sm px-2.5 py-1.5 rounded-lg flex items-center gap-1 text-danger-600 bg-danger-50 hover:bg-danger-100 transition">
                             <iconify-icon icon="solar:close-circle-outline" class="text-base"></iconify-icon>
                             Xóa lọc
@@ -74,6 +140,13 @@
                             class="btn bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200 text-xs btn-sm px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition shadow-2xs font-semibold">
                             <iconify-icon icon="lucide:file-spreadsheet" class="text-base"></iconify-icon>
                             Nhập Excel
+                        </button>
+                        <button type="button" onclick="syncFromInventory()"
+                            class="btn bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 text-xs btn-sm px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition shadow-2xs font-semibold"
+                            id="btnSyncInventory"
+                            title="Đồng bộ số lượng tồn kho thực tế và mã từ Quản lý kho vật tư">
+                            <iconify-icon icon="solar:refresh-circle-bold" class="text-base text-indigo-600"></iconify-icon>
+                            Đồng bộ từ Kho
                         </button>
                         <form id="importExcelForm" action="{{ route('wood_boards.import') }}" method="POST" enctype="multipart/form-data" style="display: none;">
                             @csrf
@@ -100,6 +173,7 @@
                         <span class="text-xs font-medium text-secondary-light mb-0">Hiển thị</span>
                         <form method="GET" action="{{ route('wood_boards.index') }}" id="perPageForm">
                             <input type="hidden" name="search" value="{{ $search }}">
+                            @if(request('stock_filter')) <input type="hidden" name="stock_filter" value="{{ request('stock_filter') }}"> @endif
                             <select name="per_page" class="form-select form-select-sm w-auto border-neutral-200 rounded-lg py-1 px-2 text-xs"
                                 onchange="document.getElementById('perPageForm').submit()">
                                 @foreach([15, 25, 50, 100] as $option)
@@ -127,20 +201,20 @@
             <div class="p-1">
                 <div class="table-responsive scroll-sm overflow-x-auto">
                     @php
-                        // Estimate table width based on number of columns (5 sub-columns per type)
-                        $minWidth = 350 + (count($boardTypes) * 480);
+                        // Estimate table width based on number of columns (6 sub-columns per type)
+                        $minWidth = 350 + (count($boardTypes) * 540);
                     @endphp
                     <table class="table bordered-table sm-table mb-0 border-collapse border border-neutral-200 text-xs" style="min-width: {{ $minWidth }}px;" id="woodBoardsTable">
                         <thead class="bg-neutral-50 font-semibold text-neutral-700 text-center uppercase tracking-wider">
                             <tr>
                                 <th rowspan="2" class="text-center align-middle border border-neutral-200 w-10">STT</th>
                                 <th rowspan="2" class="text-center align-middle border border-neutral-200 w-20">Nhóm giá</th>
-                                <th rowspan="2" class="text-center align-middle border border-neutral-200 w-24">Mã màu</th>
+                                <th rowspan="2" class="text-center align-middle border border-neutral-200 w-28">Mã màu</th>
                                 
                                 {{-- Dynamic Headers --}}
                                 @foreach($boardTypes as $idx => $type)
                                     @php $scheme = $colorSchemes[$idx % count($colorSchemes)]; @endphp
-                                    <th colspan="5" class="text-center {{ $scheme['bg'] }} {{ $scheme['text'] }} border border-neutral-200">
+                                    <th colspan="6" class="text-center {{ $scheme['bg'] }} {{ $scheme['text'] }} border border-neutral-200">
                                         {{ $type->name }}
                                     </th>
                                 @endforeach
@@ -154,6 +228,7 @@
                                     <th class="{{ $scheme['bg_sub'] }} {{ $scheme['text_sub'] }} border border-neutral-200 w-28">Mã số</th>
                                     <th class="{{ $scheme['bg_sub'] }} {{ $scheme['text_sub'] }} border border-neutral-200">Tên hàng</th>
                                     <th class="{{ $scheme['bg_sub'] }} {{ $scheme['text_sub'] }} border border-neutral-200 w-16">Độ dày</th>
+                                    <th class="{{ $scheme['bg_sub'] }} {{ $scheme['text_sub'] }} text-center border border-neutral-200 w-20" title="Tồn kho thực tế lấy từ Kho vật tư">Tồn kho</th>
                                     <th class="{{ $scheme['bg_sub'] }} {{ $scheme['text_sub'] }} text-end border border-neutral-200 w-24">Giá tấm</th>
                                     <th class="{{ $scheme['bg_sub'] }} {{ $scheme['text_sub'] }} text-end border border-neutral-200 w-24">Giá m2</th>
                                 @endforeach
@@ -166,7 +241,12 @@
                                 <td class="text-center border border-neutral-200">{{ $stt }}</td>
                                 <td class="text-center font-medium border border-neutral-200">{{ $board->price_group ?? '—' }}</td>
                                 <td class="text-center border border-neutral-200">
-                                    <span class="font-bold text-neutral-800 block">{{ $board->color_code }}</span>
+                                    <span class="font-bold text-neutral-800 block text-xs">{{ $board->color_code }}</span>
+                                    @if($board->current_stock > 0)
+                                        <span class="inline-block mt-0.5 px-1.5 py-0.2 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200" title="Tổng tồn các loại cốt">
+                                            Tồn: {{ number_format($board->current_stock, 0, ',', '.') }}
+                                        </span>
+                                    @endif
                                 </td>
                                 
                                 {{-- Render values for each type --}}
@@ -176,10 +256,20 @@
                                         $price = $board->prices->firstWhere('wood_board_type_id', $type->id);
                                         $displayCode = ($price && !empty($price->code)) ? $price->code : ($board->color_code . ($type->prefix ?? ''));
                                         $displayName = ($price && !empty($price->name)) ? $price->name : $type->name;
+                                        $realStock = $price ? $price->real_stock : 0;
                                     @endphp
                                     <td class="border border-neutral-200"><span class="text-neutral-500 font-medium">{{ $displayCode }}</span></td>
                                     <td class="border border-neutral-200"><span class="text-neutral-600">{{ $displayName }}</span></td>
                                     <td class="border border-neutral-200"><span class="text-neutral-600 font-medium">{{ $price->thickness ?? '—' }}</span></td>
+                                    <td class="text-center border border-neutral-200">
+                                        @if($realStock > 0)
+                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800" title="Tồn kho thực tế từ Kho">
+                                                {{ number_format($realStock, 0, ',', '.') }}
+                                            </span>
+                                        @else
+                                            <span class="text-neutral-400 text-[11px]">0</span>
+                                        @endif
+                                    </td>
                                     <td class="text-end font-semibold {{ $scheme['border'] }} border border-neutral-200">
                                         {{ $price && $price->price_board > 0 ? number_format($price->price_board, 0, ',', '.') . 'đ' : '—' }}
                                     </td>
@@ -214,7 +304,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="{{ 4 + count($boardTypes) * 5 }}" class="text-center py-8">
+                                <td colspan="{{ 4 + count($boardTypes) * 6 }}" class="text-center py-8">
                                     <p class="text-neutral-500 text-sm">Chưa có dòng bảng giá nào</p>
                                 </td>
                             </tr>
@@ -754,6 +844,40 @@ function submitImportForm() {
     if (fileInput.files.length > 0) {
         document.getElementById('importExcelForm').submit();
     }
+}
+
+function syncFromInventory() {
+    const btn = document.getElementById('btnSyncInventory');
+    if (!confirm('Bạn có chắc muốn đồng bộ số liệu tồn kho từ Kho vật tư sang Bảng giá tấm?')) return;
+
+    const originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<iconify-icon icon="line-md:loading-loop" class="text-base"></iconify-icon> Đang đồng bộ...';
+
+    fetch('{{ route("wood_boards.sync_inventory") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+        if (data.success) {
+            alert(data.message || 'Đồng bộ từ kho thành công!');
+            window.location.reload();
+        } else {
+            alert(data.message || 'Có lỗi xảy ra khi đồng bộ.');
+        }
+    })
+    .catch(err => {
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+        alert('Không thể kết nối đến máy chủ.');
+    });
 }
 </script>
 @endcan

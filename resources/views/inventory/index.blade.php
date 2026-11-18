@@ -468,76 +468,6 @@
     </form>
 </x-modal>
 
-{{-- MODAL IMPORT DANH MỤC VẬT TƯ TỪ EXCEL (mã.xlsx) --}}
-<x-modal name="importStockModal" maxWidth="lg">
-    <div class="px-6 py-4 border-b border-neutral-200 flex items-center justify-between bg-neutral-50 rounded-t-xl">
-        <div class="flex items-center gap-2">
-            <iconify-icon icon="solar:file-excel-bold" class="text-xl text-emerald-600"></iconify-icon>
-            <h5 class="font-bold text-base text-neutral-800 mb-0">Nhập Danh mục Vật tư từ Excel (mã.xlsx)</h5>
-        </div>
-        <button type="button" onclick="closeModal('importStockModal')" class="text-secondary-light hover:text-neutral-700 text-xl leading-none">&times;</button>
-    </div>
-    <form action="{{ route('inventory.import-stock') }}" method="POST" enctype="multipart/form-data">
-        @csrf
-        <div class="p-6 space-y-4">
-            <div class="p-3.5 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-900 leading-relaxed">
-                <div class="font-bold mb-1 flex items-center gap-1.5">
-                    <iconify-icon icon="solar:info-circle-bold" class="text-base text-blue-600"></iconify-icon>
-                    Cấu trúc file Excel hỗ trợ:
-                </div>
-                File xuất từ MISA / ERP (hoặc file <strong>mã.xlsx</strong>) với các cột:
-                <ul class="list-disc pl-5 mt-1 space-y-0.5">
-                    <li><strong>Cột B:</strong> Tên kho (Vd: <em>152 - KÍNH, 152_ACRYLIC, 153_PK, 152_COT...</em>)</li>
-                    <li><strong>Cột C:</strong> Mã hàng (Mã SKU vật tư)</li>
-                    <li><strong>Cột D:</strong> Tên hàng hóa / vật tư</li>
-                    <li><strong>Cột E:</strong> Đơn vị tính (Tấm, Cái, Mét, Kg, Hộp...)</li>
-                    <li><strong>Cột F:</strong> Nguồn gốc (nếu có)</li>
-                </ul>
-            </div>
-
-            {{-- Nút nạp nhanh từ file mã.xlsx trên máy chủ --}}
-            <div class="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between gap-3">
-                <div>
-                    <div class="text-xs font-bold text-emerald-900">File mã.xlsx có sẵn trên máy chủ</div>
-                    <div class="text-[11px] text-emerald-700">Tự động nạp toàn bộ danh mục vật tư từ file gốc tại thư mục dự án</div>
-                </div>
-                <button type="submit" name="use_server_file" value="1" onclick="return confirm('Xác nhận nhập danh mục vật tư từ file mã.xlsx trên máy chủ?')" class="btn bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold shrink-0 flex items-center gap-1 cursor-pointer">
-                    <iconify-icon icon="solar:upload-track-bold" class="text-sm"></iconify-icon>
-                    Nạp từ file máy chủ
-                </button>
-            </div>
-
-            <div class="relative flex py-1 items-center">
-                <div class="flex-grow border-t border-neutral-200"></div>
-                <span class="flex-shrink mx-3 text-neutral-400 text-xs font-semibold uppercase">Hoặc tải file lên từ máy tính</span>
-                <div class="flex-grow border-t border-neutral-200"></div>
-            </div>
-
-            <div>
-                <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Chọn file Excel (.xlsx, .xls) <span class="text-danger-500">*</span></label>
-                <input type="file" name="excel_file" accept=".xlsx,.xls" class="form-control rounded-lg w-full border-neutral-300 px-3 py-2 text-xs focus:border-primary-500">
-            </div>
-
-            <div>
-                <label class="form-label text-xs font-bold text-neutral-700 mb-1 block">Kho đích</label>
-                <select name="warehouse_id" class="form-select rounded-lg w-full border-neutral-300 px-3 py-2 text-xs focus:border-primary-500">
-                    <option value="">-- Tự động phân loại theo file (Khuyên dùng) --</option>
-                    @foreach($warehouses as $wh)
-                        <option value="{{ $wh->id }}">{{ $wh->name }} ({{ $wh->code }})</option>
-                    @endforeach
-                </select>
-                <p class="text-[11px] text-neutral-500 mt-1 mb-0">Nếu để trống, hệ thống sẽ tự động đưa từng mặt hàng vào đúng kho theo Cột B của file.</p>
-            </div>
-        </div>
-        <div class="px-6 py-4 border-t border-neutral-200 flex items-center justify-end gap-3 bg-neutral-50 rounded-b-xl">
-            <button type="button" onclick="closeModal('importStockModal')" class="btn border border-neutral-300 text-neutral-700 hover:bg-neutral-100 px-4 py-2 rounded-lg text-xs font-medium">Hủy</button>
-            <button type="submit" class="btn bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer">
-                <iconify-icon icon="solar:file-excel-bold" class="text-base"></iconify-icon> Tiến hành Nhập
-            </button>
-        </div>
-    </form>
-</x-modal>
-
 {{-- MODAL 2: CHỈNH SỬA VẬT TƯ --}}
 <x-modal name="editMaterialModal" maxWidth="lg">
     <div class="px-6 py-4 border-b border-neutral-200 flex items-center justify-between bg-neutral-50 rounded-t-xl">
@@ -888,13 +818,6 @@
         });
     }
 
-    function openImportStockModal(warehouseId = null) {
-        if (warehouseId) {
-            const whSelect = document.querySelector('#importStockModal select[name="warehouse_id"]');
-            if (whSelect) whSelect.value = warehouseId;
-        }
-        openModal('importStockModal');
-    }
 </script>
 @endpush
 

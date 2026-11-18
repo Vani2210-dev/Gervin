@@ -36,6 +36,27 @@ class WoodBoardPrice extends Model
         return $this->belongsTo(WoodBoardType::class, 'wood_board_type_id');
     }
 
+    public function material()
+    {
+        return $this->hasOne(Material::class, 'wood_board_price_id');
+    }
+
+    public function getRealStockAttribute(): float
+    {
+        if ($this->relationLoaded('material') && $this->material) {
+            return (float)$this->material->current_stock;
+        }
+        return (float)($this->stock ?? 0);
+    }
+
+    public function getCostPriceAttribute(): float
+    {
+        if ($this->relationLoaded('material') && $this->material) {
+            return (float)$this->material->cost_price;
+        }
+        return 0;
+    }
+
     public function receiptItems()
     {
         return $this->hasMany(InventoryReceiptItem::class, 'wood_board_price_id');

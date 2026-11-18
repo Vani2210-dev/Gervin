@@ -19,8 +19,8 @@
     }
 </style>
 
-<div class="grid grid-cols-12 gap-y-6" style="row-gap: 24px;">
-    <div class="col-span-12 mb-6" style="margin-bottom: 24px;">
+<div class="grid grid-cols-12 gap-y-4">
+    <div class="col-span-12">
         {{-- Statistics Grid --}}
         <div class="grid grid-cols-1 sm:grid-cols-2 {{ !empty($isViewingNhapKho) ? 'lg:grid-cols-3' : 'lg:grid-cols-4' }} gap-4 sm:gap-6">
             <!-- Card 1: Tổng đơn hàng -->

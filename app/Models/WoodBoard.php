@@ -87,6 +87,20 @@ class WoodBoard extends Model
         return $this->hasMany(WoodBoardPrice::class, 'wood_board_id');
     }
 
+    public function materials(): HasMany
+    {
+        return $this->hasMany(Material::class, 'wood_board_id');
+    }
+
+    public function edgeBandMaterial(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(Material::class, 'wood_board_id')->where(function($q) {
+            $q->where('item_type', 'edge_band')
+              ->orWhere('warehouse_code', '152_CHI')
+              ->orWhere('warehouse_code', 'KHO-CHI');
+        });
+    }
+
     public function warehouse(): BelongsTo
     {
         return $this->belongsTo(Warehouse::class, 'warehouse_id');

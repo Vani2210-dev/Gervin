@@ -2675,4 +2675,113 @@ class InventoryService
             'total_items'   => $importedCount + $updatedCount,
         ];
     }
+
+    /**
+     * Đồng bộ 2 chiều toàn diện giữa Bảng giá tấm (WoodBoard / WoodBoardPrice) và Kho vật tư (Material).
+     */
+    public function syncWoodBoardsWithInventory(): array
+    {
+        $pricesSynced = 0;
+        $boardsSynced = 0;
+        $materialsCreated = 0;
+        $materialsLinked = 0;
+        $edgeBandsLinked = 0;
+
+        $targetWarehouse = Warehouse::where('code', '155_EP_TAM')
+            ->orWhere('code', 'KHO-VAN')
+            ->first() ?? Warehouse::first();
+
+        $edgeMaterials = Material::where('item_type', 'edge_band')
+            ->orWhere('warehouse_code', 'like', '%CHI%')
+            ->orWhere('code', 'like', 'CHI-%')
+            ->orWhere('code', 'like', 'ASA.CHI%')
+            ->get();
+
+        $allPrices = WoodBoardPrice::with(['board', 'material'])->get();
+
+        foreach ($allPrices as $p) {
+            $mat = $p->material;
+            if (!$mat && !empty($p->code)) {
+                $mat = Material::where('code', $p->code)->first();
+                if ($mat) {
+                    $mat->wood_board_price_id = $p->id;
+                    $mat->wood_board_id = $p->wood_board_id;
+                    $mat->save();
+                    $materialsLinked++;
+                }
+            }
+
+            // Nếu chưa có trong bảng materials, tạo mới để đảm bảo quan hệ 1-1
+            if (!$mat && $targetWarehouse) {
+                $mat = Material::create([
+                    'code'                => $p->code ?: ('VB-' . $p->id),
+                    'name'                => $p->name ?: 'Tấm ván',
+                    'warehouse_id'        => $targetWarehouse->id,
+                    'warehouse_code'      => $targetWarehouse->code,
+                    'category'            => $p->board?->price_group ?: 'Tấm ván',
+                    'unit'                => 'Tấm',
+                    'item_type'           => 'board',
+                    'cost_price'          => 0,
+                    'initial_stock'       => (float)($p->stock ?? 0),
+                    'current_stock'       => (float)($p->stock ?? 0),
+                    'wood_board_id'       => $p->wood_board_id,
+                    'wood_board_price_id' => $p->id,
+                    'status'              => 'active',
+                ]);
+                $materialsCreated++;
+            }
+
+            // Đồng bộ tồn kho: Lấy từ Kho vật tư sang Bảng giá tấm
+            if ($mat && (float)$p->stock != (float)$mat->current_stock) {
+                $p->stock = (float)$mat->current_stock;
+                $p->save();
+                $pricesSynced++;
+            }
+        }
+
+        // Đồng bộ WoodBoard (Tổng tồn ván và Tồn chỉ dán viền)
+        $allBoards = WoodBoard::with('prices')->get();
+        foreach ($allBoards as $b) {
+            $sumStock = $b->prices->sum('stock');
+            $b->current_stock = $sumStock;
+
+            // Ánh xạ chỉ dán viền
+            $cleanCode = strtoupper(trim(str_replace('*', '', $b->color_code)));
+            $matchedEdge = null;
+            foreach ($edgeMaterials as $em) {
+                $emCode = strtoupper($em->code);
+                $emName = strtoupper($em->name);
+                if ($emCode === "CHI-$cleanCode" || $emCode === "ASA.CHI.23.$cleanCode") {
+                    $matchedEdge = $em;
+                    break;
+                }
+                if (preg_match('/(^|[^A-Z0-9])' . preg_quote($cleanCode, '/') . '([^A-Z0-9]|$)/i', $emName . ' ' . $emCode)) {
+                    $matchedEdge = $em;
+                    break;
+                }
+            }
+
+            if ($matchedEdge) {
+                if (!$matchedEdge->wood_board_id) {
+                    $matchedEdge->wood_board_id = $b->id;
+                    $matchedEdge->save();
+                    $edgeBandsLinked++;
+                }
+                $b->edge_band_current_stock = (float)$matchedEdge->current_stock;
+                $b->edge_band_cost_price = (float)$matchedEdge->cost_price;
+            }
+
+            $b->save();
+            $boardsSynced++;
+        }
+
+        return [
+            'success'          => true,
+            'prices_synced'    => $pricesSynced,
+            'boards_synced'    => $boardsSynced,
+            'materials_created'=> $materialsCreated,
+            'materials_linked' => $materialsLinked,
+            'edge_bands_linked'=> $edgeBandsLinked,
+        ];
+    }
 }
