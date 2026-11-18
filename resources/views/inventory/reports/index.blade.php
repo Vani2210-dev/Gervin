@@ -133,6 +133,23 @@
                                     @endforeach
                                 </select>
                             </div>
+
+                            {{-- Lọc trạng thái phát sinh (Tối ưu tải trang) --}}
+                            <div class="flex items-center gap-1.5 text-xs text-neutral-600 font-semibold bg-white border border-neutral-200 rounded-lg px-2.5 py-1 shadow-2xs">
+                                <iconify-icon icon="solar:filter-bold" class="text-neutral-400 text-sm"></iconify-icon>
+                                <span class="text-neutral-500 whitespace-nowrap font-medium">Lọc:</span>
+                                <select name="filter_stock" onchange="this.form.submit()" class="border-0 bg-transparent text-xs font-bold text-neutral-800 focus:ring-0 p-0 pr-4 cursor-pointer">
+                                    <option value="has_activity" {{ ($matrixFilter ?? '') === 'has_activity' ? 'selected' : '' }}>Có phát sinh / tồn kho</option>
+                                    <option value="all" {{ ($matrixFilter ?? '') === 'all' ? 'selected' : '' }}>Tất cả vật tư</option>
+                                </select>
+                            </div>
+
+                            {{-- Ô tìm kiếm --}}
+                            <div class="relative">
+                                <input type="text" name="search" value="{{ $search }}" placeholder="Tìm mã SKU hoặc tên..." 
+                                       class="form-input rounded-lg pl-8 pr-3 py-1 border-neutral-200 text-xs font-medium text-neutral-800 w-44 md:w-52 h-[30px] bg-white shadow-2xs">
+                                <iconify-icon icon="solar:magnifer-linear" class="absolute left-2.5 top-2 text-neutral-400 text-xs"></iconify-icon>
+                            </div>
                         </div>
                     </form>
                 @endif
@@ -417,8 +434,19 @@
                 <div class="p-6">
                     <div class="mb-4 flex flex-wrap items-center justify-between gap-4">
                         <div>
-                            <h6 class="font-black text-neutral-800 text-base mb-1">Ma trận Nhập - Xuất - Tồn 12 Tháng Năm {{ $year }}</h6>
-                            <p class="text-xs text-neutral-500 mb-0">Cấu trúc chuẩn theo sổ sách theo dõi tiêu thụ định kỳ của kế toán.</p>
+                            <div class="flex items-center gap-2 mb-1">
+                                <h6 class="font-black text-neutral-800 text-base mb-0">Ma trận Nhập - Xuất - Tồn 12 Tháng Năm {{ $year }}</h6>
+                                <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full {{ ($matrixFilter ?? '') === 'has_activity' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-neutral-100 text-neutral-700' }}">
+                                    Hiển thị {{ count($matrixRows) }} / {{ $totalMaterialsCount ?? count($matrixRows) }} vật tư
+                                </span>
+                            </div>
+                            <p class="text-xs text-neutral-500 mb-0">
+                                @if(($matrixFilter ?? '') === 'has_activity')
+                                    Tự động ẩn các mã vật tư không có số dư đầu năm và không phát sinh giao dịch trong năm {{ $year }} để tối ưu tốc độ.
+                                @else
+                                    Đang hiển thị toàn bộ danh mục vật tư.
+                                @endif
+                            </p>
                         </div>
                         <div class="flex items-center gap-4 text-xs font-semibold">
                             <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-emerald-100 border border-emerald-400"></span> Nhận (Nhập kho)</span>
@@ -458,7 +486,7 @@
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-neutral-100 bg-white">
-                                    @foreach($matrixRows as $row)
+                                    @forelse($matrixRows as $row)
                                         <tr class="hover:bg-neutral-50 transition-colors">
                                             <td class="py-2 px-2 text-center text-neutral-500 font-medium sticky left-0 z-10 bg-white">
                                                 {{ $row['stt'] }}
@@ -503,7 +531,19 @@
                                                 {{ fmod($row['final_stock'], 1) == 0 ? number_format($row['final_stock'], 0, ',', '.') : number_format($row['final_stock'], 2, ',', '.') }}
                                             </td>
                                         </tr>
-                                    @endforeach
+                                    @empty
+                                        <tr>
+                                            <td colspan="44" class="py-12 text-center text-neutral-400">
+                                                <div class="flex flex-col items-center justify-center gap-2">
+                                                    <iconify-icon icon="solar:box-minimalistic-linear" class="text-3xl text-neutral-300"></iconify-icon>
+                                                    <span class="text-xs font-medium">Không có vật tư nào có phát sinh hoặc tồn kho trong năm {{ $year }}.</span>
+                                                    <a href="{{ route('inventory.reports.index', array_filter(['tab' => 'matrix', 'year' => $year, 'warehouse_id' => $warehouseId, 'filter_stock' => 'all'])) }}" class="text-xs text-primary-600 hover:underline font-semibold">
+                                                        Bấm vào đây để xem tất cả danh mục vật tư
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @endforelse
                                 </tbody>
                                 <tfoot class="sticky bottom-0 z-20">
                                     <tr class="bg-neutral-800 text-white font-black border-t-2 border-neutral-600 text-xs">

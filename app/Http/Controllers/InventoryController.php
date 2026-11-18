@@ -1587,6 +1587,9 @@ class InventoryController extends Controller
      */
     public function reports(Request $request)
     {
+        ini_set('memory_limit', '512M');
+        set_time_limit(120);
+
         $tab = $request->input('tab', 'summary'); // 'summary', 'detail', or 'matrix'
         $dateFilter = $this->getDateFilterParams($request);
         if ($request->has('date_preset') || $request->has('start_date') || $request->has('end_date') || $request->has('date_mode')) {
@@ -1625,57 +1628,59 @@ class InventoryController extends Controller
         // -------------------------------------------------------------
         $reportData = [];
 
-        // Aggregate start stock before $startDate
-        $startQuery = InventoryTransaction::where('date', '<', $startDate);
-        if ($warehouseId) {
-            $startQuery->where('warehouse_id', $warehouseId);
-        }
-        $startStockMap = $startQuery->selectRaw('material_id, SUM(in_qty - out_qty) as total')
-            ->whereNotNull('material_id')
-            ->groupBy('material_id')
-            ->pluck('total', 'material_id')
-            ->toArray();
-
-        // Aggregate in/out in period [$startDate, $endDate]
-        $periodQuery = InventoryTransaction::whereBetween('date', [$startDate, $endDate]);
-        if ($warehouseId) {
-            $periodQuery->where('warehouse_id', $warehouseId);
-        }
-        $periodTx = $periodQuery->selectRaw('material_id, SUM(in_qty) as total_in, SUM(out_qty) as total_out')
-            ->whereNotNull('material_id')
-            ->groupBy('material_id')
-            ->get()
-            ->keyBy('material_id');
-
-        foreach ($materials as $m) {
-            $startStock = (float)($startStockMap[$m->id] ?? 0);
-            $inQty = isset($periodTx[$m->id]) ? (float)$periodTx[$m->id]->total_in : 0.0;
-            $outQty = isset($periodTx[$m->id]) ? (float)$periodTx[$m->id]->total_out : 0.0;
-            $endStock = $startStock + $inQty - $outQty;
-
-            if ($startStock == 0 && $inQty == 0 && $outQty == 0 && (float)$m->current_stock > 0) {
-                $endStock = (float)$m->current_stock;
-                $startStock = (float)$m->current_stock;
+        if ($tab === 'summary') {
+            // Aggregate start stock before $startDate
+            $startQuery = InventoryTransaction::where('date', '<', $startDate);
+            if ($warehouseId) {
+                $startQuery->where('warehouse_id', $warehouseId);
             }
+            $startStockMap = $startQuery->selectRaw('material_id, SUM(in_qty - out_qty) as total')
+                ->whereNotNull('material_id')
+                ->groupBy('material_id')
+                ->pluck('total', 'material_id')
+                ->toArray();
 
-            if ($filterStock === 'has_stock' && $endStock <= 0) {
-                continue;
+            // Aggregate in/out in period [$startDate, $endDate]
+            $periodQuery = InventoryTransaction::whereBetween('date', [$startDate, $endDate]);
+            if ($warehouseId) {
+                $periodQuery->where('warehouse_id', $warehouseId);
             }
-            if ($filterStock === 'has_movement' && $inQty == 0 && $outQty == 0) {
-                continue;
-            }
+            $periodTx = $periodQuery->selectRaw('material_id, SUM(in_qty) as total_in, SUM(out_qty) as total_out')
+                ->whereNotNull('material_id')
+                ->groupBy('material_id')
+                ->get()
+                ->keyBy('material_id');
 
-            $reportData[] = [
-                'material'    => $m,
-                'sku'         => $m->code,
-                'name'        => $m->name,
-                'unit'        => $m->unit ?: ($isEdgeBand ? 'm' : 'Tấm'),
-                'is_edge_band'=> $isEdgeBand || $m->isEdgeBand(),
-                'start_stock' => $startStock,
-                'in_qty'      => $inQty,
-                'out_qty'     => $outQty,
-                'end_stock'   => $endStock,
-            ];
+            foreach ($materials as $m) {
+                $startStock = (float)($startStockMap[$m->id] ?? 0);
+                $inQty = isset($periodTx[$m->id]) ? (float)$periodTx[$m->id]->total_in : 0.0;
+                $outQty = isset($periodTx[$m->id]) ? (float)$periodTx[$m->id]->total_out : 0.0;
+                $endStock = $startStock + $inQty - $outQty;
+
+                if ($startStock == 0 && $inQty == 0 && $outQty == 0 && (float)$m->current_stock > 0) {
+                    $endStock = (float)$m->current_stock;
+                    $startStock = (float)$m->current_stock;
+                }
+
+                if ($filterStock === 'has_stock' && $endStock <= 0) {
+                    continue;
+                }
+                if ($filterStock === 'has_movement' && $inQty == 0 && $outQty == 0) {
+                    continue;
+                }
+
+                $reportData[] = [
+                    'material'    => $m,
+                    'sku'         => $m->code,
+                    'name'        => $m->name,
+                    'unit'        => $m->unit ?: ($isEdgeBand ? 'm' : 'Tấm'),
+                    'is_edge_band'=> $isEdgeBand || $m->isEdgeBand(),
+                    'start_stock' => $startStock,
+                    'in_qty'      => $inQty,
+                    'out_qty'     => $outQty,
+                    'end_stock'   => $endStock,
+                ];
+            }
         }
 
         // -------------------------------------------------------------
@@ -1756,7 +1761,10 @@ class InventoryController extends Controller
                 ];
             }
 
-            foreach ($materials as $idx => $m) {
+            $matrixFilter = $request->input('filter_stock', 'has_activity');
+            $sttCounter = 1;
+
+            foreach ($materials as $m) {
                 $initYearStock = (float)($initYearStockMap[$m->id] ?? 0);
                 if ($initYearStock == 0 && empty($matMonthlyMap[$m->id]) && (float)$m->current_stock > 0 && $year == (int)date('Y')) {
                     $initYearStock = (float)$m->current_stock;
@@ -1781,8 +1789,18 @@ class InventoryController extends Controller
                     $colTotals['months'][$month]['stock'] += $running;
                 }
 
+                $colTotals['start_stock'] += $initYearStock;
+                $colTotals['total_in'] += $totalYearIn;
+                $colTotals['total_out'] += $totalYearOut;
+                $colTotals['final_stock'] += $running;
+
+                $hasActivity = ($initYearStock != 0 || $totalYearIn != 0 || $totalYearOut != 0 || $running != 0);
+                if ($matrixFilter === 'has_activity' && !$hasActivity) {
+                    continue;
+                }
+
                 $matrixRows[] = [
-                    'stt'           => $idx + 1,
+                    'stt'           => $sttCounter++,
                     'material_id'   => $m->id,
                     'code'          => $m->code,
                     'name'          => $m->name,
@@ -1796,11 +1814,6 @@ class InventoryController extends Controller
                     'total_year_out'=> $totalYearOut,
                     'final_stock'   => $running,
                 ];
-
-                $colTotals['start_stock'] += $initYearStock;
-                $colTotals['total_in'] += $totalYearIn;
-                $colTotals['total_out'] += $totalYearOut;
-                $colTotals['final_stock'] += $running;
             }
         }
 
@@ -1813,6 +1826,9 @@ class InventoryController extends Controller
             $availableYears[] = (int)date('Y');
         }
         rsort($availableYears);
+
+        $matrixFilter = $request->input('filter_stock', 'has_activity');
+        $totalMaterialsCount = $materials->count();
 
         return view('inventory.reports.index', compact(
             'tab',
@@ -1829,6 +1845,8 @@ class InventoryController extends Controller
             'availableYears',
             'search',
             'filterStock',
+            'matrixFilter',
+            'totalMaterialsCount',
             'detailTransactions',
             'selectedDetailMaterial'
         ));
@@ -1839,6 +1857,9 @@ class InventoryController extends Controller
      */
     public function exportReport(Request $request)
     {
+        ini_set('memory_limit', '512M');
+        set_time_limit(120);
+
         $dateFilter = $this->getDateFilterParams($request);
         if ($request->has('date_preset') || $request->has('start_date') || $request->has('end_date') || $request->has('date_mode')) {
             $startDate = $dateFilter['start_date'] ?? '2000-01-01';
@@ -1958,6 +1979,9 @@ class InventoryController extends Controller
      */
     public function exportMatrixReport(Request $request)
     {
+        ini_set('memory_limit', '512M');
+        set_time_limit(120);
+
         $year = (int)$request->input('year', date('Y'));
         $warehouseId = $request->input('warehouse_id');
         $selectedWarehouse = $warehouseId ? Warehouse::find($warehouseId) : null;
