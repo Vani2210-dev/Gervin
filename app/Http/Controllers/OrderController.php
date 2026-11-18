@@ -389,7 +389,21 @@ class OrderController extends Controller
             ]);
         }
 
-        $query = Order::where('order_code', $code);
+        $cleanBase = Order::stripDraftOrderCode($code);
+        $cleanBase = preg_replace('/[._-]?NK$/i', '', $cleanBase);
+
+        $candidateCodes = array_values(array_unique(array_filter([
+            $code,
+            $cleanBase,
+            Order::formatDraftOrderCode($cleanBase),
+            Order::formatNhapKhoOrderCode($cleanBase),
+            $cleanBase . '.D',
+            $cleanBase . '.NK',
+            $cleanBase . '-D',
+            $cleanBase . '_D',
+        ])));
+
+        $query = Order::whereIn('order_code', $candidateCodes);
         if ($orderId) {
             $query->where('id', '!=', $orderId);
         }
@@ -398,7 +412,7 @@ class OrderController extends Controller
         return response()->json([
             'exists'  => $exists,
             'code'    => $code,
-            'message' => $exists ? "Mã đơn hàng '{$code}' đã tồn tại trong hệ thống!" : 'Mã hợp lệ'
+            'message' => $exists ? "Mã đơn hàng '{$code}' đã tồn tại trong hệ thống (hoặc đang có đơn nháp trùng mã)!" : 'Mã hợp lệ'
         ]);
     }
 
@@ -899,40 +913,11 @@ class OrderController extends Controller
         }
 
         $isNhapKho = $this->isRequestNhapKho($request, $order);
-        $isDraftAction = $request->input('action') === 'draft';
         if ($isNhapKho && !empty($order->order_code) && !preg_match('/[._-]?NK$/i', $order->order_code)) {
             $order->order_code = Order::formatNhapKhoOrderCode($order->order_code);
             $order->saveQuietly();
         }
 
-        if ($request->filled('order_code')) {
-            $customCode = trim((string)$request->order_code);
-            if ($isNhapKho) {
-                $customCode = Order::formatNhapKhoOrderCode($customCode);
-            } elseif ($isDraftAction || $order->status === 'draft') {
-                $customCode = Order::formatDraftOrderCode($customCode);
-            } else {
-                $customCode = Order::stripDraftOrderCode($customCode);
-            }
-            $request->merge(['order_code' => $customCode]);
-            $exists = Order::where('order_code', $customCode)
-                ->where('id', '!=', $order->id)
-                ->exists();
-            if ($exists) {
-                return redirect()->back()
-                    ->withInput()
-                    ->withErrors(['order_code' => "Mã đơn hàng '{$customCode}' đã tồn tại trong hệ thống. Vui lòng nhập mã khác."])
-                    ->with('error', "Mã đơn hàng '{$customCode}' đã tồn tại trong hệ thống. Vui lòng nhập mã khác.");
-            }
-            $order->order_code = $customCode;
-            $order->save();
-        } elseif ($isNhapKho && !preg_match('/[._-]?NK$/i', $order->order_code)) {
-            $order->order_code = Order::formatNhapKhoOrderCode($order->order_code);
-            $order->save();
-        } elseif (($isDraftAction || $order->status === 'draft') && !preg_match('/[._-]?D$/i', $order->order_code)) {
-            $order->order_code = Order::formatDraftOrderCode($order->order_code);
-            $order->save();
-        }
         $order->load(['supplies.items', 'supplies.minLateItems', 'supplies.glassItems', 'paymentDetails']);
         $acrylicOrder = $order;
         $isDraftCreate = false;
@@ -945,367 +930,402 @@ class OrderController extends Controller
 
     public function store(Request $request)
     {
-        if ($request->filled('supplies_json')) {
-            $supplies = json_decode($request->input('supplies_json'), true);
-            if (is_array($supplies)) {
-                $supplies = $this->cleanEmptyStrings($supplies);
-                $supplies = $this->sanitizeSuppliesFormulas($supplies);
+        try {
+            if ($request->filled('supplies_json')) {
+                $supplies = json_decode($request->input('supplies_json'), true);
+                if (is_array($supplies)) {
+                    $supplies = $this->cleanEmptyStrings($supplies);
+                    $supplies = $this->sanitizeSuppliesFormulas($supplies);
+                    $request->merge(['supplies' => $supplies]);
+                }
+            } elseif ($request->has('supplies') && is_array($request->supplies)) {
+                $supplies = $this->cleanEmptyStrings($request->supplies);
                 $request->merge(['supplies' => $supplies]);
             }
-        } elseif ($request->has('supplies') && is_array($request->supplies)) {
-            $supplies = $this->cleanEmptyStrings($request->supplies);
-            $request->merge(['supplies' => $supplies]);
-        }
-        $this->sanitizePaymentDetailsFormulas($request);
-        if ($request->has('payment_details') && is_array($request->payment_details)) {
-            $filteredDetails = array_values(array_filter($request->payment_details, function ($item) {
-                return is_array($item) && !empty(trim($item['name'] ?? ''));
-            }));
-            $request->merge(['payment_details' => $filteredDetails]);
-        }
-
-        $request->validate([
-            'draft_order_id' => 'required|integer',
-            'type' => 'required|in:acrylic,glass,min_late,Flywood,service',
-        ]);
-
-        $draftOrder = Order::where('status', 'draft')->findOrFail($request->draft_order_id);
-        $isNhapKho = $this->isRequestNhapKho($request, $draftOrder);
-        $isDraftSave = $request->input('action') === 'draft';
-
-        if ($request->filled('order_code')) {
-            $customCode = trim((string)$request->order_code);
-            if ($isNhapKho) {
-                $customCode = Order::formatNhapKhoOrderCode($customCode);
-            } elseif ($isDraftSave) {
-                $customCode = Order::formatDraftOrderCode($customCode);
-            } else {
-                $customCode = Order::stripDraftOrderCode($customCode);
+            $this->sanitizePaymentDetailsFormulas($request);
+            if ($request->has('payment_details') && is_array($request->payment_details)) {
+                $filteredDetails = array_values(array_filter($request->payment_details, function ($item) {
+                    return is_array($item) && !empty(trim($item['name'] ?? ''));
+                }));
+                $request->merge(['payment_details' => $filteredDetails]);
             }
-            $request->merge(['order_code' => $customCode]);
 
-            $exists = Order::where('order_code', $customCode)
+            $request->validate([
+                'draft_order_id' => 'required|integer',
+                'type' => 'required|in:acrylic,glass,min_late,Flywood,service',
+            ]);
+
+            $draftOrder = Order::where('status', 'draft')->findOrFail($request->draft_order_id);
+            $isNhapKho = $this->isRequestNhapKho($request, $draftOrder);
+            $isDraftSave = $request->input('action') === 'draft';
+
+            // Chuẩn hóa và kiểm tra trùng lặp mã đơn hàng trên tất cả biến thể
+            $customCode = trim((string)$request->input('order_code', $draftOrder->order_code));
+            $baseCode = Order::stripDraftOrderCode($customCode);
+            $baseCode = preg_replace('/[._-]?NK$/i', '', $baseCode);
+
+            if ($isNhapKho) {
+                $finalCode = Order::formatNhapKhoOrderCode($baseCode);
+            } elseif ($isDraftSave) {
+                $finalCode = Order::formatDraftOrderCode($baseCode);
+            } else {
+                $finalCode = $baseCode;
+            }
+            $request->merge(['order_code' => $finalCode]);
+
+            $candidateCodes = array_values(array_unique(array_filter([
+                $finalCode,
+                $baseCode,
+                Order::formatDraftOrderCode($baseCode),
+                Order::formatNhapKhoOrderCode($baseCode),
+                $baseCode . '.D',
+                $baseCode . '.NK',
+                $baseCode . '-D',
+                $baseCode . '_D',
+            ])));
+
+            $exists = Order::whereIn('order_code', $candidateCodes)
                 ->where('id', '!=', $draftOrder->id)
                 ->exists();
+
             if ($exists) {
                 return redirect()->back()
                     ->withInput()
-                    ->withErrors(['order_code' => "Mã đơn hàng '{$customCode}' đã tồn tại trong hệ thống. Vui lòng nhập mã khác."])
-                    ->with('error', "Mã đơn hàng '{$customCode}' đã tồn tại trong hệ thống. Vui lòng nhập mã khác.");
+                    ->withErrors(['order_code' => "Mã đơn hàng '{$finalCode}' đã tồn tại trong hệ thống (hoặc đang có đơn nháp trùng mã). Vui lòng nhập mã khác."])
+                    ->with('error', "Mã đơn hàng '{$finalCode}' đã tồn tại trong hệ thống. Vui lòng nhập mã khác.");
             }
-            $draftOrder->order_code = $customCode;
-            $draftOrder->save();
-        } elseif ($isNhapKho && !preg_match('/[._-]?NK$/i', $draftOrder->order_code)) {
-            $draftOrder->order_code = Order::formatNhapKhoOrderCode($draftOrder->order_code);
-            $draftOrder->save();
-        } elseif ($isDraftSave && !preg_match('/[._-]?D$/i', $draftOrder->order_code)) {
-            $draftOrder->order_code = Order::formatDraftOrderCode($draftOrder->order_code);
-            $draftOrder->save();
-        }
 
-        $user = auth()->user();
-        if ($user && !$user->canViewAllMarketGroups() && $request->filled('customer_id')) {
-            $cust = \App\Models\Customer::find($request->customer_id);
-            if ($cust && !$cust->isAccessibleBy($user)) {
-                abort(403, 'Bạn chỉ có thể tạo đơn cho khách hàng thuộc nhóm thị trường của mình.');
-            }
-        }
+            $draftOrder->order_code = $finalCode;
 
-        if ($draftOrder->type !== $request->type) {
-            abort(422, 'Loại đơn không khớp với đơn nháp.');
-        }
-
-        $service = $this->serviceFor($request->type);
-
-        if ($isDraftSave) {
-            $request->merge(['status' => 'draft']);
-        } else {
-            // Xác nhận đơn từ đơn nháp sang đơn thường: gỡ bỏ hậu tố .D nếu có
-            $cleanCode = Order::stripDraftOrderCode($draftOrder->order_code);
-            if ($isNhapKho) {
-                $cleanCode = Order::formatNhapKhoOrderCode($cleanCode);
-            }
-            $draftOrder->order_code = $cleanCode;
-            $request->merge(['order_code' => $cleanCode]);
-
-            // Cập nhật lại ngày giờ tạo đơn theo đúng thời điểm gửi đơn
-            $now = \Carbon\Carbon::now('Asia/Ho_Chi_Minh');
-            $request->merge(['order_date' => $now->format('Y-m-d H:i:s')]);
-            $draftOrder->order_date = $now;
-            $draftOrder->created_at = $now;
-            $draftOrder->save();
-
-            // Tính lại hạn giao hàng (deadline) dựa trên ngày giờ chốt đơn mới + số ngày giao
-            if ($request->filled('delivery_days') && (float)$request->delivery_days > 0) {
-                $deliveryDays = (float) $request->delivery_days;
-                $fullDays = floor($deliveryDays);
-                $fraction = $deliveryDays - $fullDays;
-                $hours = round($fraction * 24);
-                $deadline = $now->copy()->addDays($fullDays)->addHours($hours);
-                $request->merge(['deadline' => $deadline->format('Y-m-d H:i:s')]);
-            }
-        }
-
-        $rules = $service->getStoreRules();
-        if ($isDraftSave) {
-            foreach ($rules as $k => $v) {
-                if (is_string($v) && str_contains($v, 'required')) {
-                    $rules[$k] = str_replace(['required|', '|required', 'required'], ['nullable|', '', 'nullable'], $v);
+            $user = auth()->user();
+            if ($user && !$user->canViewAllMarketGroups() && $request->filled('customer_id')) {
+                $cust = \App\Models\Customer::find($request->customer_id);
+                if ($cust && !$cust->isAccessibleBy($user)) {
+                    abort(403, 'Bạn chỉ có thể tạo đơn cho khách hàng thuộc nhóm thị trường của mình.');
                 }
             }
-            if (!$request->filled('customer_name')) {
-                $request->merge(['customer_name' => 'Đơn nháp ' . $draftOrder->order_code]);
+
+            if ($draftOrder->type !== $request->type) {
+                abort(422, 'Loại đơn không khớp với đơn nháp.');
             }
+
+            $service = $this->serviceFor($request->type);
+
+            if ($isDraftSave) {
+                $request->merge(['status' => 'draft']);
+            } else {
+                // Xác nhận đơn từ đơn nháp sang đơn thường: gỡ bỏ hậu tố .D nếu có
+                $cleanCode = Order::stripDraftOrderCode($draftOrder->order_code);
+                if ($isNhapKho) {
+                    $cleanCode = Order::formatNhapKhoOrderCode($cleanCode);
+                }
+                $draftOrder->order_code = $cleanCode;
+                $request->merge(['order_code' => $cleanCode]);
+
+                // Cập nhật lại ngày giờ tạo đơn theo đúng thời điểm gửi đơn
+                $now = \Carbon\Carbon::now('Asia/Ho_Chi_Minh');
+                $request->merge(['order_date' => $now->format('Y-m-d H:i:s')]);
+                $draftOrder->order_date = $now;
+                $draftOrder->created_at = $now;
+
+                // Tính lại hạn giao hàng (deadline) dựa trên ngày giờ chốt đơn mới + số ngày giao
+                if ($request->filled('delivery_days') && (float)$request->delivery_days > 0) {
+                    $deliveryDays = (float) $request->delivery_days;
+                    $fullDays = floor($deliveryDays);
+                    $fraction = $deliveryDays - $fullDays;
+                    $hours = round($fraction * 24);
+                    $deadline = $now->copy()->addDays($fullDays)->addHours($hours);
+                    $request->merge(['deadline' => $deadline->format('Y-m-d H:i:s')]);
+                }
+            }
+
+            $rules = $service->getStoreRules();
+            if ($isDraftSave) {
+                foreach ($rules as $k => $v) {
+                    if (is_string($v) && str_contains($v, 'required')) {
+                        $rules[$k] = str_replace(['required|', '|required', 'required'], ['nullable|', '', 'nullable'], $v);
+                    }
+                }
+                if (!$request->filled('customer_name')) {
+                    $request->merge(['customer_name' => 'Đơn nháp ' . $draftOrder->order_code]);
+                }
+            }
+
+            if ($request->status === 'transferred') {
+                return redirect()->back()->with('error', 'Đơn hàng mới tạo cần được Kế toán duyệt trước khi Kỹ thuật duyệt chuyển sản xuất.');
+            }
+
+            $request->validate($rules);
+            $service->update($request, $draftOrder);
+
+            if (!$isDraftSave) {
+                $now = \Carbon\Carbon::now('Asia/Ho_Chi_Minh');
+                $draftOrder->created_at = $now;
+                $draftOrder->saveQuietly();
+            }
+
+            if ($isDraftSave) {
+                return redirect()->route('orders.index', ['filter_status' => 'draft'])->with('success', 'Đã lưu đơn nháp thành công.');
+            }
+
+            try {
+                \App\Services\NotificationService::notifyOrderCreated($draftOrder);
+            } catch (\Throwable $e) {
+                \Log::error('Notification error on order create: ' . $e->getMessage());
+            }
+
+            return redirect()->route('orders.index')->with('success', 'Tạo đơn hàng thành công.');
+        } catch (\Illuminate\Database\UniqueConstraintViolationException | \Illuminate\Database\QueryException $e) {
+            $msg = $e->getMessage();
+            if (str_contains($msg, '1062') || str_contains($msg, 'Duplicate entry') || $e->getCode() == 23000) {
+                $code = $request->input('order_code', '');
+                return redirect()->back()
+                    ->withInput()
+                    ->withErrors(['order_code' => "Mã đơn hàng '{$code}' đã tồn tại trong hệ thống. Vui lòng nhập mã khác."])
+                    ->with('error', "Mã đơn hàng '{$code}' đã tồn tại trong hệ thống. Vui lòng kiểm tra lại mã đơn.");
+            }
+            throw $e;
         }
-
-        if ($request->status === 'transferred') {
-            return redirect()->back()->with('error', 'Đơn hàng mới tạo cần được Kế toán duyệt trước khi Kỹ thuật duyệt chuyển sản xuất.');
-        }
-
-        $request->validate($rules);
-        $service->update($request, $draftOrder);
-
-        if (!$isDraftSave) {
-            $now = \Carbon\Carbon::now('Asia/Ho_Chi_Minh');
-            $draftOrder->created_at = $now;
-            $draftOrder->saveQuietly();
-        }
-
-        if ($isDraftSave) {
-            return redirect()->route('orders.index', ['filter_status' => 'draft'])->with('success', 'Đã lưu đơn nháp thành công.');
-        }
-
-        try {
-            \App\Services\NotificationService::notifyOrderCreated($draftOrder);
-        } catch (\Throwable $e) {
-            \Log::error('Notification error on order create: ' . $e->getMessage());
-        }
-
-        return redirect()->route('orders.index')->with('success', 'Tạo đơn hàng thành công.');
     }
 
     public function update(Request $request, Order $order)
     {
-        $user = auth()->user();
-        if ($user && !$user->canViewAllMarketGroups()) {
-            if (!$order->customer || !$order->customer->isAccessibleBy($user)) {
-                abort(403, 'Bạn không có quyền truy cập đơn hàng này.');
-            }
-            if ($request->filled('customer_id')) {
-                $targetCust = \App\Models\Customer::find($request->customer_id);
-                if ($targetCust && !$targetCust->isAccessibleBy($user)) {
-                    abort(403, 'Bạn chỉ có thể chọn khách hàng thuộc nhóm thị trường của mình.');
+        try {
+            $user = auth()->user();
+            if ($user && !$user->canViewAllMarketGroups()) {
+                if (!$order->customer || !$order->customer->isAccessibleBy($user)) {
+                    abort(403, 'Bạn không có quyền truy cập đơn hàng này.');
+                }
+                if ($request->filled('customer_id')) {
+                    $targetCust = \App\Models\Customer::find($request->customer_id);
+                    if ($targetCust && !$targetCust->isAccessibleBy($user)) {
+                        abort(403, 'Bạn chỉ có thể chọn khách hàng thuộc nhóm thị trường của mình.');
+                    }
                 }
             }
-        }
 
-        if ($order->isLockedForEdit($user)) {
-            $msg = 'Đơn hàng đã được Kế toán duyệt (hoặc đã chuyển sản xuất). Vui lòng liên hệ Kế toán bấm "Yêu cầu sửa" để mở khóa chỉnh sửa.';
-            if ($order->status === 'cancelled') {
-                $msg = 'Đơn hàng đã bị hủy, không thể chỉnh sửa.';
-            } elseif (in_array($order->status, ['in_production', 'completed'])) {
-                $msg = 'Đơn hàng đang trong quá trình sản xuất hoặc đã hoàn thành, chỉ Admin mới có quyền điều chỉnh.';
+            if ($order->isLockedForEdit($user)) {
+                $msg = 'Đơn hàng đã được Kế toán duyệt (hoặc đã chuyển sản xuất). Vui lòng liên hệ Kế toán bấm "Yêu cầu sửa" để mở khóa chỉnh sửa.';
+                if ($order->status === 'cancelled') {
+                    $msg = 'Đơn hàng đã bị hủy, không thể chỉnh sửa.';
+                } elseif (in_array($order->status, ['in_production', 'completed'])) {
+                    $msg = 'Đơn hàng đang trong quá trình sản xuất hoặc đã hoàn thành, chỉ Admin mới có quyền điều chỉnh.';
+                }
+                return redirect()->route('orders.show', $order)->with('error', $msg);
             }
-            return redirect()->route('orders.show', $order)->with('error', $msg);
-        }
 
-        $isNhapKho = $this->isRequestNhapKho($request, $order);
-        $isDraftAction = $request->input('action') === 'draft';
-        if ($isNhapKho && !empty($order->order_code) && !preg_match('/[._-]?NK$/i', $order->order_code)) {
-            $order->order_code = Order::formatNhapKhoOrderCode($order->order_code);
-            $order->saveQuietly();
-        }
+            $isNhapKho = $this->isRequestNhapKho($request, $order);
+            $isDraftAction = $request->input('action') === 'draft';
 
-        if ($request->filled('order_code')) {
-            $customCode = trim((string)$request->order_code);
+            // Chuẩn hóa và kiểm tra trùng lặp mã đơn hàng trên tất cả biến thể
+            $customCode = trim((string)$request->input('order_code', $order->order_code));
+            $baseCode = Order::stripDraftOrderCode($customCode);
+            $baseCode = preg_replace('/[._-]?NK$/i', '', $baseCode);
+
             if ($isNhapKho) {
-                $customCode = Order::formatNhapKhoOrderCode($customCode);
+                $finalCode = Order::formatNhapKhoOrderCode($baseCode);
             } elseif ($isDraftAction || $order->status === 'draft') {
-                $customCode = Order::formatDraftOrderCode($customCode);
+                $finalCode = Order::formatDraftOrderCode($baseCode);
             } else {
-                $customCode = Order::stripDraftOrderCode($customCode);
+                $finalCode = $baseCode;
             }
-            $request->merge(['order_code' => $customCode]);
-            $exists = Order::where('order_code', $customCode)
+            $request->merge(['order_code' => $finalCode]);
+
+            $candidateCodes = array_values(array_unique(array_filter([
+                $finalCode,
+                $baseCode,
+                Order::formatDraftOrderCode($baseCode),
+                Order::formatNhapKhoOrderCode($baseCode),
+                $baseCode . '.D',
+                $baseCode . '.NK',
+                $baseCode . '-D',
+                $baseCode . '_D',
+            ])));
+
+            $exists = Order::whereIn('order_code', $candidateCodes)
                 ->where('id', '!=', $order->id)
                 ->exists();
+
             if ($exists) {
                 return redirect()->back()
                     ->withInput()
-                    ->withErrors(['order_code' => "Mã đơn hàng '{$customCode}' đã tồn tại trong hệ thống. Vui lòng nhập mã khác."])
-                    ->with('error', "Mã đơn hàng '{$customCode}' đã tồn tại trong hệ thống. Vui lòng nhập mã khác.");
+                    ->withErrors(['order_code' => "Mã đơn hàng '{$finalCode}' đã tồn tại trong hệ thống (hoặc đang có đơn nháp trùng mã). Vui lòng nhập mã khác."])
+                    ->with('error', "Mã đơn hàng '{$finalCode}' đã tồn tại trong hệ thống. Vui lòng nhập mã khác.");
             }
-            $order->order_code = $customCode;
-            $order->save();
-        } elseif ($isNhapKho && !preg_match('/[._-]?NK$/i', $order->order_code)) {
-            $order->order_code = Order::formatNhapKhoOrderCode($order->order_code);
-            $order->save();
-        } elseif (($isDraftAction || $order->status === 'draft') && !preg_match('/[._-]?D$/i', $order->order_code)) {
-            $order->order_code = Order::formatDraftOrderCode($order->order_code);
-            $order->save();
-        }
 
-        if ($request->filled('supplies_json')) {
-            $supplies = json_decode($request->input('supplies_json'), true);
-            if (is_array($supplies)) {
-                $supplies = $this->cleanEmptyStrings($supplies);
-                $supplies = $this->sanitizeSuppliesFormulas($supplies);
+            $order->order_code = $finalCode;
+
+            if ($request->filled('supplies_json')) {
+                $supplies = json_decode($request->input('supplies_json'), true);
+                if (is_array($supplies)) {
+                    $supplies = $this->cleanEmptyStrings($supplies);
+                    $supplies = $this->sanitizeSuppliesFormulas($supplies);
+                    $request->merge(['supplies' => $supplies]);
+                }
+            } elseif ($request->has('supplies') && is_array($request->supplies)) {
+                $supplies = $this->cleanEmptyStrings($request->supplies);
                 $request->merge(['supplies' => $supplies]);
             }
-        } elseif ($request->has('supplies') && is_array($request->supplies)) {
-            $supplies = $this->cleanEmptyStrings($request->supplies);
-            $request->merge(['supplies' => $supplies]);
-        }
-        $this->sanitizePaymentDetailsFormulas($request);
-        if ($request->has('payment_details') && is_array($request->payment_details)) {
-            $filteredDetails = array_values(array_filter($request->payment_details, function ($item) {
-                return is_array($item) && !empty(trim($item['name'] ?? ''));
-            }));
-            $request->merge(['payment_details' => $filteredDetails]);
-        }
-
-        $wasDraftBefore = $order->status === 'draft';
-        $isDraftSave = $request->input('action') === 'draft' || ($request->status === 'draft' && $order->status === 'draft');
-        if ($isDraftSave) {
-            $request->merge(['status' => 'draft']);
-        } elseif ($wasDraftBefore) {
-            // Xác nhận đơn từ đơn nháp sang đơn thường: Cập nhật lại ngày giờ tạo đơn theo đúng thời điểm gửi đơn
-            $now = \Carbon\Carbon::now('Asia/Ho_Chi_Minh');
-            $request->merge(['order_date' => $now->format('Y-m-d H:i:s')]);
-            $order->order_date = $now;
-            $order->created_at = $now;
-            $order->save();
-
-            // Tính lại hạn giao hàng (deadline) dựa trên ngày giờ chốt đơn mới + số ngày giao
-            if ($request->filled('delivery_days') && (float)$request->delivery_days > 0) {
-                $deliveryDays = (float) $request->delivery_days;
-                $fullDays = floor($deliveryDays);
-                $fraction = $deliveryDays - $fullDays;
-                $hours = round($fraction * 24);
-                $deadline = $now->copy()->addDays($fullDays)->addHours($hours);
-                $request->merge(['deadline' => $deadline->format('Y-m-d H:i:s')]);
+            $this->sanitizePaymentDetailsFormulas($request);
+            if ($request->has('payment_details') && is_array($request->payment_details)) {
+                $filteredDetails = array_values(array_filter($request->payment_details, function ($item) {
+                    return is_array($item) && !empty(trim($item['name'] ?? ''));
+                }));
+                $request->merge(['payment_details' => $filteredDetails]);
             }
-        }
 
-        $service = $this->serviceFor($request->type);
-        $rules = $service->getUpdateRules();
+            $wasDraftBefore = $order->status === 'draft';
+            $isDraftSave = $request->input('action') === 'draft' || ($request->status === 'draft' && $order->status === 'draft');
+            if ($isDraftSave) {
+                $request->merge(['status' => 'draft']);
+            } elseif ($wasDraftBefore) {
+                // Xác nhận đơn từ đơn nháp sang đơn thường: Cập nhật lại ngày giờ tạo đơn theo đúng thời điểm gửi đơn
+                $now = \Carbon\Carbon::now('Asia/Ho_Chi_Minh');
+                $request->merge(['order_date' => $now->format('Y-m-d H:i:s')]);
+                $order->order_date = $now;
+                $order->created_at = $now;
 
-        if ($isDraftSave) {
-            foreach ($rules as $k => $v) {
-                if (is_string($v) && str_contains($v, 'required')) {
-                    $rules[$k] = str_replace(['required|', '|required', 'required'], ['nullable|', '', 'nullable'], $v);
+                // Tính lại hạn giao hàng (deadline) dựa trên ngày giờ chốt đơn mới + số ngày giao
+                if ($request->filled('delivery_days') && (float)$request->delivery_days > 0) {
+                    $deliveryDays = (float) $request->delivery_days;
+                    $fullDays = floor($deliveryDays);
+                    $fraction = $deliveryDays - $fullDays;
+                    $hours = round($fraction * 24);
+                    $deadline = $now->copy()->addDays($fullDays)->addHours($hours);
+                    $request->merge(['deadline' => $deadline->format('Y-m-d H:i:s')]);
                 }
             }
-            if (!$request->filled('customer_name')) {
-                $request->merge(['customer_name' => 'Đơn nháp ' . $order->order_code]);
-            }
-        }
 
-        if ($request->status === 'transferred') {
-            if (!auth()->user()->canApproveTechnicalOrder()) {
-                return redirect()->back()->withInput()->with('error', 'Chỉ tài khoản có vai trò/quyền Kỹ thuật mới được duyệt chuyển sản xuất. Kế toán và các role khác không được duyệt.');
-            }
-            if (!$order->accountant_approved_by) {
-                return redirect()->back()->withInput()->with('error', 'Đơn hàng cần được Kế toán duyệt trước khi Kỹ thuật duyệt chuyển sản xuất.');
-            }
-        } elseif ($request->status === 'accountant_approve') {
-            if (!auth()->user()->canApproveAccountantOrder()) {
-                return redirect()->back()->withInput()->with('error', 'Chỉ tài khoản có vai trò/quyền Kế toán mới được duyệt đơn hàng.');
-            }
-        }
+            $service = $this->serviceFor($request->type);
+            $rules = $service->getUpdateRules();
 
-        $request->validate($rules);
-        $service->update($request, $order);
+            if ($isDraftSave) {
+                foreach ($rules as $k => $v) {
+                    if (is_string($v) && str_contains($v, 'required')) {
+                        $rules[$k] = str_replace(['required|', '|required', 'required'], ['nullable|', '', 'nullable'], $v);
+                    }
+                }
+                if (!$request->filled('customer_name')) {
+                    $request->merge(['customer_name' => 'Đơn nháp ' . $order->order_code]);
+                }
+            }
 
-        if ($wasDraftBefore && !$isDraftSave) {
-            $now = \Carbon\Carbon::now('Asia/Ho_Chi_Minh');
-            $order->created_at = $now;
-            $order->saveQuietly();
-        }
+            if ($request->status === 'transferred') {
+                if (!auth()->user()->canApproveTechnicalOrder()) {
+                    return redirect()->back()->withInput()->with('error', 'Chỉ tài khoản có vai trò/quyền Kỹ thuật mới được duyệt chuyển sản xuất. Kế toán và các role khác không được duyệt.');
+                }
+                if (!$order->accountant_approved_by) {
+                    return redirect()->back()->withInput()->with('error', 'Đơn hàng cần được Kế toán duyệt trước khi Kỹ thuật duyệt chuyển sản xuất.');
+                }
+            } elseif ($request->status === 'accountant_approve') {
+                if (!auth()->user()->canApproveAccountantOrder()) {
+                    return redirect()->back()->withInput()->with('error', 'Chỉ tài khoản có vai trò/quyền Kế toán mới được duyệt đơn hàng.');
+                }
+            }
 
-        if ($request->status === 'transferred') {
-            if (!auth()->user()->canApproveTechnicalOrder()) {
-                return redirect()->back()->with('error', 'Chỉ tài khoản có vai trò/quyền Kỹ thuật mới được duyệt chuyển sản xuất. Kế toán và các role khác không được duyệt.');
+            $request->validate($rules);
+            $service->update($request, $order);
+
+            if ($wasDraftBefore && !$isDraftSave) {
+                $now = \Carbon\Carbon::now('Asia/Ho_Chi_Minh');
+                $order->created_at = $now;
+                $order->saveQuietly();
             }
-            if (!$order->accountant_approved_by) {
-                return redirect()->back()->with('error', 'Đơn hàng cần được Kế toán duyệt trước khi Kỹ thuật duyệt chuyển sản xuất.');
-            }
-            $order->technical_approved_by = auth()->id();
-            $order->technical_approved_at = now();
-            $order->status = 'transferred';
-            $order->edit_reason = null;
-            $order->rejected_by = null;
-            $order->rejected_at = null;
-            $order->rejected_step = null;
-            $order->save();
-        } elseif ($request->status === 'accountant_approve') {
-            if (!auth()->user()->canApproveAccountantOrder()) {
-                return redirect()->back()->with('error', 'Chỉ tài khoản có vai trò/quyền Kế toán mới được duyệt đơn hàng.');
-            }
-            $order->accountant_approved_by = auth()->id();
-            $order->accountant_approved_at = now();
-            if ($order->rejected_step === 'accountant') {
+
+            if ($request->status === 'transferred') {
+                if (!auth()->user()->canApproveTechnicalOrder()) {
+                    return redirect()->back()->with('error', 'Chỉ tài khoản có vai trò/quyền Kỹ thuật mới được duyệt chuyển sản xuất. Kế toán và các role khác không được duyệt.');
+                }
+                if (!$order->accountant_approved_by) {
+                    return redirect()->back()->with('error', 'Đơn hàng cần được Kế toán duyệt trước khi Kỹ thuật duyệt chuyển sản xuất.');
+                }
+                $order->technical_approved_by = auth()->id();
+                $order->technical_approved_at = now();
+                $order->status = 'transferred';
+                $order->edit_reason = null;
                 $order->rejected_by = null;
                 $order->rejected_at = null;
                 $order->rejected_step = null;
-                $order->edit_reason = null;
+                $order->save();
+            } elseif ($request->status === 'accountant_approve') {
+                if (!auth()->user()->canApproveAccountantOrder()) {
+                    return redirect()->back()->with('error', 'Chỉ tài khoản có vai trò/quyền Kế toán mới được duyệt đơn hàng.');
+                }
+                $order->accountant_approved_by = auth()->id();
+                $order->accountant_approved_at = now();
+                if ($order->rejected_step === 'accountant') {
+                    $order->rejected_by = null;
+                    $order->rejected_at = null;
+                    $order->rejected_step = null;
+                    $order->edit_reason = null;
+                }
+                if (!$order->technical_approved_by && $order->status === 'transferred') {
+                    $order->status = 'pending';
+                }
+                $order->save();
             }
-            if (!$order->technical_approved_by && $order->status === 'transferred') {
-                $order->status = 'pending';
+
+            if ($isDraftSave) {
+                return redirect()->route('orders.index', ['filter_status' => 'draft'])->with('success', 'Đã lưu đơn nháp thành công.');
             }
-            $order->save();
-        }
 
-        if ($isDraftSave) {
-            return redirect()->route('orders.index', ['filter_status' => 'draft'])->with('success', 'Đã lưu đơn nháp thành công.');
-        }
+            // Nếu đơn hàng trước đó đang trong luồng Kế toán yêu cầu sửa và Sale vừa sửa xong:
+            $wasRequestedEdit = !empty($order->edit_reason) || !empty($order->rejected_step);
+            if ($wasRequestedEdit) {
+                $order->update([
+                    'edit_reason' => null,
+                    'rejected_by' => null,
+                    'rejected_at' => null,
+                    'rejected_step' => null,
+                    'status' => 'pending',
+                    'accountant_approved_by' => null,
+                    'accountant_approved_at' => null,
+                    'technical_approved_by' => null,
+                    'technical_approved_at' => null,
+                ]);
 
-        // Nếu đơn hàng trước đó đang trong luồng Kế toán yêu cầu sửa và Sale vừa sửa xong:
-        $wasRequestedEdit = !empty($order->edit_reason) || !empty($order->rejected_step);
-        if ($wasRequestedEdit) {
-            $order->update([
-                'edit_reason' => null,
-                'rejected_by' => null,
-                'rejected_at' => null,
-                'rejected_step' => null,
-                'status' => 'pending',
-                'accountant_approved_by' => null,
-                'accountant_approved_at' => null,
-                'technical_approved_by' => null,
-                'technical_approved_at' => null,
-            ]);
+                // Bắn thông báo cho Kế toán để duyệt lại
+                try {
+                    $recipients = \App\Services\NotificationService::getOrderNotificationRecipients($order);
+                    \App\Services\NotificationService::createNotification([
+                        'sender_id'   => auth()->id(),
+                        'type'        => 'order_status_changed',
+                        'title'       => "Đơn {$order->order_code} đã sửa xong (Chờ duyệt lại)",
+                        'content'     => "Sale vừa chỉnh sửa lại đơn {$order->order_code} theo yêu cầu, vui lòng Kế toán kiểm tra và duyệt lại.",
+                        'link'        => route('orders.show', $order),
+                        'target_type' => 'order_stakeholders',
+                        'target_ids'  => $recipients,
+                        'data'        => [
+                            'order_id'   => $order->id,
+                            'order_code' => $order->order_code,
+                            'action'     => 'resubmitted_for_approval',
+                        ],
+                    ], $recipients);
+                } catch (\Throwable $e) {
+                    \Log::error('Notification error on order resubmit: ' . $e->getMessage());
+                }
 
-            // Bắn thông báo cho Kế toán để duyệt lại
+                return redirect()->route('orders.show', $order)->with('success', 'Đã lưu chỉnh sửa đơn hàng thành công! Đơn hàng đã được chuyển về trạng thái Chờ duyệt để Kế toán duyệt lại.');
+            }
+
             try {
-                $recipients = \App\Services\NotificationService::getOrderNotificationRecipients($order);
-                \App\Services\NotificationService::createNotification([
-                    'sender_id'   => auth()->id(),
-                    'type'        => 'order_status_changed',
-                    'title'       => "Đơn {$order->order_code} đã sửa xong (Chờ duyệt lại)",
-                    'content'     => "Sale vừa chỉnh sửa lại đơn {$order->order_code} theo yêu cầu, vui lòng Kế toán kiểm tra và duyệt lại.",
-                    'link'        => route('orders.show', $order),
-                    'target_type' => 'order_stakeholders',
-                    'target_ids'  => $recipients,
-                    'data'        => [
-                        'order_id'   => $order->id,
-                        'order_code' => $order->order_code,
-                        'action'     => 'resubmitted_for_approval',
-                    ],
-                ], $recipients);
+                \App\Services\NotificationService::notifyOrderUpdated($order);
             } catch (\Throwable $e) {
-                \Log::error('Notification error on order resubmit: ' . $e->getMessage());
+                \Log::error('Notification error on order update: ' . $e->getMessage());
             }
 
-            return redirect()->route('orders.show', $order)->with('success', 'Đã lưu chỉnh sửa đơn hàng thành công! Đơn hàng đã được chuyển về trạng thái Chờ duyệt để Kế toán duyệt lại.');
+            return redirect()->route('orders.index')->with('success', 'Cập nhật đơn hàng thành công.');
+        } catch (\Illuminate\Database\UniqueConstraintViolationException | \Illuminate\Database\QueryException $e) {
+            $msg = $e->getMessage();
+            if (str_contains($msg, '1062') || str_contains($msg, 'Duplicate entry') || $e->getCode() == 23000) {
+                $code = $request->input('order_code', '');
+                return redirect()->back()
+                    ->withInput()
+                    ->withErrors(['order_code' => "Mã đơn hàng '{$code}' đã tồn tại trong hệ thống. Vui lòng nhập mã khác."])
+                    ->with('error', "Mã đơn hàng '{$code}' đã tồn tại trong hệ thống. Vui lòng kiểm tra lại mã đơn.");
+            }
+            throw $e;
         }
-
-        try {
-            \App\Services\NotificationService::notifyOrderUpdated($order);
-        } catch (\Throwable $e) {
-            \Log::error('Notification error on order update: ' . $e->getMessage());
-        }
-
-        return redirect()->route('orders.index')->with('success', 'Cập nhật đơn hàng thành công.');
     }
 
     public function updateStatus(Request $request, Order $order)
