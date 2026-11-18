@@ -23,145 +23,118 @@
         {{-- Main Container Card --}}
         <div class="card p-0 rounded-xl border-0 bg-white shadow-sm mb-6">
             {{-- Header Toolbar & Tab Switcher --}}
-            <div class="p-4 border-b border-neutral-200 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
-                <div class="flex items-center gap-2 bg-neutral-100 p-1 rounded-xl whitespace-nowrap flex-shrink-0 overflow-x-auto max-w-full">
+            <div class="px-5 py-3 border-b border-neutral-200 flex flex-col md:flex-row md:items-center justify-between gap-3">
+                <div class="flex items-center gap-1.5 bg-neutral-100 p-1 rounded-xl whitespace-nowrap overflow-x-auto max-w-full">
                     <a href="{{ route('inventory.reports.index', array_filter(['tab' => 'summary', 'start_date' => $startDate, 'end_date' => $endDate, 'warehouse_id' => $warehouseId])) }}" 
-                       class="px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap flex-shrink-0 {{ $tab === 'summary' ? 'bg-white text-primary-600 shadow-sm' : 'text-neutral-600 hover:text-neutral-900' }}">
-                        <iconify-icon icon="solar:chart-square-bold" class="text-base"></iconify-icon>
+                       class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap flex-shrink-0 {{ $tab === 'summary' ? 'bg-white text-primary-600 shadow-sm' : 'text-neutral-600 hover:text-neutral-900' }}">
+                        <iconify-icon icon="solar:chart-square-bold" class="text-sm"></iconify-icon>
                         <span>Báo cáo Xuất - Nhập - Tồn tổng hợp</span>
                     </a>
                     <a href="{{ route('inventory.reports.index', array_filter(['tab' => 'detail', 'start_date' => $startDate, 'end_date' => $endDate, 'warehouse_id' => $warehouseId])) }}" 
-                       class="px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap flex-shrink-0 {{ $tab === 'detail' ? 'bg-white text-primary-600 shadow-sm' : 'text-neutral-600 hover:text-neutral-900' }}">
-                        <iconify-icon icon="solar:document-text-bold" class="text-base"></iconify-icon>
-                        <span>Báo cáo Chi tiết phát sinh (Sổ chi tiết)</span>
+                       class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap flex-shrink-0 {{ $tab === 'detail' ? 'bg-white text-primary-600 shadow-sm' : 'text-neutral-600 hover:text-neutral-900' }}">
+                        <iconify-icon icon="solar:document-text-bold" class="text-sm"></iconify-icon>
+                        <span>Sổ chi tiết phát sinh</span>
                     </a>
                     <a href="{{ route('inventory.reports.index', array_filter(['tab' => 'matrix', 'year' => $year, 'warehouse_id' => $warehouseId])) }}" 
-                       class="px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap flex-shrink-0 {{ $tab === 'matrix' ? 'bg-white text-primary-600 shadow-sm' : 'text-neutral-600 hover:text-neutral-900' }}">
-                        <iconify-icon icon="solar:calendar-date-bold" class="text-base"></iconify-icon>
-                        <span>Ma trận Tiêu thụ 12 Tháng Kế toán</span>
+                       class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap flex-shrink-0 {{ $tab === 'matrix' ? 'bg-white text-primary-600 shadow-sm' : 'text-neutral-600 hover:text-neutral-900' }}">
+                        <iconify-icon icon="solar:calendar-date-bold" class="text-sm"></iconify-icon>
+                        <span>Ma trận Tiêu thụ 12 Tháng</span>
                     </a>
                 </div>
 
-                {{-- Action / Export Filter --}}
-                <div class="flex items-center gap-3 flex-wrap">
+                {{-- Action Export --}}
+                <div class="flex items-center gap-2 flex-shrink-0">
                     @if($tab === 'summary')
-                        <div class="flex flex-wrap items-center gap-3">
-                            <form action="{{ route('inventory.reports.index') }}" method="GET" class="flex items-center gap-2 flex-wrap">
-                                <input type="hidden" name="tab" value="summary">
-                                @if(request('date_preset')) <input type="hidden" name="date_preset" value="{{ request('date_preset') }}"> @endif
-                                @if(request('start_date')) <input type="hidden" name="start_date" value="{{ request('start_date') }}"> @endif
-                                @if(request('end_date')) <input type="hidden" name="end_date" value="{{ request('end_date') }}"> @endif
-                                <div class="flex items-center gap-1.5 text-xs text-neutral-600 font-medium whitespace-nowrap flex-shrink-0">
-                                    <span class="whitespace-nowrap font-semibold">Kho:</span>
-                                    <select name="warehouse_id" onchange="this.form.submit()" class="form-select rounded-lg px-2.5 py-2 border-neutral-200 text-xs font-semibold text-neutral-800">
-                                        <option value="">-- Tất cả các kho --</option>
-                                        @foreach($warehouses as $wh)
-                                            <option value="{{ $wh->id }}" {{ (string)$warehouseId === (string)$wh->id ? 'selected' : '' }}>{{ $wh->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="relative">
-                                    <input type="text" name="search" value="{{ $search }}" placeholder="Tìm mã hoặc tên..." class="form-input rounded-lg pl-8 pr-3 py-2 border-neutral-200 text-xs font-medium text-neutral-800 w-44">
-                                    <iconify-icon icon="solar:magnifer-linear" class="absolute left-2.5 top-2.5 text-neutral-400 text-sm"></iconify-icon>
-                                </div>
-                            </form>
+                        <a href="{{ route('inventory.reports.export', array_filter(['date_preset' => request('date_preset'), 'start_date' => request('start_date', $startDate), 'end_date' => request('end_date', $endDate), 'warehouse_id' => $warehouseId, 'search' => $search])) }}" 
+                           class="btn bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm whitespace-nowrap">
+                            <iconify-icon icon="solar:document-medicine-bold" class="text-base"></iconify-icon>
+                            <span>Xuất Excel</span>
+                        </a>
+                    @elseif($tab === 'matrix')
+                        <a href="{{ route('inventory.reports.export-matrix', array_filter(['year' => $year, 'warehouse_id' => $warehouseId])) }}" 
+                           class="btn bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm whitespace-nowrap">
+                            <iconify-icon icon="solar:document-medicine-bold" class="text-base"></iconify-icon>
+                            <span>Xuất Ma trận Excel</span>
+                        </a>
+                    @endif
+                </div>
+            </div>
 
-                            {{-- Bộ lọc ngày tháng chung --}}
-                            <x-date-filter :action="route('inventory.reports.index')" />
+            {{-- Filter Bar: Gọn gàng trên 1 hàng (Kho hàng + Tìm kiếm + Bộ lọc ngày) --}}
+            <div class="px-5 py-2.5 bg-neutral-50/70 border-b border-neutral-200">
+                @if($tab === 'summary' || $tab === 'detail')
+                    <form id="report_filter_form" action="{{ route('inventory.reports.index') }}" method="GET" class="flex items-center justify-between flex-wrap gap-2.5">
+                        <input type="hidden" name="tab" value="{{ $tab }}">
+                        @if($tab === 'detail' && request('material_id'))
+                            <input type="hidden" name="material_id" value="{{ request('material_id') }}">
+                        @endif
 
-                            <a href="{{ route('inventory.reports.export', array_filter(['date_preset' => request('date_preset'), 'start_date' => request('start_date', $startDate), 'end_date' => request('end_date', $endDate), 'warehouse_id' => $warehouseId])) }}" class="btn bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm whitespace-nowrap flex-shrink-0">
-                                <iconify-icon icon="solar:document-medicine-bold" class="text-base"></iconify-icon>
-                                <span>Xuất Excel</span>
-                            </a>
-                        </div>
-                    @elseif($tab === 'detail')
-                        <div class="flex flex-wrap items-center gap-3">
-                            <form action="{{ route('inventory.reports.index') }}" method="GET" class="flex items-center gap-2 flex-wrap">
-                                <input type="hidden" name="tab" value="detail">
-                                @if(request('date_preset')) <input type="hidden" name="date_preset" value="{{ request('date_preset') }}"> @endif
-                                @if(request('start_date')) <input type="hidden" name="start_date" value="{{ request('start_date') }}"> @endif
-                                @if(request('end_date')) <input type="hidden" name="end_date" value="{{ request('end_date') }}"> @endif
-                                @if(request('material_id')) <input type="hidden" name="material_id" value="{{ request('material_id') }}"> @endif
-                                <div class="flex items-center gap-1.5 text-xs text-neutral-600 font-medium whitespace-nowrap flex-shrink-0">
-                                    <span class="whitespace-nowrap font-semibold">Kho:</span>
-                                    <select name="warehouse_id" onchange="this.form.submit()" class="form-select rounded-lg px-2.5 py-2 border-neutral-200 text-xs font-semibold text-neutral-800">
-                                        <option value="">-- Tất cả các kho --</option>
-                                        @foreach($warehouses as $wh)
-                                            <option value="{{ $wh->id }}" {{ (string)$warehouseId === (string)$wh->id ? 'selected' : '' }}>{{ $wh->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="relative">
-                                    <input type="text" name="search" value="{{ $search }}" placeholder="Tìm số phiếu, mã..." class="form-input rounded-lg pl-8 pr-3 py-2 border-neutral-200 text-xs font-medium text-neutral-800 w-44">
-                                    <iconify-icon icon="solar:magnifer-linear" class="absolute left-2.5 top-2.5 text-neutral-400 text-sm"></iconify-icon>
-                                </div>
-                            </form>
-
-                            {{-- Bộ lọc ngày tháng chung --}}
-                            <x-date-filter :action="route('inventory.reports.index')" />
-                        </div>
-                    @else
-                        <form action="{{ route('inventory.reports.index') }}" method="GET" class="flex flex-wrap items-center gap-3">
-                            <input type="hidden" name="tab" value="matrix">
-                            <div class="flex items-center gap-1.5 text-xs text-neutral-600 font-medium whitespace-nowrap flex-shrink-0">
-                                <span class="whitespace-nowrap font-semibold">Kho:</span>
-                                <select name="warehouse_id" onchange="this.form.submit()" class="form-select rounded-lg px-2.5 py-2 border-neutral-200 text-xs font-semibold text-neutral-800">
-                                    <option value="">-- Tất cả các kho --</option>
+                        <div class="flex items-center gap-2.5 flex-wrap">
+                            {{-- Chọn kho hàng (Dropdown gọn gàng) --}}
+                            <div class="flex items-center gap-1.5 text-xs text-neutral-600 font-semibold bg-white border border-neutral-200 rounded-lg px-2.5 py-1 shadow-2xs">
+                                <iconify-icon icon="solar:box-minimalistic-bold" class="text-neutral-400 text-sm"></iconify-icon>
+                                <span class="text-neutral-500 whitespace-nowrap font-medium">Kho:</span>
+                                <select name="warehouse_id" onchange="this.form.submit()" class="border-0 bg-transparent text-xs font-bold text-neutral-800 focus:ring-0 p-0 pr-4 cursor-pointer">
+                                    <option value="">-- Tất cả kho ({{ $warehouses->count() }}) --</option>
                                     @foreach($warehouses as $wh)
-                                        <option value="{{ $wh->id }}" {{ (string)$warehouseId === (string)$wh->id ? 'selected' : '' }}>{{ $wh->name }}</option>
+                                        <option value="{{ $wh->id }}" {{ (string)$warehouseId === (string)$wh->id ? 'selected' : '' }}>
+                                            {{ $wh->name }}
+                                        </option>
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="flex items-center gap-1.5 text-xs text-neutral-600 font-medium whitespace-nowrap flex-shrink-0">
-                                <span class="whitespace-nowrap font-semibold">Năm:</span>
-                                <select name="year" onchange="this.form.submit()" class="form-select rounded-lg px-3 py-2 border-neutral-200 text-xs font-bold text-neutral-800">
+
+                            @if($isEdgeBand)
+                                <span class="text-[11px] font-bold text-purple-700 bg-purple-100 px-2 py-0.5 rounded-md border border-purple-200 flex items-center gap-1">
+                                    <iconify-icon icon="solar:ruler-angular-bold"></iconify-icon>
+                                    ĐVT: Mét (m)
+                                </span>
+                            @endif
+
+                            {{-- Ô tìm kiếm --}}
+                            <div class="relative">
+                                <input type="text" name="search" value="{{ $search }}" placeholder="{{ $tab === 'detail' ? 'Tìm số phiếu, SKU...' : 'Tìm mã SKU hoặc tên...' }}" 
+                                       class="form-input rounded-lg pl-8 pr-3 py-1 border-neutral-200 text-xs font-medium text-neutral-800 w-48 md:w-56 h-[30px] bg-white shadow-2xs">
+                                <iconify-icon icon="solar:magnifer-linear" class="absolute left-2.5 top-2 text-neutral-400 text-xs"></iconify-icon>
+                            </div>
+                        </div>
+
+                        {{-- Bộ lọc ngày tháng gom chung form --}}
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <x-date-filter :action="route('inventory.reports.index')" :standalone="false" formId="report_filter_form" />
+                        </div>
+                    </form>
+                @else
+                    {{-- Tab matrix --}}
+                    <form id="matrix_filter_form" action="{{ route('inventory.reports.index') }}" method="GET" class="flex items-center justify-between flex-wrap gap-2.5">
+                        <input type="hidden" name="tab" value="matrix">
+                        <div class="flex items-center gap-2.5 flex-wrap">
+                            {{-- Chọn kho hàng --}}
+                            <div class="flex items-center gap-1.5 text-xs text-neutral-600 font-semibold bg-white border border-neutral-200 rounded-lg px-2.5 py-1 shadow-2xs">
+                                <iconify-icon icon="solar:box-minimalistic-bold" class="text-neutral-400 text-sm"></iconify-icon>
+                                <span class="text-neutral-500 whitespace-nowrap font-medium">Kho:</span>
+                                <select name="warehouse_id" onchange="this.form.submit()" class="border-0 bg-transparent text-xs font-bold text-neutral-800 focus:ring-0 p-0 pr-4 cursor-pointer">
+                                    <option value="">-- Tất cả kho ({{ $warehouses->count() }}) --</option>
+                                    @foreach($warehouses as $wh)
+                                        <option value="{{ $wh->id }}" {{ (string)$warehouseId === (string)$wh->id ? 'selected' : '' }}>
+                                            {{ $wh->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            {{-- Chọn năm --}}
+                            <div class="flex items-center gap-1.5 text-xs text-neutral-600 font-semibold bg-white border border-neutral-200 rounded-lg px-2.5 py-1 shadow-2xs">
+                                <iconify-icon icon="solar:calendar-date-bold" class="text-neutral-400 text-sm"></iconify-icon>
+                                <span class="text-neutral-500 whitespace-nowrap font-medium">Năm:</span>
+                                <select name="year" onchange="this.form.submit()" class="border-0 bg-transparent text-xs font-bold text-neutral-800 focus:ring-0 p-0 pr-4 cursor-pointer">
                                     @foreach($availableYears as $y)
                                         <option value="{{ $y }}" {{ $year == $y ? 'selected' : '' }}>Năm {{ $y }}</option>
                                     @endforeach
                                 </select>
                             </div>
-                            <a href="{{ route('inventory.reports.export-matrix', array_filter(['year' => $year, 'warehouse_id' => $warehouseId])) }}" class="btn bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 shadow-sm whitespace-nowrap flex-shrink-0">
-                                <iconify-icon icon="solar:document-medicine-bold" class="text-base"></iconify-icon>
-                                <span>Xuất Ma trận Excel</span>
-                            </a>
-                        </form>
-                    @endif
-                </div>
-            </div>
-
-            {{-- Thanh chuyển nhanh kho hàng (Kho Tấm Ván vs Kho Dán Chỉ) --}}
-            <div class="px-6 py-2.5 bg-neutral-50/80 border-b border-neutral-200/80 flex items-center justify-between flex-wrap gap-2">
-                <div class="flex items-center gap-1.5 flex-wrap">
-                    <span class="text-xs font-bold text-neutral-500 mr-1 flex items-center gap-1">
-                        <iconify-icon icon="solar:box-minimalistic-bold" class="text-neutral-400"></iconify-icon> Kho hàng:
-                    </span>
-                    <a href="{{ route('inventory.reports.index', array_filter(['tab' => $tab, 'date_preset' => request('date_preset'), 'start_date' => $startDate, 'end_date' => $endDate, 'year' => $year])) }}" 
-                       class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all {{ empty($warehouseId) ? 'bg-neutral-800 text-white shadow-xs' : 'bg-white text-neutral-600 border border-neutral-200 hover:bg-neutral-100' }}">
-                        Tất cả kho
-                    </a>
-                    @foreach($warehouses as $wh)
-                        @php
-                            $isEdge = in_array(strtoupper($wh->code), ['KHO-CHI', 'EDGE_BAND', 'CHI']);
-                            $isActive = (string)$warehouseId === (string)$wh->id;
-                        @endphp
-                        <a href="{{ route('inventory.reports.index', array_filter(['tab' => $tab, 'warehouse_id' => $wh->id, 'date_preset' => request('date_preset'), 'start_date' => $startDate, 'end_date' => $endDate, 'year' => $year])) }}"
-                           class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 {{ $isActive ? ($isEdge ? 'bg-purple-600 text-white shadow-xs' : 'bg-primary-600 text-white shadow-xs') : ($isEdge ? 'bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100' : 'bg-white text-neutral-700 border border-neutral-200 hover:bg-neutral-100') }}">
-                            <iconify-icon icon="{{ $isEdge ? 'solar:ruler-angular-bold' : 'solar:box-minimalistic-bold' }}" class="text-sm"></iconify-icon>
-                            <span>{{ $wh->name }}</span>
-                            @if($isEdge)
-                                <span class="text-[10px] px-1 py-0.2 rounded {{ $isActive ? 'bg-purple-500 text-white' : 'bg-purple-200 text-purple-800' }} font-bold">m</span>
-                            @else
-                                <span class="text-[10px] px-1 py-0.2 rounded {{ $isActive ? 'bg-primary-500 text-white' : 'bg-neutral-200 text-neutral-700' }} font-bold">Tấm</span>
-                            @endif
-                        </a>
-                    @endforeach
-                </div>
-
-                @if($isEdgeBand)
-                    <span class="text-xs font-semibold text-purple-700 bg-purple-100/90 px-2.5 py-1 rounded-md border border-purple-200 flex items-center gap-1">
-                        <iconify-icon icon="solar:info-circle-bold"></iconify-icon>
-                        Đang xem số liệu Nhận, Tiêu thụ & Tồn theo Mét (m) Kho Dán Chỉ
-                    </span>
+                        </div>
+                    </form>
                 @endif
             </div>
 
