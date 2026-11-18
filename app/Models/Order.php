@@ -11,6 +11,10 @@ class Order extends Model
     protected static function booted()
     {
         static::saving(function ($order) {
+            if ($order->order_code !== null && trim((string)$order->order_code) === '') {
+                $order->order_code = null;
+            }
+
             if ($order->isNhapKho() && !empty($order->order_code)) {
                 // Đơn nhập kho: loại bỏ hậu tố .D nếu có và đảm bảo có hậu tố .NK
                 $cleaned = static::stripDraftOrderCode($order->order_code);

@@ -1,7 +1,7 @@
 @extends('layout.layout')
 @php
     $title = 'Chi tiết đơn hàng';
-    $subTitle = 'Đơn hàng: ' . $acrylicOrder->order_code;
+    $subTitle = 'Đơn hàng: ' . ($acrylicOrder->order_code ?: ('Đơn nháp #' . $acrylicOrder->id));
 @endphp
 
 @section('content')
@@ -178,7 +178,13 @@
                             <iconify-icon icon="lucide:receipt" class="text-xl"></iconify-icon>
                         </div>
                         <div>
-                            <h5 class="font-bold text-lg text-neutral-800 m-0">{{ $acrylicOrder->order_code }}</h5>
+                            <h5 class="font-bold text-lg text-neutral-800 m-0">
+                                @if(!empty($acrylicOrder->order_code))
+                                    {{ $acrylicOrder->order_code }}
+                                @else
+                                    <span class="text-neutral-500 italic font-normal">Đơn nháp #{{ $acrylicOrder->id }}</span>
+                                @endif
+                            </h5>
                             <p class="text-xs text-neutral-400 m-0">Tạo ngày:
                                 {{ $acrylicOrder->created_at->format('d/m/Y H:i') }}</p>
                         </div>

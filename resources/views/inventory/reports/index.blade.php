@@ -30,6 +30,11 @@
                         <iconify-icon icon="solar:chart-square-bold" class="text-base"></iconify-icon>
                         <span>Báo cáo Xuất - Nhập - Tồn tổng hợp</span>
                     </a>
+                    <a href="{{ route('inventory.reports.index', array_filter(['tab' => 'detail', 'start_date' => $startDate, 'end_date' => $endDate, 'warehouse_id' => $warehouseId])) }}" 
+                       class="px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap flex-shrink-0 {{ $tab === 'detail' ? 'bg-white text-primary-600 shadow-sm' : 'text-neutral-600 hover:text-neutral-900' }}">
+                        <iconify-icon icon="solar:document-text-bold" class="text-base"></iconify-icon>
+                        <span>Báo cáo Chi tiết phát sinh (Sổ chi tiết)</span>
+                    </a>
                     <a href="{{ route('inventory.reports.index', array_filter(['tab' => 'matrix', 'year' => $year, 'warehouse_id' => $warehouseId])) }}" 
                        class="px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap flex-shrink-0 {{ $tab === 'matrix' ? 'bg-white text-primary-600 shadow-sm' : 'text-neutral-600 hover:text-neutral-900' }}">
                         <iconify-icon icon="solar:calendar-date-bold" class="text-base"></iconify-icon>
@@ -41,7 +46,7 @@
                 <div class="flex items-center gap-3 flex-wrap">
                     @if($tab === 'summary')
                         <div class="flex flex-wrap items-center gap-3">
-                            <form action="{{ route('inventory.reports.index') }}" method="GET" class="flex items-center gap-2">
+                            <form action="{{ route('inventory.reports.index') }}" method="GET" class="flex items-center gap-2 flex-wrap">
                                 <input type="hidden" name="tab" value="summary">
                                 @if(request('date_preset')) <input type="hidden" name="date_preset" value="{{ request('date_preset') }}"> @endif
                                 @if(request('start_date')) <input type="hidden" name="start_date" value="{{ request('start_date') }}"> @endif
@@ -55,6 +60,10 @@
                                         @endforeach
                                     </select>
                                 </div>
+                                <div class="relative">
+                                    <input type="text" name="search" value="{{ $search }}" placeholder="Tìm mã hoặc tên..." class="form-input rounded-lg pl-8 pr-3 py-2 border-neutral-200 text-xs font-medium text-neutral-800 w-44">
+                                    <iconify-icon icon="solar:magnifer-linear" class="absolute left-2.5 top-2.5 text-neutral-400 text-sm"></iconify-icon>
+                                </div>
                             </form>
 
                             {{-- Bộ lọc ngày tháng chung --}}
@@ -64,6 +73,32 @@
                                 <iconify-icon icon="solar:document-medicine-bold" class="text-base"></iconify-icon>
                                 <span>Xuất Excel</span>
                             </a>
+                        </div>
+                    @elseif($tab === 'detail')
+                        <div class="flex flex-wrap items-center gap-3">
+                            <form action="{{ route('inventory.reports.index') }}" method="GET" class="flex items-center gap-2 flex-wrap">
+                                <input type="hidden" name="tab" value="detail">
+                                @if(request('date_preset')) <input type="hidden" name="date_preset" value="{{ request('date_preset') }}"> @endif
+                                @if(request('start_date')) <input type="hidden" name="start_date" value="{{ request('start_date') }}"> @endif
+                                @if(request('end_date')) <input type="hidden" name="end_date" value="{{ request('end_date') }}"> @endif
+                                @if(request('material_id')) <input type="hidden" name="material_id" value="{{ request('material_id') }}"> @endif
+                                <div class="flex items-center gap-1.5 text-xs text-neutral-600 font-medium whitespace-nowrap flex-shrink-0">
+                                    <span class="whitespace-nowrap font-semibold">Kho:</span>
+                                    <select name="warehouse_id" onchange="this.form.submit()" class="form-select rounded-lg px-2.5 py-2 border-neutral-200 text-xs font-semibold text-neutral-800">
+                                        <option value="">-- Tất cả các kho --</option>
+                                        @foreach($warehouses as $wh)
+                                            <option value="{{ $wh->id }}" {{ (string)$warehouseId === (string)$wh->id ? 'selected' : '' }}>{{ $wh->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="relative">
+                                    <input type="text" name="search" value="{{ $search }}" placeholder="Tìm số phiếu, mã..." class="form-input rounded-lg pl-8 pr-3 py-2 border-neutral-200 text-xs font-medium text-neutral-800 w-44">
+                                    <iconify-icon icon="solar:magnifer-linear" class="absolute left-2.5 top-2.5 text-neutral-400 text-sm"></iconify-icon>
+                                </div>
+                            </form>
+
+                            {{-- Bộ lọc ngày tháng chung --}}
+                            <x-date-filter :action="route('inventory.reports.index')" />
                         </div>
                     @else
                         <form action="{{ route('inventory.reports.index') }}" method="GET" class="flex flex-wrap items-center gap-3">
@@ -242,9 +277,14 @@
                                                 {{ fmod($r['end_stock'], 1) == 0 ? number_format($r['end_stock'], 0, ',', '.') : number_format($r['end_stock'], 2, ',', '.') }}
                                             </td>
                                             <td class="py-3 px-3 text-center">
-                                                <button type="button" onclick="openStockCardModal({{ $r['material']->id }})" class="p-1 text-primary-600 hover:text-primary-800 hover:bg-primary-50 rounded" title="Xem thẻ kho">
-                                                    <iconify-icon icon="solar:history-bold" class="text-base"></iconify-icon>
-                                                </button>
+                                                <div class="flex items-center justify-center gap-1.5">
+                                                    <button type="button" onclick="openStockCardModal({{ $r['material']->id }})" class="p-1 text-primary-600 hover:text-primary-800 hover:bg-primary-50 rounded" title="Xem nhanh thẻ kho">
+                                                        <iconify-icon icon="solar:history-bold" class="text-base"></iconify-icon>
+                                                    </button>
+                                                    <a href="{{ route('inventory.reports.index', array_filter(['tab' => 'detail', 'material_id' => $r['material']->id, 'warehouse_id' => $warehouseId, 'start_date' => $startDate, 'end_date' => $endDate, 'date_preset' => request('date_preset')])) }}" class="p-1 text-neutral-500 hover:text-primary-700 hover:bg-neutral-100 rounded text-xs font-semibold" title="Xem sổ chi tiết phát sinh (Báo cáo chi tiết)">
+                                                        <iconify-icon icon="solar:document-text-linear" class="text-base"></iconify-icon>
+                                                    </a>
+                                                </div>
                                             </td>
                                         </tr>
                                     @empty
@@ -277,8 +317,130 @@
                         </div>
                     </div>
                 </div>
+            @elseif($tab === 'detail')
+                {{-- Tab 2 Content: Báo cáo Chi tiết phát sinh (Sổ chi tiết / Thẻ kho) --}}
+                <div class="p-6">
+                    @if($selectedDetailMaterial)
+                        <div class="mb-4 bg-primary-50/70 border border-primary-200 rounded-xl p-4 flex flex-wrap items-center justify-between gap-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-lg bg-primary-600 text-white flex items-center justify-center font-bold">
+                                    <iconify-icon icon="solar:box-minimalistic-bold" class="text-xl"></iconify-icon>
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-sm font-black text-neutral-900">{{ $selectedDetailMaterial->code }}</span>
+                                        <span class="text-xs text-neutral-500 font-medium">({{ $selectedDetailMaterial->origin ?: 'Không có mã NCC' }})</span>
+                                        <span class="bg-primary-100 text-primary-800 text-[10px] px-2 py-0.5 rounded font-bold">{{ $selectedDetailMaterial->category }}</span>
+                                    </div>
+                                    <div class="text-xs text-neutral-600 font-medium">{{ $selectedDetailMaterial->name }} - Kho: {{ $selectedDetailMaterial->warehouse?->name ?? 'Tất cả' }}</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <div class="text-right">
+                                    <span class="text-[10px] uppercase font-bold text-neutral-400 block">Tồn hiện tại</span>
+                                    <span class="text-lg font-black text-primary-700">
+                                        {{ fmod($selectedDetailMaterial->current_stock, 1) == 0 ? number_format($selectedDetailMaterial->current_stock, 0, ',', '.') : number_format($selectedDetailMaterial->current_stock, 2, ',', '.') }}
+                                        <span class="text-xs font-normal text-neutral-500">{{ $selectedDetailMaterial->unit }}</span>
+                                    </span>
+                                </div>
+                                <a href="{{ route('inventory.reports.index', array_filter(['tab' => 'detail', 'warehouse_id' => $warehouseId, 'start_date' => $startDate, 'end_date' => $endDate, 'date_preset' => request('date_preset')])) }}" class="btn btn-sm bg-white border border-neutral-300 hover:bg-neutral-100 text-neutral-700 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1">
+                                    <iconify-icon icon="solar:list-cross-linear" class="text-sm"></iconify-icon> Xem tất cả vật tư
+                                </a>
+                                <a href="{{ route('inventory.reports.index', array_filter(['tab' => 'summary', 'warehouse_id' => $warehouseId, 'start_date' => $startDate, 'end_date' => $endDate, 'date_preset' => request('date_preset')])) }}" class="btn btn-sm btn-primary px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1">
+                                    <iconify-icon icon="solar:arrow-left-linear" class="text-sm"></iconify-icon> Về Báo cáo tổng hợp
+                                </a>
+                            </div>
+                        </div>
+                    @else
+                        <div class="mb-4 flex flex-wrap items-center justify-between gap-4">
+                            <div>
+                                <h6 class="font-black text-neutral-800 text-base mb-1">Sổ Chi tiết Giao dịch Phát sinh Kho</h6>
+                                <p class="text-xs text-neutral-500 mb-0">Theo dõi toàn bộ lịch sử các phiếu Nhập (PNK), Xuất (PXK) và Cân bằng kiểm kê theo trình tự thời gian.</p>
+                            </div>
+                            <a href="{{ route('inventory.reports.index', array_filter(['tab' => 'summary', 'warehouse_id' => $warehouseId, 'start_date' => $startDate, 'end_date' => $endDate, 'date_preset' => request('date_preset')])) }}" class="btn btn-sm bg-neutral-100 hover:bg-neutral-200 text-neutral-800 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1">
+                                <iconify-icon icon="solar:chart-square-bold" class="text-sm"></iconify-icon> Xem Báo cáo tổng hợp
+                            </a>
+                        </div>
+                    @endif
+
+                    <div class="border border-neutral-200 rounded-xl overflow-hidden shadow-sm">
+                        <div class="overflow-x-auto w-full">
+                            <table class="w-full border-collapse text-xs text-left">
+                                <thead>
+                                    <tr class="bg-neutral-100 text-neutral-700 uppercase font-bold border-b border-neutral-200">
+                                        <th class="py-3 px-3 w-24">Ngày ghi sổ</th>
+                                        <th class="py-3 px-3 w-32">Số chứng từ</th>
+                                        <th class="py-3 px-3 w-28">Loại phát sinh</th>
+                                        <th class="py-3 px-3 min-w-[140px]">Mã vật tư</th>
+                                        <th class="py-3 px-4 min-w-[200px]">Diễn giải</th>
+                                        <th class="py-3 px-3 w-28 text-center">Kho</th>
+                                        <th class="py-3 px-3 w-24 text-right text-emerald-800 bg-emerald-50/50">Nhập</th>
+                                        <th class="py-3 px-3 w-24 text-right text-rose-800 bg-rose-50/50">Xuất</th>
+                                        <th class="py-3 px-3 w-28 text-right text-primary-900 bg-primary-50/50">Tồn sau GD</th>
+                                        <th class="py-3 px-3 w-28 text-neutral-600">Người lập</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-neutral-100 bg-white">
+                                    @forelse($detailTransactions as $t)
+                                        <tr class="hover:bg-neutral-50 transition-colors">
+                                            <td class="py-2.5 px-3 text-neutral-600 font-medium">{{ $t->date ? $t->date->format('d/m/Y') : '-' }}</td>
+                                            <td class="py-2.5 px-3 font-bold">
+                                                @if($t->edit_url)
+                                                    <a href="{{ $t->edit_url }}" target="_blank" class="inline-flex items-center gap-1 text-primary-600 hover:text-primary-800 hover:underline group" title="Mở chứng từ {{ $t->voucher_code }}">
+                                                        <span>{{ $t->voucher_code }}</span>
+                                                        <iconify-icon icon="solar:arrow-right-up-linear" class="text-xs text-neutral-400 group-hover:text-primary-600 transition-colors"></iconify-icon>
+                                                    </a>
+                                                @else
+                                                    <span class="text-neutral-800">{{ $t->voucher_code }}</span>
+                                                @endif
+                                            </td>
+                                            <td class="py-2.5 px-3">
+                                                @if($t->type === 'receipt')
+                                                    <span class="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded font-bold">Nhập kho</span>
+                                                @elseif($t->type === 'issue')
+                                                    <span class="bg-rose-100 text-rose-800 text-[10px] px-2 py-0.5 rounded font-bold">Xuất kho</span>
+                                                @elseif($t->type === 'stocktake')
+                                                    <span class="bg-amber-100 text-amber-900 text-[10px] px-2 py-0.5 rounded font-bold">Cân bằng KK</span>
+                                                @else
+                                                    <span class="bg-neutral-100 text-neutral-700 text-[10px] px-2 py-0.5 rounded font-bold">Đầu kỳ</span>
+                                                @endif
+                                            </td>
+                                            <td class="py-2.5 px-3">
+                                                <span class="font-bold text-neutral-900 block">{{ $t->material?->code ?? $t->item_sku }}</span>
+                                                <span class="text-[10px] text-neutral-400">{{ $t->material?->name ?? $t->item_name }}</span>
+                                            </td>
+                                            <td class="py-2.5 px-4 text-neutral-700">{{ $t->notes ?: '-' }}</td>
+                                            <td class="py-2.5 px-3 text-center text-neutral-600 font-medium">{{ $t->warehouse?->name ?: '-' }}</td>
+                                            <td class="py-2.5 px-3 text-right font-bold text-emerald-700 bg-emerald-50/20">
+                                                {{ $t->in_qty > 0 ? (fmod($t->in_qty, 1) == 0 ? number_format($t->in_qty, 0, ',', '.') : number_format($t->in_qty, 2, ',', '.')) : '-' }}
+                                            </td>
+                                            <td class="py-2.5 px-3 text-right font-bold text-rose-700 bg-rose-50/20">
+                                                {{ $t->out_qty > 0 ? (fmod($t->out_qty, 1) == 0 ? number_format($t->out_qty, 0, ',', '.') : number_format($t->out_qty, 2, ',', '.')) : '-' }}
+                                            </td>
+                                            <td class="py-2.5 px-3 text-right font-black text-neutral-900 bg-primary-50/20">
+                                                {{ fmod($t->stock_after, 1) == 0 ? number_format($t->stock_after, 0, ',', '.') : number_format($t->stock_after, 2, ',', '.') }}
+                                            </td>
+                                            <td class="py-2.5 px-3 text-neutral-500 text-[11px]">{{ $t->creator?->name ?: '-' }}</td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="10" class="py-8 text-center text-neutral-400 font-medium">
+                                                Không có phát sinh giao dịch nào trong khoảng thời gian này.
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                        @if($detailTransactions->hasPages())
+                            <div class="p-3 border-t border-neutral-200 bg-neutral-50 flex justify-end">
+                                {{ $detailTransactions->links() }}
+                            </div>
+                        @endif
+                    </div>
+                </div>
             @else
-                {{-- Tab 2 Content: Ma trận Tiêu thụ 12 Tháng Kế toán (Excel Style) --}}
+                {{-- Tab 3 Content: Ma trận Tiêu thụ 12 Tháng Kế toán (Excel Style) --}}
                 <div class="p-6">
                     <div class="mb-4 flex flex-wrap items-center justify-between gap-4">
                         <div>

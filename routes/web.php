@@ -296,10 +296,10 @@ Route::middleware(['auth'])->prefix('warehouses')->name('inventory.')->group(fun
     Route::post('/stocktakes/{stocktake}/balance', [InventoryController::class, 'balanceStocktake'])->name('stocktakes.balance');
     Route::delete('/stocktakes/{stocktake}', [InventoryController::class, 'destroyStocktake'])->name('stocktakes.destroy');
 
-    // 5. Reports (Chuyển hướng về trang Tồn kho & Vật tư chính)
+    // 5. Reports (Báo cáo Xuất-Nhập-Tồn & Ma trận kế toán)
     Route::get('/reports', [InventoryController::class, 'reports'])->name('reports.index');
-    Route::get('/reports/export', [InventoryController::class, 'exportStock'])->name('reports.export');
-    Route::get('/reports/export-matrix', [InventoryController::class, 'exportStock'])->name('reports.export-matrix');
+    Route::get('/reports/export', [InventoryController::class, 'exportReport'])->name('reports.export');
+    Route::get('/reports/export-matrix', [InventoryController::class, 'exportMatrixReport'])->name('reports.export-matrix');
 
     // 6. Warehouses List (Danh sách Kho)
     Route::get('/list', [InventoryController::class, 'warehouseList'])->name('warehouses.index');

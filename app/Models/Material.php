@@ -36,6 +36,11 @@ class Material extends Model
         'current_stock' => 'double',
     ];
 
+    public function getOriginCodeAttribute(): string
+    {
+        return (string)($this->origin ?? '');
+    }
+
     public function warehouse(): BelongsTo
     {
         return $this->belongsTo(Warehouse::class, 'warehouse_id');

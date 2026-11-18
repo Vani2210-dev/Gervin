@@ -2008,8 +2008,9 @@ function handleExcelFile(file) {
                 // Must have at least height or width to be a real item row
                 if (height === '' && width === '') continue;
 
-                // Detect "Công giả dày" / "Tấm giả dày" via notes col M
-                const isLaborNote = /gi[aả]\s*d[aày]y/i.test(notes) || /c[oô]ng/i.test(notes);
+                // Detect "Công giả dày" via notes col M (Tấm giả dày và Thanh giả dày là chi tiết vật lý, KHÔNG PHẢI công)
+                const isPanelNote = /t[aấ]m|thanh/i.test(notes);
+                const isLaborNote = !isPanelNote && (/c[oô]ng/i.test(notes) || /gi[aả]\s*d[aày]y/i.test(notes));
                 const productName = isLaborNote ? 'Công giả dày' : '';
 
                 const item = {

@@ -1,13 +1,41 @@
 function isLaborItem(item) {
     if (!item) return false;
-    const name = (item.product_name || item.name || '').trim();
-    const notes = (item.notes || '').toLowerCase();
-    const isLabor = item.is_labor === 1 || item.is_labor === true || item.is_labor === '1';
-    return isLabor ||
-           name === 'Công giả dày' ||
-           name.toLowerCase() === 'công giả dày' ||
-           name.toLowerCase().includes('giả dày') ||
-           notes.includes('giả dày');
+    const name = (item.product_name || item.name || '').trim().toLowerCase();
+    const notes = (item.notes || '').trim().toLowerCase();
+
+    // 1. Dòng tiền công rõ ràng (Công giả dày / Bắt đầu bằng chữ "công")
+    if (name === 'công giả dày' || name.startsWith('công ') || name === 'công') {
+        return true;
+    }
+
+    // 2. Chi tiết tấm ván / thanh nẹp vật lý cần xả tem CNC (ví dụ: "Tấm giả dày", "Thanh giả dày", "Tấm cánh") -> KHÔNG PHẢI công
+    if (name.includes('tấm') || name.includes('thanh') || notes.includes('tấm') || notes.includes('thanh')) {
+        return false;
+    }
+
+    // 3. Cờ is_labor được bật trong DB hoặc form
+    if (item.is_labor === 1 || item.is_labor === true || item.is_labor === '1') {
+        return true;
+    }
+
+    // 4. Ghi chú là tiền công
+    if (notes === 'công giả dày' || notes.startsWith('công ') || notes === 'công') {
+        return true;
+    }
+
+    // 5. Nếu có đủ kích thước gia công hợp lệ (dài > 0 và rộng > 0) -> Là chi tiết vật lý, không phải công
+    const h = parseFloat(item.height) || 0;
+    const w = parseFloat(item.width) || 0;
+    if (h > 0 && w > 0) {
+        return false;
+    }
+
+    // 6. Nếu không có kích thước hợp lệ (rộng = 0/trống) và có từ khóa "công" hoặc "giả dày"
+    if (name.includes('công') || notes.includes('công') || name.includes('giả dày') || notes.includes('giả dày')) {
+        return true;
+    }
+
+    return false;
 }
 
 function parseMullionMillingDetails(itemName) {

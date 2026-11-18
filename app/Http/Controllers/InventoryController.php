@@ -701,7 +701,7 @@ class InventoryController extends Controller
         $type = $request->input('type');
 
         // Kiểm tra nếu là Material
-        if ($type === 'material') {
+        if ($type === 'material' || !$type) {
             $mat = \App\Models\Material::with('warehouse')->find($id);
             if ($mat) {
                 $material = (object)[
@@ -715,7 +715,14 @@ class InventoryController extends Controller
                     'min_stock'     => (float)$mat->min_stock,
                 ];
 
-                $txQuery = \App\Models\InventoryTransaction::where('material_id', $mat->id)
+                $txQuery = \App\Models\InventoryTransaction::where(function($q) use ($mat) {
+                        $q->where('material_id', $mat->id);
+                        if ($mat->wood_board_id) {
+                            $q->orWhere(function($sub) use ($mat) {
+                                $sub->whereNull('material_id')->where('wood_board_id', $mat->wood_board_id);
+                            });
+                        }
+                    })
                     ->with(['warehouse', 'creator'])
                     ->orderBy('date', 'desc')
                     ->orderBy('id', 'desc');
@@ -723,7 +730,7 @@ class InventoryController extends Controller
                 if ($request->filled('warehouse_id')) {
                     $txQuery->where('warehouse_id', $request->input('warehouse_id'));
                 }
-                $transactions = $txQuery->paginate(30);
+                $transactions = $txQuery->paginate(50);
 
                 if ($request->ajax()) {
                     return view('inventory.partials.stock_card_modal_content', compact('material', 'transactions'));
@@ -1578,19 +1585,526 @@ class InventoryController extends Controller
     /**
      * 5. Báo cáo Xuất - Nhập - Tồn & Báo cáo Ma trận 12 Tháng Kế toán theo từng kho
      */
-        public function reports(Request $request)
+    public function reports(Request $request)
     {
-        return redirect()->route('inventory.index', $request->query());
+        $tab = $request->input('tab', 'summary'); // 'summary', 'detail', or 'matrix'
+        $dateFilter = $this->getDateFilterParams($request);
+        if ($request->has('date_preset') || $request->has('start_date') || $request->has('end_date') || $request->has('date_mode')) {
+            $startDate = $dateFilter['start_date'] ?? '2000-01-01';
+            $endDate = $dateFilter['end_date'] ?? date('Y-m-d');
+        } else {
+            $startDate = date('Y-01-01');
+            $endDate = date('Y-m-d');
+        }
+        $year = (int)$request->input('year', date('Y'));
+        $warehouseId = $request->input('warehouse_id');
+        $search = trim((string)$request->input('search', ''));
+        $filterStock = $request->input('filter_stock', 'all');
+
+        $warehouses = $this->getOrderedWarehouses();
+        $selectedWarehouse = $warehouseId ? Warehouse::find($warehouseId) : null;
+        $isEdgeBand = $selectedWarehouse && (str_contains(strtoupper($selectedWarehouse->code), 'CHI') || str_contains(mb_strtolower($selectedWarehouse->name), 'chỉ'));
+
+        // Query materials
+        $materialsQuery = Material::with('warehouse');
+        if ($warehouseId) {
+            $materialsQuery->where('warehouse_id', $warehouseId);
+        }
+        if ($search) {
+            $materialsQuery->where(function($q) use ($search) {
+                $q->where('code', 'like', "%{$search}%")
+                  ->orWhere('name', 'like', "%{$search}%")
+                  ->orWhere('origin', 'like', "%{$search}%")
+                  ->orWhere('category', 'like', "%{$search}%");
+            });
+        }
+        $materials = $materialsQuery->orderBy('code')->get();
+
+        // -------------------------------------------------------------
+        // TAB 1: Xuất Nhập Tồn tổng hợp
+        // -------------------------------------------------------------
+        $reportData = [];
+
+        // Aggregate start stock before $startDate
+        $startQuery = InventoryTransaction::where('date', '<', $startDate);
+        if ($warehouseId) {
+            $startQuery->where('warehouse_id', $warehouseId);
+        }
+        $startStockMap = $startQuery->selectRaw('material_id, SUM(in_qty - out_qty) as total')
+            ->whereNotNull('material_id')
+            ->groupBy('material_id')
+            ->pluck('total', 'material_id')
+            ->toArray();
+
+        // Aggregate in/out in period [$startDate, $endDate]
+        $periodQuery = InventoryTransaction::whereBetween('date', [$startDate, $endDate]);
+        if ($warehouseId) {
+            $periodQuery->where('warehouse_id', $warehouseId);
+        }
+        $periodTx = $periodQuery->selectRaw('material_id, SUM(in_qty) as total_in, SUM(out_qty) as total_out')
+            ->whereNotNull('material_id')
+            ->groupBy('material_id')
+            ->get()
+            ->keyBy('material_id');
+
+        foreach ($materials as $m) {
+            $startStock = (float)($startStockMap[$m->id] ?? 0);
+            $inQty = isset($periodTx[$m->id]) ? (float)$periodTx[$m->id]->total_in : 0.0;
+            $outQty = isset($periodTx[$m->id]) ? (float)$periodTx[$m->id]->total_out : 0.0;
+            $endStock = $startStock + $inQty - $outQty;
+
+            if ($startStock == 0 && $inQty == 0 && $outQty == 0 && (float)$m->current_stock > 0) {
+                $endStock = (float)$m->current_stock;
+                $startStock = (float)$m->current_stock;
+            }
+
+            if ($filterStock === 'has_stock' && $endStock <= 0) {
+                continue;
+            }
+            if ($filterStock === 'has_movement' && $inQty == 0 && $outQty == 0) {
+                continue;
+            }
+
+            $reportData[] = [
+                'material'    => $m,
+                'sku'         => $m->code,
+                'name'        => $m->name,
+                'unit'        => $m->unit ?: ($isEdgeBand ? 'm' : 'Tấm'),
+                'is_edge_band'=> $isEdgeBand || $m->isEdgeBand(),
+                'start_stock' => $startStock,
+                'in_qty'      => $inQty,
+                'out_qty'     => $outQty,
+                'end_stock'   => $endStock,
+            ];
+        }
+
+        // -------------------------------------------------------------
+        // TAB 2: Báo cáo Chi tiết phát sinh (Sổ chi tiết / Thẻ kho)
+        // -------------------------------------------------------------
+        $detailTransactions = collect();
+        $selectedDetailMaterial = null;
+        if ($tab === 'detail') {
+            $detailMatId = $request->input('material_id');
+            $detailTxQuery = InventoryTransaction::with(['material.warehouse', 'creator', 'warehouse'])
+                ->whereBetween('date', [$startDate, $endDate])
+                ->orderBy('date', 'desc')
+                ->orderBy('id', 'desc');
+
+            if ($warehouseId) {
+                $detailTxQuery->where('warehouse_id', $warehouseId);
+            }
+            if ($detailMatId) {
+                $selectedDetailMaterial = Material::find($detailMatId);
+                $detailTxQuery->where('material_id', $detailMatId);
+            }
+            if ($search) {
+                $detailTxQuery->where(function($q) use ($search) {
+                    $q->where('voucher_code', 'like', "%{$search}%")
+                      ->orWhere('notes', 'like', "%{$search}%")
+                      ->orWhereHas('material', function($mQ) use ($search) {
+                          $mQ->where('code', 'like', "%{$search}%")
+                             ->orWhere('name', 'like', "%{$search}%");
+                      });
+                });
+            }
+            $detailTransactions = $detailTxQuery->paginate(50)->withQueryString();
+        }
+
+        // -------------------------------------------------------------
+        // TAB 3: Ma trận Tiêu thụ 12 Tháng Kế toán
+        // -------------------------------------------------------------
+        $matrixRows = [];
+        $colTotals = [
+            'start_stock' => 0,
+            'total_in'    => 0,
+            'total_out'   => 0,
+            'final_stock' => 0,
+            'months'      => []
+        ];
+        for ($m = 1; $m <= 12; $m++) {
+            $colTotals['months'][$m] = ['in' => 0, 'out' => 0, 'stock' => 0];
+        }
+
+        if ($tab === 'matrix') {
+            // Aggregate initial stock before $year-01-01
+            $initYearQuery = InventoryTransaction::where('date', '<', $year . '-01-01');
+            if ($warehouseId) {
+                $initYearQuery->where('warehouse_id', $warehouseId);
+            }
+            $initYearStockMap = $initYearQuery->selectRaw('material_id, SUM(in_qty - out_qty) as total')
+                ->whereNotNull('material_id')
+                ->groupBy('material_id')
+                ->pluck('total', 'material_id')
+                ->toArray();
+
+            // Aggregate monthly in/out for $year
+            $monthTxQuery = InventoryTransaction::whereYear('date', $year);
+            if ($warehouseId) {
+                $monthTxQuery->where('warehouse_id', $warehouseId);
+            }
+            $monthTxData = $monthTxQuery->selectRaw('material_id, MONTH(date) as m, SUM(in_qty) as total_in, SUM(out_qty) as total_out')
+                ->whereNotNull('material_id')
+                ->groupBy('material_id', DB::raw('MONTH(date)'))
+                ->get();
+
+            // Group monthly tx by material_id -> month
+            $matMonthlyMap = [];
+            foreach ($monthTxData as $item) {
+                $matMonthlyMap[$item->material_id][$item->m] = [
+                    'in'  => (float)$item->total_in,
+                    'out' => (float)$item->total_out,
+                ];
+            }
+
+            foreach ($materials as $idx => $m) {
+                $initYearStock = (float)($initYearStockMap[$m->id] ?? 0);
+                if ($initYearStock == 0 && empty($matMonthlyMap[$m->id]) && (float)$m->current_stock > 0 && $year == (int)date('Y')) {
+                    $initYearStock = (float)$m->current_stock;
+                }
+
+                $running = $initYearStock;
+                $rowMonths = [];
+                $totalYearIn = 0;
+                $totalYearOut = 0;
+
+                for ($month = 1; $month <= 12; $month++) {
+                    $mIn = (float)($matMonthlyMap[$m->id][$month]['in'] ?? 0);
+                    $mOut = (float)($matMonthlyMap[$m->id][$month]['out'] ?? 0);
+                    $running = $running + $mIn - $mOut;
+
+                    $rowMonths[$month] = ['in' => $mIn, 'out' => $mOut, 'stock' => $running];
+                    $totalYearIn += $mIn;
+                    $totalYearOut += $mOut;
+
+                    $colTotals['months'][$month]['in'] += $mIn;
+                    $colTotals['months'][$month]['out'] += $mOut;
+                    $colTotals['months'][$month]['stock'] += $running;
+                }
+
+                $matrixRows[] = [
+                    'stt'           => $idx + 1,
+                    'material_id'   => $m->id,
+                    'code'          => $m->code,
+                    'name'          => $m->name,
+                    'unit'          => $m->unit ?: ($isEdgeBand ? 'm' : 'Tấm'),
+                    'is_edge_band'  => $isEdgeBand || $m->isEdgeBand(),
+                    'origin_code'   => $m->origin ?: '',
+                    'category'      => $m->category ?: '',
+                    'start_stock'   => $initYearStock,
+                    'months'        => $rowMonths,
+                    'total_year_in' => $totalYearIn,
+                    'total_year_out'=> $totalYearOut,
+                    'final_stock'   => $running,
+                ];
+
+                $colTotals['start_stock'] += $initYearStock;
+                $colTotals['total_in'] += $totalYearIn;
+                $colTotals['total_out'] += $totalYearOut;
+                $colTotals['final_stock'] += $running;
+            }
+        }
+
+        $yearsQuery = InventoryTransaction::selectRaw('DISTINCT YEAR(date) as y')->whereNotNull('date');
+        if ($warehouseId) {
+            $yearsQuery->where('warehouse_id', $warehouseId);
+        }
+        $availableYears = $yearsQuery->orderByDesc('y')->pluck('y')->toArray();
+        if (!in_array((int)date('Y'), $availableYears)) {
+            $availableYears[] = (int)date('Y');
+        }
+        rsort($availableYears);
+
+        return view('inventory.reports.index', compact(
+            'tab',
+            'startDate',
+            'endDate',
+            'year',
+            'warehouseId',
+            'selectedWarehouse',
+            'isEdgeBand',
+            'warehouses',
+            'reportData',
+            'matrixRows',
+            'colTotals',
+            'availableYears',
+            'search',
+            'filterStock',
+            'detailTransactions',
+            'selectedDetailMaterial'
+        ));
     }
 
+    /**
+     * Xuất Excel Báo cáo Xuất - Nhập - Tồn tổng hợp
+     */
     public function exportReport(Request $request)
     {
-        return $this->exportStock($request);
+        $dateFilter = $this->getDateFilterParams($request);
+        if ($request->has('date_preset') || $request->has('start_date') || $request->has('end_date') || $request->has('date_mode')) {
+            $startDate = $dateFilter['start_date'] ?? '2000-01-01';
+            $endDate = $dateFilter['end_date'] ?? date('Y-m-d');
+        } else {
+            $startDate = date('Y-01-01');
+            $endDate = date('Y-m-d');
+        }
+        $warehouseId = $request->input('warehouse_id');
+        $selectedWarehouse = $warehouseId ? Warehouse::find($warehouseId) : null;
+        $isEdgeBand = $selectedWarehouse && (str_contains(strtoupper($selectedWarehouse->code), 'CHI') || str_contains(mb_strtolower($selectedWarehouse->name), 'chỉ'));
+
+        $materialsQuery = Material::with('warehouse');
+        if ($warehouseId) {
+            $materialsQuery->where('warehouse_id', $warehouseId);
+        }
+        $materials = $materialsQuery->orderBy('code')->get();
+
+        $startStockMap = InventoryTransaction::where('date', '<', $startDate)
+            ->when($warehouseId, fn($q) => $q->where('warehouse_id', $warehouseId))
+            ->whereNotNull('material_id')
+            ->groupBy('material_id')
+            ->selectRaw('material_id, SUM(in_qty - out_qty) as total')
+            ->pluck('total', 'material_id')
+            ->toArray();
+
+        $periodTx = InventoryTransaction::whereBetween('date', [$startDate, $endDate])
+            ->when($warehouseId, fn($q) => $q->where('warehouse_id', $warehouseId))
+            ->whereNotNull('material_id')
+            ->groupBy('material_id')
+            ->selectRaw('material_id, SUM(in_qty) as total_in, SUM(out_qty) as total_out')
+            ->get()
+            ->keyBy('material_id');
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Xuat_Nhap_Ton');
+
+        $sheetTitle = 'BÁO CÁO TỔNG HỢP XUẤT - NHẬP - TỒN' . ($selectedWarehouse ? ' (' . mb_strtoupper($selectedWarehouse->name) . ')' : '');
+        $sheet->setCellValue('A1', $sheetTitle);
+        $subTitle = 'Từ ngày: ' . date('d/m/Y', strtotime($startDate)) . ' đến ngày: ' . date('d/m/Y', strtotime($endDate));
+        if ($selectedWarehouse) {
+            $subTitle .= ' | Kho: ' . $selectedWarehouse->name;
+        }
+        $sheet->setCellValue('A2', $subTitle);
+        $sheet->mergeCells('A1:I1');
+        $sheet->mergeCells('A2:I2');
+        $sheet->getStyle('A1')->getFont()->setSize(14)->setBold(true);
+        $sheet->getStyle('A2')->getFont()->setSize(11)->setItalic(true);
+
+        $headers = ['STT', 'Mã vật tư (SKU)', 'Mã gốc NCC/TQ', 'Tên mặt hàng / Quy cách', 'ĐVT', 'Tồn đầu kỳ', 'Nhập trong kỳ', 'Xuất trong kỳ', 'Tồn cuối kỳ'];
+        $cols = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
+        foreach ($headers as $idx => $h) {
+            $sheet->setCellValue($cols[$idx] . '4', $h);
+        }
+
+        $headerStyle = [
+            'font' => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF1E293B']]
+        ];
+        $sheet->getStyle('A4:I4')->applyFromArray($headerStyle);
+
+        $row = 5;
+        foreach ($materials as $idx => $m) {
+            $startStock = (float)($startStockMap[$m->id] ?? 0);
+            $inQty = isset($periodTx[$m->id]) ? (float)$periodTx[$m->id]->total_in : 0.0;
+            $outQty = isset($periodTx[$m->id]) ? (float)$periodTx[$m->id]->total_out : 0.0;
+            $endStock = $startStock + $inQty - $outQty;
+
+            if ($startStock == 0 && $inQty == 0 && $outQty == 0 && (float)$m->current_stock > 0) {
+                $endStock = (float)$m->current_stock;
+                $startStock = (float)$m->current_stock;
+            }
+
+            $sheet->setCellValue('A' . $row, $idx + 1);
+            $sheet->setCellValue('B' . $row, $m->code);
+            $sheet->setCellValue('C' . $row, $m->origin ?: '-');
+            $sheet->setCellValue('D' . $row, $m->name);
+            $sheet->setCellValue('E' . $row, $m->unit ?: ($isEdgeBand ? 'm' : 'Tấm'));
+            $sheet->setCellValue('F' . $row, $startStock);
+            $sheet->setCellValue('G' . $row, $inQty);
+            $sheet->setCellValue('H' . $row, $outQty);
+            $sheet->setCellValue('I' . $row, $endStock);
+            $row++;
+        }
+
+        // Summary row
+        $sheet->setCellValue('A' . $row, 'TỔNG CỘNG:');
+        $sheet->mergeCells("A{$row}:E{$row}");
+        $sheet->setCellValue('F' . $row, "=SUM(F5:F" . ($row - 1) . ")");
+        $sheet->setCellValue('G' . $row, "=SUM(G5:G" . ($row - 1) . ")");
+        $sheet->setCellValue('H' . $row, "=SUM(H5:H" . ($row - 1) . ")");
+        $sheet->setCellValue('I' . $row, "=SUM(I5:I" . ($row - 1) . ")");
+        $sheet->getStyle("A{$row}:I{$row}")->getFont()->setBold(true);
+        $sheet->getStyle("A{$row}:I{$row}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFF1F5F9');
+
+        $sheet->getStyle("A4:I{$row}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+        $sheet->getStyle("F5:I{$row}")->getNumberFormat()->setFormatCode('#,##0.00');
+
+        foreach ($cols as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $fileName = 'Bao_Cao_XNT_' . ($selectedWarehouse ? \Illuminate\Support\Str::slug($selectedWarehouse->name) . '_' : '') . date('Ymd_His') . '.xlsx';
+        $writer = new Xlsx($spreadsheet);
+
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment; filename="' . $fileName . '"');
+        header('Cache-Control: max-age=0');
+        $writer->save('php://output');
+        exit;
     }
 
+    /**
+     * Xuất Excel Ma trận Tiêu thụ 12 tháng chuẩn kế toán theo từng kho
+     */
     public function exportMatrixReport(Request $request)
     {
-        return $this->exportStock($request);
+        $year = (int)$request->input('year', date('Y'));
+        $warehouseId = $request->input('warehouse_id');
+        $selectedWarehouse = $warehouseId ? Warehouse::find($warehouseId) : null;
+        $isEdgeBand = $selectedWarehouse && (str_contains(strtoupper($selectedWarehouse->code), 'CHI') || str_contains(mb_strtolower($selectedWarehouse->name), 'chỉ'));
+
+        $materialsQuery = Material::with('warehouse');
+        if ($warehouseId) {
+            $materialsQuery->where('warehouse_id', $warehouseId);
+        }
+        $materials = $materialsQuery->orderBy('code')->get();
+
+        $initYearStockMap = InventoryTransaction::where('date', '<', $year . '-01-01')
+            ->when($warehouseId, fn($q) => $q->where('warehouse_id', $warehouseId))
+            ->whereNotNull('material_id')
+            ->groupBy('material_id')
+            ->selectRaw('material_id, SUM(in_qty - out_qty) as total')
+            ->pluck('total', 'material_id')
+            ->toArray();
+
+        $monthTxData = InventoryTransaction::whereYear('date', $year)
+            ->when($warehouseId, fn($q) => $q->where('warehouse_id', $warehouseId))
+            ->whereNotNull('material_id')
+            ->groupBy('material_id', DB::raw('MONTH(date)'))
+            ->selectRaw('material_id, MONTH(date) as m, SUM(in_qty) as total_in, SUM(out_qty) as total_out')
+            ->get();
+
+        $matMonthlyMap = [];
+        foreach ($monthTxData as $item) {
+            $matMonthlyMap[$item->material_id][$item->m] = [
+                'in'  => (float)$item->total_in,
+                'out' => (float)$item->total_out,
+            ];
+        }
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Ma_Tran_Tieu_Thu_' . $year);
+
+        $title = "BÁO CÁO MA TRẬN NHẬP - XUẤT - TỒN 12 THÁNG NĂM {$year}";
+        if ($selectedWarehouse) {
+            $title .= ' - KHO: ' . mb_strtoupper($selectedWarehouse->name);
+        }
+        $sheet->setCellValue('A1', $title);
+        $sheet->getStyle('A1')->getFont()->setSize(14)->setBold(true);
+
+        // Header Rows (Row 3 & 4)
+        $sheet->setCellValue('A3', 'STT');
+        $sheet->mergeCells('A3:A4');
+        $sheet->setCellValue('B3', 'Mã vật tư');
+        $sheet->mergeCells('B3:B4');
+        $sheet->setCellValue('C3', 'Mã NCC/TQ');
+        $sheet->mergeCells('C3:C4');
+        $sheet->setCellValue('D3', 'Tên hàng / Quy cách');
+        $sheet->mergeCells('D3:D4');
+        $sheet->setCellValue('E3', 'Tồn đầu ' . $year);
+        $sheet->mergeCells('E3:E4');
+
+        $currentColIdx = 6;
+        for ($m = 1; $m <= 12; $m++) {
+            $colLetter1 = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($currentColIdx);
+            $colLetter3 = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($currentColIdx + 2);
+            $sheet->mergeCells("{$colLetter1}3:{$colLetter3}3");
+            $sheet->setCellValue("{$colLetter1}3", 'Tháng ' . $m);
+
+            $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($currentColIdx) . '4', 'Nhận');
+            $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($currentColIdx + 1) . '4', 'Tiêu thụ');
+            $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($currentColIdx + 2) . '4', 'Tồn kho');
+            $currentColIdx += 3;
+        }
+
+        // CẢ NĂM
+        $yearCol1 = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($currentColIdx);
+        $yearCol3 = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($currentColIdx + 2);
+        $sheet->mergeCells("{$yearCol1}3:{$yearCol3}3");
+        $sheet->setCellValue("{$yearCol1}3", 'CẢ NĂM ' . $year);
+        $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($currentColIdx) . '4', 'Tổng nhận');
+        $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($currentColIdx + 1) . '4', 'Tổng xuất');
+        $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($currentColIdx + 2) . '4', 'Tồn cuối');
+
+        $lastColLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($currentColIdx + 2);
+        $sheet->mergeCells("A1:{$lastColLetter}1");
+
+        // Styling headers
+        $sheet->getStyle("A3:{$lastColLetter}4")->getFont()->setBold(true);
+        $sheet->getStyle("A3:{$lastColLetter}4")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+        $sheet->getStyle("A3:{$lastColLetter}4")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF1E293B');
+        $sheet->getStyle("A3:{$lastColLetter}4")->getFont()->getColor()->setARGB('FFFFFFFF');
+
+        $row = 5;
+        foreach ($materials as $idx => $m) {
+            $sheet->setCellValue('A' . $row, $idx + 1);
+            $sheet->setCellValue('B' . $row, $m->code);
+            $sheet->setCellValue('C' . $row, $m->origin ?: '-');
+            $sheet->setCellValue('D' . $row, $m->name);
+
+            $initYearStock = (float)($initYearStockMap[$m->id] ?? 0);
+            if ($initYearStock == 0 && empty($matMonthlyMap[$m->id]) && (float)$m->current_stock > 0 && $year == (int)date('Y')) {
+                $initYearStock = (float)$m->current_stock;
+            }
+            $sheet->setCellValue('E' . $row, $initYearStock);
+
+            $running = $initYearStock;
+            $cIdx = 6;
+            $yearIn = 0;
+            $yearOut = 0;
+
+            for ($month = 1; $month <= 12; $month++) {
+                $mIn = (float)($matMonthlyMap[$m->id][$month]['in'] ?? 0);
+                $mOut = (float)($matMonthlyMap[$m->id][$month]['out'] ?? 0);
+                $running = $running + $mIn - $mOut;
+
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($cIdx) . $row, $mIn > 0 ? $mIn : '-');
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($cIdx + 1) . $row, $mOut > 0 ? $mOut : '-');
+                $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($cIdx + 2) . $row, $running);
+
+                $yearIn += $mIn;
+                $yearOut += $mOut;
+                $cIdx += 3;
+            }
+
+            $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($cIdx) . $row, $yearIn > 0 ? $yearIn : '-');
+            $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($cIdx + 1) . $row, $yearOut > 0 ? $yearOut : '-');
+            $sheet->setCellValue(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($cIdx + 2) . $row, $running);
+
+            $row++;
+        }
+
+        $sheet->getStyle("A3:{$lastColLetter}" . ($row - 1))->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+        $sheet->getStyle("E5:{$lastColLetter}" . ($row - 1))->getNumberFormat()->setFormatCode('#,##0.00');
+
+        $sheet->getColumnDimension('A')->setWidth(6);
+        $sheet->getColumnDimension('B')->setWidth(14);
+        $sheet->getColumnDimension('C')->setWidth(14);
+        $sheet->getColumnDimension('D')->setWidth(26);
+        $sheet->getColumnDimension('E')->setWidth(14);
+        for ($c = 6; $c <= $currentColIdx + 2; $c++) {
+            $sheet->getColumnDimension(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($c))->setWidth(10);
+        }
+
+        $fileName = "Ma_Tran_Tieu_Thu_{$year}_" . date('Ymd_His') . '.xlsx';
+        $writer = new Xlsx($spreadsheet);
+
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment; filename="' . $fileName . '"');
+        header('Cache-Control: max-age=0');
+        $writer->save('php://output');
+        exit;
     }
 
     

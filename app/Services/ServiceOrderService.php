@@ -163,8 +163,9 @@ class ServiceOrderService
             $updateData['created_at'] = $currentOrderDate;
         }
 
-                if ($request->filled('order_code')) {
-            $updateData['order_code'] = trim((string)$request->order_code);
+        if ($request->has('order_code')) {
+            $codeVal = $request->input('order_code');
+            $updateData['order_code'] = (!empty($codeVal) && trim((string)$codeVal) !== '') ? trim((string)$codeVal) : null;
         }
 
         $order->update($updateData);

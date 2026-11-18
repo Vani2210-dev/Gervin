@@ -396,7 +396,13 @@
                                         }
                                     @endphp
                                     <div class="inline-flex items-center gap-1.5 whitespace-nowrap">
-                                        <span class="text-sm font-semibold {{ $showWarning ? 'text-danger-600' : 'text-neutral-900' }}">{{ $order->order_code }}</span>
+                                        <span class="text-sm font-semibold {{ $showWarning ? 'text-danger-600' : 'text-neutral-900' }}">
+                                            @if(!empty($order->order_code))
+                                                {{ $order->order_code }}
+                                            @else
+                                                <span class="text-neutral-500 italic font-normal">Đơn nháp #{{ $order->id }}</span>
+                                            @endif
+                                        </span>
                                         @if($order->isNhapKho())
                                             <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-100 text-sky-800 border border-sky-200">Lệnh SX</span>
                                         @endif

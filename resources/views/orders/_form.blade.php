@@ -108,13 +108,13 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="form-group">
                                 <div class="flex items-center justify-between mb-2">
-                                    <label class="form-label font-semibold text-xs text-neutral-500 uppercase tracking-wider block m-0">Mã đơn hàng <span class="text-danger-500">*</span></label>
-                                    <span class="text-[11px] text-neutral-400">Tự tăng hoặc nhập mã tùy chỉnh (VD: 26.5178)</span>
+                                    <label class="form-label font-semibold text-xs text-neutral-500 uppercase tracking-wider block m-0">Mã đơn hàng</label>
+                                    <span class="text-[11px] text-neutral-400">Tự tăng khi chốt đơn hoặc nhập tùy chỉnh</span>
                                 </div>
                                 <input type="text" name="order_code" id="order-code-input" 
                                     class="form-control rounded-lg border-neutral-300 font-bold text-neutral-800 focus:border-primary-500 focus:ring-primary-500 text-sm" 
-                                    placeholder="VD: 26.5178" 
-                                    value="{{ old('order_code', isset($acrylicOrder) ? $acrylicOrder->order_code : ($nextOrderCode ?? '')) }}" required>
+                                    placeholder="Để trống tự động cấp mã khi chốt đơn (hoặc nhập mã tùy chỉnh)" 
+                                    value="{{ old('order_code', isset($acrylicOrder) ? $acrylicOrder->order_code : '') }}">
                                 <div id="order_code_status_msg" class="text-xs mt-1 font-semibold hidden"></div>
                                 @error('order_code')
                                     <div class="text-danger-500 text-xs mt-1 font-semibold">{{ $message }}</div>
@@ -6222,12 +6222,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             } else if (isDraftAction) {
                 let val = codeInput.value.trim().replace(/[._-]NK$/i, '');
-                if (!/[._-]?D$/i.test(val)) {
+                if (val && !/[._-]?D$/i.test(val)) {
                     codeInput.value = val + (val.endsWith('.') ? 'D' : '.D');
                 }
             } else {
                 let val = codeInput.value.trim();
-                if (/[._-]D$/i.test(val)) {
+                if (val && /[._-]D$/i.test(val)) {
                     codeInput.value = val.replace(/[._-]D$/i, '');
                 }
             }

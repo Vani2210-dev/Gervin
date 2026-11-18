@@ -103,7 +103,7 @@
                 </div>
                 <div>
                     <h5 class="font-bold text-base text-neutral-800 m-0">{{ ($acrylicOrder->isNhapKho() || $acrylicOrder->type === 'min_late' || $acrylicOrder->type === 'Flywood') ? 'Xem trước Lệnh sản xuất' : 'Xem trước đơn hàng' }}</h5>
-                    <p class="text-xs text-neutral-400 m-0 mt-1">{{ $acrylicOrder->order_code }} • {{ $typeLabel }}</p>
+                    <p class="text-xs text-neutral-400 m-0 mt-1">{{ $acrylicOrder->order_code ?: ('Đơn nháp #' . $acrylicOrder->id) }} • {{ $typeLabel }}</p>
                 </div>
             </div>
             <div class="flex items-center gap-2 flex-wrap">
@@ -154,7 +154,7 @@
                                 BÁO GIÁ KIÊM ĐƠN ĐẶT HÀNG
                             </div>
                         @endif
-                        <div class="text-lg font-black text-primary-600 font-mono tracking-tight leading-none">{{ $acrylicOrder->order_code }}</div>
+                        <div class="text-lg font-black text-primary-600 font-mono tracking-tight leading-none">{{ $acrylicOrder->order_code ?: ('Đơn nháp #' . $acrylicOrder->id) }}</div>
                         <div class="text-[11px] text-neutral-500 mt-1 font-medium">Ngày chốt: {{ $orderDateFormatted }}</div>
                     </div>
                 </div>

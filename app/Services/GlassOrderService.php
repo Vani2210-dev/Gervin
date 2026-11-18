@@ -226,8 +226,9 @@ class GlassOrderService
             $updateData['board_return_status'] = $order->board_return_status;
         }
 
-                if ($request->filled('order_code')) {
-            $updateData['order_code'] = trim((string)$request->order_code);
+        if ($request->has('order_code')) {
+            $codeVal = $request->input('order_code');
+            $updateData['order_code'] = (!empty($codeVal) && trim((string)$codeVal) !== '') ? trim((string)$codeVal) : null;
         }
 
         $order->update($updateData);
@@ -408,7 +409,8 @@ class GlassOrderService
                 // Never parse product_code from the form — supply codes may contain dots
                 // causing explode('.') to split incorrectly and produce wrong codes.
                 $supplyCodePart = $orderSupply->order_supply_code ?? '';
-                $prefix = $order->order_code . ($supplyCodePart !== '' ? '.' . $supplyCodePart : '');
+                $orderCodePrefix = !empty($order->order_code) ? $order->order_code : ('NHAP.' . $order->id);
+                $prefix = $orderCodePrefix . ($supplyCodePart !== '' ? '.' . $supplyCodePart : '');
 
                 // Đánh số riêng theo từng vật tư (prefix): mỗi vật tư reset về 1
                 $startIndex = $pieceIndexByPrefix[$prefix] ?? 1;

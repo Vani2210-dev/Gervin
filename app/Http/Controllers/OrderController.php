@@ -376,12 +376,6 @@ class OrderController extends Controller
         $isNhapKho = filter_var($request->query('is_nhap_kho'), FILTER_VALIDATE_BOOLEAN);
         $isDraft = filter_var($request->query('is_draft'), FILTER_VALIDATE_BOOLEAN);
 
-        if ($isNhapKho && $code !== '') {
-            $code = Order::formatNhapKhoOrderCode($code);
-        } elseif ($isDraft && $code !== '') {
-            $code = Order::formatDraftOrderCode($code);
-        }
-
         if ($code === '') {
             return response()->json([
                 'exists' => false,
@@ -389,19 +383,32 @@ class OrderController extends Controller
             ]);
         }
 
-        $cleanBase = Order::stripDraftOrderCode($code);
-        $cleanBase = preg_replace('/[._-]?NK$/i', '', $cleanBase);
+        if ($isNhapKho) {
+            $baseWithNk = Order::formatNhapKhoOrderCode(Order::stripDraftOrderCode($code));
+            $checkDisplayCode = $isDraft ? Order::formatDraftOrderCode($baseWithNk) : $baseWithNk;
 
-        $candidateCodes = array_values(array_unique(array_filter([
-            $code,
-            $cleanBase,
-            Order::formatDraftOrderCode($cleanBase),
-            Order::formatNhapKhoOrderCode($cleanBase),
-            $cleanBase . '.D',
-            $cleanBase . '.NK',
-            $cleanBase . '-D',
-            $cleanBase . '_D',
-        ])));
+            $candidateCodes = array_values(array_unique(array_filter([
+                $checkDisplayCode,
+                $baseWithNk,
+                Order::formatDraftOrderCode($baseWithNk),
+                $baseWithNk . '.D',
+                $baseWithNk . '-D',
+                $baseWithNk . '_D',
+            ])));
+        } else {
+            $baseCode = Order::stripDraftOrderCode($code);
+            $baseCode = preg_replace('/[._-]?NK$/i', '', $baseCode);
+            $checkDisplayCode = $isDraft ? Order::formatDraftOrderCode($baseCode) : $baseCode;
+
+            $candidateCodes = array_values(array_unique(array_filter([
+                $checkDisplayCode,
+                $baseCode,
+                Order::formatDraftOrderCode($baseCode),
+                $baseCode . '.D',
+                $baseCode . '-D',
+                $baseCode . '_D',
+            ])));
+        }
 
         $query = Order::whereIn('order_code', $candidateCodes);
         if ($orderId) {
@@ -411,8 +418,8 @@ class OrderController extends Controller
 
         return response()->json([
             'exists'  => $exists,
-            'code'    => $code,
-            'message' => $exists ? "Mã đơn hàng '{$code}' đã tồn tại trong hệ thống (hoặc đang có đơn nháp trùng mã)!" : 'Mã hợp lệ'
+            'code'    => $checkDisplayCode,
+            'message' => $exists ? "Mã đơn hàng '{$checkDisplayCode}' đã tồn tại trong hệ thống (hoặc đang có đơn nháp trùng mã)!" : 'Mã hợp lệ'
         ]);
     }
 
@@ -959,42 +966,89 @@ class OrderController extends Controller
             $isNhapKho = $this->isRequestNhapKho($request, $draftOrder);
             $isDraftSave = $request->input('action') === 'draft';
 
-            // Chuẩn hóa và kiểm tra trùng lặp mã đơn hàng trên tất cả biến thể
-            $customCode = trim((string)$request->input('order_code', $draftOrder->order_code));
-            $baseCode = Order::stripDraftOrderCode($customCode);
-            $baseCode = preg_replace('/[._-]?NK$/i', '', $baseCode);
+            // Xử lý và cấp mã đơn hàng:
+            // - Đơn nháp thường (draft): KHÔNG bắt buộc có mã đơn (cho phép để null).
+            // - Đơn chính thức hoặc đơn nhập kho: BẮT BUỘC có mã đơn (tự động cấp số thứ tự nếu người dùng để trống).
+            // - Đơn nhập kho và đơn thường có chuỗi số và kiểm tra trùng lặp HOÀN TOÀN TÁCH BIỆT NHAU.
+            $rawCode = trim((string)$request->input('order_code', ''));
 
-            if ($isNhapKho) {
-                $finalCode = Order::formatNhapKhoOrderCode($baseCode);
-            } elseif ($isDraftSave) {
-                $finalCode = Order::formatDraftOrderCode($baseCode);
+            if ($isDraftSave && !$isNhapKho) {
+                // Đơn hàng thường lưu nháp: cho phép để trống mã đơn
+                if ($rawCode !== '') {
+                    $baseCode = Order::stripDraftOrderCode($rawCode);
+                    $baseCode = preg_replace('/[._-]?NK$/i', '', $baseCode);
+                    $finalCode = Order::formatDraftOrderCode($baseCode);
+
+                    $candidateCodes = array_values(array_unique(array_filter([
+                        $finalCode,
+                        $baseCode,
+                        $baseCode . '.D',
+                        $baseCode . '-D',
+                        $baseCode . '_D',
+                    ])));
+
+                    $exists = Order::whereIn('order_code', $candidateCodes)
+                        ->where('id', '!=', $draftOrder->id)
+                        ->exists();
+
+                    if ($exists) {
+                        return redirect()->back()
+                            ->withInput()
+                            ->withErrors(['order_code' => "Mã đơn hàng '{$finalCode}' đã tồn tại trong hệ thống (hoặc đang có đơn nháp trùng mã). Vui lòng nhập mã khác."])
+                            ->with('error', "Mã đơn hàng '{$finalCode}' đã tồn tại trong hệ thống. Vui lòng nhập mã khác.");
+                    }
+                } else {
+                    $finalCode = null;
+                }
             } else {
-                $finalCode = $baseCode;
+                // Đơn chính thức (thường hoặc nhập kho) hoặc Đơn nhập kho lưu nháp
+                if ($rawCode !== '') {
+                    if ($isNhapKho) {
+                        $baseCode = Order::stripDraftOrderCode($rawCode);
+                        $finalCode = Order::formatNhapKhoOrderCode($baseCode);
+
+                        $candidateCodes = array_values(array_unique(array_filter([
+                            $finalCode,
+                            $finalCode . '.D',
+                            $finalCode . '-D',
+                            $finalCode . '_D',
+                        ])));
+                    } else {
+                        $baseCode = Order::stripDraftOrderCode($rawCode);
+                        $baseCode = preg_replace('/[._-]?NK$/i', '', $baseCode);
+                        $finalCode = $baseCode;
+
+                        $candidateCodes = array_values(array_unique(array_filter([
+                            $finalCode,
+                            $baseCode . '.D',
+                            $baseCode . '-D',
+                            $baseCode . '_D',
+                        ])));
+                    }
+
+                    $exists = Order::whereIn('order_code', $candidateCodes)
+                        ->where('id', '!=', $draftOrder->id)
+                        ->exists();
+
+                    if ($exists) {
+                        return redirect()->back()
+                            ->withInput()
+                            ->withErrors(['order_code' => "Mã đơn hàng '{$finalCode}' đã tồn tại trong hệ thống (hoặc đang có đơn nháp trùng mã). Vui lòng nhập mã khác."])
+                            ->with('error', "Mã đơn hàng '{$finalCode}' đã tồn tại trong hệ thống. Vui lòng nhập mã khác.");
+                    }
+                } else {
+                    // Người dùng để trống: Tự động cấp mã chính thức / nhập kho tại thời điểm xuất đơn
+                    if ($isNhapKho) {
+                        $finalCode = $this->generateOrderCode(true);
+                    } elseif ($draftOrder->parent_id && $draftOrder->parent) {
+                        $finalCode = $this->generateChildOrderCode($draftOrder->parent);
+                    } else {
+                        $finalCode = $this->generateOrderCode(false);
+                    }
+                }
             }
+
             $request->merge(['order_code' => $finalCode]);
-
-            $candidateCodes = array_values(array_unique(array_filter([
-                $finalCode,
-                $baseCode,
-                Order::formatDraftOrderCode($baseCode),
-                Order::formatNhapKhoOrderCode($baseCode),
-                $baseCode . '.D',
-                $baseCode . '.NK',
-                $baseCode . '-D',
-                $baseCode . '_D',
-            ])));
-
-            $exists = Order::whereIn('order_code', $candidateCodes)
-                ->where('id', '!=', $draftOrder->id)
-                ->exists();
-
-            if ($exists) {
-                return redirect()->back()
-                    ->withInput()
-                    ->withErrors(['order_code' => "Mã đơn hàng '{$finalCode}' đã tồn tại trong hệ thống (hoặc đang có đơn nháp trùng mã). Vui lòng nhập mã khác."])
-                    ->with('error', "Mã đơn hàng '{$finalCode}' đã tồn tại trong hệ thống. Vui lòng nhập mã khác.");
-            }
-
             $draftOrder->order_code = $finalCode;
 
             $user = auth()->user();
@@ -1014,14 +1068,7 @@ class OrderController extends Controller
             if ($isDraftSave) {
                 $request->merge(['status' => 'draft']);
             } else {
-                // Xác nhận đơn từ đơn nháp sang đơn thường: gỡ bỏ hậu tố .D nếu có
-                $cleanCode = Order::stripDraftOrderCode($draftOrder->order_code);
-                if ($isNhapKho) {
-                    $cleanCode = Order::formatNhapKhoOrderCode($cleanCode);
-                }
-                $draftOrder->order_code = $cleanCode;
-                $request->merge(['order_code' => $cleanCode]);
-
+                // Xác nhận đơn từ đơn nháp sang đơn thường / nhập kho
                 // Cập nhật lại ngày giờ tạo đơn theo đúng thời điểm gửi đơn
                 $now = \Carbon\Carbon::now('Asia/Ho_Chi_Minh');
                 $request->merge(['order_date' => $now->format('Y-m-d H:i:s')]);
@@ -1047,7 +1094,7 @@ class OrderController extends Controller
                     }
                 }
                 if (!$request->filled('customer_name')) {
-                    $request->merge(['customer_name' => 'Đơn nháp ' . $draftOrder->order_code]);
+                    $request->merge(['customer_name' => 'Đơn nháp #' . $draftOrder->id]);
                 }
             }
 
@@ -1115,44 +1162,97 @@ class OrderController extends Controller
             }
 
             $isNhapKho = $this->isRequestNhapKho($request, $order);
-            $isDraftAction = $request->input('action') === 'draft';
+            $wasDraftBefore = $order->status === 'draft';
+            $isDraftSave = $request->input('action') === 'draft' || ($request->status === 'draft' && $order->status === 'draft');
 
-            // Chuẩn hóa và kiểm tra trùng lặp mã đơn hàng trên tất cả biến thể
-            $customCode = trim((string)$request->input('order_code', $order->order_code));
-            $baseCode = Order::stripDraftOrderCode($customCode);
-            $baseCode = preg_replace('/[._-]?NK$/i', '', $baseCode);
+            // Xử lý và cấp mã đơn hàng:
+            // - Đơn nháp thường (draft): KHÔNG bắt buộc có mã đơn (cho phép để null).
+            // - Đơn chính thức hoặc đơn nhập kho: BẮT BUỘC có mã đơn (tự động cấp số thứ tự nếu người dùng để trống).
+            // - Đơn nhập kho và đơn thường có chuỗi số và kiểm tra trùng lặp HOÀN TOÀN TÁCH BIỆT NHAU.
+            $rawCode = trim((string)$request->input('order_code', ''));
 
-            if ($isNhapKho) {
-                $finalCode = Order::formatNhapKhoOrderCode($baseCode);
-            } elseif ($isDraftAction || $order->status === 'draft') {
-                $finalCode = Order::formatDraftOrderCode($baseCode);
+            if ($isDraftSave && !$isNhapKho) {
+                // Đơn hàng thường lưu nháp: cho phép để trống mã đơn
+                if ($rawCode !== '') {
+                    $baseCode = Order::stripDraftOrderCode($rawCode);
+                    $baseCode = preg_replace('/[._-]?NK$/i', '', $baseCode);
+                    $finalCode = Order::formatDraftOrderCode($baseCode);
+
+                    $candidateCodes = array_values(array_unique(array_filter([
+                        $finalCode,
+                        $baseCode,
+                        $baseCode . '.D',
+                        $baseCode . '-D',
+                        $baseCode . '_D',
+                    ])));
+
+                    $exists = Order::whereIn('order_code', $candidateCodes)
+                        ->where('id', '!=', $order->id)
+                        ->exists();
+
+                    if ($exists) {
+                        return redirect()->back()
+                            ->withInput()
+                            ->withErrors(['order_code' => "Mã đơn hàng '{$finalCode}' đã tồn tại trong hệ thống (hoặc đang có đơn nháp trùng mã). Vui lòng nhập mã khác."])
+                            ->with('error', "Mã đơn hàng '{$finalCode}' đã tồn tại trong hệ thống. Vui lòng nhập mã khác.");
+                    }
+                } else {
+                    $finalCode = null;
+                }
             } else {
-                $finalCode = $baseCode;
+                if ($rawCode !== '') {
+                    if ($isNhapKho) {
+                        $baseCode = Order::stripDraftOrderCode($rawCode);
+                        $finalCode = Order::formatNhapKhoOrderCode($baseCode);
+
+                        $candidateCodes = array_values(array_unique(array_filter([
+                            $finalCode,
+                            $finalCode . '.D',
+                            $finalCode . '-D',
+                            $finalCode . '_D',
+                        ])));
+                    } else {
+                        $baseCode = Order::stripDraftOrderCode($rawCode);
+                        $baseCode = preg_replace('/[._-]?NK$/i', '', $baseCode);
+                        $finalCode = $baseCode;
+
+                        $candidateCodes = array_values(array_unique(array_filter([
+                            $finalCode,
+                            $baseCode . '.D',
+                            $baseCode . '-D',
+                            $baseCode . '_D',
+                        ])));
+                    }
+
+                    $exists = Order::whereIn('order_code', $candidateCodes)
+                        ->where('id', '!=', $order->id)
+                        ->exists();
+
+                    if ($exists) {
+                        return redirect()->back()
+                            ->withInput()
+                            ->withErrors(['order_code' => "Mã đơn hàng '{$finalCode}' đã tồn tại trong hệ thống (hoặc đang có đơn nháp trùng mã). Vui lòng nhập mã khác."])
+                            ->with('error', "Mã đơn hàng '{$finalCode}' đã tồn tại trong hệ thống. Vui lòng nhập mã khác.");
+                    }
+                } else {
+                    // Nếu trước đó đơn đã có mã chính thức (không phải nháp, không null), giữ lại mã cũ
+                    $existingClean = !empty($order->order_code) ? Order::stripDraftOrderCode($order->order_code) : '';
+                    if (!empty($existingClean) && !$wasDraftBefore) {
+                        $finalCode = $isNhapKho ? Order::formatNhapKhoOrderCode($existingClean) : $existingClean;
+                    } else {
+                        // Tự động cấp mã chính thức tại thời điểm này
+                        if ($isNhapKho) {
+                            $finalCode = $this->generateOrderCode(true);
+                        } elseif ($order->parent_id && $order->parent) {
+                            $finalCode = $this->generateChildOrderCode($order->parent);
+                        } else {
+                            $finalCode = $this->generateOrderCode(false);
+                        }
+                    }
+                }
             }
+
             $request->merge(['order_code' => $finalCode]);
-
-            $candidateCodes = array_values(array_unique(array_filter([
-                $finalCode,
-                $baseCode,
-                Order::formatDraftOrderCode($baseCode),
-                Order::formatNhapKhoOrderCode($baseCode),
-                $baseCode . '.D',
-                $baseCode . '.NK',
-                $baseCode . '-D',
-                $baseCode . '_D',
-            ])));
-
-            $exists = Order::whereIn('order_code', $candidateCodes)
-                ->where('id', '!=', $order->id)
-                ->exists();
-
-            if ($exists) {
-                return redirect()->back()
-                    ->withInput()
-                    ->withErrors(['order_code' => "Mã đơn hàng '{$finalCode}' đã tồn tại trong hệ thống (hoặc đang có đơn nháp trùng mã). Vui lòng nhập mã khác."])
-                    ->with('error', "Mã đơn hàng '{$finalCode}' đã tồn tại trong hệ thống. Vui lòng nhập mã khác.");
-            }
-
             $order->order_code = $finalCode;
 
             if ($request->filled('supplies_json')) {
@@ -1206,7 +1306,7 @@ class OrderController extends Controller
                     }
                 }
                 if (!$request->filled('customer_name')) {
-                    $request->merge(['customer_name' => 'Đơn nháp ' . $order->order_code]);
+                    $request->merge(['customer_name' => 'Đơn nháp #' . $order->id]);
                 }
             }
 
@@ -1724,7 +1824,7 @@ class OrderController extends Controller
         return false;
     }
 
-    private function generateOrderCode(): string
+    private function generateOrderCode(bool $isNhapKho = false): string
     {
         $yearPrefix = now()->format('y'); // '26'
         $prefix = $yearPrefix . '.';
@@ -1735,39 +1835,73 @@ class OrderController extends Controller
             ->pluck('order_code');
 
         $maxNumber = 0;
-        foreach ($orders as $code) {
-            $code = trim((string)$code);
-            // Bỏ qua các mã đơn nhập kho có hậu tố NK để không chiếm số thứ tự của đơn hàng thường
-            if (preg_match('/[._-]?NK$/i', $code)) {
-                continue;
-            }
-            // Gỡ bỏ hậu tố D của đơn nháp nếu có để tính đúng số thứ tự
-            $baseCode = preg_replace('/[._-]?D$/i', '', $code);
 
-            // 1. Dạng 26.5178 hoặc 26.1 hoặc 26_5178
-            if (preg_match('/^' . preg_quote($yearPrefix, '/') . '[._](\d+)$/', $baseCode, $matches)) {
-                $num = intval($matches[1]);
-                if ($num > $maxNumber) {
-                    $maxNumber = $num;
+        if ($isNhapKho) {
+            // === ĐƠN NHẬP KHO: Dãy số riêng biệt, có hậu tố .NK (VD: 26.100.NK -> 26.101.NK) ===
+            foreach ($orders as $code) {
+                $code = trim((string)$code);
+                // Chỉ xét các mã đơn có chứa NK
+                if (!preg_match('/[._-]?NK([._-]?D)?$/i', $code)) {
+                    continue;
+                }
+
+                // Gỡ bỏ hậu tố D và NK
+                $clean = preg_replace('/([._-](NK|D))+$/i', '', $code);
+
+                // 1. Dạng 26.100 hoặc 26_100
+                if (preg_match('/^' . preg_quote($yearPrefix, '/') . '[._](\d+)$/', $clean, $matches)) {
+                    $num = intval($matches[1]);
+                    if ($num > $maxNumber) {
+                        $maxNumber = $num;
+                    }
+                }
+                // 2. Dạng số nguyên thuần túy (VD: 100)
+                elseif (preg_match('/^\d+$/', $clean)) {
+                    $num = intval($clean);
+                    if ($num > $maxNumber) {
+                        $maxNumber = $num;
+                    }
                 }
             }
-            // 2. Dạng số nguyên thuần túy (VD: người dùng nhập trực tiếp 5178)
-            elseif (preg_match('/^\d+$/', $baseCode)) {
-                $num = intval($baseCode);
-                if ($num > $maxNumber) {
-                    $maxNumber = $num;
+
+            return $prefix . ($maxNumber + 1) . '.NK';
+        } else {
+            // === ĐƠN THƯỜNG: Dãy số riêng biệt, KHÔNG có hậu tố .NK (VD: 26.5011 -> 26.5012) ===
+            foreach ($orders as $code) {
+                $code = trim((string)$code);
+                // Bỏ qua các mã đơn nhập kho có hậu tố NK để không chiếm số thứ tự của đơn hàng thường
+                if (preg_match('/[._-]?NK([._-]?D)?$/i', $code)) {
+                    continue;
+                }
+
+                // Gỡ bỏ hậu tố D của đơn nháp nếu có để tính đúng số thứ tự
+                $baseCode = preg_replace('/([._-]?D)+$/i', '', $code);
+
+                // 1. Dạng 26.5178 hoặc 26.1 hoặc 26_5178
+                if (preg_match('/^' . preg_quote($yearPrefix, '/') . '[._](\d+)$/', $baseCode, $matches)) {
+                    $num = intval($matches[1]);
+                    if ($num > $maxNumber) {
+                        $maxNumber = $num;
+                    }
+                }
+                // 2. Dạng số nguyên thuần túy (VD: người dùng nhập trực tiếp 5178)
+                elseif (preg_match('/^\d+$/', $baseCode)) {
+                    $num = intval($baseCode);
+                    if ($num > $maxNumber) {
+                        $maxNumber = $num;
+                    }
+                }
+                // 3. Dạng đơn con của năm hiện tại (VD: 26.5178.1 -> lấy 5178)
+                elseif (preg_match('/^' . preg_quote($yearPrefix, '/') . '[._](\d+)\./', $baseCode, $matches)) {
+                    $num = intval($matches[1]);
+                    if ($num > $maxNumber) {
+                        $maxNumber = $num;
+                    }
                 }
             }
-            // 3. Dạng đơn con của năm hiện tại (VD: 26.5178.1 -> lấy 5178)
-            elseif (preg_match('/^' . preg_quote($yearPrefix, '/') . '[._](\d+)\./', $baseCode, $matches)) {
-                $num = intval($matches[1]);
-                if ($num > $maxNumber) {
-                    $maxNumber = $num;
-                }
-            }
+
+            return $prefix . ($maxNumber + 1);
         }
-
-        return $prefix . ($maxNumber + 1);
     }
 
     private function generateChildOrderCode(Order $parentOrder): string
@@ -1802,11 +1936,8 @@ class OrderController extends Controller
     private function createDraftOrder(string $type, ?string $relationType = null, ?Order $parentOrder = null): Order
     {
         return DB::transaction(function () use ($type, $relationType, $parentOrder) {
-            $orderCode = $parentOrder ? $this->generateChildOrderCode($parentOrder) : $this->generateOrderCode();
-            $orderCode = Order::formatDraftOrderCode($orderCode);
-
             return Order::create([
-                'order_code' => $orderCode,
+                'order_code' => null, // Đơn nháp ban đầu không cấp mã đơn, chỉ cấp khi lên đơn chính thức hoặc nhập kho
                 'parent_id' => $parentOrder?->id,
                 'type' => $type,
                 'relation_type' => $relationType,
