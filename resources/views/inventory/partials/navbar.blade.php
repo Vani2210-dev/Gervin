@@ -119,11 +119,27 @@
                                 @if(!empty($serverFiles))
                                     <span class="bg-emerald-200 text-emerald-900 text-[10px] px-2 py-0.5 rounded-full font-bold">{{ count($serverFiles) }} file kho sẵn sàng</span>
                                 @endif
-                                <span class="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded-full font-bold border border-emerald-300">Tự tạo kho chuẩn</span>
+                                <span class="bg-amber-100 text-amber-900 text-[10px] px-2 py-0.5 rounded-full font-bold border border-amber-300">Xóa kho cũ & tạo 24 kho chuẩn</span>
                             </div>
                             <p class="text-[11px] text-emerald-800 mb-0 mt-1">
-                                Tự động chuẩn hóa 24 kho hàng (mã, tên, mô tả, loại hàng) và nạp danh mục mã vật tư.
+                                Tự động dọn dẹp các kho cũ tạm thời và chuẩn hóa 24 kho hàng theo tài khoản kế toán (152, 153, 155).
                             </p>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Cảnh báo và Lưu ý --}}
+                <div class="p-2.5 bg-amber-50/90 border border-amber-300 rounded-lg text-xs text-amber-950 flex items-start gap-2">
+                    <iconify-icon icon="solar:danger-triangle-bold" class="text-amber-600 text-base shrink-0 mt-0.5"></iconify-icon>
+                    <div class="space-y-1 text-[11px] leading-relaxed">
+                        <div>
+                            <strong class="font-bold text-amber-950">Lưu ý phân loại:</strong> 
+                            <strong>152</strong> = Nguyên vật liệu &bull; 
+                            <strong>153</strong> = Phụ kiện & công cụ &bull; 
+                            <strong>155</strong> = Thành phẩm gia công.
+                        </div>
+                        <div class="text-amber-800">
+                            <strong>Cảnh báo:</strong> Thao tác "Nạp từ file máy chủ" sẽ <strong>xóa bỏ các kho cũ tạm thời</strong> (Kho Tấm Ván, Kho Dán Chỉ) và chuyển dữ liệu sang 24 kho chuẩn. Nếu chỉ muốn thêm mã mà giữ nguyên kho cũ, vui lòng dùng phần <em>"Tải file lên từ máy tính"</em> ở dưới.
                         </div>
                     </div>
                 </div>
@@ -155,7 +171,7 @@
                             <iconify-icon icon="solar:check-circle-bold" class="text-emerald-600 text-xs"></iconify-icon>
                             Tự động đồng bộ với kho đích đã chọn ở trên
                         </span>
-                        <button type="submit" onclick="return confirm('Xác nhận nạp danh mục vật tư từ máy chủ? Hệ thống sẽ tự động đồng bộ và tạo chuẩn các kho hàng.')" class="btn bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 shadow-sm cursor-pointer">
+                        <button type="submit" onclick="return confirm('CẢNH BÁO QUAN TRỌNG:\n\nThao tác Nạp từ máy chủ sẽ:\n1. Tự động xóa bỏ các kho cũ tạm thời (Kho Tấm Ván, Kho Dán Chỉ) và chuyển dữ liệu sang kho chuẩn.\n2. Thiết lập chuẩn hóa 24 kho hàng theo chuẩn kế toán (152, 153, 155).\n3. Nạp danh mục vật tư vào đúng từng kho.\n\nBạn có chắc chắn muốn tiến hành?');" class="btn bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 shadow-sm cursor-pointer">
                             <iconify-icon icon="solar:upload-track-bold" class="text-base"></iconify-icon> Nạp từ file máy chủ
                         </button>
                     </div>
@@ -164,20 +180,20 @@
 
             <div class="flex items-center my-4">
                 <div class="flex-grow border-t border-neutral-200"></div>
-                <span class="flex-shrink mx-4 text-[11px] font-bold text-neutral-400 uppercase tracking-wider">Hoặc tải file lên từ máy tính</span>
+                <span class="flex-shrink mx-4 text-[11px] font-bold text-neutral-400 uppercase tracking-wider">Hoặc tải file lên từ máy tính (Giữ nguyên các kho hiện có)</span>
                 <div class="flex-grow border-t border-neutral-200"></div>
             </div>
         @endif
 
-        {{-- Form tải file mới --}}
+        {{-- Form tải file mới từ máy tính (Thêm bình thường, KHÔNG xóa kho cũ) --}}
         <form action="{{ route('inventory.import-stock') }}" method="POST" enctype="multipart/form-data" class="space-y-4 m-0">
             @csrf
             <input type="hidden" name="warehouse_id" class="import-stock-target-wh" value="{{ $currentWhId }}">
 
-            <div class="p-4 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-900 space-y-1">
+            <div class="p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-900 space-y-1">
                 <div class="font-bold flex items-center gap-1.5 mb-1">
                     <iconify-icon icon="solar:info-circle-bold" class="text-base text-blue-600"></iconify-icon>
-                    Cấu trúc các cột trong file Excel (mã.xlsx hoặc file từng kho):
+                    Cấu trúc các cột trong file Excel (Thêm mới/cập nhật, không xóa kho cũ):
                 </div>
                 <ul class="list-disc pl-5 space-y-0.5 text-[11px]">
                     <li><strong>Cột B:</strong> Tên kho (Vd: <em>152 - KÍNH, 152_ACRYLIC, 153_PK, 152_COT, 155_Thành Phẩm...</em>)</li>

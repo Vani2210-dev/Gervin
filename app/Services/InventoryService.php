@@ -2525,27 +2525,11 @@ class InventoryService
      * Nhập danh mục vật tư tổng quát từ file mã.xlsx (hoặc file xuất từ MISA)
      */
     /**
-     * Danh mục cấu hình 24 kho hàng chuẩn theo phân loại của Gervin
+     * Danh mục cấu hình 24 kho hàng chuẩn theo phân loại của Gervin (theo mã tài khoản kế toán 152, 153, 155)
      */
     public static function getStandardWarehousesConfig(): array
     {
         return [
-            'KHO-VAN' => [
-                'code'        => 'KHO-VAN',
-                'name'        => 'Kho Tấm Ván',
-                'item_name'   => 'Tấm ván',
-                'description' => 'Kho lưu trữ và theo dõi các mã tấm ván gỗ công nghiệp & Acrylic',
-                'item_type'   => 'board',
-                'file_name'   => null,
-            ],
-            'KHO-CHI' => [
-                'code'        => 'KHO-CHI',
-                'name'        => 'Kho Dán Chỉ',
-                'item_name'   => 'Chỉ dán viền',
-                'description' => 'Kho lưu trữ và theo dõi xuất nhập tồn cuộn chỉ / nẹp chỉ dán cạnh cho từng mã tấm',
-                'item_type'   => 'edge_band',
-                'file_name'   => null,
-            ],
             '152 - KÍNH' => [
                 'code'        => '152 - KÍNH',
                 'name'        => 'Kho Kính (152)',
@@ -2783,6 +2767,58 @@ class InventoryService
         }
 
         return ['created' => $created, 'updated' => $updated];
+    }
+
+    /**
+     * Dọn dẹp và xóa các kho cũ tạm thời (KHO-VAN, KHO-CHI)
+     * Chỉ thực hiện khi nạp từ máy chủ. Tự động chuyển toàn bộ chứng từ, giao dịch, vật tư sang kho chuẩn tương ứng.
+     */
+    public function cleanupOldWarehouses(): array
+    {
+        $targetWh = Warehouse::where('code', '155_EP_TAM')->first() 
+            ?? Warehouse::where('code', '152_COT')->first() 
+            ?? Warehouse::first();
+        
+        $edgeWh = Warehouse::where('code', '152_CHI')->first() 
+            ?? $targetWh;
+
+        $deleted = [];
+
+        \Illuminate\Support\Facades\DB::transaction(function() use ($targetWh, $edgeWh, &$deleted) {
+            // 1. Dọn dẹp Kho Dán Chỉ (KHO-CHI) cũ
+            $chiWh = Warehouse::where('code', 'KHO-CHI')->first();
+            if ($chiWh) {
+                Material::where('warehouse_id', $chiWh->id)->update([
+                    'warehouse_id'   => $edgeWh->id,
+                    'warehouse_code' => $edgeWh->code,
+                ]);
+                InventoryTransaction::where('warehouse_id', $chiWh->id)->update(['warehouse_id' => $edgeWh->id]);
+                InventoryReceipt::where('warehouse_id', $chiWh->id)->update(['warehouse_id' => $edgeWh->id]);
+                InventoryIssue::where('warehouse_id', $chiWh->id)->update(['warehouse_id' => $edgeWh->id]);
+                InventoryStocktake::where('warehouse_id', $chiWh->id)->update(['warehouse_id' => $edgeWh->id]);
+                WoodBoard::where('warehouse_id', $chiWh->id)->update(['warehouse_id' => $edgeWh->id]);
+                $chiWh->delete();
+                $deleted[] = 'KHO-CHI (Kho Dán Chỉ)';
+            }
+
+            // 2. Dọn dẹp Kho Tấm Ván (KHO-VAN) cũ
+            $vanWh = Warehouse::where('code', 'KHO-VAN')->first();
+            if ($vanWh) {
+                Material::where('warehouse_id', $vanWh->id)->update([
+                    'warehouse_id'   => $targetWh->id,
+                    'warehouse_code' => $targetWh->code,
+                ]);
+                InventoryTransaction::where('warehouse_id', $vanWh->id)->update(['warehouse_id' => $targetWh->id]);
+                InventoryReceipt::where('warehouse_id', $vanWh->id)->update(['warehouse_id' => $targetWh->id]);
+                InventoryIssue::where('warehouse_id', $vanWh->id)->update(['warehouse_id' => $targetWh->id]);
+                InventoryStocktake::where('warehouse_id', $vanWh->id)->update(['warehouse_id' => $targetWh->id]);
+                WoodBoard::where('warehouse_id', $vanWh->id)->update(['warehouse_id' => $targetWh->id]);
+                $vanWh->delete();
+                $deleted[] = 'KHO-VAN (Kho Tấm Ván)';
+            }
+        });
+
+        return $deleted;
     }
 
     /**

@@ -175,6 +175,22 @@
                 </div>
             </div>
 
+            {{-- Thanh Lưu ý phân loại kho theo Tài khoản kế toán --}}
+            <div class="px-4 py-2 bg-neutral-50/80 border-b border-neutral-200 flex flex-wrap items-center justify-between gap-2 text-[11px] text-neutral-600">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class="inline-flex items-center gap-1 font-bold text-neutral-800 bg-white border border-neutral-200 px-2 py-0.5 rounded-md shadow-2xs">
+                        <iconify-icon icon="solar:info-circle-bold" class="text-primary-600 text-xs"></iconify-icon>
+                        Lưu ý mã phân loại kho:
+                    </span>
+                    <span><strong class="text-neutral-800">152</strong>: Nguyên vật liệu (cốt ván, acrylic, melamin, keo, chỉ...)</span>
+                    <span class="text-neutral-300">&bull;</span>
+                    <span><strong class="text-neutral-800">153</strong>: Phụ kiện & dụng cụ xưởng (bản lề, ray, ốc vít...)</span>
+                    <span class="text-neutral-300">&bull;</span>
+                    <span><strong class="text-neutral-800">155</strong>: Thành phẩm gia công hoàn thiện (cánh kính, tấm ép...)</span>
+                </div>
+                <span class="text-[10px] text-neutral-400 italic">Hệ thống 24 kho chuẩn</span>
+            </div>
+
             {{-- Table Area --}}
             <div class="p-1">
                 <div class="overflow-x-auto w-full">

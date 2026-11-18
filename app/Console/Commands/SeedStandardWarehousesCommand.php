@@ -13,7 +13,12 @@ class SeedStandardWarehousesCommand extends Command
 
     public function handle(InventoryService $inventoryService): int
     {
-        $this->info('Đang tiến hành chuẩn hóa danh mục 24 kho hàng...');
+        $this->info('Đang tiến hành dọn dẹp kho cũ và chuẩn hóa danh mục 24 kho hàng...');
+
+        $deletedOld = $inventoryService->cleanupOldWarehouses();
+        if (!empty($deletedOld)) {
+            $this->warn('Đã xóa bỏ các kho cũ tạm thời: ' . implode(', ', $deletedOld));
+        }
 
         $res = $inventoryService->ensureStandardWarehouses();
         $this->info("Đã xử lý danh mục kho: Tạo mới {$res['created']} kho, Cập nhật chuẩn hóa {$res['updated']} kho.");

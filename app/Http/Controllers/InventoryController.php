@@ -1670,10 +1670,11 @@ class InventoryController extends Controller
         $targetWarehouseId = $request->input('warehouse_id');
         $serverFile = $request->input('server_file', 'all_p_code_excels');
 
-        // Tự động chuẩn hóa và tạo mới các kho chuẩn nếu chưa có
-        $whSync = $this->inventoryService->ensureStandardWarehouses();
-
         if ($useServerFile) {
+            // Chỉ khi nạp từ file máy chủ: Xóa bỏ các kho cũ tạm thời (KHO-VAN, KHO-CHI) và chuẩn hóa 24 kho hàng
+            $deletedOldWhs = $this->inventoryService->cleanupOldWarehouses();
+            $whSync = $this->inventoryService->ensureStandardWarehouses();
+
             try {
                 // Trường hợp 1: Chọn nạp toàn bộ 24 kho từ thư mục p_code_excels
                 if ($serverFile === 'all_p_code_excels' || ($serverFile === 'all' && empty($targetWarehouseId))) {
