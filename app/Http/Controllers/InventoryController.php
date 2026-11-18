@@ -1654,8 +1654,34 @@ class InventoryController extends Controller
     public function destroyWarehouse(Warehouse $warehouse)
     {
         $name = $warehouse->name;
-        $warehouse->delete();
-        return back()->with('success', 'Đã xóa kho ' . $name . '!');
+        
+        // Tìm kho chuẩn để chuyển dữ liệu an toàn nếu kho này đang có vật tư/chứng từ
+        $targetWh = Warehouse::where('id', '!=', $warehouse->id)->where('code', '155_EP_TAM')->first()
+            ?? Warehouse::where('id', '!=', $warehouse->id)->where('code', '152_COT')->first()
+            ?? Warehouse::where('id', '!=', $warehouse->id)->first();
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($warehouse, $targetWh) {
+            if ($targetWh) {
+                \App\Models\Material::where('warehouse_id', $warehouse->id)->update([
+                    'warehouse_id'   => $targetWh->id,
+                    'warehouse_code' => $targetWh->code,
+                ]);
+                \App\Models\InventoryTransaction::where('warehouse_id', $warehouse->id)->update(['warehouse_id' => $targetWh->id]);
+                \App\Models\InventoryReceipt::where('warehouse_id', $warehouse->id)->update(['warehouse_id' => $targetWh->id]);
+                \App\Models\InventoryIssue::where('warehouse_id', $warehouse->id)->update(['warehouse_id' => $targetWh->id]);
+                \App\Models\InventoryStocktake::where('warehouse_id', $warehouse->id)->update(['warehouse_id' => $targetWh->id]);
+                \App\Models\WoodBoard::where('warehouse_id', $warehouse->id)->update(['warehouse_id' => $targetWh->id]);
+            }
+
+            $warehouse->delete();
+        });
+
+        $msg = "Đã xóa kho {$name} thành công!";
+        if ($targetWh) {
+            $msg .= " (Dữ liệu vật tư/chứng từ liên quan đã được chuyển an toàn sang {$targetWh->name})";
+        }
+
+        return back()->with('success', $msg);
     }
 
     /**

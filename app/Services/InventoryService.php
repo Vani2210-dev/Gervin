@@ -2770,7 +2770,7 @@ class InventoryService
     }
 
     /**
-     * Dọn dẹp và xóa các kho cũ tạm thời (KHO-VAN, KHO-CHI)
+     * Dọn dẹp và xóa các kho cũ tạm thời không thuộc danh mục 24 kho chuẩn (như KHO-VAN, KHO-CHI, KHO-TP-ÉP TẤM, AS...)
      * Chỉ thực hiện khi nạp từ máy chủ. Tự động chuyển toàn bộ chứng từ, giao dịch, vật tư sang kho chuẩn tương ứng.
      */
     public function cleanupOldWarehouses(): array
@@ -2782,41 +2782,32 @@ class InventoryService
         $edgeWh = Warehouse::where('code', '152_CHI')->first() 
             ?? $targetWh;
 
+        $standardCodes = array_keys(self::getStandardWarehousesConfig());
         $deleted = [];
 
-        \Illuminate\Support\Facades\DB::transaction(function() use ($targetWh, $edgeWh, &$deleted) {
-            // 1. Dọn dẹp Kho Dán Chỉ (KHO-CHI) cũ
-            $chiWh = Warehouse::where('code', 'KHO-CHI')->first();
-            if ($chiWh) {
-                Material::where('warehouse_id', $chiWh->id)->update([
-                    'warehouse_id'   => $edgeWh->id,
-                    'warehouse_code' => $edgeWh->code,
-                ]);
-                InventoryTransaction::where('warehouse_id', $chiWh->id)->update(['warehouse_id' => $edgeWh->id]);
-                InventoryReceipt::where('warehouse_id', $chiWh->id)->update(['warehouse_id' => $edgeWh->id]);
-                InventoryIssue::where('warehouse_id', $chiWh->id)->update(['warehouse_id' => $edgeWh->id]);
-                InventoryStocktake::where('warehouse_id', $chiWh->id)->update(['warehouse_id' => $edgeWh->id]);
-                WoodBoard::where('warehouse_id', $chiWh->id)->update(['warehouse_id' => $edgeWh->id]);
-                $chiWh->delete();
-                $deleted[] = 'KHO-CHI (Kho Dán Chỉ)';
-            }
+        // Lấy tất cả các kho không nằm trong danh mục 24 kho chuẩn
+        $nonStandardWarehouses = Warehouse::whereNotIn('code', $standardCodes)->get();
 
-            // 2. Dọn dẹp Kho Tấm Ván (KHO-VAN) cũ
-            $vanWh = Warehouse::where('code', 'KHO-VAN')->first();
-            if ($vanWh) {
-                Material::where('warehouse_id', $vanWh->id)->update([
-                    'warehouse_id'   => $targetWh->id,
-                    'warehouse_code' => $targetWh->code,
-                ]);
-                InventoryTransaction::where('warehouse_id', $vanWh->id)->update(['warehouse_id' => $targetWh->id]);
-                InventoryReceipt::where('warehouse_id', $vanWh->id)->update(['warehouse_id' => $targetWh->id]);
-                InventoryIssue::where('warehouse_id', $vanWh->id)->update(['warehouse_id' => $targetWh->id]);
-                InventoryStocktake::where('warehouse_id', $vanWh->id)->update(['warehouse_id' => $targetWh->id]);
-                WoodBoard::where('warehouse_id', $vanWh->id)->update(['warehouse_id' => $targetWh->id]);
-                $vanWh->delete();
-                $deleted[] = 'KHO-VAN (Kho Tấm Ván)';
-            }
-        });
+        if ($nonStandardWarehouses->isNotEmpty()) {
+            \Illuminate\Support\Facades\DB::transaction(function() use ($nonStandardWarehouses, $targetWh, $edgeWh, &$deleted) {
+                foreach ($nonStandardWarehouses as $oldWh) {
+                    $destWh = str_contains(strtoupper($oldWh->code . ' ' . $oldWh->name), 'CHỈ') ? $edgeWh : $targetWh;
+
+                    Material::where('warehouse_id', $oldWh->id)->update([
+                        'warehouse_id'   => $destWh->id,
+                        'warehouse_code' => $destWh->code,
+                    ]);
+                    InventoryTransaction::where('warehouse_id', $oldWh->id)->update(['warehouse_id' => $destWh->id]);
+                    InventoryReceipt::where('warehouse_id', $oldWh->id)->update(['warehouse_id' => $destWh->id]);
+                    InventoryIssue::where('warehouse_id', $oldWh->id)->update(['warehouse_id' => $destWh->id]);
+                    InventoryStocktake::where('warehouse_id', $oldWh->id)->update(['warehouse_id' => $destWh->id]);
+                    WoodBoard::where('warehouse_id', $oldWh->id)->update(['warehouse_id' => $destWh->id]);
+
+                    $deleted[] = "{$oldWh->code} ({$oldWh->name})";
+                    $oldWh->delete();
+                }
+            });
+        }
 
         return $deleted;
     }

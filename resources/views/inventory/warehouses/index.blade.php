@@ -107,15 +107,13 @@
                                                 title="Chỉnh sửa kho hàng">
                                             <iconify-icon icon="solar:pen-bold" class="text-base pointer-events-none"></iconify-icon>
                                         </button>
-                                        @if($w->materials_count == 0)
-                                            <form action="{{ route('inventory.warehouses.destroy', $w) }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa kho này?');" class="inline-block">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="p-2 text-neutral-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg" title="Xóa">
-                                                    <iconify-icon icon="solar:trash-bin-trash-bold" class="text-base pointer-events-none"></iconify-icon>
-                                                </button>
-                                            </form>
-                                        @endif
+                                        <form action="{{ route('inventory.warehouses.destroy', $w) }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa kho \'{{ addslashes($w->name) }}\'? {{ $w->materials_count > 0 ? 'Toàn bộ ' . $w->materials_count . ' vật tư và chứng từ liên quan sẽ được tự động chuyển sang kho chuẩn an toàn.' : '' }}');" class="inline-block">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="p-2 text-neutral-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer" title="Xóa kho hàng">
+                                                <iconify-icon icon="solar:trash-bin-trash-bold" class="text-base pointer-events-none"></iconify-icon>
+                                            </button>
+                                        </form>
                                     </div>
                                 </div>
                             </div>
