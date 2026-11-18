@@ -70,12 +70,16 @@
 @php
     $modalWarehouses = isset($warehouses) && count($warehouses) ? $warehouses : \App\Models\Warehouse::where('status', 'active')->orderBy('id')->get();
     $currentWhId = request('warehouse_id') ?: ($selectedWarehouseId ?? '');
+    $serverFiles = \App\Services\InventoryService::getServerExcelFiles();
+    $serverFilePath = base_path('mã.xlsx');
+    $hasServerMasterFile = file_exists($serverFilePath) || file_exists('C:/Code/Gervin/mã.xlsx');
+    $hasServerFiles = !empty($serverFiles) || $hasServerMasterFile;
 @endphp
 <x-modal name="importStockModal" maxWidth="xl">
     <div class="px-6 py-4 border-b border-neutral-200 flex items-center justify-between bg-emerald-50 rounded-t-xl">
         <div class="flex items-center gap-2">
             <iconify-icon icon="solar:file-excel-bold" class="text-xl text-emerald-600"></iconify-icon>
-            <h5 class="font-bold text-base text-neutral-800 mb-0">Nhập Danh mục Vật tư từ Excel (mã.xlsx)</h5>
+            <h5 class="font-bold text-base text-neutral-800 mb-0">Nhập Danh mục Vật tư từ Excel</h5>
         </div>
         <button type="button" onclick="closeModal('importStockModal')" class="text-neutral-400 hover:text-neutral-700 text-xl leading-none">&times;</button>
     </div>
@@ -88,47 +92,73 @@
                 Kho đích áp dụng:
             </label>
             <select id="modal_import_warehouse_select" onchange="syncImportWarehouse(this.value)" class="form-select rounded-lg w-full border-neutral-300 px-4 py-2 text-xs font-semibold text-neutral-800 focus:border-primary-500 focus:ring-primary-500 bg-white">
-                <option value="" {{ empty($currentWhId) ? 'selected' : '' }}>-- Tất cả kho (Tự động nhận diện theo Cột B của file) --</option>
+                <option value="" data-code="">-- Tất cả kho (Tự động nạp toàn bộ 24 kho từ máy chủ & tạo kho chuẩn) --</option>
                 @foreach($modalWarehouses as $wh)
-                    <option value="{{ $wh->id }}" {{ (string)$currentWhId === (string)$wh->id ? 'selected' : '' }}>
+                    <option value="{{ $wh->id }}" data-code="{{ $wh->code }}" {{ (string)$currentWhId === (string)$wh->id ? 'selected' : '' }}>
                         {{ $wh->name }} ({{ $wh->code }})
                     </option>
                 @endforeach
             </select>
             <p class="text-[11px] text-neutral-500 mb-0 mt-2 flex items-center gap-1">
                 <iconify-icon icon="solar:info-circle-outline" class="text-xs text-primary-600"></iconify-icon>
-                Hệ thống chỉ nhập danh mục mã vật tư (không cần số lượng tồn). Chọn "Tất cả kho" để tự động gán từng mã vào đúng kho theo Cột B.
+                Hệ thống chỉ nhập danh mục mã vật tư (không cần số lượng tồn). Chọn "Tất cả kho" để tự động tạo kho chuẩn và nạp toàn bộ 24 file kho từ máy chủ.
             </p>
         </div>
 
-        {{-- Card: File sẵn có mã.xlsx --}}
-        @php
-            $serverFilePath = base_path('mã.xlsx');
-            $hasServerFile = file_exists($serverFilePath) || file_exists('C:/Code/Gervin/mã.xlsx');
-        @endphp
-        @if($hasServerFile)
-            <div class="p-4 bg-emerald-50 border-2 border-emerald-300 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs">
-                <div class="flex items-start gap-3">
-                    <div class="w-10 h-10 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm mt-1">
-                        <iconify-icon icon="solar:file-excel-bold" class="text-2xl"></iconify-icon>
-                    </div>
-                    <div>
-                        <div class="text-xs font-bold text-emerald-950 flex items-center gap-2">
-                            <span>mã.xlsx</span>
-                            <span class="bg-emerald-200 text-emerald-800 text-[10px] px-2 py-0.5 rounded-full font-bold">File gốc trên máy chủ</span>
+        {{-- Card: File sẵn có trên máy chủ (p_code_excels / mã.xlsx) --}}
+        @if($hasServerFiles)
+            <div class="p-4 bg-emerald-50 border-2 border-emerald-300 rounded-xl space-y-3 shadow-2xs">
+                <div class="flex items-start justify-between gap-3">
+                    <div class="flex items-start gap-3">
+                        <div class="w-10 h-10 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm mt-0.5">
+                            <iconify-icon icon="solar:server-square-bold" class="text-2xl"></iconify-icon>
                         </div>
-                        <p class="text-[11px] text-emerald-800 mb-0 mt-1">
-                            Tự động nạp toàn bộ danh mục mã vật tư từ file mã.xlsx tại thư mục dự án.
-                        </p>
+                        <div>
+                            <div class="text-xs font-bold text-emerald-950 flex flex-wrap items-center gap-2">
+                                <span>Kho file máy chủ (p_code_excels)</span>
+                                @if(!empty($serverFiles))
+                                    <span class="bg-emerald-200 text-emerald-900 text-[10px] px-2 py-0.5 rounded-full font-bold">{{ count($serverFiles) }} file kho sẵn sàng</span>
+                                @endif
+                                <span class="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded-full font-bold border border-emerald-300">Tự tạo kho chuẩn</span>
+                            </div>
+                            <p class="text-[11px] text-emerald-800 mb-0 mt-1">
+                                Tự động chuẩn hóa 24 kho hàng (mã, tên, mô tả, loại hàng) và nạp danh mục mã vật tư.
+                            </p>
+                        </div>
                     </div>
                 </div>
-                <form action="{{ route('inventory.import-stock') }}" method="POST" class="m-0 shrink-0">
+
+                <form action="{{ route('inventory.import-stock') }}" method="POST" class="m-0 space-y-3">
                     @csrf
                     <input type="hidden" name="use_server_file" value="1">
                     <input type="hidden" name="warehouse_id" class="import-stock-target-wh" value="{{ $currentWhId }}">
-                    <button type="submit" onclick="return confirm('Xác nhận nhập danh mục vật tư từ file mã.xlsx trên máy chủ?')" class="btn bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 shadow-sm w-full sm:w-auto justify-center cursor-pointer">
-                        <iconify-icon icon="solar:upload-track-bold" class="text-base"></iconify-icon> Nạp từ file máy chủ
-                    </button>
+
+                    <div>
+                        <label for="server_file_select" class="block text-xs font-bold text-emerald-950 mb-1">
+                            Chọn nguồn file máy chủ:
+                        </label>
+                        <select id="server_file_select" name="server_file" onchange="syncServerFileToWarehouse(this.value)" class="form-select rounded-lg w-full border-emerald-300 bg-white text-xs font-semibold text-neutral-800 focus:border-emerald-600 focus:ring-emerald-600 py-2">
+                            <option value="all_p_code_excels" data-wh-code="">[Tất cả kho] Toàn bộ 24 file kho (Tự động nạp 1.529 mã & tạo kho chuẩn)</option>
+                            @foreach($serverFiles as $sFile)
+                                <option value="{{ $sFile['filename'] }}" data-wh-code="{{ $sFile['warehouse_code'] }}" data-wh-name="{{ $sFile['warehouse_name'] }}">
+                                    [{{ $sFile['warehouse_code'] }}] {{ $sFile['warehouse_name'] }} ({{ $sFile['filename'] }}) - {{ $sFile['items_count'] }} mã
+                                </option>
+                            @endforeach
+                            @if($hasServerMasterFile)
+                                <option value="ma.xlsx" data-wh-code="">[File tổng] mã.xlsx (File tổng hợp 24 kho gốc)</option>
+                            @endif
+                        </select>
+                    </div>
+
+                    <div class="flex items-center justify-between pt-1">
+                        <span class="text-[11px] text-emerald-700 italic flex items-center gap-1">
+                            <iconify-icon icon="solar:check-circle-bold" class="text-emerald-600 text-xs"></iconify-icon>
+                            Tự động đồng bộ với kho đích đã chọn ở trên
+                        </span>
+                        <button type="submit" onclick="return confirm('Xác nhận nạp danh mục vật tư từ máy chủ? Hệ thống sẽ tự động đồng bộ và tạo chuẩn các kho hàng.')" class="btn bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 shadow-sm cursor-pointer">
+                            <iconify-icon icon="solar:upload-track-bold" class="text-base"></iconify-icon> Nạp từ file máy chủ
+                        </button>
+                    </div>
                 </form>
             </div>
 
@@ -147,10 +177,10 @@
             <div class="p-4 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-900 space-y-1">
                 <div class="font-bold flex items-center gap-1.5 mb-1">
                     <iconify-icon icon="solar:info-circle-bold" class="text-base text-blue-600"></iconify-icon>
-                    Cấu trúc các cột trong file Excel (mã.xlsx):
+                    Cấu trúc các cột trong file Excel (mã.xlsx hoặc file từng kho):
                 </div>
                 <ul class="list-disc pl-5 space-y-0.5 text-[11px]">
-                    <li><strong>Cột B:</strong> Tên kho (Vd: <em>152 - KÍNH, 152_ACRYLIC, 153_PK, 152_COT...</em>)</li>
+                    <li><strong>Cột B:</strong> Tên kho (Vd: <em>152 - KÍNH, 152_ACRYLIC, 153_PK, 152_COT, 155_Thành Phẩm...</em>)</li>
                     <li><strong>Cột C:</strong> Mã hàng (Mã SKU vật tư)</li>
                     <li><strong>Cột D:</strong> Tên hàng hóa / vật tư</li>
                     <li><strong>Cột E:</strong> Đơn vị tính (Tấm, Cái, Mét, Kg, Hộp, Cây...)</li>
@@ -188,5 +218,61 @@
         document.querySelectorAll('.import-stock-target-wh').forEach(function(el) {
             el.value = val || '';
         });
+
+        // Tự động đồng bộ dropdown file máy chủ tương ứng
+        var whSelect = document.getElementById('modal_import_warehouse_select');
+        var serverSelect = document.getElementById('server_file_select');
+        if (!whSelect || !serverSelect) return;
+
+        if (!val) {
+            serverSelect.value = 'all_p_code_excels';
+            return;
+        }
+
+        var opt = whSelect.options[whSelect.selectedIndex];
+        var whCode = opt ? (opt.getAttribute('data-code') || '').trim() : '';
+        if (!whCode) return;
+
+        var found = false;
+        for (var i = 0; i < serverSelect.options.length; i++) {
+            var sOpt = serverSelect.options[i];
+            if (sOpt.getAttribute('data-wh-code') === whCode) {
+                serverSelect.selectedIndex = i;
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            serverSelect.value = 'all_p_code_excels';
+        }
+    }
+
+    function syncServerFileToWarehouse(fileName) {
+        var whSelect = document.getElementById('modal_import_warehouse_select');
+        var serverSelect = document.getElementById('server_file_select');
+        if (!whSelect || !serverSelect) return;
+
+        if (fileName === 'all_p_code_excels' || fileName === 'ma.xlsx') {
+            whSelect.value = '';
+            document.querySelectorAll('.import-stock-target-wh').forEach(function(el) {
+                el.value = '';
+            });
+            return;
+        }
+
+        var sOpt = serverSelect.options[serverSelect.selectedIndex];
+        var whCode = sOpt ? (sOpt.getAttribute('data-wh-code') || '').trim() : '';
+        if (!whCode) return;
+
+        for (var i = 0; i < whSelect.options.length; i++) {
+            var opt = whSelect.options[i];
+            if (opt.getAttribute('data-code') === whCode) {
+                whSelect.selectedIndex = i;
+                document.querySelectorAll('.import-stock-target-wh').forEach(function(el) {
+                    el.value = opt.value;
+                });
+                break;
+            }
+        }
     }
 </script>

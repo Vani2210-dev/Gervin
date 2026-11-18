@@ -1661,18 +1661,72 @@ class InventoryController extends Controller
     /**
      * Nhập tồn kho từ file Excel Ton_Kho_Tam_Van_
      */
+    /**
+     * Nhập tồn kho / danh mục vật tư từ file Excel (máy chủ hoặc tải lên từ máy tính)
+     */
     public function importStock(Request $request)
     {
         $useServerFile = $request->boolean('use_server_file');
         $targetWarehouseId = $request->input('warehouse_id');
+        $serverFile = $request->input('server_file', 'all_p_code_excels');
+
+        // Tự động chuẩn hóa và tạo mới các kho chuẩn nếu chưa có
+        $whSync = $this->inventoryService->ensureStandardWarehouses();
 
         if ($useServerFile) {
-            $filePath = base_path('mã.xlsx');
-            if (!file_exists($filePath)) {
-                $filePath = 'C:/Code/Gervin/mã.xlsx';
-            }
-            if (!file_exists($filePath)) {
-                return back()->withErrors(['excel_file' => 'Không tìm thấy file mã.xlsx trên máy chủ!']);
+            try {
+                // Trường hợp 1: Chọn nạp toàn bộ 24 kho từ thư mục p_code_excels
+                if ($serverFile === 'all_p_code_excels' || ($serverFile === 'all' && empty($targetWarehouseId))) {
+                    $result = $this->inventoryService->importAllWarehousesFromFolder();
+                    $msg = "Đã đồng bộ 24 kho chuẩn và nạp thành công {$result['files_count']} file kho từ máy chủ! Tổng xử lý: {$result['total_items']} dòng (Thêm mới: {$result['created_count']}, Cập nhật: {$result['updated_count']}).";
+                    return redirect()->route('inventory.index', $targetWarehouseId ? ['warehouse_id' => $targetWarehouseId] : [])
+                        ->with('success', $msg);
+                }
+
+                // Trường hợp 2: Chọn file tổng mã.xlsx
+                if ($serverFile === 'ma.xlsx') {
+                    $filePath = base_path('mã.xlsx');
+                    if (!file_exists($filePath)) {
+                        $filePath = 'C:/Code/Gervin/mã.xlsx';
+                    }
+                    if (!file_exists($filePath)) {
+                        return back()->withErrors(['excel_file' => 'Không tìm thấy file mã.xlsx trên máy chủ!']);
+                    }
+                    $result = $this->inventoryService->importMaterialsFromExcel($filePath, $targetWarehouseId ? (int)$targetWarehouseId : null);
+                    $msg = "Đã nạp danh mục vật tư từ file tổng mã.xlsx thành công! Tổng xử lý: {$result['total_items']} dòng (Thêm mới: {$result['created_count']}, Cập nhật: {$result['updated_count']}).";
+                    return redirect()->route('inventory.index', $targetWarehouseId ? ['warehouse_id' => $targetWarehouseId] : [])
+                        ->with('success', $msg);
+                }
+
+                // Trường hợp 3: Chọn 1 file kho cụ thể trong thư mục p_code_excels
+                $folder = \App\Services\InventoryService::getServerExcelFolderPath();
+                $filePath = $folder ? ($folder . DIRECTORY_SEPARATOR . $serverFile) : null;
+                if (!$filePath || !file_exists($filePath)) {
+                    // Thử tìm theo mã kho nếu người dùng chọn kho đích
+                    if ($targetWarehouseId) {
+                        $targetWh = \App\Models\Warehouse::find($targetWarehouseId);
+                        if ($targetWh) {
+                            $safeWhName = preg_replace('/[\\\\\\/*?:"<>|]/', '_', $targetWh->code);
+                            $candidatePath = $folder ? ($folder . DIRECTORY_SEPARATOR . $safeWhName . '.xlsx') : null;
+                            if ($candidatePath && file_exists($candidatePath)) {
+                                $filePath = $candidatePath;
+                                $serverFile = $safeWhName . '.xlsx';
+                            }
+                        }
+                    }
+                }
+
+                if (!$filePath || !file_exists($filePath)) {
+                    return back()->withErrors(['excel_file' => "Không tìm thấy file kho {$serverFile} trên máy chủ!"]);
+                }
+
+                $result = $this->inventoryService->importMaterialsFromExcel($filePath, $targetWarehouseId ? (int)$targetWarehouseId : null);
+                $msg = "Đã nạp thành công file {$serverFile}! Tổng xử lý: {$result['total_items']} dòng (Thêm mới: {$result['created_count']}, Cập nhật: {$result['updated_count']}).";
+
+                return redirect()->route('inventory.index', $targetWarehouseId ? ['warehouse_id' => $targetWarehouseId] : [])
+                    ->with('success', $msg);
+            } catch (\Exception $e) {
+                return back()->withErrors(['excel_file' => 'Lỗi khi nạp file từ máy chủ: ' . $e->getMessage()]);
             }
         } else {
             $request->validate([
@@ -1683,15 +1737,15 @@ class InventoryController extends Controller
                 'excel_file.max'      => 'Dung lượng file tối đa là 30MB!',
             ]);
             $filePath = $request->file('excel_file')->getRealPath();
-        }
 
-        try {
-            $result = $this->inventoryService->importMaterialsFromExcel($filePath, $targetWarehouseId ? (int)$targetWarehouseId : null);
+            try {
+                $result = $this->inventoryService->importMaterialsFromExcel($filePath, $targetWarehouseId ? (int)$targetWarehouseId : null);
 
-            return redirect()->route('inventory.index', $targetWarehouseId ? ['warehouse_id' => $targetWarehouseId] : [])
-                ->with('success', "Nhập danh mục vật tư thành công! Tổng xử lý: {$result['total_items']} dòng (Thêm mới: {$result['created_count']}, Cập nhật: {$result['updated_count']}).");
-        } catch (\Exception $e) {
-            return back()->withErrors(['excel_file' => 'Lỗi khi nhập file Excel: ' . $e->getMessage()]);
+                return redirect()->route('inventory.index', $targetWarehouseId ? ['warehouse_id' => $targetWarehouseId] : [])
+                    ->with('success', "Nhập danh mục vật tư thành công! Tổng xử lý: {$result['total_items']} dòng (Thêm mới: {$result['created_count']}, Cập nhật: {$result['updated_count']}).");
+            } catch (\Exception $e) {
+                return back()->withErrors(['excel_file' => 'Lỗi khi nhập file Excel: ' . $e->getMessage()]);
+            }
         }
     }
 }

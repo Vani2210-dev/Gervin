@@ -2524,49 +2524,443 @@ class InventoryService
     /**
      * Nhập danh mục vật tư tổng quát từ file mã.xlsx (hoặc file xuất từ MISA)
      */
-    public function importMaterialsFromExcel(string $filePath, ?int $targetWarehouseId = null): array
+    /**
+     * Danh mục cấu hình 24 kho hàng chuẩn theo phân loại của Gervin
+     */
+    public static function getStandardWarehousesConfig(): array
+    {
+        return [
+            'KHO-VAN' => [
+                'code'        => 'KHO-VAN',
+                'name'        => 'Kho Tấm Ván',
+                'item_name'   => 'Tấm ván',
+                'description' => 'Kho lưu trữ và theo dõi các mã tấm ván gỗ công nghiệp & Acrylic',
+                'item_type'   => 'board',
+                'file_name'   => null,
+            ],
+            'KHO-CHI' => [
+                'code'        => 'KHO-CHI',
+                'name'        => 'Kho Dán Chỉ',
+                'item_name'   => 'Chỉ dán viền',
+                'description' => 'Kho lưu trữ và theo dõi xuất nhập tồn cuộn chỉ / nẹp chỉ dán cạnh cho từng mã tấm',
+                'item_type'   => 'edge_band',
+                'file_name'   => null,
+            ],
+            '152 - KÍNH' => [
+                'code'        => '152 - KÍNH',
+                'name'        => 'Kho Kính (152)',
+                'item_name'   => 'Kính nguyên liệu',
+                'description' => 'Kho lưu trữ vật tư kính tấm, kính nguyên liệu phục vụ sản xuất cánh kính',
+                'item_type'   => 'glass',
+                'file_name'   => '152 - KÍNH.xlsx',
+            ],
+            '152 - NHÔM' => [
+                'code'        => '152 - NHÔM',
+                'name'        => 'Kho Nhôm (152)',
+                'item_name'   => 'Thanh nhôm định hình',
+                'description' => 'Kho lưu trữ thanh nhôm định hình, nhôm cánh kính, nẹp nhôm và tay nắm nhôm',
+                'item_type'   => 'aluminum',
+                'file_name'   => '152 - NHÔM.xlsx',
+            ],
+            '152 Melamin Panex' => [
+                'code'        => '152 Melamin Panex',
+                'name'        => 'Kho Melamin Panex (152)',
+                'item_name'   => 'Tấm ván Melamin Panex',
+                'description' => 'Kho lưu trữ ván gỗ công nghiệp phủ Melamin thương hiệu Panex',
+                'item_type'   => 'board',
+                'file_name'   => '152 Melamin Panex.xlsx',
+            ],
+            '152_ACRYLIC ĐÀ NẴNG' => [
+                'code'        => '152_ACRYLIC ĐÀ NẴNG',
+                'name'        => 'Kho Acrylic Đà Nẵng (152)',
+                'item_name'   => 'Tấm Acrylic Đà Nẵng',
+                'description' => 'Kho lưu trữ các dòng tấm ván phủ Acrylic chi nhánh Đà Nẵng',
+                'item_type'   => 'board',
+                'file_name'   => '152_ACRYLIC ĐÀ NẴNG.xlsx',
+            ],
+            '152_ACRYLIC' => [
+                'code'        => '152_ACRYLIC',
+                'name'        => 'Kho Tấm Acrylic (152)',
+                'item_name'   => 'Tấm Acrylic bóng gương',
+                'description' => 'Kho lưu trữ các mã tấm ván phủ Acrylic bóng gương cao cấp',
+                'item_type'   => 'board',
+                'file_name'   => '152_ACRYLIC.xlsx',
+            ],
+            '152_CHI' => [
+                'code'        => '152_CHI',
+                'name'        => 'Kho Chỉ Dán Viền (152)',
+                'item_name'   => 'Chỉ dán viền / nẹp chỉ',
+                'description' => 'Kho lưu trữ các cuộn chỉ dán cạnh, nẹp viền đồng màu theo từng mã ván',
+                'item_type'   => 'edge_band',
+                'file_name'   => '152_CHI.xlsx',
+            ],
+            '152_COT' => [
+                'code'        => '152_COT',
+                'name'        => 'Kho Cốt Ván (MDF, PVC, Plywood) (152)',
+                'item_name'   => 'Cốt ván thô (MDF, HMR, Plywood, PVC)',
+                'description' => 'Kho lưu trữ cốt ván thô các loại: MDF chống ẩm, cốt ván dăm, Plywood, WPB, PVC',
+                'item_type'   => 'board',
+                'file_name'   => '152_COT.xlsx',
+            ],
+            '152_HÓA CHẤT' => [
+                'code'        => '152_HÓA CHẤT',
+                'name'        => 'Kho Hóa Chất - Keo Dán (152)',
+                'item_name'   => 'Keo dán & hóa chất ngành gỗ',
+                'description' => 'Kho lưu trữ keo dán cạnh PUR/EVA, hóa chất xử lý bề mặt và dung môi tẩy keo',
+                'item_type'   => 'chemical',
+                'file_name'   => '152_HÓA CHẤT.xlsx',
+            ],
+            '152_LAMINATE BMH' => [
+                'code'        => '152_LAMINATE BMH',
+                'name'        => 'Kho Laminate BMH (152)',
+                'item_name'   => 'Tấm bề mặt Laminate BMH',
+                'description' => 'Kho lưu trữ các tấm bề mặt Laminate dòng BMH',
+                'item_type'   => 'board',
+                'file_name'   => '152_LAMINATE BMH.xlsx',
+            ],
+            '152_LAMINATE' => [
+                'code'        => '152_LAMINATE',
+                'name'        => 'Kho Laminate (152)',
+                'item_name'   => 'Tấm phủ bề mặt Laminate',
+                'description' => 'Kho lưu trữ tấm Laminate phủ bề mặt các loại chống xước cao cấp',
+                'item_type'   => 'board',
+                'file_name'   => '152_LAMINATE.xlsx',
+            ],
+            '152_MELAMIN VƯƠNG THANH' => [
+                'code'        => '152_MELAMIN VƯƠNG THANH',
+                'name'        => 'Kho Melamin Vương Thanh (152)',
+                'item_name'   => 'Tấm ván Melamin Vương Thanh',
+                'description' => 'Kho lưu trữ ván phủ Melamin nhà cung cấp Vương Thanh',
+                'item_type'   => 'board',
+                'file_name'   => '152_MELAMIN VƯƠNG THANH.xlsx',
+            ],
+            '152_MELAMIN_ NHAVIET' => [
+                'code'        => '152_MELAMIN_ NHAVIET',
+                'name'        => 'Kho Melamin Nhà Việt (152)',
+                'item_name'   => 'Tấm ván Melamin Nhà Việt',
+                'description' => 'Kho lưu trữ ván phủ Melamin nhà cung cấp Nhà Việt',
+                'item_type'   => 'board',
+                'file_name'   => '152_MELAMIN_ NHAVIET.xlsx',
+            ],
+            '152_MELAMIN_MP' => [
+                'code'        => '152_MELAMIN_MP',
+                'name'        => 'Kho Melamin MP (152)',
+                'item_name'   => 'Tấm ván Melamin Mộc Phát',
+                'description' => 'Kho lưu trữ ván phủ Melamin nhà cung cấp Mộc Phát',
+                'item_type'   => 'board',
+                'file_name'   => '152_MELAMIN_MP.xlsx',
+            ],
+            '152_MELAMIN_TTĐ' => [
+                'code'        => '152_MELAMIN_TTĐ',
+                'name'        => 'Kho Melamin TTĐ (152)',
+                'item_name'   => 'Tấm ván Melamin TTĐ',
+                'description' => 'Kho lưu trữ ván phủ Melamin nhà cung cấp TTĐ',
+                'item_type'   => 'board',
+                'file_name'   => '152_MELAMIN_TTĐ.xlsx',
+            ],
+            '152_MELAMIN_XN' => [
+                'code'        => '152_MELAMIN_XN',
+                'name'        => 'Kho Melamin XN (152)',
+                'item_name'   => 'Tấm ván Melamin XN',
+                'description' => 'Kho lưu trữ ván phủ Melamin nhà cung cấp XN',
+                'item_type'   => 'board',
+                'file_name'   => '152_MELAMIN_XN.xlsx',
+            ],
+            '152_MIN An Cường' => [
+                'code'        => '152_MIN An Cường',
+                'name'        => 'Kho Melamin An Cường (152)',
+                'item_name'   => 'Tấm ván Melamin An Cường',
+                'description' => 'Kho lưu trữ ván phủ Melamin chính hãng An Cường',
+                'item_type'   => 'board',
+                'file_name'   => '152_MIN An Cường.xlsx',
+            ],
+            '152_MIN_ THUYTRINH' => [
+                'code'        => '152_MIN_ THUYTRINH',
+                'name'        => 'Kho Melamin Thùy Trinh (152)',
+                'item_name'   => 'Tấm ván Melamin Thùy Trinh',
+                'description' => 'Kho lưu trữ ván phủ Melamin nhà cung cấp Thùy Trinh',
+                'item_type'   => 'board',
+                'file_name'   => '152_MIN_ THUYTRINH.xlsx',
+            ],
+            '152_PHU' => [
+                'code'        => '152_PHU',
+                'name'        => 'Kho Vật Tư Phụ (152)',
+                'item_name'   => 'Vật tư phụ ngành sản xuất',
+                'description' => 'Kho lưu trữ vật tư tiêu hao, băng dính, màng PE, giấy ráp và vật tư phụ 152',
+                'item_type'   => 'chemical',
+                'file_name'   => '152_PHU.xlsx',
+            ],
+            '153_PHU' => [
+                'code'        => '153_PHU',
+                'name'        => 'Kho Phụ Tùng - Vật Tư Phụ (153)',
+                'item_name'   => 'Phụ tùng máy móc & thiết bị xưởng',
+                'description' => 'Kho lưu trữ phụ tùng thay thế máy dán cạnh, máy cưa, mũi khoan và dao phay',
+                'item_type'   => 'chemical',
+                'file_name'   => '153_PHU.xlsx',
+            ],
+            '153_PK' => [
+                'code'        => '153_PK',
+                'name'        => 'Kho Phụ Kiện - Kim Khí (153)',
+                'item_name'   => 'Phụ kiện kim khí (bản lề, ray trượt, ốc vít)',
+                'description' => 'Kho lưu trữ phụ kiện ngành mộc: bản lề giảm chấn, ray trượt, ốc liên kết, tay nâng',
+                'item_type'   => 'hardware',
+                'file_name'   => '153_PK.xlsx',
+            ],
+            '155_CÁNH KÍNH' => [
+                'code'        => '155_CÁNH KÍNH',
+                'name'        => 'Kho Cánh Kính Thành Phẩm (155)',
+                'item_name'   => 'Cánh kính thành phẩm',
+                'description' => 'Kho lưu trữ và xuất hàng cánh kính tủ áo, tủ bếp gia công hoàn thiện',
+                'item_type'   => 'glass',
+                'file_name'   => '155_CÁNH KÍNH.xlsx',
+            ],
+            '155_EP_TAM' => [
+                'code'        => '155_EP_TAM',
+                'name'        => 'Kho Ép Tấm Thành Phẩm (155)',
+                'item_name'   => 'Tấm ván gia công ép bề mặt',
+                'description' => 'Kho lưu trữ các tấm cốt đã ép phủ hoàn thiện Acrylic, Laminate, Melamin',
+                'item_type'   => 'board',
+                'file_name'   => '155_EP_TAM.xlsx',
+            ],
+            '155_Thành Phẩm' => [
+                'code'        => '155_Thành Phẩm',
+                'name'        => 'Kho Thành Phẩm Gia Công (155)',
+                'item_name'   => 'Sản phẩm gia công hoàn thiện',
+                'description' => 'Kho lưu trữ thành phẩm nội thất, cánh tủ cắt dán hoàn thiện chờ giao khách hàng',
+                'item_type'   => 'finished',
+                'file_name'   => '155_Thành Phẩm.xlsx',
+            ],
+            'Melamin Minh Long' => [
+                'code'        => 'Melamin Minh Long',
+                'name'        => 'Kho Melamin Minh Long',
+                'item_name'   => 'Tấm ván Melamin Minh Long',
+                'description' => 'Kho lưu trữ ván phủ Melamin chính hãng Minh Long',
+                'item_type'   => 'board',
+                'file_name'   => 'Melamin Minh Long.xlsx',
+            ],
+        ];
+    }
+
+    /**
+     * Tự động khởi tạo và chuẩn hóa danh mục 24 kho hàng theo chuẩn của Gervin
+     */
+    public function ensureStandardWarehouses(): array
+    {
+        $configs = self::getStandardWarehousesConfig();
+        $created = 0;
+        $updated = 0;
+
+        foreach ($configs as $code => $cfg) {
+            $wh = Warehouse::where('code', $code)->first();
+            if (!$wh) {
+                Warehouse::create([
+                    'code'        => $code,
+                    'name'        => $cfg['name'],
+                    'item_name'   => $cfg['item_name'],
+                    'description' => $cfg['description'],
+                    'status'      => 'active',
+                ]);
+                $created++;
+            } else {
+                $changes = [];
+                if (empty($wh->name) || $wh->name === $code) {
+                    $changes['name'] = $cfg['name'];
+                }
+                if (empty($wh->item_name)) {
+                    $changes['item_name'] = $cfg['item_name'];
+                }
+                if (empty($wh->description)) {
+                    $changes['description'] = $cfg['description'];
+                }
+                if ($wh->status !== 'active') {
+                    $changes['status'] = 'active';
+                }
+                if (!empty($changes)) {
+                    $wh->update($changes);
+                    $updated++;
+                }
+            }
+        }
+
+        return ['created' => $created, 'updated' => $updated];
+    }
+
+    /**
+     * Lấy đường dẫn thư mục chứa các file Excel kho trên máy chủ (p_code_excels)
+     */
+    public static function getServerExcelFolderPath(): ?string
+    {
+        $primary = base_path('p_code_excels');
+        if (is_dir($primary)) {
+            return $primary;
+        }
+        $fallback = 'C:/Code/Gervin/p_code_excels';
+        if (is_dir($fallback)) {
+            return $fallback;
+        }
+        return null;
+    }
+
+    /**
+     * Lấy danh sách các file kho Excel có sẵn trên máy chủ trong thư mục p_code_excels
+     */
+    public static function getServerExcelFiles(): array
+    {
+        $folder = self::getServerExcelFolderPath();
+        if (!$folder) {
+            return [];
+        }
+
+        $files = glob($folder . '/*.xlsx');
+        if (empty($files)) {
+            return [];
+        }
+
+        $configs = self::getStandardWarehousesConfig();
+        $results = [];
+
+        $itemCounts = [
+            '152 - KÍNH.xlsx'              => 5,
+            '152 - NHÔM.xlsx'              => 82,
+            '152 Melamin Panex.xlsx'       => 12,
+            '152_ACRYLIC ĐÀ NẴNG.xlsx'     => 7,
+            '152_ACRYLIC.xlsx'             => 104,
+            '152_CHI.xlsx'                 => 335,
+            '152_COT.xlsx'                 => 24,
+            '152_HÓA CHẤT.xlsx'            => 11,
+            '152_LAMINATE BMH.xlsx'        => 99,
+            '152_LAMINATE.xlsx'            => 71,
+            '152_MELAMIN VƯƠNG THANH.xlsx' => 4,
+            '152_MELAMIN_ NHAVIET.xlsx'    => 36,
+            '152_MELAMIN_MP.xlsx'          => 21,
+            '152_MELAMIN_TTĐ.xlsx'         => 3,
+            '152_MELAMIN_XN.xlsx'          => 1,
+            '152_MIN An Cường.xlsx'        => 12,
+            '152_MIN_ THUYTRINH.xlsx'      => 3,
+            '152_PHU.xlsx'                 => 15,
+            '153_PHU.xlsx'                 => 50,
+            '153_PK.xlsx'                  => 105,
+            '155_CÁNH KÍNH.xlsx'           => 7,
+            '155_EP_TAM.xlsx'              => 392,
+            '155_Thành Phẩm.xlsx'          => 125,
+            'Melamin Minh Long.xlsx'       => 5,
+        ];
+
+        foreach ($files as $filePath) {
+            $filename = basename($filePath);
+            $code = pathinfo($filename, PATHINFO_FILENAME);
+            $cfg = $configs[$code] ?? null;
+            $name = $cfg['name'] ?? $code;
+            $itemsCount = $itemCounts[$filename] ?? 0;
+
+            $results[] = [
+                'filename'       => $filename,
+                'filepath'       => $filePath,
+                'warehouse_code' => $code,
+                'warehouse_name' => $name,
+                'items_count'    => $itemsCount,
+            ];
+        }
+
+        usort($results, fn($a, $b) => strcmp($a['warehouse_name'], $b['warehouse_name']));
+
+        return $results;
+    }
+
+    /**
+     * Nạp toàn bộ danh mục vật tư của tất cả 24 kho từ thư mục p_code_excels
+     */
+    public function importAllWarehousesFromFolder(?string $folderPath = null): array
+    {
+        $folderPath = $folderPath ?: self::getServerExcelFolderPath();
+        if (!$folderPath || !is_dir($folderPath)) {
+            // Fallback sang mã.xlsx nếu không tìm thấy thư mục tách
+            $fallbackFile = base_path('mã.xlsx');
+            if (!file_exists($fallbackFile)) {
+                $fallbackFile = 'C:/Code/Gervin/mã.xlsx';
+            }
+            if (file_exists($fallbackFile)) {
+                return $this->importMaterialsFromExcel($fallbackFile);
+            }
+            throw new \Exception("Không tìm thấy thư mục p_code_excels hoặc file mã.xlsx trên máy chủ!");
+        }
+
+        $this->ensureStandardWarehouses();
+
+        $files = glob($folderPath . '/*.xlsx');
+        if (empty($files)) {
+            throw new \Exception("Không tìm thấy file Excel nào trong thư mục: {$folderPath}");
+        }
+
+        $totalCreated = 0;
+        $totalUpdated = 0;
+        $processedFiles = 0;
+
+        $boards = WoodBoard::all()->keyBy(fn($b) => strtoupper(trim($b->color_code)));
+        $prices = WoodBoardPrice::all()->keyBy(fn($p) => strtoupper(trim($p->code)));
+        $whCache = Warehouse::all()->keyBy('code');
+
+        foreach ($files as $file) {
+            $baseName = pathinfo($file, PATHINFO_FILENAME);
+            $targetWh = $whCache->get($baseName);
+            $targetWhId = $targetWh?->id;
+
+            $res = $this->importMaterialsFromExcel($file, $targetWhId, $boards, $prices, $whCache);
+            $totalCreated += $res['created_count'];
+            $totalUpdated += $res['updated_count'];
+            $processedFiles++;
+        }
+
+        return [
+            'files_count'   => $processedFiles,
+            'created_count' => $totalCreated,
+            'updated_count' => $totalUpdated,
+            'total_items'   => $totalCreated + $totalUpdated,
+        ];
+    }
+
+    /**
+     * Nhập danh mục vật tư tổng quát từ file Excel (hỗ trợ cả mã.xlsx và từng file trong p_code_excels)
+     */
+    public function importMaterialsFromExcel(
+        string $filePath, 
+        ?int $targetWarehouseId = null,
+        $cachedBoards = null,
+        $cachedPrices = null,
+        $cachedWhs = null
+    ): array
     {
         if (!file_exists($filePath)) {
             throw new \Exception("Không tìm thấy file: {$filePath}");
         }
 
+        // Tự động chuẩn hóa kho trước khi import
+        $this->ensureStandardWarehouses();
+
         $spreadsheet = IOFactory::load($filePath);
-        $sheet = $spreadsheet->getSheetByName('Báo cáo') ?: $spreadsheet->getActiveSheet();
+        $sheet = $spreadsheet->getSheetByName('Báo cáo') 
+            ?: $spreadsheet->getSheetByName('Danh mục vật tư') 
+            ?: $spreadsheet->getActiveSheet();
         $highestRow = $sheet->getHighestRow();
 
-        $warehouseNameMap = [
-            '152 - KÍNH'              => 'Kho Kính (152)',
-            '152 - NHÔM'              => 'Kho Nhôm (152)',
-            '152 Melamin Panex'       => 'Kho Melamin Panex (152)',
-            '152_ACRYLIC'             => 'Kho Tấm Acrylic (152)',
-            '152_ACRYLIC ĐÀ NẴNG'     => 'Kho Acrylic Đà Nẵng (152)',
-            '152_CHI'                 => 'Kho Chỉ Dán Viền (152)',
-            '152_COT'                 => 'Kho Cốt Ván (MDF, PVC, Plywood) (152)',
-            '152_HÓA CHẤT'            => 'Kho Hóa Chất - Keo Dán (152)',
-            '152_LAMINATE'            => 'Kho Laminate (152)',
-            '152_LAMINATE BMH'        => 'Kho Laminate BMH (152)',
-            '152_MELAMIN VƯƠNG THANH' => 'Kho Melamin Vương Thanh (152)',
-            '152_MELAMIN_ NHAVIET'    => 'Kho Melamin Nhà Việt (152)',
-            '152_MELAMIN_MP'          => 'Kho Melamin MP (152)',
-            '152_MELAMIN_TTĐ'         => 'Kho Melamin TTĐ (152)',
-            '152_MELAMIN_XN'          => 'Kho Melamin XN (152)',
-            '152_MIN An Cường'        => 'Kho Melamin An Cường (152)',
-            '152_MIN_ THUYTRINH'      => 'Kho Melamin Thùy Trinh (152)',
-            '152_PHU'                 => 'Kho Vật Tư Phụ (152)',
-            '153_PHU'                 => 'Kho Phụ Tùng - Vật Tư Phụ (153)',
-            '153_PK'                  => 'Kho Phụ Kiện - Kim Khí (153)',
-            '155_CÁNH KÍNH'           => 'Kho Cánh Kính Thành Phẩm (155)',
-            '155_EP_TAM'              => 'Kho Ép Tấm Thành Phẩm (155)',
-            '155_Thành Phẩm'          => 'Kho Thành Phẩm Gia Công (155)',
-            'Melamin Minh Long'       => 'Kho Melamin Minh Long',
-        ];
+        $standardConfigs = self::getStandardWarehousesConfig();
+        $warehouseNameMap = [];
+        foreach ($standardConfigs as $code => $cfg) {
+            $warehouseNameMap[$code] = $cfg['name'];
+        }
 
         $currentWhRaw = '';
-        $whCache = [];
+        $whCache = $cachedWhs ?: Warehouse::all()->keyBy('code');
         $forcedWh = $targetWarehouseId ? Warehouse::find($targetWarehouseId) : null;
 
-        $boards = WoodBoard::all()->keyBy(fn($b) => strtoupper(trim($b->color_code)));
-        $prices = WoodBoardPrice::all()->keyBy(fn($p) => strtoupper(trim($p->code)));
+        // Nếu file có tên dạng {tên_kho}.xlsx thì xác định mã kho mặc định từ file
+        $fileNameWh = pathinfo(basename($filePath), PATHINFO_FILENAME);
+        if (!$forcedWh && isset($standardConfigs[$fileNameWh])) {
+            $forcedWh = $whCache->get($fileNameWh) ?: Warehouse::where('code', $fileNameWh)->first();
+        }
+
+        $boards = $cachedBoards ?: WoodBoard::all()->keyBy(fn($b) => strtoupper(trim($b->color_code)));
+        $prices = $cachedPrices ?: WoodBoardPrice::all()->keyBy(fn($p) => strtoupper(trim($p->code)));
 
         $importedCount = 0;
         $updatedCount = 0;
@@ -2601,20 +2995,27 @@ class InventoryService
                 $whCode = preg_replace('/\s*\(\d+\s*\)$/u', '', $whRaw);
                 $whCode = trim($whCode);
                 if (!$whCode) {
-                    $whCode = '152_PHU';
+                    $whCode = isset($standardConfigs[$fileNameWh]) ? $fileNameWh : '152_PHU';
                 }
 
                 if (!isset($whCache[$whCode])) {
                     $whName = $warehouseNameMap[$whCode] ?? $whCode;
+                    $cfg = $standardConfigs[$whCode] ?? null;
                     $whCache[$whCode] = Warehouse::firstOrCreate(
                         ['code' => $whCode],
-                        ['name' => $whName, 'status' => 'active']
+                        [
+                            'name'        => $whName, 
+                            'item_name'   => $cfg['item_name'] ?? null,
+                            'description' => $cfg['description'] ?? null,
+                            'status'      => 'active'
+                        ]
                     );
                 }
                 $warehouse = $whCache[$whCode];
             }
 
-            $itemType = 'hardware';
+            $cfg = $standardConfigs[$whCode] ?? null;
+            $itemType = $cfg['item_type'] ?? 'hardware';
             $upperWh = strtoupper($whCode);
             if ($upperWh === '152_CHI' || str_starts_with($code, 'CHI') || str_starts_with($code, 'CML.') || str_starts_with($code, 'ASA.CHI')) {
                 $itemType = 'edge_band';
@@ -2643,7 +3044,7 @@ class InventoryService
 
             $mat = Material::where('warehouse_id', $warehouse->id)->where('code', $code)->first();
             if (!$mat) {
-                $mat = Material::where('code', $code)->first();
+                $mat = Material::where('warehouse_code', $whCode)->where('code', $code)->first();
             }
 
             $data = [
