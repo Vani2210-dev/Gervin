@@ -202,7 +202,7 @@
                 <div class="table-responsive scroll-sm overflow-x-auto">
                     @php
                         // Estimate table width based on number of columns (6 sub-columns per type)
-                        $minWidth = 350 + (count($boardTypes) * 540);
+                        $minWidth = 440 + (count($boardTypes) * 540);
                     @endphp
                     <table class="table bordered-table sm-table mb-0 border-collapse border border-neutral-200 text-xs" style="min-width: {{ $minWidth }}px;" id="woodBoardsTable">
                         <thead class="bg-neutral-50 font-semibold text-neutral-700 text-center uppercase tracking-wider">
@@ -210,6 +210,9 @@
                                 <th rowspan="2" class="text-center align-middle border border-neutral-200 w-10">STT</th>
                                 <th rowspan="2" class="text-center align-middle border border-neutral-200 w-20">Nhóm giá</th>
                                 <th rowspan="2" class="text-center align-middle border border-neutral-200 w-28">Mã màu</th>
+                                <th rowspan="2" class="text-center align-middle border border-neutral-200 w-24 bg-amber-50/70 text-amber-900" title="Tích chọn nếu là màu nhũ hoặc chống xước để tự động lấy cạnh cao làm chiều vân khi lên đơn">
+                                    Màu nhũ /<br>Chống xước
+                                </th>
                                 
                                 {{-- Dynamic Headers --}}
                                 @foreach($boardTypes as $idx => $type)
@@ -248,6 +251,14 @@
                                         </span>
                                     @endif
                                 </td>
+                                <td class="text-center border border-neutral-200 bg-amber-50/20">
+                                    <label class="inline-flex items-center justify-center cursor-pointer p-1" title="{{ $board->has_grain ? 'Đang bật: Màu nhũ / Chống xước (Lấy cạnh cao làm chiều vân)' : 'Tích chọn để lấy cạnh cao làm chiều vân khi lên đơn' }}">
+                                        <input type="checkbox" 
+                                               class="form-checkbox text-amber-600 rounded border-neutral-300 focus:ring-amber-500 w-4 h-4 cursor-pointer" 
+                                               {{ $board->has_grain ? 'checked' : '' }} 
+                                               onchange="toggleBoardGrain({{ $board->id }}, this.checked)">
+                                    </label>
+                                </td>
                                 
                                 {{-- Render values for each type --}}
                                 @foreach($boardTypes as $idx => $type)
@@ -282,7 +293,7 @@
                                     <div class="flex items-center gap-2 justify-center">
                                         @can('edit supply')
                                         <button type="button"
-                                            onclick="openEditModal({{ $board->id }}, '{{ addslashes($board->price_group) }}', '{{ addslashes($board->color_code) }}', {{ json_encode($board->prices) }})"
+                                            onclick="openEditModal({{ $board->id }}, '{{ addslashes($board->price_group) }}', '{{ addslashes($board->color_code) }}', {{ json_encode($board->prices) }}, {{ $board->has_grain ? 1 : 0 }})"
                                             class="bg-success-100 hover:bg-success-200 text-success-600 font-medium w-8 h-8 flex justify-center items-center rounded-full"
                                             title="Sửa">
                                             <iconify-icon icon="lucide:edit" class="text-base"></iconify-icon>
@@ -354,6 +365,13 @@
                         </select>
                     </div>
                 </div>
+                <div class="mt-3 pt-3 border-t border-neutral-200">
+                    <label class="inline-flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" name="has_grain" value="1" class="form-checkbox text-amber-600 rounded border-neutral-300 focus:ring-amber-500 w-4 h-4" {{ old('has_grain') ? 'checked' : '' }}>
+                        <span class="text-xs font-bold text-amber-900">Màu nhũ / Chống xước</span>
+                        <span class="text-[11px] text-neutral-500">(Tự động lấy cạnh cao này làm chiều vân khi lên đơn)</span>
+                    </label>
+                </div>
             </div>
 
             {{-- Loop through types --}}
@@ -424,6 +442,13 @@
                         </select>
                     </div>
                 </div>
+                <div class="mt-3 pt-3 border-t border-neutral-200">
+                    <label class="inline-flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="edit_has_grain" name="has_grain" value="1" class="form-checkbox text-amber-600 rounded border-neutral-300 focus:ring-amber-500 w-4 h-4">
+                        <span class="text-xs font-bold text-amber-900">Màu nhũ / Chống xước</span>
+                        <span class="text-[11px] text-neutral-500">(Tự động lấy cạnh cao này làm chiều vân khi lên đơn)</span>
+                    </label>
+                </div>
             </div>
 
             {{-- Loop through types for Edit inputs --}}
@@ -466,10 +491,12 @@
 </x-modal>
 
 <script>
-function openEditModal(id, priceGroup, colorCode, prices) {
+function openEditModal(id, priceGroup, colorCode, prices, hasGrain) {
     document.getElementById('edit-board-form').action = '/wood-boards/' + id;
     document.getElementById('edit_price_group').value = priceGroup || '';
     document.getElementById('edit_color_code').value = colorCode || '';
+    const hasGrainEl = document.getElementById('edit_has_grain');
+    if (hasGrainEl) hasGrainEl.checked = !!hasGrain;
     
     // Clear all inputs first, defaulting name to type name
     @foreach($boardTypes as $type)
@@ -493,6 +520,27 @@ function openEditModal(id, priceGroup, colorCode, prices) {
     });
 
     openModal('edit-board-modal');
+}
+
+async function toggleBoardGrain(boardId, isChecked) {
+    try {
+        const res = await fetch(`/wood-boards/${boardId}/toggle-grain`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ has_grain: isChecked })
+        });
+        const data = await res.json();
+        if (!data.success) {
+            alert('Lỗi cập nhật: ' + (data.message || 'Không thể lưu trạng thái'));
+        }
+    } catch (e) {
+        console.error(e);
+        alert('Lỗi kết nối máy chủ.');
+    }
 }
 </script>
 @endcan

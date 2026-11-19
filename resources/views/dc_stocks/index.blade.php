@@ -129,6 +129,15 @@
                     <x-table-column-toggle table-id="stockTable" />
 
                     @can('add dc stock')
+                    {{-- Nút Dán từ Excel (Ctrl+V) --}}
+                    <button type="button" onclick="openPasteModal()"
+                        class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer"
+                        title="Dán nhanh nhiều dòng copy trực tiếp từ Excel (Ctrl+V)">
+                        <iconify-icon icon="solar:clipboard-text-bold" class="text-base"></iconify-icon>
+                        <span>Dán từ Excel</span>
+                        <kbd class="hidden sm:inline-block px-1 py-0.2 bg-emerald-800/60 text-white/90 rounded text-[9px] font-mono font-normal">Ctrl+V</kbd>
+                    </button>
+
                     {{-- Import Button --}}
                     <button type="button" onclick="openModal('importDcModal')"
                         class="px-3 py-1.5 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs" title="Nhập danh sách từ file Excel">
@@ -685,6 +694,105 @@
         </form>
     </x-modal>
 
+    {{-- Modal Dán từ Excel (Copy - Paste) --}}
+    <x-modal name="pasteDcModal" maxWidth="5xl">
+        <div class="px-5 py-4 border-b border-neutral-100 dark:border-neutral-800 flex justify-between items-center bg-emerald-50/60 dark:bg-emerald-950/20 rounded-t-xl">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                    <iconify-icon icon="solar:clipboard-text-bold" class="text-lg"></iconify-icon>
+                </div>
+                <div>
+                    <h5 class="font-bold text-base text-neutral-800 dark:text-neutral-100 mb-0">Dán dữ liệu tấm dư từ Excel (Copy - Paste)</h5>
+                    <p class="text-xs text-neutral-500 mb-0">Copy các cột từ Excel rồi dán trực tiếp vào đây để thêm nhanh hàng loạt tấm ván dư.</p>
+                </div>
+            </div>
+            <button type="button" onclick="closeModal('pasteDcModal')" class="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 p-1 rounded-lg transition-colors">
+                <iconify-icon icon="lucide:x" class="text-xl"></iconify-icon>
+            </button>
+        </div>
+
+        <div class="p-6 flex flex-col gap-4 max-h-[80vh] overflow-y-auto">
+            {{-- Instruction card --}}
+            <div class="p-3.5 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/40 rounded-xl text-xs text-emerald-900 dark:text-emerald-300 flex items-center justify-between flex-wrap gap-2">
+                <div class="flex items-center gap-2">
+                    <iconify-icon icon="solar:info-circle-bold" class="text-base text-emerald-600 shrink-0"></iconify-icon>
+                    <span>Hệ thống tự động nhận diện các cột theo Excel: <strong>MÃ HÀNG</strong> &bull; <strong>CAO (DÀI)</strong> &bull; <strong>RỘNG</strong> &bull; <strong>SỐ LƯỢNG</strong> &bull; <strong>VỊ TRÍ</strong> (Tự động bỏ qua cột trống và tự động điền mã hàng cho dòng trống bên dưới).</span>
+                </div>
+                <button type="button" onclick="pasteSampleData()" class="text-[11px] font-bold text-emerald-700 hover:text-emerald-900 underline flex items-center gap-1 cursor-pointer">
+                    <iconify-icon icon="solar:magic-stick-bold"></iconify-icon> Dán dữ liệu mẫu
+                </button>
+            </div>
+
+            {{-- Textarea Paste Box --}}
+            <div>
+                <label class="block text-xs font-bold text-neutral-700 dark:text-neutral-300 uppercase mb-1 flex items-center justify-between">
+                    <span>1. Dán dữ liệu vừa copy tại đây (Nhấp chuột vào ô và bấm Ctrl + V):</span>
+                    <span id="pasteLineCount" class="text-[11px] font-normal text-neutral-400">Chưa có dữ liệu</span>
+                </label>
+                <textarea id="pasteInput" rows="4" oninput="handlePasteInput(this.value)"
+                    class="w-full font-mono text-xs border-2 border-dashed border-emerald-400 bg-emerald-50/20 dark:bg-neutral-800 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                    placeholder="Bấm chuột vào đây và ấn Ctrl + V để dán các cột copy từ file Excel vào..."></textarea>
+            </div>
+
+            {{-- Preview Table Section --}}
+            <div class="border border-neutral-200 dark:border-neutral-700 rounded-xl overflow-hidden bg-white dark:bg-neutral-900">
+                <div class="p-3 bg-neutral-50 dark:bg-neutral-800/60 border-b border-neutral-200 dark:border-neutral-700 flex items-center justify-between flex-wrap gap-2">
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold text-xs uppercase text-neutral-700 dark:text-neutral-300">2. Xem trước danh sách tấm ván nhận diện</span>
+                        <span id="parsedBadge" class="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded-full font-bold">0 tấm</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="addBlankRowToPasteTable()" class="btn btn-xs border border-neutral-300 text-neutral-600 hover:bg-neutral-100 px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 cursor-pointer">
+                            <iconify-icon icon="ic:baseline-plus"></iconify-icon> Thêm dòng
+                        </button>
+                        <button type="button" onclick="clearPasteTable()" class="btn btn-xs border border-danger-200 text-danger-600 hover:bg-danger-50 px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 cursor-pointer">
+                            <iconify-icon icon="solar:trash-bin-trash-bold"></iconify-icon> Xóa bảng
+                        </button>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto max-h-[350px] overflow-y-auto">
+                    <table class="w-full text-xs text-left border-collapse" id="pastePreviewTable">
+                        <thead class="sticky top-0 bg-neutral-100 dark:bg-neutral-800 shadow-2xs z-10 text-neutral-700 dark:text-neutral-300">
+                            <tr>
+                                <th class="py-2 px-3 w-10 text-center">STT</th>
+                                <th class="py-2 px-3 min-w-[130px]">Mã hàng / Màu <span class="text-danger-500">*</span></th>
+                                <th class="py-2 px-3 w-28 text-center">Cao (Dài mm) <span class="text-danger-500">*</span></th>
+                                <th class="py-2 px-3 w-28 text-center">Rộng (mm) <span class="text-danger-500">*</span></th>
+                                <th class="py-2 px-3 w-20 text-center">Số lượng</th>
+                                <th class="py-2 px-3 w-28">Vị trí kho</th>
+                                <th class="py-2 px-3">Ghi chú</th>
+                                <th class="py-2 px-3 w-10 text-center">Xóa</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pastePreviewTbody" class="divide-y divide-neutral-100 dark:divide-neutral-800">
+                            <tr>
+                                <td colspan="8" class="py-8 text-center text-neutral-400">
+                                    Vui lòng dán dữ liệu từ Excel vào ô phía trên để xem trước danh sách tấm dư.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="px-6 py-4 border-t border-neutral-100 dark:border-neutral-800 flex justify-between items-center bg-neutral-50/50 dark:bg-neutral-900/30 rounded-b-xl">
+            <div class="text-xs text-neutral-500">
+                Tổng cộng: <strong id="pasteTotalQty" class="text-emerald-700 font-bold text-sm">0</strong> tấm
+            </div>
+            <div class="flex items-center gap-2">
+                <button type="button" onclick="closeModal('pasteDcModal')" class="px-4 py-2 border border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 text-xs font-semibold rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer">
+                    Đóng
+                </button>
+                <button type="button" id="btnSaveBatchPasted" onclick="saveBatchPastedDc()" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-sm flex items-center gap-1.5 transition-all disabled:opacity-50 cursor-pointer" disabled>
+                    <iconify-icon icon="solar:disk-bold" class="text-base"></iconify-icon>
+                    <span>Lưu tất cả vào Kho DC</span>
+                </button>
+            </div>
+        </div>
+    </x-modal>
+
     {{-- Toast Container --}}
     <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2"></div>
 @endsection
@@ -1148,5 +1256,419 @@
             }
         }
     }
+
+    // ─── Modal Dán từ Excel (Copy - Paste) ────────────────
+    function openPasteModal() {
+        openModal('pasteDcModal');
+        setTimeout(() => {
+            const el = document.getElementById('pasteInput');
+            if (el) el.focus();
+        }, 150);
+    }
+
+    function parseExcelPaste(text) {
+        if (!text || !text.trim()) return [];
+        const lines = text.split(/\r?\n/).map(l => l.trimEnd()).filter(l => l.length > 0);
+        if (lines.length === 0) return [];
+
+        let headerRowIdx = -1;
+        let colMap = { code: 0, height: 1, width: 2, qty: 3, loc: 4, note: -1 };
+
+        // Kiểm tra 3 dòng đầu để phát hiện dòng tiêu đề
+        for (let i = 0; i < Math.min(lines.length, 3); i++) {
+            const parts = lines[i].split('\t').map(p => p.trim());
+            let matches = 0;
+            let tempMap = {};
+
+            parts.forEach((p, idx) => {
+                const lower = p.toLowerCase()
+                    .normalize('NFD').replace(/[\u0300-\u036f]/g, ''); // Bỏ dấu tiếng Việt
+                if (lower.includes('ma hang') || lower.includes('ma van') || lower.includes('ma mau') || lower === 'ma' || lower === 'sku') {
+                    tempMap.code = idx; matches++;
+                } else if (lower.includes('cao') || lower.includes('dai') || lower === 'h' || lower === 'length') {
+                    tempMap.height = idx; matches++;
+                } else if (lower.includes('rong') || lower === 'w' || lower === 'width') {
+                    tempMap.width = idx; matches++;
+                } else if (lower.includes('so luong') || lower === 'sl' || lower === 'qty') {
+                    tempMap.qty = idx; matches++;
+                } else if (lower.includes('vi tri') || lower.includes('kho') || lower === 'loc') {
+                    tempMap.loc = idx; matches++;
+                } else if (lower.includes('ghi chu') || lower.includes('note')) {
+                    tempMap.note = idx;
+                }
+            });
+
+            if (matches >= 2) {
+                headerRowIdx = i;
+                colMap = { ...colMap, ...tempMap };
+                break;
+            }
+        }
+
+        // Nếu không có tiêu đề, phân tích cấu trúc dòng dữ liệu đầu tiên
+        if (headerRowIdx === -1) {
+            const firstRowParts = lines[0].split('\t').map(p => p.trim());
+            // Cấu trúc 6 cột có cột B trống (MÃ HÀNG - [TRỐNG] - CAO - RỘNG - SỐ LƯỢNG - VỊ TRÍ)
+            if (firstRowParts.length >= 6 && (!firstRowParts[1] || isNaN(firstRowParts[1])) && !isNaN(firstRowParts[2]) && !isNaN(firstRowParts[3])) {
+                colMap = { code: 0, height: 2, width: 3, qty: 4, loc: 5, note: -1 };
+            } else if (firstRowParts.length >= 5 && !isNaN(firstRowParts[1]) && !isNaN(firstRowParts[2])) {
+                colMap = { code: 0, height: 1, width: 2, qty: 3, loc: 4, note: -1 };
+            }
+        }
+
+        const startIdx = headerRowIdx >= 0 ? headerRowIdx + 1 : 0;
+        const items = [];
+        let prevCode = '';
+
+        for (let i = startIdx; i < lines.length; i++) {
+            let parts = lines[i].split('\t').map(p => p.trim());
+            if (parts.length === 1 && (parts[0].includes(',') || parts[0].includes(';'))) {
+                parts = lines[i].split(/[,;]/).map(p => p.trim());
+            }
+
+            if (parts.length === 0 || parts.every(p => p === '')) continue;
+
+            let rawCode = colMap.code >= 0 && parts[colMap.code] !== undefined ? parts[colMap.code] : '';
+            let heightStr = colMap.height >= 0 && parts[colMap.height] !== undefined ? parts[colMap.height].replace(/[^\d.]/g, '') : '';
+            let widthStr = colMap.width >= 0 && parts[colMap.width] !== undefined ? parts[colMap.width].replace(/[^\d.]/g, '') : '';
+            let qtyStr = colMap.qty >= 0 && parts[colMap.qty] !== undefined ? parts[colMap.qty].replace(/[^\d.]/g, '') : '1';
+            let location = colMap.loc >= 0 && parts[colMap.loc] !== undefined ? parts[colMap.loc] : '';
+            let note = colMap.note >= 0 && parts[colMap.note] !== undefined ? parts[colMap.note] : '';
+
+            let height = parseFloat(heightStr) || 0;
+            let width = parseFloat(widthStr) || 0;
+            let qty = parseInt(qtyStr) || 1;
+
+            if (height <= 0 || width <= 0) continue;
+
+            // Kế thừa mã hàng từ dòng trên nếu để trống
+            let code = rawCode || prevCode;
+            if (rawCode) prevCode = rawCode;
+
+            if (!code) continue;
+
+            items.push({
+                color_code: code,
+                height: height,
+                width: width,
+                quantity: qty,
+                location: location,
+                note: note
+            });
+        }
+
+        return items;
+    }
+
+    function handlePasteInput(rawText) {
+        const lineCount = rawText ? rawText.trim().split(/\r?\n/).filter(l => l.trim()).length : 0;
+        const lineCountEl = document.getElementById('pasteLineCount');
+        if (lineCountEl) {
+            lineCountEl.textContent = lineCount > 0 ? `Đã nhận ${lineCount} dòng dữ liệu thô` : 'Chưa có dữ liệu';
+        }
+
+        const items = parseExcelPaste(rawText);
+        renderPastePreview(items);
+    }
+
+    function renderPastePreview(items) {
+        const tbody = document.getElementById('pastePreviewTbody');
+        const badge = document.getElementById('parsedBadge');
+        const totalQtyEl = document.getElementById('pasteTotalQty');
+        const saveBtn = document.getElementById('btnSaveBatchPasted');
+
+        if (!tbody) return;
+
+        if (!items || items.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="8" class="py-8 text-center text-neutral-400">
+                        Vui lòng dán dữ liệu từ Excel vào ô phía trên để xem trước danh sách tấm dư.
+                    </td>
+                </tr>
+            `;
+            if (badge) badge.textContent = '0 tấm';
+            if (totalQtyEl) totalQtyEl.textContent = '0';
+            if (saveBtn) saveBtn.disabled = true;
+            return;
+        }
+
+        let totalQty = 0;
+        let html = '';
+
+        items.forEach((item, index) => {
+            const qty = parseInt(item.quantity) || 1;
+            totalQty += qty;
+
+            html += `
+                <tr class="paste-row hover:bg-neutral-50/80 dark:hover:bg-neutral-800/50 transition-colors">
+                    <td class="py-2 px-3 text-center text-neutral-400 font-mono text-xs stt-cell">${index + 1}</td>
+                    <td class="py-1.5 px-3">
+                        <input type="text" value="${escapeHtml(item.color_code || '')}" 
+                            class="row-code w-full px-2 py-1 text-xs font-bold uppercase rounded border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 focus:ring-1 focus:ring-emerald-500" 
+                            placeholder="Mã màu/hàng *" onchange="recalculatePasteTotals()">
+                    </td>
+                    <td class="py-1.5 px-3">
+                        <input type="number" value="${item.height || ''}" 
+                            class="row-height w-full px-2 py-1 text-xs text-center font-mono rounded border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 focus:ring-1 focus:ring-emerald-500" 
+                            placeholder="Cao *" min="1" onchange="recalculatePasteTotals()">
+                    </td>
+                    <td class="py-1.5 px-3">
+                        <input type="number" value="${item.width || ''}" 
+                            class="row-width w-full px-2 py-1 text-xs text-center font-mono rounded border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 focus:ring-1 focus:ring-emerald-500" 
+                            placeholder="Rộng *" min="1" onchange="recalculatePasteTotals()">
+                    </td>
+                    <td class="py-1.5 px-3">
+                        <input type="number" value="${qty}" 
+                            class="row-qty w-full px-2 py-1 text-xs text-center font-bold text-emerald-700 rounded border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 focus:ring-1 focus:ring-emerald-500" 
+                            min="1" onchange="recalculatePasteTotals()">
+                    </td>
+                    <td class="py-1.5 px-3">
+                        <input type="text" value="${escapeHtml(item.location || '')}" 
+                            class="row-location w-full px-2 py-1 text-xs rounded border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 focus:ring-1 focus:ring-emerald-500" 
+                            placeholder="Vị trí kệ...">
+                    </td>
+                    <td class="py-1.5 px-3">
+                        <input type="text" value="${escapeHtml(item.note || '')}" 
+                            class="row-note w-full px-2 py-1 text-xs rounded border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 focus:ring-1 focus:ring-emerald-500" 
+                            placeholder="Ghi chú...">
+                    </td>
+                    <td class="py-1.5 px-3 text-center">
+                        <button type="button" onclick="removePasteRow(this)" 
+                            class="text-neutral-400 hover:text-danger-600 p-1 rounded transition-colors" title="Xóa dòng này">
+                            <iconify-icon icon="solar:trash-bin-trash-bold" class="text-sm"></iconify-icon>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        tbody.innerHTML = html;
+        if (badge) badge.textContent = `${items.length} quy cách (${totalQty} tấm)`;
+        if (totalQtyEl) totalQtyEl.textContent = totalQty;
+        if (saveBtn) saveBtn.disabled = items.length === 0;
+    }
+
+    function recalculatePasteTotals() {
+        const rows = document.querySelectorAll('#pastePreviewTbody tr.paste-row');
+        let totalQty = 0;
+        let validRows = 0;
+
+        rows.forEach((r, idx) => {
+            const sttCell = r.querySelector('.stt-cell');
+            if (sttCell) sttCell.textContent = idx + 1;
+
+            const code = r.querySelector('.row-code')?.value.trim();
+            const h = parseFloat(r.querySelector('.row-height')?.value) || 0;
+            const w = parseFloat(r.querySelector('.row-width')?.value) || 0;
+            const q = parseInt(r.querySelector('.row-qty')?.value) || 0;
+
+            if (code && h > 0 && w > 0 && q > 0) {
+                validRows++;
+                totalQty += q;
+            }
+        });
+
+        const badge = document.getElementById('parsedBadge');
+        const totalQtyEl = document.getElementById('pasteTotalQty');
+        const saveBtn = document.getElementById('btnSaveBatchPasted');
+
+        if (badge) badge.textContent = `${rows.length} quy cách (${totalQty} tấm)`;
+        if (totalQtyEl) totalQtyEl.textContent = totalQty;
+        if (saveBtn) saveBtn.disabled = (validRows === 0);
+    }
+
+    function addBlankRowToPasteTable() {
+        const tbody = document.getElementById('pastePreviewTbody');
+        if (!tbody) return;
+
+        if (tbody.querySelector('td[colspan="8"]')) {
+            tbody.innerHTML = '';
+        }
+
+        const count = tbody.querySelectorAll('tr.paste-row').length + 1;
+        const tr = document.createElement('tr');
+        tr.className = 'paste-row hover:bg-neutral-50/80 dark:hover:bg-neutral-800/50 transition-colors';
+        tr.innerHTML = `
+            <td class="py-2 px-3 text-center text-neutral-400 font-mono text-xs stt-cell">${count}</td>
+            <td class="py-1.5 px-3">
+                <input type="text" value="" 
+                    class="row-code w-full px-2 py-1 text-xs font-bold uppercase rounded border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 focus:ring-1 focus:ring-emerald-500" 
+                    placeholder="Mã màu/hàng *" onchange="recalculatePasteTotals()">
+            </td>
+            <td class="py-1.5 px-3">
+                <input type="number" value="" 
+                    class="row-height w-full px-2 py-1 text-xs text-center font-mono rounded border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 focus:ring-1 focus:ring-emerald-500" 
+                    placeholder="Cao *" min="1" onchange="recalculatePasteTotals()">
+            </td>
+            <td class="py-1.5 px-3">
+                <input type="number" value="" 
+                    class="row-width w-full px-2 py-1 text-xs text-center font-mono rounded border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 focus:ring-1 focus:ring-emerald-500" 
+                    placeholder="Rộng *" min="1" onchange="recalculatePasteTotals()">
+            </td>
+            <td class="py-1.5 px-3">
+                <input type="number" value="1" 
+                    class="row-qty w-full px-2 py-1 text-xs text-center font-bold text-emerald-700 rounded border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 focus:ring-1 focus:ring-emerald-500" 
+                    min="1" onchange="recalculatePasteTotals()">
+            </td>
+            <td class="py-1.5 px-3">
+                <input type="text" value="" 
+                    class="row-location w-full px-2 py-1 text-xs rounded border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 focus:ring-1 focus:ring-emerald-500" 
+                    placeholder="Vị trí kệ...">
+            </td>
+            <td class="py-1.5 px-3">
+                <input type="text" value="" 
+                    class="row-note w-full px-2 py-1 text-xs rounded border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 focus:ring-1 focus:ring-emerald-500" 
+                    placeholder="Ghi chú...">
+            </td>
+            <td class="py-1.5 px-3 text-center">
+                <button type="button" onclick="removePasteRow(this)" 
+                    class="text-neutral-400 hover:text-danger-600 p-1 rounded transition-colors" title="Xóa dòng này">
+                    <iconify-icon icon="solar:trash-bin-trash-bold" class="text-sm"></iconify-icon>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+        recalculatePasteTotals();
+        tr.querySelector('.row-code')?.focus();
+    }
+
+    function removePasteRow(btn) {
+        const row = btn.closest('tr.paste-row');
+        if (row) {
+            row.remove();
+            const rows = document.querySelectorAll('#pastePreviewTbody tr.paste-row');
+            if (rows.length === 0) {
+                renderPastePreview([]);
+            } else {
+                recalculatePasteTotals();
+            }
+        }
+    }
+
+    function clearPasteTable() {
+        const input = document.getElementById('pasteInput');
+        if (input) input.value = '';
+        const lineCountEl = document.getElementById('pasteLineCount');
+        if (lineCountEl) lineCountEl.textContent = 'Chưa có dữ liệu';
+        renderPastePreview([]);
+    }
+
+    function pasteSampleData() {
+        const sample = "MÃ HÀNG\t\tCAO\tRỘNG\tSỐ LƯỢNG\tVỊ TRÍ\nMDF04\t\t960\t760\t1\tD1.39\nMDF23\t\t2400\t330\t1\tD1.39\nMdf56\t\t1000\t670\t1\tD1.39\nMDF72\t\t1320\t1200\t1\tD1.45\nMdf133\t\t2400\t560\t1\tD1.39\nMDF05\t\t940\t420\t1\tD1.6\nMDF122\t\t400\t660\t1\tC6\n\t\t1100\t480\t1\tC1";
+        const input = document.getElementById('pasteInput');
+        if (input) {
+            input.value = sample;
+            handlePasteInput(sample);
+        }
+    }
+
+    async function saveBatchPastedDc() {
+        const rows = document.querySelectorAll('#pastePreviewTbody tr.paste-row');
+        const items = [];
+        let errors = [];
+
+        rows.forEach((r, idx) => {
+            const code = r.querySelector('.row-code')?.value.trim();
+            const h = parseFloat(r.querySelector('.row-height')?.value) || 0;
+            const w = parseFloat(r.querySelector('.row-width')?.value) || 0;
+            const q = parseInt(r.querySelector('.row-qty')?.value) || 1;
+            const loc = r.querySelector('.row-location')?.value.trim() || '';
+            const note = r.querySelector('.row-note')?.value.trim() || '';
+
+            if (!code) {
+                errors.push(`Dòng ${idx + 1}: Thiếu mã hàng/màu`);
+            } else if (h <= 0 || w <= 0) {
+                errors.push(`Dòng ${idx + 1} (${code}): Kích thước Cao và Rộng phải lớn hơn 0`);
+            } else {
+                items.push({
+                    color_code: code,
+                    height: h,
+                    width: w,
+                    quantity: q,
+                    location: loc,
+                    note: note
+                });
+            }
+        });
+
+        if (errors.length > 0) {
+            alert("Vui lòng kiểm tra lại dữ liệu:\n- " + errors.slice(0, 5).join("\n- ") + (errors.length > 5 ? `\n... và ${errors.length - 5} lỗi khác` : ''));
+            return;
+        }
+
+        if (items.length === 0) {
+            showToast('Chưa có tấm ván nào hợp lệ để lưu!', 'error');
+            return;
+        }
+
+        const btn = document.getElementById('btnSaveBatchPasted');
+        const originalHtml = btn ? btn.innerHTML : '';
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<iconify-icon icon="lucide:loader" class="animate-spin text-base"></iconify-icon> <span>Đang lưu...</span>';
+        }
+
+        try {
+            const res = await fetch('{{ route("dc-stocks.batch-store") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': CSRF,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ items })
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                showToast(data.message || `Đã lưu thành công ${items.length} tấm vào Kho DC!`);
+                closeModal('pasteDcModal');
+                setTimeout(() => location.reload(), 800);
+            } else {
+                showToast(data.message || 'Lỗi khi lưu dữ liệu!', 'error');
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                }
+            }
+        } catch (err) {
+            console.error(err);
+            showToast('Lỗi kết nối máy chủ: ' + err.message, 'error');
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
+        }
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return String(text)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Lắng nghe sự kiện paste toàn cục khi modal dán đang mở
+    document.addEventListener('paste', function(e) {
+        const modal = document.querySelector("[name='pasteDcModal']");
+        if (modal && !modal.classList.contains("hidden")) {
+            if (document.activeElement && document.activeElement.tagName === 'INPUT') {
+                return;
+            }
+            const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+            if (pastedText) {
+                const input = document.getElementById('pasteInput');
+                if (input && document.activeElement !== input) {
+                    e.preventDefault();
+                    input.value = pastedText;
+                    handlePasteInput(pastedText);
+                }
+            }
+        }
+    });
 </script>
 @endpush

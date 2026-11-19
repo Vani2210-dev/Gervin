@@ -114,7 +114,7 @@
                                 <thead class="bg-neutral-50 text-neutral-700 font-bold border-b border-neutral-200">
                                     <tr>
                                         <th class="py-2 px-3 w-12 text-center">STT</th>
-                                        <th class="py-2 px-3 min-w-[280px]" id="thMaterialCol">
+                                        <th class="py-2 px-3 w-[300px] max-w-[320px]" id="thMaterialCol">
                                             <div class="flex items-center justify-between gap-2">
                                                 <span>Mặt hàng vật tư (Mã ván / Chỉ dán) <span class="text-danger-500">*</span></span>
                                                 <button type="button" onclick="openQuickMaterialModal()" class="text-[11px] text-emerald-700 hover:text-emerald-900 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded font-bold flex items-center gap-0.5 transition-all">
@@ -313,6 +313,7 @@
 <style>
     .material-ts-wrapper {
         width: 100% !important;
+        max-width: 320px !important;
     }
     .material-ts-wrapper .ts-control {
         border-radius: 0.5rem !important;
@@ -326,6 +327,16 @@
         display: flex !important;
         align-items: center !important;
         color: #1f2937 !important;
+        max-width: 100% !important;
+        overflow: hidden !important;
+        white-space: nowrap !important;
+    }
+    .material-ts-wrapper .ts-control > .item {
+        max-width: calc(100% - 20px) !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+        display: block !important;
     }
     .material-ts-wrapper.focus .ts-control {
         border-color: #2563eb !important;
@@ -338,6 +349,7 @@
         box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08) !important;
         z-index: 99999 !important;
         max-height: 320px !important;
+        min-width: 480px !important;
         overflow-y: auto !important;
         background-color: #ffffff !important;
     }
@@ -437,7 +449,7 @@
 
         tr.innerHTML = `
             <td class="py-2 px-3 text-center text-neutral-400 font-medium row-stt">${tbody.children.length + 1}</td>
-            <td class="py-2 px-3">
+            <td class="py-2 px-3 w-[300px] max-w-[320px]">
                 <select id="select_mat_${thisRowIdx}" name="items[${thisRowIdx}][material_id]" class="material-tom-select w-full" required>
                     <option value="">-- Chọn / tìm ${isEdge ? 'mã chỉ dán CHI-...' : 'mã ván, tên màu...'} --</option>
                 </select>
@@ -528,10 +540,13 @@
                     },
                     item: function(data, escape) {
                         const originText = data.origin_code ? ` [${escape(data.origin_code)}]` : '';
-                        const whText = data.warehouse_name ? ` (${escape(data.warehouse_name)})` : '';
-                        return `<div class="truncate text-xs font-semibold text-neutral-800">
-                            <span class="font-bold text-primary-700">${escape(data.code)}</span>${originText}${whText} - ${escape(data.name)}
-                        </div>`;
+                        const tooltipText = `${escape(data.code)}${originText}${data.name ? ' - ' + escape(data.name) : ''}`;
+                        return `
+                            <div class="truncate text-xs font-semibold text-neutral-800" title="${tooltipText}">
+                                <span class="font-bold text-primary-700">${escape(data.code)}</span>${originText}
+                                ${data.name ? `<span class="text-neutral-500 font-normal text-[11px] ml-1">- ${escape(data.name)}</span>` : ''}
+                            </div>
+                        `;
                     },
                     no_results: function(data, escape) {
                         return `

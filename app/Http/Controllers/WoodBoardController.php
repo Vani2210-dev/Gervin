@@ -161,6 +161,7 @@ class WoodBoardController extends Controller
         $board = WoodBoard::create([
             'color_code'  => $request->color_code,
             'price_group' => $request->price_group,
+            'has_grain'   => $request->boolean('has_grain'),
         ]);
 
         $pricesData = $request->input('prices', []);
@@ -222,6 +223,7 @@ class WoodBoardController extends Controller
         $woodBoard->update([
             'color_code'  => $request->color_code,
             'price_group' => $request->price_group,
+            'has_grain'   => $request->boolean('has_grain'),
         ]);
 
         $pricesData = $request->input('prices', []);
@@ -864,6 +866,27 @@ class WoodBoardController extends Controller
             'cost_price'         => $costPrice,
             'stock'              => floatval($priceRecord?->stock ?? 0),
             'price_group'        => $board?->price_group ?? '',
+            'has_grain'          => (bool)($board?->has_grain ?? false),
+        ]);
+    }
+
+    /**
+     * Bật / tắt đánh dấu màu nhũ / chống xước (có chiều vân)
+     */
+    public function toggleGrain(Request $request, WoodBoard $woodBoard)
+    {
+        $hasGrain = $request->has('has_grain') 
+            ? $request->boolean('has_grain') 
+            : !$woodBoard->has_grain;
+
+        $woodBoard->update(['has_grain' => $hasGrain]);
+
+        return response()->json([
+            'success'   => true,
+            'has_grain' => (bool)$woodBoard->has_grain,
+            'message'   => $woodBoard->has_grain
+                ? "Đã đánh dấu {$woodBoard->color_code} là Màu nhũ / Chống xước (sẽ lấy cạnh cao làm chiều vân khi lên đơn)."
+                : "Đã hủy đánh dấu chiều vân cho {$woodBoard->color_code}."
         ]);
     }
 

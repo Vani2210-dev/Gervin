@@ -13,6 +13,7 @@ class WoodBoard extends Model
     protected $fillable = [
         'price_group',
         'color_code',
+        'has_grain',
         'foil_name',
         'nature',
         'origin_code',
@@ -32,6 +33,7 @@ class WoodBoard extends Model
     ];
 
     protected $casts = [
+        'has_grain'               => 'boolean',
         'cost_price'              => 'double',
         'min_stock'               => 'double',
         'initial_stock'           => 'double',

@@ -892,7 +892,7 @@ class OrderController extends Controller
         }
 
         $isDraftCreate = true;
-        $woodBoardPrices = \App\Models\WoodBoardPrice::orderBy('code', 'asc')->get();
+        $woodBoardPrices = \App\Models\WoodBoardPrice::with('board')->orderBy('code', 'asc')->get();
         $cncTemplates = \App\Models\CncTemplate::orderBy('id', 'asc')->get();
         $glassPrices = \App\Models\GlassPrice::orderBy('code', 'asc')->get();
         $minLatePrices = \App\Models\MinLatePrice::orderBy('category_name', 'asc')->orderBy('stt', 'asc')->get();
@@ -928,7 +928,7 @@ class OrderController extends Controller
         $order->load(['supplies.items', 'supplies.minLateItems', 'supplies.glassItems', 'paymentDetails']);
         $acrylicOrder = $order;
         $isDraftCreate = false;
-        $woodBoardPrices = \App\Models\WoodBoardPrice::orderBy('code', 'asc')->get();
+        $woodBoardPrices = \App\Models\WoodBoardPrice::with('board')->orderBy('code', 'asc')->get();
         $cncTemplates = \App\Models\CncTemplate::orderBy('id', 'asc')->get();
         $glassPrices = \App\Models\GlassPrice::orderBy('code', 'asc')->get();
         $minLatePrices = \App\Models\MinLatePrice::orderBy('category_name', 'asc')->orderBy('stt', 'asc')->get();
@@ -2204,7 +2204,7 @@ class OrderController extends Controller
 
         $orderType = $order->type;
         $isDraftCreate = true;
-        $woodBoardPrices = \App\Models\WoodBoardPrice::orderBy('code', 'asc')->get();
+        $woodBoardPrices = \App\Models\WoodBoardPrice::with('board')->orderBy('code', 'asc')->get();
         $cncTemplates = \App\Models\CncTemplate::orderBy('id', 'asc')->get();
         $glassPrices = \App\Models\GlassPrice::orderBy('code', 'asc')->get();
         $minLatePrices = \App\Models\MinLatePrice::orderBy('category_name', 'asc')->orderBy('stt', 'asc')->get();
@@ -2271,7 +2271,7 @@ class OrderController extends Controller
         // Đơn sửa tấm PHẢI LUÔN DÙNG FORM ĐƠN MINLATE
         $orderType = 'min_late';
         $isDraftCreate = true;
-        $woodBoardPrices = \App\Models\WoodBoardPrice::orderBy('code', 'asc')->get();
+        $woodBoardPrices = \App\Models\WoodBoardPrice::with('board')->orderBy('code', 'asc')->get();
         $cncTemplates = \App\Models\CncTemplate::orderBy('id', 'asc')->get();
         $glassPrices = \App\Models\GlassPrice::orderBy('code', 'asc')->get();
         $minLatePrices = \App\Models\MinLatePrice::orderBy('category_name', 'asc')->orderBy('stt', 'asc')->get();
@@ -2545,7 +2545,7 @@ class OrderController extends Controller
 
         $orderType = $order->type;
         $isDraftCreate = true;
-        $woodBoardPrices = \App\Models\WoodBoardPrice::orderBy('code', 'asc')->get();
+        $woodBoardPrices = \App\Models\WoodBoardPrice::with('board')->orderBy('code', 'asc')->get();
         $cncTemplates = \App\Models\CncTemplate::orderBy('id', 'asc')->get();
         $glassPrices = \App\Models\GlassPrice::orderBy('code', 'asc')->get();
         $minLatePrices = \App\Models\MinLatePrice::orderBy('category_name', 'asc')->orderBy('stt', 'asc')->get();
@@ -2799,7 +2799,7 @@ class OrderController extends Controller
 
         $orderType = $order->type;
         $isDraftCreate = true;
-        $woodBoardPrices = \App\Models\WoodBoardPrice::orderBy('code', 'asc')->get();
+        $woodBoardPrices = \App\Models\WoodBoardPrice::with('board')->orderBy('code', 'asc')->get();
         $cncTemplates = \App\Models\CncTemplate::orderBy('id', 'asc')->get();
         $glassPrices = \App\Models\GlassPrice::orderBy('code', 'asc')->get();
         $minLatePrices = \App\Models\MinLatePrice::orderBy('category_name', 'asc')->orderBy('stt', 'asc')->get();

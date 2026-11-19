@@ -119,6 +119,83 @@ class DcStockController extends Controller
         return response()->json(['success' => true, 'message' => 'Đã thêm tấm dư vào Kho DC thành công!']);
     }
 
+    public function batchStore(Request $request)
+    {
+        $user = auth()->user();
+        abort_unless($user && ($user->can('add dc stock') || $user->hasRole('Admin')), 403);
+
+        $items = $request->input('items', []);
+        if (empty($items) || !is_array($items)) {
+            return response()->json(['success' => false, 'message' => 'Không có dữ liệu tấm ván để lưu.'], 422);
+        }
+
+        $userId = Auth::id();
+        $recordsToInsert = [];
+        $savedCount = 0;
+
+        DB::beginTransaction();
+        try {
+            foreach ($items as $item) {
+                $colorCode = trim((string)($item['color_code'] ?? ''));
+                $height = (int)($item['height'] ?? 0);
+                $width = (int)($item['width'] ?? 0);
+                $quantity = max(1, (int)($item['quantity'] ?? 1));
+                $location = trim((string)($item['location'] ?? ''));
+                $note = trim((string)($item['note'] ?? ''));
+                $thickness = trim((string)($item['thickness'] ?? '17mm')) ?: '17mm';
+                $status = in_array($item['status'] ?? '', ['available', 'used', 'reserved']) ? $item['status'] : 'available';
+
+                if (empty($colorCode) || $height <= 0 || $width <= 0) {
+                    continue;
+                }
+
+                $normalized = $this->resolveNormalizedStockInfo($note, $colorCode);
+
+                $recordsToInsert[] = [
+                    'color_code'         => $normalized['color_code'],
+                    'board_code'         => $normalized['board_code'],
+                    'board_type'         => $normalized['board_type'],
+                    'wood_board_type_id' => $normalized['wood_board_type_id'],
+                    'thickness'          => $thickness,
+                    'note'               => $note ?: null,
+                    'height'             => $height,
+                    'width'              => $width,
+                    'quantity'           => $quantity,
+                    'location'           => $location ?: null,
+                    'status'             => $status,
+                    'created_by'         => $userId,
+                    'created_at'         => now(),
+                    'updated_at'         => now(),
+                ];
+
+                if (count($recordsToInsert) >= 200) {
+                    DcStock::insert($recordsToInsert);
+                    $savedCount += count($recordsToInsert);
+                    $recordsToInsert = [];
+                }
+            }
+
+            if (!empty($recordsToInsert)) {
+                DcStock::insert($recordsToInsert);
+                $savedCount += count($recordsToInsert);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => "Đã lưu thành công {$savedCount} tấm ván dư vào Kho DC!",
+                'count'   => $savedCount,
+            ]);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi khi lưu dữ liệu: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function update(Request $request, DcStock $dcStock)
     {
         abort_unless(auth()->user()->can('edit dc stock'), 403);
@@ -253,6 +330,7 @@ class DcStockController extends Controller
             }
 
             $recordsToInsert = [];
+            $prevColorCode = null;
 
             for ($row = $headerRow + 1; $row <= $highestRow; $row++) {
                 $getVal = function ($key) use ($sheet, $row, $colMap) {
@@ -261,7 +339,8 @@ class DcStockController extends Controller
                     return trim((string)$sheet->getCell($letter . $row)->getValue());
                 };
 
-                $colorCode = $getVal('color_code');
+                $rawColor = $getVal('color_code');
+                $colorCode = $rawColor ?: $prevColorCode;
                 $height = (int)$getVal('height');
                 $width = (int)$getVal('width');
                 $quantity = (int)($getVal('quantity') ?: 1);
@@ -271,6 +350,10 @@ class DcStockController extends Controller
 
                 if (empty($colorCode) || $height <= 0 || $width <= 0) {
                     continue;
+                }
+
+                if (!empty($rawColor)) {
+                    $prevColorCode = $rawColor;
                 }
 
                 if ($status === 'Còn hàng' || $status === 'con_hang') $status = 'available';

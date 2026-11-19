@@ -203,6 +203,9 @@
                     <li>
                         <a href="{{ route('inventory.index') }}"><i class="ri-circle-fill circle-icon text-primary-600 w-auto"></i> Tồn kho & Vật tư</a>
                     </li>
+                    <li>
+                        <a href="{{ route('inventory.transfers.index') }}"><i class="ri-circle-fill circle-icon text-purple-600 w-auto"></i> Chuyển kho nội bộ</a>
+                    </li>
                     @endcan
 
                     @can('view dc stock')

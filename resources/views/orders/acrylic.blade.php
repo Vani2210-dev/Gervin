@@ -386,6 +386,13 @@
                                 <option value="subtract" {{ $currentAction === 'subtract' ? 'selected' : '' }}>- Trừ kho</option>
                             </select>
                         </div>
+                        @php
+                            $matchedBoardPrice = $woodBoardPrices->firstWhere('code', $supply->order_supply_code);
+                            $hasGrainBoard = $matchedBoardPrice ? (bool)$matchedBoardPrice->has_grain : false;
+                        @endphp
+                        <span class="supply-grain-badge inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300 shadow-sm" style="{{ $hasGrainBoard ? 'display: inline-flex;' : 'display: none;' }}">
+                            <iconify-icon icon="lucide:sparkles" class="text-xs text-amber-600"></iconify-icon> Màu nhũ / Chống xước (Vân dọc: Cao)
+                        </span>
                     </div>
                     <div class="flex items-center gap-2">
                         <button type="button" onclick="this.closest('.order-supply-row').remove(); updateOrderSummary(); if(typeof updateAcrylicRowIndexes === 'function') updateAcrylicRowIndexes();" class="text-neutral-400 hover:text-danger-500 transition-colors p-1 flex items-center justify-center" title="Xóa vật tư này">
@@ -510,7 +517,19 @@
                                     </div>
                                 </td>
                                 <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
-                                    <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][grain_direction]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Chiều vân" value="{{ $item->grain_direction }}">
+                                    @php
+                                        $rowGrainVal = $item->grain_direction;
+                                        if ($hasGrainBoard) {
+                                            if ($rowGrainVal === '1' || $rowGrainVal === '0' || $rowGrainVal === '' || $rowGrainVal === null) {
+                                                $rowGrainVal = $item->height ?: $rowGrainVal;
+                                            }
+                                        } else {
+                                            if ($rowGrainVal === '' || $rowGrainVal === null || $rowGrainVal === '1') {
+                                                $rowGrainVal = '0';
+                                            }
+                                        }
+                                    @endphp
+                                    <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][grain_direction]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Chiều vân" value="{{ $rowGrainVal }}">
                                 </td>
                                 <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
                                     <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][wing_area]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Cánh (m2)" value="{{ ((float)($item->wing_area ?? 0) > 0) ? $item->wing_area : '' }}" autocomplete="off" @if(!empty($itemFormulas['wing_area'])) data-formula="{{ $itemFormulas['wing_area'] }}" title="Công thức: {{ $itemFormulas['wing_area'] }}" data-manual="1" @endif>
@@ -644,14 +663,28 @@ function updateOldSize(element) {
     }
 }
 
+function updateSupplyGrainBadge(supplyRow, isHasGrain) {
+    if (!supplyRow) return;
+    const badge = supplyRow.querySelector('.supply-grain-badge');
+    if (badge) {
+        badge.style.display = isHasGrain ? 'inline-flex' : 'none';
+    }
+}
+
 function handleSupplyCodeChange(selectEl, value) {
-    if (!value) return;
-    
-    const price = woodBoardPricesData.find(p => p.code === value);
-    if (!price) return;
-    
     const supplyRow = selectEl.closest('.order-supply-row');
     if (!supplyRow) return;
+
+    if (!value) {
+        updateSupplyGrainBadge(supplyRow, false);
+        return;
+    }
+    
+    const price = woodBoardPricesData.find(p => p.code === value);
+    if (!price) {
+        updateSupplyGrainBadge(supplyRow, false);
+        return;
+    }
     
     const supplyNameInput = supplyRow.querySelector('input[name*="[supply_name]"]');
     if (supplyNameInput) {
@@ -659,10 +692,14 @@ function handleSupplyCodeChange(selectEl, value) {
         applyFlashEffect(supplyNameInput);
     }
     
+    const isHasGrain = !!price.has_grain;
+    updateSupplyGrainBadge(supplyRow, isHasGrain);
+    
     const itemRows = supplyRow.querySelectorAll('.order-item-row');
     itemRows.forEach(itemRow => {
         const thicknessInput = itemRow.querySelector('input[name*="[thickness]"]');
         const unitPriceInput = itemRow.querySelector('input[name*="[unit_price]"]');
+        const grainInput = itemRow.querySelector('input[name*="[grain_direction]"]');
         
         if (thicknessInput) {
             thicknessInput.value = price.thickness || '';
@@ -674,6 +711,17 @@ function handleSupplyCodeChange(selectEl, value) {
             applyFlashEffect(unitPriceInput);
             applyNarrowWidthRule(itemRow, false);
             calculateTotalPrice(itemRow, 'unit_price');
+        }
+        if (grainInput) {
+            const heightInput = itemRow.querySelector('input[name*="[height]"]');
+            const hVal = heightInput ? heightInput.value.trim() : '';
+            if (isHasGrain) {
+                grainInput.value = hVal;
+                applyFlashEffect(grainInput);
+            } else {
+                grainInput.value = '0';
+                applyFlashEffect(grainInput);
+            }
         }
     });
 }
@@ -712,6 +760,9 @@ function addOrderSupply() {
                         <option value="subtract">- Trừ kho</option>
                     </select>
                 </div>
+                <span class="supply-grain-badge inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300 shadow-sm" style="display: none;">
+                    <iconify-icon icon="lucide:sparkles" class="text-xs text-amber-600"></iconify-icon> Màu nhũ / Chống xước (Vân dọc: Cao)
+                </span>
             </div>
             <div class="flex items-center gap-2">
                 <button type="button" onclick="this.closest('.order-supply-row').remove(); updateOrderSummary(); if(typeof updateAcrylicRowIndexes === 'function') updateAcrylicRowIndexes();" class="text-neutral-400 hover:text-danger-500 transition-colors p-1 flex items-center justify-center" title="Xóa vật tư này">
@@ -837,6 +888,10 @@ function addOrderItem(button, isInitial = false, insertAfterRow = null) {
     const price = woodBoardPricesData.find(p => p.code === selectedCode);
     const defaultThickness = price ? (price.thickness || '') : '';
     const defaultUnitPrice = price ? (price.price_m2 ? parseInt(price.price_m2) : 0) : '';
+    const isNhapKho = typeof window.isNhapKhoSelected === 'function' && window.isNhapKhoSelected();
+    const defaultHeight = isNhapKho ? 1220 : '';
+    const defaultWidth = isNhapKho ? 2440 : '';
+    const defaultGrain = (price && price.has_grain) ? (defaultHeight ? String(defaultHeight) : '') : '0';
     
     // Sao chép đơn giá từ dòng cuối nếu có
     const lastRow = container.querySelector('.order-item-row:last-of-type');
@@ -847,9 +902,6 @@ function addOrderItem(button, isInitial = false, insertAfterRow = null) {
             copiedUnitPrice = lastUnitPriceInput.value;
         }
     }
-    const isNhapKho = typeof window.isNhapKhoSelected === 'function' && window.isNhapKhoSelected();
-    const defaultHeight = isNhapKho ? 1220 : '';
-    const defaultWidth = isNhapKho ? 2440 : '';
     const unitPriceToUse = isNhapKho ? 0 : (copiedUnitPrice !== '' ? copiedUnitPrice : defaultUnitPrice);
     
     const newItem = document.createElement('tr');
@@ -906,7 +958,7 @@ function addOrderItem(button, isInitial = false, insertAfterRow = null) {
             </div>
         </td>
         <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
-            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][grain_direction]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Chiều vân" value="0">
+            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][grain_direction]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Chiều vân" value="${defaultGrain}">
         </td>
         <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
             <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][wing_area]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center px-1 py-1 h-8 text-xs" placeholder="Cánh (m2)" value="" autocomplete="off">
@@ -1089,6 +1141,28 @@ function updateAcrylicRowIndexes() {
     });
 }
 
+function syncGrainOnHeightChange(row) {
+    if (!row) return;
+    const supplyRow = row.closest('.order-supply-row');
+    if (!supplyRow) return;
+    const selectEl = supplyRow.querySelector('.order-supply-code-select');
+    const selectedCode = selectEl ? (selectEl.tomselect ? selectEl.tomselect.getValue() : selectEl.value) : '';
+    const price = woodBoardPricesData.find(p => p.code === selectedCode);
+    const isHasGrain = !!(price && price.has_grain);
+    
+    const grainInput = row.querySelector('input[name*="[grain_direction]"]');
+    const heightInput = row.querySelector('input[name*="[height]"]');
+    if (!grainInput || !heightInput) return;
+    
+    if (isHasGrain) {
+        grainInput.value = heightInput.value.trim();
+    } else {
+        if (!grainInput.value || grainInput.value !== '0') {
+            grainInput.value = '0';
+        }
+    }
+}
+
 function bindAcrylicRowEvents(row) {
     const productNameInput = row.querySelector('input[name*="[product_name]"]');
     const heightInput = row.querySelector('input[name*="[height]"]');
@@ -1113,6 +1187,7 @@ function bindAcrylicRowEvents(row) {
                 applyNarrowWidthRule(row, false);
                 calculateTotalPrice(row, 'height');
                 syncBevelOnSizeChange(row);
+                syncGrainOnHeightChange(row);
             });
         });
     }
@@ -1742,6 +1817,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateAcrylicRowIndexes();
             });
         });
+
+        document.querySelectorAll('.order-supply-row').forEach(row => {
+            const selectEl = row.querySelector('.order-supply-code-select');
+            const code = selectEl ? (selectEl.tomselect ? selectEl.tomselect.getValue() : selectEl.value) : '';
+            const price = woodBoardPricesData.find(p => p.code === code);
+            const isHasGrain = !!(price && price.has_grain);
+            updateSupplyGrainBadge(row, isHasGrain);
+            row.querySelectorAll('.order-item-row').forEach(itemRow => {
+                const gInput = itemRow.querySelector('input[name*="[grain_direction]"]');
+                const hInput = itemRow.querySelector('input[name*="[height]"]');
+                if (isHasGrain) {
+                    if (gInput && hInput && hInput.value.trim()) {
+                        if (gInput.value === '1' || gInput.value === '0' || gInput.value === '') {
+                            gInput.value = hInput.value.trim();
+                        }
+                    }
+                } else {
+                    if (gInput && (gInput.value === '' || gInput.value === '1')) {
+                        gInput.value = '0';
+                    }
+                }
+            });
+        });
     }
 
     // Recalculate codes on load
@@ -2013,6 +2111,15 @@ function handleExcelFile(file) {
                 const isLaborNote = !isPanelNote && (/c[oô]ng/i.test(notes) || /gi[aả]\s*d[aày]y/i.test(notes));
                 const productName = isLaborNote ? 'Công giả dày' : '';
 
+                const priceForSupply = woodBoardPricesData.find(p => p.code === supplyCode);
+                const isBoardHasGrain = priceForSupply ? !!priceForSupply.has_grain : false;
+                let effectiveGrain;
+                if (isBoardHasGrain) {
+                    effectiveGrain = (height !== '' ? height : (grain || ''));
+                } else {
+                    effectiveGrain = '0';
+                }
+
                 const item = {
                     product_name : productName,
                     thickness    : '',
@@ -2020,7 +2127,7 @@ function handleExcelFile(file) {
                     width,
                     quantity     : qty,
                     edge_bevel   : bevel,
-                    grain        : grain || '0',
+                    grain        : effectiveGrain,
                     wing_area    : wingArea,
                     molding,
                     unit_price   : unitPrice,
@@ -2168,6 +2275,9 @@ function confirmExcelImport() {
             supplyNameInput.value = group.supply_name;
         }
 
+        const groupPrice = woodBoardPricesData.find(p => p.code === group.supply_code);
+        updateSupplyGrainBadge(newSupplyRow, !!(groupPrice && groupPrice.has_grain));
+
         // 3. Add items into the supply
         const itemsContainer = newSupplyRow.querySelector('.supply-items-container');
         const addItemBtn = newSupplyRow.querySelector('[onclick*="addOrderItem"]');
@@ -2215,7 +2325,14 @@ function confirmExcelImport() {
             }
 
             const grainInput = newRow.querySelector('input[name*="[grain_direction]"], select[name*="[grain_direction]"]');
-            if (grainInput) grainInput.value = item.grain !== undefined && item.grain !== null ? item.grain : '0';
+            if (grainInput) {
+                const curPrice = woodBoardPricesData.find(p => p.code === group.supply_code);
+                if (curPrice && curPrice.has_grain) {
+                    grainInput.value = item.height || item.grain || '';
+                } else {
+                    grainInput.value = '0';
+                }
+            }
 
             // Handle labor rows
             if (item.is_labor) {

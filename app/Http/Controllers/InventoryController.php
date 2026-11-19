@@ -14,6 +14,8 @@ use App\Models\InventoryIssue;
 use App\Models\InventoryIssueItem;
 use App\Models\InventoryStocktake;
 use App\Models\InventoryStocktakeItem;
+use App\Models\InventoryTransfer;
+use App\Models\InventoryTransferItem;
 use App\Models\InventoryTransaction;
 use App\Models\Supplier;
 use App\Models\Order;
@@ -39,12 +41,14 @@ class InventoryController extends Controller
         $this->middleware('permission:view warehouse', ['only' => [
             'index', 'stockCard', 'exportStock', 'receipts', 'showReceipt', 'printReceipt',
             'issues', 'showIssue', 'printIssue', 'stocktakes', 'showStocktake', 'reports',
-            'exportReport', 'exportMatrixReport', 'warehouseList'
+            'exportReport', 'exportMatrixReport', 'warehouseList',
+            'transfers', 'showTransfer', 'printTransfer'
         ]]);
 
         $this->middleware('permission:add warehouse', ['only' => [
             'storeMaterial', 'importStock', 'createReceipt', 'storeReceipt', 'createIssue', 'storeIssue',
-            'createStocktake', 'storeStocktake', 'storeWarehouse'
+            'createStocktake', 'storeStocktake', 'storeWarehouse',
+            'createTransfer', 'storeTransfer'
         ]]);
 
         $this->middleware('permission:edit warehouse', ['only' => [
@@ -52,7 +56,8 @@ class InventoryController extends Controller
         ]]);
 
         $this->middleware('permission:delete warehouse', ['only' => [
-            'destroyMaterial', 'destroyReceipt', 'destroyIssue', 'destroyStocktake', 'destroyWarehouse'
+            'destroyMaterial', 'destroyReceipt', 'destroyIssue', 'destroyStocktake', 'destroyWarehouse',
+            'destroyTransfer'
         ]]);
     }
 
@@ -1518,6 +1523,125 @@ class InventoryController extends Controller
     }
 
     /**
+     * 5. Transfers (Phiếu Chuyển kho - PCK)
+     */
+    public function transfers(Request $request)
+    {
+        $warehouses = $this->getOrderedWarehouses();
+        $fromWarehouseId = $request->input('from_warehouse_id');
+        $toWarehouseId = $request->input('to_warehouse_id');
+        $warehouseId = $request->input('warehouse_id');
+        $search = $request->input('search');
+
+        $query = InventoryTransfer::with(['fromWarehouse', 'toWarehouse', 'creator'])->withCount('items');
+        $this->applyDateFilter($query, $request, 'date');
+
+        if ($fromWarehouseId) {
+            $query->where('from_warehouse_id', $fromWarehouseId);
+        }
+        if ($toWarehouseId) {
+            $query->where('to_warehouse_id', $toWarehouseId);
+        }
+        if ($warehouseId) {
+            $query->where(function($q) use ($warehouseId) {
+                $q->where('from_warehouse_id', $warehouseId)->orWhere('to_warehouse_id', $warehouseId);
+            });
+        }
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('code', 'like', "%{$search}%")
+                  ->orWhere('deliverer', 'like', "%{$search}%")
+                  ->orWhere('receiver', 'like', "%{$search}%")
+                  ->orWhere('notes', 'like', "%{$search}%")
+                  ->orWhereHas('items', function($iq) use ($search) {
+                      $iq->where('code', 'like', "%{$search}%")->orWhere('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        $stats = [
+            'total_transfers' => (clone $query)->count(),
+            'total_quantity'  => (clone $query)->sum('total_quantity'),
+        ];
+
+        $transfers = $query->orderBy('date', 'desc')->orderBy('id', 'desc')->paginate(20)->withQueryString();
+
+        return view('inventory.transfers.index', compact('transfers', 'warehouses', 'fromWarehouseId', 'toWarehouseId', 'warehouseId', 'search', 'stats'));
+    }
+
+    public function createTransfer(Request $request)
+    {
+        $warehouses = $this->getOrderedWarehouses();
+        $fromWarehouseId = $request->input('from_warehouse_id') ?: ($warehouses->first()?->id ?? null);
+        $toWarehouseId = $request->input('to_warehouse_id') ?: ($warehouses->skip(1)->first()?->id ?? null);
+
+        $nextCode = $this->inventoryService->generateCode('PCK', 'inventory_transfers');
+        $materials = $this->getSelectableMaterials();
+
+        return view('inventory.transfers.create', compact('warehouses', 'materials', 'nextCode', 'fromWarehouseId', 'toWarehouseId'));
+    }
+
+    public function storeTransfer(Request $request)
+    {
+        $request->validate([
+            'from_warehouse_id'   => 'required|exists:warehouses,id',
+            'to_warehouse_id'     => 'required|exists:warehouses,id|different:from_warehouse_id',
+            'date'                => 'required|date',
+            'items'               => 'required|array|min:1',
+            'items.*.material_id' => 'required',
+            'items.*.quantity'    => 'required|numeric|min:0.001',
+        ], [
+            'to_warehouse_id.different' => 'Kho nhận phải khác kho xuất!',
+            'items.required'            => 'Vui lòng thêm ít nhất một mặt hàng cần chuyển kho.',
+        ]);
+
+        $fromWarehouse = Warehouse::findOrFail($request->from_warehouse_id);
+        $toWarehouse = Warehouse::findOrFail($request->to_warehouse_id);
+
+        $transfer = $this->inventoryService->createTransfer(
+            $fromWarehouse,
+            $toWarehouse,
+            $request->only(['code', 'date', 'deliverer', 'receiver', 'notes']),
+            $request->input('items', []),
+            Auth::id()
+        );
+
+        return redirect()->route('inventory.transfers.show', $transfer)
+            ->with('success', 'Tạo phiếu chuyển kho ' . $transfer->code . ' thành công! Đã điều chuyển tồn kho từ ' . $fromWarehouse->name . ' sang ' . $toWarehouse->name . '.');
+    }
+
+    public function showTransfer(InventoryTransfer $transfer)
+    {
+        $transfer->load(['fromWarehouse', 'toWarehouse', 'creator', 'items.fromMaterial', 'items.toMaterial']);
+        return view('inventory.transfers.show', compact('transfer'));
+    }
+
+    public function printTransfer(InventoryTransfer $transfer)
+    {
+        $transfer->load(['fromWarehouse', 'toWarehouse', 'creator', 'items.fromMaterial', 'items.toMaterial']);
+        return view('inventory.transfers.print', compact('transfer'));
+    }
+
+    public function destroyTransfer(InventoryTransfer $transfer)
+    {
+        $code = $transfer->code;
+        $this->inventoryService->deleteTransfer($transfer);
+        return redirect()->route('inventory.transfers.index')
+            ->with('success', 'Đã xóa phiếu chuyển kho ' . $code . ' và hoàn trả lại số lượng tồn kho thành công!');
+    }
+
+    public function getWarehouseMaterialsJson(Warehouse $warehouse)
+    {
+        $materials = $this->getSelectableMaterials($warehouse->id);
+        return response()->json([
+            'success'   => true,
+            'warehouse' => $warehouse,
+            'materials' => $materials,
+        ]);
+    }
+
+    /**
      * Lấy danh sách kho hàng ưu tiên: Kho Tấm Ván lên đầu tiên, Kho Dán Chỉ xuống cuối
      */
     private function getOrderedWarehouses()
@@ -1538,6 +1662,7 @@ class InventoryController extends Controller
     {
         $materials = \App\Models\Material::with(['warehouse', 'boardPrice'])
             ->where('status', 'active')
+            ->when($warehouseId, fn($q) => $q->where('warehouse_id', $warehouseId))
             ->orderBy('code')
             ->get();
 

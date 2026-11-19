@@ -221,6 +221,7 @@ Route::middleware(['auth'])->prefix('media')->name('media.')->group(function () 
 Route::middleware(['auth'])->group(function () {
     Route::get('wood-boards/board-info', [WoodBoardController::class, 'getBoardInfo'])->name('wood_boards.board_info');
     Route::post('wood-boards/quick-update-stock', [WoodBoardController::class, 'quickUpdateStock'])->name('wood_boards.quick_update_stock');
+    Route::post('wood-boards/{woodBoard}/toggle-grain', [WoodBoardController::class, 'toggleGrain'])->name('wood_boards.toggle_grain');
     Route::post('wood-boards/import', [WoodBoardController::class, 'import'])->name('wood_boards.import');
     Route::post('wood-boards/sync-inventory', [WoodBoardController::class, 'syncFromInventory'])->name('wood_boards.sync_inventory');
     Route::resource('wood-boards', WoodBoardController::class)->names('wood_boards');
@@ -288,7 +289,16 @@ Route::middleware(['auth'])->prefix('warehouses')->name('inventory.')->group(fun
     Route::get('/issues/{issue}/print', [InventoryController::class, 'printIssue'])->name('issues.print');
     Route::delete('/issues/{issue}', [InventoryController::class, 'destroyIssue'])->name('issues.destroy');
 
-    // 4. Stocktakes (Kiểm kê kho - PKK & Cân bằng kho)
+    // 4. Transfers (Phiếu Chuyển kho - PCK)
+    Route::get('/transfers', [InventoryController::class, 'transfers'])->name('transfers.index');
+    Route::get('/transfers/create', [InventoryController::class, 'createTransfer'])->name('transfers.create');
+    Route::post('/transfers', [InventoryController::class, 'storeTransfer'])->name('transfers.store');
+    Route::get('/transfers/{transfer}', [InventoryController::class, 'showTransfer'])->name('transfers.show');
+    Route::get('/transfers/{transfer}/print', [InventoryController::class, 'printTransfer'])->name('transfers.print');
+    Route::delete('/transfers/{transfer}', [InventoryController::class, 'destroyTransfer'])->name('transfers.destroy');
+    Route::get('/warehouses/{warehouse}/materials-json', [InventoryController::class, 'getWarehouseMaterialsJson'])->name('warehouses.materials-json');
+
+    // 5. Stocktakes (Kiểm kê kho - PKK & Cân bằng kho)
     Route::get('/stocktakes', [InventoryController::class, 'stocktakes'])->name('stocktakes.index');
     Route::get('/stocktakes/create', [InventoryController::class, 'createStocktake'])->name('stocktakes.create');
     Route::post('/stocktakes', [InventoryController::class, 'storeStocktake'])->name('stocktakes.store');
@@ -480,6 +490,7 @@ use App\Http\Controllers\DcStockController;
 Route::middleware(['auth'])->prefix('dc-stocks')->name('dc-stocks.')->group(function () {
     Route::get('/', [DcStockController::class, 'index'])->name('index');
     Route::post('/', [DcStockController::class, 'store'])->name('store');
+    Route::post('/batch', [DcStockController::class, 'batchStore'])->name('batch-store');
     Route::post('/normalize-types', [DcStockController::class, 'normalizeTypes'])->name('normalize-types');
     Route::post('/import', [DcStockController::class, 'import'])->name('import');
     Route::get('/export', [DcStockController::class, 'export'])->name('export');

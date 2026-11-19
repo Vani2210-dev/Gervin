@@ -357,6 +357,14 @@ class AcrylicOrderService
                 'formula'           => $supplyData['formula'] ?? null,
             ]);
 
+            $boardHasGrain = false;
+            if (!empty($orderSupply->order_supply_code)) {
+                $boardPrice = \App\Models\WoodBoardPrice::with('board')->where('code', $orderSupply->order_supply_code)->first();
+                if ($boardPrice && $boardPrice->has_grain) {
+                    $boardHasGrain = true;
+                }
+            }
+
             if (!isset($supplyData['items']) || !is_array($supplyData['items'])) continue;
             foreach ($supplyData['items'] as $item) {
                 $rawUnitPrice = is_string($item['unit_price'] ?? null) ? str_replace('.', '', $item['unit_price']) : ($item['unit_price'] ?? 0);
@@ -364,13 +372,23 @@ class AcrylicOrderService
                 $rawTotalPrice = is_string($item['total_price'] ?? null) ? str_replace('.', '', $item['total_price']) : ($item['total_price'] ?? null);
                 $totalPrice = ($rawTotalPrice !== null && $rawTotalPrice !== '') ? round(floatval($rawTotalPrice)) : round($unitPrice * (floatval($item['quantity'] ?? 0)));
                 
+                $heightVal = trim((string)($item['height'] ?? ''));
+                $grainDirection = isset($item['grain_direction']) ? trim((string)$item['grain_direction']) : '';
+                if ($boardHasGrain) {
+                    if ($grainDirection === '' || $grainDirection === '0' || $grainDirection === '1') {
+                        $grainDirection = $heightVal !== '' ? $heightVal : '0';
+                    }
+                } else {
+                    $grainDirection = '0';
+                }
+
                 $orderItem = AcrylicOrderItem::create([
                     'order_supply_id'    => $orderSupply->id,
                     'product_name'        => $item['product_name'],
                     'thickness'           => $item['thickness'] ?? null,
                     'height'              => $item['height'] ?? null,
                     'width'               => $item['width'] ?? null,
-                    'grain_direction'     => isset($item['grain_direction']) ? (string)$item['grain_direction'] : '0',
+                    'grain_direction'     => $grainDirection,
                     'edge_bevel'          => $item['edge_bevel'] ?? null,
                     'wing_area'           => $item['wing_area'] ?? null,
                     'molding_length'      => $item['molding_length'] ?? null,

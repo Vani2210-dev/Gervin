@@ -26,6 +26,15 @@ class WoodBoardPrice extends Model
         'stock'       => 'double',
     ];
 
+    protected $appends = [
+        'has_grain',
+    ];
+
+    public function getHasGrainAttribute(): bool
+    {
+        return (bool)($this->board?->has_grain ?? false);
+    }
+
     public function board()
     {
         return $this->belongsTo(WoodBoard::class, 'wood_board_id');

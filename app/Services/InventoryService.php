@@ -12,6 +12,8 @@ use App\Models\InventoryIssue;
 use App\Models\InventoryIssueItem;
 use App\Models\InventoryStocktake;
 use App\Models\InventoryStocktakeItem;
+use App\Models\InventoryTransfer;
+use App\Models\InventoryTransferItem;
 use App\Models\InventoryTransaction;
 use App\Models\Order;
 use App\Models\OrderSupply;
@@ -1937,6 +1939,255 @@ class InventoryService
 
             $stocktake->items()->delete();
             $stocktake->delete();
+        });
+    }
+
+    /**
+     * Create Stock Transfer (PCK - Phiếu Chuyển Kho)
+     */
+    public function createTransfer(Warehouse $fromWarehouse, Warehouse $toWarehouse, array $data, array $items, $userId = null): InventoryTransfer
+    {
+        $this->ensureSchemaUpdated();
+
+        return DB::transaction(function () use ($fromWarehouse, $toWarehouse, $data, $items, $userId) {
+            $code = !empty($data['code']) ? $data['code'] : $this->generateCode('PCK', 'inventory_transfers');
+            $date = !empty($data['date']) ? $data['date'] : date('Y-m-d');
+
+            $transfer = InventoryTransfer::create([
+                'code'              => $code,
+                'date'              => $date,
+                'from_warehouse_id' => $fromWarehouse->id,
+                'to_warehouse_id'   => $toWarehouse->id,
+                'deliverer'         => $data['deliverer'] ?? null,
+                'receiver'          => $data['receiver'] ?? null,
+                'total_quantity'    => 0,
+                'total_amount'      => 0,
+                'notes'             => $data['notes'] ?? null,
+                'status'            => 'completed',
+                'created_by'        => $userId,
+            ]);
+
+            $totalQty = 0;
+            $totalAmount = 0;
+
+            foreach ($items as $item) {
+                $rawMatId = (string)($item['from_material_id'] ?? $item['material_id'] ?? '');
+                $qty = (float)($item['quantity'] ?? 0);
+                if ($qty <= 0) continue;
+
+                $price = (float)($item['unit_price'] ?? 0);
+                $lineTotal = $qty * $price;
+                $itemHeight = isset($item['height']) && $item['height'] !== '' ? (float)$item['height'] : null;
+                $itemWidth = isset($item['width']) && $item['width'] !== '' ? (float)$item['width'] : null;
+
+                // Tìm Material tại kho xuất
+                $fromMat = null;
+                if (str_starts_with($rawMatId, 'mat_')) {
+                    $matId = (int)str_replace('mat_', '', $rawMatId);
+                    $fromMat = Material::find($matId);
+                } elseif (is_numeric($rawMatId)) {
+                    $fromMat = Material::find($rawMatId);
+                } elseif (!empty($item['code'])) {
+                    $fromMat = Material::where('warehouse_id', $fromWarehouse->id)->where('code', $item['code'])->first()
+                        ?? Material::where('code', $item['code'])->first();
+                }
+
+                if (!$fromMat) continue;
+
+                $itemType = $fromMat->item_type;
+                $woodBoardId = $fromMat->wood_board_id;
+                $woodBoardPriceId = $fromMat->wood_board_price_id;
+
+                // 1. Giảm tồn kho nguồn
+                $fromMat->current_stock = max(0, (float)$fromMat->current_stock - $qty);
+                $fromMat->save();
+                $fromStockAfter = $fromMat->current_stock;
+
+                if ($woodBoardPriceId) {
+                    $p = WoodBoardPrice::find($woodBoardPriceId);
+                    if ($p) { $p->stock = max(0, $p->stock - $qty); $p->save(); }
+                }
+                if ($woodBoardId) {
+                    $b = WoodBoard::find($woodBoardId);
+                    if ($b) {
+                        if ($itemType === 'edge_band') {
+                            $b->edge_band_current_stock = max(0, (float)$b->edge_band_current_stock - $qty);
+                        } else {
+                            $b->current_stock = $b->prices()->sum('stock') ?: max(0, (float)$b->current_stock - $qty);
+                        }
+                        $b->save();
+                    }
+                }
+
+                // 2. Tăng hoặc tạo Material tương ứng tại kho đích
+                $toMat = Material::where('warehouse_id', $toWarehouse->id)
+                    ->where('code', $fromMat->code)
+                    ->first();
+
+                if (!$toMat) {
+                    $toMat = Material::create([
+                        'code'                => $fromMat->code,
+                        'name'                => $fromMat->name,
+                        'warehouse_code'      => $toWarehouse->code,
+                        'warehouse_id'        => $toWarehouse->id,
+                        'category'            => $toWarehouse->name,
+                        'unit'                => $fromMat->unit ?: 'Cái',
+                        'item_type'           => $fromMat->item_type,
+                        'origin'              => $fromMat->origin,
+                        'cost_price'          => $fromMat->cost_price ?: $price,
+                        'min_stock'           => $fromMat->min_stock,
+                        'initial_stock'       => 0,
+                        'current_stock'       => $qty,
+                        'wood_board_id'       => $fromMat->wood_board_id,
+                        'wood_board_price_id' => $fromMat->wood_board_price_id,
+                        'status'              => 'active',
+                        'notes'               => 'Tự động tạo từ phiếu chuyển kho ' . $code . ' (chuyển từ ' . $fromWarehouse->name . ')',
+                    ]);
+                    $toStockAfter = $qty;
+                } else {
+                    $toMat->current_stock = (float)$toMat->current_stock + $qty;
+                    if ($price > 0 && (float)$toMat->cost_price <= 0) {
+                        $toMat->cost_price = $price;
+                    }
+                    $toMat->save();
+                    $toStockAfter = $toMat->current_stock;
+                }
+
+                // 3. Tạo dòng Item trong Phiếu chuyển kho
+                InventoryTransferItem::create([
+                    'transfer_id'         => $transfer->id,
+                    'from_material_id'    => $fromMat->id,
+                    'to_material_id'      => $toMat->id,
+                    'wood_board_id'       => $woodBoardId,
+                    'wood_board_price_id' => $woodBoardPriceId,
+                    'item_type'           => $itemType,
+                    'code'                => $fromMat->code,
+                    'name'                => $fromMat->name,
+                    'unit'                => $fromMat->unit ?: 'Cái',
+                    'height'              => $itemHeight,
+                    'width'               => $itemWidth,
+                    'quantity'            => $qty,
+                    'unit_price'          => $price,
+                    'total_price'         => $lineTotal,
+                    'notes'               => $item['notes'] ?? null,
+                ]);
+
+                // 4. Ghi nhận 2 giao dịch kho (Xuất kho nguồn & Nhập kho đích)
+                // a. Xuất tại Kho Nguồn
+                InventoryTransaction::create($this->sanitizeItemData('inventory_transactions', [
+                    'warehouse_id'        => $fromWarehouse->id,
+                    'material_id'         => $fromMat->id,
+                    'item_type'           => $itemType,
+                    'wood_board_id'       => $woodBoardId,
+                    'wood_board_price_id' => $woodBoardPriceId,
+                    'height'              => $itemHeight,
+                    'width'               => $itemWidth,
+                    'date'                => $date,
+                    'type'                => 'transfer_out',
+                    'voucher_code'        => $code,
+                    'reference_id'        => $transfer->id,
+                    'reference_type'      => InventoryTransfer::class,
+                    'in_qty'              => 0,
+                    'out_qty'             => $qty,
+                    'stock_after'         => $fromStockAfter,
+                    'unit_price'          => $price,
+                    'notes'               => $data['notes'] ?? ('Xuất chuyển sang ' . $toWarehouse->name . ' theo phiếu ' . $code),
+                    'created_by'          => $userId,
+                ]));
+
+                // b. Nhập tại Kho Đích
+                InventoryTransaction::create($this->sanitizeItemData('inventory_transactions', [
+                    'warehouse_id'        => $toWarehouse->id,
+                    'material_id'         => $toMat->id,
+                    'item_type'           => $itemType,
+                    'wood_board_id'       => $woodBoardId,
+                    'wood_board_price_id' => $woodBoardPriceId,
+                    'height'              => $itemHeight,
+                    'width'               => $itemWidth,
+                    'date'                => $date,
+                    'type'                => 'transfer_in',
+                    'voucher_code'        => $code,
+                    'reference_id'        => $transfer->id,
+                    'reference_type'      => InventoryTransfer::class,
+                    'in_qty'              => $qty,
+                    'out_qty'             => 0,
+                    'stock_after'         => $toStockAfter,
+                    'unit_price'          => $price,
+                    'notes'               => $data['notes'] ?? ('Nhập nhận chuyển từ ' . $fromWarehouse->name . ' theo phiếu ' . $code),
+                    'created_by'          => $userId,
+                ]));
+
+                $totalQty += $qty;
+                $totalAmount += $lineTotal;
+            }
+
+            $transfer->update([
+                'total_quantity' => $totalQty,
+                'total_amount'   => $totalAmount,
+            ]);
+
+            return $transfer;
+        });
+    }
+
+    /**
+     * Delete Stock Transfer (Xóa phiếu chuyển kho và hoàn trả tồn kho cả 2 bên)
+     */
+    public function deleteTransfer(InventoryTransfer $transfer): void
+    {
+        DB::transaction(function () use ($transfer) {
+            $transfer->loadMissing('items');
+
+            if ($transfer->status === 'completed') {
+                foreach ($transfer->items as $item) {
+                    $qty = (float)($item->quantity ?? 0);
+                    if ($qty <= 0) continue;
+
+                    // Hoàn trả kho xuất (cộng lại)
+                    if ($item->from_material_id) {
+                        $fromMat = Material::find($item->from_material_id);
+                        if ($fromMat) {
+                            $fromMat->current_stock = (float)$fromMat->current_stock + $qty;
+                            $fromMat->save();
+                        }
+                    }
+
+                    // Thu hồi kho nhận (trừ đi)
+                    if ($item->to_material_id) {
+                        $toMat = Material::find($item->to_material_id);
+                        if ($toMat) {
+                            $toMat->current_stock = max(0, (float)$toMat->current_stock - $qty);
+                            $toMat->save();
+                        }
+                    }
+
+                    if ($item->wood_board_price_id) {
+                        $p = WoodBoardPrice::find($item->wood_board_price_id);
+                        if ($p) { $p->stock += $qty; $p->save(); }
+                    }
+                    if ($item->wood_board_id) {
+                        $b = WoodBoard::find($item->wood_board_id);
+                        if ($b) {
+                            if ($item->item_type === 'edge_band') {
+                                $b->edge_band_current_stock = (float)$b->edge_band_current_stock + $qty;
+                            } else {
+                                $b->current_stock = (float)$b->current_stock + $qty;
+                            }
+                            $b->save();
+                        }
+                    }
+                }
+            }
+
+            // Xóa các giao dịch kho liên quan
+            InventoryTransaction::where(function ($q) use ($transfer) {
+                $q->where('reference_type', InventoryTransfer::class)
+                  ->where('reference_id', $transfer->id);
+            })->orWhere('voucher_code', $transfer->code)
+              ->delete();
+
+            $transfer->items()->delete();
+            $transfer->delete();
         });
     }
 

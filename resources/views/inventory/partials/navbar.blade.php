@@ -24,6 +24,9 @@
             <a href="{{ route('inventory.issues.create') }}" class="btn btn-sm bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 shadow-sm">
                 <iconify-icon icon="solar:export-bold" class="text-base"></iconify-icon> Xuất kho (PXK)
             </a>
+            <a href="{{ route('inventory.transfers.create') }}" class="btn btn-sm bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 shadow-sm">
+                <iconify-icon icon="solar:transfer-horizontal-bold" class="text-base"></iconify-icon> Chuyển kho (PCK)
+            </a>
             <a href="{{ route('inventory.stocktakes.create') }}" class="btn btn-sm bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 shadow-sm">
                 <iconify-icon icon="solar:checklist-minimalistic-bold" class="text-base"></iconify-icon> Kiểm kê kho (PKK)
             </a>
@@ -42,6 +45,12 @@
            class="flex items-center gap-2 px-4 py-3 border-b-2 transition-all {{ (str_starts_with($currentRoute, 'inventory.receipts') || str_starts_with($currentRoute, 'inventory.issues')) ? 'border-primary-600 text-primary-600 bg-white rounded-t-lg shadow-sm' : 'border-transparent text-neutral-600 hover:text-neutral-900 hover:border-neutral-300' }}">
             <iconify-icon icon="solar:clipboard-list-bold" class="text-base"></iconify-icon>
             Nhập, xuất kho
+        </a>
+
+        <a href="{{ route('inventory.transfers.index') }}" 
+           class="flex items-center gap-2 px-4 py-3 border-b-2 transition-all {{ str_starts_with($currentRoute, 'inventory.transfers') ? 'border-primary-600 text-primary-600 bg-white rounded-t-lg shadow-sm' : 'border-transparent text-neutral-600 hover:text-neutral-900 hover:border-neutral-300' }}">
+            <iconify-icon icon="solar:transfer-horizontal-bold" class="text-base"></iconify-icon>
+            Chuyển kho
         </a>
 
         <a href="{{ route('inventory.stocktakes.index') }}" 

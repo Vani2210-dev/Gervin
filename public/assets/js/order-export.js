@@ -799,8 +799,11 @@ async function exportToExcel(customData = null, returnBlob = false) {
                     row.getCell(7).value = parseFloat((parseFloat(item.height) || 0).toFixed(2));    // Dài
                     row.getCell(8).value = parseFloat((parseFloat(item.width) || 0).toFixed(2));     // Rộng
                     row.getCell(9).value = (item.thickness && !isNaN(parseFloat(item.thickness))) ? parseFloat(parseFloat(item.thickness).toFixed(2)) : 19; // Dày
-                    row.getCell(10).value = item.grain_direction !== null
-                        ? parseInt(item.grain_direction) : 2;                // Chiều vân
+                    row.getCell(10).value = (function() {
+                        const gd = String(item.grain_direction ?? '').trim();
+                        if (gd === '' || gd === '0' || gd === '0.00' || gd === 'Không vân') return 0;
+                        return 2;
+                    })(); // Chiều vân (Bazis: 0 = không vân, 2 = vân dọc)
                     row.getCell(11).value = parseInt(item.quantity) || 1;    // Số lượng
                     row.getCell(12).value = edgeL1;                           // Kí hiệu nẹp L1
                     row.getCell(13).value = edgeL2;                           // Kí hiệu nẹp L2
