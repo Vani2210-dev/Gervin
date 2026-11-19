@@ -35,6 +35,13 @@
 
     {{-- Horizontal Tabs Bar --}}
     <div class="flex flex-wrap items-center gap-1 px-4 pt-2 bg-neutral-50 border-t border-neutral-100 overflow-x-auto text-xs font-bold">
+        <a href="{{ route('inventory.workflow') }}" 
+           class="flex items-center gap-2 px-4 py-3 border-b-2 transition-all {{ $currentRoute === 'inventory.workflow' ? 'border-primary-600 text-primary-600 bg-white rounded-t-lg shadow-sm font-extrabold' : 'border-transparent text-neutral-600 hover:text-neutral-900 hover:border-neutral-300' }}">
+            <iconify-icon icon="solar:diagram-up-bold" class="text-base text-amber-500"></iconify-icon>
+            Sơ đồ Quy trình
+            <span class="bg-amber-100 text-amber-800 text-[10px] px-2 py-0.5 rounded-full font-bold">MISA</span>
+        </a>
+
         <a href="{{ route('inventory.index') }}" 
            class="flex items-center gap-2 px-4 py-3 border-b-2 transition-all {{ $currentRoute === 'inventory.index' ? 'border-primary-600 text-primary-600 bg-white rounded-t-lg shadow-sm' : 'border-transparent text-neutral-600 hover:text-neutral-900 hover:border-neutral-300' }}">
             <iconify-icon icon="solar:widget-2-bold" class="text-base"></iconify-icon>

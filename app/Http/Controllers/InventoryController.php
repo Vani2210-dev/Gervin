@@ -39,7 +39,7 @@ class InventoryController extends Controller
         $this->inventoryService = $inventoryService;
 
         $this->middleware('permission:view warehouse', ['only' => [
-            'index', 'stockCard', 'exportStock', 'receipts', 'showReceipt', 'printReceipt',
+            'index', 'workflow', 'stockCard', 'exportStock', 'receipts', 'showReceipt', 'printReceipt',
             'issues', 'showIssue', 'printIssue', 'stocktakes', 'showStocktake', 'reports',
             'exportReport', 'exportMatrixReport', 'warehouseList',
             'transfers', 'showTransfer', 'printTransfer'
@@ -59,6 +59,26 @@ class InventoryController extends Controller
             'destroyMaterial', 'destroyReceipt', 'destroyIssue', 'destroyStocktake', 'destroyWarehouse',
             'destroyTransfer'
         ]]);
+    }
+
+    /**
+     * 0. Sơ đồ Quy trình Quản lý Kho (Workflow Diagram & Alignment)
+     */
+    public function workflow(Request $request)
+    {
+        $warehouses = $this->getOrderedWarehouses();
+        
+        $stats = [
+            'orders_count' => \App\Models\Order::whereDate('created_at', '>=', now()->subDays(30))->count(),
+            'receipts_count' => \App\Models\InventoryReceipt::whereDate('created_at', '>=', now()->subDays(30))->count(),
+            'issues_count' => \App\Models\InventoryIssue::whereDate('created_at', '>=', now()->subDays(30))->count(),
+            'transfers_count' => class_exists(\App\Models\InventoryTransfer::class) ? \App\Models\InventoryTransfer::whereDate('created_at', '>=', now()->subDays(30))->count() : 0,
+            'stocktakes_count' => \App\Models\InventoryStocktake::whereDate('created_at', '>=', now()->subDays(30))->count(),
+            'warehouses_count' => $warehouses->count(),
+            'materials_count' => \App\Models\Material::count(),
+        ];
+
+        return view('inventory.workflow', compact('warehouses', 'stats'));
     }
 
     /**

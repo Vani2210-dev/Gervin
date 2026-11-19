@@ -439,6 +439,15 @@ function addPaymentDetail() {
     const container = document.getElementById('payment-details-container');
     if (!container) return;
     
+    const section = document.getElementById('payment-details-section');
+    if (section && section.style.display === 'none') {
+        section.style.display = 'block';
+    }
+    const btn = document.getElementById('toggle-payment-details-btn');
+    if (btn) {
+        btn.style.display = 'none';
+    }
+
     const optionsHtml = getPaymentCodeOptionsHtml();
 
     const newRow = document.createElement('tr');
@@ -918,30 +927,27 @@ function togglePaymentDetailsSection() {
     const container = document.getElementById('payment-details-container');
     if (!section) return;
 
-    if (section.style.display === 'none' || section.style.display === '') {
-        section.style.display = 'block';
-        if (btn) {
-            btn.classList.remove('bg-blue-50', 'text-blue-600', 'hover:bg-blue-100', 'border-blue-200');
-            btn.classList.add('bg-danger-50', 'text-danger-600', 'hover:bg-danger-100', 'border-danger-200');
-            btn.innerHTML = '<iconify-icon icon="lucide:eye-off" class="text-lg"></iconify-icon> <span class="mobile-hide-text">Ẩn chi tiết hóa đơn</span>';
-        }
-        if (container && container.querySelectorAll('tr.payment-detail-row').length === 0) {
-            const curType = @json($currentOrderType ?? 'min_late');
-            const defaultCombo = (window.orderServiceCombosData || []).find(c => c.order_type === curType && c.is_default);
-            if (defaultCombo && typeof applyServiceCombo === 'function') {
-                applyServiceCombo(defaultCombo.id, false);
-            } else {
-                addPaymentDetail();
-            }
-        }
-    } else {
-        section.style.display = 'none';
-        if (btn) {
-            btn.classList.remove('bg-danger-50', 'text-danger-600', 'hover:bg-danger-100', 'border-danger-200');
-            btn.classList.add('bg-blue-50', 'text-blue-600', 'hover:bg-blue-100', 'border-blue-200');
-            btn.innerHTML = '<iconify-icon icon="lucide:receipt" class="text-lg"></iconify-icon> <span class="mobile-hide-text">Chi tiết hóa đơn dịch vụ</span>';
+    // Luôn mở hiển thị phần chi tiết hóa đơn
+    section.style.display = 'block';
+
+    // Khi đã thêm chi tiết hóa đơn rồi thì ẩn nút toggle hoàn toàn, KHÔNG cho ẩn nữa để tránh lỗi form submit
+    if (btn) {
+        btn.style.display = 'none';
+    }
+
+    if (container && container.querySelectorAll('tr.payment-detail-row').length === 0) {
+        const curType = @json($currentOrderType ?? 'min_late');
+        const defaultCombo = (window.orderServiceCombosData || []).find(c => c.order_type === curType && c.is_default);
+        if (defaultCombo && typeof applyServiceCombo === 'function') {
+            applyServiceCombo(defaultCombo.id, false);
+        } else {
+            addPaymentDetail();
         }
     }
+
+    setTimeout(() => {
+        section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 100);
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -952,6 +958,27 @@ document.addEventListener('DOMContentLoaded', function() {
     // Gán sự kiện tính toán cho các dòng
     document.querySelectorAll('#payment-details-container .payment-detail-row').forEach(row => {
         bindPaymentDetailEvents(row);
+    });
+
+    // Khi đã có chi tiết hóa đơn (edit hoặc create có dữ liệu), ẩn nút toggle để không cho ẩn nữa
+    const container = document.getElementById('payment-details-container');
+    const btn = document.getElementById('toggle-payment-details-btn');
+    const section = document.getElementById('payment-details-section');
+    if (container && container.querySelectorAll('tr.payment-detail-row').length > 0) {
+        if (section) section.style.display = 'block';
+        if (btn) btn.style.display = 'none';
+    }
+
+    // Bảo vệ chặn lỗi submit 'An invalid form control is not focusable' nếu section bị ẩn vì bất kỳ lý do gì
+    document.querySelectorAll('button[type="submit"], input[type="submit"]').forEach(sBtn => {
+        sBtn.addEventListener('click', function() {
+            const sec = document.getElementById('payment-details-section');
+            if (sec && (sec.style.display === 'none' || sec.offsetParent === null)) {
+                sec.querySelectorAll('textarea[required], input[required], select[required]').forEach(el => {
+                    el.removeAttribute('required');
+                });
+            }
+        });
     });
 });
 </script>

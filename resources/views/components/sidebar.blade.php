@@ -39,6 +39,7 @@
                 </a>
             </li>
 
+
             {{-- Nhóm Nghiệp vụ & Đơn hàng --}}
             @if(auth()->check() && (auth()->user()->can('view customer') || auth()->user()->can('view order') || auth()->user()->can('view revenue report') || auth()->user()->hasRole('Admin')))
             <li class="sidebar-menu-group-title">Kinh doanh & Đơn hàng</li>
@@ -200,6 +201,9 @@
                 </a>
                 <ul class="sidebar-submenu">
                     @can('view warehouse')
+                    <li>
+                        <a href="{{ route('inventory.workflow') }}"><i class="ri-circle-fill circle-icon text-amber-500 w-auto"></i> Sơ đồ Quy trình Kho</a>
+                    </li>
                     <li>
                         <a href="{{ route('inventory.index') }}"><i class="ri-circle-fill circle-icon text-primary-600 w-auto"></i> Tồn kho & Vật tư</a>
                     </li>

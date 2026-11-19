@@ -180,16 +180,10 @@
                 <span>Hỗ trợ Ctrl+V Excel</span>
             </span>
             <input type="file" id="minLateExcelFileInput" accept=".xlsx, .xls" style="display: none;">
-            @if(!$isWarranty)
-                @if($hasPaymentDetails)
-                    <button type="button" id="toggle-payment-details-btn" onclick="togglePaymentDetailsSection()" class="btn btn-sm bg-danger-50 text-danger-600 hover:bg-danger-100 border border-danger-200 rounded-lg flex items-center gap-1">
-                        <iconify-icon icon="lucide:trash-2" class="text-lg"></iconify-icon> <span>Xóa chi tiết hóa đơn</span>
-                    </button>
-                @else
-                    <button type="button" id="toggle-payment-details-btn" onclick="togglePaymentDetailsSection()" class="btn btn-sm bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 rounded-lg flex items-center gap-1">
-                        <iconify-icon icon="lucide:receipt" class="text-lg"></iconify-icon> <span>Thêm chi tiết hóa đơn</span>
-                    </button>
-                @endif
+            @if(!$isWarranty && !$hasPaymentDetails)
+                <button type="button" id="toggle-payment-details-btn" onclick="togglePaymentDetailsSection()" class="btn btn-sm bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 rounded-lg flex items-center gap-1">
+                    <iconify-icon icon="lucide:receipt" class="text-lg"></iconify-icon> <span>Thêm chi tiết hóa đơn</span>
+                </button>
             @endif
             <button type="button" onclick="addMinLateOrderSupply()" class="btn btn-sm btn-primary rounded-lg flex items-center gap-1">
                 <iconify-icon icon="lucide:plus" class="text-lg"></iconify-icon> <span class="mobile-hide-text">Thêm vật tư</span>
@@ -2059,10 +2053,11 @@ function confirmMinLateExcelImport() {
     if (typeof _minLateExcelServices !== 'undefined' && _minLateExcelServices.length > 0) {
         const section = document.getElementById('payment-details-section');
         const btn = document.getElementById('toggle-payment-details-btn');
-        if (section && btn) {
+        if (section) {
             section.style.display = 'block';
-            btn.className = 'btn btn-sm bg-danger-50 text-danger-600 hover:bg-danger-100 border border-danger-200 rounded-lg flex items-center gap-1';
-            btn.innerHTML = '<iconify-icon icon="lucide:trash-2" class="text-lg"></iconify-icon> <span>Xóa chi tiết hóa đơn</span>';
+        }
+        if (btn) {
+            btn.style.display = 'none';
         }
         _minLateExcelServices.forEach(srv => {
             if(typeof addPaymentDetail === 'function') {

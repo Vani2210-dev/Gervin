@@ -258,6 +258,9 @@ Route::prefix('qrcode')->name('qrcode.')->group(function () {
 
 // Inventory & Warehouses (KiotViet / MISA Architecture)
 Route::middleware(['auth'])->prefix('warehouses')->name('inventory.')->group(function () {
+    // 0. Sơ đồ Quy trình Kho (MISA Workflow)
+    Route::get('/workflow', [InventoryController::class, 'workflow'])->name('workflow');
+
     // 1. Dashboard & Materials (Tồn kho & Hàng hóa)
     Route::get('/', [InventoryController::class, 'index'])->name('index');
     Route::post('/materials', [InventoryController::class, 'storeMaterial'])->name('materials.store');
@@ -530,6 +533,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('api/notifications/{id}/read', [NotificationController::class, 'apiMarkAsRead'])->name('api.notifications.mark-read');
     Route::post('api/notifications/read-all', [NotificationController::class, 'apiMarkAllAsRead'])->name('api.notifications.read-all');
 });
+
 
 // Tiện ích chạy migration trực tiếp từ web (hỗ trợ cập nhật database server)
 Route::get('/run-migrate', function () {
