@@ -1274,7 +1274,7 @@ function _doUpdateOrderSummary() {
     let totalArea = 0;
     let totalAmount = 0;
     
-    if (orderType === 'min_late') {
+    if (orderType === 'min_late' || orderType === 'Flywood' || orderType === 'flywood') {
         // Tự động đồng bộ 3 dòng dịch vụ sửa tấm (LIC1, ML48, ML49) nếu là đơn sửa tấm
         if (window.isReworkOrder) {
             let reworkPlates = 0;
@@ -1449,7 +1449,7 @@ function _doUpdateOrderSummary() {
     let suppliesOnlyAmount = 0;
     let paymentDetailsOnlyAmount = 0;
     if (!window.isWarrantyOrder) {
-        if (orderType === 'min_late') {
+        if (orderType === 'min_late' || orderType === 'Flywood' || orderType === 'flywood') {
             suppliesOnlyAmount = roundedTotalAmount;
         } else {
             document.querySelectorAll('.order-item-row').forEach(row => {

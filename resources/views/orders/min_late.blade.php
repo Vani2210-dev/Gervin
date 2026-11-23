@@ -244,7 +244,7 @@
                     $supply->minLateItems = $items;
                     $supplies->push($supply);
                 }
-            } elseif (isset($acrylicOrder) && $acrylicOrder->type == 'min_late' && $acrylicOrder->supplies->count() > 0) {
+            } elseif (isset($acrylicOrder) && in_array($acrylicOrder->type, ['min_late', 'Flywood', 'flywood']) && $acrylicOrder->supplies->count() > 0) {
                 $supplies = $acrylicOrder->supplies;
             }
         @endphp

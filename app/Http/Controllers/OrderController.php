@@ -1309,7 +1309,7 @@ class OrderController extends Controller
                 }
             }
 
-            $service = $this->serviceFor($request->type);
+            $service = $this->serviceFor($request->type ?: $order->type);
             $rules = $service->getUpdateRules();
 
             if ($isDraftSave) {
@@ -1958,12 +1958,12 @@ class OrderController extends Controller
 
     private function serviceFor(?string $type)
     {
-        return match ($type) {
-            'min_late', 'Flywood' => $this->minLateOrderService,
+        $norm = strtolower(trim($type ?? ''));
+        return match ($norm) {
+            'min_late', 'flywood' => $this->minLateOrderService,
             'glass' => $this->glassOrderService,
             'service' => $this->serviceOrderService,
             default => $this->acrylicOrderService,
-            'acrylic' => $this->acrylicOrderService,
         };
     }
 

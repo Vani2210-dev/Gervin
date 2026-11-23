@@ -247,7 +247,7 @@
                     <div class="info-row">
                         <span class="info-label">Phân loại:</span>
                         <span class="info-val" style="font-weight: bold; text-transform: uppercase;">
-                            {{ $order->type === 'min_late' ? 'Min/Late' : ($order->type === 'glass' ? 'Đơn kính' : 'Acrylic') }}
+                            {{ in_array($order->type, ['min_late', 'Flywood', 'flywood']) ? ($order->type === 'glass' ? 'Đơn kính' : ($order->type === 'acrylic' ? 'Acrylic' : ($order->type === 'Flywood' ? 'Flywood' : 'Min/Late'))) : 'Acrylic' }}
                             (Sửa tấm)
                         </span>
                     </div>
@@ -288,7 +288,7 @@
             @php $stt = 1; @endphp
             @foreach($order->supplies as $supply)
                 @php
-                    if ($order->type === 'min_late') {
+                    if (in_array($order->type, ['min_late', 'Flywood', 'flywood'])) {
                         $items = $supply->minLateItems;
                     } elseif ($order->type === 'glass') {
                         $items = $supply->glassItems;
@@ -319,7 +319,7 @@
                         // Determine new size
                         $newSize = '';
                         $hasSize = false;
-                        if ($order->type === 'min_late') {
+                        if (in_array($order->type, ['min_late', 'Flywood', 'flywood'])) {
                             $sizes = $item->size ?? [];
                             if (is_string($sizes)) {
                                 $sizes = json_decode($sizes, true) ?? [];

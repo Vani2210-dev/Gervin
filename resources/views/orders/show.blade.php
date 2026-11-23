@@ -633,7 +633,7 @@
 
                     <div class="p-6">
                         @php
-                            $hasPriceOnly = $acrylicOrder->type === 'min_late' || $acrylicOrder->paymentDetails->contains(fn($d) => floatval($d->price_only ?? 0) > 0);
+                            $hasPriceOnly = in_array($acrylicOrder->type, ['min_late', 'Flywood', 'flywood']) || $acrylicOrder->paymentDetails->contains(fn($d) => floatval($d->price_only ?? 0) > 0);
                         @endphp
                         <div class="overflow-x-auto">
                             <table class="table bordered-table sm-table mb-0 min-w-[800px]">
@@ -689,7 +689,7 @@
                         <span class="text-neutral-500">Tổng số sản phẩm:</span>
                         <span class="font-semibold text-neutral-800" id="summary-total-items">
                             {{ $acrylicOrder->supplies->flatMap(function ($s) use ($acrylicOrder) {
-        if ($acrylicOrder->type === 'min_late')
+        if (in_array($acrylicOrder->type, ['min_late', 'Flywood', 'flywood']))
             return $s->minLateItems;
         if ($acrylicOrder->type === 'glass')
             return $s->glassItems;
@@ -1225,8 +1225,8 @@
 
                 <div class="overflow-y-auto overflow-x-auto border border-neutral-200 rounded-lg" style="max-height: calc(95vh - 220px);">
                     @php $displayStt = 1; @endphp
-                    @if($acrylicOrder->type === 'min_late')
-                        {{-- Bảng cho đơn Melamine/Laminate --}}
+                    @if(in_array($acrylicOrder->type, ['min_late', 'Flywood', 'flywood']))
+                        {{-- Bảng cho đơn Melamine/Laminate/Flywood --}}
                         <table class="table bordered-table sm-table mb-0 w-full text-xs min-w-[1400px]">
                             <thead class="bg-neutral-50 sticky top-0 z-10">
                                 <tr>

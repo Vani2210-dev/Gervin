@@ -33,7 +33,7 @@
     }
 
     $totalItems = $acrylicOrder->supplies->flatMap(function ($s) use ($acrylicOrder) {
-        if ($acrylicOrder->type === 'min_late') return $s->minLateItems;
+        if (in_array($acrylicOrder->type, ['min_late', 'Flywood', 'flywood'])) return $s->minLateItems;
         if ($acrylicOrder->type === 'glass') return $s->glassItems;
         return $s->items->filter(fn($i) => ($i->product_name ?? '') !== 'Công giả dày');
     })->sum(fn($i) => $i->quantity ?? $i->wing_quantity ?? 0);
