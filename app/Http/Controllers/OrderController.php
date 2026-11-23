@@ -1499,24 +1499,8 @@ class OrderController extends Controller
             $step = $request->input('step', 'accountant');
             $isAdmin = $currentUser && $currentUser->hasRole('Admin');
 
-            if ($step === 'accountant') {
-                if (!$currentUser || (!$currentUser->canApproveAccountantOrder() && !$isAdmin)) {
-                    return redirect()->back()->with('error', 'Chỉ người dùng có quyền/vai trò Kế toán mới được yêu cầu sửa ở bước Kế toán.');
-                }
-            } elseif ($step === 'technical') {
-                if (!$currentUser || (!$currentUser->canApproveTechnicalOrder() && !$isAdmin)) {
-                    return redirect()->back()->with('error', 'Chỉ người dùng có quyền/vai trò Kỹ thuật mới được yêu cầu sửa ở bước Kỹ thuật.');
-                }
-            } elseif ($step === 'sale') {
-                $isCreator = $currentUser && $order->created_by === $currentUser->id;
-                $canEdit = $currentUser && $currentUser->can('edit order');
-                if (!$currentUser || (!$canEdit && !$isCreator && !$isAdmin)) {
-                    return redirect()->back()->with('error', 'Bạn không có quyền xin sửa lại đơn hàng này.');
-                }
-            } else {
-                if (!$currentUser || (!$currentUser->canApproveAccountantOrder() && !$currentUser->canApproveTechnicalOrder() && !$isAdmin)) {
-                    return redirect()->back()->with('error', 'Bạn không có quyền yêu cầu sửa đơn hàng.');
-                }
+            if ($step !== 'accountant' || (!$currentUser || (!$currentUser->canApproveAccountantOrder() && !$isAdmin))) {
+                return redirect()->back()->with('error', 'Chỉ có Kế toán mới được quyền thu hồi duyệt và yêu cầu sửa đơn hàng.');
             }
 
             if (in_array($order->status, ['in_production', 'completed', 'cancelled'])) {

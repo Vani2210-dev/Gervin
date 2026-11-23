@@ -291,7 +291,7 @@
                             @endif
                         @endif
 
-                        {{-- Nút Kỹ thuật duyệt (Chuyển SX) & Yêu cầu sửa / Thu hồi --}}
+                        {{-- Nút Kỹ thuật duyệt (Chuyển SX) --}}
                         @if(auth()->user()?->canApproveTechnicalOrder() && !in_array($acrylicOrder->status, ['in_production', 'completed', 'cancelled']))
                             @if(!$acrylicOrder->technical_approved_by)
                                 @if($acrylicOrder->accountant_approved_by)
@@ -303,35 +303,13 @@
                                             <span>{{ !empty($acrylicOrder->edit_reason) ? 'Chuyển SX lại' : 'Duyệt & Chuyển SX' }}</span>
                                         </button>
                                     </form>
-                                    <button type="button" onclick="openRequestEditModal('{{ route('orders.update-status', $acrylicOrder) }}', '{{ $acrylicOrder->order_code }}', 'technical')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-300 transition-all flex items-center gap-1 cursor-pointer">
-                                        <iconify-icon icon="lucide:alert-circle" class="text-sm text-amber-600"></iconify-icon>
-                                        <span>Kỹ thuật yêu cầu sửa</span>
-                                    </button>
                                 @else
                                     <button type="button" onclick="alert('Đơn hàng cần được Kế toán duyệt trước khi Kỹ thuật duyệt chuyển sản xuất!')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-neutral-100 text-neutral-400 border border-neutral-300 cursor-not-allowed opacity-75 flex items-center gap-1.5" title="Đơn hàng cần được Kế toán duyệt trước khi Kỹ thuật duyệt chuyển sản xuất">
                                         <iconify-icon icon="lucide:factory" class="text-sm"></iconify-icon>
                                         <span>Kỹ thuật duyệt (Chờ KT duyệt)</span>
                                     </button>
                                 @endif
-                            @else
-                                <button type="button" onclick="openRequestEditModal('{{ route('orders.update-status', $acrylicOrder) }}', '{{ $acrylicOrder->order_code }}', 'technical')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-300 transition-all flex items-center gap-1 cursor-pointer" title="Thu hồi duyệt Kỹ thuật để yêu cầu sửa đơn">
-                                    <iconify-icon icon="lucide:rotate-ccw" class="text-sm text-amber-600"></iconify-icon>
-                                    <span>Kỹ thuật thu hồi / Yêu cầu sửa</span>
-                                </button>
                             @endif
-                        @endif
-
-                        {{-- Nút Sale xin sửa lại đơn (khi đơn đang bị khóa duyệt) --}}
-                        @php
-                            $canSaleReqEdit = (auth()->user()?->can('edit order') || $acrylicOrder->created_by === auth()->id() || auth()->user()?->hasRole('Admin'))
-                                && !in_array($acrylicOrder->status, ['in_production', 'completed', 'cancelled'])
-                                && $acrylicOrder->isLockedForEdit();
-                        @endphp
-                        @if($canSaleReqEdit)
-                            <button type="button" onclick="openRequestEditModal('{{ route('orders.update-status', $acrylicOrder) }}', '{{ $acrylicOrder->order_code }}', 'sale')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs" title="Đơn đã duyệt nhưng phát hiện sai sót, bấm để xin sửa lại">
-                                <iconify-icon icon="lucide:edit-3" class="text-sm text-amber-600"></iconify-icon>
-                                <span>Xin sửa lại đơn</span>
-                            </button>
                         @endif
                     </div>
                 </div>
@@ -942,34 +920,14 @@
                         <iconify-icon icon="lucide:rotate-ccw" class="text-base"></iconify-icon> KT thu hồi / Yêu cầu sửa
                     </button>
                 @endif
-                @if($canReqShowTechnical && $acrylicOrder->technical_approved_by)
-                    <button type="button" onclick="openRequestEditModal('{{ route('orders.update-status', $acrylicOrder) }}', '{{ $acrylicOrder->order_code }}', 'technical')"
-                        class="w-full justify-center flex items-center gap-2 py-3 rounded-xl font-semibold bg-amber-500 hover:bg-amber-600 text-white shadow-sm text-sm transition-colors cursor-pointer"
-                        title="Thu hồi duyệt Kỹ thuật để yêu cầu sửa đơn">
-                        <iconify-icon icon="lucide:rotate-ccw" class="text-base"></iconify-icon> Kỹ thuật thu hồi / Yêu cầu sửa
-                    </button>
-                @endif
-                @if(($canReqShowAccountant && !$acrylicOrder->accountant_approved_by) || ($canReqShowTechnical && !$acrylicOrder->technical_approved_by && $acrylicOrder->accountant_approved_by))
-                    <button type="button" onclick="openRequestEditModal('{{ route('orders.update-status', $acrylicOrder) }}', '{{ $acrylicOrder->order_code }}', '{{ $acrylicOrder->accountant_approved_by ? 'technical' : 'accountant' }}')"
+                @if($canReqShowAccountant && !$acrylicOrder->accountant_approved_by)
+                    <button type="button" onclick="openRequestEditModal('{{ route('orders.update-status', $acrylicOrder) }}', '{{ $acrylicOrder->order_code }}', 'accountant')"
                         class="w-full justify-center flex items-center gap-2 py-3 rounded-xl font-semibold bg-amber-500 hover:bg-amber-600 text-white shadow-sm text-sm transition-colors cursor-pointer">
-                        <iconify-icon icon="lucide:alert-circle" class="text-base"></iconify-icon> Yêu cầu sửa đơn
-                    </button>
-                @endif
-                @if($canReqShowSale && !$canReqShowAccountant && !$canReqShowTechnical)
-                    <button type="button" onclick="openRequestEditModal('{{ route('orders.update-status', $acrylicOrder) }}', '{{ $acrylicOrder->order_code }}', 'sale')"
-                        class="w-full justify-center flex items-center gap-2 py-3 rounded-xl font-semibold bg-amber-500 hover:bg-amber-600 text-white shadow-sm text-sm transition-colors cursor-pointer"
-                        title="Đơn đã được duyệt nhưng phát hiện sai sót, bấm để xin mở khóa sửa đơn">
-                        <iconify-icon icon="lucide:edit-3" class="text-base"></iconify-icon> Xin sửa lại đơn
+                        <iconify-icon icon="lucide:alert-circle" class="text-base"></iconify-icon> Kế toán yêu cầu sửa đơn
                     </button>
                 @endif
                 @can('edit order')
-                    @if($acrylicOrder->isLockedForEdit())
-                        <button type="button" onclick="if(confirm('Đơn hàng đã được duyệt nên đang bị khóa chỉnh sửa.\nBạn có muốn gửi yêu cầu \'Xin sửa lại đơn\' không?')) { openRequestEditModal('{{ route('orders.update-status', $acrylicOrder) }}', '{{ $acrylicOrder->order_code }}', 'sale'); }"
-                            class="w-full justify-center flex items-center gap-2 py-3 rounded-xl font-semibold bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-300 shadow-sm text-sm transition-colors cursor-pointer"
-                            title="Đã được duyệt - Bấm để gửi yêu cầu xin sửa lại đơn">
-                            <iconify-icon icon="lucide:lock" class="text-base text-amber-600"></iconify-icon> Chỉnh sửa đơn hàng (Khóa - Bấm để xin sửa)
-                        </button>
-                    @elseif($acrylicOrder->isRequestedEdit())
+                    @if($acrylicOrder->isRequestedEdit())
                         <a href="{{ route('orders.edit', $acrylicOrder) }}"
                             class="w-full justify-center flex items-center gap-2 py-3 rounded-xl font-semibold bg-amber-600 hover:bg-amber-700 text-white shadow-sm text-sm transition-colors cursor-pointer animate-pulse"
                             title="Yêu cầu sửa: {{ $acrylicOrder->edit_reason }}">

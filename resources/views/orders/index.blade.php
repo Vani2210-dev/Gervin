@@ -1404,22 +1404,16 @@
                 @endif
             @endif
 
-            {{-- Yêu cầu sửa đơn / Xin sửa lại đơn --}}
+            {{-- Yêu cầu sửa đơn (Chỉ Kế toán) --}}
             @php
                 $notInProd = !in_array($order->status, ['in_production', 'completed', 'cancelled']);
                 $canRequestEditAccountant = auth()->user()?->canApproveAccountantOrder() && $notInProd;
-                $canRequestEditTechnical = auth()->user()?->canApproveTechnicalOrder() && $notInProd;
-                $canRequestEditSale = auth()->user()?->can('edit order') && $order->isLockedForEdit() && $notInProd && empty($order->edit_reason);
             @endphp
-            @if(($canRequestEditAccountant || $canRequestEditTechnical || $canRequestEditSale) && in_array($order->status, ['draft', 'pending', 'transferred']))
+            @if($canRequestEditAccountant && in_array($order->status, ['draft', 'pending', 'transferred']))
             <li class="{{ in_array($order->status, ['draft', 'pending']) ? '' : 'border-t border-neutral-100 my-1 pt-1' }}">
-                @php
-                    $reqStep = $canRequestEditAccountant ? 'accountant' : ($canRequestEditTechnical ? 'technical' : 'sale');
-                    $btnLabel = ($canRequestEditSale && !$canRequestEditAccountant && !$canRequestEditTechnical) ? 'Xin sửa lại đơn' : 'Yêu cầu sửa đơn';
-                @endphp
-                <button type="button" onclick="openRequestEditModal('{{ route('orders.update-status', $order) }}', '{{ $order->order_code }}', '{{ $reqStep }}')" class="w-full flex items-center gap-2 px-4 py-2 hover:bg-amber-50 text-amber-700 text-left transition-colors font-medium">
+                <button type="button" onclick="openRequestEditModal('{{ route('orders.update-status', $order) }}', '{{ $order->order_code }}', 'accountant')" class="w-full flex items-center gap-2 px-4 py-2 hover:bg-amber-50 text-amber-700 text-left transition-colors font-medium">
                     <iconify-icon icon="lucide:alert-circle" class="text-amber-600 text-lg"></iconify-icon>
-                    <span>{{ $btnLabel }}</span>
+                    <span>Yêu cầu sửa đơn</span>
                 </button>
             </li>
             @endif
@@ -1617,21 +1611,11 @@
                     <span>Người duyệt: <strong class="text-neutral-800">{{ $order->technicalApprover?->name ?? 'Kỹ thuật' }}</strong></span>
                     <span class="text-neutral-400 font-medium">{{ $order->technical_approved_at?->format('H:i d/m/Y') }}</span>
                 </div>
-                @if(auth()->user()?->canApproveTechnicalOrder() && !in_array($order->status, ['in_production', 'completed', 'cancelled']))
-                    <div class="flex items-center gap-2 mt-2 pt-2 border-t border-blue-200/60 justify-end">
-                        <button type="button" onclick="openRequestEditModal('{{ route('orders.update-status', $order) }}', '{{ $order->order_code }}', 'technical')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-white hover:bg-amber-50 text-amber-700 border border-amber-300 transition-colors shadow-2xs">
-                            Thu hồi duyệt / Yêu cầu sửa
-                        </button>
-                    </div>
-                @endif
             @else
                 @if(auth()->user()?->canApproveTechnicalOrder())
                     @if(!in_array($order->status, ['cancelled', 'completed']))
                         @if($order->accountant_approved_by)
                             <div class="flex items-center gap-2 mt-2 pt-2 border-t border-neutral-200/60 justify-end">
-                                <button type="button" onclick="openRequestEditModal('{{ route('orders.update-status', $order) }}', '{{ $order->order_code }}', 'technical')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-300 transition-colors">
-                                    Yêu cầu sửa
-                                </button>
                                 <form method="POST" action="{{ route('orders.update-status', $order) }}" class="m-0" onsubmit="return confirm('Kỹ thuật xác nhận duyệt & Chuyển sản xuất đơn {{ $order->order_code }}?')">
                                     @csrf
                                     <input type="hidden" name="status" value="transferred">
