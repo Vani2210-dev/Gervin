@@ -766,11 +766,11 @@ class Order extends Model
 
     /**
      * Tự động kiểm tra và chuyển trạng thái đơn hàng sang "in_production" (Đang sản xuất)
-     * nếu đơn hàng đang ở trạng thái transferred/pending và đã có ít nhất 1 tấm được gia công/quét mã.
+     * nếu đơn hàng đang ở trạng thái transferred (đã duyệt chuyển sản xuất) và đã có ít nhất 1 tấm được gia công/quét mã.
      */
     public function checkAndMarkInProduction(): bool
     {
-        if (!in_array($this->status, ['transferred', 'pending'])) {
+        if ($this->status !== 'transferred') {
             return false;
         }
 
@@ -879,7 +879,7 @@ class Order extends Model
     {
         if (!$item) return;
         $order = $item->orderSupply?->order ?? $item->order ?? null;
-        if ($order && in_array($order->status, ['transferred', 'pending'])) {
+        if ($order && $order->status === 'transferred') {
             $order->update(['status' => 'in_production']);
             try {
                 \App\Services\NotificationService::notifyOrderStatusChanged($order, 'in_production');

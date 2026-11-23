@@ -1562,7 +1562,7 @@
                     <span>Người duyệt: <strong class="text-neutral-800">{{ $order->accountantApprover?->name }}</strong></span>
                     <span class="text-neutral-400 font-medium">{{ $order->accountant_approved_at?->format('H:i d/m/Y') }}</span>
                 </div>
-                @if(auth()->user()?->canApproveAccountantOrder() && !in_array($order->status, ['in_production', 'completed', 'cancelled']))
+                @if(auth()->user()?->canApproveAccountantOrder() && !in_array($order->status, ['completed', 'cancelled']))
                     <div class="flex items-center gap-2 mt-2 pt-2 border-t border-emerald-200/60 justify-end">
                         <button type="button" onclick="openRequestEditModal('{{ route('orders.update-status', $order) }}', '{{ $order->order_code }}', 'accountant')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-white hover:bg-amber-50 text-amber-700 border border-amber-300 transition-colors shadow-2xs">
                             Thu hồi duyệt / Yêu cầu sửa
@@ -1571,7 +1571,7 @@
                 @endif
             @else
                 @if(auth()->user()?->canApproveAccountantOrder())
-                    @if(!in_array($order->status, ['in_production', 'completed', 'cancelled']))
+                    @if(!in_array($order->status, ['completed', 'cancelled']))
                         <div class="flex items-center gap-2 mt-2 pt-2 border-t border-neutral-200/60 justify-end">
                             <button type="button" onclick="openRequestEditModal('{{ route('orders.update-status', $order) }}', '{{ $order->order_code }}', 'accountant')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-300 transition-colors">
                                 Yêu cầu sửa

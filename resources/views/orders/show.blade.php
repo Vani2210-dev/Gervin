@@ -269,7 +269,7 @@
                         </button>
 
                         {{-- Nút Kế toán duyệt & Yêu cầu sửa / Thu hồi --}}
-                        @if(auth()->user()?->canApproveAccountantOrder() && !in_array($acrylicOrder->status, ['in_production', 'completed', 'cancelled']))
+                        @if(auth()->user()?->canApproveAccountantOrder() && !in_array($acrylicOrder->status, ['completed', 'cancelled']))
                             @if(!$acrylicOrder->accountant_approved_by)
                                 <form method="POST" action="{{ route('orders.update-status', $acrylicOrder) }}" onsubmit="return confirm('Kế toán xác nhận duyệt đơn hàng {{ $acrylicOrder->order_code }}?')" class="m-0 inline-block">
                                     @csrf
@@ -292,7 +292,7 @@
                         @endif
 
                         {{-- Nút Kỹ thuật duyệt (Chuyển SX) --}}
-                        @if(auth()->user()?->canApproveTechnicalOrder() && !in_array($acrylicOrder->status, ['in_production', 'completed', 'cancelled']))
+                        @if(auth()->user()?->canApproveTechnicalOrder() && !in_array($acrylicOrder->status, ['completed', 'cancelled']))
                             @if(!$acrylicOrder->technical_approved_by)
                                 @if($acrylicOrder->accountant_approved_by)
                                     <form method="POST" action="{{ route('orders.update-status', $acrylicOrder) }}" onsubmit="return confirm('Kỹ thuật xác nhận duyệt & Chuyển sản xuất đơn hàng {{ $acrylicOrder->order_code }}?')" class="m-0 inline-block">
@@ -879,7 +879,7 @@
                     class="w-full justify-center flex items-center gap-2 py-3 rounded-xl font-semibold border border-neutral-200 text-neutral-700 hover:bg-neutral-50 transition-colors shadow-sm text-sm bg-white cursor-pointer">
                     <iconify-icon icon="lucide:arrow-left" class="text-base"></iconify-icon> Quay lại danh sách
                 </a>
-                @if(auth()->user()?->canApproveAccountantOrder() && !$acrylicOrder->accountant_approved_by && !in_array($acrylicOrder->status, ['in_production', 'completed', 'cancelled']))
+                @if(auth()->user()?->canApproveAccountantOrder() && !$acrylicOrder->accountant_approved_by && !in_array($acrylicOrder->status, ['completed', 'cancelled']))
                     <form method="POST" action="{{ route('orders.update-status', $acrylicOrder) }}" onsubmit="return confirm('Kế toán xác nhận duyệt đơn hàng {{ $acrylicOrder->order_code }}?')" class="w-full m-0">
                         @csrf
                         <input type="hidden" name="status" value="accountant_approve">
@@ -889,7 +889,7 @@
                         </button>
                     </form>
                 @endif
-                @if(auth()->user()?->canApproveTechnicalOrder() && !$acrylicOrder->technical_approved_by && !in_array($acrylicOrder->status, ['in_production', 'completed', 'cancelled']))
+                @if(auth()->user()?->canApproveTechnicalOrder() && !$acrylicOrder->technical_approved_by && !in_array($acrylicOrder->status, ['completed', 'cancelled']))
                     @if($acrylicOrder->accountant_approved_by)
                         <form method="POST" action="{{ route('orders.update-status', $acrylicOrder) }}" onsubmit="return confirm('Kỹ thuật xác nhận duyệt & Chuyển sản xuất đơn hàng {{ $acrylicOrder->order_code }}?')" class="w-full m-0">
                             @csrf
@@ -908,7 +908,7 @@
                     @endif
                 @endif
                 @php
-                    $isNotInProduction = !in_array($acrylicOrder->status, ['in_production', 'completed', 'cancelled']);
+                    $isNotInProduction = !in_array($acrylicOrder->status, ['completed', 'cancelled']);
                     $canReqShowAccountant = auth()->user()?->canApproveAccountantOrder() && $isNotInProduction;
                     $canReqShowTechnical = auth()->user()?->canApproveTechnicalOrder() && $isNotInProduction;
                     $canReqShowSale = (auth()->user()?->can('edit order') || $acrylicOrder->created_by === auth()->id() || auth()->user()?->hasRole('Admin')) && $isNotInProduction && $acrylicOrder->isLockedForEdit();

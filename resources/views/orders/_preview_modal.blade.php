@@ -910,7 +910,7 @@
 
                     {{-- 1. Nút Kế toán duyệt --}}
                     @if(auth()->user()?->canApproveAccountantOrder())
-                        @if(!$acrylicOrder->accountant_approved_by && !in_array($acrylicOrder->status, ['in_production', 'completed', 'cancelled']))
+                        @if(!$acrylicOrder->accountant_approved_by && !in_array($acrylicOrder->status, ['completed', 'cancelled']))
                             <form method="POST" action="{{ route('orders.update-status', $acrylicOrder) }}" onsubmit="return confirm('Kế toán xác nhận duyệt đơn hàng {{ $acrylicOrder->order_code }}?')" class="m-0 inline-block">
                                 @csrf
                                 <input type="hidden" name="status" value="accountant_approve">
@@ -930,7 +930,7 @@
 
                     {{-- 2. Nút Kỹ thuật duyệt (Chuyển SX) --}}
                     @if(auth()->user()?->canApproveTechnicalOrder())
-                        @if(!$acrylicOrder->technical_approved_by && !in_array($acrylicOrder->status, ['in_production', 'completed', 'cancelled']))
+                        @if(!$acrylicOrder->technical_approved_by && !in_array($acrylicOrder->status, ['completed', 'cancelled']))
                             @if($acrylicOrder->accountant_approved_by)
                                 <form method="POST" action="{{ route('orders.update-status', $acrylicOrder) }}" onsubmit="return confirm('Kỹ thuật xác nhận duyệt & Chuyển sản xuất đơn hàng {{ $acrylicOrder->order_code }}?')" class="m-0 inline-block">
                                     @csrf

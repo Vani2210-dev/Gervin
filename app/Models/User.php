@@ -105,11 +105,11 @@ class User extends Authenticatable
     }
 
     /**
-     * Người có quyền 'approve accountant order' hoặc vai trò 'Kế toán' mới được duyệt ở Kế toán.
+     * Người có quyền 'approve accountant order', vai trò 'Admin' hoặc vai trò 'Kế toán' mới được duyệt ở Kế toán.
      */
     public function canApproveAccountantOrder(): bool
     {
-        if ($this->can('approve accountant order')) {
+        if ($this->hasRole('Admin') || $this->can('approve accountant order')) {
             return true;
         }
 
@@ -121,7 +121,7 @@ class User extends Authenticatable
 
         foreach ($names as $name) {
             $norm = self::normalizeRoleString($name);
-            if (str_contains($norm, 'ketoan') || str_contains($norm, 'accountant')) {
+            if (str_contains($norm, 'ketoan') || str_contains($norm, 'accountant') || str_contains($norm, 'admin')) {
                 return true;
             }
         }
@@ -130,11 +130,11 @@ class User extends Authenticatable
     }
 
     /**
-     * Người có quyền 'approve technical order' hoặc vai trò 'Kỹ thuật' mới được duyệt ở Kỹ thuật.
+     * Người có quyền 'approve technical order', vai trò 'Admin' hoặc vai trò 'Kỹ thuật' mới được duyệt ở Kỹ thuật.
      */
     public function canApproveTechnicalOrder(): bool
     {
-        if ($this->can('approve technical order')) {
+        if ($this->hasRole('Admin') || $this->can('approve technical order')) {
             return true;
         }
 
@@ -146,7 +146,7 @@ class User extends Authenticatable
 
         foreach ($names as $name) {
             $norm = self::normalizeRoleString($name);
-            if (str_contains($norm, 'kythuat') || str_contains($norm, 'technical')) {
+            if (str_contains($norm, 'kythuat') || str_contains($norm, 'technical') || str_contains($norm, 'admin')) {
                 return true;
             }
         }

@@ -1421,6 +1421,14 @@ class OrderController extends Controller
                 return redirect()->route('orders.show', $order)->with('success', 'Đã lưu chỉnh sửa đơn hàng thành công! Đơn hàng đã được chuyển về trạng thái Chờ duyệt để Kế toán duyệt lại.');
             }
 
+            // Nếu đơn hàng chưa được duyệt đủ 2 cấp mà được chỉnh sửa, đảm bảo trạng thái là 'pending' (Chờ duyệt)
+            if ((!$order->accountant_approved_by || !$order->technical_approved_by) && !in_array($order->status, ['draft', 'cancelled'])) {
+                if ($order->status !== 'pending') {
+                    $order->status = 'pending';
+                    $order->saveQuietly();
+                }
+            }
+
             try {
                 \App\Services\NotificationService::notifyOrderUpdated($order);
             } catch (\Throwable $e) {
@@ -1456,7 +1464,7 @@ class OrderController extends Controller
             if (!$currentUser || !$currentUser->canApproveAccountantOrder()) {
                 return redirect()->back()->with('error', 'Chỉ người dùng có quyền/vai trò Kế toán mới được duyệt ở bước Kế toán. Kỹ thuật và các role khác không được phép duyệt.');
             }
-            if (in_array($order->status, ['in_production', 'completed', 'cancelled'])) {
+            if (in_array($order->status, ['completed', 'cancelled'])) {
                 return redirect()->back()->with('error', 'Trạng thái đơn hàng không hợp lệ để kế toán duyệt.');
             }
             $order->accountant_approved_by = auth()->id();
@@ -1469,7 +1477,7 @@ class OrderController extends Controller
                 $order->edit_reason = null;
             }
             // Đảm bảo không bị tự động xác nhận kỹ thuật và status chưa chuyển sản xuất
-            if (!$order->technical_approved_by && $order->status === 'transferred') {
+            if (!$order->technical_approved_by) {
                 $order->status = 'pending';
             }
             $order->save();
@@ -1540,7 +1548,7 @@ class OrderController extends Controller
             if (!$currentUser || !$currentUser->canApproveTechnicalOrder()) {
                 return redirect()->back()->with('error', 'Chỉ người dùng có quyền/vai trò Kỹ thuật mới được duyệt chuyển sản xuất. Kế toán và các role khác không được phép duyệt.');
             }
-            if (in_array($order->status, ['in_production', 'completed', 'cancelled'])) {
+            if (in_array($order->status, ['completed', 'cancelled'])) {
                 return redirect()->back()->with('error', 'Trạng thái đơn hàng không hợp lệ để chuyển sản xuất.');
             }
             // Kỹ thuật duyệt & Chuyển sản xuất: Bắt buộc Kế toán phải duyệt trước
