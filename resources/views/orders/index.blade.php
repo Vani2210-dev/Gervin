@@ -1649,18 +1649,6 @@
                 @endif
             @endif
         </div>
-
-        {{-- Nút xin mở khóa sửa dành cho Sale / Người lên đơn khi đơn đã duyệt mà xưởng chưa làm --}}
-        @if(!in_array($order->status, ['draft', 'in_production', 'completed', 'cancelled']) && empty($order->edit_reason))
-            @can('edit order')
-                <div class="mt-2.5 pt-2 border-t border-neutral-200">
-                    <button type="button" onclick="openRequestEditModal('{{ route('orders.update-status', $order) }}', '{{ $order->order_code }}', 'sale')" class="w-full py-1.5 px-3 rounded-lg text-xs font-bold bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 transition-colors flex items-center justify-center gap-1.5 cursor-pointer">
-                        <iconify-icon icon="lucide:undo-2" class="text-sm text-amber-600"></iconify-icon>
-                        <span>Phát hiện sai sót? Bấm xin sửa lại đơn</span>
-                    </button>
-                </div>
-            @endcan
-        @endif
     </div>
 @endforeach
 @include('orders._request_edit_modal')
