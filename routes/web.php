@@ -256,6 +256,10 @@ Route::prefix('qrcode')->name('qrcode.')->group(function () {
     Route::get('/{code}', [QrCodeGeneratorController::class, 'lookupByParam'])->name('lookup.param')->where('code', '.*');
 });
 
+// Cho phép thiết bị đo POST trực tiếp về processes/qc để ghi nhận kết quả QC cho tấm
+Route::match(['get', 'post'], '/processes/qc/measurement', [QrCodeGeneratorController::class, 'storeMeasurement'])->name('processes.qc.measurement');
+Route::post('/processes/qc', [QrCodeGeneratorController::class, 'storeMeasurement'])->name('processes.qc.store_measurement');
+
 // Inventory & Warehouses (KiotViet / MISA Architecture)
 Route::middleware(['auth'])->prefix('warehouses')->name('inventory.')->group(function () {
     // 0. Sơ đồ Quy trình Kho (MISA Workflow)

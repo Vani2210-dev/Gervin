@@ -298,7 +298,10 @@ class OrderController extends Controller
         $order = $orderId ? Order::find($orderId) : null;
 
         if (!$order) {
-            return response()->json(['message' => 'Không tìm thấy đơn hàng cần xem trước.'], 404);
+            $type = $request->input('type') ?: $request->input('order_type', 'acrylic');
+            $parentId = $request->input('parent_id');
+            $parentOrder = $parentId ? Order::find($parentId) : null;
+            $order = $this->createDraftOrder($type, $request->input('relation_type'), $parentOrder);
         }
 
         $user = auth()->user();
@@ -962,7 +965,17 @@ class OrderController extends Controller
                 'type' => 'required|in:acrylic,glass,min_late,Flywood,service',
             ]);
 
-            $draftOrder = Order::where('status', 'draft')->findOrFail($request->draft_order_id);
+            $draftOrder = Order::find($request->draft_order_id);
+            if ($draftOrder && $draftOrder->status !== 'draft') {
+                return redirect()->route('orders.index')->with('success', 'Đơn hàng ' . ($draftOrder->order_code ? '#' . $draftOrder->order_code : '') . ' đã được lưu thành công.');
+            }
+
+            if (!$draftOrder) {
+                $type = $request->input('type', 'acrylic');
+                $parentId = $request->input('parent_id');
+                $parentOrder = $parentId ? Order::find($parentId) : null;
+                $draftOrder = $this->createDraftOrder($type, $request->input('relation_type'), $parentOrder);
+            }
             $isNhapKho = $this->isRequestNhapKho($request, $draftOrder);
             $isDraftSave = $request->input('action') === 'draft';
 

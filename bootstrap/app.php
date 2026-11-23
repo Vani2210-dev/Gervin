@@ -16,6 +16,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'scan',
             'qrcode',
             'qrcode/*',
+            'processes/qc',
+            'processes/qc/*',
             'processes/packing/printer/agent/*',
             'api/zebra-agent/*',
         ]);

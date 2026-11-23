@@ -967,7 +967,7 @@
         phone: {!! json_encode($acrylicOrder->phone ?: ($acrylicOrder->customer?->phone ?? '')) !!}
     };
 
-    let previewImgTopZIndex = 100000010;
+    window.previewImgTopZIndex = window.previewImgTopZIndex || 100000010;
 
     function openPreviewModal() {
         let modal = document.getElementById('preview-order-modal');
@@ -988,8 +988,8 @@
     function openPreviewImageModal(id) {
         const el = document.getElementById(id);
         if (!el) return;
-        previewImgTopZIndex++;
-        el.style.zIndex = previewImgTopZIndex;
+        window.previewImgTopZIndex++;
+        el.style.zIndex = window.previewImgTopZIndex;
         el.style.display = 'block';
         const modalBody = el.querySelector('[data-modal-content]');
         if (modalBody) {
@@ -1151,8 +1151,8 @@
         // Nâng z-index lên trên cùng khi người dùng bấm vào bất kỳ cửa sổ ảnh nào
         const draggableModal = e.target.closest('.preview-image-draggable-modal');
         if (draggableModal) {
-            previewImgTopZIndex++;
-            draggableModal.style.zIndex = previewImgTopZIndex;
+            window.previewImgTopZIndex = (window.previewImgTopZIndex || 100000010) + 1;
+            draggableModal.style.zIndex = window.previewImgTopZIndex;
         }
 
         const handle = e.target.closest('.preview-drag-handle');

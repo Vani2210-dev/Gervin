@@ -30,15 +30,18 @@ class QCService
             $item = $code->acrylicOrderItem;
             if (!$item) continue;
             $statusLogs = $code->status ?? [];
+            if (is_string($statusLogs)) {
+                $statusLogs = json_decode($statusLogs, true) ?? [];
+            }
             foreach ($statusLogs as $log) {
                 $action = $log['action'] ?? '';
-                if ($action === 'Hoàn thành QC' || $action === 'Ghi nhận lỗi' || stripos($action, 'lỗi') === 0) {
+                if ($action === 'Hoàn thành QC' || str_starts_with($action, 'Hoàn thành QC') || $action === 'Ghi nhận lỗi' || stripos($action, 'lỗi') === 0 || stripos($action, 'Đo KT') !== false) {
                     $history->push((object)[
                         'product_code' => $code->product_id,
                         'product_name' => $item->product_name ?? '—',
                         'type' => 'acrylic',
                         'action' => $action,
-                        'operator' => $log['operator'] ?? 'Hệ thống',
+                        'operator' => $log['operator'] ?? $log['user'] ?? 'Hệ thống',
                         'time' => $log['time'] ?? $code->updated_at->toDateTimeString(),
                         'notes' => $log['notes'] ?? $item->notes ?? '',
                         'item_id' => $item->id
@@ -51,15 +54,18 @@ class QCService
             $item = $code->glassOrderItem;
             if (!$item) continue;
             $statusLogs = $code->status ?? [];
+            if (is_string($statusLogs)) {
+                $statusLogs = json_decode($statusLogs, true) ?? [];
+            }
             foreach ($statusLogs as $log) {
                 $action = $log['action'] ?? '';
-                if ($action === 'Hoàn thành QC' || $action === 'Ghi nhận lỗi' || stripos($action, 'lỗi') === 0) {
+                if ($action === 'Hoàn thành QC' || str_starts_with($action, 'Hoàn thành QC') || $action === 'Ghi nhận lỗi' || stripos($action, 'lỗi') === 0 || stripos($action, 'Đo KT') !== false) {
                     $history->push((object)[
                         'product_code' => $code->product_id,
                         'product_name' => $item->product_name ?? '—',
                         'type' => 'glass',
                         'action' => $action,
-                        'operator' => $log['operator'] ?? 'Hệ thống',
+                        'operator' => $log['operator'] ?? $log['user'] ?? 'Hệ thống',
                         'time' => $log['time'] ?? $code->updated_at->toDateTimeString(),
                         'notes' => $log['notes'] ?? $item->notes ?? '',
                         'item_id' => $item->id
@@ -72,15 +78,18 @@ class QCService
             $item = $code->minLateOrderItem;
             if (!$item) continue;
             $statusLogs = $code->status ?? [];
+            if (is_string($statusLogs)) {
+                $statusLogs = json_decode($statusLogs, true) ?? [];
+            }
             foreach ($statusLogs as $log) {
                 $action = $log['action'] ?? '';
-                if ($action === 'Hoàn thành QC' || $action === 'Ghi nhận lỗi' || stripos($action, 'lỗi') === 0) {
+                if ($action === 'Hoàn thành QC' || str_starts_with($action, 'Hoàn thành QC') || $action === 'Ghi nhận lỗi' || stripos($action, 'lỗi') === 0 || stripos($action, 'Đo KT') !== false) {
                     $history->push((object)[
                         'product_code' => $code->product_id,
                         'product_name' => $item->product_name ?? $item->name ?? '—',
                         'type' => 'min_late',
                         'action' => $action,
-                        'operator' => $log['operator'] ?? 'Hệ thống',
+                        'operator' => $log['operator'] ?? $log['user'] ?? 'Hệ thống',
                         'time' => $log['time'] ?? $code->updated_at->toDateTimeString(),
                         'notes' => $log['notes'] ?? $item->notes ?? '',
                         'item_id' => $item->id
@@ -319,6 +328,9 @@ class QCService
         // Completed steps from status logs
         $completedSteps = [];
         $status = $codeRecord->status ?? [];
+        if (is_string($status)) {
+            $status = json_decode($status, true) ?? [];
+        }
         foreach ($status as $log) {
             $action = strtolower($log['action'] ?? '');
             if ($action === 'đã nhận tem') {
@@ -331,24 +343,42 @@ class QCService
                 $completedSteps[] = 'Dán cạnh';
             } elseif ($action === 'hoàn thành làm đẹp') {
                 $completedSteps[] = 'Làm đẹp';
+            } elseif (str_contains($action, 'đo kt') || str_contains($action, 'hoàn thành qc')) {
+                $completedSteps[] = 'Kiểm tra QC';
             }
         }
         $completedSteps = array_values(array_unique($completedSteps));
 
         $isQcCompleted = collect($status)->contains(function ($log) {
-            return ($log['action'] ?? '') === 'Hoàn thành QC';
+            $act = $log['action'] ?? '';
+            return $act === 'Hoàn thành QC' || str_starts_with($act, 'Hoàn thành QC') || ($log['is_passed'] ?? false) === true;
         });
+
+        // Lấy thông tin đo kích thước gần nhất (nếu có)
+        $latestMeasurement = \App\Models\QrMeasurement::where('qr_code', $codeRecord->product_id)
+            ->orderBy('id', 'desc')
+            ->first();
 
         return [
             'success' => true,
             'status_code' => 200,
             'data' => [
-                'product_code'    => $codeRecord->product_id,
-                'product_name'    => $productName,
-                'order_code'      => $orderCode,
-                'dimensions'      => $dimensions,
-                'completed_steps' => $completedSteps,
-                'is_qc_completed' => $isQcCompleted,
+                'product_code'       => $codeRecord->product_id,
+                'product_name'       => $productName,
+                'order_code'         => $orderCode,
+                'dimensions'         => $dimensions,
+                'completed_steps'    => $completedSteps,
+                'is_qc_completed'    => $isQcCompleted,
+                'latest_measurement' => $latestMeasurement ? [
+                    'actual_height'  => $latestMeasurement->actual_height,
+                    'actual_width'   => $latestMeasurement->actual_width,
+                    'diff_height'    => $latestMeasurement->diff_height,
+                    'diff_width'     => $latestMeasurement->diff_width,
+                    'is_passed'      => $latestMeasurement->is_passed,
+                    'status'         => $latestMeasurement->status,
+                    'measured_at'    => $latestMeasurement->measured_at?->format('Y-m-d H:i:s'),
+                    'operator_name'  => $latestMeasurement->operator_name,
+                ] : null,
             ]
         ];
     }

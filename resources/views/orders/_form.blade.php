@@ -929,13 +929,17 @@ async function previewOrder() {
         }
         container.innerHTML = html;
 
-        // Thực thi các thẻ script trong HTML vừa load
+        // Thực thi các thẻ script trong HTML vừa load (bảo vệ tránh crash nếu có cú pháp trùng lặp)
         const scripts = container.querySelectorAll('script');
         scripts.forEach(oldScript => {
-            const newScript = document.createElement('script');
-            Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
-            newScript.textContent = oldScript.textContent;
-            oldScript.parentNode.replaceChild(newScript, oldScript);
+            try {
+                const newScript = document.createElement('script');
+                Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+                newScript.textContent = oldScript.textContent;
+                oldScript.parentNode.replaceChild(newScript, oldScript);
+            } catch (scriptErr) {
+                console.warn('Script execution notice:', scriptErr);
+            }
         });
 
         // Mở modal
@@ -3436,7 +3440,7 @@ window.fixChromeTableBorders = function(table) {
 };
 </script>
 
-@if($isDraftCreate && isset($acrylicOrder))
+@if($isDraftCreate && isset($acrylicOrder) && empty($acrylicOrder->parent_id) && ($acrylicOrder->relation_type ?? '') !== 'additional')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     let formSaved = false;
@@ -3445,14 +3449,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('order-form');
     if (form) {
         form.addEventListener('submit', function(e) {
-            if (!e.defaultPrevented) {
-                formSaved = true;
-            }
+            formSaved = true;
+            window.formSaved = true;
         });
     }
 
     function discardDraft() {
-        if (formSaved || hasDiscarded) return;
+        if (formSaved || window.formSaved || hasDiscarded) return;
         hasDiscarded = true;
         
         const formData = new FormData();

@@ -229,7 +229,7 @@ class QrCodeGeneratorController extends Controller
             'raw_payload'      => $request->all(),
         ]);
 
-        // Cập nhật nhật ký công đoạn của mã tấm nếu có
+        // Cập nhật nhật ký công đoạn và ghi nhận kết quả QC cho mã tấm
         if (!empty($plateInfo['code_record'])) {
             $codeRecord = $plateInfo['code_record'];
             $currentStatus = $codeRecord->status ?? [];
@@ -239,19 +239,51 @@ class QrCodeGeneratorController extends Controller
 
             $diffHStr = ($diffH >= 0 ? "+{$diffH}" : (string)$diffH);
             $diffWStr = ($diffW >= 0 ? "+{$diffW}" : (string)$diffW);
-            $actionText = 'Đo KT: ' . ($isPassed ? 'ĐẠT' : 'LỖI SAI SỐ') . 
-                " (Dài: {$actH}/{$reqH}mm [{$diffHStr}mm], Rộng: {$actW}/{$reqW}mm [{$diffWStr}mm])";
+
+            $measNote = "Đo KT: Dài {$actH}/{$reqH}mm [{$diffHStr}mm], Rộng {$actW}/{$reqW}mm [{$diffWStr}mm] (Sai số cho phép ±{$tolerance}mm)";
+            if (!empty($notes)) {
+                $measNote .= " - {$notes}";
+            }
+
+            if ($isPassed) {
+                $actionName = 'Hoàn thành QC';
+            } else {
+                $isUnder = ($diffH < -$tolH || $diffW < -$tolW);
+                $actionName = $isUnder ? 'Lỗi Cắt hụt (Đo KT)' : 'Lỗi Cắt thừa (Đo KT)';
+            }
 
             $currentStatus[] = [
-                'action'      => $actionText,
-                'time'        => now()->format('Y-m-d H:i:s'),
-                'user'        => $operatorName,
-                'is_passed'   => $isPassed,
-                'diff_height' => $diffH,
-                'diff_width'  => $diffW,
+                'action'          => $actionName,
+                'operator'        => $operatorName,
+                'user'            => $operatorName,
+                'operator_id'     => Auth::id(),
+                'time'            => now()->format('Y-m-d H:i:s'),
+                'notes'           => $measNote,
+                'is_passed'       => $isPassed,
+                'diff_height'     => $diffH,
+                'diff_width'      => $diffW,
+                'actual_height'   => $actH,
+                'actual_width'    => $actW,
+                'required_height' => $reqH,
+                'required_width'  => $reqW,
+                'tolerance'       => $tolerance,
+                'device_id'       => $deviceId,
             ];
 
-            $codeRecord->update(['status' => $currentStatus]);
+            $codeRecord->status = $currentStatus;
+            $codeRecord->save();
+
+            // Nếu đo ĐẠT -> Cập nhật trạng thái sản xuất đơn hàng từ Item
+            $item = $codeRecord->acrylicOrderItem 
+                ?? $codeRecord->glassOrderItem 
+                ?? $codeRecord->minLateOrderItem;
+            if ($item) {
+                if ($isPassed) {
+                    $item->notes = $measNote;
+                    $item->save();
+                    \App\Models\Order::markInProductionFromItem($item);
+                }
+            }
         }
 
         return response()->json([

@@ -400,7 +400,7 @@
                                 @else
                                 <span class="text-xs px-2.5 py-1 rounded-full font-semibold inline-flex items-center gap-1" style="background-color: rgba(16, 185, 129, 0.1); color: rgb(5, 150, 105); border: 1px solid rgba(16, 185, 129, 0.3);">
                                     <iconify-icon icon="lucide:shield-check" class="text-xs"></iconify-icon>
-                                    HOÀN THÀNH
+                                    {{ mb_strtoupper($item->action) }}
                                 </span>
                                 @endif
                             </td>
