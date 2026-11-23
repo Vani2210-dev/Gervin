@@ -247,28 +247,90 @@ class QrCodeGeneratorController extends Controller
 
             if ($isPassed) {
                 $actionName = 'Hoàn thành QC';
+                $newLog = [
+                    'action'          => $actionName,
+                    'operator'        => $operatorName,
+                    'user'            => $operatorName,
+                    'operator_id'     => Auth::id(),
+                    'time'            => now()->format('Y-m-d H:i:s'),
+                    'notes'           => $measNote,
+                    'is_passed'       => true,
+                    'diff_height'     => $diffH,
+                    'diff_width'      => $diffW,
+                    'actual_height'   => $actH,
+                    'actual_width'    => $actW,
+                    'required_height' => $reqH,
+                    'required_width'  => $reqW,
+                    'tolerance'       => $tolerance,
+                    'device_id'       => $deviceId,
+                ];
+
+                // Nếu lần này đo đúng -> Replace (thay thế) log lỗi đo trước đó bằng log đúng mới
+                $replaced = false;
+                foreach ($currentStatus as $idx => $existingLog) {
+                    $existingAct = mb_strtolower($existingLog['action'] ?? '');
+                    $isOldMeasurementError = (
+                        (isset($existingLog['is_passed']) && $existingLog['is_passed'] === false)
+                        || (str_contains($existingAct, 'lỗi') && (str_contains($existingAct, 'đo kt') || str_contains($existingAct, 'kcs') || str_contains($existingAct, 'cắt thừa') || str_contains($existingAct, 'cắt hụt')))
+                        || str_contains($existingAct, 'hoàn thành qc')
+                    );
+
+                    if ($isOldMeasurementError) {
+                        $currentStatus[$idx] = $newLog;
+                        $replaced = true;
+                        break;
+                    }
+                }
+
+                if (!$replaced) {
+                    $currentStatus[] = $newLog;
+                }
+
+                // Dọn dẹp bất kỳ log lỗi đo cũ nào còn sót lại để chỉ giữ lại bản ghi đúng mới nhất
+                $currentStatus = array_values(array_filter($currentStatus, function ($item) use ($newLog) {
+                    $act = mb_strtolower($item['action'] ?? '');
+                    if ((isset($item['is_passed']) && $item['is_passed'] === false) || (str_contains($act, 'lỗi') && (str_contains($act, 'đo kt') || str_contains($act, 'kcs') || str_contains($act, 'cắt thừa') || str_contains($act, 'cắt hụt')))) {
+                        return false;
+                    }
+                    return true;
+                }));
+
             } else {
                 $isUnder = ($diffH < -$tolH || $diffW < -$tolW);
-                $actionName = $isUnder ? 'Lỗi Cắt hụt (Đo KT)' : 'Lỗi Cắt thừa (Đo KT)';
-            }
+                $actionName = $isUnder ? 'Lỗi KCS: Cắt hụt' : 'Lỗi KCS: Cắt thừa';
+                $newLog = [
+                    'action'          => $actionName,
+                    'operator'        => $operatorName,
+                    'user'            => $operatorName,
+                    'operator_id'     => Auth::id(),
+                    'time'            => now()->format('Y-m-d H:i:s'),
+                    'notes'           => $measNote,
+                    'is_passed'       => false,
+                    'diff_height'     => $diffH,
+                    'diff_width'      => $diffW,
+                    'actual_height'   => $actH,
+                    'actual_width'    => $actW,
+                    'required_height' => $reqH,
+                    'required_width'  => $reqW,
+                    'tolerance'       => $tolerance,
+                    'device_id'       => $deviceId,
+                ];
 
-            $currentStatus[] = [
-                'action'          => $actionName,
-                'operator'        => $operatorName,
-                'user'            => $operatorName,
-                'operator_id'     => Auth::id(),
-                'time'            => now()->format('Y-m-d H:i:s'),
-                'notes'           => $measNote,
-                'is_passed'       => $isPassed,
-                'diff_height'     => $diffH,
-                'diff_width'      => $diffW,
-                'actual_height'   => $actH,
-                'actual_width'    => $actW,
-                'required_height' => $reqH,
-                'required_width'  => $reqW,
-                'tolerance'       => $tolerance,
-                'device_id'       => $deviceId,
-            ];
+                // Nếu trước đó đã có log lỗi đo KT / KCS -> Replace bằng kết quả đo mới nhất
+                $replaced = false;
+                foreach ($currentStatus as $idx => $existingLog) {
+                    $existingAct = mb_strtolower($existingLog['action'] ?? '');
+                    if ((isset($existingLog['is_passed']) && $existingLog['is_passed'] === false) || (str_contains($existingAct, 'lỗi') && (str_contains($existingAct, 'đo kt') || str_contains($existingAct, 'kcs') || str_contains($existingAct, 'cắt thừa') || str_contains($existingAct, 'cắt hụt')))) {
+                        $currentStatus[$idx] = $newLog;
+                        $replaced = true;
+                        break;
+                    }
+                }
+
+                if (!$replaced) {
+                    $currentStatus[] = $newLog;
+                }
+            }
 
             $codeRecord->status = $currentStatus;
             $codeRecord->save();

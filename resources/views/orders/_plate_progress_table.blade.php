@@ -81,7 +81,9 @@
 
                         foreach ($rawStatusLog as $log) {
                             $actLower = mb_strtolower($log['action'] ?? '');
-                            if (str_contains($actLower, 'ép')) {
+                            if (str_contains($actLower, 'qc') || str_contains($actLower, 'kcs') || str_contains($actLower, 'đo kt')) {
+                                $stageQc[] = $log;
+                            } elseif (str_contains($actLower, 'ép')) {
                                 $stagePressing[] = $log;
                             } elseif (str_contains($actLower, 'cnc') || str_contains($actLower, 'cắt')) {
                                 $stageCnc[] = $log;
@@ -89,13 +91,23 @@
                                 $stageEdge[] = $log;
                             } elseif (str_contains($actLower, 'làm đẹp') || str_contains($actLower, 'hoàn thiện')) {
                                 $stageFinishing[] = $log;
-                            } elseif (str_contains($actLower, 'qc') || str_contains($actLower, 'kcs')) {
-                                $stageQc[] = $log;
                             } elseif (str_contains($actLower, 'đóng gói')) {
                                 $stagePacking[] = $log;
                             } else {
                                 $otherLogs[] = $log;
                             }
+                        }
+
+                        // Nếu đã có kết quả Hoàn thành QC (đo đúng) -> Tự động thay thế / ẩn các log lỗi đo KT cũ
+                        $hasQcCompleted = collect($stageQc)->contains(function ($l) {
+                            $a = mb_strtolower($l['action'] ?? '');
+                            return str_contains($a, 'hoàn thành') || ($l['is_passed'] ?? false) === true;
+                        });
+                        if ($hasQcCompleted) {
+                            $stageQc = array_values(array_filter($stageQc, function ($l) {
+                                $a = mb_strtolower($l['action'] ?? '');
+                                return !(str_contains($a, 'lỗi') && (str_contains($a, 'đo kt') || str_contains($a, 'cắt thừa') || str_contains($a, 'cắt hụt') || str_contains($a, 'kcs')));
+                            }));
                         }
 
                         $pkgItem = $packageItemsMap[$productId] ?? null;
