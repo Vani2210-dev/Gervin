@@ -240,9 +240,10 @@ class QrCodeGeneratorController extends Controller
             $diffHStr = ($diffH >= 0 ? "+{$diffH}" : (string)$diffH);
             $diffWStr = ($diffW >= 0 ? "+{$diffW}" : (string)$diffW);
 
-            $measNote = "Đo KT: Dài {$actH}/{$reqH}mm [{$diffHStr}mm], Rộng {$actW}/{$reqW}mm [{$diffWStr}mm] (Sai số cho phép ±{$tolerance}mm)";
-            if (!empty($notes)) {
-                $measNote .= " - {$notes}";
+            if ($diffH == 0 && $diffW == 0) {
+                $measNote = "KT: {$actH}x{$actW}mm";
+            } else {
+                $measNote = "KT: {$actH}x{$actW}mm [D:{$diffHStr}, R:{$diffWStr}]";
             }
 
             if ($isPassed) {
@@ -340,9 +341,12 @@ class QrCodeGeneratorController extends Controller
                 ?? $codeRecord->glassOrderItem 
                 ?? $codeRecord->minLateOrderItem;
             if ($item) {
-                if ($isPassed) {
-                    $item->notes = $measNote;
+                // Dọn sạch nếu $item->notes từng bị lưu nhầm chuỗi đo KT kỹ thuật dài
+                if (!empty($item->notes) && (str_starts_with($item->notes, 'Đo KT:') || str_starts_with($item->notes, 'KT:'))) {
+                    $item->notes = null;
                     $item->save();
+                }
+                if ($isPassed) {
                     \App\Models\Order::markInProductionFromItem($item);
                 }
             }

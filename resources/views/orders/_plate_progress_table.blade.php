@@ -436,6 +436,9 @@
                         <td class="text-left py-2 px-3 align-middle bg-white group-hover:bg-neutral-50 text-xs text-neutral-600">
                             @php
                                 $itemNote = $item->notes ?? '';
+                                if (str_starts_with($itemNote, 'Đo KT:') || str_starts_with($itemNote, 'KT:')) {
+                                    $itemNote = '';
+                                }
                             @endphp
                             @if($itemNote)
                                 <div class="font-medium text-neutral-800">{{ $itemNote }}</div>
