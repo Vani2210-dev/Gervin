@@ -59,7 +59,7 @@ class MinLateOrderService
             'supplies.*.items.*.direction'             => 'nullable|string|max:100',
             'supplies.*.items.*.notes'               => 'nullable|string',
             'payment_details'                          => 'nullable|array',
-            'payment_details.*.name'                   => 'required|string|max:255',
+            'payment_details.*.name'                   => 'required|string|max:5000',
             'payment_details.*.unit'                   => 'nullable|string|max:255',
             'payment_details.*.length'                 => 'nullable',
             'payment_details.*.width'                  => 'nullable',
