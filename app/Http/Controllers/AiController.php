@@ -98,6 +98,7 @@ class AiController extends Controller
             "QUY TẮC BẮT BUỘC KHI TRẢ LỜI:\n" .
             "- TUYỆT ĐỐI KHÔNG SỬ DỤNG BẤT KỲ EMOJI, ICON HOẶC BIỂU TƯỢNG CẢM XÚC NÀO (nghiêm cấm toàn bộ ký tự emoji, mặt cười, icon như 📊, 💰, ⚠️, 😊, 📦, 📈, 📉, 🎯, 🚚, 🏢, v.v.).\n" .
             "- Toàn bộ nội dung trả lời, tiêu đề, danh sách, bảng biểu chỉ dùng chữ viết tiếng Việt chuẩn mực và số liệu văn bản thuần túy.\n" .
+            "- Khi người dùng hỏi số lượng đơn hàng theo ngày hoặc khoảng thời gian (ví dụ: 'hôm qua mấy đơn', 'hôm nay có mấy đơn', 'ngày 23/11 có mấy đơn'): BẮT BUỘC phải trả lời chính xác theo số liệu trong trường 'exact_total_orders' của 'orders_filter_summary' hoặc các chỉ số trong 'business_overview'. TUYỆT ĐỐI KHÔNG tự đếm số dòng trong mảng danh sách chi tiết (vì danh sách chi tiết chỉ hiển thị một số đơn mẫu đại diện).\n" .
             "- Trả lời bám sát đúng số liệu thực tế được cung cấp. Nêu rõ mã đơn hàng (ví dụ #26.6188), tên khách hàng, mã tấm phôi, kích thước mm, số tiền VND.\n" .
             "- Khi người dùng hỏi về tiến độ tấm/đơn hoặc lỗi KCS, trích dẫn chính xác kích thước yêu cầu, kích thước đo thực tế và độ lệch mm.\n" .
             "- Định dạng bảng biểu (Markdown table) ngay ngắn, chuẩn xác với các cột số liệu rõ ràng.\n" .
@@ -210,31 +211,100 @@ class AiController extends Controller
         // =========================================================================
         // 1. ĐƠN HÀNG SẢN XUẤT (Orders, Supplies, Acrylic, MinLate, Glass, Flywood)
         // =========================================================================
-        if (str_contains($q, 'đơn') || str_contains($q, 'don') || str_contains($q, 'order') || str_contains($q, 'acrylic') || str_contains($q, 'min') || str_contains($q, 'late') || str_contains($q, 'kính') || str_contains($q, 'glass') || str_contains($q, 'flywood') || str_contains($q, 'doanh thu') || str_contains($q, 'tiến độ') || str_contains($q, 'sản xuất') || preg_match('/\b\d{3,6}\b/', $q)) {
+        if (str_contains($q, 'đơn') || str_contains($q, 'don') || str_contains($q, 'order') || str_contains($q, 'acrylic') || str_contains($q, 'min') || str_contains($q, 'late') || str_contains($q, 'kính') || str_contains($q, 'glass') || str_contains($q, 'flywood') || str_contains($q, 'doanh thu') || str_contains($q, 'tiến độ') || str_contains($q, 'sản xuất') || str_contains($q, 'hôm qua') || str_contains($q, 'hom qua') || str_contains($q, 'hôm nay') || str_contains($q, 'hom nay') || preg_match('/\b\d{3,6}\b/', $q)) {
             
             $orderQuery = Order::query()->with(['customer:id,name,customer_code,phone', 'supplies']);
 
-            // Tìm theo mã số đơn cụ thể (ví dụ 6188, 6178, 1224)
+            // 1.1. Tự động nhận diện khoảng thời gian người dùng hỏi (hôm qua, hôm nay, tuần này, ngày cụ thể...)
+            $dateLabel = null;
+            $startDate = null;
+            $endDate = null;
+
+            if (str_contains($q, 'hôm qua') || str_contains($q, 'hom qua') || str_contains($q, 'yesterday')) {
+                $startDate = Carbon::yesterday()->toDateString();
+                $endDate = Carbon::yesterday()->toDateString();
+                $dateLabel = 'Hôm qua (' . Carbon::yesterday()->format('d/m/Y') . ')';
+            } elseif (str_contains($q, 'hôm nay') || str_contains($q, 'hom nay') || str_contains($q, 'today')) {
+                $startDate = Carbon::today()->toDateString();
+                $endDate = Carbon::today()->toDateString();
+                $dateLabel = 'Hôm nay (' . Carbon::today()->format('d/m/Y') . ')';
+            } elseif (str_contains($q, 'tuần này') || str_contains($q, 'tuan nay') || str_contains($q, '7 ngày')) {
+                $startDate = Carbon::now()->startOfWeek()->toDateString();
+                $endDate = Carbon::now()->endOfWeek()->toDateString();
+                $dateLabel = 'Tuần này (' . Carbon::now()->startOfWeek()->format('d/m') . ' - ' . Carbon::now()->endOfWeek()->format('d/m/Y') . ')';
+            } elseif (str_contains($q, 'tháng này') || str_contains($q, 'thang nay')) {
+                $startDate = Carbon::now()->startOfMonth()->toDateString();
+                $endDate = Carbon::now()->endOfMonth()->toDateString();
+                $dateLabel = 'Tháng này (' . Carbon::now()->format('m/Y') . ')';
+            } elseif (str_contains($q, 'tháng trước') || str_contains($q, 'thang truoc')) {
+                $startDate = Carbon::now()->subMonth()->startOfMonth()->toDateString();
+                $endDate = Carbon::now()->subMonth()->endOfMonth()->toDateString();
+                $dateLabel = 'Tháng trước (' . Carbon::now()->subMonth()->format('m/Y') . ')';
+            } elseif (preg_match('/(?:ngày\s*)?(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{4}))?/', $query, $dateMatches)) {
+                $d = str_pad($dateMatches[1], 2, '0', STR_PAD_LEFT);
+                $m = str_pad($dateMatches[2], 2, '0', STR_PAD_LEFT);
+                $y = !empty($dateMatches[3]) ? $dateMatches[3] : Carbon::now()->format('Y');
+                $parsedDate = "$y-$m-$d";
+                $startDate = $parsedDate;
+                $endDate = $parsedDate;
+                $dateLabel = "Ngày $d/$m/$y";
+            }
+
+            // Áp dụng bộ lọc thời gian vào truy vấn (ưu tiên order_date, fallback sang created_at nếu null)
+            if ($startDate && $endDate) {
+                $orderQuery->where(function($oq) use ($startDate, $endDate) {
+                    if ($startDate === $endDate) {
+                        $oq->whereDate('order_date', $startDate)
+                           ->orWhere(function($sq) use ($startDate) {
+                               $sq->whereNull('order_date')->whereDate('created_at', $startDate);
+                           });
+                    } else {
+                        $oq->where(function($sq) use ($startDate, $endDate) {
+                            $sq->whereDate('order_date', '>=', $startDate)
+                               ->whereDate('order_date', '<=', $endDate);
+                        })->orWhere(function($sq) use ($startDate, $endDate) {
+                            $sq->whereNull('order_date')
+                               ->whereDate('created_at', '>=', $startDate)
+                               ->whereDate('created_at', '<=', $endDate);
+                        });
+                    }
+                });
+            }
+
+            // 1.2. Tìm theo mã số đơn cụ thể (ví dụ 6188, 6178, 1224)
             if (preg_match('/(?:#|đơn\s*|order\s*)?(\d{3,6})/i', $query, $matches)) {
                 $codeNum = $matches[1];
                 $orderQuery->where(function($oq) use ($codeNum) {
                     $oq->where('order_code', 'like', "%{$codeNum}%")
                        ->orWhere('id', $codeNum);
                 });
-            } else {
-                // Lấy đơn hàng mới nhất hoặc lọc theo khách
-                $orderQuery->where(function($oq) use ($query) {
-                    $oq->where('order_code', 'like', "%{$query}%")
-                       ->orWhereHas('customer', function($cq) use ($query) {
-                           $cq->where('name', 'like', "%{$query}%");
-                       });
-                });
+            } elseif (!$startDate) {
+                // Nếu không lọc theo ngày và không có mã đơn, lọc theo tên khách hoặc từ khóa tìm kiếm
+                $cleanQuery = trim(preg_replace('/(mấy|bao nhiêu|đơn|hàng|rồi|có|thế|cho|tôi|xem|danh sách|thông tin)/iu', '', $query));
+                if (!empty($cleanQuery) && mb_strlen($cleanQuery) >= 2) {
+                    $orderQuery->where(function($oq) use ($cleanQuery) {
+                        $oq->where('order_code', 'like', "%{$cleanQuery}%")
+                           ->orWhereHas('customer', function($cq) use ($cleanQuery) {
+                               $cq->where('name', 'like', "%{$cleanQuery}%");
+                           });
+                    });
+                }
             }
 
-            $orders = $orderQuery->latest()->take(10)->get();
+            // 1.3. Tính toán CHÍNH XÁC tổng số lượng và doanh thu của tất cả đơn thỏa mãn điều kiện
+            $totalCount = (clone $orderQuery)->count();
+            $totalRevenue = (clone $orderQuery)->sum('total_amount');
+            $statusCounts = (clone $orderQuery)->select('status', DB::raw('count(*) as count'))
+                ->groupBy('status')->pluck('count', 'status')->toArray();
+            $typeCounts = (clone $orderQuery)->select('type', DB::raw('count(*) as count'))
+                ->groupBy('type')->pluck('count', 'type')->toArray();
 
-            if ($orders->isEmpty()) {
+            // Lấy danh sách chi tiết (tối đa 25 đơn tiêu biểu)
+            $orders = $orderQuery->orderByRaw('COALESCE(order_date, created_at) DESC')->take(25)->get();
+
+            if ($orders->isEmpty() && !$startDate) {
                 $orders = Order::with('customer:id,name,customer_code,phone')->latest()->take(6)->get();
+                $totalCount = Order::count();
             }
 
             $orderList = [];
@@ -267,11 +337,20 @@ class AiController extends Controller
                     'total_amount'        => floatval($ord->total_amount ?? 0),
                     'paid_amount'         => floatval($ord->paid_amount ?? 0),
                     'debt_amount'         => floatval($ord->debt_amount ?? 0),
-                    'order_date'          => $ord->order_date ? Carbon::parse($ord->order_date)->format('d/m/Y') : null,
+                    'order_date'          => $ord->order_date ? Carbon::parse($ord->order_date)->format('d/m/Y') : ($ord->created_at ? $ord->created_at->format('d/m/Y') : null),
                     'supplies'            => $suppliesSummary,
                 ];
             }
 
+            $result['orders_filter_summary'] = [
+                'time_range'             => $dateLabel ?: 'Toàn bộ đơn hàng',
+                'exact_total_orders'     => $totalCount,
+                'exact_total_revenue'    => number_format(floatval($totalRevenue ?? 0), 0, ',', '.') . ' VND',
+                'orders_by_status'       => $statusCounts,
+                'orders_by_type'         => $typeCounts,
+                'displayed_sample_count' => count($orderList),
+                'note'                   => "Hệ thống có CHÍNH XÁC {$totalCount} đơn hàng trong khoảng thời gian {$dateLabel}. BẮT BUỘC dùng con số {$totalCount} đơn này để trả lời người dùng, không được đếm số dòng trong mảng danh sách chi tiết vì chỉ trích xuất tối đa " . count($orderList) . " đơn đại diện."
+            ];
             $result['orders_search_results'] = $orderList;
         }
 
@@ -562,13 +641,51 @@ class AiController extends Controller
     public function getSystemContext(): array
     {
         $today = Carbon::today();
+        $yesterday = Carbon::yesterday();
+        $startOfWeek = Carbon::now()->startOfWeek();
         $startOfMonth = Carbon::now()->startOfMonth();
 
-        // 1. Thống kê Đơn hàng & Doanh số
+        // 1. Thống kê Đơn hàng & Doanh số (lọc theo order_date hoặc created_at)
         $totalOrders = Order::count();
-        $todayOrders = Order::whereDate('created_at', $today)->count();
-        $todayRevenue = Order::whereDate('created_at', $today)->sum('total_amount');
-        $monthRevenue = Order::where('created_at', '>=', $startOfMonth)->sum('total_amount');
+
+        // Đơn hàng hôm nay
+        $todayQuery = Order::where(function($q) use ($today) {
+            $q->whereDate('order_date', $today)
+              ->orWhere(function($sq) use ($today) {
+                  $sq->whereNull('order_date')->whereDate('created_at', $today);
+              });
+        });
+        $todayOrders = $todayQuery->count();
+        $todayRevenue = $todayQuery->sum('total_amount');
+
+        // Đơn hàng hôm qua
+        $yesterdayQuery = Order::where(function($q) use ($yesterday) {
+            $q->whereDate('order_date', $yesterday)
+              ->orWhere(function($sq) use ($yesterday) {
+                  $sq->whereNull('order_date')->whereDate('created_at', $yesterday);
+              });
+        });
+        $yesterdayOrders = $yesterdayQuery->count();
+        $yesterdayRevenue = $yesterdayQuery->sum('total_amount');
+
+        // Đơn hàng tuần này
+        $weekQuery = Order::where(function($q) use ($startOfWeek) {
+            $q->whereDate('order_date', '>=', $startOfWeek)
+              ->orWhere(function($sq) use ($startOfWeek) {
+                  $sq->whereNull('order_date')->whereDate('created_at', '>=', $startOfWeek);
+              });
+        });
+        $weekOrders = $weekQuery->count();
+
+        // Đơn hàng tháng này
+        $monthQuery = Order::where(function($q) use ($startOfMonth) {
+            $q->whereDate('order_date', '>=', $startOfMonth)
+              ->orWhere(function($sq) use ($startOfMonth) {
+                  $sq->whereNull('order_date')->whereDate('created_at', '>=', $startOfMonth);
+              });
+        });
+        $monthOrders = $monthQuery->count();
+        $monthRevenue = $monthQuery->sum('total_amount');
 
         $ordersByStatus = Order::select('status', DB::raw('count(*) as count'), DB::raw('sum(total_amount) as total'))
             ->groupBy('status')
@@ -673,6 +790,10 @@ class AiController extends Controller
             'business_overview' => [
                 'today_orders_count'       => $todayOrders,
                 'today_revenue'            => round(floatval($todayRevenue ?? 0), 0),
+                'yesterday_orders_count'   => $yesterdayOrders,
+                'yesterday_revenue'        => round(floatval($yesterdayRevenue ?? 0), 0),
+                'this_week_orders_count'   => $weekOrders,
+                'this_month_orders_count'  => $monthOrders,
                 'month_revenue'            => round(floatval($monthRevenue ?? 0), 0),
                 'total_orders_all_time'    => $totalOrders,
                 'total_customers'          => $totalCustomers,
