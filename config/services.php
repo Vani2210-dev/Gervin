@@ -31,4 +31,9 @@ return [
         ],
     ],
 
+    'openrouter' => [
+        'api_key' => env('OPENROUTER_API_KEY'),
+        'default_model' => env('OPENROUTER_DEFAULT_MODEL', 'openrouter/free'),
+    ],
+
 ];

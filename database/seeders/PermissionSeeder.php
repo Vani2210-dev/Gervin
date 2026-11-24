@@ -141,6 +141,9 @@ class PermissionSeeder extends Seeder
             'view delivery', // Quyền xem trang giao hàng
             'complete delivery', // Quyền hoàn tất giao hàng
             
+            'view manufacture',
+            'approve manufacture',
+            
             // UI permissions
             'view ui',
 

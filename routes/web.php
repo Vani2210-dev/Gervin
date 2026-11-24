@@ -538,6 +538,18 @@ Route::middleware(['auth'])->group(function () {
     Route::post('api/notifications/read-all', [NotificationController::class, 'apiMarkAllAsRead'])->name('api.notifications.read-all');
 });
 
+// Trợ lý AI Doanh nghiệp Gervin Wood (OpenRouter AI)
+use App\Http\Controllers\AiController;
+Route::middleware(['auth'])->prefix('ai')->name('ai.')->group(function () {
+    Route::get('/', [AiController::class, 'index'])->name('index');
+    Route::post('/chat', [AiController::class, 'chat'])->name('chat');
+    Route::get('/context', [AiController::class, 'contextApi'])->name('context');
+});
+Route::middleware(['auth'])->group(function () {
+    Route::post('api/ai/chat', [AiController::class, 'chat'])->name('api.ai.chat');
+    Route::get('api/ai/context', [AiController::class, 'contextApi'])->name('api.ai.context');
+});
+
 
 // Tiện ích chạy migration trực tiếp từ web (hỗ trợ cập nhật database server)
 Route::get('/run-migrate', function () {

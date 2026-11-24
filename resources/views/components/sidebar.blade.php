@@ -33,6 +33,12 @@
                 </a>
             </li>
             <li>
+                <a href="{{ route('ai.index') }}" class="{{ request()->routeIs('ai.*') ? 'active-page' : '' }}">
+                    <iconify-icon icon="solar:magic-stick-3-bold-duotone" class="menu-icon"></iconify-icon>
+                    <span>Trợ lý AI</span>
+                </a>
+            </li>
+            <li>
                 <a href="{{ route('notifications.index') }}">
                     <iconify-icon icon="solar:bell-bing-bold-duotone" class="menu-icon"></iconify-icon>
                     <span>Thông báo</span>

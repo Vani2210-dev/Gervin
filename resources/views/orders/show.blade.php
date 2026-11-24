@@ -1241,6 +1241,7 @@
                                     <th scope="col" class="w-20 text-center py-2 px-3">Rộng</th>
                                     <th scope="col" class="w-20 text-center py-2 px-3">SL</th>
                                     <th scope="col" class="w-20 text-center py-2 px-3">Vát</th>
+                                    <th scope="col" class="w-24 text-center py-2 px-3">Chiều vân</th>
                                     <th scope="col" class="w-28 text-center py-2 px-3">Dán cạnh</th>
                                     <th scope="col" class="w-24 text-center py-2 px-3">Dán thẳng</th>
                                     <th scope="col" class="w-24 text-center py-2 px-3">Dán vát</th>
@@ -1250,7 +1251,6 @@
                                     <th scope="col" class="w-28 text-center py-2 px-3">Bản rộng 25-35</th>
                                     <th scope="col" class="w-28 text-center py-2 px-3">Tay nắm vát</th>
                                     <th scope="col" class="w-20 text-center py-2 px-3">CNC</th>
-                                    <th scope="col" class="w-24 text-center py-2 px-3">Chiều vân</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1307,6 +1307,7 @@
                                                     <td class="text-center text-neutral-600 py-2.5 px-3">{{ $sizes['width'] ?? '—' }}</td>
                                                     <td class="text-center text-neutral-600 py-2.5 px-3 font-bold text-neutral-800">1</td>
                                                     <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->bevel ?? '—' }}</td>
+                                                    <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->direction ?? '—' }}</td>
                                                     <td class="text-center text-neutral-600 py-2.5 px-3">
                                                         @if(!empty($edgeGluing))
                                                             <span class="text-xs bg-neutral-100 px-2 py-0.5 rounded text-neutral-600">{{ implode(', ', $edgeGluing) }}</span>
@@ -1328,7 +1329,6 @@
                                                             —
                                                         @endif
                                                     </td>
-                                                    <td class="text-center text-neutral-600 py-2.5 px-3">{{ $item->direction ?? '—' }}</td>
                                                 </tr>
                                             @endfor
                                         @endforeach

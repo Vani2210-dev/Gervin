@@ -308,6 +308,7 @@
                                 <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase text-center">Rộng <span class="text-primary-600 font-extrabold">(C)</span></th>
                                 <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số lượng <span class="text-primary-600 font-extrabold">(D)</span></th>
                                 <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Vát</th>
+                                <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Chiều vân</th>
                                 <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Nẹp Cao 1</th>
                                 <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Nẹp Cao 2</th>
                                 <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Nẹp Rộng 1</th>
@@ -320,7 +321,6 @@
                                 <th scope="col" style="width: 105px; min-width: 105px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán bản rộng 25-35mm <span class="text-primary-600 font-extrabold">(J)</span></th>
                                 <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số vát tay nắm âm <span class="text-primary-600 font-extrabold">(K)</span></th>
                                 <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số tấm CNC <span class="text-primary-600 font-extrabold">(L)</span></th>
-                                <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Chiều vân</th>
                                 <th scope="col" style="min-width: 140px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Ghi chú</th>
                                 <th scope="col" style="width: 140px; min-width: 140px; white-space: nowrap; position: sticky; right: 0; z-index: 3; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="order-action-col align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Hành động</th>
                             </tr>
@@ -341,6 +341,7 @@
                                 <td class="border border-neutral-200"></td>
                                 <td class="border border-neutral-200"></td>
                                 <td class="border border-neutral-200"></td>
+                                <td class="border border-neutral-200"></td>
                                 <td class="border border-neutral-200 text-center" data-summary-field="straight_paste_length" data-summary-col="E" style="font-size: 80% !important;">0</td>
                                 <td class="border border-neutral-200 text-center" data-summary-field="beveled_length" data-summary-col="F" style="font-size: 80% !important;">0</td>
                                 <td class="border border-neutral-200 text-center" data-summary-field="vat_moi_length" data-summary-col="G" style="font-size: 80% !important;">0</td>
@@ -349,7 +350,6 @@
                                 <td class="border border-neutral-200 text-center" data-summary-field="ban_rong_25_35" data-summary-col="J" style="font-size: 80% !important;">0</td>
                                 <td class="border border-neutral-200 text-center" data-summary-field="beveled_handle" data-summary-col="K" style="font-size: 80% !important;">0</td>
                                 <td class="border border-neutral-200 text-center" data-summary-field="cnc" data-summary-col="L" style="font-size: 80% !important;">0</td>
-                                <td class="border border-neutral-200"></td>
                                 <td class="border border-neutral-200"></td>
                                 <td class="order-action-col border border-neutral-200" style="width: 140px; min-width: 140px; position: sticky; right: 0; z-index: 3; background-color: #f1f5f9;"></td>
                         </thead>
@@ -422,6 +422,9 @@
                                         </div>
                                     </div>
                                 </td>
+                                <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
+                                    <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][direction]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 px-1 py-1 h-8 text-xs" placeholder="Chiều vân" value="{{ $item->direction ?? '' }}">
+                                </td>
                                 {{-- Dán cạnh (4 text inputs) --}}
                                 <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
                                     <select name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][edge_gluing][height_1]" class="form-select form-select-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center w-full px-1 py-0.5 h-8 text-xs hide-arrow">
@@ -490,9 +493,6 @@
                                 </td>
                                 <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
                                     <input type="number" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][cnc]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="Số tấm CNC" value="{{ ((float)($item->cnc ?? 0) > 0) ? $item->cnc : '' }}" readonly>
-                                </td>
-                                <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
-                                    <input type="text" name="supplies[{{ $supplyIndex }}][items][{{ $itemIndex }}][direction]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 px-1 py-1 h-8 text-xs" placeholder="Chiều vân" value="{{ $item->direction ?? '' }}">
                                 </td>
 
                                 <td style="min-width: 160px;" class="border border-neutral-200">
@@ -616,6 +616,7 @@ function addMinLateOrderSupply() {
                         <th scope="col" style="width: 200px; min-width: 200px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase text-center">Rộng <span class="text-primary-600 font-extrabold">(C)</span></th>
                         <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số lượng <span class="text-primary-600 font-extrabold">(D)</span></th>
                         <th scope="col" style="width: 70px; min-width: 70px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Vát</th>
+                        <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Chiều vân</th>
                         <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Nẹp Cao 1</th>
                         <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Nẹp Cao 2</th>
                         <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Nẹp Rộng 1</th>
@@ -628,7 +629,6 @@ function addMinLateOrderSupply() {
                         <th scope="col" style="width: 105px; min-width: 105px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số mét dán bản rộng 25-35mm <span class="text-primary-600 font-extrabold">(J)</span></th>
                         <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số vát tay nắm âm <span class="text-primary-600 font-extrabold">(K)</span></th>
                         <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Số tấm CNC <span class="text-primary-600 font-extrabold">(L)</span></th>
-                        <th scope="col" style="width: 100px; min-width: 100px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Chiều vân</th>
                         <th scope="col" style="min-width: 140px; white-space: nowrap;" class="align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase">Ghi chú</th>
                         <th scope="col" style="width: 140px; min-width: 140px; white-space: nowrap; position: sticky; right: 0; z-index: 3; box-shadow: -2px 0 4px rgba(0,0,0,0.06);" class="order-action-col align-middle border border-neutral-200 font-bold text-xs text-neutral-600 uppercase bg-neutral-50">Hành động</th>
                     </tr>
@@ -649,6 +649,7 @@ function addMinLateOrderSupply() {
                         <td class="border border-neutral-200"></td>
                         <td class="border border-neutral-200"></td>
                         <td class="border border-neutral-200"></td>
+                        <td class="border border-neutral-200"></td>
                         <td class="border border-neutral-200 text-center" data-summary-field="straight_paste_length" data-summary-col="E" style="font-size: 80% !important;">0</td>
                         <td class="border border-neutral-200 text-center" data-summary-field="beveled_length" data-summary-col="F" style="font-size: 80% !important;">0</td>
                         <td class="border border-neutral-200 text-center" data-summary-field="vat_moi_length" data-summary-col="G" style="font-size: 80% !important;">0</td>
@@ -657,7 +658,6 @@ function addMinLateOrderSupply() {
                         <td class="border border-neutral-200 text-center" data-summary-field="ban_rong_25_35" data-summary-col="J" style="font-size: 80% !important;">0</td>
                         <td class="border border-neutral-200 text-center" data-summary-field="beveled_handle" data-summary-col="K" style="font-size: 80% !important;">0</td>
                         <td class="border border-neutral-200 text-center" data-summary-field="cnc" data-summary-col="L" style="font-size: 80% !important;">0</td>
-                        <td class="border border-neutral-200"></td>
                         <td class="border border-neutral-200"></td>
                         <td class="order-action-col border border-neutral-200" style="width: 140px; min-width: 140px; position: sticky; right: 0; z-index: 3; background-color: #f1f5f9;"></td>
                 </thead>
@@ -766,6 +766,9 @@ function addMinLateOrderItem(button, isInitial = false, insertAfterRow = null) {
                 </div>
             </div>
         </td>
+        <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
+            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][direction]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 px-1 py-1 h-8 text-xs" placeholder="Chiều vân" value="${lastData ? lastData.direction : ''}">
+        </td>
         {{-- Dán cạnh (4 select options) --}}
         <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
             <select name="supplies[${supplyIndex}][items][${itemIndex}][edge_gluing][height_1]" class="form-select form-select-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center w-full px-1 py-0.5 h-8 text-xs hide-arrow">
@@ -834,9 +837,6 @@ function addMinLateOrderItem(button, isInitial = false, insertAfterRow = null) {
         </td>
         <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
             <input type="number" name="supplies[${supplyIndex}][items][${itemIndex}][cnc]" class="form-control form-control-sm rounded-lg bg-neutral-50 border-neutral-200 cursor-not-allowed text-center px-1 py-1 h-8 text-xs" placeholder="Số tấm CNC" value="${lastData ? lastData.cnc : '0'}" readonly>
-        </td>
-        <td style="width: 100px; min-width: 100px; " class="border border-neutral-200">
-            <input type="text" name="supplies[${supplyIndex}][items][${itemIndex}][direction]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 px-1 py-1 h-8 text-xs" placeholder="Chiều vân" value="${lastData ? lastData.direction : ''}">
         </td>
         <td style="min-width: 160px;" class="border border-neutral-200">
             <textarea name="supplies[${supplyIndex}][items][${itemIndex}][notes]" class="form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-xs w-full resize-none font-medium text-neutral-700 leading-tight" rows="2" style="min-height: 46px; padding: 4px 6px; font-size: 11px;" placeholder="Ghi chú">${lastData ? (lastData.notes || '') : ''}</textarea>

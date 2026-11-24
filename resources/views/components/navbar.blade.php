@@ -18,6 +18,10 @@
         </div>
         <div class="col-auto">
             <div class="flex flex-wrap items-center gap-3">
+                <a href="{{ route('ai.index') }}" class="w-10 h-10 bg-primary-50 hover:bg-primary-100 dark:bg-primary-950/40 text-primary-600 rounded-full flex justify-center items-center transition-colors" title="Trợ lý AI Gervin Wood">
+                    <iconify-icon icon="solar:magic-stick-3-bold-duotone" class="text-xl"></iconify-icon>
+                </a>
+
                 <button type="button" id="theme-toggle" class="w-10 h-10 bg-neutral-200 rounded-full flex justify-center items-center">
                     <span id="theme-toggle-dark-icon" class="hidden">
                         <i class="ri-sun-line"></i>
