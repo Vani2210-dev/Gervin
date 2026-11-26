@@ -410,7 +410,7 @@
                                                class="product-bevel-input form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center pr-6 pl-1 py-1 h-8 text-xs w-full" 
                                                placeholder="Vát" 
                                                value="{{ $item->bevel }}"
-                                               data-auto-sync="{{ (empty($item->bevel) && $item->bevel !== '0') ? 'width' : (($item->bevel == ($size['width'] ?? '')) ? 'width' : (($item->bevel == ($size['height'] ?? '')) ? 'height' : 'none')) }}">
+                                               data-auto-sync="{{ (empty($item->bevel) || $item->bevel == 0) ? 'none' : (($item->bevel == ($size['width'] ?? '')) ? 'width' : (($item->bevel == ($size['height'] ?? '')) ? 'height' : 'none')) }}">
                                         <div class="pointer-events-auto cursor-pointer" style="position: absolute; right: 4px; top: 0; bottom: 0; width: 24px; display: flex; align-items: center; justify-content: center; z-index: 4;" title="Chọn kiểu vát">
                                             <iconify-icon icon="lucide:chevron-down" class="text-neutral-500 text-base pointer-events-none"></iconify-icon>
                                             <select class="product-bevel-select absolute inset-0 opacity-0 cursor-pointer w-full h-full">
@@ -754,7 +754,7 @@ function addMinLateOrderItem(button, isInitial = false, insertAfterRow = null) {
                        class="product-bevel-input form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center pr-6 pl-1 py-1 h-8 text-xs w-full" 
                        placeholder="Vát" 
                        value="${lastData ? lastData.bevel : ''}"
-                       data-auto-sync="${(!lastData || (!lastData.bevel && lastData.bevel !== '0')) ? 'width' : ((lastData.bevel == lastData.width) ? 'width' : ((lastData.bevel == lastData.height) ? 'height' : 'none'))}">
+                       data-auto-sync="${(!lastData || (!lastData.bevel && lastData.bevel !== '0')) ? 'none' : ((lastData.bevel == lastData.width) ? 'width' : ((lastData.bevel == lastData.height) ? 'height' : 'none'))}">
                 <div class="pointer-events-auto cursor-pointer" style="position: absolute; right: 4px; top: 0; bottom: 0; width: 24px; display: flex; align-items: center; justify-content: center; z-index: 4;" title="Chọn kiểu vát">
                     <iconify-icon icon="lucide:chevron-down" class="text-neutral-500 text-base pointer-events-none"></iconify-icon>
                     <select class="product-bevel-select absolute inset-0 opacity-0 cursor-pointer w-full h-full">
@@ -1265,22 +1265,20 @@ function initMinLateBevelField(row) {
     const width = widthInput.value.trim();
     let val = bevelInput.value.trim();
     
-    const currentSync = bevelInput.getAttribute('data-auto-sync') || 'width';
+    const currentSync = bevelInput.getAttribute('data-auto-sync') || 'none';
 
     if (val === '') {
-        if (currentSync === 'none') {
-            bevelInput.setAttribute('data-auto-sync', 'none');
-        } else {
-            // Default to width sync
-            bevelInput.setAttribute('data-auto-sync', 'width');
-            if (width !== '') {
-                bevelInput.value = width;
-                val = width;
-            }
-        }
+        bevelInput.setAttribute('data-auto-sync', 'none');
+        bevelSelect.value = '';
     } else {
         // Check if value matches width or height
-        if (width !== '' && val === width) {
+        if (currentSync === 'width' && width !== '' && val === width) {
+            bevelInput.setAttribute('data-auto-sync', 'width');
+        } else if (currentSync === 'height' && height !== '' && val === height) {
+            bevelInput.setAttribute('data-auto-sync', 'height');
+        } else if (currentSync === 'none') {
+            bevelInput.setAttribute('data-auto-sync', 'none');
+        } else if (width !== '' && val === width) {
             bevelInput.setAttribute('data-auto-sync', 'width');
         } else if (height !== '' && val === height) {
             bevelInput.setAttribute('data-auto-sync', 'height');
@@ -2023,6 +2021,7 @@ function confirmMinLateExcelImport() {
                 setVal('input[name*="[height]"]', item.height);
                 setVal('input[name*="[width]"]', item.width);
                 setVal('input[name*="[quantity]"]', item.quantity);
+                setVal('input[name*="[bevel]"]', item.beveled);
                 setVal('input[name*="[beveled_edges]"]', item.beveled);
                 setVal('select[name*="[edge_gluing][height_1]"]', item.edge_h1);
                 setVal('select[name*="[edge_gluing][height_2]"]', item.edge_h2);

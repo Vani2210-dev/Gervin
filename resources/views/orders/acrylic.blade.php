@@ -1713,19 +1713,11 @@ function initBevelField(row) {
     const width = widthInput.value.trim();
     let val = bevelInput.value.trim();
     
-    const currentSync = bevelInput.getAttribute('data-auto-sync') || 'width';
+    const currentSync = bevelInput.getAttribute('data-auto-sync') || 'none';
 
     if (val === '') {
-        if (currentSync === 'none') {
-            bevelInput.setAttribute('data-auto-sync', 'none');
-        } else {
-            // Default to width sync
-            bevelInput.setAttribute('data-auto-sync', 'width');
-            if (width !== '') {
-                bevelInput.value = width;
-                val = width;
-            }
-        }
+        bevelInput.setAttribute('data-auto-sync', 'none');
+        bevelSelect.value = '';
     } else {
         // Check if value matches width or height
         if (width !== '' && val === width) {
