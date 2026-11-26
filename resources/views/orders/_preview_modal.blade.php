@@ -645,30 +645,30 @@
 
                         {{-- Khối thông tin công nợ khách hàng --}}
                         @if(!empty($debtInfo))
-                            <div class="mt-2 pt-2 border-t border-neutral-200">
-                                <div class="text-[11px] font-bold text-neutral-700 mb-1 flex items-center justify-between">
-                                    <span class="flex items-center gap-2 text-primary-700">
-                                        <iconify-icon icon="lucide:wallet" class="text-sm text-primary-600"></iconify-icon>
-                                        <span>Công nợ khách hàng</span>
+                            <div class="mt-3 pt-2.5 border-t-2 border-neutral-200">
+                                <div class="text-xs sm:text-sm font-bold text-neutral-800 mb-1.5 flex items-center justify-between">
+                                    <span class="flex items-center gap-1.5 text-primary-700">
+                                        <iconify-icon icon="lucide:wallet" class="text-base text-primary-600"></iconify-icon>
+                                        <span class="uppercase tracking-wide text-xs sm:text-sm font-bold">Công nợ khách hàng</span>
                                     </span>
-                                    <span class="text-[10px] font-normal text-neutral-400 italic">(đồng bộ với file excel)</span>
+                                    <span class="text-[11px] font-normal text-neutral-400 italic">(đồng bộ với file excel)</span>
                                 </div>
-                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                                    <div class="bg-white py-1 px-2 rounded border border-neutral-200 flex items-center justify-between text-xs">
-                                        <span class="text-neutral-500 text-[11px]">Công nợ cũ:</span>
-                                        <span class="font-bold text-neutral-800 font-mono">
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                                    <div class="bg-white py-2 px-3 rounded-lg border border-neutral-300 flex items-center justify-between">
+                                        <span class="text-neutral-600 text-xs sm:text-sm font-medium">Công nợ cũ:</span>
+                                        <span class="font-bold text-neutral-800 font-mono text-sm sm:text-base">
                                             {{ number_format(round($debtInfo['old_debt'], -3), 0, ',', '.') }} đ
                                         </span>
                                     </div>
-                                    <div class="bg-white py-1 px-2 rounded border border-emerald-200 bg-emerald-50/40 flex items-center justify-between text-xs">
-                                        <span class="text-emerald-700 text-[11px]">Đã thanh toán:</span>
-                                        <span class="font-bold text-emerald-600 font-mono">
+                                    <div class="bg-emerald-50/60 py-2 px-3 rounded-lg border border-emerald-300 flex items-center justify-between">
+                                        <span class="text-emerald-800 text-xs sm:text-sm font-semibold">Đã thanh toán:</span>
+                                        <span class="font-bold text-emerald-600 font-mono text-sm sm:text-base">
                                             {{ number_format(round($debtInfo['this_order_paid'], -3), 0, ',', '.') }} đ
                                         </span>
                                     </div>
-                                    <div class="bg-white py-1 px-2 rounded border border-rose-200 bg-rose-50/50 flex items-center justify-between text-xs">
-                                        <span class="text-rose-700 text-[11px] font-bold">Tổng nợ:</span>
-                                        <span class="font-bold text-rose-600 font-mono">
+                                    <div class="bg-rose-50 py-2 px-3 rounded-lg border-2 border-rose-400 flex items-center justify-between shadow-xs">
+                                        <span class="text-rose-800 text-xs sm:text-sm font-extrabold uppercase tracking-wide">Tổng công nợ:</span>
+                                        <span class="font-extrabold text-rose-600 font-mono text-base sm:text-lg">
                                             {{ number_format(round($debtInfo['total_combined_debt'], -3), 0, ',', '.') }} đ
                                         </span>
                                     </div>
