@@ -617,16 +617,14 @@
                                 Chiết khấu ({{ (float)$acrylicOrder->discount_percent }}%): -{{ number_format(round($discountAmt, -3), 0, ',', '.') }} đ
                             </div>
                         @endif
-                        @if($acrylicOrder->vat_percent > 0)
-                            <div class="mt-1 text-xs text-right font-medium text-neutral-700">
-                                VAT ({{ (float)$acrylicOrder->vat_percent }}%): +{{ number_format(round($vatAmt, -3), 0, ',', '.') }} đ
-                            </div>
-                        @endif
                         @if(($acrylicOrder->additional_discount_percent ?? 0) > 0)
                             <div class="mt-1 text-xs text-right font-medium text-danger-600">
                                 Chiết khấu thêm ({{ (float)$acrylicOrder->additional_discount_percent }}%): -{{ number_format(round($additionalDiscountAmt, -3), 0, ',', '.') }} đ
                             </div>
                         @endif
+                        <div class="mt-1 text-xs text-right font-medium text-neutral-700">
+                            VAT ({{ (float)($acrylicOrder->vat_percent ?? 0) }}%): +{{ number_format(round($vatAmt ?? 0, -3), 0, ',', '.') }} đ
+                        </div>
                         <div class="mt-2 pt-2 border-t border-neutral-200 flex items-center justify-between">
                             <span class="font-bold text-xs text-neutral-800">Tổng thanh toán:</span>
                             <span class="text-lg font-extrabold text-primary-700">{{ number_format(round($acrylicOrder->total_amount, -3), 0, ',', '.') }} VNĐ</span>

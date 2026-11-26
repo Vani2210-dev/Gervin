@@ -769,15 +769,6 @@
                         </div>
                         @endif
 
-                        @if($acrylicOrder->vat_percent > 0)
-                        <div class="flex justify-between items-center text-sm">
-                            <span class="text-neutral-500">VAT ({{ (float)$acrylicOrder->vat_percent }}%):</span>
-                            <span class="font-semibold text-neutral-800">
-                                +{{ number_format(round($vatAmt, -3), 0, ',', '.') }} VNĐ
-                            </span>
-                        </div>
-                        @endif
-
                         @if(($acrylicOrder->additional_discount_percent ?? 0) > 0)
                         <div class="flex justify-between items-center text-sm">
                             <span class="text-neutral-500">CK thêm ({{ (float)$acrylicOrder->additional_discount_percent }}%):</span>
@@ -786,6 +777,13 @@
                             </span>
                         </div>
                         @endif
+
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="text-neutral-500">VAT ({{ (float)($acrylicOrder->vat_percent ?? 0) }}%):</span>
+                            <span class="font-semibold text-neutral-800">
+                                +{{ number_format(round($vatAmt ?? 0, -3), 0, ',', '.') }} VNĐ
+                            </span>
+                        </div>
 
                         <div class="border-t border-neutral-100 pt-3 flex justify-between items-center">
                             <span class="text-base font-bold text-neutral-800">Tổng thanh toán:</span>
