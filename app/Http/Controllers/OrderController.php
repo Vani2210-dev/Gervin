@@ -683,9 +683,16 @@ class OrderController extends Controller
             'total_amount' => round($acrylicOrder->total_amount, -3),
             'delivery_days' => $acrylicOrder->delivery_days ?? ($acrylicOrder->type === 'glass' ? 5 : 2),
             'customer_debt_info' => $acrylicOrder->customer ? $acrylicOrder->customer->getDebtInfoForOrder($acrylicOrder) : null,
+            'technical_approved_by' => $acrylicOrder->technical_approved_by,
+            'technical_approver_name' => $acrylicOrder->technicalApprover?->name,
+            'technical_approved_at' => $acrylicOrder->technical_approved_at ? $acrylicOrder->technical_approved_at->format('H:i d/m/Y') : null,
+            'accountant_approved_by' => $acrylicOrder->accountant_approved_by,
+            'accountant_approver_name' => $acrylicOrder->accountantApprover?->name,
+            'accountant_approved_at' => $acrylicOrder->accountant_approved_at ? $acrylicOrder->accountant_approved_at->format('H:i d/m/Y') : null,
             'supplies' => $acrylicOrder->supplies->map(function ($supply) use ($acrylicOrder) {
                 $items = [];
-                if (in_array($acrylicOrder->type, ['min_late', 'Flywood'])) {
+                $orderTypeLower = strtolower($acrylicOrder->type ?? '');
+                if (in_array($orderTypeLower, ['min_late', 'flywood', 'plywood'])) {
                     $items = $supply->minLateItems->map(function ($item) {
                         $sizes = $item->size ?? [];
                         if (is_string($sizes)) {
@@ -716,7 +723,7 @@ class OrderController extends Controller
                             'notes' => $item->notes,
                         ];
                     });
-                } elseif ($acrylicOrder->type === 'glass') {
+                } elseif ($orderTypeLower === 'glass') {
                     $items = $supply->glassItems->map(function ($item) {
                         return [
                             'product_code' => $item->product_code,
@@ -784,6 +791,8 @@ class OrderController extends Controller
                 return [
                     'name' => $detail->name,
                     'unit' => $detail->unit,
+                    'length' => $detail->length,
+                    'width' => $detail->width,
                     'quantity' => $detail->quantity,
                     'price' => $detail->price,
                     'price_only' => $detail->price_only,

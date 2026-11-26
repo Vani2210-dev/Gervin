@@ -146,9 +146,9 @@ async function exportToExcel(customData = null, returnBlob = false) {
             let r = startRow;
             const debt = orderData.customer_debt_info;
             const rowsData = [
-                { text: "Công nợ:", val: debt.old_debt, color: null },
-                { text: "Đã TT:", val: debt.this_order_paid, color: 'FF16A34A' },
-                { text: "Tổng:", val: debt.total_combined_debt, color: 'FFDC2626' }
+                { text: "Công nợ cũ:", val: debt.old_debt, color: null },
+                { text: "Đã thanh toán:", val: debt.this_order_paid, color: 'FF16A34A' },
+                { text: "Tổng công nợ:", val: debt.total_combined_debt, color: 'FFDC2626' }
             ];
             rowsData.forEach((item, index) => {
                 const row = worksheet.getRow(r);
@@ -178,6 +178,212 @@ async function exportToExcel(customData = null, returnBlob = false) {
                 }
                 r++;
             });
+            return r;
+        };
+
+        let firstSignatureRow = 999999;
+
+        const appendSignaturesAndTerms = (sheet, startRow, maxCol) => {
+            let r = startRow;
+            if (r < firstSignatureRow) {
+                firstSignatureRow = r;
+            }
+
+            // 1. Spacing row
+            sheet.getRow(r).height = 10;
+            r++;
+
+            // 2. Amber Note (Lưu ý nhận hàng)
+            const noteRow = sheet.getRow(r);
+            noteRow.height = 36;
+            sheet.mergeCells(r, 1, r, maxCol);
+            const noteCell = noteRow.getCell(1);
+            noteCell.value = 'Lưu ý nhận hàng: Khách hàng vui lòng kiểm tra và xác nhận đã nhận đầy đủ số lượng, tình trạng bên ngoài không bị trầy xước hư hỏng trước khi nhận hàng. Sau thời điểm giao xong hàng bên bán không chịu trách nhiệm về thiếu sót hoặc hư hỏng ngoại quan.';
+            noteCell.font = { name: 'Times New Roman', size: 10, italic: true, color: { argb: 'FF78350F' } };
+            noteCell.alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
+            noteCell.fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FFFEF3C7' } // Light amber
+            };
+            for (let c = 1; c <= maxCol; c++) {
+                const cell = noteRow.getCell(c);
+                cell.border = {
+                    top: { style: 'thin', color: { argb: 'FFFDE68A' } },
+                    bottom: { style: 'thin', color: { argb: 'FFFDE68A' } },
+                    left: c === 1 ? { style: 'thin', color: { argb: 'FFFDE68A' } } : undefined,
+                    right: c === maxCol ? { style: 'thin', color: { argb: 'FFFDE68A' } } : undefined
+                };
+            }
+            r++;
+
+            // Spacing
+            sheet.getRow(r).height = 8;
+            r++;
+
+            // 3. Signature & Electronic Approval Boxes (3 columns)
+            let b1Start = 1, b1End = Math.floor(maxCol / 3);
+            let b2Start = b1End + 1, b2End = b1End + Math.floor(maxCol / 3);
+            let b3Start = b2End + 1, b3End = maxCol;
+
+            const boxTop = r;
+            const boxBottom = r + 3;
+
+            sheet.getRow(boxTop).height = 22;
+            sheet.getRow(boxTop + 1).height = 20;
+            sheet.getRow(boxTop + 2).height = 20;
+            sheet.getRow(boxTop + 3).height = 20;
+
+            const boxes = [
+                {
+                    startCol: b1Start,
+                    endCol: b1End,
+                    title: 'BÊN MUA HÀNG',
+                    status: 'Đã nhận đủ số lượng & nguyên vẹn',
+                    statusFont: { name: 'Times New Roman', size: 9, italic: true, color: { argb: 'FF64748B' } },
+                    detail: '',
+                    detailFont: { name: 'Times New Roman', size: 10 },
+                    footer: '(Ký, ghi rõ họ tên)',
+                    footerFont: { name: 'Times New Roman', size: 9, italic: true, color: { argb: 'FF94A3B8' } }
+                },
+                {
+                    startCol: b2Start,
+                    endCol: b2End,
+                    title: 'KỸ THUẬT DUYỆT',
+                    status: orderData.technical_approved_by ? 'ĐÃ DUYỆT SX' : '(Chờ duyệt)',
+                    statusFont: orderData.technical_approved_by
+                        ? { name: 'Times New Roman', size: 10, bold: true, color: { argb: 'FF1D4ED8' } }
+                        : { name: 'Times New Roman', size: 10, italic: true, color: { argb: 'FF94A3B8' } },
+                    detail: orderData.technical_approved_by
+                        ? `${orderData.technical_approver_name || 'Kỹ thuật'} ${orderData.technical_approved_at ? '(' + orderData.technical_approved_at + ')' : ''}`
+                        : '',
+                    detailFont: { name: 'Times New Roman', size: 9, bold: true, color: { argb: 'FF1F2937' } },
+                    footer: 'Xác nhận duyệt hệ thống',
+                    footerFont: { name: 'Times New Roman', size: 9, italic: true, color: { argb: 'FF94A3B8' } }
+                },
+                {
+                    startCol: b3Start,
+                    endCol: b3End,
+                    title: 'KẾ TOÁN DUYỆT',
+                    status: orderData.accountant_approved_by ? 'KẾ TOÁN ĐÃ DUYỆT' : '(Chờ duyệt)',
+                    statusFont: orderData.accountant_approved_by
+                        ? { name: 'Times New Roman', size: 10, bold: true, color: { argb: 'FF059669' } }
+                        : { name: 'Times New Roman', size: 10, italic: true, color: { argb: 'FF94A3B8' } },
+                    detail: orderData.accountant_approved_by
+                        ? `${orderData.accountant_approver_name || 'Kế toán'} ${orderData.accountant_approved_at ? '(' + orderData.accountant_approved_at + ')' : ''}`
+                        : '',
+                    detailFont: { name: 'Times New Roman', size: 9, bold: true, color: { argb: 'FF1F2937' } },
+                    footer: 'Xác nhận duyệt hệ thống',
+                    footerFont: { name: 'Times New Roman', size: 9, italic: true, color: { argb: 'FF94A3B8' } }
+                }
+            ];
+
+            boxes.forEach(box => {
+                sheet.mergeCells(boxTop, box.startCol, boxTop, box.endCol);
+                sheet.mergeCells(boxTop + 1, box.startCol, boxTop + 1, box.endCol);
+                sheet.mergeCells(boxTop + 2, box.startCol, boxTop + 2, box.endCol);
+                sheet.mergeCells(boxTop + 3, box.startCol, boxTop + 3, box.endCol);
+
+                const cTitle = sheet.getCell(boxTop, box.startCol);
+                cTitle.value = box.title;
+                cTitle.font = { name: 'Times New Roman', size: 10, bold: true, color: { argb: 'FF0F172A' } };
+                cTitle.alignment = { horizontal: 'center', vertical: 'middle' };
+
+                const cStatus = sheet.getCell(boxTop + 1, box.startCol);
+                cStatus.value = box.status;
+                cStatus.font = box.statusFont;
+                cStatus.alignment = { horizontal: 'center', vertical: 'middle' };
+
+                const cDetail = sheet.getCell(boxTop + 2, box.startCol);
+                cDetail.value = box.detail;
+                cDetail.font = box.detailFont;
+                cDetail.alignment = { horizontal: 'center', vertical: 'middle' };
+
+                const cFooter = sheet.getCell(boxTop + 3, box.startCol);
+                cFooter.value = box.footer;
+                cFooter.font = box.footerFont;
+                cFooter.alignment = { horizontal: 'center', vertical: 'middle' };
+
+                for (let rowIdx = boxTop; rowIdx <= boxBottom; rowIdx++) {
+                    for (let colIdx = box.startCol; colIdx <= box.endCol; colIdx++) {
+                        const cell = sheet.getCell(rowIdx, colIdx);
+                        cell.fill = {
+                            type: 'pattern',
+                            pattern: 'solid',
+                            fgColor: { argb: 'FFF8FAFC' }
+                        };
+                        const borderObj = {};
+                        if (rowIdx === boxTop) borderObj.top = { style: 'thin', color: { argb: 'FFCBD5E1' } };
+                        if (rowIdx === boxBottom) borderObj.bottom = { style: 'thin', color: { argb: 'FFCBD5E1' } };
+                        if (colIdx === box.startCol) borderObj.left = { style: 'thin', color: { argb: 'FFCBD5E1' } };
+                        if (colIdx === box.endCol) borderObj.right = { style: 'thin', color: { argb: 'FFCBD5E1' } };
+                        cell.border = borderObj;
+                    }
+                }
+            });
+
+            r = boxBottom + 1;
+
+            // Spacing
+            sheet.getRow(r).height = 10;
+            r++;
+
+            // 4. Terms & Conditions (5 clauses)
+            const terms = [
+                '1. Đơn giá trên chưa bao gồm VAT. Đúng sai kích thước sản xuất ±1 mm.',
+                '2. Ứng trước 50% tiền đơn hàng gia công, thanh toán 50% còn lại trước khi lấy hàng tại kho.',
+                '3. Khi mua tấm Quý khách vui lòng thanh toán 100% tiền hàng trước khi xuất kho bên bán.',
+                '4. Thanh toán tiền mặt hoặc chuyển khoản theo thông tin ngân hàng của Công ty Gỗ Gervin.',
+                '5. Bảo hành cong vênh, bong tróc 12 tháng, bảo trì vĩnh viễn (không bảo hành ngập nước và mối mọt).'
+            ];
+
+            terms.forEach((term, idx) => {
+                const termRow = sheet.getRow(r);
+                termRow.height = 18;
+                sheet.mergeCells(r, 1, r, maxCol);
+                const termCell = termRow.getCell(1);
+                termCell.value = term;
+                termCell.font = { name: 'Times New Roman', size: 10, color: { argb: 'FF374151' } };
+                termCell.alignment = { horizontal: 'left', vertical: 'middle' };
+                if (idx === 0) {
+                    for (let c = 1; c <= maxCol; c++) {
+                        termRow.getCell(c).border = {
+                            top: { style: 'thin', color: { argb: 'FFE2E8F0' } }
+                        };
+                    }
+                }
+                r++;
+            });
+
+            // 5. Footer Line
+            sheet.getRow(r).height = 8;
+            r++;
+
+            const footerRow = sheet.getRow(r);
+            footerRow.height = 20;
+            const midCol = Math.floor(maxCol / 2);
+            sheet.mergeCells(r, 1, r, midCol);
+            sheet.mergeCells(r, midCol + 1, r, maxCol);
+
+            const fLeft = footerRow.getCell(1);
+            fLeft.value = 'Xưởng Nội Thất Gervin';
+            fLeft.font = { name: 'Times New Roman', size: 9, italic: true, color: { argb: 'FF9CA3AF' } };
+            fLeft.alignment = { horizontal: 'left', vertical: 'middle' };
+
+            const now = new Date();
+            const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} ${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+            const fRight = footerRow.getCell(midCol + 1);
+            fRight.value = `Phiếu xuất lúc: ${timeStr}`;
+            fRight.font = { name: 'Times New Roman', size: 9, italic: true, color: { argb: 'FF9CA3AF' } };
+            fRight.alignment = { horizontal: 'right', vertical: 'middle' };
+
+            for (let c = 1; c <= maxCol; c++) {
+                footerRow.getCell(c).border = {
+                    top: { style: 'thin', color: { argb: 'FFE2E8F0' } }
+                };
+            }
+            r++;
+
             return r;
         };
 
@@ -250,9 +456,15 @@ async function exportToExcel(customData = null, returnBlob = false) {
             }
         }
 
+        const orderType = (orderData.type || '').toLowerCase();
+        const isAcrylic = orderType === 'acrylic';
+        const isGlass = orderType === 'glass';
+        const isMinLateOrFlywood = ['min_late', 'flywood', 'plywood'].includes(orderType);
+        const isService = orderType === 'service';
+
         let currentRow = 12;
 
-        if (orderData.type === 'acrylic') {
+        if (isAcrylic) {
             // Column dimensions
             const colWidths = [
                 { col: 'A', width: 5.375 },
@@ -688,6 +900,7 @@ async function exportToExcel(customData = null, returnBlob = false) {
             currentRow++;
 
             currentRow = appendDebtSummary(currentRow, 13, 11, 12, null);
+            currentRow = appendSignaturesAndTerms(worksheet, currentRow, 13);
 
             // ─── Sheet 2: BAZIS-PM (only for acrylic orders) ───
             const ws2 = workbook.addWorksheet('BAZIS-PM');
@@ -836,7 +1049,7 @@ async function exportToExcel(customData = null, returnBlob = false) {
                 });
             });
 
-        } else if (orderData.type === 'glass') {
+        } else if (isGlass) {
             // Column dimensions
             const colWidths = [
                 { col: 'A', width: 6.5 },
@@ -1303,6 +1516,7 @@ async function exportToExcel(customData = null, returnBlob = false) {
             }
 
             currentRow = appendDebtSummary(currentRow, 14, 11, 13, 12);
+            currentRow = appendSignaturesAndTerms(worksheet, currentRow, 14);
 
             // ─── GENERATE SECOND SHEET "ĐẶT KÍNH" ───
             const worksheet2 = workbook.addWorksheet('Đặt kính', {
@@ -1570,7 +1784,7 @@ async function exportToExcel(customData = null, returnBlob = false) {
             }
             currentRow2++;
 
-        } else if (orderData.type === 'min_late') {
+        } else if (isMinLateOrFlywood || (orderData.supplies && orderData.supplies.length > 0 && !isService)) {
             // Column dimensions
             const colWidths = [
                 { col: 'A', width: 6.375 },
@@ -2177,11 +2391,255 @@ async function exportToExcel(customData = null, returnBlob = false) {
             } // Close the `if (orderData.payment_details && orderData.payment_details.length > 0)` block
 
             currentRow = appendDebtSummary(currentRow, 17, 16, 17, null);
+            currentRow = appendSignaturesAndTerms(worksheet, currentRow, 17);
+        } else {
+            // ─── SERVICE & SUPPLIES ORDER (OR GENERIC ORDER WITH PAYMENT DETAILS) ───
+            const colWidths = [
+                { col: 'A', width: 6 },     // STT
+                { col: 'B', width: 14 },    // Mã hàng
+                { col: 'C', width: 38 },    // Tên hàng hóa, dịch vụ
+                { col: 'D', width: 10 },    // ĐVT
+                { col: 'E', width: 18 },    // Quy cách (dài x rộng)
+                { col: 'F', width: 10 },    // Số lượng
+                { col: 'G', width: 15 },    // Đơn giá
+                { col: 'H', width: 18 }     // Thành tiền
+            ];
+            colWidths.forEach(w => { worksheet.getColumn(w.col).width = w.width; });
+            const maxCol = 8;
+
+            // Metadata rows (using C:F merge)
+            worksheet.getRow(5).height = 25;
+            worksheet.mergeCells('C5:F5');
+            const serviceTitle = (orderData.is_nhap_kho || (orderData.order_code && /[._-]?NK$/i.test(orderData.order_code)))
+                ? 'PHIẾU NHẬP KHO'
+                : 'BÁO GIÁ DỊCH VỤ & VẬT TƯ';
+            setCell(5, 3, serviceTitle, true, 'center', 16);
+
+            worksheet.getRow(6).height = 18;
+            worksheet.mergeCells('C6:F6');
+            setCell(6, 3, dateStr, false, 'center', 11, true);
+            setCell(6, 7, 'Ngày giờ chốt đơn:', true, 'right', 10);
+            worksheet.getCell('H6').value = chotDonStr;
+            worksheet.getCell('H6').font = { name: 'Times New Roman', size: 10 };
+
+            worksheet.getRow(7).height = 18;
+            worksheet.mergeCells('C7:F7');
+            setCell(7, 3, `Số phiếu: ${orderData.order_code}`, true, 'center', 11);
+            setCell(7, 7, 'Số ngày giao:', true, 'right', 10);
+            worksheet.getCell('H7').value = parseInt(orderData.delivery_days) || '—';
+            worksheet.getCell('H7').font = { name: 'Times New Roman', size: 10 };
+
+            worksheet.getRow(8).height = 18;
+            worksheet.mergeCells('C8:F8');
+            setCell(8, 3, `Khách hàng: ${orderData.customer_name || ''}`, true, 'left', 11);
+            setCell(8, 7, 'Hạn giao hàng:', true, 'right', 10);
+            worksheet.getCell('H8').value = deadlineStr;
+            worksheet.getCell('H8').font = { name: 'Times New Roman', size: 10 };
+
+            worksheet.getRow(9).height = 18;
+            worksheet.mergeCells('C9:F9');
+            setCell(9, 3, `Địa chỉ: ${orderData.address || ''}`, false, 'left', 10);
+            setCell(9, 7, 'Điện thoại:', true, 'right', 10);
+            worksheet.getCell('H9').value = orderData.phone || '—';
+            worksheet.getCell('H9').font = { name: 'Times New Roman', size: 10, bold: true };
+            worksheet.getCell('H9').alignment = { horizontal: 'left', vertical: 'middle' };
+
+            worksheet.getRow(10).height = 18;
+            worksheet.mergeCells('C10:H10');
+            setCell(10, 3, `Chính sách KH: ${orderData.customer_policy || ''}`, false, 'left', 10);
+
+            worksheet.getRow(11).height = 20;
+            worksheet.mergeCells('C11:H11');
+            setCell(11, 3, 'Công ty TNHH Gỗ GERVIN xin cảm ơn quý khách hàng đã tin dùng sản phẩm của chúng tôi và xin được báo giá như sau:', false, 'left', 10, true);
+
+            // Table Header (Row 12)
+            worksheet.getRow(12).height = 26;
+            const sHeaders = [
+                { col: 1, val: 'STT' },
+                { col: 2, val: 'Mã hàng' },
+                { col: 3, val: 'Tên hàng hóa, dịch vụ' },
+                { col: 4, val: 'ĐVT' },
+                { col: 5, val: 'Quy cách' },
+                { col: 6, val: 'Số lượng' },
+                { col: 7, val: 'Đơn giá' },
+                { col: 8, val: 'Thành tiền' }
+            ];
+            sHeaders.forEach(h => {
+                const c = worksheet.getCell(12, h.col);
+                c.value = h.val;
+                c.font = { name: 'Times New Roman', size: 11, bold: true };
+                c.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+                c.fill = headerFill;
+                c.border = thinBorder;
+            });
+            currentRow = 13;
+
+            let sSumTotal = 0;
+            let sSumQty = 0;
+            const pDetails = orderData.payment_details || [];
+            pDetails.forEach((item, idx) => {
+                const row = worksheet.getRow(currentRow);
+                row.height = 24;
+                const qty = parseFloat(item.quantity) || 0;
+                const price = parseFloat(item.price) || 0;
+                const total = parseFloat(item.total) || (qty * price);
+                sSumQty += qty;
+                sSumTotal += total;
+
+                let dimStr = '—';
+                if (item.length || item.width) {
+                    const lStr = item.length ? Number(item.length).toLocaleString('vi-VN') : '—';
+                    const wStr = item.width ? Number(item.width).toLocaleString('vi-VN') : '—';
+                    dimStr = `${lStr} x ${wStr}`;
+                }
+
+                setCell(currentRow, 1, idx + 1, false, 'center', 11);
+                setCell(currentRow, 2, item.product_code || item.item_code || '—', false, 'center', 11);
+                setCell(currentRow, 3, item.name || '', false, 'left', 11);
+                setCell(currentRow, 4, item.unit || '—', false, 'center', 11);
+                setCell(currentRow, 5, dimStr, false, 'center', 11);
+                
+                const qtyCell = setCell(currentRow, 6, qty, false, 'center', 11);
+                qtyCell.numFmt = '#,##0.##';
+
+                const priceCell = setCell(currentRow, 7, Math.round(price), false, 'right', 11);
+                priceCell.numFmt = '#,##0';
+
+                const totalCell = setCell(currentRow, 8, Math.round(total), false, 'right', 11);
+                totalCell.numFmt = '#,##0';
+
+                for (let c = 1; c <= maxCol; c++) {
+                    row.getCell(c).border = thinBorder;
+                }
+                currentRow++;
+            });
+
+            // Summary Subtotal Row
+            const sumRow = worksheet.getRow(currentRow);
+            sumRow.height = 22;
+            worksheet.mergeCells(currentRow, 1, currentRow, 5);
+            sumRow.getCell(1).value = 'TỔNG CỘNG:';
+            sumRow.getCell(1).font = { name: 'Times New Roman', size: 11, bold: true };
+            sumRow.getCell(1).alignment = { horizontal: 'right', vertical: 'middle' };
+
+            sumRow.getCell(6).value = sSumQty;
+            sumRow.getCell(6).font = { name: 'Times New Roman', size: 11, bold: true };
+            sumRow.getCell(6).alignment = { horizontal: 'center', vertical: 'middle' };
+            sumRow.getCell(6).numFmt = '#,##0.##';
+
+            sumRow.getCell(7).value = '';
+            sumRow.getCell(8).value = Math.round(sSumTotal);
+            sumRow.getCell(8).font = { name: 'Times New Roman', size: 11, bold: true, color: { argb: 'FF16A34A' } };
+            sumRow.getCell(8).alignment = { horizontal: 'right', vertical: 'middle' };
+            sumRow.getCell(8).numFmt = '#,##0';
+
+            for (let c = 1; c <= maxCol; c++) {
+                sumRow.getCell(c).border = {
+                    top: { style: 'thin', color: { argb: 'FF9CA3AF' } },
+                    bottom: { style: 'double', color: { argb: 'FF1F2937' } }
+                };
+            }
+            currentRow++;
+
+            // Discount
+            if (parseFloat(orderData.discount_percent || 0) > 0 || parseFloat(orderData.discount_amount || 0) > 0) {
+                const discountRow = worksheet.getRow(currentRow);
+                discountRow.height = 22;
+                worksheet.mergeCells(currentRow, 1, currentRow, 7);
+                discountRow.getCell(1).value = `Chiết khấu (${parseFloat(orderData.discount_percent || 0)}%):`;
+                discountRow.getCell(1).font = { name: 'Times New Roman', size: 11, bold: true };
+                discountRow.getCell(1).alignment = { horizontal: 'right', vertical: 'middle' };
+
+                discountRow.getCell(8).value = -Math.round(parseFloat(orderData.discount_amount || 0) / 1000) * 1000;
+                discountRow.getCell(8).font = { name: 'Times New Roman', size: 11, bold: true, color: { argb: 'FFDC2626' } };
+                discountRow.getCell(8).numFmt = '#,##0';
+                discountRow.getCell(8).alignment = { horizontal: 'right', vertical: 'middle' };
+
+                for (let c = 1; c <= maxCol; c++) {
+                    discountRow.getCell(c).border = {
+                        top: { style: 'thin', color: { argb: 'FF9CA3AF' } },
+                        bottom: { style: 'thin', color: { argb: 'FF9CA3AF' } }
+                    };
+                }
+                currentRow++;
+            }
+
+            // VAT
+            if (parseFloat(orderData.vat_percent || 0) > 0 || parseFloat(orderData.vat_amount || 0) > 0) {
+                const vatRow = worksheet.getRow(currentRow);
+                vatRow.height = 22;
+                worksheet.mergeCells(currentRow, 1, currentRow, 7);
+                vatRow.getCell(1).value = `VAT (${parseFloat(orderData.vat_percent || 0)}%):`;
+                vatRow.getCell(1).font = { name: 'Times New Roman', size: 11, bold: true };
+                vatRow.getCell(1).alignment = { horizontal: 'right', vertical: 'middle' };
+
+                vatRow.getCell(8).value = Math.round(parseFloat(orderData.vat_amount || 0) / 1000) * 1000;
+                vatRow.getCell(8).font = { name: 'Times New Roman', size: 11, bold: true };
+                vatRow.getCell(8).numFmt = '#,##0';
+                vatRow.getCell(8).alignment = { horizontal: 'right', vertical: 'middle' };
+
+                for (let c = 1; c <= maxCol; c++) {
+                    vatRow.getCell(c).border = {
+                        top: { style: 'thin', color: { argb: 'FF9CA3AF' } },
+                        bottom: { style: 'thin', color: { argb: 'FF9CA3AF' } }
+                    };
+                }
+                currentRow++;
+            }
+
+            // Additional Discount
+            if (parseFloat(orderData.additional_discount_percent || 0) > 0 || parseFloat(orderData.additional_discount_amount || 0) > 0) {
+                const addDiscountRow = worksheet.getRow(currentRow);
+                addDiscountRow.height = 22;
+                worksheet.mergeCells(currentRow, 1, currentRow, 7);
+                addDiscountRow.getCell(1).value = `Chiết khấu thêm (${parseFloat(orderData.additional_discount_percent || 0)}%):`;
+                addDiscountRow.getCell(1).font = { name: 'Times New Roman', size: 11, bold: true };
+                addDiscountRow.getCell(1).alignment = { horizontal: 'right', vertical: 'middle' };
+
+                addDiscountRow.getCell(8).value = -Math.round(parseFloat(orderData.additional_discount_amount || 0) / 1000) * 1000;
+                addDiscountRow.getCell(8).font = { name: 'Times New Roman', size: 11, bold: true, color: { argb: 'FFDC2626' } };
+                addDiscountRow.getCell(8).numFmt = '#,##0';
+                addDiscountRow.getCell(8).alignment = { horizontal: 'right', vertical: 'middle' };
+
+                for (let c = 1; c <= maxCol; c++) {
+                    addDiscountRow.getCell(c).border = {
+                        top: { style: 'thin', color: { argb: 'FF9CA3AF' } },
+                        bottom: { style: 'thin', color: { argb: 'FF9CA3AF' } }
+                    };
+                }
+                currentRow++;
+            }
+
+            // TỔNG THANH TOÁN
+            const remainRow = worksheet.getRow(currentRow);
+            remainRow.height = 22;
+            worksheet.mergeCells(currentRow, 1, currentRow, 7);
+            remainRow.getCell(1).value = "TỔNG THANH TOÁN:";
+            remainRow.getCell(1).font = { name: 'Times New Roman', size: 11, bold: true };
+            remainRow.getCell(1).alignment = { horizontal: 'right', vertical: 'middle' };
+
+            remainRow.getCell(8).value = Math.round(parseFloat(orderData.total_amount) / 1000) * 1000;
+            remainRow.getCell(8).font = { name: 'Times New Roman', size: 11, bold: true, color: { argb: 'FFDC2626' } };
+            remainRow.getCell(8).numFmt = '#,##0';
+            remainRow.getCell(8).alignment = { horizontal: 'right', vertical: 'middle' };
+
+            for (let c = 1; c <= maxCol; c++) {
+                remainRow.getCell(c).border = {
+                    top: { style: 'thin', color: { argb: 'FF9CA3AF' } },
+                    bottom: orderData.customer_debt_info ? { style: 'thin', color: { argb: 'FF9CA3AF' } } : { style: 'double', color: { argb: 'FF1F2937' } }
+                };
+            }
+            currentRow++;
+
+            currentRow = appendDebtSummary(currentRow, 8, 7, 8, null);
+            currentRow = appendSignaturesAndTerms(worksheet, currentRow, 8);
         }
 
         // Auto fit row heights by clearing custom heights, and ensure wrap text is enabled on all cells
         worksheet.eachRow((row) => {
-            row.height = null;
+            if (row.number > 12 && row.number < firstSignatureRow) {
+                row.height = null;
+            }
             row.eachCell({ includeEmpty: true }, (cell) => {
                 if (!cell.alignment) {
                     cell.alignment = {};
@@ -2193,22 +2651,30 @@ async function exportToExcel(customData = null, returnBlob = false) {
             });
         });
 
+        worksheet.getRow(1).height = 20;
+        worksheet.getRow(2).height = 20;
+        worksheet.getRow(3).height = 20;
+        worksheet.getRow(4).height = 20;
+
         // Specific manual auto-fit for merged customer row
         const custText = 'Khách hàng: ' + (orderData.customer_name || '');
         let custRowNumber = 8;
         let custMergedWidth = 96.5;
 
-        if (orderData.type === 'glass') {
+        if (isGlass) {
             custRowNumber = 9;
             custMergedWidth = 133.6;
-        } else if (orderData.type === 'min_late') {
+        } else if (isMinLateOrFlywood) {
             custRowNumber = 8;
             custMergedWidth = 176.3;
+        } else if (isService) {
+            custRowNumber = 8;
+            custMergedWidth = 90;
         }
 
         const custRowHeight = estimateRowHeight(custText, custMergedWidth);
         worksheet.getRow(custRowNumber).height = Math.max(18, custRowHeight);
-        if (orderData.type === 'glass') {
+        if (isGlass) {
             const worksheet2 = workbook.getWorksheet('Đặt kính');
             if (worksheet2) {
                 worksheet2.getRow(9).height = Math.max(18, custRowHeight);
@@ -2220,17 +2686,20 @@ async function exportToExcel(customData = null, returnBlob = false) {
         let addressRowNumber = 9;
         let addressMergedWidth = 96.5;
 
-        if (orderData.type === 'glass') {
+        if (isGlass) {
             addressRowNumber = 10;
             addressMergedWidth = 133.6;
-        } else if (orderData.type === 'min_late') {
+        } else if (isMinLateOrFlywood) {
             addressRowNumber = 9;
             addressMergedWidth = 176.3;
+        } else if (isService) {
+            addressRowNumber = 9;
+            addressMergedWidth = 90;
         }
 
         const addressRowHeight = estimateRowHeight(addressText, addressMergedWidth);
         worksheet.getRow(addressRowNumber).height = addressRowHeight;
-        if (orderData.type === 'glass') {
+        if (isGlass) {
             const worksheet2 = workbook.getWorksheet('Đặt kính');
             if (worksheet2) {
                 worksheet2.getRow(10).height = addressRowHeight;
@@ -2245,7 +2714,7 @@ async function exportToExcel(customData = null, returnBlob = false) {
         }
         
         const isNK = orderData.is_nhap_kho || (orderData.order_code && /[._-]?NK$/i.test(orderData.order_code));
-        const filePrefix = isNK ? 'Phieu_Nhap_Kho' : ((orderData.type === 'min_late' || orderData.type === 'Flywood') ? 'Lenh_San_Xuat' : 'Bao_Gia');
+        const filePrefix = isNK ? 'Phieu_Nhap_Kho' : (isMinLateOrFlywood ? 'Lenh_San_Xuat' : 'Bao_Gia');
         saveAs(blob, `${filePrefix}_${orderData.order_code}.xlsx`);
     } catch (error) {
         console.error("Export error", error);
