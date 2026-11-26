@@ -116,8 +116,9 @@ function getShortCustomerName(data, projectName) {
  * @param {Object} orderData   - Full order export data (window.orderExportData)
  * @param {Array}  suppliesData - Filtered supplies (each with their .items subset)
  * @param {string} filename    - Output .xlsx filename
+ * @param {boolean|null} includeDc - Có xuất kèm Sheet Stock boards (Kho DC) hay không. Mặc định tự động: false nếu là file phào, true nếu là file nesting thường.
  */
-async function generateNestingWorkbook(orderData, suppliesData, filename) {
+async function generateNestingWorkbook(orderData, suppliesData, filename, includeDc = null) {
     const hasItems = suppliesData.some(s => s.items && s.items.length > 0);
     if (!hasItems) {
         console.warn(`[Nesting] No items for "${filename}", skipping.`);
@@ -324,102 +325,107 @@ async function generateNestingWorkbook(orderData, suppliesData, filename) {
         });
     });
 
-    // Sheet 2: Stock boards (từ Kho DC)
-    const wsDc = wb.addWorksheet('Stock boards', {
-        views: [{ showGridLines: true }]
-    });
+    // Sheet 2: Stock boards (từ Kho DC) - Chỉ xuất cho file Nesting thường, BỎ ở file Phào
+    const isPhaoFile = filename.toLowerCase().includes('phao');
+    const shouldIncludeDc = (includeDc !== null) ? Boolean(includeDc) : !isPhaoFile;
 
-    // 6 cột theo chuẩn nesting: Material, Texture, Height, Width, Amount, Note
-    const dcCols = [
-        { col: 'A', width: 34 }, // Material
-        { col: 'B', width: 14 }, // Texture
-        { col: 'C', width: 14 }, // Height
-        { col: 'D', width: 14 }, // Width
-        { col: 'E', width: 14 }, // Amount
-        { col: 'F', width: 28 }, // Note
-    ];
-    dcCols.forEach(c => { wsDc.getColumn(c.col).width = c.width; });
-
-    // Dòng 1: Tiêu đề cột
-    const dcHeaders = [
-        'Material',
-        'Texture',
-        'Height',
-        'Width',
-        'Amount',
-        'Note'
-    ];
-    const r1Dc = wsDc.getRow(1);
-    r1Dc.height = 24;
-    dcHeaders.forEach((h, i) => {
-        const cell = r1Dc.getCell(i + 1);
-        cell.value = h;
-        cell.font = { name: 'Times New Roman', size: 11, bold: true };
-        cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
-        cell.fill = hdrFill;
-        cell.border = thinBorder;
-    });
-
-    const rawDcMatches = orderData.dc_stock_matches || [];
-    const seenCurDc = new Set();
-    const dcMatches = [];
-    rawDcMatches.forEach(m => {
-        const key = m.dc_id
-            ? `id_${m.dc_id}`
-            : `${m.dc_board_code}_${m.dc_height}_${m.dc_width}_${m.dc_location}_${m.dc_note || ''}`;
-        if (!seenCurDc.has(key)) {
-            seenCurDc.add(key);
-            dcMatches.push(m);
-        }
-    });
-    let curDcRow = 2;
-
-    if (dcMatches.length > 0) {
-        dcMatches.forEach(m => {
-            const row = wsDc.getRow(curDcRow);
-            row.height = 20;
-
-            // 1. Material
-            const matName = getMaterialName({ order_supply_code: m.supply_code, supply_name: m.supply_name }) || m.supply_name || '—';
-            row.getCell(1).value = matName;
-            row.getCell(1).alignment = { horizontal: 'left', vertical: 'middle' };
-
-            // 2. Texture: strictly 0 hoặc 2
-            const gdVal = (m.grain_direction === 2 || m.grain_direction === '2' || m.grain_direction === 'Vân dọc' || m.grain_direction === 'Vân ngang') ? 2 : 0;
-            row.getCell(2).value = gdVal;
-            row.getCell(2).alignment = { horizontal: 'center', vertical: 'middle' };
-
-            // 3. Height
-            row.getCell(3).value = parseInt(m.dc_height) || 0;
-            row.getCell(3).numFmt = '#,##0';
-            row.getCell(3).alignment = { horizontal: 'right', vertical: 'middle' };
-
-            // 4. Width
-            row.getCell(4).value = parseInt(m.dc_width) || 0;
-            row.getCell(4).numFmt = '#,##0';
-            row.getCell(4).alignment = { horizontal: 'right', vertical: 'middle' };
-
-            // 5. Amount
-            row.getCell(5).value = parseInt(m.dc_quantity) || 1;
-            row.getCell(5).numFmt = '#,##0';
-            row.getCell(5).alignment = { horizontal: 'center', vertical: 'middle' };
-
-            // 6. Note (kèm location nếu có để dễ nhận diện trong xưởng)
-            let noteVal = (m.dc_note || '').trim();
-            if (m.dc_location && m.dc_location !== '—' && m.dc_location.trim() !== '') {
-                noteVal = noteVal ? `[${m.dc_location.trim()}] ${noteVal}` : m.dc_location.trim();
-            }
-            row.getCell(6).value = noteVal;
-            row.getCell(6).alignment = { horizontal: 'left', vertical: 'middle' };
-
-            for (let c = 1; c <= 6; c++) {
-                const cell = row.getCell(c);
-                cell.font = { name: 'Times New Roman', size: 11 };
-                cell.border = thinBorder;
-            }
-
-            curDcRow++;
+    if (shouldIncludeDc) {
+        const wsDc = wb.addWorksheet('Stock boards', {
+            views: [{ showGridLines: true }]
         });
+
+        // 6 cột theo chuẩn nesting: Material, Texture, Height, Width, Amount, Note
+        const dcCols = [
+            { col: 'A', width: 34 }, // Material
+            { col: 'B', width: 14 }, // Texture
+            { col: 'C', width: 14 }, // Height
+            { col: 'D', width: 14 }, // Width
+            { col: 'E', width: 14 }, // Amount
+            { col: 'F', width: 28 }, // Note
+        ];
+        dcCols.forEach(c => { wsDc.getColumn(c.col).width = c.width; });
+
+        // Dòng 1: Tiêu đề cột
+        const dcHeaders = [
+            'Material',
+            'Texture',
+            'Height',
+            'Width',
+            'Amount',
+            'Note'
+        ];
+        const r1Dc = wsDc.getRow(1);
+        r1Dc.height = 24;
+        dcHeaders.forEach((h, i) => {
+            const cell = r1Dc.getCell(i + 1);
+            cell.value = h;
+            cell.font = { name: 'Times New Roman', size: 11, bold: true };
+            cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+            cell.fill = hdrFill;
+            cell.border = thinBorder;
+        });
+
+        const rawDcMatches = orderData.dc_stock_matches || [];
+        const seenCurDc = new Set();
+        const dcMatches = [];
+        rawDcMatches.forEach(m => {
+            const key = m.dc_id
+                ? `id_${m.dc_id}`
+                : `${m.dc_board_code}_${m.dc_height}_${m.dc_width}_${m.dc_location}_${m.dc_note || ''}`;
+            if (!seenCurDc.has(key)) {
+                seenCurDc.add(key);
+                dcMatches.push(m);
+            }
+        });
+        let curDcRow = 2;
+
+        if (dcMatches.length > 0) {
+            dcMatches.forEach(m => {
+                const row = wsDc.getRow(curDcRow);
+                row.height = 20;
+
+                // 1. Material
+                const matName = getMaterialName({ order_supply_code: m.supply_code, supply_name: m.supply_name }) || m.supply_name || '—';
+                row.getCell(1).value = matName;
+                row.getCell(1).alignment = { horizontal: 'left', vertical: 'middle' };
+
+                // 2. Texture: strictly 0 hoặc 2
+                const gdVal = (m.grain_direction === 2 || m.grain_direction === '2' || m.grain_direction === 'Vân dọc' || m.grain_direction === 'Vân ngang') ? 2 : 0;
+                row.getCell(2).value = gdVal;
+                row.getCell(2).alignment = { horizontal: 'center', vertical: 'middle' };
+
+                // 3. Height
+                row.getCell(3).value = parseInt(m.dc_height) || 0;
+                row.getCell(3).numFmt = '#,##0';
+                row.getCell(3).alignment = { horizontal: 'right', vertical: 'middle' };
+
+                // 4. Width
+                row.getCell(4).value = parseInt(m.dc_width) || 0;
+                row.getCell(4).numFmt = '#,##0';
+                row.getCell(4).alignment = { horizontal: 'right', vertical: 'middle' };
+
+                // 5. Amount
+                row.getCell(5).value = parseInt(m.dc_quantity) || 1;
+                row.getCell(5).numFmt = '#,##0';
+                row.getCell(5).alignment = { horizontal: 'center', vertical: 'middle' };
+
+                // 6. Note (kèm location nếu có để dễ nhận diện trong xưởng)
+                let noteVal = (m.dc_note || '').trim();
+                if (m.dc_location && m.dc_location !== '—' && m.dc_location.trim() !== '') {
+                    noteVal = noteVal ? `[${m.dc_location.trim()}] ${noteVal}` : m.dc_location.trim();
+                }
+                row.getCell(6).value = noteVal;
+                row.getCell(6).alignment = { horizontal: 'left', vertical: 'middle' };
+
+                for (let c = 1; c <= 6; c++) {
+                    const cell = row.getCell(c);
+                    cell.font = { name: 'Times New Roman', size: 11 };
+                    cell.border = thinBorder;
+                }
+
+                curDcRow++;
+            });
+        }
     }
 
     const buf = await wb.xlsx.writeBuffer();
@@ -479,8 +485,8 @@ async function exportNestingFiles(customData = null, returnBlobs = false) {
     const nestingFilename = `Nesting-${code}.xlsx`;
     const phaoFilename = `Nesting-Phao-${code}.xlsx`;
 
-    const nestingBlob = await generateNestingWorkbook(orderData, nestingSupplies, nestingFilename);
-    const phaoBlob = await generateNestingWorkbook(orderData, phaoSupplies, phaoFilename);
+    const nestingBlob = await generateNestingWorkbook(orderData, nestingSupplies, nestingFilename, true);
+    const phaoBlob = await generateNestingWorkbook(orderData, phaoSupplies, phaoFilename, false);
 
     if (returnBlobs) {
         const files = [];
@@ -574,8 +580,8 @@ async function exportManufactureNestingFiles(moCode, ordersData) {
     dummyOrder.dc_stock_matches = allDcMatches;
 
     const code = moCode || 'LSX';
-    const nestingBlob = await generateNestingWorkbook(dummyOrder, nestingSupplies, `Nesting-${code}.xlsx`);
-    const phaoBlob = await generateNestingWorkbook(dummyOrder, phaoSupplies, `Nesting-Phao-${code}.xlsx`);
+    const nestingBlob = await generateNestingWorkbook(dummyOrder, nestingSupplies, `Nesting-${code}.xlsx`, true);
+    const phaoBlob = await generateNestingWorkbook(dummyOrder, phaoSupplies, `Nesting-Phao-${code}.xlsx`, false);
 
     if (nestingBlob) {
         saveAs(nestingBlob, `Nesting-${code}.xlsx`);
@@ -732,7 +738,7 @@ async function exportBulkNestingFiles(ordersData, returnBlobs = false) {
             customer_company_name: acrylicOrders.length === 1 ? (acrylicOrders[0].customer_company_name || '') : '',
             customer_code: acrylicOrders.length === 1 ? (acrylicOrders[0].customer_code || '') : '',
             project_name: acrylicOrders.length === 1 ? (acrylicOrders[0].project_name || '') : 'Nhiều công trình',
-            dc_stock_matches: allDcMatches
+            dc_stock_matches: [] // Bỏ DC ở file phào
         };
 
         let phaoFilename = '';
@@ -747,7 +753,7 @@ async function exportBulkNestingFiles(ordersData, returnBlobs = false) {
             phaoFilename = `Nesting-Phao-Gop-${firstCode}_den_${lastCode}.xlsx`;
         }
 
-        const phaoBlob = await generateNestingWorkbook(dummyOrder, finalPhaoSupplies, phaoFilename);
+        const phaoBlob = await generateNestingWorkbook(dummyOrder, finalPhaoSupplies, phaoFilename, false);
         if (phaoBlob) {
             files.push({ fileName: phaoFilename, blob: phaoBlob });
         }

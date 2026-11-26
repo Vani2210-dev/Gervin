@@ -147,29 +147,43 @@
                 </button>
                 <div id="service-combo-dropdown-menu" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-neutral-200 py-2 z-50 divide-y divide-neutral-100 text-left">
                     @php
-                        $curType = $currentOrderType ?? 'min_late';
+                        $curRelationType = $acrylicOrder->relation_type ?? request('relation_type');
+                        $curType = (!empty($curRelationType) && in_array($curRelationType, ['rework', 'additional', 'warranty', 'reuse']))
+                            ? $curRelationType
+                            : ($currentOrderType ?? 'min_late');
+                        $labelMap = [
+                            'min_late'   => 'Lệnh SX (Min-late)',
+                            'acrylic'    => 'Acrylic',
+                            'Flywood'    => 'Flywood',
+                            'glass'      => 'Kính',
+                            'service'    => 'Dịch vụ & Vật tư',
+                            'rework'     => 'Đơn sửa tấm',
+                            'additional' => 'Đơn bổ sung',
+                            'warranty'   => 'Đơn bảo hành',
+                            'reuse'      => 'Đơn tận dụng',
+                        ];
                         $curTypeCombos = $serviceCombos->filter(fn($c) => $c->order_type === $curType);
                         $otherCombos = $serviceCombos->filter(fn($c) => $c->order_type !== $curType);
                     @endphp
                     @if($curTypeCombos->count() > 0)
                         <div class="px-3 py-1 text-[11px] font-bold text-neutral-400 uppercase tracking-wider">
-                            Dành cho {{ $curType }}
+                            Dành cho {{ $labelMap[$curType] ?? $curType }}
                         </div>
                         <div class="py-1">
                             @foreach($curTypeCombos as $combo)
                                 <button type="button" onclick="applyServiceCombo({{ $combo->id }})" class="w-full text-left px-3 py-2 hover:bg-purple-50 flex items-start gap-2.5 transition-colors group">
                                     <iconify-icon icon="lucide:sparkles" class="text-base text-purple-500 mt-0.5 shrink-0"></iconify-icon>
                                     <div class="flex-1 min-w-0">
-                                        <div class="text-xs font-bold text-neutral-800 group-hover:text-purple-700 flex items-center gap-1.5">
-                                            <span class="truncate">{{ $combo->name }}</span>
-                                            @if($combo->is_default)
-                                                <span class="text-[10px] bg-emerald-100 text-emerald-700 font-semibold px-1.5 py-0.2 rounded shrink-0">Mặc định</span>
-                                            @endif
-                                        </div>
-                                        @if($combo->description)
-                                            <div class="text-[11px] text-neutral-500 truncate">{{ $combo->description }}</div>
-                                        @endif
-                                        <div class="text-[10px] text-neutral-400 mt-0.5">{{ count($combo->items ?? []) }} hạng mục</div>
+                                         <div class="text-xs font-bold text-neutral-800 group-hover:text-purple-700 flex items-center gap-1.5">
+                                             <span class="truncate">{{ $combo->name }}</span>
+                                             @if($combo->is_default)
+                                                 <span class="text-[10px] bg-emerald-100 text-emerald-700 font-semibold px-1.5 py-0.2 rounded shrink-0">Mặc định</span>
+                                             @endif
+                                         </div>
+                                         @if($combo->description)
+                                             <div class="text-[11px] text-neutral-500 truncate">{{ $combo->description }}</div>
+                                         @endif
+                                         <div class="text-[10px] text-neutral-400 mt-0.5">{{ count($combo->items ?? []) }} hạng mục</div>
                                     </div>
                                 </button>
                             @endforeach
@@ -185,11 +199,11 @@
                                 <button type="button" onclick="applyServiceCombo({{ $combo->id }})" class="w-full text-left px-3 py-2 hover:bg-neutral-50 flex items-start gap-2.5 transition-colors group">
                                     <iconify-icon icon="lucide:box" class="text-base text-neutral-400 mt-0.5 shrink-0"></iconify-icon>
                                     <div class="flex-1 min-w-0">
-                                        <div class="text-xs font-semibold text-neutral-700 group-hover:text-primary-700 flex items-center gap-1.5">
-                                            <span class="truncate">{{ $combo->name }}</span>
-                                            <span class="text-[10px] text-neutral-400">({{ $combo->order_type }})</span>
-                                        </div>
-                                        <div class="text-[10px] text-neutral-400 mt-0.5">{{ count($combo->items ?? []) }} hạng mục</div>
+                                         <div class="text-xs font-semibold text-neutral-700 group-hover:text-primary-700 flex items-center gap-1.5">
+                                             <span class="truncate">{{ $combo->name }}</span>
+                                             <span class="text-[10px] text-neutral-400">({{ $labelMap[$combo->order_type] ?? $combo->order_type }})</span>
+                                         </div>
+                                         <div class="text-[10px] text-neutral-400 mt-0.5">{{ count($combo->items ?? []) }} hạng mục</div>
                                     </div>
                                 </button>
                             @endforeach
@@ -936,7 +950,7 @@ function togglePaymentDetailsSection() {
     }
 
     if (container && container.querySelectorAll('tr.payment-detail-row').length === 0) {
-        const curType = @json($currentOrderType ?? 'min_late');
+        const curType = @json($curType);
         const defaultCombo = (window.orderServiceCombosData || []).find(c => c.order_type === curType && c.is_default);
         if (defaultCombo && typeof applyServiceCombo === 'function') {
             applyServiceCombo(defaultCombo.id, false);

@@ -64,7 +64,7 @@
             </div>
 
             {{-- Visual Flow Diagram Canvas Area --}}
-            <div class="p-6 md:p-8 bg-gradient-to-b from-sky-50/30 via-white to-sky-50/20 relative overflow-x-auto min-w-[1000px]">
+            <div id="workflow-canvas" class="p-6 md:p-8 bg-gradient-to-b from-sky-50/30 via-white to-sky-50/20 relative overflow-x-auto min-w-[1000px]">
                 
                 {{-- Decorative background dotted grid --}}
                 <div class="absolute inset-0 opacity-[0.04] pointer-events-none" style="background-image: radial-gradient(#0284c7 1.5px, transparent 1.5px); background-size: 24px 24px;"></div>
@@ -79,12 +79,28 @@
                 </div>
 
                 {{-- SVG Pipeline Connectors Overlay --}}
-                <svg class="absolute inset-0 w-full h-full pointer-events-none z-0" xmlns="http://www.w3.org/2000/svg">
+                <svg id="workflow-svg" class="absolute inset-0 pointer-events-none z-0" style="overflow: visible;" xmlns="http://www.w3.org/2000/svg">
                     <defs>
-                        <marker id="arrow-sky" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                            <path d="M 0 1 L 10 5 L 0 9 z" fill="#0284c7" />
+                        <marker id="arrow-sky" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                            <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#0284c7" />
+                        </marker>
+                        <marker id="arrow-indigo" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                            <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#6366f1" />
+                        </marker>
+                        <marker id="arrow-rose" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                            <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#e11d48" />
+                        </marker>
+                        <marker id="arrow-purple" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                            <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#9333ea" />
+                        </marker>
+                        <marker id="arrow-emerald" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                            <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#059669" />
+                        </marker>
+                        <marker id="arrow-amber" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                            <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#d97706" />
                         </marker>
                     </defs>
+                    <g id="workflow-paths-group"></g>
                 </svg>
 
                 {{-- MAIN WORKFLOW GRID: 5 Columns with 3 Vertical Zones (Top, Center Pipeline, Bottom) --}}
@@ -93,7 +109,7 @@
                     {{-- ================= COLUMN 1 ================= --}}
                     <div class="flex flex-col justify-between py-2">
                         {{-- 1. Lệnh sản xuất (Top) --}}
-                        <div onclick="openNodeDetail('lenh_sx')" 
+                        <div id="card-lenh-sx" onclick="openNodeDetail('lenh_sx')" 
                              class="group cursor-pointer bg-white rounded-2xl p-4 border-2 border-neutral-200 hover:border-primary-500 hover:shadow-xl transition-all duration-200 relative flex flex-col items-center text-center shadow-sm">
                             <span class="absolute -top-3 left-3 px-2 py-0.5 rounded-full text-[10px] font-black bg-primary-100 text-primary-700 border border-primary-300 shadow-2xs">BƯỚC 1</span>
                             
@@ -112,15 +128,8 @@
                             </span>
                         </div>
 
-                        {{-- Vertical Connector Pipeline indicator --}}
-                        <div class="h-16 flex items-center justify-center">
-                            <div class="w-1 h-full bg-sky-400/80 rounded-full relative">
-                                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-sky-500 rounded-full border-2 border-white shadow-sm"></div>
-                            </div>
-                        </div>
-
                         {{-- 2. Lệnh lắp ráp, tháo dỡ (Bottom) --}}
-                        <div onclick="openNodeDetail('lap_rap')" 
+                        <div id="card-lap-rap" onclick="openNodeDetail('lap_rap')" 
                              class="group cursor-pointer bg-white rounded-2xl p-4 border-2 border-neutral-200 hover:border-indigo-500 hover:shadow-xl transition-all duration-200 relative flex flex-col items-center text-center shadow-sm">
                             <span class="absolute -top-3 left-3 px-2 py-0.5 rounded-full text-[10px] font-black bg-indigo-100 text-indigo-700 border border-indigo-300 shadow-2xs">ĐỊNH MỨC</span>
                             
@@ -145,7 +154,7 @@
                         {{-- Top Pair: Xuất kho & Chuyển kho --}}
                         <div class="grid grid-cols-2 gap-3">
                             {{-- 3. Xuất kho --}}
-                            <div onclick="openNodeDetail('xuat_kho')" 
+                            <div id="card-xuat-kho" onclick="openNodeDetail('xuat_kho')" 
                                  class="group cursor-pointer bg-white rounded-2xl p-3 border-2 border-neutral-200 hover:border-rose-500 hover:shadow-lg transition-all duration-200 flex flex-col items-center text-center shadow-sm">
                                 <div class="w-13 h-13 rounded-xl bg-gradient-to-tr from-rose-600 to-rose-400 text-white flex items-center justify-center shadow-md mb-1.5 group-hover:scale-105 transition-transform">
                                     <iconify-icon icon="solar:export-bold" class="text-2xl"></iconify-icon>
@@ -156,7 +165,7 @@
                             </div>
 
                             {{-- 4. Chuyển kho --}}
-                            <div onclick="openNodeDetail('chuyen_kho')" 
+                            <div id="card-chuyen-kho" onclick="openNodeDetail('chuyen_kho')" 
                                  class="group cursor-pointer bg-white rounded-2xl p-3 border-2 border-neutral-200 hover:border-purple-500 hover:shadow-lg transition-all duration-200 flex flex-col items-center text-center shadow-sm">
                                 <div class="w-13 h-13 rounded-xl bg-gradient-to-tr from-purple-600 to-purple-400 text-white flex items-center justify-center shadow-md mb-1.5 group-hover:scale-105 transition-transform">
                                     <iconify-icon icon="solar:transfer-horizontal-bold" class="text-2xl"></iconify-icon>
@@ -167,18 +176,10 @@
                             </div>
                         </div>
 
-                        {{-- Central Bus Connection Bar --}}
-                        <div class="h-16 flex items-center justify-center relative">
-                            <div class="w-full h-1 bg-sky-400/90 rounded-full relative">
-                                <div class="absolute left-1/4 -translate-y-1/2 w-2.5 h-2.5 bg-sky-600 rounded-full border-2 border-white"></div>
-                                <div class="absolute left-3/4 -translate-y-1/2 w-2.5 h-2.5 bg-sky-600 rounded-full border-2 border-white"></div>
-                            </div>
-                        </div>
-
                         {{-- Bottom Pair: Nhập kho & Tính giá xuất kho --}}
                         <div class="grid grid-cols-2 gap-3">
                             {{-- 5. Nhập kho --}}
-                            <div onclick="openNodeDetail('nhap_kho')" 
+                            <div id="card-nhap-kho" onclick="openNodeDetail('nhap_kho')" 
                                  class="group cursor-pointer bg-white rounded-2xl p-3 border-2 border-neutral-200 hover:border-emerald-500 hover:shadow-lg transition-all duration-200 flex flex-col items-center text-center shadow-sm">
                                 <div class="w-13 h-13 rounded-xl bg-gradient-to-tr from-emerald-600 to-emerald-400 text-white flex items-center justify-center shadow-md mb-1.5 group-hover:scale-105 transition-transform">
                                     <iconify-icon icon="solar:import-bold" class="text-2xl"></iconify-icon>
@@ -189,7 +190,7 @@
                             </div>
 
                             {{-- 6. Tính giá xuất kho --}}
-                            <div onclick="openNodeDetail('tinh_gia')" 
+                            <div id="card-tinh-gia" onclick="openNodeDetail('tinh_gia')" 
                                  class="group cursor-pointer bg-white rounded-2xl p-3 border-2 border-neutral-200 hover:border-amber-500 hover:shadow-lg transition-all duration-200 flex flex-col items-center text-center shadow-sm">
                                 <div class="w-13 h-13 rounded-xl bg-gradient-to-tr from-amber-600 to-amber-400 text-white flex items-center justify-center shadow-md mb-1.5 group-hover:scale-105 transition-transform">
                                     <iconify-icon icon="solar:calculator-minimalistic-bold" class="text-2xl"></iconify-icon>
@@ -203,7 +204,7 @@
 
                     {{-- ================= COLUMN 3: THỦ KHO NHẬP/XUẤT KHO (Center Spine) ================= --}}
                     <div class="flex flex-col justify-center items-center py-2 relative">
-                        <div onclick="openNodeDetail('thu_kho')" 
+                        <div id="card-thu-kho" onclick="openNodeDetail('thu_kho')" 
                              class="group cursor-pointer bg-white rounded-2xl p-5 border-2 border-sky-400 hover:border-sky-600 hover:shadow-2xl transition-all duration-200 relative flex flex-col items-center text-center w-full shadow-md z-10">
                             <span class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full text-[10px] font-black bg-sky-100 text-sky-800 border border-sky-300 shadow-2xs whitespace-nowrap">GHI SỔ KHO</span>
                             
@@ -224,17 +225,10 @@
                     </div>
 
                     {{-- ================= COLUMN 4: THỦ KHO (Kiểm kê kho) ================= --}}
-                    <div class="flex flex-col justify-end items-center py-2 relative">
-                        {{-- Top spacer with connector pipeline dropping to bottom --}}
-                        <div class="h-48 flex items-center justify-center relative w-full mb-4">
-                            <div class="w-1 h-full bg-sky-400/80 rounded-full relative">
-                                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-amber-500 rounded-full border-2 border-white shadow-sm"></div>
-                            </div>
-                        </div>
-
-                        {{-- 8. Kiểm kê kho (Bottom) --}}
-                        <div onclick="openNodeDetail('kiem_ke')" 
-                             class="group cursor-pointer bg-white rounded-2xl p-4 border-2 border-neutral-200 hover:border-amber-500 hover:shadow-xl transition-all duration-200 relative flex flex-col items-center text-center w-full shadow-sm z-10">
+                    <div class="flex flex-col justify-center items-center py-2 relative">
+                        {{-- 8. Kiểm kê kho (Centered) --}}
+                        <div id="card-kiem-ke" onclick="openNodeDetail('kiem_ke')" 
+                             class="group cursor-pointer bg-white rounded-2xl p-5 border-2 border-neutral-200 hover:border-amber-500 hover:shadow-xl transition-all duration-200 relative flex flex-col items-center text-center w-full shadow-sm z-10">
                             <span class="absolute -top-3 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-300 shadow-2xs whitespace-nowrap">CÂN BẰNG TỒN</span>
                             
                             {{-- Visual Icon mimicking MISA clipboard with tally mark --}}
@@ -256,7 +250,7 @@
                     {{-- ================= COLUMN 5: KẾ TOÁN KHO (BÁO CÁO PHÂN TÍCH - GLOWING TARGET) ================= --}}
                     <div class="flex flex-col justify-center items-center py-2 relative">
                         {{-- 9. Báo cáo phân tích (Centered on Pipeline with Glowing Aureole) --}}
-                        <div onclick="openNodeDetail('bao_cao')" 
+                        <div id="card-bao-cao" onclick="openNodeDetail('bao_cao')" 
                              class="group cursor-pointer bg-gradient-to-b from-amber-50 via-white to-amber-50/40 rounded-2xl p-5 border-2 border-amber-400 hover:border-amber-500 hover:shadow-2xl transition-all duration-200 relative flex flex-col items-center text-center w-full shadow-lg ring-4 ring-amber-200/60 z-10">
                             <span class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full text-[10px] font-black bg-amber-500 text-white shadow-sm whitespace-nowrap uppercase tracking-wider">ĐÍCH ĐẾN CUỐI</span>
                             
@@ -904,5 +898,181 @@ document.addEventListener('keydown', function(e) {
         closeNodeDetail();
     }
 });
+
+// ================= DYNAMIC WORKFLOW CONNECTORS =================
+function drawWorkflowConnectors() {
+    const canvas = document.getElementById('workflow-canvas');
+    const svg = document.getElementById('workflow-svg');
+    const group = document.getElementById('workflow-paths-group');
+    if (!canvas || !svg || !group) return;
+
+    const cRect = canvas.getBoundingClientRect();
+    if (cRect.width === 0 || cRect.height === 0) return;
+
+    const sWidth = Math.max(canvas.scrollWidth, cRect.width);
+    const sHeight = Math.max(canvas.scrollHeight, cRect.height);
+    svg.style.width = sWidth + 'px';
+    svg.style.height = sHeight + 'px';
+    svg.setAttribute('viewBox', `0 0 ${sWidth} ${sHeight}`);
+
+    const getAnchors = (id) => {
+        const el = document.getElementById(id);
+        if (!el) return null;
+        const r = el.getBoundingClientRect();
+        const left = (r.left - cRect.left) + canvas.scrollLeft;
+        const top = (r.top - cRect.top) + canvas.scrollTop;
+        const width = r.width;
+        const height = r.height;
+        return {
+            x: left,
+            y: top,
+            w: width,
+            h: height,
+            centerX: left + width / 2,
+            centerY: top + height / 2,
+            left: { x: left, y: top + height / 2 },
+            right: { x: left + width, y: top + height / 2 },
+            top: { x: left + width / 2, y: top },
+            bottom: { x: left + width / 2, y: top + height },
+            leftOffset: (ratio) => ({ x: left, y: top + height * ratio }),
+            rightOffset: (ratio) => ({ x: left + width, y: top + height * ratio }),
+            topOffset: (ratio) => ({ x: left + width * ratio, y: top }),
+            bottomOffset: (ratio) => ({ x: left + width * ratio, y: top + height }),
+        };
+    };
+
+    const nLenhSx = getAnchors('card-lenh-sx');
+    const nLapRap = getAnchors('card-lap-rap');
+    const nXuatKho = getAnchors('card-xuat-kho');
+    const nChuyenKho = getAnchors('card-chuyen-kho');
+    const nNhapKho = getAnchors('card-nhap-kho');
+    const nTinhGia = getAnchors('card-tinh-gia');
+    const nThuKho = getAnchors('card-thu-kho');
+    const nKiemKe = getAnchors('card-kiem-ke');
+    const nBaoCao = getAnchors('card-bao-cao');
+
+    if (!nLenhSx || !nThuKho || !nBaoCao) return;
+
+    let svgHtml = '';
+
+    const drawCurve = (p1, p2, color, markerId, dash = false, strokeW = 2.5) => {
+        const dx = Math.max(25, Math.abs(p2.x - p1.x) * 0.5);
+        const d = `M ${p1.x} ${p1.y} C ${p1.x + dx} ${p1.y}, ${p2.x - dx} ${p2.y}, ${p2.x - 3} ${p2.y}`;
+        const dashAttr = dash ? 'stroke-dasharray="4,4"' : '';
+        return `
+            <circle cx="${p1.x}" cy="${p1.y}" r="3" fill="${color}" stroke="#fff" stroke-width="1.5" />
+            <path d="${d}" fill="none" stroke="${color}" stroke-width="${strokeW}" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#${markerId})" ${dashAttr} />
+        `;
+    };
+
+    // 1. Lệnh sản xuất -> Xuất kho (Bước 1 -> Bước 3)
+    if (nLenhSx && nXuatKho) {
+        svgHtml += drawCurve(nLenhSx.right, nXuatKho.left, '#0284c7', 'arrow-sky', false, 2.5);
+    }
+
+    // 2. Lệnh lắp ráp -> Nhập kho (Bước 2 -> Bước 5)
+    if (nLapRap && nNhapKho) {
+        svgHtml += drawCurve(nLapRap.right, nNhapKho.left, '#6366f1', 'arrow-indigo', false, 2.5);
+    }
+
+    // Hành lang trung tâm giữa hàng trên và hàng dưới ở Cột 2
+    const corridorY = nXuatKho && nNhapKho ? (nXuatKho.bottom.y + nNhapKho.top.y) / 2 : nThuKho.left.y;
+
+    // 3. Xuất kho -> Thủ kho (chạy xuống hành lang giữa rồi rẽ vào Thủ kho)
+    if (nXuatKho && nThuKho) {
+        const p1 = nXuatKho.bottom;
+        const p2 = nThuKho.leftOffset(0.35);
+        const midY = corridorY - 12;
+        const d = `M ${p1.x} ${p1.y} C ${p1.x} ${midY}, ${p1.x + 25} ${midY}, ${p1.x + 40} ${midY} L ${p2.x - 35} ${midY} C ${p2.x - 15} ${midY}, ${p2.x - 5} ${p2.y}, ${p2.x - 3} ${p2.y}`;
+        svgHtml += `
+            <circle cx="${p1.x}" cy="${p1.y}" r="3" fill="#e11d48" stroke="#fff" stroke-width="1.5" />
+            <path d="${d}" fill="none" stroke="#e11d48" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-rose)" />
+        `;
+    }
+
+    // 4. Chuyển kho -> Thủ kho (Bước 4 -> Bước 7)
+    if (nChuyenKho && nThuKho) {
+        svgHtml += drawCurve(nChuyenKho.right, nThuKho.leftOffset(0.20), '#9333ea', 'arrow-purple', false, 2.5);
+    }
+
+    // 5. Nhập kho -> Thủ kho (chạy lên hành lang giữa rồi rẽ vào Thủ kho)
+    if (nNhapKho && nThuKho) {
+        const p1 = nNhapKho.top;
+        const p2 = nThuKho.leftOffset(0.65);
+        const midY = corridorY + 12;
+        const d = `M ${p1.x} ${p1.y} C ${p1.x} ${midY}, ${p1.x + 25} ${midY}, ${p1.x + 40} ${midY} L ${p2.x - 35} ${midY} C ${p2.x - 15} ${midY}, ${p2.x - 5} ${p2.y}, ${p2.x - 3} ${p2.y}`;
+        svgHtml += `
+            <circle cx="${p1.x}" cy="${p1.y}" r="3" fill="#059669" stroke="#fff" stroke-width="1.5" />
+            <path d="${d}" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-emerald)" />
+        `;
+    }
+
+    // 6. Thủ kho -> Tính giá xuất kho (Thủ kho ghi sổ -> Kế toán tính giá vốn)
+    if (nThuKho && nTinhGia) {
+        const p1 = nThuKho.leftOffset(0.80);
+        const p2 = { x: nTinhGia.top.x, y: nTinhGia.top.y - 3 };
+        const d = `M ${p1.x} ${p1.y} C ${p1.x - 35} ${p1.y}, ${p2.x + 25} ${p2.y - 20}, ${p2.x} ${p2.y}`;
+        svgHtml += `
+            <circle cx="${p1.x}" cy="${p1.y}" r="3" fill="#d97706" stroke="#fff" stroke-width="1.5" />
+            <path d="${d}" fill="none" stroke="#d97706" stroke-width="2" stroke-dasharray="4,4" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-amber)" />
+        `;
+    }
+
+    // 7. TRỤC CHÍNH: Thủ kho -> Kiểm kê kho (Đường thẳng ngang, dày 3px)
+    if (nThuKho && nKiemKe) {
+        const p1 = nThuKho.right;
+        const p2 = nKiemKe.left;
+        const d = `M ${p1.x} ${p1.y} L ${p2.x - 3} ${p2.y}`;
+        svgHtml += `
+            <circle cx="${p1.x}" cy="${p1.y}" r="4" fill="#0284c7" stroke="#fff" stroke-width="2" />
+            <path d="${d}" fill="none" stroke="#0284c7" stroke-width="3" stroke-linecap="round" marker-end="url(#arrow-sky)" />
+        `;
+    }
+
+    // 8. TRỤC CHÍNH: Kiểm kê kho -> Báo cáo phân tích (Đường thẳng ngang, dày 3px)
+    if (nKiemKe && nBaoCao) {
+        const p1 = nKiemKe.right;
+        const p2 = nBaoCao.left;
+        const d = `M ${p1.x} ${p1.y} L ${p2.x - 3} ${p2.y}`;
+        svgHtml += `
+            <circle cx="${p1.x}" cy="${p1.y}" r="4" fill="#d97706" stroke="#fff" stroke-width="2" />
+            <path d="${d}" fill="none" stroke="#d97706" stroke-width="3" stroke-linecap="round" marker-end="url(#arrow-amber)" />
+        `;
+    }
+
+    // 9. Tính giá xuất kho -> Báo cáo phân tích (Cung lượn đáy dẫn vào báo cáo)
+    if (nTinhGia && nBaoCao) {
+        const p1 = nTinhGia.right;
+        const p2 = nBaoCao.bottomOffset(0.35);
+        const arcY = Math.max(nTinhGia.bottom.y, nBaoCao.bottom.y) + 20;
+        const d = `M ${p1.x} ${p1.y} C ${p1.x + 35} ${p1.y}, ${p1.x + 50} ${arcY}, ${p1.x + 70} ${arcY} L ${p2.x - 35} ${arcY} C ${p2.x - 15} ${arcY}, ${p2.x} ${p2.y + 15}, ${p2.x} ${p2.y + 3}`;
+        svgHtml += `
+            <circle cx="${p1.x}" cy="${p1.y}" r="3" fill="#d97706" stroke="#fff" stroke-width="1.5" />
+            <path d="${d}" fill="none" stroke="#d97706" stroke-width="2" stroke-dasharray="4,4" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-amber)" />
+        `;
+    }
+
+    group.innerHTML = svgHtml;
+}
+
+// Khởi chạy vẽ sơ đồ và gắn watcher resize phản hồi thời gian thực
+document.addEventListener('DOMContentLoaded', function() {
+    drawWorkflowConnectors();
+    setTimeout(drawWorkflowConnectors, 80);
+    setTimeout(drawWorkflowConnectors, 300);
+});
+window.addEventListener('load', function() {
+    drawWorkflowConnectors();
+    setTimeout(drawWorkflowConnectors, 100);
+});
+window.addEventListener('resize', drawWorkflowConnectors);
+
+const canvasEl = document.getElementById('workflow-canvas');
+if (canvasEl && window.ResizeObserver) {
+    new ResizeObserver(() => {
+        drawWorkflowConnectors();
+    }).observe(canvasEl);
+}
+setTimeout(drawWorkflowConnectors, 50);
 </script>
 @endsection

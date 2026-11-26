@@ -2323,6 +2323,12 @@ class OrderController extends Controller
             $totalPlates = 0;
             $totalStraightLength = 0;
             $totalBeveledLength = 0;
+            $totalVatMoiLength = 0;
+            $totalBanRong40_59 = 0;
+            $totalBanRong17_39 = 0;
+            $totalBanRong25_35 = 0;
+            $totalBeveledHandle = 0;
+            $totalCnc = 0;
 
             foreach ($selectedPieces as $pieceInfo) {
                 $itemId = is_array($pieceInfo) ? ($pieceInfo['item_id'] ?? null) : $pieceInfo;
@@ -2467,62 +2473,124 @@ class OrderController extends Controller
                 $totalPlates++;
                 $totalStraightLength += $straightLength;
                 $totalBeveledLength += $beveledLength;
+                $totalVatMoiLength += $vatMoiLength;
+                $totalBanRong40_59 += $banRong40_59;
+                $totalBanRong17_39 += $banRong17_39;
+                $totalBanRong25_35 += $banRong25_35;
+                $totalBeveledHandle += $beveledHandle;
+                $totalCnc += $cnc;
             }
 
-            // Lấy trực tiếp thông tin tên nội dung, đơn vị, đơn giá từ database (bảng minlate_prices)
-            $lic1Db = \App\Models\MinLatePrice::where('code', 'LIC1')->first();
-            $ml48Db = \App\Models\MinLatePrice::where('code', 'ML48')->first();
-            $ml49Db = \App\Models\MinLatePrice::where('code', 'ML49')->first();
+            // Lấy tổ hợp dịch vụ được cấu hình cho đơn sửa tấm (rework) từ Cài đặt tổ hợp (minlate-prices?tab=combos)
+            $reworkCombo = \App\Models\OrderServiceCombo::where('order_type', 'rework')
+                ->where('is_default', true)
+                ->first();
+            if (!$reworkCombo) {
+                $reworkCombo = \App\Models\OrderServiceCombo::where('order_type', 'rework')->first();
+            }
 
-            $ml48Qty = round($totalStraightLength * 1.05, 2);
-            $ml49Qty = round($totalBeveledLength * 1.05, 2);
+            $totalAmount = 0;
 
-            $lic1Name  = $lic1Db ? $lic1Db->product_name : 'Gia công cắt dán sửa tấm';
-            $lic1Unit  = $lic1Db ? ($lic1Db->unit ?: 'Tấm') : 'Tấm';
-            $lic1Price = $lic1Db ? (float)$lic1Db->price : 10000;
-            $lic1Total = round($totalPlates * $lic1Price);
+            if ($reworkCombo && !empty($reworkCombo->items) && is_array($reworkCombo->items)) {
+                $colTotals = [
+                    'A' => 0,
+                    'B' => 0,
+                    'C' => 0,
+                    'D' => $totalPlates,
+                    'E' => $totalStraightLength,
+                    'F' => $totalBeveledLength,
+                    'G' => $totalVatMoiLength,
+                    'H' => $totalBanRong40_59,
+                    'I' => $totalBanRong17_39,
+                    'J' => $totalBanRong25_35,
+                    'K' => $totalBeveledHandle,
+                    'L' => $totalCnc,
+                ];
 
-            $ml48Name  = $ml48Db ? $ml48Db->product_name : 'Dán chỉ thẳng';
-            $ml48Unit  = $ml48Db ? ($ml48Db->unit ?: 'm') : 'm';
-            $ml48Price = $ml48Db ? (float)$ml48Db->price : 18000;
-            $ml48Total = round($ml48Qty * $ml48Price);
+                foreach ($reworkCombo->items as $item) {
+                    $name = trim($item['name'] ?? '');
+                    if ($name === '') continue;
 
-            $ml49Name  = $ml49Db ? $ml49Db->product_name : 'Dán chỉ vát';
-            $ml49Unit  = $ml49Db ? ($ml49Db->unit ?: 'm') : 'm';
-            $ml49Price = $ml49Db ? (float)$ml49Db->price : 25000;
-            $ml49Total = round($ml49Qty * $ml49Price);
+                    $formula = trim($item['formula'] ?? ($item['quantity'] ?? ''));
+                    $qty = \App\Models\OrderServiceCombo::evaluateFormulaString($formula, $colTotals, 1.0);
+                    $price = isset($item['price']) && is_numeric($item['price']) ? (float)$item['price'] : 0;
+                    $priceOnly = isset($item['price_only']) && is_numeric($item['price_only']) ? (float)$item['price_only'] : 0;
+                    $rowTotal = round($qty * $price);
 
-            \App\Models\PaymentDetail::create([
-                'order_id'   => $reworkOrder->id,
-                'name'       => $lic1Name,
-                'unit'       => $lic1Unit,
-                'quantity'   => $totalPlates,
-                'price'      => $lic1Price,
-                'price_only' => 0,
-                'total'      => $lic1Total,
-            ]);
+                    \App\Models\PaymentDetail::create([
+                        'order_id'   => $reworkOrder->id,
+                        'name'       => $name,
+                        'unit'       => $item['unit'] ?? '',
+                        'quantity'   => $qty,
+                        'price'      => $price,
+                        'price_only' => $priceOnly,
+                        'formula'    => !empty($formula) ? ['quantity' => $formula] : null,
+                        'total'      => $rowTotal,
+                    ]);
 
-            \App\Models\PaymentDetail::create([
-                'order_id'   => $reworkOrder->id,
-                'name'       => $ml48Name,
-                'unit'       => $ml48Unit,
-                'quantity'   => $ml48Qty,
-                'price'      => $ml48Price,
-                'price_only' => 0,
-                'total'      => $ml48Total,
-            ]);
+                    $totalAmount += $rowTotal;
+                }
+            } else {
+                // Fallback nếu chưa tạo tổ hợp cho đơn sửa tấm: Lấy theo LIC1, ML48, ML49
+                $lic1Db = \App\Models\MinLatePrice::where('code', 'LIC1')->first();
+                $ml48Db = \App\Models\MinLatePrice::where('code', 'ML48')->first();
+                $ml49Db = \App\Models\MinLatePrice::where('code', 'ML49')->first();
 
-            \App\Models\PaymentDetail::create([
-                'order_id'   => $reworkOrder->id,
-                'name'       => $ml49Name,
-                'unit'       => $ml49Unit,
-                'quantity'   => $ml49Qty,
-                'price'      => $ml49Price,
-                'price_only' => 0,
-                'total'      => $ml49Total,
-            ]);
+                $ml48Qty = round($totalStraightLength * 1.05, 2);
+                $ml49Qty = round($totalBeveledLength * 1.05, 2);
 
-            $reworkOrder->total_amount = $lic1Total + $ml48Total + $ml49Total;
+                $lic1Name  = $lic1Db ? $lic1Db->product_name : 'Gia công cắt dán sửa tấm';
+                $lic1Unit  = $lic1Db ? ($lic1Db->unit ?: 'Tấm') : 'Tấm';
+                $lic1Price = $lic1Db ? (float)$lic1Db->price : 10000;
+                $lic1Total = round($totalPlates * $lic1Price);
+
+                $ml48Name  = $ml48Db ? $ml48Db->product_name : 'Dán chỉ thẳng';
+                $ml48Unit  = $ml48Db ? ($ml48Db->unit ?: 'm') : 'm';
+                $ml48Price = $ml48Db ? (float)$ml48Db->price : 18000;
+                $ml48Total = round($ml48Qty * $ml48Price);
+
+                $ml49Name  = $ml49Db ? $ml49Db->product_name : 'Dán chỉ vát';
+                $ml49Unit  = $ml49Db ? ($ml49Db->unit ?: 'm') : 'm';
+                $ml49Price = $ml49Db ? (float)$ml49Db->price : 25000;
+                $ml49Total = round($ml49Qty * $ml49Price);
+
+                \App\Models\PaymentDetail::create([
+                    'order_id'   => $reworkOrder->id,
+                    'name'       => $lic1Name,
+                    'unit'       => $lic1Unit,
+                    'quantity'   => $totalPlates,
+                    'price'      => $lic1Price,
+                    'price_only' => 0,
+                    'formula'    => ['quantity' => '=D'],
+                    'total'      => $lic1Total,
+                ]);
+
+                \App\Models\PaymentDetail::create([
+                    'order_id'   => $reworkOrder->id,
+                    'name'       => $ml48Name,
+                    'unit'       => $ml48Unit,
+                    'quantity'   => $ml48Qty,
+                    'price'      => $ml48Price,
+                    'price_only' => 0,
+                    'formula'    => ['quantity' => '=E*1.05'],
+                    'total'      => $ml48Total,
+                ]);
+
+                \App\Models\PaymentDetail::create([
+                    'order_id'   => $reworkOrder->id,
+                    'name'       => $ml49Name,
+                    'unit'       => $ml49Unit,
+                    'quantity'   => $ml49Qty,
+                    'price'      => $ml49Price,
+                    'price_only' => 0,
+                    'formula'    => ['quantity' => '=F*1.05'],
+                    'total'      => $ml49Total,
+                ]);
+
+                $totalAmount = $lic1Total + $ml48Total + $ml49Total;
+            }
+
+            $reworkOrder->total_amount = $totalAmount;
             $reworkOrder->save();
 
             return $reworkOrder;
@@ -2773,6 +2841,40 @@ class OrderController extends Controller
                     \App\Models\GlassOrderItem::create($itemData);
                 } else {
                     \App\Models\AcrylicOrderItem::create($itemData);
+                }
+            }
+
+            // Tự động nạp tổ hợp mặc định cho đơn bổ sung nếu đã cấu hình trong Cài đặt tổ hợp
+            $additionalCombo = \App\Models\OrderServiceCombo::where('order_type', 'additional')
+                ->where('is_default', true)
+                ->first();
+            if ($additionalCombo && !empty($additionalCombo->items) && is_array($additionalCombo->items)) {
+                $totalPlates = count($selectedItemIds);
+                $colTotals = ['D' => $totalPlates];
+                $addTotal = 0;
+                foreach ($additionalCombo->items as $item) {
+                    $name = trim($item['name'] ?? '');
+                    if ($name === '') continue;
+                    $formula = trim($item['formula'] ?? ($item['quantity'] ?? ''));
+                    $qty = \App\Models\OrderServiceCombo::evaluateFormulaString($formula, $colTotals, 1.0);
+                    $price = isset($item['price']) && is_numeric($item['price']) ? (float)$item['price'] : 0;
+                    $priceOnly = isset($item['price_only']) && is_numeric($item['price_only']) ? (float)$item['price_only'] : 0;
+                    $rowTotal = round($qty * $price);
+                    \App\Models\PaymentDetail::create([
+                        'order_id'   => $additionalOrder->id,
+                        'name'       => $name,
+                        'unit'       => $item['unit'] ?? '',
+                        'quantity'   => $qty,
+                        'price'      => $price,
+                        'price_only' => $priceOnly,
+                        'formula'    => !empty($formula) ? ['quantity' => $formula] : null,
+                        'total'      => $rowTotal,
+                    ]);
+                    $addTotal += $rowTotal;
+                }
+                if ($addTotal > 0) {
+                    $additionalOrder->total_amount = $addTotal;
+                    $additionalOrder->save();
                 }
             }
 

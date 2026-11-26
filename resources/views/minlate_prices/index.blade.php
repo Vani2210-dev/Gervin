@@ -4,11 +4,15 @@
     $subTitle = 'Quản lý bảng giá gia công và cấu hình tổ hợp chi tiết hóa đơn theo từng loại đơn hàng';
     $activeTab = $activeTab ?? 'prices';
     $orderTypeLabels = [
-        'Flywood'  => 'Flywood',
-        'min_late' => 'Lệnh sản xuất (Min-late)',
-        'acrylic'  => 'Acrylic',
-        'glass'    => 'Kính',
-        'service'  => 'Dịch vụ & Vật tư',
+        'min_late'   => 'Lệnh sản xuất (Min-late)',
+        'acrylic'    => 'Acrylic',
+        'Flywood'    => 'Flywood',
+        'glass'      => 'Kính',
+        'service'    => 'Dịch vụ & Vật tư',
+        'rework'     => 'Đơn sửa tấm',
+        'additional' => 'Đơn bổ sung',
+        'warranty'   => 'Đơn bảo hành',
+        'reuse'      => 'Đơn tận dụng',
     ];
 @endphp
 
@@ -419,7 +423,16 @@
                                     <input type="text" name="name" value="{{ $combo->name }}"
                                            class="form-control form-control-sm font-bold text-neutral-800 border-neutral-300 rounded-lg text-sm w-72 focus:border-primary-500 focus:ring-primary-500"
                                            placeholder="Tên tổ hợp..." required>
-                                    <span class="px-2.5 py-1 rounded-md text-xs font-bold border {{ $combo->order_type === 'Flywood' ? 'bg-amber-100 text-amber-800 border-amber-300' : ($combo->order_type === 'min_late' ? 'bg-blue-100 text-blue-800 border-blue-300' : 'bg-neutral-100 text-neutral-800 border-neutral-300') }}">
+                                    <span class="px-2.5 py-1 rounded-md text-xs font-bold border {{ match($combo->order_type) {
+                                        'Flywood'    => 'bg-amber-100 text-amber-800 border-amber-300',
+                                        'min_late'   => 'bg-blue-100 text-blue-800 border-blue-300',
+                                        'acrylic'    => 'bg-sky-100 text-sky-800 border-sky-300',
+                                        'rework'     => 'bg-rose-100 text-rose-800 border-rose-300',
+                                        'additional' => 'bg-purple-100 text-purple-800 border-purple-300',
+                                        'warranty'   => 'bg-orange-100 text-orange-800 border-orange-300',
+                                        'reuse'      => 'bg-teal-100 text-teal-800 border-teal-300',
+                                        default      => 'bg-neutral-100 text-neutral-800 border-neutral-300',
+                                    } }}">
                                         {{ $orderTypeLabels[$combo->order_type] ?? $combo->order_type }}
                                     </span>
                                     <select name="order_type" class="form-select form-select-sm text-xs rounded-lg border-neutral-300 w-44">
@@ -704,7 +717,7 @@
                 <label class="form-label font-semibold text-xs text-neutral-600 mb-1 block">Loại đơn áp dụng <span class="text-danger-500">*</span></label>
                 <select name="order_type" class="form-select rounded-lg text-xs" required>
                     @foreach($orderTypeLabels as $kType => $lbl)
-                        <option value="{{ $kType }}" {{ ($comboOrderType === $kType || $kType === 'Flywood') ? 'selected' : '' }}>{{ $lbl }} ({{ $kType }})</option>
+                        <option value="{{ $kType }}" {{ ($comboOrderType === $kType || (empty($comboOrderType) && $kType === 'min_late')) ? 'selected' : '' }}>{{ $lbl }} ({{ $kType }})</option>
                     @endforeach
                 </select>
             </div>

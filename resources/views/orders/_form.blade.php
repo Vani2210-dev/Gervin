@@ -1309,6 +1309,11 @@ function _doUpdateOrderSummary() {
             pRows.forEach(pRow => {
                 const nameIn = pRow.querySelector('textarea[name*="[name]"]');
                 const qIn = pRow.querySelector('input[name*="[quantity]"]');
+                // Nếu dòng chi tiết đã có công thức riêng, để bộ tính công thức tự động tính, không ghi đè số cứng
+                if (qIn && qIn.dataset.formula && qIn.dataset.formula.trim().startsWith('=')) {
+                    return;
+                }
+
                 const selIn = pRow.querySelector('.order-payment-code-select');
                 const codeVal = (selIn ? (selIn.tomselect ? selIn.tomselect.getValue() : selIn.value) : '').toUpperCase();
                 const nVal = (nameIn ? nameIn.value : '').toUpperCase();
