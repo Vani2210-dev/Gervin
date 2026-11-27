@@ -66,6 +66,11 @@
                         <span class="px-2.5 py-1 rounded-lg text-xs font-bold border {{ $statusColor }}">
                             {{ $customer->status ?: 'Đang đặt hàng' }}
                         </span>
+                        @if($customer->is_retail)
+                            <span class="px-2.5 py-1 rounded-lg text-xs font-bold border bg-amber-50 text-amber-700 border-amber-200">
+                                Khách lẻ (Thu theo đơn)
+                            </span>
+                        @endif
                         @if($customer->marketGroup)
                             <span class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-primary-50 text-primary-700 border border-primary-200 flex items-center gap-1">
                                 <iconify-icon icon="solar:users-group-two-rounded-bold" class="text-sm"></iconify-icon>
@@ -1708,6 +1713,14 @@
                             <label class="form-label font-semibold text-xs text-neutral-700 mb-1.5 block">Chính sách khách hàng</label>
                             <input type="text" id="edit_policy" name="policy" value="{{ $customer->policy }}" class="form-control rounded-xl text-sm py-2.5 px-3.5">
                         </div>
+                    </div>
+
+                    <div class="p-3 bg-amber-50/80 rounded-xl border border-amber-200 flex items-center justify-between">
+                        <div>
+                            <label for="show_edit_is_retail" class="font-bold text-xs text-amber-900 block cursor-pointer">Khách lẻ (Thu tiền theo đơn)</label>
+                            <span class="text-[11px] text-amber-700 block">Khách thanh toán từng đơn, xem trước không cộng dồn công nợ cũ</span>
+                        </div>
+                        <input type="checkbox" id="show_edit_is_retail" name="is_retail" value="1" {{ $customer->is_retail ? 'checked' : '' }} class="rounded text-amber-600 focus:ring-amber-500 border-neutral-300 w-5 h-5 cursor-pointer">
                     </div>
                 </div>
             </div>

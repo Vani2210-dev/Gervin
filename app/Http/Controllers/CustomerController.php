@@ -86,6 +86,14 @@ class CustomerController extends Controller
             }
         }
 
+        if ($request->filled('filter_is_retail')) {
+            if ($request->filter_is_retail === '1' || $request->filter_is_retail === 'retail') {
+                $query->where('is_retail', true);
+            } elseif ($request->filter_is_retail === '0' || $request->filter_is_retail === 'agency') {
+                $query->where('is_retail', false);
+            }
+        }
+
         $customersQuery = $query->when($search, function ($q) use ($search) {
                 $q->where('name', 'like', "%$search%")
                   ->orWhere('customer_code', 'like', "%$search%")
@@ -897,6 +905,7 @@ class CustomerController extends Controller
             'initial_debt'        => 'nullable|numeric|min:0',
             'debt_limit'          => 'nullable|numeric|min:0',
             'policy'              => 'nullable|string',
+            'is_retail'           => 'nullable|boolean',
             'default_discount_percent' => 'nullable|numeric|min:0|max:100',
             'market_group_id'     => 'nullable|exists:market_groups,id',
         ]);
@@ -947,6 +956,7 @@ class CustomerController extends Controller
             'debt'                => $request->initial_debt ?? 0,
             'debt_limit'          => $request->debt_limit ?? 0,
             'policy'              => $request->policy,
+            'is_retail'           => $request->boolean('is_retail'),
             'default_discount_percent' => $request->filled('default_discount_percent') ? (float)$request->default_discount_percent : 0,
             'photos'              => $photos,
             'market_group_id'     => $targetMarketGroupId,
@@ -1002,6 +1012,7 @@ class CustomerController extends Controller
             'initial_debt'        => 'nullable|numeric|min:0',
             'debt_limit'          => 'nullable|numeric|min:0',
             'policy'              => 'nullable|string',
+            'is_retail'           => 'nullable|boolean',
             'default_discount_percent' => 'nullable|numeric|min:0|max:100',
             'market_group_id'     => 'nullable|exists:market_groups,id',
         ]);
@@ -1059,6 +1070,7 @@ class CustomerController extends Controller
             'sale_proposal'       => $request->sale_proposal,
             'debt_limit'          => $request->debt_limit ?? 0,
             'policy'              => $request->policy,
+            'is_retail'           => $request->boolean('is_retail'),
             'default_discount_percent' => $request->has('default_discount_percent') ? (float)$request->default_discount_percent : $customer->default_discount_percent,
             'photos'              => $photos,
             'market_group_id'     => $request->market_group_id ?? $customer->market_group_id,
@@ -1200,6 +1212,19 @@ class CustomerController extends Controller
 
         $customer->delete();
         return redirect()->route('customers.index')->with('success', 'Xóa khách hàng thành công.');
+    }
+
+    public function toggleRetail(Request $request, Customer $customer)
+    {
+        abort_unless($customer->isAccessibleBy(auth()->user()), 403, 'Bạn không có quyền cập nhật khách hàng này.');
+        $customer->is_retail = !$customer->is_retail;
+        $customer->save();
+
+        return response()->json([
+            'success'   => true,
+            'is_retail' => (bool)$customer->is_retail,
+            'message'   => $customer->is_retail ? 'Đã đánh dấu khách hàng là Khách lẻ (Thu theo đơn)' : 'Đã chuyển khách hàng sang Khách đại lý'
+        ]);
     }
 
     public function checkCode(Request $request)

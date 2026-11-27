@@ -927,7 +927,9 @@
                     throw new Error("Không tìm thấy hàm exportToExcel");
                 }
                 const blob = await exportToExcel(data, true);
-                const fileName = `Bao_Gia_${data.order_code}.xlsx`;
+                const fileName = (typeof getOrderExportFileName === 'function') 
+                    ? getOrderExportFileName(data) 
+                    : (data.export_file_name || `${data.order_code}.xlsx`);
                 
                 const fileHandle = await directoryHandle.getFileHandle(fileName, { create: true });
                 const writable = await fileHandle.createWritable();

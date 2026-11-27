@@ -180,6 +180,18 @@ class CustomerDebtService
         $specificPaid = $orderId ? floatval($payments->where('order_id', $orderId)->sum('amount')) : 0.0;
         $thisOrderPaid = $specificPaid;
 
+        // B. Nếu là khách lẻ (is_retail == true):
+        // Khách lẻ thanh toán công nợ dứt điểm theo từng đơn riêng biệt, không có công nợ cũ lũy kế từ các đơn khác!
+        if ($customer->is_retail) {
+            $totalCombinedDebt = max(0, $orderTotal - $thisOrderPaid);
+            return [
+                'is_retail'           => true,
+                'old_debt'            => 0.0,
+                'this_order_paid'     => round($thisOrderPaid, -3),
+                'total_combined_debt' => round($totalCombinedDebt, -3),
+            ];
+        }
+
         // 4. Lấy tất cả đơn hàng hợp lệ của khách hàng (loại bỏ đơn hủy, đơn nhập kho, đơn nháp draft)
         $allOrders = $customer->orders()
             ->whereNotNhapKho()

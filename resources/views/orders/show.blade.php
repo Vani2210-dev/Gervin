@@ -801,11 +801,20 @@
                 $customer = $acrylicOrder->customer;
                 $orderDebtInfo = $customer->getDebtInfoForOrder($acrylicOrder);
                 $custCurrentDebt = floatval($customer->debt ?? 0);
+                $isRetail = (bool)$customer->is_retail;
+                $orderPaidForThis = floatval($orderDebtInfo['this_order_paid'] ?? 0);
             @endphp
             <div class="card p-0 rounded-xl border-0 overflow-hidden shadow-sm bg-white">
-                <div class="card-header border-b border-neutral-200 bg-white py-4 px-6 flex items-center gap-2">
-                    <iconify-icon icon="lucide:wallet" class="text-xl text-violet-500"></iconify-icon>
-                    <h6 class="font-bold text-base text-neutral-800 m-0 flex-1">Công nợ khách hàng</h6>
+                <div class="card-header border-b border-neutral-200 bg-white py-4 px-6 flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-2">
+                        <iconify-icon icon="lucide:wallet" class="text-xl text-violet-500"></iconify-icon>
+                        <h6 class="font-bold text-base text-neutral-800 m-0">Công nợ khách hàng</h6>
+                    </div>
+                    @if($isRetail)
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                            Khách lẻ (Thu theo đơn)
+                        </span>
+                    @endif
                 </div>
                 <div class="p-5 space-y-4">
                     <div class="text-xs text-neutral-500 font-medium">
@@ -817,25 +826,45 @@
                     </div>
                     
                     <div class="space-y-3">
-                        @if($orderDebtInfo)
+                        @if($isRetail)
                             <div class="flex justify-between items-center text-sm">
-                                <span class="text-neutral-500 font-medium">Công nợ trước đơn này:</span>
-                                <span class="font-semibold text-neutral-800">{{ number_format($orderDebtInfo['old_debt'], 0, ',', '.') }} đ</span>
+                                <span class="text-neutral-500 font-medium">Tiền đơn hàng này:</span>
+                                <span class="font-semibold text-neutral-800">{{ number_format($acrylicOrder->total_amount, 0, ',', '.') }} đ</span>
                             </div>
                             <div class="flex justify-between items-center text-sm">
                                 <span class="text-neutral-500 font-medium">Đã thanh toán (đơn này):</span>
-                                <span class="font-semibold text-success-600">{{ number_format($orderDebtInfo['this_order_paid'], 0, ',', '.') }} đ</span>
+                                <span class="font-semibold text-success-600">{{ number_format($orderPaidForThis, 0, ',', '.') }} đ</span>
                             </div>
                             <div class="flex justify-between items-center text-sm">
-                                <span class="text-neutral-500 font-medium">Tổng nợ sau đơn này:</span>
-                                <span class="font-bold text-rose-600">{{ number_format($orderDebtInfo['total_combined_debt'], 0, ',', '.') }} đ</span>
+                                <span class="text-neutral-700 font-bold">Còn lại phải trả đơn này:</span>
+                                <span class="font-bold text-rose-600">{{ number_format(max(0, $acrylicOrder->total_amount - $orderPaidForThis), 0, ',', '.') }} đ</span>
                             </div>
                             <hr class="border-neutral-100">
+                            <div class="flex justify-between items-center text-sm">
+                                <span class="text-neutral-500 font-medium text-xs">Tổng nợ các đơn chưa thanh toán:</span>
+                                <span class="text-sm font-bold text-danger-600">{{ number_format($custCurrentDebt, 0, ',', '.') }} đ</span>
+                            </div>
+                        @else
+                            @if($orderDebtInfo)
+                                <div class="flex justify-between items-center text-sm">
+                                    <span class="text-neutral-500 font-medium">Công nợ trước đơn này:</span>
+                                    <span class="font-semibold text-neutral-800">{{ number_format($orderDebtInfo['old_debt'], 0, ',', '.') }} đ</span>
+                                </div>
+                                <div class="flex justify-between items-center text-sm">
+                                    <span class="text-neutral-500 font-medium">Đã thanh toán (đơn này):</span>
+                                    <span class="font-semibold text-success-600">{{ number_format($orderDebtInfo['this_order_paid'], 0, ',', '.') }} đ</span>
+                                </div>
+                                <div class="flex justify-between items-center text-sm">
+                                    <span class="text-neutral-500 font-medium">Tổng nợ sau đơn này:</span>
+                                    <span class="font-bold text-rose-600">{{ number_format($orderDebtInfo['total_combined_debt'], 0, ',', '.') }} đ</span>
+                                </div>
+                                <hr class="border-neutral-100">
+                            @endif
+                            <div class="flex justify-between items-center text-sm">
+                                <span class="text-neutral-800 font-bold">Còn nợ hiện tại (sổ cái KH):</span>
+                                <span class="text-lg font-extrabold text-danger-600">{{ number_format($custCurrentDebt, 0, ',', '.') }} đ</span>
+                            </div>
                         @endif
-                        <div class="flex justify-between items-center text-sm">
-                            <span class="text-neutral-800 font-bold">Còn nợ hiện tại (sổ cái KH):</span>
-                            <span class="text-lg font-extrabold text-danger-600">{{ number_format($custCurrentDebt, 0, ',', '.') }} đ</span>
-                        </div>
                     </div>
 
                     <div class="pt-2 border-t border-neutral-100 text-center">

@@ -656,8 +656,39 @@ class OrderController extends Controller
         $fullCustomerDisplay = $acrylicOrder->full_customer_display;
         $customerShortName = $acrylicOrder->customer_short_display;
 
+        // Xây dựng tên file xuất Excel theo chuẩn: Tên khách hàng (Tên công trình) Mã đơn .xlsx
+        $customerName = trim($acrylicOrder->customer?->name ?: '');
+        $projectName = trim($acrylicOrder->customer_name ?: '');
+        $orderCode = trim($acrylicOrder->order_code ?: '');
+
+        if ($acrylicOrder->isNhapKho()) {
+            $exportFileName = "Phieu_Nhap_Kho_{$orderCode}.xlsx";
+        } else {
+            $parts = [];
+            if ($customerName && $projectName && mb_strtolower($customerName) !== mb_strtolower($projectName)) {
+                $parts[] = "{$customerName} ({$projectName})";
+            } elseif ($customerName) {
+                $parts[] = $customerName;
+            } elseif ($projectName) {
+                $parts[] = $projectName;
+            }
+
+            if ($orderCode) {
+                $parts[] = $orderCode;
+            }
+
+            $rawName = implode(' ', $parts);
+            if (!$rawName) {
+                $rawName = "Bao_Gia_{$orderCode}";
+            }
+            $cleanName = preg_replace('~[/\\\\:*?"<>|]~', '', $rawName);
+            $cleanName = preg_replace('/\s+/', ' ', trim($cleanName));
+            $exportFileName = $cleanName . '.xlsx';
+        }
+
         return [
             'order_code' => $acrylicOrder->order_code,
+            'export_file_name' => $exportFileName,
             'created_at' => $acrylicOrder->created_at->format('d/m/Y H:i'),
             'type' => $acrylicOrder->type,
             'is_nhap_kho' => $acrylicOrder->isNhapKho(),

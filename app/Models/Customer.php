@@ -25,6 +25,7 @@ class Customer extends Model
         'debt',
         'debt_limit',
         'policy',
+        'is_retail',
         'default_discount_percent',
         'monthly_discount_policy',
         'applied_monthly_discounts',
@@ -33,6 +34,7 @@ class Customer extends Model
     ];
 
     protected $casts = [
+        'is_retail'                 => 'boolean',
         'default_discount_percent'  => 'float',
         'photos'                    => 'array',
         'monthly_discount_policy'   => 'array',

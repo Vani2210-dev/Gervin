@@ -2713,9 +2713,33 @@ async function exportToExcel(customData = null, returnBlob = false) {
             return blob;
         }
         
-        const isNK = orderData.is_nhap_kho || (orderData.order_code && /[._-]?NK$/i.test(orderData.order_code));
-        const filePrefix = isNK ? 'Phieu_Nhap_Kho' : (isMinLateOrFlywood ? 'Lenh_San_Xuat' : 'Bao_Gia');
-        saveAs(blob, `${filePrefix}_${orderData.order_code}.xlsx`);
+        let finalFileName = orderData.export_file_name || '';
+        if (!finalFileName) {
+            const isNK = orderData.is_nhap_kho || (orderData.order_code && /[._-]?NK$/i.test(orderData.order_code));
+            const orderCode = (orderData.order_code || '').trim();
+            if (isNK) {
+                finalFileName = `Phieu_Nhap_Kho_${orderCode}.xlsx`;
+            } else {
+                const custName = (orderData.customer_company_name || (orderData.customer ? orderData.customer.name : '') || '').trim();
+                const projName = (orderData.project_name || orderData.customer_name || '').trim();
+                let parts = [];
+                if (custName && projName && custName.toLowerCase() !== projName.toLowerCase()) {
+                    parts.push(`${custName} (${projName})`);
+                } else if (custName) {
+                    parts.push(custName);
+                } else if (projName) {
+                    parts.push(projName);
+                }
+                if (orderCode) parts.push(orderCode);
+                let rawName = parts.join(' ').trim();
+                if (!rawName) rawName = `Bao_Gia_${orderCode || 'Don_Hang'}`;
+                finalFileName = rawName.replace(/[/\\:*?"<>|]/g, '').replace(/\s+/g, ' ').trim() + '.xlsx';
+            }
+        }
+        if (!finalFileName.endsWith('.xlsx')) {
+            finalFileName += '.xlsx';
+        }
+        saveAs(blob, finalFileName);
     } catch (error) {
         console.error("Export error", error);
         if (!returnBlob) {
@@ -2745,6 +2769,31 @@ async function getLogoBase64(url) {
         return null;
     }
 }
+
+window.getOrderExportFileName = function(orderData) {
+    if (orderData.export_file_name) {
+        return orderData.export_file_name.endsWith('.xlsx') ? orderData.export_file_name : `${orderData.export_file_name}.xlsx`;
+    }
+    const isNK = orderData.is_nhap_kho || (orderData.order_code && /[._-]?NK$/i.test(orderData.order_code));
+    const orderCode = (orderData.order_code || '').trim();
+    if (isNK) {
+        return `Phieu_Nhap_Kho_${orderCode}.xlsx`;
+    }
+    const custName = (orderData.customer_company_name || (orderData.customer ? orderData.customer.name : '') || '').trim();
+    const projName = (orderData.project_name || orderData.customer_name || '').trim();
+    let parts = [];
+    if (custName && projName && custName.toLowerCase() !== projName.toLowerCase()) {
+        parts.push(`${custName} (${projName})`);
+    } else if (custName) {
+        parts.push(custName);
+    } else if (projName) {
+        parts.push(projName);
+    }
+    if (orderCode) parts.push(orderCode);
+    let rawName = parts.join(' ').trim();
+    if (!rawName) rawName = `Bao_Gia_${orderCode || 'Don_Hang'}`;
+    return rawName.replace(/[/\\:*?"<>|]/g, '').replace(/\s+/g, ' ').trim() + '.xlsx';
+};
 
 // Expose globally for Vite-compiled modules
 window.exportToExcel = exportToExcel;

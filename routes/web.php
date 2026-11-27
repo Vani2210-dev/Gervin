@@ -351,6 +351,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('customers/{customer}/orders/export', [CustomerController::class, 'exportOrdersExcel'])->name('customers.orders.export');
     Route::get('customers/{customer}/payments/export', [CustomerController::class, 'exportPaymentsExcel'])->name('customers.payments.export');
     Route::resource('customers', CustomerController::class)->names('customers');
+    Route::post('customers/{customer}/toggle-retail', [CustomerController::class, 'toggleRetail'])->name('customers.toggle-retail');
     Route::get('customers/{customer}/overview', [CustomerController::class, 'overview'])->name('customers.overview');
     Route::post('customers/quick-create', [CustomerController::class, 'quickCreate'])->name('customers.quick-create');
     Route::post('customers/{customer}/monthly-discount-policy', [CustomerController::class, 'saveMonthlyDiscountPolicy'])->name('customers.monthly-discount-policy.save');

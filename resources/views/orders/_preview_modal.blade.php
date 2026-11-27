@@ -627,19 +627,19 @@
                             <span class="text-lg font-extrabold text-primary-700">{{ number_format(round($acrylicOrder->total_amount, -3), 0, ',', '.') }} VNĐ</span>
                         </div>
 
-                        @if($orderPaidAmt > 0)
+                        @if($orderPaidAmt > 0 || ($acrylicOrder->customer && $acrylicOrder->customer->is_retail))
                             <div class="mt-2 pt-2 border-t border-dashed border-neutral-200 flex items-center justify-between text-xs">
                                 <span class="text-neutral-600 font-medium">Đã thanh toán:</span>
                                 <span class="font-bold text-emerald-600 font-mono">{{ number_format(round($orderPaidAmt, -3), 0, ',', '.') }} đ</span>
                             </div>
                             <div class="mt-1 flex items-center justify-between text-xs">
-                                <span class="text-neutral-600 font-medium">Còn lại:</span>
-                                <span class="font-bold text-rose-600 font-mono">{{ number_format(round($orderRemainingAmt, -3), 0, ',', '.') }} đ</span>
+                                <span class="text-neutral-700 font-bold">Còn lại:</span>
+                                <span class="font-bold text-rose-600 font-mono text-sm">{{ number_format(round($orderRemainingAmt, -3), 0, ',', '.') }} đ</span>
                             </div>
                         @endif
 
-                        {{-- Khối thông tin công nợ khách hàng --}}
-                        @if(!empty($debtInfo))
+                        {{-- Khối thông tin công nợ khách hàng (chỉ áp dụng cho khách đại lý/công nợ tích luỹ; khách lẻ trả theo đơn nên không hiển thị công nợ cũ) --}}
+                        @if(!empty($debtInfo) && empty($debtInfo['is_retail']) && empty($acrylicOrder->customer?->is_retail))
                             <div class="mt-3 pt-2.5 border-t-2 border-neutral-200">
                                 <div class="text-xs sm:text-sm font-bold text-neutral-800 mb-1.5 flex items-center justify-between">
                                     <span class="flex items-center gap-1.5 text-primary-700">

@@ -110,7 +110,7 @@
                             <iconify-icon icon="solar:filter-outline" class="text-base"></iconify-icon>
                             Lọc nâng cao
                         </button>
-                        @if(request()->filled('filter_customer_code') || request()->filled('filter_name') || request()->filled('filter_phone') || request()->filled('filter_start_date') || request()->filled('filter_end_date') || request()->filled('filter_customer_id') || request()->filled('filter_debt_level') || request()->filled('filter_market_group_id') || ($dateMode !== 'all' && request()->filled('date_mode')))
+                        @if(request()->filled('filter_customer_code') || request()->filled('filter_name') || request()->filled('filter_phone') || request()->filled('filter_is_retail') || request()->filled('filter_start_date') || request()->filled('filter_end_date') || request()->filled('filter_customer_id') || request()->filled('filter_debt_level') || request()->filled('filter_market_group_id') || ($dateMode !== 'all' && request()->filled('date_mode')))
                         <a href="{{ route('customers.index') }}" class="btn text-xs btn-sm px-3 py-2 rounded-lg flex items-center gap-1 text-danger-600 bg-danger-50 hover:bg-danger-100 transition">
                             <iconify-icon icon="solar:close-circle-outline" class="text-base"></iconify-icon>
                             Xóa lọc
@@ -187,6 +187,7 @@
                                 <th scope="col">Số điện thoại</th>
                                 <th scope="col">Địa chỉ</th>
                                 <th scope="col">Chính sách KH</th>
+                                <th scope="col" class="text-center whitespace-nowrap">Khách lẻ</th>
                                 <th scope="col">Nhóm thị trường</th>
                                 <th scope="col" class="text-right">
                                     Đã thanh toán
@@ -207,6 +208,11 @@
                                 <td>
                                     <a href="{{ route('customers.show', $c->id) }}" class="font-bold text-neutral-800 hover:text-primary-600 transition-colors">{{ $c->name }}</a>
                                     <div class="flex items-center gap-1.5 mt-1 flex-wrap">
+                                        @if($c->is_retail)
+                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200" id="cust-retail-badge-{{ $c->id }}">
+                                                Khách lẻ
+                                            </span>
+                                        @endif
                                         @if($c->status)
                                             @php
                                                 $statusColor = match($c->status) {
@@ -251,6 +257,17 @@
                                 </td>
                                 <td>
                                     <div class="max-w-[200px] truncate text-neutral-600" title="{{ $c->policy }}">{{ $c->policy ?: '—' }}</div>
+                                </td>
+                                <td class="text-center">
+                                    <label class="inline-flex items-center gap-1.5 cursor-pointer select-none" title="{{ $c->is_retail ? 'Bấm để đổi thành Khách đại lý' : 'Bấm để đổi thành Khách lẻ (Thu theo đơn)' }}">
+                                        <input type="checkbox"
+                                               class="rounded text-amber-600 focus:ring-amber-500 border-neutral-300 w-4 h-4 cursor-pointer"
+                                               {{ $c->is_retail ? 'checked' : '' }}
+                                               onchange="toggleCustomerRetail(this, {{ $c->id }})">
+                                        <span class="text-[11px] font-semibold retail-label-{{ $c->id }} {{ $c->is_retail ? 'text-amber-700 font-bold' : 'text-neutral-400' }}">
+                                            {{ $c->is_retail ? 'Khách lẻ' : 'Đại lý' }}
+                                        </span>
+                                    </label>
                                 </td>
                                 <td>
                                     @if($c->marketGroup)
@@ -302,6 +319,7 @@
                                             data-debt="{{ $c->debt ?? 0 }}"
                                             data-debt-limit="{{ $c->debt_limit ?? 0 }}"
                                             data-policy="{{ $c->policy ?? '' }}"
+                                            data-is-retail="{{ $c->is_retail ? '1' : '0' }}"
                                             data-photos="{{ json_encode($c->photos ?? []) }}"
                                             data-market-group-id="{{ $c->market_group_id ?? '' }}"
                                             onclick="openEditCustomerModalFromBtn(this)">
@@ -551,6 +569,14 @@
                         <label class="form-label font-semibold text-xs text-neutral-700 mb-1.5 block">Chính sách khách hàng</label>
                         <input type="text" name="policy" class="form-control rounded-xl text-sm py-2.5 px-3.5" placeholder="Chính sách giá, chiết khấu, điều khoản thanh toán..." value="{{ old('policy') }}">
                     </div>
+
+                    <div class="p-3 bg-amber-50/80 rounded-xl border border-amber-200 flex items-center justify-between">
+                        <div>
+                            <label for="create_is_retail" class="font-bold text-xs text-amber-900 block cursor-pointer">Khách lẻ (Thu tiền theo đơn)</label>
+                            <span class="text-[11px] text-amber-700 block">Khách thanh toán từng đơn, xem trước không cộng dồn công nợ cũ</span>
+                        </div>
+                        <input type="checkbox" id="create_is_retail" name="is_retail" value="1" {{ old('is_retail') ? 'checked' : '' }} class="rounded text-amber-600 focus:ring-amber-500 border-neutral-300 w-5 h-5 cursor-pointer">
+                    </div>
                 </div>
             </div>
         </div>
@@ -766,6 +792,14 @@
                     <div>
                         <label class="form-label font-semibold text-xs text-neutral-700 mb-1.5 block">Chính sách khách hàng</label>
                         <input type="text" id="edit_policy" name="policy" class="form-control rounded-xl text-sm py-2.5 px-3.5" placeholder="Chính sách giá, chiết khấu, điều khoản thanh toán...">
+                    </div>
+
+                    <div class="p-3 bg-amber-50/80 rounded-xl border border-amber-200 flex items-center justify-between">
+                        <div>
+                            <label for="edit_is_retail" class="font-bold text-xs text-amber-900 block cursor-pointer">Khách lẻ (Thu tiền theo đơn)</label>
+                            <span class="text-[11px] text-amber-700 block">Khách thanh toán từng đơn, xem trước không cộng dồn công nợ cũ</span>
+                        </div>
+                        <input type="checkbox" id="edit_is_retail" name="is_retail" value="1" class="rounded text-amber-600 focus:ring-amber-500 border-neutral-300 w-5 h-5 cursor-pointer">
                     </div>
 
                     <div class="border border-amber-200 bg-amber-50/60 rounded-xl p-3.5 mt-2">
@@ -1078,6 +1112,11 @@ function openEditCustomerModalFromBtn(btn) {
     document.getElementById('edit_initial_debt').value = debt;
     document.getElementById('edit_debt_limit').value = debtLimit;
     document.getElementById('edit_policy').value = policy;
+    const isRetail = btn.getAttribute('data-is-retail');
+    const editRetailCheckbox = document.getElementById('edit_is_retail');
+    if (editRetailCheckbox) {
+        editRetailCheckbox.checked = (isRetail === '1' || isRetail === 1 || isRetail === 'true');
+    }
     
     const mgSelect = document.getElementById('edit_market_group_id');
     if (mgSelect) {
@@ -1330,6 +1369,15 @@ function previewCustomerPhotos(photos, custName) {
                             {{ $mg->name }} ({{ $mg->code }})
                         </option>
                     @endforeach
+                </select>
+            </div>
+
+            <div class="form-group md:col-span-2">
+                <label class="form-label font-semibold text-sm text-neutral-600">Loại khách hàng</label>
+                <select name="filter_is_retail" id="filter_is_retail" class="form-select rounded-lg w-full">
+                    <option value="">Tất cả (Đại lý & Khách lẻ)</option>
+                    <option value="retail" {{ request('filter_is_retail') === 'retail' ? 'selected' : '' }}>Chỉ khách lẻ (Thu theo đơn)</option>
+                    <option value="agency" {{ request('filter_is_retail') === 'agency' ? 'selected' : '' }}>Chỉ khách đại lý (Tính nợ lũy kế)</option>
                 </select>
             </div>
             
@@ -2139,6 +2187,58 @@ document.addEventListener("DOMContentLoaded", function() {
 
     }
 });
+
+function toggleCustomerRetail(checkbox, customerId) {
+    const wasChecked = !checkbox.checked;
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+    
+    fetch(`/customers/${customerId}/toggle-retail`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': csrfToken,
+            'Accept': 'application/json'
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            const label = document.querySelector(`.retail-label-${customerId}`);
+            if (label) {
+                label.textContent = data.is_retail ? 'Khách lẻ' : 'Đại lý';
+                label.className = `text-[11px] font-semibold retail-label-${customerId} ` + (data.is_retail ? 'text-amber-700 font-bold' : 'text-neutral-400');
+            }
+            const editBtn = document.querySelector(`.customer-edit-btn[data-id="${customerId}"]`);
+            if (editBtn) {
+                editBtn.setAttribute('data-is-retail', data.is_retail ? '1' : '0');
+            }
+            let badge = document.getElementById(`cust-retail-badge-${customerId}`);
+            if (data.is_retail) {
+                if (!badge) {
+                    const nameContainer = checkbox.closest('tr')?.querySelector('td:nth-child(3) .flex');
+                    if (nameContainer) {
+                        badge = document.createElement('span');
+                        badge.id = `cust-retail-badge-${customerId}`;
+                        badge.className = 'inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200';
+                        badge.textContent = 'Khách lẻ';
+                        nameContainer.prepend(badge);
+                    }
+                }
+            } else {
+                if (badge) {
+                    badge.remove();
+                }
+            }
+        } else {
+            checkbox.checked = wasChecked;
+            alert(data.message || 'Không thể cập nhật trạng thái khách lẻ.');
+        }
+    })
+    .catch(err => {
+        checkbox.checked = wasChecked;
+        alert('Lỗi kết nối khi cập nhật khách lẻ.');
+    });
+}
 </script>
 
 <style>
