@@ -796,15 +796,11 @@
             </div>
 
             {{-- ===== CÔNG NỢ KHÁCH HÀNG ===== --}}
-            @if(!$acrylicOrder->isNhapKho() && $acrylicOrder->customer && !in_array($acrylicOrder->status, ['draft', 'pending', 'cancelled']))
+            @if(!$acrylicOrder->isNhapKho() && $acrylicOrder->customer && !in_array($acrylicOrder->status, ['draft', 'cancelled']))
             @php
                 $customer = $acrylicOrder->customer;
-                $debtSummary = $customer->debt_summary;
-                $custTotalAmount = $debtSummary['total_amount'];
-                $custTotalPaid = $debtSummary['total_paid'];
-                $custTotalDebt = $debtSummary['total_debt'];
-                $custInitialDebt = $customer->debt ?? 0;
-                $total_combined_debt = $custTotalDebt + $custTotalPaid;
+                $orderDebtInfo = $customer->getDebtInfoForOrder($acrylicOrder);
+                $custCurrentDebt = floatval($customer->debt ?? 0);
             @endphp
             <div class="card p-0 rounded-xl border-0 overflow-hidden shadow-sm bg-white">
                 <div class="card-header border-b border-neutral-200 bg-white py-4 px-6 flex items-center gap-2">
@@ -821,18 +817,24 @@
                     </div>
                     
                     <div class="space-y-3">
+                        @if($orderDebtInfo)
+                            <div class="flex justify-between items-center text-sm">
+                                <span class="text-neutral-500 font-medium">Công nợ trước đơn này:</span>
+                                <span class="font-semibold text-neutral-800">{{ number_format($orderDebtInfo['old_debt'], 0, ',', '.') }} đ</span>
+                            </div>
+                            <div class="flex justify-between items-center text-sm">
+                                <span class="text-neutral-500 font-medium">Đã thanh toán (đơn này):</span>
+                                <span class="font-semibold text-success-600">{{ number_format($orderDebtInfo['this_order_paid'], 0, ',', '.') }} đ</span>
+                            </div>
+                            <div class="flex justify-between items-center text-sm">
+                                <span class="text-neutral-500 font-medium">Tổng nợ sau đơn này:</span>
+                                <span class="font-bold text-rose-600">{{ number_format($orderDebtInfo['total_combined_debt'], 0, ',', '.') }} đ</span>
+                            </div>
+                            <hr class="border-neutral-100">
+                        @endif
                         <div class="flex justify-between items-center text-sm">
-                            <span class="text-neutral-500 font-medium">Công nợ:</span>
-                            <span class="font-semibold text-neutral-800">{{ number_format($total_combined_debt, 0, ',', '.') }} đ</span>
-                        </div>
-                        <div class="flex justify-between items-center text-sm">
-                            <span class="text-neutral-500 font-medium">Đã thanh toán:</span>
-                            <span class="font-semibold text-success-600">{{ number_format($custTotalPaid, 0, ',', '.') }} đ</span>
-                        </div>
-                        <hr class="border-neutral-100">
-                        <div class="flex justify-between items-center text-sm">
-                            <span class="text-neutral-800 font-bold">Tổng nợ hiện tại:</span>
-                            <span class="text-lg font-extrabold text-danger-600">{{ number_format($custTotalDebt, 0, ',', '.') }} đ</span>
+                            <span class="text-neutral-800 font-bold">Còn nợ hiện tại (sổ cái KH):</span>
+                            <span class="text-lg font-extrabold text-danger-600">{{ number_format($custCurrentDebt, 0, ',', '.') }} đ</span>
                         </div>
                     </div>
 

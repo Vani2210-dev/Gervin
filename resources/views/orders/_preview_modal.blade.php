@@ -74,9 +74,6 @@
 
     // Order specific payment
     $orderPaidAmt = $acrylicOrder->orderPayments ? $acrylicOrder->orderPayments->sum('amount') : 0;
-    if ($orderPaidAmt == 0 && !empty($debtInfo['this_order_paid'])) {
-        $orderPaidAmt = floatval($debtInfo['this_order_paid']);
-    }
     $orderRemainingAmt = max(0, $acrylicOrder->total_amount - $orderPaidAmt);
 
     // Tra cứu thông tin đóng gói từ mục processes/packing

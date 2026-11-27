@@ -171,13 +171,22 @@ class CustomerDebtService
         $todayStr = Carbon::now()->format('Y-m-d');
         $orderId = $order?->id;
 
-        // 3. Lấy tất cả đơn hàng hợp lệ của khách hàng (loại bỏ đơn hủy, đơn nhập kho)
+        // 3. Lấy tất cả các khoản thanh toán của khách hàng
+        $payments = $customer->customerPayments()->get(['id', 'order_id', 'amount', 'payment_date']);
+
+        // A. Khoản thanh toán GẮN ĐÍCH DANH VỚI ĐƠN HÀNG NÀY (order_id == $orderId)
+        // Lưu ý quan trọng: Chỉ có khoản thanh toán gắn mã đơn hàng này mới là tiền khách thanh toán cho đơn này.
+        // Tuyệt đối KHÔNG phân bổ khoản thu nợ chung của khách (order_id null, ví dụ đợt thanh toán nợ cũ) vào đơn hàng mới!
+        $specificPaid = $orderId ? floatval($payments->where('order_id', $orderId)->sum('amount')) : 0.0;
+        $thisOrderPaid = $specificPaid;
+
+        // 4. Lấy tất cả đơn hàng hợp lệ của khách hàng (loại bỏ đơn hủy, đơn nhập kho, đơn nháp draft)
         $allOrders = $customer->orders()
             ->whereNotNhapKho()
-            ->where('status', '!=', 'cancelled')
+            ->whereNotIn('status', ['cancelled', 'draft'])
             ->get(['id', 'order_code', 'total_amount', 'order_date', 'created_at', 'status', 'board_return_status']);
 
-        // 4. Phân loại các đơn hàng TRƯỚC và SAU đơn hàng hiện tại
+        // 5. Phân loại các đơn hàng TRƯỚC và SAU đơn hàng hiện tại theo thời gian
         $ordersAfter = collect();
         $ordersBefore = collect();
 
@@ -216,10 +225,10 @@ class CustomerDebtService
             }
         }
 
-        // 5. Tính toán Công nợ cũ tính đến trước đơn này ($oldDebt) từ Còn nợ hiện tại
+        // 6. Tính toán Công nợ cũ tính đến trước đơn này ($oldDebt) từ Còn nợ hiện tại ($currentDebt)
         $oldDebt = $currentDebt;
 
-        // A. Nếu đơn hiện tại $order đang ở trạng thái đã được cộng vào debt (transferred, in_production, completed...):
+        // A. Nếu đơn hiện tại $order đang ở trạng thái ĐÃ ĐƯỢC CỘNG vào currentDebt (transferred, in_production, completed...):
         // Ta trừ tiền đơn này ra khỏi oldDebt (vì oldDebt là nợ TRƯỚC đơn này)
         $isOrderInDebt = $order && !in_array($order->status, ['draft', 'pending', 'cancelled']) && $order->board_return_status !== 'returned';
         if ($isOrderInDebt) {
@@ -227,7 +236,7 @@ class CustomerDebtService
         }
 
         // B. Với các đơn SAU đơn này ($ordersAfter):
-        // Nếu đã được cộng vào currentDebt, ta trừ ra khỏi oldDebt
+        // Nếu đã được cộng vào currentDebt, ta trừ ra khỏi oldDebt (vì khi đơn này phát sinh thì các đơn sau chưa có)
         foreach ($ordersAfter as $afterOrder) {
             if (!in_array($afterOrder->status, ['draft', 'pending', 'cancelled']) && $afterOrder->board_return_status !== 'returned') {
                 $oldDebt -= round($afterOrder->total_amount ?? 0, -3);
@@ -235,71 +244,32 @@ class CustomerDebtService
         }
 
         // C. Với các đơn TRƯỚC đơn này ($ordersBefore):
-        // Nếu bất kỳ đơn nào trước đơn này mà CHƯA ĐƯỢC CỘNG vào currentDebt (ví dụ pending):
-        // Ta cộng nó vào oldDebt
+        // Nếu đơn nào trước đơn này mà CHƯA ĐƯỢC CỘNG vào currentDebt (ở trạng thái pending - Chờ duyệt):
+        // Ta cộng tiền đơn đó vào oldDebt để nợ nối tiếp đúng thời gian
+        // (Lưu ý: Đơn nháp draft KHÔNG tính vào công nợ; mọi khoản đã trả cho đơn trước đó đã được trừ vào currentDebt rồi)
         foreach ($ordersBefore as $beforeOrder) {
-            if (in_array($beforeOrder->status, ['pending']) && $beforeOrder->board_return_status !== 'returned') {
+            if ($beforeOrder->status === 'pending' && $beforeOrder->board_return_status !== 'returned') {
                 $oldDebt += round($beforeOrder->total_amount ?? 0, -3);
             }
         }
 
-        // 6. Xử lý các khoản thanh toán (payments)
-        $payments = $customer->customerPayments()->get(['id', 'order_id', 'amount', 'payment_date']);
-
-        // A. Khoản thanh toán gắn đích danh với đơn hàng này
-        $specificPaid = $orderId ? $payments->where('order_id', $orderId)->sum('amount') : 0;
-
-        // B. Khoản thanh toán chung trong ngày (ngày chốt đơn hoặc ngày hôm nay khi vừa thu tiền)
-        $generalPaymentsToday = $payments->filter(function ($p) use ($orderDateStr, $todayStr) {
-            if (!empty($p->order_id) || !$p->payment_date) return false;
-            $pDate = Carbon::parse($p->payment_date)->format('Y-m-d');
-            return $pDate === $orderDateStr || $pDate === $todayStr;
-        })->sum('amount');
-
-        // Phân bổ phần thanh toán chung còn lại sau các đơn trước đó trong ngày
-        $usedByPreviousOrders = 0;
-        if ($generalPaymentsToday > 0) {
-            $sameDayOrdersBefore = $ordersBefore->filter(function ($o) use ($orderDateStr, $todayStr) {
-                $d = $o->order_date ? Carbon::parse($o->order_date)->format('Y-m-d') : null;
-                return $d === $orderDateStr || $d === $todayStr;
-            });
-
-            foreach ($sameDayOrdersBefore as $prevOrder) {
-                $prevSpecific = $payments->where('order_id', $prevOrder->id)->sum('amount');
-                if ($prevSpecific == 0) {
-                    $prevAmount = round($prevOrder->total_amount ?? 0, -3);
-                    $usedByPreviousOrders += $prevAmount;
-                }
-            }
-        }
-
-        $remainingGeneralPayment = max(0, $generalPaymentsToday - $usedByPreviousOrders);
-
-        // Đã thanh toán trong ngày/cho đơn này
-        $thisOrderPaid = $specificPaid + $remainingGeneralPayment;
-
-        // Vì khoản $thisOrderPaid này đã được trừ vào $currentDebt của khách hàng khi tạo phiếu thu,
-        // Để $oldDebt thể hiện đúng số nợ TRƯỚC đơn này và TRƯỚC khoản thanh toán này,
-        // ta cộng lại $thisOrderPaid vào $oldDebt:
+        // D. Khoản thanh toán gắn đích danh với đơn này ($thisOrderPaid):
+        // Vì khoản $thisOrderPaid này đã được trừ vào $currentDebt khi tạo phiếu thu,
+        // để $oldDebt thể hiện đúng số nợ TRƯỚC đơn này và TRƯỚC khi thanh toán đơn này, ta cộng lại $thisOrderPaid vào $oldDebt:
         if ($thisOrderPaid > 0) {
             $oldDebt += $thisOrderPaid;
         }
 
-        // Các khoản thanh toán diễn ra SAU đơn này: cộng lại vào oldDebt (loại trừ phần đã tính vào thisOrderPaid)
-        $allocatedRemaining = $thisOrderPaid;
+        // E. Các khoản thanh toán diễn ra SAU đơn này:
+        // - Thanh toán gắn với đơn sau: cộng lại vào oldDebt
+        // - Thanh toán chung (không gắn đơn) có ngày sau ngày đơn này: cộng lại vào oldDebt
         foreach ($payments as $pmt) {
             if ($pmt->order_id && $ordersAfter->contains('id', $pmt->order_id)) {
                 $oldDebt += floatval($pmt->amount);
             } elseif (!$pmt->order_id && $pmt->payment_date) {
                 $pDate = Carbon::parse($pmt->payment_date)->startOfDay();
                 if ($pDate->gt($orderDate->copy()->startOfDay())) {
-                    $pmtAmt = floatval($pmt->amount);
-                    if ($allocatedRemaining > 0) {
-                        $deduct = min($allocatedRemaining, $pmtAmt);
-                        $allocatedRemaining -= $deduct;
-                        $pmtAmt -= $deduct;
-                    }
-                    $oldDebt += $pmtAmt;
+                    $oldDebt += floatval($pmt->amount);
                 }
             }
         }
