@@ -754,12 +754,12 @@ function addMinLateOrderItem(button, isInitial = false, insertAfterRow = null) {
                        class="product-bevel-input form-control form-control-sm rounded-lg border-neutral-300 focus:border-primary-500 focus:ring-primary-500 text-center pr-6 pl-1 py-1 h-8 text-xs w-full" 
                        placeholder="Vát" 
                        value="${lastData ? lastData.bevel : ''}"
-                       data-auto-sync="${(!lastData || (!lastData.bevel && lastData.bevel !== '0')) ? 'none' : ((lastData.bevel == lastData.width) ? 'width' : ((lastData.bevel == lastData.height) ? 'height' : 'none'))}">
+                       data-auto-sync="${(!lastData || (!lastData.bevel && lastData.bevel !== '0')) ? 'width' : ((lastData.bevel == lastData.width) ? 'width' : ((lastData.bevel == lastData.height) ? 'height' : 'none'))}">
                 <div class="pointer-events-auto cursor-pointer" style="position: absolute; right: 4px; top: 0; bottom: 0; width: 24px; display: flex; align-items: center; justify-content: center; z-index: 4;" title="Chọn kiểu vát">
                     <iconify-icon icon="lucide:chevron-down" class="text-neutral-500 text-base pointer-events-none"></iconify-icon>
                     <select class="product-bevel-select absolute inset-0 opacity-0 cursor-pointer w-full h-full">
                         <option value="">-- Không vát --&nbsp;&nbsp;</option>
-                        <option value="width">▪ Bám theo Rộng&nbsp;&nbsp;</option>
+                        <option value="width" ${(!lastData || (lastData && lastData.bevel == lastData.width)) ? 'selected' : ''}>▪ Bám theo Rộng&nbsp;&nbsp;</option>
                         <option value="height">▪ Bám theo Dài&nbsp;&nbsp;</option>
                         <option value="custom">▪ Tự nhập tay&nbsp;&nbsp;</option>
                     </select>
@@ -1268,22 +1268,44 @@ function initMinLateBevelField(row) {
     const currentSync = bevelInput.getAttribute('data-auto-sync') || 'none';
 
     if (val === '') {
-        bevelInput.setAttribute('data-auto-sync', 'none');
-        bevelSelect.value = '';
+        if (currentSync === 'width') {
+            bevelInput.setAttribute('data-auto-sync', 'width');
+            bevelSelect.value = 'width';
+            if (width !== '') {
+                bevelInput.value = width;
+                val = width;
+            }
+        } else if (currentSync === 'height') {
+            bevelInput.setAttribute('data-auto-sync', 'height');
+            bevelSelect.value = 'height';
+            if (height !== '') {
+                bevelInput.value = height;
+                val = height;
+            }
+        } else {
+            bevelInput.setAttribute('data-auto-sync', 'none');
+            bevelSelect.value = '';
+        }
     } else {
         // Check if value matches width or height
         if (currentSync === 'width' && width !== '' && val === width) {
             bevelInput.setAttribute('data-auto-sync', 'width');
+            bevelSelect.value = 'width';
         } else if (currentSync === 'height' && height !== '' && val === height) {
             bevelInput.setAttribute('data-auto-sync', 'height');
+            bevelSelect.value = 'height';
         } else if (currentSync === 'none') {
             bevelInput.setAttribute('data-auto-sync', 'none');
+            bevelSelect.value = (width !== '' && val === width) ? 'width' : ((height !== '' && val === height) ? 'height' : 'custom');
         } else if (width !== '' && val === width) {
             bevelInput.setAttribute('data-auto-sync', 'width');
+            bevelSelect.value = 'width';
         } else if (height !== '' && val === height) {
             bevelInput.setAttribute('data-auto-sync', 'height');
+            bevelSelect.value = 'height';
         } else {
             bevelInput.setAttribute('data-auto-sync', 'none');
+            bevelSelect.value = 'custom';
         }
     }
 
@@ -2023,6 +2045,17 @@ function confirmMinLateExcelImport() {
                 setVal('input[name*="[quantity]"]', item.quantity);
                 setVal('input[name*="[bevel]"]', item.beveled);
                 setVal('input[name*="[beveled_edges]"]', item.beveled);
+                const bevelIn = newRow.querySelector('.product-bevel-input');
+                if (bevelIn) {
+                    if (!item.beveled || item.beveled === '0' || item.beveled === 0) {
+                        bevelIn.setAttribute('data-auto-sync', 'none');
+                        bevelIn.value = '';
+                    } else {
+                        bevelIn.value = item.beveled;
+                        const sync = (item.beveled == item.width) ? 'width' : ((item.beveled == item.height) ? 'height' : 'none');
+                        bevelIn.setAttribute('data-auto-sync', sync);
+                    }
+                }
                 setVal('select[name*="[edge_gluing][height_1]"]', item.edge_h1);
                 setVal('select[name*="[edge_gluing][height_2]"]', item.edge_h2);
                 setVal('select[name*="[edge_gluing][width_1]"]', item.edge_w1);

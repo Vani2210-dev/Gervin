@@ -1,3 +1,9 @@
+function isSupportedNestingType(type) {
+    if (!type) return false;
+    const t = String(type).trim().toLowerCase();
+    return ['acrylic', 'min_late', 'flywood', 'plywood'].includes(t);
+}
+
 function isLaborItem(item) {
     if (!item) return false;
     const name = (item.product_name || item.name || '').trim().toLowerCase();
@@ -216,15 +222,23 @@ async function generateNestingWorkbook(orderData, suppliesData, filename, includ
             const h = parseFloat((parseFloat(item.height) || 0).toFixed(2));
             const w = parseFloat((parseFloat(item.width) || 0).toFixed(2));
 
-            // Determine edge banding: 'Vát XXX' → if XXX ≈ W → W2='V', if ≈ H → L2='V'
-            const bevelText = (item.edge_bevel || '').replace(/[^0-9.]/g, '');
-            const bevelVal = parseFloat(bevelText) || 0;
+            // Determine edge banding:
             let edgeL1 = 'T', edgeL2 = 'T', edgeW1 = 'T', edgeW2 = 'T';
-            if (bevelVal > 0) {
-                if (Math.abs(bevelVal - h) < 1) {
-                    edgeL2 = 'V';   // bevel on the Height/Dài side
-                } else {
-                    edgeW2 = 'V';   // bevel on the Width/Rộng side (default)
+            if (item.edge_gluing && typeof item.edge_gluing === 'object') {
+                edgeL1 = (item.edge_gluing.height_1 || '').trim().toUpperCase();
+                edgeL2 = (item.edge_gluing.height_2 || '').trim().toUpperCase();
+                edgeW1 = (item.edge_gluing.width_1 || '').trim().toUpperCase();
+                edgeW2 = (item.edge_gluing.width_2 || '').trim().toUpperCase();
+            } else {
+                // Default / Acrylic logic: 'Vát XXX' → if XXX ≈ W → W2='V', if ≈ H → L2='V'
+                const bevelText = (item.edge_bevel || item.bevel || '').replace(/[^0-9.]/g, '');
+                const bevelVal = parseFloat(bevelText) || 0;
+                if (bevelVal > 0) {
+                    if (Math.abs(bevelVal - h) < 1) {
+                        edgeL2 = 'V';   // bevel on the Height/Dài side
+                    } else {
+                        edgeW2 = 'V';   // bevel on the Width/Rộng side (default)
+                    }
                 }
             }
 
@@ -290,20 +304,28 @@ async function generateNestingWorkbook(orderData, suppliesData, filename, includ
                     w,                                                        // H Rộng
                     (function() {
                         const thick = parseFloat(item.thickness);
-                        if (!isNaN(thick)) {
-                            return parseFloat((thick + 2).toFixed(2));
+                        const isAcrylic = (orderData.type && String(orderData.type).toLowerCase() === 'acrylic');
+                        if (isAcrylic) {
+                            if (!isNaN(thick)) {
+                                return parseFloat((thick + 2).toFixed(2));
+                            }
+                            return 21;
                         }
-                        return 21;
-                    })(), // I Dày (+2 mm)
+                        if (!isNaN(thick) && thick > 0) {
+                            return parseFloat(thick.toFixed(2));
+                        }
+                        return 17;
+                    })(), // I Dày (+2 mm cho Acrylic, giữ nguyên cho Min-late/Flywood)
                     (function() {
-                        const gd = String(item.grain_direction || '').trim();
-                        if (gd === '0' || gd === '') return 0;
+                        const gd = String(item.grain_direction || item.direction || '').trim();
+                        if (gd === '0' || gd === '' || gd === 'Không vân' || gd === '—') return 0;
                         return 2;
                     })(), // J Chiều vân (0 or empty -> 0, other -> 2)
                     1,                                                        // K Số lượng (always 1 per expanded sheet row)
                     edgeL1, edgeL2, edgeW1, edgeW2,                         // L M N O Nẹp
-                    0.00001, 0.00001, 0.00001, 0.00001,                     // P Q R S Dày nẹp
-                    item.edge_bevel || '',                                    // T Ghi chú
+                    (edgeL1 ? 0.00001 : null), (edgeL2 ? 0.00001 : null),
+                    (edgeW1 ? 0.00001 : null), (edgeW2 ? 0.00001 : null),   // P Q R S Dày nẹp
+                    item.edge_bevel || (item.bevel ? ('Vát ' + item.bevel) : '') || '', // T Ghi chú
                     milling.offsetLeft, milling.offsetRight, milling.offsetTop, milling.offsetBottom, // U-X Bao trong
                     milling.millLeft, milling.millRight, milling.millTop, milling.millBottom,         // Y-AB Xoi 1
                     milling.millWidth, milling.millDepth,                                             // AC-AD Rộng/Sâu 1
@@ -443,9 +465,9 @@ async function generateNestingWorkbook(orderData, suppliesData, filename, includ
  */
 async function exportNestingFiles(customData = null, returnBlobs = false) {
     const orderData = customData || window.orderExportData;
-    if (!orderData || orderData.type !== 'acrylic') {
+    if (!orderData || !isSupportedNestingType(orderData.type)) {
         if (!customData) {
-            alert('Chức năng xuất nesting chỉ dành cho đơn acrylic.');
+            alert('Chức năng xuất nesting chỉ dành cho đơn acrylic, minlate hoặc flywood.');
         }
         return returnBlobs ? [] : null;
     }
@@ -508,7 +530,7 @@ async function exportNestingFiles(customData = null, returnBlobs = false) {
  */
 async function exportManufactureNestingFiles(moCode, ordersData) {
     if (!ordersData || !ordersData.length) {
-        alert('Lệnh sản xuất này không có đơn hàng Acrylic nào để xuất Nesting.');
+        alert('Lệnh sản xuất này không có đơn hàng nào phù hợp để xuất Nesting.');
         return;
     }
 
@@ -516,7 +538,7 @@ async function exportManufactureNestingFiles(moCode, ordersData) {
     const phaoSupplies = [];
 
     ordersData.forEach(orderData => {
-        if (orderData.type !== 'acrylic' || !orderData.supplies) return;
+        if (!isSupportedNestingType(orderData.type) || !orderData.supplies) return;
         const shortCust = getShortCustomerName(orderData, orderData.project_name);
         orderData.supplies.forEach(supply => {
             const allItems = supply.items || [];
@@ -558,7 +580,7 @@ async function exportManufactureNestingFiles(moCode, ordersData) {
     });
 
     if (nestingSupplies.length === 0 && phaoSupplies.length === 0) {
-        alert('Không tìm thấy tấm Acrylic nào trong các đơn hàng của lệnh này.');
+        alert('Không tìm thấy tấm nào trong các đơn hàng của lệnh này.');
         return;
     }
 
@@ -605,9 +627,9 @@ async function exportBulkNestingFiles(ordersData, returnBlobs = false) {
         return returnBlobs ? [] : null;
     }
 
-    const acrylicOrders = ordersData.filter(o => o.type === 'acrylic');
-    if (!acrylicOrders.length) {
-        if (!returnBlobs) alert('Không có đơn hàng Acrylic nào trong các đơn đã chọn.');
+    const validOrders = ordersData.filter(o => isSupportedNestingType(o.type));
+    if (!validOrders.length) {
+        if (!returnBlobs) alert('Không có đơn hàng nào (Acrylic, Min-late, Flywood) trong các đơn đã chọn.');
         return returnBlobs ? [] : null;
     }
 
@@ -618,7 +640,7 @@ async function exportBulkNestingFiles(ordersData, returnBlobs = false) {
     const allDcMatches = [];
     const seenDcKeys = new Set();
 
-    acrylicOrders.forEach(orderData => {
+    validOrders.forEach(orderData => {
         const shortCust = getShortCustomerName(orderData, orderData.project_name);
         // Thu thập Kho DC
         (orderData.dc_stock_matches || []).forEach(m => {
@@ -699,26 +721,26 @@ async function exportBulkNestingFiles(ordersData, returnBlobs = false) {
 
     // 1. Gộp TOÀN BỘ tấm Nesting chính (> 70x70) của TẤT CẢ các đơn vào 1 file Nesting duy nhất
     if (finalNestingSupplies.length > 0) {
-        const firstCust = acrylicOrders.length === 1 ? getShortCustomerName(acrylicOrders[0], acrylicOrders[0].project_name) : 'Nhiều khách hàng';
+        const firstCust = validOrders.length === 1 ? getShortCustomerName(validOrders[0], validOrders[0].project_name) : 'Nhiều khách hàng';
         const dummyOrder = {
-            order_code: acrylicOrders.length === 1 ? (acrylicOrders[0].order_code || 'DH') : 'GOP',
+            order_code: validOrders.length === 1 ? (validOrders[0].order_code || 'DH') : 'GOP',
             customer_name: firstCust,
             customer_short_name: firstCust,
-            customer_company_name: acrylicOrders.length === 1 ? (acrylicOrders[0].customer_company_name || '') : '',
-            customer_code: acrylicOrders.length === 1 ? (acrylicOrders[0].customer_code || '') : '',
-            project_name: acrylicOrders.length === 1 ? (acrylicOrders[0].project_name || '') : 'Nhiều công trình',
+            customer_company_name: validOrders.length === 1 ? (validOrders[0].customer_company_name || '') : '',
+            customer_code: validOrders.length === 1 ? (validOrders[0].customer_code || '') : '',
+            project_name: validOrders.length === 1 ? (validOrders[0].project_name || '') : 'Nhiều công trình',
             dc_stock_matches: allDcMatches
         };
 
         let nestingFilename = '';
-        if (acrylicOrders.length === 1) {
-            nestingFilename = `Nesting-${acrylicOrders[0].order_code || 'DH'}.xlsx`;
-        } else if (acrylicOrders.length <= 3) {
-            const codesStr = acrylicOrders.map(o => o.order_code).filter(Boolean).join('_');
+        if (validOrders.length === 1) {
+            nestingFilename = `Nesting-${validOrders[0].order_code || 'DH'}.xlsx`;
+        } else if (validOrders.length <= 3) {
+            const codesStr = validOrders.map(o => o.order_code).filter(Boolean).join('_');
             nestingFilename = `Nesting-Gop-${codesStr}.xlsx`;
         } else {
-            const firstCode = acrylicOrders[0].order_code || 'DH';
-            const lastCode = acrylicOrders[acrylicOrders.length - 1].order_code || 'DH';
+            const firstCode = validOrders[0].order_code || 'DH';
+            const lastCode = validOrders[validOrders.length - 1].order_code || 'DH';
             nestingFilename = `Nesting-Gop-${firstCode}_den_${lastCode}.xlsx`;
         }
 
@@ -730,26 +752,26 @@ async function exportBulkNestingFiles(ordersData, returnBlobs = false) {
 
     // 2. Gộp TOÀN BỘ tấm phào (<= 70) của TẤT CẢ các đơn vào 1 file Nesting Phào duy nhất
     if (finalPhaoSupplies.length > 0) {
-        const firstCust = acrylicOrders.length === 1 ? getShortCustomerName(acrylicOrders[0], acrylicOrders[0].project_name) : 'Nhiều khách hàng';
+        const firstCust = validOrders.length === 1 ? getShortCustomerName(validOrders[0], validOrders[0].project_name) : 'Nhiều khách hàng';
         const dummyOrder = {
-            order_code: acrylicOrders.length === 1 ? (acrylicOrders[0].order_code || 'DH') : 'GOP-PHAO',
+            order_code: validOrders.length === 1 ? (validOrders[0].order_code || 'DH') : 'GOP-PHAO',
             customer_name: firstCust,
             customer_short_name: firstCust,
-            customer_company_name: acrylicOrders.length === 1 ? (acrylicOrders[0].customer_company_name || '') : '',
-            customer_code: acrylicOrders.length === 1 ? (acrylicOrders[0].customer_code || '') : '',
-            project_name: acrylicOrders.length === 1 ? (acrylicOrders[0].project_name || '') : 'Nhiều công trình',
+            customer_company_name: validOrders.length === 1 ? (validOrders[0].customer_company_name || '') : '',
+            customer_code: validOrders.length === 1 ? (validOrders[0].customer_code || '') : '',
+            project_name: validOrders.length === 1 ? (validOrders[0].project_name || '') : 'Nhiều công trình',
             dc_stock_matches: [] // Bỏ DC ở file phào
         };
 
         let phaoFilename = '';
-        if (acrylicOrders.length === 1) {
-            phaoFilename = `Nesting-Phao-${acrylicOrders[0].order_code || 'DH'}.xlsx`;
-        } else if (acrylicOrders.length <= 3) {
-            const codesStr = acrylicOrders.map(o => o.order_code).filter(Boolean).join('_');
+        if (validOrders.length === 1) {
+            phaoFilename = `Nesting-Phao-${validOrders[0].order_code || 'DH'}.xlsx`;
+        } else if (validOrders.length <= 3) {
+            const codesStr = validOrders.map(o => o.order_code).filter(Boolean).join('_');
             phaoFilename = `Nesting-Phao-Gop-${codesStr}.xlsx`;
         } else {
-            const firstCode = acrylicOrders[0].order_code || 'DH';
-            const lastCode = acrylicOrders[acrylicOrders.length - 1].order_code || 'DH';
+            const firstCode = validOrders[0].order_code || 'DH';
+            const lastCode = validOrders[validOrders.length - 1].order_code || 'DH';
             phaoFilename = `Nesting-Phao-Gop-${firstCode}_den_${lastCode}.xlsx`;
         }
 

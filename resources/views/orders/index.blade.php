@@ -1021,7 +1021,7 @@
             }
 
             if (exportedCount === 0) {
-                alert("Không có đơn hàng Acrylic nào có tấm cần xả tem Nesting trong các đơn đã chọn.");
+                alert("Không có đơn hàng nào (Acrylic, Min-late, Flywood) có tấm cần xả tem Nesting trong các đơn đã chọn.");
             } else {
                 alert(`Đã xuất thành công ${exportedCount} file xả tem Nesting gộp!`);
                 clearBulkOrderSelection();
@@ -1296,7 +1296,7 @@
                 </a>
             </li>
 
-            @if($order->type === 'acrylic')
+            @if(in_array(strtolower($order->type ?? ''), ['acrylic', 'min_late', 'flywood', 'plywood']))
             {{-- Tải file xả tem cho Kỹ thuật --}}
             <li>
                 <a href="{{ route('orders.show', $order) }}?export_nesting=1" class="flex items-center gap-2 px-4 py-2 hover:bg-neutral-50 text-emerald-700 font-medium transition-colors">

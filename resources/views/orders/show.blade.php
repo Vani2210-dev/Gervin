@@ -980,7 +980,7 @@
                     class="w-full justify-center flex items-center gap-2 py-3 rounded-xl font-semibold border border-neutral-200 text-neutral-700 hover:bg-neutral-50 transition-colors shadow-sm text-sm bg-white cursor-pointer">
                     <iconify-icon icon="lucide:file-spreadsheet" class="text-base"></iconify-icon> Xuất Excel (.xlsx)
                 </button>
-                @if($acrylicOrder->type === 'acrylic')
+                @if(in_array(strtolower($acrylicOrder->type ?? ''), ['acrylic', 'min_late', 'flywood', 'plywood']))
                     <button type="button" onclick="exportNestingFiles()"
                         class="w-full justify-center flex items-center gap-2 py-3 rounded-xl font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition-colors shadow-sm text-sm cursor-pointer">
                         <iconify-icon icon="lucide:table-2" class="text-lg"></iconify-icon> Tải file xả tem Nesting (Kỹ thuật)
@@ -1060,7 +1060,7 @@
         window.orderExportData = @json($exportData);
     </script>
     <script src="{{ asset('assets/js/order-export.js') }}?v={{ file_exists(public_path('assets/js/order-export.js')) ? filemtime(public_path('assets/js/order-export.js')) : time() }}"></script>
-    @if($acrylicOrder->type === 'acrylic')
+    @if(in_array(strtolower($acrylicOrder->type ?? ''), ['acrylic', 'min_late', 'flywood', 'plywood']))
         <script src="{{ asset('assets/js/nesting-export.js') }}?v={{ file_exists(public_path('assets/js/nesting-export.js')) ? filemtime(public_path('assets/js/nesting-export.js')) : time() }}"></script>
     @endif
     <script>

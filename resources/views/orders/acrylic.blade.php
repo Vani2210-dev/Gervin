@@ -1716,16 +1716,44 @@ function initBevelField(row) {
     const currentSync = bevelInput.getAttribute('data-auto-sync') || 'none';
 
     if (val === '') {
-        bevelInput.setAttribute('data-auto-sync', 'none');
-        bevelSelect.value = '';
-    } else {
-        // Check if value matches width or height
-        if (width !== '' && val === width) {
+        if (currentSync === 'width') {
             bevelInput.setAttribute('data-auto-sync', 'width');
-        } else if (height !== '' && val === height) {
+            bevelSelect.value = 'width';
+            if (width !== '') {
+                bevelInput.value = width;
+                val = width;
+            }
+        } else if (currentSync === 'height') {
             bevelInput.setAttribute('data-auto-sync', 'height');
+            bevelSelect.value = 'height';
+            if (height !== '') {
+                bevelInput.value = height;
+                val = height;
+            }
         } else {
             bevelInput.setAttribute('data-auto-sync', 'none');
+            bevelSelect.value = '';
+        }
+    } else {
+        // Check if value matches width or height
+        if (currentSync === 'width' && width !== '' && val === width) {
+            bevelInput.setAttribute('data-auto-sync', 'width');
+            bevelSelect.value = 'width';
+        } else if (currentSync === 'height' && height !== '' && val === height) {
+            bevelInput.setAttribute('data-auto-sync', 'height');
+            bevelSelect.value = 'height';
+        } else if (currentSync === 'none') {
+            bevelInput.setAttribute('data-auto-sync', 'none');
+            bevelSelect.value = (width !== '' && val === width) ? 'width' : ((height !== '' && val === height) ? 'height' : 'custom');
+        } else if (width !== '' && val === width) {
+            bevelInput.setAttribute('data-auto-sync', 'width');
+            bevelSelect.value = 'width';
+        } else if (height !== '' && val === height) {
+            bevelInput.setAttribute('data-auto-sync', 'height');
+            bevelSelect.value = 'height';
+        } else {
+            bevelInput.setAttribute('data-auto-sync', 'none');
+            bevelSelect.value = 'custom';
         }
     }
 

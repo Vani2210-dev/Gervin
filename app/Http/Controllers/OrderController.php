@@ -652,6 +652,7 @@ class OrderController extends Controller
 
     public function getExportData(Order $acrylicOrder)
     {
+        $acrylicOrder->loadMissing(['customer', 'supplies.items.codes', 'supplies.minLateItems.codes']);
         $fullCustomerDisplay = $acrylicOrder->full_customer_display;
         $customerShortName = $acrylicOrder->customer_short_display;
 
@@ -702,15 +703,24 @@ class OrderController extends Controller
                         if (is_string($edgeGluing)) {
                             $edgeGluing = json_decode($edgeGluing, true) ?? [];
                         }
+                        $productCodes = [];
+                        if ($item->relationLoaded('codes')) {
+                            $productCodes = $item->codes->pluck('product_id')->toArray();
+                        } elseif (method_exists($item, 'codes')) {
+                            $productCodes = $item->codes()->pluck('product_id')->toArray();
+                        }
                         return [
                             'product_code' => $item->product_code,
+                            'product_codes' => $productCodes,
                             'name' => $item->product_name ?? $item->name,
+                            'product_name' => $item->product_name ?? $item->name,
                             'thickness' => $item->thickness,
                             'quantity' => $item->quantity,
                             'height' => $sizes['height'] ?? null,
                             'width' => $sizes['width'] ?? null,
                             'edge_gluing' => $edgeGluing,
                             'bevel' => $item->bevel,
+                            'edge_bevel' => $item->bevel ? ('Vát ' . $item->bevel) : '',
                             'straight_paste_length' => $item->straight_paste_length,
                             'beveled_length' => $item->beveled_length,
                             'vat_moi_length' => $item->vat_moi_length,
@@ -720,6 +730,7 @@ class OrderController extends Controller
                             'beveled_handle' => $item->beveled_handle,
                             'cnc' => $item->cnc,
                             'direction' => $item->direction,
+                            'grain_direction' => $item->direction,
                             'notes' => $item->notes,
                         ];
                     });
@@ -800,7 +811,8 @@ class OrderController extends Controller
                 ];
             }) : [],
             'dc_stock_matches' => call_user_func(function () use ($acrylicOrder) {
-                if ($acrylicOrder->type !== 'acrylic') {
+                $orderTypeLower = strtolower($acrylicOrder->type ?? '');
+                if (!in_array($orderTypeLower, ['acrylic', 'min_late', 'flywood', 'plywood'])) {
                     return [];
                 }
                 $dcStockMatches = [];
@@ -810,8 +822,12 @@ class OrderController extends Controller
                     $name = trim($supply->supply_name ?? '');
 
                     // Chiều vân: 0 hoặc 2
-                    $hasGrain = $supply->items->contains(function ($i) {
-                        $g = trim((string)($i->grain_direction ?? ''));
+                    $itemsColl = in_array($orderTypeLower, ['min_late', 'flywood', 'plywood'])
+                        ? $supply->minLateItems
+                        : $supply->items;
+
+                    $hasGrain = $itemsColl->contains(function ($i) {
+                        $g = trim((string)($i->grain_direction ?? $i->direction ?? ''));
                         return $g !== '0' && $g !== '' && $g !== 'Không vân';
                     });
                     $grainVal = $hasGrain ? 2 : 0;
